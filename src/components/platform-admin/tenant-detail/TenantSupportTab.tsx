@@ -80,7 +80,7 @@ export const TenantSupportTab: React.FC<TenantSupportTabProps> = ({ tenantId }) 
               </tr>
             </thead>
             <tbody>
-              {tenantTickets.map((ticket: any) => (
+              {tenantTickets.map((ticket) => (
                 <tr
                   key={ticket.id}
                   onClick={() => navigate(`/platform-admin/tickets/${ticket.id}`)}

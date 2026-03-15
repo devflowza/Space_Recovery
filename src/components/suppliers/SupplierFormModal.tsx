@@ -6,18 +6,43 @@ import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 
+interface SupplierData {
+  id?: string;
+  name?: string;
+  supplier_number?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  tax_id?: string;
+  website?: string;
+  category_id?: string;
+  payment_terms_id?: string;
+  description?: string;
+  primary_contact_name?: string;
+  primary_contact_email?: string;
+  primary_contact_phone?: string;
+  primary_contact_position?: string;
+  preferred_shipping_method?: string;
+  is_active?: boolean;
+  is_approved?: boolean;
+}
+
 interface SupplierFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  supplier?: any;
+  supplier?: SupplierData | null;
 }
 
 export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: SupplierFormModalProps) {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [paymentTerms, setPaymentTerms] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Array<{ id: number; name: string; is_active?: boolean }>>([]);
+  const [paymentTerms, setPaymentTerms] = useState<Array<{ id: number; name: string; days: number; is_active?: boolean }>>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -112,8 +137,8 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
 
       const supplierData = {
         ...formData,
-        category_id: formData.category_id ? parseInt(formData.category_id as any) : null,
-        payment_terms_id: formData.payment_terms_id ? parseInt(formData.payment_terms_id as any) : null,
+        category_id: formData.category_id ? parseInt(formData.category_id) : null,
+        payment_terms_id: formData.payment_terms_id ? parseInt(formData.payment_terms_id) : null,
         updated_by: user.id,
         updated_at: new Date().toISOString(),
       };

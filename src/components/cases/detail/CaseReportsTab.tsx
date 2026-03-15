@@ -7,8 +7,22 @@ import { Card } from '../../ui/Card';
 import { REPORT_TYPES, getReportTypeConfig, getReportStatusConfig, type ReportType, type ReportStatus } from '../../../lib/reportTypes';
 import { formatDate } from '../../../lib/format';
 
+interface CaseReport {
+  id: string;
+  title: string;
+  report_number: string;
+  report_type: ReportType;
+  status: ReportStatus;
+  version_number: number;
+  visible_to_customer?: boolean;
+  approved_at?: string | null;
+  sent_to_customer_at?: string | null;
+  created_at: string;
+  created_by_profile?: { full_name: string } | null;
+}
+
 interface CaseReportsTabProps {
-  reports: any[];
+  reports: CaseReport[];
   reportTypeFilter: ReportType | 'all';
   reportStatusFilter: ReportStatus | 'all';
   showLatestOnly: boolean;
@@ -17,7 +31,7 @@ interface CaseReportsTabProps {
   onSetReportStatusFilter: (v: ReportStatus | 'all') => void;
   onSetShowLatestOnly: (v: boolean) => void;
   onSetViewReportId: (id: string | null) => void;
-  onSetEditingReport: (report: any) => void;
+  onSetEditingReport: (report: CaseReport) => void;
 }
 
 export const CaseReportsTab: React.FC<CaseReportsTabProps> = ({
@@ -98,7 +112,7 @@ export const CaseReportsTab: React.FC<CaseReportsTabProps> = ({
           </div>
         ) : (
           <div className="grid gap-4">
-            {reports.map((report: any) => {
+            {reports.map((report) => {
               const typeConfig = getReportTypeConfig(report.report_type);
               const statusConfig = getReportStatusConfig(report.status);
               const TypeIcon = typeConfig.icon;

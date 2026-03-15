@@ -174,9 +174,9 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
         if (!formData.mobile_number?.trim()) {
           throw new Error('Mobile number is required for mobile money accounts');
         }
-        accountData.account_number = null as any;
+        accountData.account_number = null as unknown as string | undefined;
       } else if (formData.account_type === 'cash') {
-        accountData.account_number = null as any;
+        accountData.account_number = null as unknown as string | undefined;
       }
 
       if (!initialData) {
@@ -228,7 +228,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
                 type="button"
                 onClick={() => setFormData({
                   ...formData,
-                  account_type: type.value as any,
+                  account_type: type.value as 'bank' | 'cash' | 'mobile',
                   account_number: type.value === 'cash' ? '' : formData.account_number
                 })}
                 className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${

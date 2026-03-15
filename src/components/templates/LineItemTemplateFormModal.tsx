@@ -9,8 +9,8 @@ import { useAccountingLocale } from '../../hooks/useAccountingLocale';
 interface LineItemTemplateFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (templateData: any) => Promise<void>;
-  initialData?: any;
+  onSave: (templateData: Record<string, unknown>) => Promise<void>;
+  initialData?: Record<string, unknown>;
   templateTypeId: string;
   isLineItemType: boolean;
 }

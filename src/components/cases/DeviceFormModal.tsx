@@ -15,7 +15,7 @@ interface DeviceFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   caseId: string;
-  deviceData?: any;
+  deviceData?: Record<string, unknown>;
   onSuccess: () => void;
 }
 
@@ -360,7 +360,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       const selectedRole = deviceRoles.find(r => r.id?.toString() === formData.device_role_id);
       const isDonorRole = selectedRole?.name.toLowerCase() === 'donor';
 
-      let devicePayload: any = {
+      let devicePayload: Record<string, unknown> = {
         case_id: caseId,
         device_role_id: formData.device_role_id ? parseInt(formData.device_role_id) : null,
         device_password: formData.device_password || null,
@@ -447,7 +447,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         try {
           await diagnosticsService.upsertDeviceDiagnostics({
             case_device_id: deviceId,
-            device_type_category: diagnosticsFormData.device_type_category as any,
+            device_type_category: diagnosticsFormData.device_type_category as 'hdd' | 'ssd' | 'flash' | 'raid' | 'other',
             heads_status: diagnosticsFormData.heads_status || null,
             pcb_status: diagnosticsFormData.pcb_status || null,
             pcb_notes: diagnosticsFormData.pcb_notes || null,
@@ -735,7 +735,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                       className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">No link</option>
-                      {patientDevices.map((pd: any) => (
+                      {patientDevices.map((pd: { id: string; device_type?: { name?: string }; serial_no?: string; model?: string }) => (
                         <option key={pd.id} value={pd.id}>
                           {pd.device_type?.name || 'Device'} {pd.serial_no ? `- ${pd.serial_no}` : ''} {pd.model ? `(${pd.model})` : ''}
                         </option>

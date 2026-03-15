@@ -50,8 +50,8 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
       );
       onClose();
     },
-    onError: (error: any) => {
-      showToast(error.message || 'Failed to save component', 'error');
+    onError: (error: unknown) => {
+      showToast(error instanceof Error ? error.message : 'Failed to save component', 'error');
     },
   });
 
@@ -67,8 +67,8 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
       code: formData.code.toUpperCase().trim(),
       name: formData.name.trim(),
       name_ar: formData.name_ar.trim() || null,
-      component_type: formData.component_type as any,
-      calculation_type: formData.calculation_type as any,
+      component_type: formData.component_type as SalaryComponentInsert['component_type'],
+      calculation_type: formData.calculation_type as SalaryComponentInsert['calculation_type'],
       default_amount: parseFloat(formData.default_amount) || 0,
       percentage_of: formData.calculation_type === 'percentage' ? formData.percentage_of : null,
       is_taxable: formData.is_taxable,
@@ -80,7 +80,7 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
     saveMutation.mutate(submitData);
   };
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

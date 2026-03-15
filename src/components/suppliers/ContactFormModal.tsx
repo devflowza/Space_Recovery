@@ -6,12 +6,23 @@ import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 
+interface ContactData {
+  id?: string;
+  name?: string;
+  position?: string;
+  email?: string;
+  phone?: string;
+  mobile?: string;
+  notes?: string;
+  is_primary?: boolean;
+}
+
 interface ContactFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   supplierId: string;
-  contact?: any;
+  contact?: ContactData | null;
 }
 
 export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierId, contact }: ContactFormModalProps) {

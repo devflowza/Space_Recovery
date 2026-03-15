@@ -6,12 +6,22 @@ import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 
+interface CommunicationData {
+  id?: string;
+  type?: string;
+  subject?: string;
+  notes?: string;
+  communication_date?: string;
+  follow_up_required?: boolean;
+  follow_up_date?: string;
+}
+
 interface CommunicationFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   supplierId: string;
-  communication?: any;
+  communication?: CommunicationData | null;
 }
 
 export default function CommunicationFormModal({ isOpen, onClose, onSuccess, supplierId, communication }: CommunicationFormModalProps) {

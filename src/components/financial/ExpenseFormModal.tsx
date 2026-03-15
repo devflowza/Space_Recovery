@@ -215,7 +215,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
                 className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select Category</option>
-                {categories.map((cat: any) => (
+                {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
@@ -238,7 +238,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
                 className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">No Case</option>
-                {cases.map((c: any) => (
+                {cases.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.case_no} - {c.title}
                   </option>
@@ -257,7 +257,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select Method</option>
-              {paymentMethods.map((method: any) => (
+              {paymentMethods.map((method) => (
                 <option key={method.id} value={method.id}>
                   {method.name}
                 </option>

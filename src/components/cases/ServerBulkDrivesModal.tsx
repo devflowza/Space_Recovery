@@ -104,7 +104,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
     return !!(drive.brand_id && drive.serial_no && drive.capacity_id);
   }, []);
 
-  const updateDrive = useCallback((id: string, field: keyof BulkDriveRow, value: any) => {
+  const updateDrive = useCallback((id: string, field: keyof BulkDriveRow, value: string | boolean) => {
     setDrives((prevDrives) => {
       const updated = prevDrives.map((drive) => {
         if (drive.id === id) {

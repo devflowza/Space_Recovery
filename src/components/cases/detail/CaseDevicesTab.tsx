@@ -9,13 +9,13 @@ import { getDeviceIconComponent } from '../../../lib/deviceIconMapper';
 import { formatDate, formatDateTime } from '../../../lib/format';
 
 interface CaseDevicesTabProps {
-  caseData: any;
-  devices: any[];
+  caseData: Record<string, unknown>;
+  devices: Record<string, unknown>[];
   expandedDevices: Set<string>;
   showPassword: boolean;
   onToggleDeviceDetails: (deviceId: string) => void;
   onSetShowDeviceModal: (v: boolean) => void;
-  onSetEditingDevice: (device: any) => void;
+  onSetEditingDevice: (device: Record<string, unknown> | null) => void;
   onSetShowPassword: (v: boolean) => void;
 }
 
@@ -35,7 +35,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
     return roleName === 'backup' || roleName === 'donor';
   });
 
-  const renderDeviceCard = (device: any, idx: number) => {
+  const renderDeviceCard = (device: Record<string, unknown>, idx: number) => {
     const isExpanded = expandedDevices.has(device.id);
     const DeviceIcon = getDeviceIconComponent(device.device_type?.name);
     return (

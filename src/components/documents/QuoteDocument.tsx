@@ -53,7 +53,7 @@ interface CurrencyFormat {
 }
 
 interface QuoteDocumentProps {
-  quote: any;
+  quote: Record<string, unknown>;
   companySettings: CompanySettings | null;
   currencyFormat: CurrencyFormat;
   t: (key: string, fallback: string) => string;
@@ -276,7 +276,7 @@ export const QuoteDocument: React.FC<QuoteDocumentProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white">
-                {quote.quote_items?.map((item: any, index: number) => (
+                {(quote.quote_items as Array<{ description: string; quantity: number; unit_price: number }> | undefined)?.map((item, index: number) => (
                   <tr key={index} className="hover:bg-slate-50">
                     <td className="px-2 py-1.5 text-xs text-slate-900">
                       {item.description}

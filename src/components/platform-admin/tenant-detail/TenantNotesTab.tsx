@@ -91,8 +91,8 @@ export const TenantNotesTab: React.FC<TenantNotesTabProps> = ({ tenantId }) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {notes.map((note: any) => {
-              const activityData = note.activity_data || {};
+            {notes.map((note) => {
+              const activityData = (note.activity_data || {}) as Record<string, unknown>;
               return (
                 <div key={note.id} className="border border-slate-200 rounded-lg p-4 bg-slate-50">
                   <div className="flex items-start justify-between mb-2">
@@ -102,7 +102,7 @@ export const TenantNotesTab: React.FC<TenantNotesTabProps> = ({ tenantId }) => {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-slate-900">
-                          {activityData.admin_name || 'Admin'}
+                          {(activityData.admin_name as string) || 'Admin'}
                         </p>
                         <p className="text-xs text-slate-500">
                           {formatDistanceToNow(new Date(note.created_at))} ago
@@ -111,7 +111,7 @@ export const TenantNotesTab: React.FC<TenantNotesTabProps> = ({ tenantId }) => {
                     </div>
                   </div>
                   <p className="text-sm text-slate-700 whitespace-pre-wrap ml-10">
-                    {activityData.note}
+                    {activityData.note as string}
                   </p>
                 </div>
               );
