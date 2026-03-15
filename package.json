@@ -11,16 +11,11 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.2.2",
     "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.90.7",
-    "@tanstack/react-table": "^8.21.3",
-    "@types/pdfmake": "^0.2.12",
-    "arabic-persian-reshaper": "^1.0.1",
     "date-fns": "^4.1.0",
     "i18next": "^25.6.1",
     "lucide-react": "^0.344.0",
-    "noto-sans-arabic": "^1.0.2",
     "pdfmake": "^0.2.20",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -28,12 +23,13 @@
     "react-hook-form": "^7.66.0",
     "react-hot-toast": "^2.6.0",
     "react-i18next": "^16.2.4",
+    "react-is": "^18.3.1",
     "react-router-dom": "^7.13.1",
-    "recharts": "^3.3.0",
-    "zod": "^4.1.12"
+    "recharts": "^3.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@types/pdfmake": "^0.2.12",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.7.0",
