@@ -67,7 +67,7 @@ export const PayrollSettingsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['payroll-settings'] });
       showToast('Payroll settings updated successfully', 'success');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showToast(error.message || 'Failed to update settings', 'error');
     },
   });
@@ -78,7 +78,7 @@ export const PayrollSettingsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['payroll-settings'] });
       showToast('Settings reset to defaults', 'success');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showToast(error.message || 'Failed to reset settings', 'error');
     },
   });

@@ -37,7 +37,7 @@ export default function PayrollAdjustmentsPage() {
       showToast('Adjustment approved successfully', 'success');
       setApprovingAdjustment(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showToast(error.message || 'Failed to approve adjustment', 'error');
     },
   });
@@ -49,7 +49,7 @@ export default function PayrollAdjustmentsPage() {
       showToast('Adjustment cancelled', 'success');
       setCancellingAdjustment(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showToast(error.message || 'Failed to cancel adjustment', 'error');
     },
   });
