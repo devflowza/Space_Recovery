@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useParams } from 'react-router-dom';
 import { ArrowLeft, MessageCircle, Printer, FileText, Tag, CheckCircle2, Copy, User, HardDrive, FileStack, AlertCircle, Calendar, Package, Activity, Settings, History, Users, DollarSign, Trash2, Grid2x2 as Grid, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
@@ -9,14 +8,9 @@ import { Modal } from '../../components/ui/Modal';
 import { formatDate } from '../../lib/format';
 import { quotesService } from '../../lib/quotesService';
 import { invoiceService } from '../../lib/invoiceService';
-import { createPayment } from '../../lib/paymentsService';
 import { useCurrency } from '../../hooks/useCurrency';
-import { getCaseFinancialSummary } from '../../lib/caseFinanceService';
 import { CaseBackupDevicesTab } from '../../components/cases/CaseBackupDevicesTab';
 import { openWhatsAppChat, isValidWhatsAppNumber, logWhatsAppCommunication } from '../../lib/whatsappUtils';
-import { deleteCaseService } from '../../lib/caseService';
-import { useAuth } from '../../contexts/AuthContext';
-import { useToast } from '../../hooks/useToast';
 import { DeviceCheckoutModal } from '../../components/cases/DeviceCheckoutModal';
 import { DuplicateCaseConfirmationModal } from '../../components/cases/DuplicateCaseConfirmationModal';
 import { DeleteCaseConfirmationModal } from '../../components/cases/DeleteCaseConfirmationModal';
@@ -45,15 +39,13 @@ import {
   CasePortalTab,
 } from '../../components/cases/detail';
 import { useCaseModals } from '../../components/cases/detail/useCaseModals';
+import { useCaseQueries } from '../../components/cases/detail/useCaseQueries';
+import { useCaseMutations } from '../../components/cases/detail/useCaseMutations';
 
 type TabType = 'overview' | 'client' | 'devices' | 'clones' | 'reports' | 'quotes' | 'files' | 'engineers' | 'notes' | 'portal' | 'history' | 'stock';
 
 export const CaseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { profile } = useAuth();
-  const toast = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const modals = useCaseModals();
 
@@ -73,625 +65,25 @@ export const CaseDetail: React.FC = () => {
     }
   };
 
-  const { data: caseData, isLoading, error: caseError } = useQuery({
-    queryKey: ['case', id],
-    queryFn: async () => {
-      const { data: caseRecord, error } = await supabase
-        .from('cases')
-        .select(`
-          id,
-          case_no,
-          title,
-          priority,
-          status,
-          client_reference,
-          created_at,
-          updated_at,
-          due_date,
-          summary,
-          important_data,
-          accessories,
-          customer_id,
-          contact_id,
-          service_type_id,
-          created_by,
-          checkout_date,
-          checkout_collector_name,
-          recovery_outcome,
-          assigned_engineer_id,
-          company_id
-        `)
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching case:', error);
-        throw error;
-      }
-
-      const [customerData, contactData, serviceTypeData, createdByData, assignedEngineerData, companyData] = await Promise.all([
-        caseRecord.customer_id
-          ? supabase
-              .from('customers_enhanced')
-              .select('id, customer_number, customer_name, email, mobile_number, phone_number, city, country, address_line1, address_line2, postal_code')
-              .eq('id', caseRecord.customer_id)
-              .maybeSingle()
-          : Promise.resolve({ data: null }),
-        caseRecord.contact_id
-          ? supabase
-              .from('customers_enhanced')
-              .select('id, customer_name, email, mobile_number, phone_number')
-              .eq('id', caseRecord.contact_id)
-              .maybeSingle()
-          : Promise.resolve({ data: null }),
-        caseRecord.service_type_id
-          ? supabase
-              .from('service_types')
-              .select('id, name')
-              .eq('id', caseRecord.service_type_id)
-              .maybeSingle()
-          : Promise.resolve({ data: null }),
-        caseRecord.created_by
-          ? supabase
-              .from('profiles')
-              .select('id, full_name')
-              .eq('id', caseRecord.created_by)
-              .maybeSingle()
-          : Promise.resolve({ data: null }),
-        caseRecord.assigned_engineer_id
-          ? supabase
-              .from('profiles')
-              .select('id, full_name')
-              .eq('id', caseRecord.assigned_engineer_id)
-              .maybeSingle()
-          : Promise.resolve({ data: null }),
-        // Two-tier company fallback
-        // Tier 1: Use case-level company_id if set
-        // Tier 2: Fallback to customer's company from customer_company_relationships
-        (async () => {
-          if (caseRecord.company_id) {
-            return supabase
-              .from('companies')
-              .select('id, company_number, company_name, email, phone_number, city, country, vat_number')
-              .eq('id', caseRecord.company_id)
-              .maybeSingle();
-          } else if (caseRecord.customer_id) {
-            const { data: relationship, error: relError } = await supabase
-              .from('customer_company_relationships')
-              .select(`
-                company_id,
-                companies (
-                  id, company_number, company_name, email, phone_number, city, country, vat_number
-                )
-              `)
-              .eq('customer_id', caseRecord.customer_id)
-              .order('is_primary_contact', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-
-            if (relError) {
-              return { data: null, error: relError };
-            }
-            return { data: relationship?.companies || null, error: null };
-          }
-          return Promise.resolve({ data: null });
-        })(),
-      ]);
-
-      const result = {
-        ...caseRecord,
-        case_number: caseRecord.case_no,
-        customer: customerData.data,
-        contact: contactData.data,
-        service_type: serviceTypeData.data,
-        created_by_profile: createdByData.data,
-        assigned_engineer: assignedEngineerData.data,
-        company: companyData.data,
-      };
-
-      return result;
-    },
-    enabled: !!id,
-  });
-
-  const { data: caseStatuses = [] } = useQuery({
-    queryKey: ['case_statuses'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('case_statuses')
-        .select('id, name, type, color, is_active')
-        .eq('is_active', true)
-        .order('sort_order');
-
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: devices = [] } = useQuery({
-    queryKey: ['case_devices', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('case_devices')
-        .select(`
-          id,
-          model,
-          serial_no,
-          device_problem,
-          recovery_requirements,
-          device_password,
-          device_type_id,
-          capacity_id,
-          accessories,
-          device_role_id,
-          is_primary,
-          parent_device_id,
-          role_notes,
-          created_at,
-          created_by,
-          device_type:device_types(id, name),
-          brand:brands(name),
-          capacity:capacities(id, name),
-          condition:device_conditions(name),
-          encryption_type:device_encryption(name),
-          device_role:device_roles(id, name),
-          created_by_profile:profiles!created_by(full_name)
-        `)
-        .eq('case_id', id)
-        .order('is_primary', { ascending: false })
-        .order('created_at');
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  const { data: cloneDrives = [] } = useQuery({
-    queryKey: ['clone_drives', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('clone_drives')
-        .select(`
-          id,
-          case_id,
-          patient_device_id,
-          resource_clone_drive_id,
-          physical_drive_serial,
-          physical_drive_brand,
-          physical_drive_model,
-          physical_drive_capacity,
-          storage_path,
-          storage_server,
-          storage_type,
-          physical_location_id,
-          image_format,
-          image_size_gb,
-          clone_date,
-          cloned_by,
-          status,
-          extracted_date,
-          extracted_by,
-          backup_device_id,
-          extraction_notes,
-          retention_days,
-          notes,
-          physical_location:inventory_locations(name),
-          cloned_by_user:profiles!clone_drives_cloned_by_fkey(full_name),
-          resource_clone_drive:resource_clone_drives(
-            clone_id,
-            physical_drive_brand,
-            physical_drive_model,
-            physical_drive_capacity_gb,
-            physical_drive_serial,
-            storage_type
-          )
-        `)
-        .eq('case_id', id)
-        .order('clone_date', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  const { data: attachments = [] } = useQuery({
-    queryKey: ['case_attachments', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('case_attachments')
-        .select(`
-          id,
-          file_name,
-          file_path,
-          file_size,
-          mime_type,
-          category,
-          description,
-          created_at,
-          uploaded_by:profiles(full_name)
-        `)
-        .eq('case_id', id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  const { data: quotes = [] } = useQuery({
-    queryKey: ['quotes', 'case', id],
-    queryFn: async () => {
-      if (!id) return [];
-      return await quotesService.getQuotesByCaseId(id);
-    },
-    enabled: !!id,
-  });
-
-  const { data: invoices = [] } = useQuery({
-    queryKey: ['invoices', 'case', id],
-    queryFn: async () => {
-      if (!id) return [];
-      return await invoiceService.getInvoicesByCaseId(id);
-    },
-    enabled: !!id,
-  });
-
-  const { data: caseFinancialSummary } = useQuery({
-    queryKey: ['case_financial_summary', id],
-    queryFn: async () => {
-      if (!id) return null;
-      return await getCaseFinancialSummary(id);
-    },
-    enabled: !!id,
-  });
-
-  const { data: reports = [] } = useQuery({
-    queryKey: ['case_reports', id, reportTypeFilter, reportStatusFilter, showLatestOnly],
-    queryFn: async () => {
-      let query = supabase
-        .from('case_reports')
-        .select(`
-          id,
-          report_number,
-          report_type,
-          title,
-          status,
-          visible_to_customer,
-          version_number,
-          is_latest_version,
-          created_at,
-          approved_at,
-          sent_to_customer_at,
-          created_by_profile:profiles!created_by(full_name)
-        `)
-        .eq('case_id', id);
-
-      if (reportTypeFilter !== 'all') {
-        query = query.eq('report_type', reportTypeFilter);
-      }
-
-      if (reportStatusFilter !== 'all') {
-        query = query.eq('status', reportStatusFilter);
-      }
-
-      if (showLatestOnly) {
-        query = query.eq('is_latest_version', true);
-      }
-
-      query = query.order('created_at', { ascending: false });
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  const { data: caseEngineers = [] } = useQuery({
-    queryKey: ['case_engineers', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('case_engineers')
-        .select(`
-          id,
-          role_text,
-          created_at,
-          engineer:profiles(id, full_name, role)
-        `)
-        .eq('case_id', id)
-        .order('created_at');
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  const { data: portalSettings } = useQuery({
-    queryKey: ['case_portal_visibility', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('case_portal_visibility')
-        .select('*')
-        .eq('case_id', id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  const { data: notes = [] } = useQuery({
-    queryKey: ['case_notes', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('case_internal_notes')
-        .select(`
-          id,
-          note_text,
-          private,
-          created_at,
-          author:profiles(full_name)
-        `)
-        .eq('case_id', id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  const { data: history = [] } = useQuery({
-    queryKey: ['case_history', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('case_job_history')
-        .select(`
-          id,
-          action,
-          details_json,
-          created_at,
-          actor:profiles(full_name)
-        `)
-        .eq('case_id', id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
+  const {
+    caseData, isLoading, caseError,
+    caseStatuses, devices, cloneDrives, attachments,
+    quotes, invoices, caseFinancialSummary, reports,
+    caseEngineers, portalSettings, notes, history,
+  } = useCaseQueries(id, {
+    reportTypeFilter: modals.reportTypeFilter,
+    reportStatusFilter: modals.reportStatusFilter,
+    showLatestOnly: modals.showLatestOnly,
   });
 
 
-  const addNoteMutation = useMutation({
-    mutationFn: async (noteText: string) => {
-      const { error } = await supabase
-        .from('case_internal_notes')
-        .insert({
-          case_id: id,
-          author_id: profile?.id,
-          note_text: noteText,
-          private: true,
-        });
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['case_notes', id] });
-      setNewNote('');
-    },
-  });
-
-  const updateCaseStatusMutation = useMutation({
-    mutationFn: async (newStatus: string) => {
-      console.log('Updating case status to:', newStatus);
-      const { data, error } = await supabase
-        .from('cases')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select();
-
-      if (error) {
-        console.error('Error updating status:', error);
-        throw error;
-      }
-      console.log('Status update result:', data);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['case', id] });
-      queryClient.invalidateQueries({ queryKey: ['cases'] });
-      queryClient.invalidateQueries({ queryKey: ['case_history', id] });
-    },
-    onError: (error) => {
-      console.error('Status update failed:', error);
-      toast.error('Failed to update status. Please try again.');
-    },
-  });
-
-  const updateCasePriorityMutation = useMutation({
-    mutationFn: async (newPriority: string) => {
-      console.log('Updating case priority to:', newPriority);
-      const { data, error } = await supabase
-        .from('cases')
-        .update({ priority: newPriority, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select();
-
-      if (error) {
-        console.error('Error updating priority:', error);
-        throw error;
-      }
-      console.log('Priority update result:', data);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['case', id] });
-      queryClient.invalidateQueries({ queryKey: ['cases'] });
-      queryClient.invalidateQueries({ queryKey: ['case_history', id] });
-    },
-    onError: (error) => {
-      console.error('Priority update failed:', error);
-      toast.error('Failed to update priority. Please try again.');
-    },
-  });
-
-  const updateAssignedEngineerMutation = useMutation({
-    mutationFn: async (newEngineerId: string | null) => {
-      console.log('Updating assigned engineer to:', newEngineerId);
-      const { data, error } = await supabase
-        .from('cases')
-        .update({ assigned_engineer_id: newEngineerId, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select();
-
-      if (error) {
-        console.error('Error updating assigned engineer:', error);
-        throw error;
-      }
-      console.log('Assigned engineer update result:', data);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['case', id] });
-      queryClient.invalidateQueries({ queryKey: ['cases'] });
-      queryClient.invalidateQueries({ queryKey: ['case_history', id] });
-    },
-    onError: (error) => {
-      console.error('Assigned engineer update failed:', error);
-      toast.error('Failed to update assigned engineer. Please try again.');
-    },
-  });
-
-  const createPaymentMutation = useMutation({
-    mutationFn: async ({
-      paymentData,
-      allocations,
-    }: {
-      paymentData: Omit<import('../../lib/paymentsService').Payment, 'id' | 'payment_number' | 'created_at' | 'updated_at'>;
-      allocations: Array<{ invoice_id: string; amount: number }>;
-    }) => {
-      return createPayment(paymentData, allocations);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices', 'case', id] });
-      queryClient.invalidateQueries({ queryKey: ['case_financial_summary', id] });
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
-      setShowRecordPaymentModal(false);
-      setSelectedInvoiceForPayment(null);
-    },
-  });
-
-  const updateCaseInfoMutation = useMutation({
-    mutationFn: async (updates: Record<string, unknown>) => {
-      const { error } = await supabase
-        .from('cases')
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['case', id] });
-      queryClient.invalidateQueries({ queryKey: ['cases'] });
-    },
-  });
-
-  const updateDeviceInfoMutation = useMutation({
-    mutationFn: async ({ deviceId, updates }: { deviceId: string; updates: Record<string, unknown> }) => {
-      const { error } = await supabase
-        .from('case_devices')
-        .update(updates)
-        .eq('id', deviceId);
-
-      if (error) {
-        console.error('Error updating device:', error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['case_devices', id] });
-      queryClient.invalidateQueries({ queryKey: ['case', id] });
-      queryClient.invalidateQueries({ queryKey: ['cases'] });
-    },
-  });
-
-  const updateCustomerInfoMutation = useMutation({
-    mutationFn: async (updates: Record<string, unknown>) => {
-      const { error } = await supabase
-        .from('customers_enhanced')
-        .update(updates)
-        .eq('id', caseData?.customer_id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['case', id] });
-    },
-  });
-
-  const markAsDeliveredMutation = useMutation({
-    mutationFn: async ({ cloneId, updateCaseStatus, deliveryNotes, retentionDays }: { cloneId: string; updateCaseStatus: boolean; deliveryNotes: string; retentionDays: number }) => {
-      const deliveryDate = new Date();
-      const retentionDeadline = new Date(deliveryDate.getTime() + retentionDays * 24 * 60 * 60 * 1000);
-
-      const { error } = await supabase
-        .from('clone_drives')
-        .update({
-          status: 'delivered',
-          retention_days: retentionDays,
-          delivered_date: deliveryDate.toISOString(),
-          delivered_by: profile?.id,
-          retention_deadline: retentionDeadline.toISOString(),
-          notes: deliveryNotes || null,
-        })
-        .eq('id', cloneId);
-
-      if (error) throw error;
-
-      if (updateCaseStatus && id) {
-        const { error: caseError } = await supabase
-          .from('cases')
-          .update({ status: 'Delivered' })
-          .eq('id', id);
-
-        if (caseError) throw caseError;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['case', id] });
-      queryClient.invalidateQueries({ queryKey: ['clone_drives', id] });
-      queryClient.invalidateQueries({ queryKey: ['resource_clone_drives'] });
-      setShowMarkAsDeliveredModal(false);
-      setSelectedClone(null);
-    },
-  });
-
-  const preserveLongTermMutation = useMutation({
-    mutationFn: async ({ cloneId, preserveReason }: { cloneId: string; preserveReason: string }) => {
-      const { error } = await supabase
-        .from('clone_drives')
-        .update({
-          status: 'preserved',
-          preserve_reason: preserveReason,
-        })
-        .eq('id', cloneId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clone_drives', id] });
-      queryClient.invalidateQueries({ queryKey: ['resource_clone_drives'] });
-      setShowPreserveLongTermModal(false);
-      setSelectedClone(null);
-    },
-  });
+  const {
+    addNoteMutation, updateCaseStatusMutation, updateCasePriorityMutation,
+    updateAssignedEngineerMutation, createPaymentMutation, updateCaseInfoMutation,
+    updateDeviceInfoMutation, updateCustomerInfoMutation, markAsDeliveredMutation,
+    preserveLongTermMutation, duplicateCaseMutation, deleteCaseMutation,
+    queryClient, navigate, profile, toast,
+  } = useCaseMutations({ id, caseData, devices, modals });
 
   const handleWhatsApp = async () => {
     if (!caseData) return;
@@ -719,29 +111,29 @@ export const CaseDetail: React.FC = () => {
   };
 
   const handlePrintOfficeReceipt = () => {
-    setPreviewDocumentType('office_receipt');
-    setShowPDFPreviewModal(true);
+    modals.setPreviewDocumentType('office_receipt');
+    modals.setShowPDFPreviewModal(true);
   };
 
   const handlePrintCustomerCopy = () => {
-    setPreviewDocumentType('customer_copy');
-    setShowPDFPreviewModal(true);
+    modals.setPreviewDocumentType('customer_copy');
+    modals.setShowPDFPreviewModal(true);
   };
 
   const handlePrintLabel = () => {
-    setPreviewDocumentType('case_label');
-    setShowPDFPreviewModal(true);
+    modals.setPreviewDocumentType('case_label');
+    modals.setShowPDFPreviewModal(true);
   };
 
   const handleSendEmailFromPreview = (blobUrl: string, blob: Blob, filename: string) => {
-    setEmailPdfBlob(blob);
-    setEmailPdfFilename(filename);
-    setShowEmailModal(true);
+    modals.setEmailPdfBlob(blob);
+    modals.setEmailPdfFilename(filename);
+    modals.setShowEmailModal(true);
   };
 
   const handleOpenCheckoutPreview = () => {
-    setPreviewDocumentType('checkout_form');
-    setShowPDFPreviewModal(true);
+    modals.setPreviewDocumentType('checkout_form');
+    modals.setShowPDFPreviewModal(true);
   };
 
   const handleRecordPayment = async (invoice: { id: string; invoice_type?: string }) => {
@@ -751,19 +143,19 @@ export const CaseDetail: React.FC = () => {
       return;
     }
     const fullInvoice = await invoiceService.fetchInvoiceById(invoice.id);
-    setSelectedInvoiceForPayment(fullInvoice);
-    setShowRecordPaymentModal(true);
+    modals.setSelectedInvoiceForPayment(fullInvoice);
+    modals.setShowRecordPaymentModal(true);
   };
 
   const handleConvertProforma = async () => {
-    if (!convertingInvoice) return;
+    if (!modals.convertingInvoice) return;
 
     try {
-      await invoiceService.convertProformaToTaxInvoice(convertingInvoice.id);
+      await invoiceService.convertProformaToTaxInvoice(modals.convertingInvoice.id);
 
       // Close modal
-      setShowConvertProformaModal(false);
-      setConvertingInvoice(null);
+      modals.setShowConvertProformaModal(false);
+      modals.setConvertingInvoice(null);
 
       // Refresh the invoices list to show the new tax invoice
       queryClient.invalidateQueries({ queryKey: ['invoices', 'case', id] });
@@ -776,153 +168,16 @@ export const CaseDetail: React.FC = () => {
     }
   };
 
-  const duplicateCaseMutation = useMutation({
-    mutationFn: async () => {
-      const { data: nextCaseNumber, error: numberError } = await supabase
-        .rpc('get_next_case_number');
-
-      if (numberError) {
-        console.error('Error getting next case number:', numberError);
-        throw new Error('Failed to get next case number');
-      }
-
-      const newCaseData: Record<string, unknown> = {
-        case_no: nextCaseNumber,
-        customer_id: caseData!.customer_id,
-        service_type_id: caseData!.service_type_id,
-        priority: caseData!.priority,
-        status: 'Received',
-        client_reference: caseData!.case_no,
-        title: caseData!.title,
-        summary: caseData!.summary,
-        important_data: caseData!.important_data,
-        accessories: caseData!.accessories,
-        created_by: profile?.id,
-      };
-
-      if (caseData!.contact_id) {
-        newCaseData.contact_id = caseData!.contact_id;
-      }
-      if (caseData!.assigned_engineer_id) {
-        newCaseData.assigned_engineer_id = caseData!.assigned_engineer_id;
-      }
-      if (caseData!.company_id) {
-        newCaseData.company_id = caseData!.company_id;
-      }
-
-      const { data: newCase, error: caseError } = await supabase
-        .from('cases')
-        .insert(newCaseData)
-        .select()
-        .single();
-
-      if (caseError) {
-        console.error('Error creating duplicate case:', caseError);
-        throw new Error(`Failed to duplicate case: ${caseError.message}`);
-      }
-
-      if (devices && devices.length > 0) {
-        // First insert devices without parent_device_id to get new IDs
-        const devicesToInsert = devices.map(device => ({
-          case_id: newCase.id,
-          device_type_id: device.device_type_id,
-          brand_id: device.brand_id,
-          model: device.model,
-          serial_no: device.serial_no,
-          capacity_id: device.capacity_id,
-          condition_id: device.condition_id,
-          accessories: device.accessories,
-          device_problem: device.device_problem,
-          recovery_requirements: device.recovery_requirements,
-          device_password: device.device_password,
-          encryption_type_id: device.encryption_type_id,
-          device_role_id: device.device_role_id,
-          is_primary: device.is_primary,
-          role_notes: device.role_notes,
-          created_by: profile?.id,
-        }));
-
-        const { data: newDevices, error: devicesError } = await supabase
-          .from('case_devices')
-          .insert(devicesToInsert)
-          .select('id');
-
-        if (devicesError) {
-          console.error('Error duplicating devices:', devicesError);
-          throw new Error(`Failed to duplicate devices: ${devicesError.message}`);
-        }
-
-        // Create mapping from old device IDs to new device IDs
-        const deviceIdMapping: Record<string, string> = {};
-        devices.forEach((oldDevice, index) => {
-          if (newDevices && newDevices[index]) {
-            deviceIdMapping[oldDevice.id] = newDevices[index].id;
-          }
-        });
-
-        // Update parent_device_id references with new IDs
-        const devicesWithParents = devices.filter(d => d.parent_device_id);
-        if (devicesWithParents.length > 0 && newDevices) {
-          for (let i = 0; i < devices.length; i++) {
-            const oldDevice = devices[i];
-            if (oldDevice.parent_device_id && deviceIdMapping[oldDevice.parent_device_id]) {
-              const newDeviceId = newDevices[i]?.id;
-              const newParentId = deviceIdMapping[oldDevice.parent_device_id];
-
-              if (newDeviceId && newParentId) {
-                const { error: updateError } = await supabase
-                  .from('case_devices')
-                  .update({ parent_device_id: newParentId })
-                  .eq('id', newDeviceId);
-
-                if (updateError) {
-                  console.error('Error updating parent_device_id:', updateError);
-                }
-              }
-            }
-          }
-        }
-      }
-
-      return newCase;
-    },
-    onSuccess: (newCase) => {
-      queryClient.invalidateQueries({ queryKey: ['cases'] });
-      setShowDuplicateModal(false);
-      navigate(`/cases/${newCase.id}`);
-    },
-    onError: (error) => {
-      console.error('Case duplication error:', error);
-      toast.error(`Failed to duplicate case: ${(error as Error).message}`);
-    },
-  });
-
   const handleDuplicateCase = () => {
-    setShowDuplicateModal(true);
+    modals.setShowDuplicateModal(true);
   };
 
   const handleConfirmDuplicate = () => {
     duplicateCaseMutation.mutate();
   };
 
-  const deleteCaseMutation = useMutation({
-    mutationFn: async () => {
-      if (!id) throw new Error('No case ID');
-      return await deleteCaseService(id);
-    },
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['cases'] });
-      toast.success(`Case ${result.case_number} deleted successfully. ${result.total_records_deleted} total records removed.`);
-      navigate('/cases');
-    },
-    onError: (error: Error) => {
-      console.error('Failed to delete case:', error);
-      toast.error(`Failed to delete case: ${error.message}`);
-    },
-  });
-
   const handleDeleteCase = () => {
-    setShowDeleteModal(true);
+    modals.setShowDeleteModal(true);
   };
 
   const handleConfirmDelete = () => {
@@ -930,8 +185,8 @@ export const CaseDetail: React.FC = () => {
   };
 
   const handleAddNote = () => {
-    if (newNote.trim()) {
-      addNoteMutation.mutate(newNote);
+    if (modals.newNote.trim()) {
+      addNoteMutation.mutate(modals.newNote);
     }
   };
 
@@ -1073,7 +328,7 @@ export const CaseDetail: React.FC = () => {
               <span className="hidden md:inline">Print Label</span>
             </Button>
             <Button
-              onClick={() => setShowCheckoutModal(true)}
+              onClick={() => modals.setShowCheckoutModal(true)}
               style={{ backgroundColor: '#8b5cf6' }}
               size="sm"
               title="Device Checkout"
@@ -1217,12 +472,12 @@ export const CaseDetail: React.FC = () => {
             <CaseDevicesTab
               caseData={caseData}
               devices={devices || []}
-              expandedDevices={expandedDevices}
-              showPassword={showPassword}
-              onToggleDeviceDetails={toggleDeviceDetails}
-              onSetShowDeviceModal={setShowDeviceModal}
-              onSetEditingDevice={setEditingDevice}
-              onSetShowPassword={setShowPassword}
+              expandedDevices={modals.expandedDevices}
+              showPassword={modals.showPassword}
+              onToggleDeviceDetails={modals.toggleDeviceDetails}
+              onSetShowDeviceModal={modals.setShowDeviceModal}
+              onSetEditingDevice={modals.setEditingDevice}
+              onSetShowPassword={modals.setShowPassword}
             />
           )}
 
@@ -1233,11 +488,11 @@ export const CaseDetail: React.FC = () => {
               caseData={caseData}
               devices={devices || []}
               cloneDrives={cloneDrives || []}
-              onSetShowCloneDriveModal={setShowCloneDriveModal}
-              onSetViewCloneModal={setViewCloneModal}
-              onSetSelectedClone={setSelectedClone}
-              onSetShowMarkAsDeliveredModal={setShowMarkAsDeliveredModal}
-              onSetShowPreserveLongTermModal={setShowPreserveLongTermModal}
+              onSetShowCloneDriveModal={modals.setShowCloneDriveModal}
+              onSetViewCloneModal={modals.setViewCloneModal}
+              onSetSelectedClone={modals.setSelectedClone}
+              onSetShowMarkAsDeliveredModal={modals.setShowMarkAsDeliveredModal}
+              onSetShowPreserveLongTermModal={modals.setShowPreserveLongTermModal}
             />
           )}
 
@@ -1246,15 +501,15 @@ export const CaseDetail: React.FC = () => {
           {activeTab === 'reports' && (
             <CaseReportsTab
               reports={reports || []}
-              reportTypeFilter={reportTypeFilter}
-              reportStatusFilter={reportStatusFilter}
-              showLatestOnly={showLatestOnly}
-              onSetShowReportTypeSelector={setShowReportTypeSelector}
-              onSetReportTypeFilter={setReportTypeFilter}
-              onSetReportStatusFilter={setReportStatusFilter}
-              onSetShowLatestOnly={setShowLatestOnly}
-              onSetViewReportId={setViewReportId}
-              onSetEditingReport={setEditingReport}
+              reportTypeFilter={modals.reportTypeFilter}
+              reportStatusFilter={modals.reportStatusFilter}
+              showLatestOnly={modals.showLatestOnly}
+              onSetShowReportTypeSelector={modals.setShowReportTypeSelector}
+              onSetReportTypeFilter={modals.setReportTypeFilter}
+              onSetReportStatusFilter={modals.setReportStatusFilter}
+              onSetShowLatestOnly={modals.setShowLatestOnly}
+              onSetViewReportId={modals.setViewReportId}
+              onSetEditingReport={modals.setEditingReport}
             />
           )}
 
@@ -1269,15 +524,15 @@ export const CaseDetail: React.FC = () => {
               caseFinancialSummary={caseFinancialSummary}
               formatCurrency={formatCurrency}
               formatCurrencyAmount={formatCurrencyAmount}
-              onSetShowQuoteModal={setShowQuoteModal}
-              onSetShowInvoiceModal={setShowInvoiceModal}
-              onSetEditingQuote={setEditingQuote}
-              onSetEditingInvoice={setEditingInvoice}
-              onSetViewingQuote={setViewingQuote}
-              onSetViewingInvoice={setViewingInvoice}
+              onSetShowQuoteModal={modals.setShowQuoteModal}
+              onSetShowInvoiceModal={modals.setShowInvoiceModal}
+              onSetEditingQuote={modals.setEditingQuote}
+              onSetEditingInvoice={modals.setEditingInvoice}
+              onSetViewingQuote={modals.setViewingQuote}
+              onSetViewingInvoice={modals.setViewingInvoice}
               onHandleRecordPayment={handleRecordPayment}
-              onSetConvertingInvoice={setConvertingInvoice}
-              onSetShowConvertProformaModal={setShowConvertProformaModal}
+              onSetConvertingInvoice={modals.setConvertingInvoice}
+              onSetShowConvertProformaModal={modals.setShowConvertProformaModal}
               quotesService={quotesService}
               invoiceService={invoiceService}
             />
@@ -1306,8 +561,8 @@ export const CaseDetail: React.FC = () => {
             <CaseNotesTab
               caseId={id!}
               notes={notes}
-              newNote={newNote}
-              onNoteChange={setNewNote}
+              newNote={modals.newNote}
+              onNoteChange={modals.setNewNote}
               onAddNote={handleAddNote}
               isAdding={addNoteMutation.isPending}
             />
@@ -1338,10 +593,10 @@ export const CaseDetail: React.FC = () => {
       )}
 
       {/* Checkout Modal */}
-      {showCheckoutModal && (
+      {modals.showCheckoutModal && (
         <DeviceCheckoutModal
-          isOpen={showCheckoutModal}
-          onClose={() => setShowCheckoutModal(false)}
+          isOpen={modals.showCheckoutModal}
+          onClose={() => modals.setShowCheckoutModal(false)}
           caseId={id!}
           caseNumber={caseData.case_no}
           devices={devices as any}
@@ -1356,10 +611,10 @@ export const CaseDetail: React.FC = () => {
       )}
 
       {/* Clone Drive Modal */}
-      {showCloneDriveModal && (
+      {modals.showCloneDriveModal && (
         <CloneDriveModal
-          isOpen={showCloneDriveModal}
-          onClose={() => setShowCloneDriveModal(false)}
+          isOpen={modals.showCloneDriveModal}
+          onClose={() => modals.setShowCloneDriveModal(false)}
           caseId={id!}
           caseNo={caseData.case_no}
           patientDevices={devices
@@ -1371,16 +626,16 @@ export const CaseDetail: React.FC = () => {
             }))}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['clone_drives', id] });
-            setShowCloneDriveModal(false);
+            modals.setShowCloneDriveModal(false);
           }}
         />
       )}
 
       {/* Duplicate Case Confirmation Modal */}
-      {showDuplicateModal && (
+      {modals.showDuplicateModal && (
         <DuplicateCaseConfirmationModal
-          isOpen={showDuplicateModal}
-          onClose={() => setShowDuplicateModal(false)}
+          isOpen={modals.showDuplicateModal}
+          onClose={() => modals.setShowDuplicateModal(false)}
           onConfirm={handleConfirmDuplicate}
           originalCaseNumber={caseData.case_no}
           customerName={caseData.customer?.customer_name || 'Unknown'}
@@ -1390,10 +645,10 @@ export const CaseDetail: React.FC = () => {
       )}
 
       {/* Delete Case Confirmation Modal */}
-      {showDeleteModal && (
+      {modals.showDeleteModal && (
         <DeleteCaseConfirmationModal
-          isOpen={showDeleteModal}
-          onClose={() => setShowDeleteModal(false)}
+          isOpen={modals.showDeleteModal}
+          onClose={() => modals.setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
           caseNumber={caseData.case_no}
           caseTitle={caseData.title || 'Untitled Case'}
@@ -1402,28 +657,28 @@ export const CaseDetail: React.FC = () => {
       )}
 
       {/* Device Form Modal */}
-      {showDeviceModal && (
+      {modals.showDeviceModal && (
         <DeviceFormModal
-          isOpen={showDeviceModal}
+          isOpen={modals.showDeviceModal}
           onClose={() => {
-            setShowDeviceModal(false);
-            setEditingDevice(null);
+            modals.setShowDeviceModal(false);
+            modals.setEditingDevice(null);
           }}
           caseId={id!}
-          deviceData={editingDevice}
+          deviceData={modals.editingDevice}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['case_devices', id] });
-            setShowDeviceModal(false);
-            setEditingDevice(null);
+            modals.setShowDeviceModal(false);
+            modals.setEditingDevice(null);
           }}
         />
       )}
 
       {/* View Clone Drive Modal */}
-      {viewCloneModal && (
+      {modals.viewCloneModal && (
         <Modal
-          isOpen={!!viewCloneModal}
-          onClose={() => setViewCloneModal(null)}
+          isOpen={!!modals.viewCloneModal}
+          onClose={() => modals.setViewCloneModal(null)}
           title={`Clone Drive Details - ${caseData.case_no}`}
           icon={Copy}
           maxWidth="3xl"
@@ -1436,49 +691,49 @@ export const CaseDetail: React.FC = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-600">Status</label>
-                <p className="text-sm text-slate-900 capitalize">{viewCloneModal.status}</p>
+                <p className="text-sm text-slate-900 capitalize">{modals.viewCloneModal.status}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-600">Storage Path</label>
-                <p className="text-sm text-slate-900 font-mono break-all">{viewCloneModal.storage_path}</p>
+                <p className="text-sm text-slate-900 font-mono break-all">{modals.viewCloneModal.storage_path}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-600">Storage Server</label>
-                <p className="text-sm text-slate-900">{viewCloneModal.storage_server || 'N/A'}</p>
+                <p className="text-sm text-slate-900">{modals.viewCloneModal.storage_server || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-600">Image Format</label>
-                <p className="text-sm text-slate-900 uppercase">{viewCloneModal.image_format || 'DD'}</p>
+                <p className="text-sm text-slate-900 uppercase">{modals.viewCloneModal.image_format || 'DD'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-600">Image Size</label>
-                <p className="text-sm text-slate-900">{viewCloneModal.image_size_gb ? `${viewCloneModal.image_size_gb} GB` : 'N/A'}</p>
+                <p className="text-sm text-slate-900">{modals.viewCloneModal.image_size_gb ? `${modals.viewCloneModal.image_size_gb} GB` : 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-600">Clone Date</label>
-                <p className="text-sm text-slate-900">{formatDate(viewCloneModal.clone_date)}</p>
+                <p className="text-sm text-slate-900">{formatDate(modals.viewCloneModal.clone_date)}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-600">Cloned By</label>
-                <p className="text-sm text-slate-900">{viewCloneModal.cloned_by_name || 'Unknown'}</p>
+                <p className="text-sm text-slate-900">{modals.viewCloneModal.cloned_by_name || 'Unknown'}</p>
               </div>
-              {viewCloneModal.extracted_date && (
+              {modals.viewCloneModal.extracted_date && (
                 <>
                   <div>
                     <label className="text-sm font-medium text-slate-600">Extracted Date</label>
-                    <p className="text-sm text-slate-900">{formatDate(viewCloneModal.extracted_date)}</p>
+                    <p className="text-sm text-slate-900">{formatDate(modals.viewCloneModal.extracted_date)}</p>
                   </div>
                 </>
               )}
             </div>
-            {viewCloneModal.notes && (
+            {modals.viewCloneModal.notes && (
               <div>
                 <label className="text-sm font-medium text-slate-600">Notes</label>
-                <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded">{viewCloneModal.notes}</p>
+                <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded">{modals.viewCloneModal.notes}</p>
               </div>
             )}
             <div className="flex justify-end pt-4 border-t border-slate-200">
-              <Button variant="secondary" onClick={() => setViewCloneModal(null)}>
+              <Button variant="secondary" onClick={() => modals.setViewCloneModal(null)}>
                 Close
               </Button>
             </div>
@@ -1488,23 +743,23 @@ export const CaseDetail: React.FC = () => {
 
       {/* Mark As Delivered Modal */}
       <MarkAsDeliveredModal
-        isOpen={showMarkAsDeliveredModal}
+        isOpen={modals.showMarkAsDeliveredModal}
         onClose={() => {
-          setShowMarkAsDeliveredModal(false);
-          setSelectedClone(null);
+          modals.setShowMarkAsDeliveredModal(false);
+          modals.setSelectedClone(null);
         }}
         onConfirm={(updateCaseStatus, deliveryNotes, retentionDays) => {
-          if (selectedClone) {
-            markAsDeliveredMutation.mutate({ cloneId: selectedClone.id, updateCaseStatus, deliveryNotes, retentionDays });
+          if (modals.selectedClone) {
+            markAsDeliveredMutation.mutate({ cloneId: modals.selectedClone.id, updateCaseStatus, deliveryNotes, retentionDays });
           }
         }}
-        clone={selectedClone}
+        clone={modals.selectedClone}
         caseNo={caseData?.case_no}
         caseStatus={caseData?.status}
         patientDeviceName={
-          selectedClone && devices.length > 0
+          modals.selectedClone && devices.length > 0
             ? (() => {
-                const patientDevice = devices.find(d => d.id === selectedClone.patient_device_id);
+                const patientDevice = devices.find(d => d.id === modals.selectedClone.patient_device_id);
                 return patientDevice
                   ? `${patientDevice.device_type?.name || 'Device'} ${patientDevice.serial_no ? `(${patientDevice.serial_no})` : ''}`
                   : 'Unknown Device';
@@ -1516,22 +771,22 @@ export const CaseDetail: React.FC = () => {
 
       {/* Preserve Long-term Modal */}
       <PreserveLongTermModal
-        isOpen={showPreserveLongTermModal}
+        isOpen={modals.showPreserveLongTermModal}
         onClose={() => {
-          setShowPreserveLongTermModal(false);
-          setSelectedClone(null);
+          modals.setShowPreserveLongTermModal(false);
+          modals.setSelectedClone(null);
         }}
         onConfirm={(preserveReason) => {
-          if (selectedClone) {
-            preserveLongTermMutation.mutate({ cloneId: selectedClone.id, preserveReason });
+          if (modals.selectedClone) {
+            preserveLongTermMutation.mutate({ cloneId: modals.selectedClone.id, preserveReason });
           }
         }}
-        clone={selectedClone}
+        clone={modals.selectedClone}
         caseNo={caseData?.case_no}
         patientDeviceName={
-          selectedClone && devices.length > 0
+          modals.selectedClone && devices.length > 0
             ? (() => {
-                const patientDevice = devices.find(d => d.id === selectedClone.patient_device_id);
+                const patientDevice = devices.find(d => d.id === modals.selectedClone.patient_device_id);
                 return patientDevice
                   ? `${patientDevice.device_type?.name || 'Device'} ${patientDevice.serial_no ? `(${patientDevice.serial_no})` : ''}`
                   : 'Unknown Device';
@@ -1542,37 +797,37 @@ export const CaseDetail: React.FC = () => {
       />
 
       {/* Quote View Modal */}
-      {viewingQuote && (
+      {modals.viewingQuote && (
         <PDFPreviewModal
-          isOpen={!!viewingQuote}
-          onClose={() => setViewingQuote(null)}
+          isOpen={!!modals.viewingQuote}
+          onClose={() => modals.setViewingQuote(null)}
           documentType="quote"
-          documentId={viewingQuote.id}
-          documentNumber={viewingQuote.quote_number}
-          customerEmail={viewingQuote.customers?.email}
+          documentId={modals.viewingQuote.id}
+          documentNumber={modals.viewingQuote.quote_number}
+          customerEmail={modals.viewingQuote.customers?.email}
         />
       )}
 
       {/* Invoice View Modal */}
-      {viewingInvoice && (
+      {modals.viewingInvoice && (
         <PDFPreviewModal
-          isOpen={!!viewingInvoice}
-          onClose={() => setViewingInvoice(null)}
+          isOpen={!!modals.viewingInvoice}
+          onClose={() => modals.setViewingInvoice(null)}
           documentType="invoice"
-          documentId={viewingInvoice.id}
-          documentNumber={viewingInvoice.invoice_number}
-          customerEmail={viewingInvoice.customers_enhanced?.email || viewingInvoice.customers?.email}
+          documentId={modals.viewingInvoice.id}
+          documentNumber={modals.viewingInvoice.invoice_number}
+          customerEmail={modals.viewingInvoice.customers_enhanced?.email || modals.viewingInvoice.customers?.email}
         />
       )}
 
       {/* Report Type Selection Modal */}
       {caseData && (
         <ReportTypeSelectionModal
-          isOpen={showReportTypeSelector}
-          onClose={() => setShowReportTypeSelector(false)}
+          isOpen={modals.showReportTypeSelector}
+          onClose={() => modals.setShowReportTypeSelector(false)}
           onSelectType={(type) => {
-            setSelectedReportType(type);
-            setShowReportTypeSelector(false);
+            modals.setSelectedReportType(type);
+            modals.setShowReportTypeSelector(false);
           }}
           caseNumber={caseData.case_no || caseData.case_number || ''}
           serviceType={caseData.service_type?.name || 'Data Recovery'}
@@ -1580,15 +835,15 @@ export const CaseDetail: React.FC = () => {
       )}
 
       {/* Streamlined Report Editor */}
-      {caseData && (selectedReportType || editingReport || reportVersioningId) && (
+      {caseData && (modals.selectedReportType || modals.editingReport || modals.reportVersioningId) && (
         <StreamlinedReportEditor
-          isOpen={!!(selectedReportType || editingReport || reportVersioningId)}
+          isOpen={!!(modals.selectedReportType || modals.editingReport || modals.reportVersioningId)}
           onClose={() => {
-            setSelectedReportType(null);
-            setEditingReport(null);
-            setReportVersioningId(null);
+            modals.setSelectedReportType(null);
+            modals.setEditingReport(null);
+            modals.setReportVersioningId(null);
           }}
-          reportType={editingReport?.report_type || selectedReportType}
+          reportType={modals.editingReport?.report_type || modals.selectedReportType}
           caseId={id!}
           caseData={{
             case_no: caseData.case_no || caseData.case_number || '',
@@ -1609,26 +864,26 @@ export const CaseDetail: React.FC = () => {
             symptoms: devices[0].symptoms || '',
             diagnostic_notes: devices[0].diagnostic_notes || '',
           } : undefined}
-          reportId={editingReport?.id}
-          existingReport={editingReport}
-          versioningFromReportId={reportVersioningId || undefined}
+          reportId={modals.editingReport?.id}
+          existingReport={modals.editingReport}
+          versioningFromReportId={modals.reportVersioningId || undefined}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['case_reports', id] });
-            setSelectedReportType(null);
-            setEditingReport(null);
-            setReportVersioningId(null);
+            modals.setSelectedReportType(null);
+            modals.setEditingReport(null);
+            modals.setReportVersioningId(null);
           }}
         />
       )}
 
       {/* Report View Modal */}
       <ReportViewModal
-        isOpen={!!viewReportId}
-        onClose={() => setViewReportId(null)}
-        reportId={viewReportId || ''}
+        isOpen={!!modals.viewReportId}
+        onClose={() => modals.setViewReportId(null)}
+        reportId={modals.viewReportId || ''}
         onNewVersion={() => {
-          setReportVersioningId(viewReportId);
-          setViewReportId(null);
+          modals.setReportVersioningId(modals.viewReportId);
+          modals.setViewReportId(null);
         }}
         onApprove={async (reportId) => {
           await reportsService.approveReport(reportId, profile?.id || '');
@@ -1641,33 +896,33 @@ export const CaseDetail: React.FC = () => {
       />
 
       {/* PDF Preview Modal */}
-      {showPDFPreviewModal && previewDocumentType && caseData && (
+      {modals.showPDFPreviewModal && modals.previewDocumentType && caseData && (
         <PDFPreviewModal
-          isOpen={showPDFPreviewModal}
+          isOpen={modals.showPDFPreviewModal}
           onClose={() => {
-            setShowPDFPreviewModal(false);
-            setPreviewDocumentType(null);
+            modals.setShowPDFPreviewModal(false);
+            modals.setPreviewDocumentType(null);
           }}
           documentId={id!}
           documentNumber={caseData.case_no || caseData.case_number || ''}
-          documentType={previewDocumentType}
+          documentType={modals.previewDocumentType}
           customerEmail={caseData.customer?.email}
           onSendEmail={handleSendEmailFromPreview}
         />
       )}
 
       {/* Email Document Modal */}
-      {showEmailModal && emailPdfBlob && previewDocumentType && caseData && (
+      {modals.showEmailModal && modals.emailPdfBlob && modals.previewDocumentType && caseData && (
         <EmailDocumentModal
-          isOpen={showEmailModal}
+          isOpen={modals.showEmailModal}
           onClose={() => {
-            setShowEmailModal(false);
-            setEmailPdfBlob(null);
-            setEmailPdfFilename('');
+            modals.setShowEmailModal(false);
+            modals.setEmailPdfBlob(null);
+            modals.setEmailPdfFilename('');
           }}
-          blob={emailPdfBlob}
-          filename={emailPdfFilename}
-          documentType={previewDocumentType}
+          blob={modals.emailPdfBlob}
+          filename={modals.emailPdfFilename}
+          documentType={modals.previewDocumentType}
           caseId={id!}
           caseNumber={caseData.case_no || caseData.case_number || ''}
           customerName={caseData.customer?.customer_name || 'Customer'}
