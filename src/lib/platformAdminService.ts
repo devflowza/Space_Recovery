@@ -437,7 +437,7 @@ export async function createTicket(ticket: {
       status: 'open',
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error || !newTicket) throw error;
 
@@ -468,7 +468,7 @@ export async function addTicketMessage(
       is_internal_note: isInternalNote,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error || !data) throw error;
 
@@ -553,7 +553,7 @@ export async function createAnnouncement(announcement: {
       created_by: announcement.createdBy,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error || !data) throw error;
   return data;
@@ -734,7 +734,7 @@ export async function duplicateAnnouncement(id: string): Promise<PlatformAnnounc
       created_by: original.created_by,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error || !data) throw error;
   return data;
@@ -743,7 +743,7 @@ export async function duplicateAnnouncement(id: string): Promise<PlatformAnnounc
 export async function deleteAnnouncement(id: string): Promise<void> {
   const { error } = await supabase
     .from('platform_announcements')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;
@@ -758,7 +758,7 @@ export async function updateAnnouncement(
     .update(updates)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error || !data) throw error;
   return data;

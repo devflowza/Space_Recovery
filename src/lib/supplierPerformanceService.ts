@@ -54,7 +54,7 @@ export async function createPerformanceEvaluation(
       notes: evaluation.comments || null,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 

@@ -238,7 +238,7 @@ export async function initiateCustodyTransfer(params: {
       metadata: params.metadata,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error initiating custody transfer:', error);
@@ -279,7 +279,7 @@ export async function acceptCustodyTransfer(params: {
     })
     .eq('id', params.transferId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error accepting custody transfer:', error);
@@ -313,7 +313,7 @@ export async function rejectCustodyTransfer(params: {
     })
     .eq('id', params.transferId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error rejecting custody transfer:', error);
@@ -380,7 +380,7 @@ export async function logAccess(params: {
       metadata: params.metadata,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error logging access:', error);
@@ -414,7 +414,7 @@ export async function endAccess(params: {
     })
     .eq('id', params.accessLogId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error ending access:', error);
@@ -471,7 +471,7 @@ export async function performIntegrityCheck(params: {
       metadata: params.metadata,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error performing integrity check:', error);

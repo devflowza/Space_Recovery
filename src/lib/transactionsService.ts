@@ -127,7 +127,7 @@ export const createTransaction = async (
     .from('financial_transactions')
     .insert([transaction])
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -151,7 +151,7 @@ export const updateTransaction = async (
     .update(transaction)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -160,7 +160,7 @@ export const updateTransaction = async (
 export const deleteTransaction = async (id: string) => {
   const { error } = await supabase
     .from('financial_transactions')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;
@@ -172,7 +172,7 @@ export const reconcileTransaction = async (id: string) => {
     .update({ status: 'reconciled' })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -194,7 +194,7 @@ export const voidTransaction = async (id: string) => {
     .from('financial_transactions')
     .select('bank_account_id, amount, type, status')
     .eq('id', id)
-    .single();
+    .maybeSingle();
 
   if (fetchError) throw fetchError;
 
@@ -211,7 +211,7 @@ export const voidTransaction = async (id: string) => {
     .update({ status: 'void' })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -398,7 +398,7 @@ const updateBankAccountBalance = async (
     .from('bank_accounts')
     .select('current_balance')
     .eq('id', accountId)
-    .single();
+    .maybeSingle();
 
   if (fetchError) {
     console.error('Error fetching bank account:', fetchError);

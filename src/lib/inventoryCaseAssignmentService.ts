@@ -130,7 +130,7 @@ export async function checkItemAvailability(itemId: string): Promise<{
     .from('inventory_items')
     .select('quantity_available, status_type:inventory_status_types(name)')
     .eq('id', itemId)
-    .single();
+    .maybeSingle();
 
   if (itemError) {
     console.error('Error fetching item details:', itemError);
@@ -179,7 +179,7 @@ export async function assignInventoryToCase(
       case:cases (id, case_no, title, status),
       assigned_by_profile:profiles!inventory_case_assignments_assigned_by_fkey (id, full_name)
     `)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error assigning inventory to case:', error);
@@ -217,7 +217,7 @@ export async function markAssignmentAsDefective(
       assigned_by_profile:profiles!inventory_case_assignments_assigned_by_fkey (id, full_name),
       unassigned_by_profile:profiles!inventory_case_assignments_unassigned_by_fkey (id, full_name)
     `)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error marking assignment as defective:', error);
@@ -253,7 +253,7 @@ export async function markAssignmentAsWorking(
       assigned_by_profile:profiles!inventory_case_assignments_assigned_by_fkey (id, full_name),
       unassigned_by_profile:profiles!inventory_case_assignments_unassigned_by_fkey (id, full_name)
     `)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error marking assignment as working:', error);

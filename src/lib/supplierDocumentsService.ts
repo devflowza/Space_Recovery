@@ -49,7 +49,7 @@ export async function uploadSupplierDocument(
       uploaded_by: userId,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data as SupplierDocument;
@@ -73,7 +73,7 @@ export async function deleteSupplierDocument(id: string, filePath: string) {
 
   const { error } = await supabase
     .from('supplier_documents')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;

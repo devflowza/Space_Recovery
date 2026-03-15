@@ -64,7 +64,7 @@ export const leaveService = {
       .from('leave_types')
       .insert(payload)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -75,7 +75,7 @@ export const leaveService = {
       .update({ ...payload, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -131,7 +131,7 @@ export const leaveService = {
       .from('leave_requests')
       .insert(payload)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -142,7 +142,7 @@ export const leaveService = {
       .update({ ...payload, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -159,7 +159,7 @@ export const leaveService = {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -176,7 +176,7 @@ export const leaveService = {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -184,7 +184,7 @@ export const leaveService = {
   async deleteLeaveRequest(id: string): Promise<void> {
     const { error } = await supabase
       .from('leave_requests')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
     if (error) throw error;
   },
@@ -216,7 +216,7 @@ export const leaveService = {
       .from('leave_balances')
       .upsert(payload, { onConflict: 'employee_id,leave_type_id,year' })
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -227,7 +227,7 @@ export const leaveService = {
       .update({ ...payload, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },

@@ -27,7 +27,7 @@ export async function createSupplierCommunication(
       created_by: userId,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data as SupplierCommunication;
@@ -42,7 +42,7 @@ export async function updateSupplierCommunication(
     .update(communicationData)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data as SupplierCommunication;
@@ -55,7 +55,7 @@ export async function markFollowUpCompleted(id: string) {
 export async function deleteSupplierCommunication(id: string) {
   const { error } = await supabase
     .from('supplier_communications')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;

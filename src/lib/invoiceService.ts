@@ -1,5 +1,19 @@
 import { supabase } from './supabaseClient';
 
+const logAuditTrail = async (actionType: string, tableName: string, recordId: string, oldValues: object, newValues: object) => {
+  try {
+    await supabase.rpc('log_audit_trail', {
+      p_action_type: actionType,
+      p_table_name: tableName,
+      p_record_id: recordId,
+      p_old_values: oldValues,
+      p_new_values: newValues,
+    });
+  } catch (e) {
+    console.error('Audit trail logging failed:', e);
+  }
+};
+
 const sanitizeUuidFields = (data: any): any => {
   const sanitized = { ...data };
   const uuidFields = ['customer_id', 'company_id', 'case_id', 'created_by', 'template_id', 'accounting_locale_id', 'quote_id', 'currency_id'];
@@ -139,6 +153,7 @@ export const fetchInvoices = async (filters?: {
         quote_number
       )
     `)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
   if (filters?.status && filters.status !== 'all') {
@@ -284,16 +299,16 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
   const invoiceNumber = await getNextInvoiceNumber(invoice.invoice_type);
 
   const subtotal = items.reduce((sum, item) => {
-    const itemSubtotal = item.quantity * item.unit_price;
-    const discount = itemSubtotal * ((item.discount_percent || 0) / 100);
-    return sum + (itemSubtotal - discount);
+    const itemSubtotal = Math.round(item.quantity * item.unit_price * 100) / 100;
+    const discount = Math.round(itemSubtotal * ((item.discount_percent || 0) / 100) * 100) / 100;
+    return Math.round((sum + (itemSubtotal - discount)) * 100) / 100;
   }, 0);
 
-  const discountedSubtotal = subtotal - (invoice.discount_amount || 0);
+  const discountedSubtotal = Math.round((subtotal - (invoice.discount_amount || 0)) * 100) / 100;
   const invoiceTaxRate = invoice.tax_rate || 0;
-  const taxAmount = (discountedSubtotal * invoiceTaxRate) / 100;
-  const totalAmount = discountedSubtotal + taxAmount;
-  const amountDue = totalAmount - (invoice.amount_paid || 0);
+  const taxAmount = Math.round((discountedSubtotal * invoiceTaxRate) / 100 * 100) / 100;
+  const totalAmount = Math.round((discountedSubtotal + taxAmount) * 100) / 100;
+  const amountDue = Math.round((totalAmount - (invoice.amount_paid || 0)) * 100) / 100;
 
   const invoiceToInsert = {
     title: invoiceTitle,
@@ -327,7 +342,7 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
     .from('invoices')
     .insert([sanitizedInvoice])
     .select()
-    .single();
+    .maybeSingle();
 
   if (invoiceError) throw invoiceError;
 
@@ -355,6 +370,8 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
     .insert(itemsWithInvoiceId);
 
   if (itemsError) throw itemsError;
+
+  await logAuditTrail('create', 'invoices', invoiceData.id, {}, { invoice_number: invoiceData.invoice_number, total_amount: totalAmount });
 
   return invoiceData;
 };
@@ -387,7 +404,7 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
       amount_due: amountDue,
     };
 
-    await supabase.from('invoice_line_items').delete().eq('invoice_id', id);
+    await supabase.from('invoice_line_items').update({ deleted_at: new Date().toISOString() }).eq('invoice_id', id);
 
     const itemsWithInvoiceId = items.map((item, index) => {
       const itemSubtotal = item.quantity * item.unit_price;
@@ -420,14 +437,14 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
     .update(updateData)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
 };
 
 export const deleteInvoice = async (id: string) => {
-  const { error } = await supabase.from('invoices').delete().eq('id', id);
+  const { error } = await supabase.from('invoices').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 };
 
@@ -444,7 +461,7 @@ export const updateInvoiceStatus = async (
     })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -491,7 +508,7 @@ export const convertQuoteToInvoice = async (
       quote_items (*)
     `)
     .eq('id', quoteId)
-    .single();
+    .maybeSingle();
 
   if (quoteError) throw quoteError;
   if (!quote) throw new Error('Quote not found');
@@ -527,13 +544,18 @@ export const convertQuoteToInvoice = async (
 
   const createdInvoice = await createInvoice(newInvoice, items);
 
-  await supabase
+  const { error: updateError } = await supabase
     .from('quotes')
     .update({
       status: 'converted',
       converted_to_case_id: quote.case_id,
     })
-    .eq('id', quoteId);
+    .eq('id', quoteId)
+    .neq('status', 'converted');
+
+  if (updateError) {
+    throw new Error(`Failed to update quote status after conversion: ${updateError.message}`);
+  }
 
   return createdInvoice;
 };
@@ -620,7 +642,7 @@ export const recordPayment = async (
       },
     ])
     .select()
-    .single();
+    .maybeSingle();
 
   if (paymentError) throw paymentError;
 

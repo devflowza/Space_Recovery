@@ -92,7 +92,7 @@ export const diagnosticsService = {
       .from('device_diagnostics')
       .insert([diagnosticsData])
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error creating device diagnostics:', error);
@@ -108,7 +108,7 @@ export const diagnosticsService = {
       .update(diagnostics)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error updating device diagnostics:', error);
@@ -131,7 +131,7 @@ export const diagnosticsService = {
   async deleteDeviceDiagnostics(id: string): Promise<void> {
     const { error } = await supabase
       .from('device_diagnostics')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {

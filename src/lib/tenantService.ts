@@ -42,7 +42,7 @@ export const tenantService = {
         trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (tenantError) throw tenantError;
 
@@ -117,7 +117,7 @@ export const tenantService = {
       .update(updates)
       .eq('id', tenantId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data;

@@ -121,7 +121,7 @@ export async function createPurchaseOrder(
       created_by: userId,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (poError) throw poError;
 
@@ -156,7 +156,7 @@ export async function updatePurchaseOrder(
     })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data as PurchaseOrder;
@@ -167,7 +167,7 @@ export async function approvePurchaseOrder(id: string, userId: string) {
     .from('purchase_order_statuses')
     .select('id')
     .eq('name', 'Approved')
-    .single();
+    .maybeSingle();
 
   return updatePurchaseOrder(id, {
     status_id: statuses?.id || null,
@@ -181,7 +181,7 @@ export async function markPurchaseOrderOrdered(id: string, userId: string) {
     .from('purchase_order_statuses')
     .select('id')
     .eq('name', 'Ordered')
-    .single();
+    .maybeSingle();
 
   return updatePurchaseOrder(id, {
     status_id: statuses?.id || null,
@@ -193,7 +193,7 @@ export async function receivePurchaseOrder(id: string, userId: string) {
     .from('purchase_order_statuses')
     .select('id')
     .eq('name', 'Received')
-    .single();
+    .maybeSingle();
 
   return updatePurchaseOrder(id, {
     status_id: statuses?.id || null,
@@ -206,7 +206,7 @@ export async function receivePurchaseOrder(id: string, userId: string) {
 export async function deletePurchaseOrder(id: string) {
   const { error } = await supabase
     .from('purchase_orders')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;
@@ -254,7 +254,7 @@ export async function updatePurchaseOrderItems(
 ) {
   await supabase
     .from('purchase_order_items')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('po_id', poId);
 
   if (items.length > 0) {
