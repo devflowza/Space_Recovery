@@ -42,20 +42,35 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'supabase': ['@supabase/supabase-js'],
-          'ui-libs': ['lucide-react', '@tanstack/react-query', '@tanstack/react-table'],
-          'form-libs': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          'chart-libs': ['recharts'],
-          'pdfmake-libs': ['pdfmake/build/pdfmake', 'pdfmake/build/vfs_fonts'],
-          'date-libs': ['date-fns'],
-          'i18n': ['i18next', 'react-i18next'],
+        manualChunks(id: string) {
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/') || id.includes('node_modules/react-router-dom')) {
+            return 'react-vendor';
+          }
+          if (id.includes('node_modules/@supabase')) {
+            return 'supabase';
+          }
+          if (id.includes('node_modules/lucide-react') || id.includes('node_modules/@tanstack/react-query')) {
+            return 'ui-libs';
+          }
+          if (id.includes('node_modules/react-hook-form')) {
+            return 'form-libs';
+          }
+          if (id.includes('node_modules/recharts')) {
+            return 'chart-libs';
+          }
+          if (id.includes('node_modules/pdfmake')) {
+            return 'pdfmake-libs';
+          }
+          if (id.includes('node_modules/date-fns')) {
+            return 'date-libs';
+          }
+          if (id.includes('node_modules/i18next') || id.includes('node_modules/react-i18next')) {
+            return 'i18n';
+          }
         },
       },
     },
     chunkSizeWarningLimit: 1000,
     sourcemap: false,
-    minify: 'esbuild',
   },
 });
