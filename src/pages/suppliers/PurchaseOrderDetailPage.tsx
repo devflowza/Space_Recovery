@@ -389,7 +389,7 @@ export default function PurchaseOrderDetailPage() {
                   unit_price: item.unit_price ?? null,
                   stock_item_id: item.stock_item_id ?? null,
                 }))
-              : (order.line_items ?? []).map((item: any, idx: number) => ({
+              : (order.line_items ?? []).map((item: { description?: string; item_name?: string; quantity: number; unit_price?: number }, idx: number) => ({
                   id: `line-${idx}`,
                   description: item.description ?? item.item_name ?? 'Item',
                   quantity: item.quantity,

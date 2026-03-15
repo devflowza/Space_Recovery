@@ -82,9 +82,9 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving communication:', error);
-      showToast(error.message || 'Failed to save communication', 'error');
+      showToast(error instanceof Error ? error.message : 'Failed to save communication', 'error');
     } finally {
       setLoading(false);
     }

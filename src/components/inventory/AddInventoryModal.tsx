@@ -289,7 +289,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
 
     setSubmitting(true);
     try {
-      const itemData: any = {
+      const itemData: Record<string, unknown> = {
         category_id: formData.inventory_type_id || null,
         status_type_id: formData.status_type_id || null,
         device_type_id: formData.device_type_id || null,
@@ -339,9 +339,9 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
         await fetchNextInventoryNumber();
       }
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error ${itemId ? 'updating' : 'creating'} inventory item:`, error);
-      setErrors({ submit: error.message || `Failed to ${itemId ? 'update' : 'create'} inventory item` });
+      setErrors({ submit: error instanceof Error ? error.message : `Failed to ${itemId ? 'update' : 'create'} inventory item` });
     } finally {
       setSubmitting(false);
     }

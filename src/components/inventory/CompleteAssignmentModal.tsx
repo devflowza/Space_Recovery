@@ -38,9 +38,9 @@ export function CompleteAssignmentModal({
       handleReset();
       onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error completing assignment:', err);
-      setError(err.message || 'Failed to complete assignment. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to complete assignment. Please try again.');
     } finally {
       setLoading(false);
     }

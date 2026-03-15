@@ -84,9 +84,9 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving contact:', error);
-      showToast(error.message || 'Failed to save contact', 'error');
+      showToast(error instanceof Error ? error.message : 'Failed to save contact', 'error');
     } finally {
       setLoading(false);
     }

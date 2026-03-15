@@ -77,21 +77,21 @@ export const QuoteDetailPage: React.FC = () => {
       toast.success('Quote deleted successfully');
       navigate('/quotes');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error?.message || 'Failed to delete quote');
     },
   });
 
   const statusMutation = useMutation({
     mutationFn: ({ status }: { status: string }) =>
-      updateQuoteStatus(id!, status as any),
+      updateQuoteStatus(id!, status as 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quote', id] });
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
       toast.success('Quote status updated successfully');
       setShowStatusModal(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error?.message || 'Failed to update quote status');
     },
   });
@@ -103,7 +103,7 @@ export const QuoteDetailPage: React.FC = () => {
       toast.success('Quote duplicated successfully');
       navigate(`/quotes/${data.id}`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error?.message || 'Failed to duplicate quote');
     },
   });
@@ -124,7 +124,7 @@ export const QuoteDetailPage: React.FC = () => {
     }
   };
 
-  const handleEditQuote = async (quoteData: any, items: any[]) => {
+  const handleEditQuote = async (quoteData: Record<string, unknown> & { title: string; status: string; valid_until: string; client_reference?: string; tax_rate: number; discount_amount: number; discount_type: string; terms_and_conditions?: string; bank_account_id?: string }, items: Array<{ description: string; quantity: number; unit_price: number; tax_rate?: number; discount_percent?: number; sort_order?: number }>) => {
     try {
       const subtotal = items.reduce(
         (sum, item) => sum + item.quantity * item.unit_price,
@@ -153,8 +153,8 @@ export const QuoteDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
       toast.success('Quote updated successfully');
       setShowEditModal(false);
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to update quote');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update quote');
       throw error;
     }
   };
@@ -183,8 +183,8 @@ export const QuoteDetailPage: React.FC = () => {
       setShowConvertModal(false);
 
       navigate(`/invoices/${invoice.id}`);
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to convert quote to invoice');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to convert quote to invoice');
     } finally {
       setIsConverting(false);
     }
@@ -625,12 +625,12 @@ export const QuoteDetailPage: React.FC = () => {
                       .from('quote_items')
                       .select('*')
                       .eq('quote_id', id!);
-                    const current = (existingItems ?? []).map((i: any) => ({
+                    const current = (existingItems ?? []).map((i: { description: string; quantity: number; unit_price: number }) => ({
                       description: i.description,
                       quantity: i.quantity,
                       unit_price: i.unit_price,
                     }));
-                    await updateQuote(id!, quote as any, [...current, ...newItems]);
+                    await updateQuote(id!, quote as Record<string, unknown>, [...current, ...newItems]);
                     queryClient.invalidateQueries({ queryKey: ['quote', id] });
                     toast.success(`${newItems.length} device${newItems.length !== 1 ? 's' : ''} added to quote`);
                   }}

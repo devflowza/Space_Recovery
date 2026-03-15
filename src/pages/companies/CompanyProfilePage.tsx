@@ -285,13 +285,13 @@ export const CompanyProfilePage: React.FC = () => {
   });
 
   const filteredCities = cities.filter(
-    (city: any) => !editFormData.country_id || city.country_id === editFormData.country_id
+    (city: { id: string; country_id: string; name: string }) => !editFormData.country_id || city.country_id === editFormData.country_id
   );
 
   const updateMutation = useMutation({
     mutationFn: async (updatedData: typeof editFormData) => {
-      const selectedCountry = countries.find((c: any) => c.id === updatedData.country_id);
-      const selectedCity = cities.find((c: any) => c.id === updatedData.city_id);
+      const selectedCountry = countries.find((c: { id: string; name: string }) => c.id === updatedData.country_id);
+      const selectedCity = cities.find((c: { id: string; name: string }) => c.id === updatedData.city_id);
 
       const { data, error } = await supabase
         .from('companies')
@@ -323,8 +323,8 @@ export const CompanyProfilePage: React.FC = () => {
   const handleOpenEditModal = () => {
     if (!company) return;
 
-    const companyCountry = countries.find((c: any) => c.name === company.country);
-    const companyCity = cities.find((c: any) => c.name === company.city);
+    const companyCountry = countries.find((c: { id: string; name: string }) => c.name === company.country);
+    const companyCity = cities.find((c: { id: string; name: string }) => c.name === company.city);
 
     setEditFormData({
       company_name: company.company_name,
@@ -864,7 +864,7 @@ export const CompanyProfilePage: React.FC = () => {
               label="Industry"
               value={editFormData.industry_id}
               onChange={(value) => setEditFormData({ ...editFormData, industry_id: value })}
-              options={industries.map((i: any) => ({ id: i.id, name: i.name }))}
+              options={industries.map((i: { id: string; name: string }) => ({ id: i.id, name: i.name }))}
               placeholder="Select Industry"
             />
           </div>
@@ -897,14 +897,14 @@ export const CompanyProfilePage: React.FC = () => {
               onChange={(value) => {
                 setEditFormData({ ...editFormData, country_id: value, city_id: '' });
               }}
-              options={countries.map((c: any) => ({ id: c.id, name: c.name }))}
+              options={countries.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))}
               placeholder="Select Country"
             />
             <SearchableSelect
               label="City"
               value={editFormData.city_id}
               onChange={(value) => setEditFormData({ ...editFormData, city_id: value })}
-              options={filteredCities.map((c: any) => ({ id: c.id, name: c.name }))}
+              options={filteredCities.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))}
               placeholder="Select City"
               disabled={!editFormData.country_id}
             />

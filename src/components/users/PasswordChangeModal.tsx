@@ -95,8 +95,8 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
       } else {
         throw new Error(result.error || 'Failed to change password');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to change password');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to change password');
     } finally {
       setLoading(false);
     }

@@ -46,9 +46,9 @@ export function MarkDefectiveModal({
       handleReset();
       onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error marking as defective:', err);
-      setError(err.message || 'Failed to mark item as defective. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to mark item as defective. Please try again.');
     } finally {
       setLoading(false);
     }

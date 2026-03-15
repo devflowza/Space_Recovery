@@ -208,7 +208,7 @@ export const SupportTicketsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {tickets.map((ticket: any) => (
+              {tickets.map((ticket: Record<string, unknown> & { id: string; ticket_number: string; subject: string }) => (
                 <tr
                   key={ticket.id}
                   onClick={() => navigate(`/platform-admin/tickets/${ticket.id}`)}

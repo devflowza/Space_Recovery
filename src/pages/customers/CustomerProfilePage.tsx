@@ -197,7 +197,7 @@ export const CustomerProfilePage: React.FC = () => {
   });
 
   const filteredCities = cities.filter(
-    (city: any) => !editFormData.country_id || city.country_id === editFormData.country_id
+    (city: { id: string; country_id: string; name: string }) => !editFormData.country_id || city.country_id === editFormData.country_id
   );
 
   React.useEffect(() => {
@@ -210,8 +210,8 @@ export const CustomerProfilePage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async (updatedData: typeof editFormData) => {
-      const selectedCountry = countries.find((c: any) => c.id === updatedData.country_id);
-      const selectedCity = cities.find((c: any) => c.id === updatedData.city_id);
+      const selectedCountry = countries.find((c: { id: string; name: string }) => c.id === updatedData.country_id);
+      const selectedCity = cities.find((c: { id: string; name: string }) => c.id === updatedData.city_id);
 
       let photoUrl = updatedData.profile_photo_url;
 
@@ -263,8 +263,8 @@ export const CustomerProfilePage: React.FC = () => {
   const handleOpenEditModal = () => {
     if (!customer) return;
 
-    const customerCountry = countries.find((c: any) => c.name === customer.country);
-    const customerCity = cities.find((c: any) => c.name === customer.city);
+    const customerCountry = countries.find((c: { id: string; name: string }) => c.name === customer.country);
+    const customerCity = cities.find((c: { id: string; name: string }) => c.name === customer.city);
 
     setEditFormData({
       customer_name: customer.customer_name,
@@ -1002,7 +1002,7 @@ export const CustomerProfilePage: React.FC = () => {
             label="Customer Group"
             value={editFormData.customer_group_id}
             onChange={(value) => setEditFormData({ ...editFormData, customer_group_id: value })}
-            options={customerGroups.map((g: any) => ({ id: g.id, name: g.name }))}
+            options={customerGroups.map((g: { id: string; name: string }) => ({ id: g.id, name: g.name }))}
             placeholder="Select Group"
           />
 
@@ -1013,14 +1013,14 @@ export const CustomerProfilePage: React.FC = () => {
               onChange={(value) => {
                 setEditFormData({ ...editFormData, country_id: value, city_id: '' });
               }}
-              options={countries.map((c: any) => ({ id: c.id, name: c.name }))}
+              options={countries.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))}
               placeholder="Select Country"
             />
             <SearchableSelect
               label="City"
               value={editFormData.city_id}
               onChange={(value) => setEditFormData({ ...editFormData, city_id: value })}
-              options={filteredCities.map((c: any) => ({ id: c.id, name: c.name }))}
+              options={filteredCities.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))}
               placeholder="Select City"
               disabled={!editFormData.country_id}
             />

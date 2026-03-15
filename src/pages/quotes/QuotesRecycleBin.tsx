@@ -46,7 +46,7 @@ export const QuotesRecycleBin: React.FC = () => {
       setShowRestoreModal(false);
       setSelectedQuote(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error?.message || 'Failed to restore quote');
     },
   });
@@ -59,17 +59,17 @@ export const QuotesRecycleBin: React.FC = () => {
       setShowDeleteModal(false);
       setSelectedQuote(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error?.message || 'Failed to permanently delete quote');
     },
   });
 
-  const handleRestore = (quote: any) => {
+  const handleRestore = (quote: { id: string }) => {
     setSelectedQuote(quote);
     setShowRestoreModal(true);
   };
 
-  const handlePermanentDelete = (quote: any) => {
+  const handlePermanentDelete = (quote: { id: string }) => {
     setSelectedQuote(quote);
     setShowDeleteModal(true);
   };
@@ -86,7 +86,7 @@ export const QuotesRecycleBin: React.FC = () => {
     {
       header: 'Quote Number',
       accessor: 'quote_number' as const,
-      cell: (quote: any) => (
+      cell: (quote: Record<string, unknown>) => (
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-slate-400" />
           <span className="font-medium text-slate-900">{quote.quote_number || 'N/A'}</span>
@@ -96,7 +96,7 @@ export const QuotesRecycleBin: React.FC = () => {
     {
       header: 'Customer',
       accessor: 'customer_name' as const,
-      cell: (quote: any) => (
+      cell: (quote: Record<string, unknown>) => (
         <span className="text-slate-700">
           {quote.customers?.customer_name || quote.companies?.company_name || 'N/A'}
         </span>
@@ -105,14 +105,14 @@ export const QuotesRecycleBin: React.FC = () => {
     {
       header: 'Case',
       accessor: 'case_no' as const,
-      cell: (quote: any) => (
+      cell: (quote: Record<string, unknown>) => (
         <span className="text-slate-700">{quote.cases?.case_no || 'N/A'}</span>
       ),
     },
     {
       header: 'Amount',
       accessor: 'total_amount' as const,
-      cell: (quote: any) => (
+      cell: (quote: Record<string, unknown>) => (
         <span className="font-medium text-slate-900">
           {quote.total_amount?.toFixed(2) || '0.00'}
         </span>
@@ -121,7 +121,7 @@ export const QuotesRecycleBin: React.FC = () => {
     {
       header: 'Deleted',
       accessor: 'deleted_at' as const,
-      cell: (quote: any) => {
+      cell: (quote: Record<string, unknown>) => {
         const daysLeft = getDaysUntilPurge(quote.deleted_at);
         return (
           <div className="space-y-1">
@@ -140,7 +140,7 @@ export const QuotesRecycleBin: React.FC = () => {
     {
       header: 'Deleted By',
       accessor: 'deleted_by_profile' as const,
-      cell: (quote: any) => (
+      cell: (quote: Record<string, unknown>) => (
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <User className="w-3 h-3" />
           {quote.deleted_by_profile?.full_name || 'Unknown'}
@@ -150,7 +150,7 @@ export const QuotesRecycleBin: React.FC = () => {
     {
       header: 'Actions',
       accessor: 'id' as const,
-      cell: (quote: any) => (
+      cell: (quote: Record<string, unknown>) => (
         <div className="flex gap-2">
           <Button
             size="sm"

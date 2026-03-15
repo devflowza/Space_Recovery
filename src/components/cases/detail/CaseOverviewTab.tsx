@@ -11,18 +11,18 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabaseClient';
 
 interface CaseOverviewTabProps {
-  caseData: any;
-  devices: any[];
+  caseData: Record<string, unknown>;
+  devices: Record<string, unknown>[];
   isSavingCaseInfo: boolean;
   isSavingDeviceInfo: boolean;
   isSavingClientInfo: boolean;
-  onSaveCaseInfo: (updates: Record<string, any>) => void;
-  onSaveDeviceInfo: (deviceId: string, updates: Record<string, any>) => void;
-  onSaveClientInfo: (customerUpdates: Record<string, any>, deviceUpdates: Record<string, any>) => void;
+  onSaveCaseInfo: (updates: Record<string, unknown>) => void;
+  onSaveDeviceInfo: (deviceId: string, updates: Record<string, unknown>) => void;
+  onSaveClientInfo: (customerUpdates: Record<string, unknown>, deviceUpdates: Record<string, unknown>) => void;
   onUpdateStatus: (newStatus: string) => void;
   onUpdatePriority: (newPriority: string) => void;
   onUpdateEngineer: (engineerId: string | null) => void;
-  profile: any;
+  profile: Record<string, unknown>;
 }
 
 export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
