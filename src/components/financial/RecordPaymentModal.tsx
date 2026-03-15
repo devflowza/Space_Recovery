@@ -131,7 +131,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
 
   useEffect(() => {
     if (preselectedInvoiceId && unpaidInvoices.length > 0) {
-      const invoice = unpaidInvoices.find((inv: any) => inv.id === preselectedInvoiceId);
+      const invoice = unpaidInvoices.find((inv) => inv.id === preselectedInvoiceId);
       if (invoice && !allocations.find(a => a.invoice_id === invoice.id)) {
         setAllocations([{
           invoice_id: invoice.id,
@@ -153,7 +153,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   };
 
   const handleAddInvoice = (invoiceId: string) => {
-    const invoice = unpaidInvoices.find((inv: any) => inv.id === invoiceId);
+    const invoice = unpaidInvoices.find((inv) => inv.id === invoiceId);
     if (!invoice || allocations.find(a => a.invoice_id === invoiceId)) return;
 
     const newAllocation: InvoiceAllocation = {
@@ -234,7 +234,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   };
 
   const availableInvoices = unpaidInvoices.filter(
-    (inv: any) => !allocations.find(a => a.invoice_id === inv.id)
+    (inv) => !allocations.find(a => a.invoice_id === inv.id)
   );
 
   const totalAllocated = allocations.reduce((sum, a) => sum + a.allocation_amount, 0);
@@ -335,7 +335,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select Method</option>
-                {paymentMethods.map((method: any) => (
+                {paymentMethods.map((method) => (
                   <option key={method.id} value={method.id}>
                     {method.name}
                   </option>
@@ -359,7 +359,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select Account</option>
-              {bankAccounts.map((account: any) => (
+              {bankAccounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.account_name} ({account.account_type})
                 </option>
@@ -396,7 +396,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 className="text-sm px-2 py-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">+ Add Invoice</option>
-                {availableInvoices.map((inv: any) => (
+                {availableInvoices.map((inv) => (
                   <option key={inv.id} value={inv.id}>
                     {inv.invoice_number} - {formatCurrency(inv.amount_due)} due
                   </option>

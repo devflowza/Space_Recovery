@@ -50,9 +50,9 @@ export default function InventoryDetailModal({
   onEdit,
 }: InventoryDetailModalProps) {
   const { formatCurrency } = useCurrency();
-  const [item, setItem] = useState<any>(null);
-  const [statusHistory, setStatusHistory] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [item, setItem] = useState<Record<string, unknown> | null>(null);
+  const [statusHistory, setStatusHistory] = useState<Record<string, unknown>[]>([]);
+  const [transactions, setTransactions] = useState<Record<string, unknown>[]>([]);
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
   const [activeAssignment, setActiveAssignment] = useState<AssignmentWithDetails | null>(null);
   const [loading, setLoading] = useState(true);

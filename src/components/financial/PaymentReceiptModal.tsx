@@ -5,10 +5,16 @@ import { PaymentReceiptDocument } from '../documents/PaymentReceiptDocument';
 import { useCurrency } from '../../hooks/useCurrency';
 import { usePDFDownload } from '../../hooks/usePDFDownload';
 
+interface PaymentData {
+  payment_number?: string;
+  customer?: { customer_name?: string } | null;
+  [key: string]: unknown;
+}
+
 interface PaymentReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
-  payment: any;
+  payment: PaymentData | null;
 }
 
 export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
@@ -35,7 +41,7 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
   const customerName = payment.customer?.customer_name || 'Customer';
 
   const handleDownloadPDF = async () => {
-    const fileName = `Payment_Receipt_${payment.payment_number || 'Draft'}_${customerName.replace(/\s+/g, '_')}.pdf`;
+    const fileName = `Payment_Receipt_${payment.payment_number || 'Draft'}_${(customerName as string).replace(/\s+/g, '_')}.pdf`;
     await downloadPDF({
       elementId: 'receipt-print-frame',
       filename: fileName,

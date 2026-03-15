@@ -58,7 +58,7 @@ export const TenantUsersTab: React.FC<TenantUsersTabProps> = ({ tenantId }) => {
           </tr>
         </thead>
         <tbody>
-          {users.map((user: any) => (
+          {users.map((user) => (
             <tr key={user.id}>
               <td className="font-medium">{user.full_name || 'N/A'}</td>
               <td className="text-slate-600">{user.email}</td>

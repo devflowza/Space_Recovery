@@ -12,7 +12,7 @@ interface ConvertToInvoiceModalProps {
     dueDate: string;
     notes?: string;
   }) => Promise<void>;
-  quote: any;
+  quote: Record<string, unknown> | null;
   isConverting?: boolean;
 }
 

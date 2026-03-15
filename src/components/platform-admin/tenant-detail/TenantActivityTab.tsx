@@ -78,7 +78,7 @@ export const TenantActivityTab: React.FC<TenantActivityTabProps> = ({ tenantId }
               <div className="space-y-6">
                 {filteredActivities.map((activity, index) => {
                   const Icon = activityTypeIcons[activity.activity_type] || activityTypeIcons.default;
-                  const activityData = activity.activity_data as any;
+                  const activityData = activity.activity_data as Record<string, unknown> | null;
 
                   return (
                     <div key={activity.id} className="relative flex gap-4">
@@ -92,13 +92,13 @@ export const TenantActivityTab: React.FC<TenantActivityTabProps> = ({ tenantId }
                               {activityTypeLabels[activity.activity_type] || activity.activity_type}
                             </p>
                             {activityData?.description && (
-                              <p className="text-sm text-slate-600 mt-1">{activityData.description}</p>
+                              <p className="text-sm text-slate-600 mt-1">{activityData.description as string}</p>
                             )}
                             {activityData?.note && (
-                              <p className="text-sm text-slate-600 mt-1 italic">"{activityData.note}"</p>
+                              <p className="text-sm text-slate-600 mt-1 italic">"{activityData.note as string}"</p>
                             )}
                             {activityData?.admin_name && (
-                              <p className="text-xs text-slate-500 mt-1">by {activityData.admin_name}</p>
+                              <p className="text-xs text-slate-500 mt-1">by {activityData.admin_name as string}</p>
                             )}
                           </div>
                           <span className="text-xs text-slate-500 whitespace-nowrap">

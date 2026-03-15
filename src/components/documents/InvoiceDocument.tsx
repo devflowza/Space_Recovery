@@ -53,7 +53,7 @@ interface CurrencyFormat {
 }
 
 interface InvoiceDocumentProps {
-  invoice: any;
+  invoice: Record<string, unknown>;
   companySettings: CompanySettings | null;
   currencyFormat: CurrencyFormat;
   t: (key: string, fallback: string) => string;
@@ -285,7 +285,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white">
-                {invoice.invoice_line_items?.map((item: any, index: number) => (
+                {(invoice.invoice_line_items as Array<{ description: string; quantity: number; unit_price: number; line_total?: number }> | undefined)?.map((item, index: number) => (
                   <tr key={index} className="hover:bg-slate-50">
                     <td className="px-2 py-1.5 text-xs text-slate-900">
                       {item.description}

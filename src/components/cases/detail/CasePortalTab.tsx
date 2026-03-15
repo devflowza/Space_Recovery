@@ -27,7 +27,7 @@ interface PortalSettings {
 
 interface CasePortalTabProps {
   caseId: string;
-  portalSettings: any;
+  portalSettings: Partial<PortalSettings> | null;
 }
 
 const defaultSettings = (caseId: string): PortalSettings => ({
@@ -73,8 +73,8 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
       toast.success('Portal settings saved');
       queryClient.invalidateQueries({ queryKey: ['case_portal_visibility', caseId] });
     },
-    onError: (err: any) => {
-      toast.error(`Failed to save portal settings: ${err.message}`);
+    onError: (err: unknown) => {
+      toast.error(`Failed to save portal settings: ${err instanceof Error ? err.message : 'Unknown error'}`);
     },
   });
 

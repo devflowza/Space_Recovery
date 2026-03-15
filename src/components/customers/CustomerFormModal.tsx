@@ -10,7 +10,7 @@ import { useAuth } from '../../contexts/AuthContext';
 interface CustomerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (customer: any) => void;
+  onSuccess?: (customer: Record<string, unknown>) => void;
 }
 
 interface CustomerGroup {

@@ -57,7 +57,7 @@ export const LowStockWidget: React.FC = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-800 truncate">{item.name}</p>
                 {item.stock_categories && (
-                  <p className="text-xs text-slate-400 truncate">{(item.stock_categories as any).name}</p>
+                  <p className="text-xs text-slate-400 truncate">{(item.stock_categories as { name: string }).name}</p>
                 )}
               </div>
               <div className="flex-shrink-0 ml-3 text-right">

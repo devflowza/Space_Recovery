@@ -11,7 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 interface ResourceCloneDriveModalProps {
   isOpen: boolean;
   onClose: () => void;
-  editingDrive?: any;
+  editingDrive?: Record<string, unknown>;
   onSuccess?: () => void;
 }
 

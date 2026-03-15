@@ -28,12 +28,12 @@ interface InvoiceLineItem {
 interface InvoiceFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (invoiceData: any, items: InvoiceLineItem[]) => Promise<void>;
+  onSave: (invoiceData: Record<string, unknown>, items: InvoiceLineItem[]) => Promise<void>;
   caseId?: string;
   customerId?: string | null;
   companyId?: string | null;
-  initialData?: any;
-  quotes?: any[];
+  initialData?: Record<string, unknown>;
+  quotes?: Record<string, unknown>[];
   clientReference?: string;
 }
 
@@ -248,7 +248,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
             }
             // Auto-populate title if not editing and no title is set
             if (!initialData && !invoiceData.title) {
-              const serviceTypeName = (data as any).service_types?.name;
+              const serviceTypeName = (data as Record<string, unknown> & { service_types?: { name?: string } }).service_types?.name;
               const autoTitle = serviceTypeName || data.title || 'Invoice';
               setInvoiceData(prev => ({ ...prev, title: autoTitle }));
             }
@@ -292,7 +292,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     }
 
     if (quoteData.quote_items && quoteData.quote_items.length > 0) {
-      const items = quoteData.quote_items.map((item: any) => ({
+      const items = quoteData.quote_items.map((item: { description: string; quantity: number; unit_price: number }) => ({
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
@@ -319,7 +319,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     }
   };
 
-  const updateLineItem = (index: number, field: keyof InvoiceLineItem, value: any) => {
+  const updateLineItem = (index: number, field: keyof InvoiceLineItem, value: string | number) => {
     const updated = [...lineItems];
     updated[index] = { ...updated[index], [field]: value };
     setLineItems(updated);
@@ -440,7 +440,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
 
       await onSave(invoicePayload, lineItems);
       onClose();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error saving invoice:', error);
       toast.error('Invoice couldn\'t be saved. Check your connection and try again.');
     } finally {

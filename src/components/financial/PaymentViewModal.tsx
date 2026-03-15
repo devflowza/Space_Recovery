@@ -21,10 +21,40 @@ import {
   Printer,
 } from 'lucide-react';
 
+interface PaymentAllocation {
+  invoice_id?: string;
+  amount: number;
+  invoice?: {
+    invoice_number?: string;
+    case?: {
+      case_no?: string;
+      title?: string;
+    };
+  };
+}
+
+interface PaymentViewData {
+  payment_number?: string;
+  payment_date?: string;
+  amount?: number;
+  status?: string;
+  reference_number?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+  customer?: { customer_name?: string; email?: string } | null;
+  case?: { case_no?: string; title?: string } | null;
+  payment_method?: { name?: string } | null;
+  bank_account?: { account_name?: string } | null;
+  created_by_profile?: { full_name?: string } | null;
+  allocations?: PaymentAllocation[];
+  [key: string]: unknown;
+}
+
 interface PaymentViewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  payment: any;
+  payment: PaymentViewData | null;
   onPrintReceipt?: () => void;
 }
 
@@ -209,7 +239,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {payment.allocations.map((allocation: any, index: number) => (
+                  {payment.allocations!.map((allocation, index: number) => (
                     <tr key={index} className="hover:bg-slate-50">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -240,8 +270,8 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
                     <td className="px-4 py-3 text-right">
                       <span className="text-base font-bold text-green-600">
                         {formatCurrency(
-                          payment.allocations.reduce(
-                            (sum: number, a: any) => sum + (a.amount || 0),
+                          payment.allocations!.reduce(
+                            (sum: number, a) => sum + (a.amount || 0),
                             0
                           )
                         )}

@@ -28,11 +28,11 @@ interface QuoteLineItem {
 interface QuoteFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (quoteData: any, items: QuoteLineItem[]) => Promise<void>;
+  onSave: (quoteData: Record<string, unknown>, items: QuoteLineItem[]) => Promise<void>;
   caseId?: string;
   customerId?: string | null;
   companyId?: string | null;
-  initialData?: any;
+  initialData?: Record<string, unknown>;
   clientReference?: string;
 }
 
@@ -279,7 +279,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
     }
   };
 
-  const updateLineItem = (index: number, field: keyof QuoteLineItem, value: any) => {
+  const updateLineItem = (index: number, field: keyof QuoteLineItem, value: string | number) => {
     const updated = [...lineItems];
     updated[index] = { ...updated[index], [field]: value };
     setLineItems(updated);

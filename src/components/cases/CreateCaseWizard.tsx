@@ -54,7 +54,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdCase, setCreatedCase] = useState<{ id: string; case_no: string } | null>(null);
   const [isBulkDrivesModalOpen, setIsBulkDrivesModalOpen] = useState(false);
-  const [bulkServerDrives, setBulkServerDrives] = useState<any[]>([]);
+  const [bulkServerDrives, setBulkServerDrives] = useState<{ id: string; brand_id: string; serial_no: string; model: string; capacity_id: string; isValid: boolean }[]>([]);
 
   const [formData, setFormData] = useState({
     customer_id: '',
@@ -316,12 +316,12 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     }
   }, [deviceRoles]);
 
-  const handleCustomerCreated = (newCustomer: any) => {
+  const handleCustomerCreated = (newCustomer: { id: string }) => {
     queryClient.invalidateQueries({ queryKey: ['customers_for_cases'] });
     setFormData({ ...formData, customer_id: newCustomer.id });
   };
 
-  const handleBulkDrivesSave = (bulkDrives: any[]) => {
+  const handleBulkDrivesSave = (bulkDrives: { id: string; brand_id: string; serial_no: string; model: string; capacity_id: string; isValid: boolean }[]) => {
     const primaryDevice = devices[0];
     const patientRole = deviceRoles.find(r => r.name.toLowerCase() === 'patient');
     const defaultCondition = deviceConditions.length > 0 ? deviceConditions[0].id.toString() : '';
@@ -508,7 +508,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     }
   };
 
-  const updateDevice = (id: string, field: keyof Device, value: any) => {
+  const updateDevice = (id: string, field: keyof Device, value: string | number | boolean | string[] | null) => {
     setDevices(devices.map(d => (d.id === id ? { ...d, [field]: value } : d)));
   };
 

@@ -48,14 +48,14 @@ interface ReportSection {
 }
 
 interface ReportDocumentProps {
-  report: any;
+  report: Record<string, unknown>;
   sections: ReportSection[];
-  caseData?: any;
-  customerData?: any;
+  caseData?: Record<string, unknown>;
+  customerData?: Record<string, unknown>;
   companySettings: CompanySettings | null;
-  deviceData?: any;
-  diagnosticsData?: any;
-  chainOfCustodyEvents?: any[];
+  deviceData?: Record<string, unknown>;
+  diagnosticsData?: Record<string, unknown>;
+  chainOfCustodyEvents?: Record<string, unknown>[];
   elementId?: string;
   t: (key: string, fallback: string) => string;
 }
@@ -479,7 +479,7 @@ export const ReportDocument: React.FC<ReportDocumentProps> = ({
             const renderSection = (section: ReportSection, className: string = 'mb-3') => {
               const translationKey = translationKeyMap[section.section_key];
               const sectionTitle = translationKey
-                ? t(translationKey as any, section.section_title)
+                ? t(translationKey, section.section_title)
                 : section.section_title;
 
               return (

@@ -15,7 +15,7 @@ import {
 import { formatDate } from '../../lib/format';
 
 interface ResourceCloneDriveCardProps {
-  drive: any;
+  drive: Record<string, unknown>;
   onEdit: () => void;
   onViewHistory?: () => void;
 }

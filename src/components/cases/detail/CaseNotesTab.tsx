@@ -5,9 +5,19 @@ import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { formatDate } from '../../../lib/format';
 
+interface CaseNote {
+  id: string;
+  note_text: string;
+  private?: boolean;
+  created_at: string;
+  author: {
+    full_name: string;
+  };
+}
+
 interface CaseNotesTabProps {
   caseId: string;
-  notes: any[];
+  notes: CaseNote[];
   newNote: string;
   isAdding?: boolean;
   onNoteChange: (v: string) => void;

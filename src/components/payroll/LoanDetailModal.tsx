@@ -57,8 +57,8 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
       showToast('Loan cancelled successfully', 'success');
       onClose();
     },
-    onError: (error: any) => {
-      showToast(error.message || 'Failed to cancel loan', 'error');
+    onError: (error: unknown) => {
+      showToast(error instanceof Error ? error.message : 'Failed to cancel loan', 'error');
     },
   });
 
@@ -69,8 +69,8 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ['loan', loanId] });
       showToast('Loan approved successfully', 'success');
     },
-    onError: (error: any) => {
-      showToast(error.message || 'Failed to approve loan', 'error');
+    onError: (error: unknown) => {
+      showToast(error instanceof Error ? error.message : 'Failed to approve loan', 'error');
     },
   });
 

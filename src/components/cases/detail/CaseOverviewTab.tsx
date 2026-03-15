@@ -40,9 +40,9 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   profile,
 }) => {
   const [editingSection, setEditingSection] = useState<string | null>(null);
-  const [editedCaseData, setEditedCaseData] = useState<any>({});
-  const [editedDeviceData, setEditedDeviceData] = useState<any>({});
-  const [editedClientData, setEditedClientData] = useState<any>({});
+  const [editedCaseData, setEditedCaseData] = useState<Record<string, unknown>>({});
+  const [editedDeviceData, setEditedDeviceData] = useState<Record<string, unknown>>({});
+  const [editedClientData, setEditedClientData] = useState<Record<string, unknown>>({});
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingPriority, setIsEditingPriority] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -186,8 +186,8 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
     setEditingSection(null);
   };
 
-  const handleDeviceFieldChange = (field: string, value: any) => {
-    setEditedDeviceData((prev: any) => ({ ...prev, [field]: value }));
+  const handleDeviceFieldChange = (field: string, value: unknown) => {
+    setEditedDeviceData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -223,7 +223,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                 <input
                   type="text"
                   value={editedCaseData.client_reference ?? caseData.client_reference ?? ''}
-                  onChange={(e) => setEditedCaseData((prev: any) => ({ ...prev, client_reference: e.target.value }))}
+                  onChange={(e) => setEditedCaseData((prev) => ({ ...prev, client_reference: e.target.value }))}
                   placeholder="Enter client reference..."
                   className="text-sm px-2 py-1 border border-blue-300 rounded bg-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]"
                 />
@@ -241,7 +241,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                   <SearchableSelect
                     label=""
                     value={editedCaseData.service_type_id ?? caseData.service_type_id ?? ''}
-                    onChange={(value) => setEditedCaseData((prev: any) => ({ ...prev, service_type_id: value }))}
+                    onChange={(value) => setEditedCaseData((prev) => ({ ...prev, service_type_id: value }))}
                     options={serviceTypes.map(st => ({ id: st.id, name: st.name }))}
                     placeholder="Select service..."
                     clearable={false}
@@ -581,7 +581,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={editedDeviceData.device_password ?? devices[0]?.device_password ?? ''}
-                    onChange={(e) => setEditedDeviceData((prev: any) => ({ ...prev, device_password: e.target.value }))}
+                    onChange={(e) => setEditedDeviceData((prev) => ({ ...prev, device_password: e.target.value }))}
                     placeholder="Enter password..."
                     className="font-mono text-xs bg-white px-2 py-1 rounded border border-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-500 w-24"
                   />

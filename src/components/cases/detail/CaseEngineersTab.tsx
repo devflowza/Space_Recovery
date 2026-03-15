@@ -10,9 +10,19 @@ import { supabase } from '../../../lib/supabaseClient';
 import { useToast } from '../../../hooks/useToast';
 import { formatDate } from '../../../lib/format';
 
+interface CaseEngineerAssignment {
+  id: string;
+  role_text?: string | null;
+  created_at: string;
+  engineer: {
+    full_name: string;
+    role: string;
+  };
+}
+
 interface CaseEngineersTabProps {
   caseId: string;
-  caseEngineers: any[];
+  caseEngineers: CaseEngineerAssignment[];
 }
 
 export const CaseEngineersTab: React.FC<CaseEngineersTabProps> = ({ caseId, caseEngineers }) => {
@@ -39,8 +49,8 @@ export const CaseEngineersTab: React.FC<CaseEngineersTabProps> = ({ caseId, case
       setSelectedEngineerId(null);
       setRoleText('');
     },
-    onError: (err: any) => {
-      toast.error(`Failed to assign engineer: ${err.message}`);
+    onError: (err: unknown) => {
+      toast.error(`Failed to assign engineer: ${err instanceof Error ? err.message : 'Unknown error'}`);
     },
   });
 
@@ -53,8 +63,8 @@ export const CaseEngineersTab: React.FC<CaseEngineersTabProps> = ({ caseId, case
       toast.success('Engineer removed from case');
       queryClient.invalidateQueries({ queryKey: ['case_engineers', caseId] });
     },
-    onError: (err: any) => {
-      toast.error(`Failed to remove engineer: ${err.message}`);
+    onError: (err: unknown) => {
+      toast.error(`Failed to remove engineer: ${err instanceof Error ? err.message : 'Unknown error'}`);
     },
   });
 
