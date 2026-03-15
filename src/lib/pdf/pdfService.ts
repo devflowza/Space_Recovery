@@ -1,11 +1,14 @@
 import { initializePDFFonts, getFontFamily, areFontsLoaded, createPdfWithFonts } from './fonts';
-import { fetchReceiptData, fetchQuoteData, fetchInvoiceData } from './dataFetcher';
+import { fetchReceiptData, fetchQuoteData, fetchInvoiceData, fetchPaymentReceiptData, fetchPayslipData, fetchChainOfCustodyData } from './dataFetcher';
 import { buildOfficeReceiptDocument } from './documents/OfficeReceiptDocument';
 import { buildCustomerCopyDocument } from './documents/CustomerCopyDocument';
 import { buildCheckoutFormDocument } from './documents/CheckoutFormDocument';
 import { buildCaseLabelDocument } from './documents/CaseLabelDocument';
 import { buildQuoteDocument } from './documents/QuoteDocument';
 import { buildInvoiceDocument } from './documents/InvoiceDocument';
+import { buildPaymentReceiptDocument } from './documents/PaymentReceiptDocument';
+import { buildPayslipDocument } from './documents/PayslipDocument';
+import { buildChainOfCustodyDocument } from './documents/ChainOfCustodyDocument';
 import { loadImageAsBase64 } from './utils';
 import { logPDFGeneration } from './loggingService';
 import type { TranslationContext, DocumentType } from './types';
@@ -551,6 +554,148 @@ export async function generateInvoice(invoiceId: string, download: boolean = tru
   }
 }
 
+export async function generatePaymentReceipt(paymentId: string, download: boolean = true): Promise<PDFGenerationResult> {
+  const startTime = Date.now();
+  let languageCode: LanguageCode | null = null;
+  let mode: 'english_only' | 'bilingual' = 'english_only';
+  let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
+
+  try {
+    const data = await withTimeout(fetchPaymentReceiptData(paymentId), 10000, 'Failed to fetch payment data');
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    mode = languageSettings?.mode || 'english_only';
+
+    const fontsLoaded = await withTimeout(initializePDFFonts(languageCode), 15000, 'Font initialization timeout');
+    if (!fontsLoaded && languageCode) {
+      languageCode = null;
+      mode = 'english_only';
+      fontSource = 'fallback';
+    }
+
+    const ctx = createTranslationContext(mode, languageCode);
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? withTimeout(loadImageAsBase64(data.companySettings.branding.logo_url), 5000, 'Logo loading timeout')
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_general_url
+        ? withTimeout(loadImageAsBase64(data.companySettings.branding.qr_code_general_url), 5000, 'QR code loading timeout')
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
+    const docDefinition = buildPaymentReceiptDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const filename = `Payment_Receipt_${data.paymentData.receipt_number || paymentId}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    if (download) {
+      createPdfWithFonts(docDefinition).download(filename);
+    } else {
+      createPdfWithFonts(docDefinition).open();
+    }
+
+    const duration = Date.now() - startTime;
+    await logPDFGeneration({ caseId: data.paymentData.cases?.id || '', documentType: 'payment_receipt', languageCode, mode, success: true, durationMs: duration, fontSource });
+    return { success: true };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate payment receipt';
+    const errorCode = error instanceof Error && error.message.includes('timeout') ? 'TIMEOUT' : 'GENERATION_FAILED';
+    await logPDFGeneration({ caseId: '', documentType: 'payment_receipt', languageCode, mode, success: false, durationMs: duration, errorMessage, errorCode, fontSource });
+    return { success: false, error: errorMessage, errorCode };
+  }
+}
+
+export async function generatePayslip(recordId: string, download: boolean = true): Promise<PDFGenerationResult> {
+  const startTime = Date.now();
+  let languageCode: LanguageCode | null = null;
+  let mode: 'english_only' | 'bilingual' = 'english_only';
+  let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
+
+  try {
+    const data = await withTimeout(fetchPayslipData(recordId), 10000, 'Failed to fetch payslip data');
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    mode = languageSettings?.mode || 'english_only';
+
+    const fontsLoaded = await withTimeout(initializePDFFonts(languageCode), 15000, 'Font initialization timeout');
+    if (!fontsLoaded && languageCode) {
+      languageCode = null;
+      mode = 'english_only';
+      fontSource = 'fallback';
+    }
+
+    const ctx = createTranslationContext(mode, languageCode);
+    const docDefinition = buildPayslipDocument(data, ctx);
+    const filename = `Payslip_${data.payslipData.employee.employee_number}_${data.payslipData.payroll_period.period_name}.pdf`;
+
+    if (download) {
+      createPdfWithFonts(docDefinition).download(filename);
+    } else {
+      createPdfWithFonts(docDefinition).open();
+    }
+
+    const duration = Date.now() - startTime;
+    await logPDFGeneration({ caseId: '', documentType: 'payslip', languageCode, mode, success: true, durationMs: duration, fontSource });
+    return { success: true };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate payslip';
+    const errorCode = error instanceof Error && error.message.includes('timeout') ? 'TIMEOUT' : 'GENERATION_FAILED';
+    await logPDFGeneration({ caseId: '', documentType: 'payslip', languageCode, mode, success: false, durationMs: duration, errorMessage, errorCode, fontSource });
+    return { success: false, error: errorMessage, errorCode };
+  }
+}
+
+export async function generateChainOfCustody(
+  caseId: string,
+  caseNumber: string,
+  options?: { includeMetadata?: boolean; includeHashes?: boolean; includeSignatures?: boolean },
+  download: boolean = true
+): Promise<PDFGenerationResult> {
+  const startTime = Date.now();
+  let languageCode: LanguageCode | null = null;
+  let mode: 'english_only' | 'bilingual' = 'english_only';
+  let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
+
+  try {
+    const data = await withTimeout(fetchChainOfCustodyData(caseId, caseNumber, options), 10000, 'Failed to fetch chain of custody data');
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    mode = languageSettings?.mode || 'english_only';
+
+    const fontsLoaded = await withTimeout(initializePDFFonts(languageCode), 15000, 'Font initialization timeout');
+    if (!fontsLoaded && languageCode) {
+      languageCode = null;
+      mode = 'english_only';
+      fontSource = 'fallback';
+    }
+
+    const ctx = createTranslationContext(mode, languageCode);
+    const docDefinition = buildChainOfCustodyDocument(data, ctx);
+    const filename = `Chain_of_Custody_${caseNumber}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    if (download) {
+      createPdfWithFonts(docDefinition).download(filename);
+    } else {
+      createPdfWithFonts(docDefinition).open();
+    }
+
+    const duration = Date.now() - startTime;
+    await logPDFGeneration({ caseId, documentType: 'chain_of_custody', languageCode, mode, success: true, durationMs: duration, fontSource });
+    return { success: true };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate chain of custody';
+    const errorCode = error instanceof Error && error.message.includes('timeout') ? 'TIMEOUT' : 'GENERATION_FAILED';
+    await logPDFGeneration({ caseId, documentType: 'chain_of_custody', languageCode, mode, success: false, durationMs: duration, errorMessage, errorCode, fontSource });
+    return { success: false, error: errorMessage, errorCode };
+  }
+}
+
 export async function generatePDF(options: PDFGenerationOptions): Promise<PDFGenerationResult> {
   const { caseId, documentType, download = true } = options;
 
@@ -905,6 +1050,85 @@ export async function generateInvoiceAsBlob(invoiceId: string): Promise<PDFBlobR
       success: false,
       error: error instanceof Error ? error.message : 'Failed to generate invoice',
     };
+  }
+}
+
+export async function generatePaymentReceiptAsBlob(paymentId: string): Promise<PDFBlobResult> {
+  try {
+    const data = await fetchPaymentReceiptData(paymentId);
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    const languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    await initializePDFFonts(languageCode);
+    const ctx = createTranslationContext(languageSettings?.mode || 'english_only', languageCode);
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url ? loadImageAsBase64(data.companySettings.branding.logo_url) : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_general_url ? loadImageAsBase64(data.companySettings.branding.qr_code_general_url) : Promise.resolve(null),
+    ]);
+    const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
+
+    const docDefinition = buildPaymentReceiptDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const filename = `Payment_Receipt_${data.paymentData.receipt_number || paymentId}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    return new Promise((resolve) => {
+      createPdfWithFonts(docDefinition).getBlob((blob: Blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        resolve({ success: true, blobUrl, blob, filename });
+      });
+    });
+  } catch (error) {
+    console.error('Error generating payment receipt blob:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to generate payment receipt' };
+  }
+}
+
+export async function generatePayslipAsBlob(recordId: string): Promise<PDFBlobResult> {
+  try {
+    const data = await fetchPayslipData(recordId);
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    const languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    await initializePDFFonts(languageCode);
+    const ctx = createTranslationContext(languageSettings?.mode || 'english_only', languageCode);
+
+    const docDefinition = buildPayslipDocument(data, ctx);
+    const filename = `Payslip_${data.payslipData.employee.employee_number}_${data.payslipData.payroll_period.period_name}.pdf`;
+
+    return new Promise((resolve) => {
+      createPdfWithFonts(docDefinition).getBlob((blob: Blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        resolve({ success: true, blobUrl, blob, filename });
+      });
+    });
+  } catch (error) {
+    console.error('Error generating payslip blob:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to generate payslip' };
+  }
+}
+
+export async function generateChainOfCustodyAsBlob(
+  caseId: string,
+  caseNumber: string,
+  options?: { includeMetadata?: boolean; includeHashes?: boolean; includeSignatures?: boolean }
+): Promise<PDFBlobResult> {
+  try {
+    const data = await fetchChainOfCustodyData(caseId, caseNumber, options);
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    const languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    await initializePDFFonts(languageCode);
+    const ctx = createTranslationContext(languageSettings?.mode || 'english_only', languageCode);
+
+    const docDefinition = buildChainOfCustodyDocument(data, ctx);
+    const filename = `Chain_of_Custody_${caseNumber}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    return new Promise((resolve) => {
+      createPdfWithFonts(docDefinition).getBlob((blob: Blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        resolve({ success: true, blobUrl, blob, filename });
+      });
+    });
+  } catch (error) {
+    console.error('Error generating chain of custody blob:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to generate chain of custody' };
   }
 }
 

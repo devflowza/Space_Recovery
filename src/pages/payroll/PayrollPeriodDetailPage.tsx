@@ -11,8 +11,7 @@ import { useToast } from '../../hooks/useToast';
 import { useCurrency } from '../../hooks/useCurrency';
 import { format } from 'date-fns';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { pdf } from '@react-pdf/renderer';
-import { PayslipDocument } from '../../components/documents/PayslipDocument';
+import { generatePayslip } from '../../lib/pdf/pdfService';
 
 export default function PayrollPeriodDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -81,22 +80,12 @@ export default function PayrollPeriodDetailPage() {
 
   const handleDownloadPayslip = async (recordId: string) => {
     try {
-      const record = await payrollService.getPayrollRecord(recordId);
-      if (!record) {
-        showToast('Record not found', 'error');
-        return;
+      const result = await generatePayslip(recordId);
+      if (result.success) {
+        showToast('Payslip downloaded successfully', 'success');
+      } else {
+        showToast(result.error || 'Failed to download payslip', 'error');
       }
-
-      const blob = await pdf(<PayslipDocument record={record} />).toBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Payslip_${record.employee?.employee_number}_${period?.period_name?.replace(/\s/g, '_')}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('Payslip downloaded successfully', 'success');
     } catch (error: unknown) {
       showToast(error instanceof Error ? error.message : 'Failed to download payslip', 'error');
     }

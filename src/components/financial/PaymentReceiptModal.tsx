@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { PDFDownloadButton } from '../shared/PDFDownloadButton';
 import { PaymentReceiptDocument } from '../documents/PaymentReceiptDocument';
 import { useCurrency } from '../../hooks/useCurrency';
 import { usePDFDownload } from '../../hooks/usePDFDownload';
+import { generatePaymentReceipt } from '../../lib/pdf/pdfService';
 
 interface PaymentData {
+  id?: string;
   payment_number?: string;
   customer?: { customer_name?: string } | null;
   [key: string]: unknown;
@@ -28,33 +30,40 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
     isLoadingSettings,
     settingsReady,
     settingsError,
-    isGenerating,
     translationsReady,
     translationsError,
     isLoadingTranslations,
-    downloadPDF,
     t,
   } = usePDFDownload();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   if (!payment) return null;
 
-  const customerName = payment.customer?.customer_name || 'Customer';
-
   const handleDownloadPDF = async () => {
-    const fileName = `Payment_Receipt_${payment.payment_number || 'Draft'}_${(customerName as string).replace(/\s+/g, '_')}.pdf`;
-    await downloadPDF({
-      elementId: 'receipt-print-frame',
-      filename: fileName,
-    });
+    if (!payment.id) return;
+    setIsGenerating(true);
+    try {
+      const result = await generatePaymentReceipt(payment.id);
+      if (!result.success) {
+        alert(result.error || 'Failed to generate PDF');
+      }
+    } catch (error) {
+      console.error('Error generating payment receipt PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const downloadButton = (
     <PDFDownloadButton
       onClick={handleDownloadPDF}
       isGenerating={isGenerating}
-      disabled={isLoadingSettings || isLoadingTranslations || !translationsReady || !settingsReady || translationsError || settingsError}
+      disabled={!payment.id || isLoadingSettings || isLoadingTranslations || !translationsReady || !settingsReady || translationsError || settingsError}
       tooltip={
-        !translationsReady || !settingsReady
+        !payment.id
+          ? 'Payment ID not available'
+          : !translationsReady || !settingsReady
           ? 'Waiting for resources to load...'
           : translationsError || settingsError
           ? 'Cannot generate PDF due to loading errors'

@@ -46,15 +46,14 @@ export const QuoteDetailPage: React.FC = () => {
     settingsReady,
     settingsError,
     resourceError,
-    isGenerating,
     translationsReady,
     translationsError,
     translationsErrorMessage,
     isLoadingTranslations,
-    downloadPDF,
     t,
   } = usePDFDownload();
   const { profile } = useAuth();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -111,6 +110,7 @@ export const QuoteDetailPage: React.FC = () => {
   const handleDownloadPDF = async () => {
     if (!quote) return;
 
+    setIsGenerating(true);
     try {
       const { generateQuotePDF } = await import('../../lib/quotesService');
       const result = await generateQuotePDF(quote.id, true);
@@ -121,6 +121,8 @@ export const QuoteDetailPage: React.FC = () => {
     } catch (error) {
       console.error('Error generating quote PDF:', error);
       toast.error('Failed to generate PDF');
+    } finally {
+      setIsGenerating(false);
     }
   };
 

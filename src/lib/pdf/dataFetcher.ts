@@ -8,7 +8,13 @@ import type {
   QuoteData,
   QuoteDocumentData,
   InvoiceData,
-  InvoiceDocumentData
+  InvoiceDocumentData,
+  PaymentReceiptData,
+  PaymentReceiptDocumentData,
+  PayslipData,
+  PayslipDocumentData,
+  ChainOfCustodyDocumentData,
+  ChainOfCustodyEntryData,
 } from './types';
 
 export async function fetchReceiptData(caseId: string): Promise<ReceiptData> {
@@ -417,4 +423,197 @@ async function fetchInvoiceDetails(invoiceId: string): Promise<InvoiceData> {
       decimal_places: 3,
     },
   } as InvoiceData;
+}
+
+export async function fetchPaymentReceiptData(paymentId: string): Promise<PaymentReceiptDocumentData> {
+  const [paymentResult, settingsResult] = await Promise.all([
+    fetchPaymentDetails(paymentId),
+    fetchCompanySettings(),
+  ]);
+
+  return {
+    paymentData: paymentResult,
+    companySettings: settingsResult,
+  };
+}
+
+async function fetchPaymentDetails(paymentId: string): Promise<PaymentReceiptData> {
+  const { data: paymentData, error: paymentError } = await supabase
+    .from('payments')
+    .select(`
+      *,
+      invoices (
+        id,
+        invoice_number,
+        total_amount,
+        invoice_type
+      ),
+      customers:customers_enhanced (
+        id,
+        customer_name,
+        email,
+        mobile_number,
+        phone_number
+      ),
+      companies (
+        id,
+        company_name
+      ),
+      created_by_profile:profiles!payments_created_by_fkey (
+        id,
+        full_name
+      ),
+      bank_accounts (
+        id,
+        account_name,
+        bank_name,
+        account_number,
+        iban,
+        swift_code
+      ),
+      accounting_locales (
+        currency_symbol,
+        currency_position,
+        decimal_places
+      )
+    `)
+    .eq('id', paymentId)
+    .maybeSingle();
+
+  if (paymentError) {
+    console.error('Error fetching payment data:', paymentError);
+    throw new Error('Failed to load payment data');
+  }
+
+  if (!paymentData) {
+    throw new Error('Payment not found');
+  }
+
+  let caseInfo = null;
+  if (paymentData.invoices?.id) {
+    const { data: invoiceData } = await supabase
+      .from('invoices')
+      .select('case_id, cases(id, case_no)')
+      .eq('id', paymentData.invoices.id)
+      .maybeSingle();
+    if (invoiceData?.cases) {
+      caseInfo = invoiceData.cases;
+    }
+  }
+
+  const { data: defaultLocale } = await supabase
+    .from('accounting_locales')
+    .select('currency_symbol, currency_position, decimal_places')
+    .eq('is_default', true)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  return {
+    ...paymentData,
+    invoice: paymentData.invoices,
+    customer: paymentData.customers,
+    cases: caseInfo,
+    accounting_locales: paymentData.accounting_locales || defaultLocale || {
+      currency_symbol: 'OMR',
+      currency_position: 'after',
+      decimal_places: 3,
+    },
+  } as PaymentReceiptData;
+}
+
+export async function fetchPayslipData(recordId: string): Promise<PayslipDocumentData> {
+  const [payslipResult, settingsResult] = await Promise.all([
+    fetchPayslipDetails(recordId),
+    fetchCompanySettings(),
+  ]);
+
+  return {
+    payslipData: payslipResult,
+    companySettings: settingsResult,
+  };
+}
+
+async function fetchPayslipDetails(recordId: string): Promise<PayslipData> {
+  const { data: recordData, error: recordError } = await supabase
+    .from('payroll_records')
+    .select(`
+      *,
+      employee:employees!payroll_records_employee_id_fkey (
+        first_name,
+        last_name,
+        employee_number
+      ),
+      payroll_period:payroll_records_period_id_fkey (
+        period_name,
+        start_date,
+        end_date
+      )
+    `)
+    .eq('id', recordId)
+    .maybeSingle();
+
+  if (recordError) {
+    console.error('Error fetching payroll record:', recordError);
+    throw new Error('Failed to load payroll record');
+  }
+
+  if (!recordData) {
+    throw new Error('Payroll record not found');
+  }
+
+  const { data: items } = await supabase
+    .from('payroll_record_items')
+    .select('component_code, component_name, component_type, amount, calculation_basis')
+    .eq('payroll_record_id', recordId)
+    .order('sort_order', { ascending: true });
+
+  const { data: defaultLocale } = await supabase
+    .from('accounting_locales')
+    .select('currency_symbol, currency_position, decimal_places')
+    .eq('is_default', true)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  return {
+    ...recordData,
+    items: items || [],
+    accounting_locales: defaultLocale || {
+      currency_symbol: 'OMR',
+      currency_position: 'after',
+      decimal_places: 3,
+    },
+  } as PayslipData;
+}
+
+export async function fetchChainOfCustodyData(
+  caseId: string,
+  caseNumber: string,
+  options?: ChainOfCustodyDocumentData['options']
+): Promise<ChainOfCustodyDocumentData> {
+  const [entriesResult, settingsResult] = await Promise.all([
+    fetchChainOfCustodyEntries(caseId),
+    fetchCompanySettings(),
+  ]);
+
+  return {
+    caseNumber,
+    entries: entriesResult,
+    options,
+    companySettings: settingsResult,
+  };
+}
+
+async function fetchChainOfCustodyEntries(caseId: string): Promise<ChainOfCustodyEntryData[]> {
+  const { data, error } = await supabase
+    .from('chain_of_custody')
+    .select('entry_number, action_category, action_type, action_description, actor_name, actor_role, occurred_at, evidence_reference, hash_algorithm, hash_value, digital_signature')
+    .eq('case_id', caseId)
+    .order('entry_number', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching chain of custody entries:', error);
+    return [];
+  }
+
+  return (data || []) as ChainOfCustodyEntryData[];
 }
