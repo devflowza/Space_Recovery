@@ -14,6 +14,7 @@ import {
   Settings,
   ClipboardList,
 } from 'lucide-react';
+import { EmptyState } from '../../components/shared/EmptyState';
 import { stockKeys } from '../../lib/queryKeys';
 import {
   getStockItems,

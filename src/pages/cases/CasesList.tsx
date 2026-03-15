@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Plus, Search, Filter, Briefcase, AlertCircle, CheckCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { EmptyState } from '../../components/shared/EmptyState';
 import { formatDate } from '../../lib/format';
 import { CreateCaseWizard } from '../../components/cases/CreateCaseWizard';
 import { useCasesRealtime } from '../../hooks/useCasesRealtime';
@@ -506,13 +507,17 @@ export const CasesList: React.FC = () => {
           <p className="text-slate-500 mt-4">Loading cases...</p>
         </div>
       ) : cases.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <Briefcase className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 text-lg">
-            {searchTerm || filterStatus !== 'all' || filterPriority !== 'all'
-              ? 'No cases found matching your criteria.'
-              : 'No cases yet. Create your first case to get started.'}
-          </p>
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200">
+          <EmptyState
+            icon={Briefcase}
+            title="No cases found"
+            description={
+              searchTerm || filterStatus !== 'all' || filterPriority !== 'all'
+                ? 'No cases found matching your criteria.'
+                : 'No cases yet. Create your first case to get started.'
+            }
+            action={{ label: 'Create Case', onClick: handleCreateCase }}
+          />
         </div>
       ) : (
         <>

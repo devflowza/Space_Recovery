@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, Truck, UserCheck, Clock, Users, Mail, Phone, MapPin, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { EmptyState } from '../../components/shared/EmptyState';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import SupplierFormModal from '../../components/suppliers/SupplierFormModal';
@@ -360,13 +361,17 @@ export default function SuppliersListPage() {
           <p className="text-slate-500 mt-4">Loading suppliers...</p>
         </div>
       ) : filteredSuppliers.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <Truck className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 text-lg">
-            {searchTerm || statusFilter !== 'all' || approvalFilter !== 'all' || categoryFilter !== 'all'
-              ? 'No suppliers found matching your criteria.'
-              : 'No suppliers yet. Add your first supplier to get started.'}
-          </p>
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200">
+          <EmptyState
+            icon={Truck}
+            title="No suppliers found"
+            description={
+              searchTerm || statusFilter !== 'all' || approvalFilter !== 'all' || categoryFilter !== 'all'
+                ? 'No suppliers found matching your criteria.'
+                : 'No suppliers yet. Add your first supplier to get started.'
+            }
+            action={{ label: 'Add Supplier', onClick: handleOpenModal }}
+          />
         </div>
       ) : (
         <>

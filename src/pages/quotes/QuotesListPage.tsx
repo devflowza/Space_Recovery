@@ -9,6 +9,7 @@ import { FinancialStatsCard } from '../../components/financial/FinancialStatsCar
 import { QuoteFormModal } from '../../components/cases/QuoteFormModal';
 import { useCurrency } from '../../hooks/useCurrency';
 import { supabase } from '../../lib/supabaseClient';
+import { EmptyState } from '../../components/shared/EmptyState';
 import {
   FileText,
   Plus,
@@ -311,13 +312,17 @@ export const QuotesListPage: React.FC = () => {
       </div>
 
       {quotes.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 text-lg">
-            {searchTerm || statusFilter !== 'all'
-              ? 'No quotes found matching your criteria.'
-              : 'No quotes yet. Create your first quote to get started.'}
-          </p>
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200">
+          <EmptyState
+            icon={FileText}
+            title="No quotes found"
+            description={
+              searchTerm || statusFilter !== 'all'
+                ? 'No quotes found matching your criteria.'
+                : 'No quotes yet. Create your first quote to get started.'
+            }
+            action={{ label: 'Create Quote', onClick: () => setShowQuoteModal(true) }}
+          />
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">

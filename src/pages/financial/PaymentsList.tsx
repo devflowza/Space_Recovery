@@ -11,6 +11,7 @@ import { PaymentViewModal } from '../../components/financial/PaymentViewModal';
 import { PaymentReceiptModal } from '../../components/financial/PaymentReceiptModal';
 import { useCurrency } from '../../hooks/useCurrency';
 import { createPayment, getPaymentStats, voidPayment, fetchPaymentById } from '../../lib/paymentsService';
+import { EmptyState } from '../../components/shared/EmptyState';
 import {
   Plus,
   Search,
@@ -444,20 +445,17 @@ export const PaymentsList: React.FC = () => {
       )}
 
       {payments.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <CreditCard className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 text-lg mb-4">
-            {searchTerm || statusFilter !== 'all' || dateFilter !== 'all'
-              ? 'No payments found matching your criteria.'
-              : 'No payments yet. Record your first payment to get started.'}
-          </p>
-          <Button
-            onClick={() => setShowRecordPaymentModal(true)}
-            style={{ backgroundColor: '#10b981' }}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Record Payment
-          </Button>
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200">
+          <EmptyState
+            icon={CreditCard}
+            title="No payments found"
+            description={
+              searchTerm || statusFilter !== 'all' || dateFilter !== 'all'
+                ? 'No payments found matching your criteria.'
+                : 'No payments yet. Record your first payment to get started.'
+            }
+            action={{ label: 'Record Payment', onClick: () => setShowRecordPaymentModal(true) }}
+          />
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
