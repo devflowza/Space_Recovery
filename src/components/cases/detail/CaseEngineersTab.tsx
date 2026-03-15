@@ -6,9 +6,9 @@ import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { Modal } from '../../ui/Modal';
 import { EngineerSelector } from '../EngineerSelector';
-import { supabase } from '../../../lib/supabaseClient';
-import { useToast } from '../../../hooks/useToast';
-import { formatDate } from '../../../lib/format';
+import { supabase } from '@/lib/supabaseClient';
+import { useToast } from '@/hooks/useToast';
+import { formatDate } from '@/lib/format';
 
 interface CaseEngineerAssignment {
   id: string;

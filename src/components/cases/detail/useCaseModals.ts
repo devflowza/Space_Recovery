@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { type ReportType, type ReportStatus } from '../../../lib/reportTypes';
-import type { DocumentType } from '../../../lib/pdf/types';
+import { type ReportType, type ReportStatus } from '@/lib/reportTypes';
+import type { DocumentType } from '@/lib/pdf/types';
 
 export function useCaseModals() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);

@@ -3,7 +3,7 @@ import { FileText, MessageSquarePlus } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
-import { formatDate } from '../../../lib/format';
+import { formatDate } from '@/lib/format';
 
 interface CaseNote {
   id: string;

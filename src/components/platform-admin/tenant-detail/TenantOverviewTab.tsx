@@ -3,10 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Mail, Phone, Building2, MapPin, CreditCard, Calendar, TrendingUp, Activity, Users as UsersIcon, Briefcase, HardDrive } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
-import { getHealthMetricsHistory } from '../../../lib/platformAdminService';
-import { platformAdminKeys } from '../../../lib/queryKeys';
+import { getHealthMetricsHistory } from '@/lib/platformAdminService';
+import { platformAdminKeys } from '@/lib/queryKeys';
 import { formatDistanceToNow } from 'date-fns';
-import type { Database } from '../../../types/database.types';
+import type { Database } from '@/types/database.types';
 
 type Tenant = Database['public']['Tables']['tenants']['Row'];
 type TenantSubscription = Database['public']['Tables']['tenant_subscriptions']['Row'];

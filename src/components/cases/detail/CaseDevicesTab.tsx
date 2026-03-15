@@ -5,8 +5,8 @@ import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { DeviceRoleBadge } from '../../ui/DeviceRoleBadge';
-import { getDeviceIconComponent } from '../../../lib/deviceIconMapper';
-import { formatDate, formatDateTime } from '../../../lib/format';
+import { getDeviceIconComponent } from '@/lib/deviceIconMapper';
+import { formatDate, formatDateTime } from '@/lib/format';
 
 interface CaseDevicesTabProps {
   caseData: Record<string, unknown>;

@@ -4,8 +4,8 @@ import { User } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Table } from '../../ui/Table';
-import { getTenantUsers } from '../../../lib/platformAdminService';
-import { platformAdminKeys } from '../../../lib/queryKeys';
+import { getTenantUsers } from '@/lib/platformAdminService';
+import { platformAdminKeys } from '@/lib/queryKeys';
 import { formatDistanceToNow } from 'date-fns';
 
 interface TenantUsersTabProps {
