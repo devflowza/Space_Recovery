@@ -15,6 +15,8 @@
 | Dead console statements | **81** (console.log/debug/warn/info across 14 files) |
 | `.select('*')` calls | **193** across 79 files (bandwidth waste) |
 | `any` type usages | **~195** across ~74 files |
+| `if (error) throw error` repetitions | **307** across service files |
+| Duplicated utility functions | **5 functions** copy-pasted across 2-5 services each |
 | Deep relative imports | **54** (`../../../`) across 20 files |
 | Production bundle | **6.8 MB** total (5.3 MB JS, 81.8 KB CSS, 174 chunks) |
 | Code splitting | **Excellent** — all ~125 routes lazy-loaded |
@@ -168,22 +170,48 @@ export async function softDeleteItem(id: string) {
 }
 ```
 
-**Estimate**: ~30-50% of each service file is boilerplate CRUD. A generic service factory could reduce this, but:
+**Estimate**: ~60-70% of each service file is boilerplate CRUD. A generic service factory could reduce this, but:
 - Each service has domain-specific queries, joins, and business logic mixed with CRUD
 - The current pattern is explicit and easy to debug
 - Refactoring risk is high relative to benefit
 - **Recommendation**: Report only. Consider for new services, not retrofitting.
 
-### 3B. Modal State Management
+**`if (error) throw error` pattern**: Appears **307 times** across service files. Consistent but verbose — a wrapper function could reduce this to a single-line call while preserving behavior.
 
-**6 files** use explicit modal state patterns:
-```typescript
-const [isOpen, setIsOpen] = useState(false);
-```
+### 3B. Duplicated Utility Functions Across Services
 
-This is standard React — not excessive duplication. The pattern is simple enough that abstracting it would add complexity without meaningful benefit.
+Several utility functions are copy-pasted across multiple service files rather than shared:
 
-### 3C. Deep Relative Imports
+| Function | Duplicated In | Lines Per Copy | Potential Shared Module |
+|---|---|---|---|
+| `logAuditTrail()` | invoiceService, quotesService, paymentsService, expensesService, vatService | ~11-15 | `auditTrailService.ts` |
+| `sanitizeUuidFields()` | invoiceService, quotesService | ~11 | `dataValidation.ts` |
+| `createFinancialTransaction()` | paymentsService, expensesService | ~11 | `financialTransactionService.ts` |
+| `getNextXxxNumber()` wrappers | invoiceService, quotesService, paymentsService, expensesService | ~5-8 | `numberSequenceService.ts` |
+| Status update patterns | 10+ services | ~5-8 | Generic `updateStatus()` helper |
+| Stats calculation (filter/count/sum) | quotesService, paymentsService, expensesService, invoiceService | ~30-50 | `statsCalculationService.ts` |
+
+**Estimated lines eliminable by extracting shared utilities**: 200-400 lines.
+
+### 3C. Component Pattern Duplication
+
+**78 modal/form components** share significant structural similarity:
+
+- **InvoiceFormModal (1,021 lines) vs QuoteFormModal (888 lines)**: ~60% identical code — same LineItem interface, bank account selection, terms template fetching, line item editing, currency formatting
+- **DeviceFormModal (1,062 lines)**: Large, contains form logic repeated in other device components
+- **Modal open/close/submit/toast patterns**: Repeated across all 78 modals
+
+A base `FormModal` component could reduce boilerplate across the modal components, but the effort-to-risk ratio is high for an ERP with domain-specific forms.
+
+### 3D. Toast & Date Formatting Patterns
+
+| Pattern | Total Occurrences | Files | Status |
+|---|---|---|---|
+| Toast notifications (toast.success/error/etc.) | 209 | 56 files | `useMutationToast` hook exists but not universally adopted |
+| Date formatting (date-fns calls) | 404 | 134 files | `src/lib/format.ts` utility exists, most files use it but 32 import date-fns directly |
+| Soft delete pattern (`.update({ deleted_at })`) | ~30+ | ~30 files | Consistent — no issue |
+
+### 3E. Deep Relative Imports
 
 **54 occurrences of `../../../`** relative imports across 20 files:
 
@@ -479,18 +507,22 @@ No duplicate type definitions found across files. Types are well-organized.
 
 | # | Action | Impact | Files | Effort |
 |---|---|---|---|---|
-| 5 | **Replace 54 deep `../../../` imports with `@/` alias** | Cleaner, more maintainable imports | 20 files | Low |
-| 6 | **Replace `.select('*')` with specific columns** in top-10 highest-traffic services | Reduced Supabase bandwidth, faster queries | ~15 files | Medium |
-| 7 | **Standardize lazy-load export pattern** in `App.tsx` | Consistency (34 routes use `m.default` vs 91 using `m.NamedExport`) | 1 file | Low |
+| 5 | **Extract `logAuditTrail()` to shared `auditTrailService.ts`** | Eliminate duplication across 5 services (~60 lines saved) | 5 service files | Low |
+| 6 | **Extract `sanitizeUuidFields()` to shared utility** | Eliminate duplication (~22 lines saved) | 2 service files | Low |
+| 7 | **Extract `getNextNumber` wrappers to shared utility** | Consolidate 4+ near-identical wrappers | 4+ service files | Low |
+| 8 | **Replace 54 deep `../../../` imports with `@/` alias** | Cleaner, more maintainable imports | 20 files | Low |
+| 9 | **Replace `.select('*')` with specific columns** in top-10 highest-traffic services | Reduced Supabase bandwidth, faster queries | ~15 files | Medium |
+| 10 | **Standardize lazy-load export pattern** in `App.tsx` | Consistency (34 routes use `m.default` vs 91 using `m.NamedExport`) | 1 file | Low |
 
 ### Tier 3: Refactoring Opportunities — Higher Effort, Needs Review
 
 | # | Action | Impact | Effort | Risk |
 |---|---|---|---|---|
-| 8 | **Decompose `stockService.ts`** (2,069 lines) | Split into stockItemsService, stockMovementsService, stockAdjustmentsService, stockSalesService | High | Medium |
-| 9 | **Decompose `GeneralSettings.tsx`** (1,427 lines) | Extract settings sections into separate tab components | High | Medium |
-| 10 | **Reduce `any` usage** (~195 occurrences) | Better type safety, IDE support | Medium | Low |
-| 11 | **Generic CRUD service factory** for 48 service files | DRY, less boilerplate for new services | Very High | High |
+| 11 | **Decompose `stockService.ts`** (2,069 lines) | Split into stockItemsService, stockMovementsService, stockAdjustmentsService, stockSalesService | High | Medium |
+| 12 | **Decompose `GeneralSettings.tsx`** (1,427 lines) | Extract settings sections into separate tab components | High | Medium |
+| 13 | **Reduce `any` usage** (~195 occurrences) | Better type safety, IDE support | Medium | Low |
+| 14 | **Create shared base `FormModal` component** | Reduce boilerplate across 78 modal components (~60% shared patterns) | High | Medium |
+| 15 | **Generic CRUD service factory** for 48 service files | DRY, less boilerplate for new services | Very High | High |
 
 ---
 
