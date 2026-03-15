@@ -89,12 +89,16 @@ export interface QuoteWithDetails extends Quote {
   quote_items?: QuoteItem[];
 }
 
+const DEFAULT_PAGE_SIZE = 100;
+
 export const fetchQuotes = async (filters?: {
   status?: string;
   search?: string;
   customerId?: string;
   companyId?: string;
   caseId?: string;
+  page?: number;
+  pageSize?: number;
 }) => {
   try {
     let query = supabase
@@ -145,6 +149,10 @@ export const fetchQuotes = async (filters?: {
     if (filters?.caseId) {
       query = query.eq('case_id', filters.caseId);
     }
+
+    const pageSize = filters?.pageSize || DEFAULT_PAGE_SIZE;
+    const page = filters?.page || 0;
+    query = query.range(page * pageSize, (page + 1) * pageSize - 1);
 
     const { data, error } = await query;
 

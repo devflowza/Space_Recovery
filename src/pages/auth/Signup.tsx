@@ -19,8 +19,8 @@ export const Signup: React.FC = () => {
     try {
       await signUp(email, password, fullName);
       navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign up');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign up');
     } finally {
       setLoading(false);
     }

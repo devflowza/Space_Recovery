@@ -55,9 +55,9 @@ export default function PurchaseOrdersListPage() {
 
       setOrders(data || []);
       calculateStats(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading purchase orders:', error);
-      showToast(error.message || 'Failed to load purchase orders', 'error');
+      showToast(error instanceof Error ? error.message : 'Failed to load purchase orders', 'error');
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ export default function PurchaseOrdersListPage() {
     }
   };
 
-  const calculateStats = (orderData: any[]) => {
+  const calculateStats = (orderData: Array<Record<string, unknown> & { status?: { name?: string }; total_amount?: number }>) => {
     const pending = orderData.filter(o => o.status?.name === 'Draft' || o.status?.name === 'Ordered');
     const approved = orderData.filter(o => o.status?.name === 'Approved' || o.status?.name === 'Received');
     const totalValue = orderData.reduce((sum, o) => sum + (o.total_amount || 0), 0);
@@ -111,12 +111,12 @@ export default function PurchaseOrdersListPage() {
     setFilteredOrders(filtered);
   };
 
-  const handleEdit = (order: any) => {
+  const handleEdit = (order: Record<string, unknown>) => {
     setSelectedOrder(order);
     setShowAddModal(true);
   };
 
-  const handleDelete = async (order: any) => {
+  const handleDelete = async (order: { id: string; po_number?: string }) => {
     if (!confirm(`Are you sure you want to delete purchase order "${order.po_number}"?`)) {
       return;
     }
@@ -131,9 +131,9 @@ export default function PurchaseOrdersListPage() {
 
       showToast('Purchase order deleted successfully', 'success');
       loadOrders();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting purchase order:', error);
-      showToast(error.message || 'Failed to delete purchase order', 'error');
+      showToast(error instanceof Error ? error.message : 'Failed to delete purchase order', 'error');
     }
   };
 
@@ -150,7 +150,7 @@ export default function PurchaseOrdersListPage() {
     {
       key: 'po_number',
       label: 'PO Number',
-      render: (order: any) => (
+      render: (order: Record<string, unknown>) => (
         <button
           onClick={() => navigate(`/purchase-orders/${order.id}`)}
           className="text-blue-600 hover:text-blue-800 font-medium"
@@ -162,7 +162,7 @@ export default function PurchaseOrdersListPage() {
     {
       key: 'supplier',
       label: 'Supplier',
-      render: (order: any) => (
+      render: (order: Record<string, unknown>) => (
         <div>
           <div className="font-medium">{order.supplier?.name || '-'}</div>
           <div className="text-sm text-gray-500">{order.supplier?.supplier_number}</div>
@@ -172,24 +172,24 @@ export default function PurchaseOrdersListPage() {
     {
       key: 'order_date',
       label: 'Order Date',
-      render: (order: any) => format(new Date(order.order_date), 'MMM dd, yyyy'),
+      render: (order: Record<string, unknown>) => format(new Date(order.order_date), 'MMM dd, yyyy'),
     },
     {
       key: 'expected_delivery',
       label: 'Expected Delivery',
-      render: (order: any) => order.expected_delivery ? format(new Date(order.expected_delivery), 'MMM dd, yyyy') : '-',
+      render: (order: Record<string, unknown>) => order.expected_delivery ? format(new Date(order.expected_delivery), 'MMM dd, yyyy') : '-',
     },
     {
       key: 'total_amount',
       label: 'Total Amount',
-      render: (order: any) => (
+      render: (order: Record<string, unknown>) => (
         <span className="font-semibold">${order.total_amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</span>
       ),
     },
     {
       key: 'status',
       label: 'Status',
-      render: (order: any) => (
+      render: (order: Record<string, unknown>) => (
         <Badge style={{ backgroundColor: order.status?.color || '#3b82f6', color: 'white' }}>
           {order.status?.name || 'Unknown'}
         </Badge>
@@ -198,7 +198,7 @@ export default function PurchaseOrdersListPage() {
     {
       key: 'created_at',
       label: 'Created',
-      render: (order: any) => format(new Date(order.created_at), 'MMM dd, yyyy'),
+      render: (order: Record<string, unknown>) => format(new Date(order.created_at), 'MMM dd, yyyy'),
     },
   ];
 

@@ -44,7 +44,7 @@ export default function PayrollPeriodDetailPage() {
       showToast('Payroll period approved successfully', 'success');
       setShowApproveDialog(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showToast(error.message || 'Failed to approve payroll period', 'error');
     },
   });
@@ -56,7 +56,7 @@ export default function PayrollPeriodDetailPage() {
       showToast('Payroll period marked as paid', 'success');
       setShowPayDialog(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showToast(error.message || 'Failed to mark payroll as paid', 'error');
     },
   });
@@ -74,8 +74,8 @@ export default function PayrollPeriodDetailPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       showToast('Bank file generated successfully', 'success');
-    } catch (error: any) {
-      showToast(error.message || 'Failed to generate bank file', 'error');
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : 'Failed to generate bank file', 'error');
     }
   };
 
@@ -97,8 +97,8 @@ export default function PayrollPeriodDetailPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       showToast('Payslip downloaded successfully', 'success');
-    } catch (error: any) {
-      showToast(error.message || 'Failed to download payslip', 'error');
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : 'Failed to download payslip', 'error');
     }
   };
 
@@ -110,8 +110,8 @@ export default function PayrollPeriodDetailPage() {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       showToast('All payslips downloaded successfully', 'success');
-    } catch (error: any) {
-      showToast(error.message || 'Failed to download payslips', 'error');
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : 'Failed to download payslips', 'error');
     }
   };
 

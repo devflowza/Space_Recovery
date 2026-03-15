@@ -13,7 +13,7 @@ interface SystemLog {
   action: string;
   message: string;
   user_id: string | null;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
   ip_address: string | null;
   user_agent: string | null;
   created_at: string;

@@ -140,7 +140,7 @@ export const PaymentsList: React.FC = () => {
       paymentData,
       allocations,
     }: {
-      paymentData: any;
+      paymentData: Omit<import('../../lib/paymentsService').Payment, 'id' | 'payment_number' | 'created_at' | 'updated_at'>;
       allocations: Array<{ invoice_id: string; amount: number }>;
     }) => {
       return createPayment(paymentData, allocations);
@@ -170,7 +170,7 @@ export const PaymentsList: React.FC = () => {
     }
   };
 
-  const handleViewPayment = async (payment: any) => {
+  const handleViewPayment = async (payment: { id: string }) => {
     try {
       const fullData = await fetchPaymentById(payment.id);
       setFullPaymentData(fullData);
@@ -181,7 +181,7 @@ export const PaymentsList: React.FC = () => {
     }
   };
 
-  const handlePrintReceipt = async (payment: any) => {
+  const handlePrintReceipt = async (payment: { id: string }) => {
     try {
       const fullData = await fetchPaymentById(payment.id);
       setFullPaymentData(fullData);
@@ -372,7 +372,7 @@ export const PaymentsList: React.FC = () => {
                   className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">All Methods</option>
-                  {paymentMethods.map((method: any) => (
+                  {paymentMethods.map((method: { id: string; name: string }) => (
                     <option key={method.id} value={method.id}>
                       {method.name}
                     </option>
@@ -477,7 +477,7 @@ export const PaymentsList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {payments.map((payment: any) => (
+                {payments.map((payment: { id: string; payment_number: string; payment_date: string; amount: number; status: string; customer?: { customer_name?: string }; payment_method?: { name?: string }; bank_account?: { account_name?: string }; reference_number?: string }) => (
                   <tr
                     key={payment.id}
                     className="hover:bg-slate-50 transition-colors"

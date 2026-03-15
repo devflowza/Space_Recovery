@@ -291,7 +291,7 @@ export const InvoicesList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {invoices.map((invoice: any) => (
+                {invoices.map((invoice: Record<string, unknown> & { id: string; invoice_number: string; invoice_date: string; customer?: { customer_name?: string }; total_amount?: number; amount_paid?: number; amount_due?: number; status: string; invoice_type?: string }) => (
                   <tr
                     key={invoice.id}
                     onClick={() => navigate(`/invoices/${invoice.id}`)}
@@ -386,7 +386,7 @@ export const InvoicesList: React.FC = () => {
             setShowInvoiceModal(false);
             setEditingInvoice(null);
           }}
-          onSave={async (invoiceData: any, items: any[]) => {
+          onSave={async (invoiceData: Partial<import('../../lib/invoiceService').Invoice>, items: import('../../lib/invoiceService').InvoiceItem[]) => {
             await createInvoice({
               title: invoiceData.title,
               case_id: invoiceData.case_id,

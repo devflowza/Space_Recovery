@@ -82,7 +82,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
     onSubmit(formData);
   };
 
-  const handleInputChange = (field: keyof AccountingLocaleFormData, value: any) => {
+  const handleInputChange = (field: keyof AccountingLocaleFormData, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

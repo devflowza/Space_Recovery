@@ -60,9 +60,9 @@ export default function SupplierProfilePage() {
 
       if (error) throw error;
       setSupplier(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading supplier:', error);
-      showToast(error.message || 'Failed to load supplier', 'error');
+      showToast(error instanceof Error ? error.message : 'Failed to load supplier', 'error');
       navigate('/suppliers');
     } finally {
       setLoading(false);
@@ -164,7 +164,7 @@ export default function SupplierProfilePage() {
     return null;
   }
 
-  const tabs: { id: TabType; label: string; icon: any; count?: number }[] = [
+  const tabs: { id: TabType; label: string; icon: React.ComponentType<{ className?: string }>; count?: number }[] = [
     { id: 'overview', label: 'Overview', icon: Building2 },
     { id: 'contacts', label: 'Contacts', icon: User, count: contacts.length },
     { id: 'communications', label: 'Communications', icon: MessageSquare, count: communications.length },
@@ -259,7 +259,7 @@ export default function SupplierProfilePage() {
   );
 }
 
-function OverviewTab({ supplier }: { supplier: any }) {
+function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name: string; category?: { name?: string }; payment_terms?: { name?: string }; supplier_number?: string; contact_person?: string; email?: string; phone?: string; address?: string; city?: string; country?: string; currency?: string; tax_number?: string; notes?: string; is_active?: boolean; is_approved?: boolean; website?: string } }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
@@ -454,7 +454,7 @@ function OverviewTab({ supplier }: { supplier: any }) {
   );
 }
 
-function ContactsTab({ contacts, supplierId, onUpdate }: { contacts: any[]; supplierId: string; onUpdate: () => void }) {
+function ContactsTab({ contacts, supplierId, onUpdate }: { contacts: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
   return (
     <Card>
       <div className="p-6">
@@ -510,7 +510,7 @@ function ContactsTab({ contacts, supplierId, onUpdate }: { contacts: any[]; supp
   );
 }
 
-function CommunicationsTab({ communications, supplierId, onUpdate }: { communications: any[]; supplierId: string; onUpdate: () => void }) {
+function CommunicationsTab({ communications, supplierId, onUpdate }: { communications: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
   return (
     <Card>
       <div className="p-6">
@@ -550,7 +550,7 @@ function CommunicationsTab({ communications, supplierId, onUpdate }: { communica
   );
 }
 
-function DocumentsTab({ documents, supplierId, onUpdate }: { documents: any[]; supplierId: string; onUpdate: () => void }) {
+function DocumentsTab({ documents, supplierId, onUpdate }: { documents: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
   return (
     <Card>
       <div className="p-6">
@@ -588,7 +588,7 @@ function DocumentsTab({ documents, supplierId, onUpdate }: { documents: any[]; s
   );
 }
 
-function PerformanceTab({ supplier, performance }: { supplier: any; performance: any[] }) {
+function PerformanceTab({ supplier, performance }: { supplier: Record<string, unknown>; performance: Record<string, unknown>[] }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -678,14 +678,14 @@ function PerformanceTab({ supplier, performance }: { supplier: any; performance:
   );
 }
 
-function OrdersTab({ orders, supplierId }: { orders: any[]; supplierId: string }) {
+function OrdersTab({ orders, supplierId }: { orders: Record<string, unknown>[]; supplierId: string }) {
   const navigate = useNavigate();
 
   const columns = [
     {
       key: 'po_number',
       label: 'PO Number',
-      render: (order: any) => (
+      render: (order: Record<string, unknown>) => (
         <button
           onClick={() => navigate(`/purchase-orders/${order.id}`)}
           className="text-blue-600 hover:text-blue-800 font-medium"
@@ -697,22 +697,22 @@ function OrdersTab({ orders, supplierId }: { orders: any[]; supplierId: string }
     {
       key: 'order_date',
       label: 'Order Date',
-      render: (order: any) => format(new Date(order.order_date), 'MMM dd, yyyy'),
+      render: (order: Record<string, unknown>) => format(new Date(order.order_date), 'MMM dd, yyyy'),
     },
     {
       key: 'expected_delivery',
       label: 'Expected Delivery',
-      render: (order: any) => order.expected_delivery ? format(new Date(order.expected_delivery), 'MMM dd, yyyy') : '-',
+      render: (order: Record<string, unknown>) => order.expected_delivery ? format(new Date(order.expected_delivery), 'MMM dd, yyyy') : '-',
     },
     {
       key: 'total_amount',
       label: 'Amount',
-      render: (order: any) => `$${order.total_amount?.toLocaleString() || '0.00'}`,
+      render: (order: Record<string, unknown>) => `$${order.total_amount?.toLocaleString() || '0.00'}`,
     },
     {
       key: 'status',
       label: 'Status',
-      render: (order: any) => (
+      render: (order: Record<string, unknown>) => (
         <Badge style={{ backgroundColor: order.status?.color || '#3b82f6' }}>
           {order.status?.name || 'Unknown'}
         </Badge>
@@ -742,7 +742,7 @@ function OrdersTab({ orders, supplierId }: { orders: any[]; supplierId: string }
   );
 }
 
-function AuditTab({ auditTrail }: { auditTrail: any[] }) {
+function AuditTab({ auditTrail }: { auditTrail: Record<string, unknown>[] }) {
   return (
     <Card>
       <div className="p-6">
