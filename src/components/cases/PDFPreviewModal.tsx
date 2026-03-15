@@ -138,7 +138,6 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1);
-    console.log(`[PDF Preview] Retry attempt ${retryCount + 1}`);
     loadPDF();
   };
 

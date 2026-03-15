@@ -166,7 +166,7 @@ export async function seedDeviceMediaData(): Promise<SeedResult> {
       const seedData = DEVICE_MEDIA_SEED_DATA[table];
 
       if (!seedData || seedData.length === 0) {
-        console.warn(`No seed data found for table: ${table}`);
+        console.error(`No seed data found for table: ${table}`);
         details.push({
           tableName: table,
           tableLabel: tableLabels[table],
@@ -397,7 +397,7 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
       const seedData = CLIENT_FINANCIAL_SEED_DATA[table];
 
       if (!seedData || seedData.length === 0) {
-        console.warn(`No seed data found for table: ${table}`);
+        console.error(`No seed data found for table: ${table}`);
         details.push({
           tableName: table,
           tableLabel: tableLabels[table],

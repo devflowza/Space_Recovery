@@ -5,8 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
-import { getCaseExpenses, getCasePayments, type CaseExpense, type CasePayment, type CaseFinancialSummary } from '../../../lib/caseFinanceService';
-import { formatDate } from '../../../lib/format';
+import { getCaseExpenses, getCasePayments, type CaseExpense, type CasePayment, type CaseFinancialSummary } from '@/lib/caseFinanceService';
+import { formatDate } from '@/lib/format';
 import { useNavigate } from 'react-router-dom';
 
 interface CaseFinancesTabProps {

@@ -1,32 +1,9 @@
 import { supabase } from './supabaseClient';
+import { logAuditTrail } from './auditTrailService';
+import { sanitizeUuidFields as sanitizeUuids } from './dataValidation';
 
-const logAuditTrail = async (actionType: string, tableName: string, recordId: string, oldValues: object, newValues: object) => {
-  try {
-    await supabase.rpc('log_audit_trail', {
-      p_action_type: actionType,
-      p_table_name: tableName,
-      p_record_id: recordId,
-      p_old_values: oldValues,
-      p_new_values: newValues,
-    });
-  } catch (e) {
-    console.error('Audit trail logging failed:', e);
-    throw new Error(`Audit trail logging failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
-  }
-};
-
-const sanitizeUuidFields = (data: any): any => {
-  const sanitized = { ...data };
-  const uuidFields = ['customer_id', 'company_id', 'case_id', 'created_by', 'approved_by', 'converted_to_case_id', 'template_id', 'accounting_locale_id', 'bank_account_id'];
-
-  uuidFields.forEach(field => {
-    if (field in sanitized && (sanitized[field] === '' || sanitized[field] === undefined)) {
-      sanitized[field] = null;
-    }
-  });
-
-  return sanitized;
-};
+const QUOTE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'approved_by', 'converted_to_case_id', 'template_id', 'accounting_locale_id', 'bank_account_id'];
+const sanitizeUuidFields = (data: any) => sanitizeUuids(data, QUOTE_UUID_FIELDS);
 
 export interface QuoteItem {
   id?: string;

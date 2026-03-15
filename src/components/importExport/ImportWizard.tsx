@@ -228,7 +228,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
                 record[targetField] = typeof value === 'string' ? JSON.parse(value) : value;
               } catch (error) {
                 // If parsing fails, skip this field
-                console.warn(`Failed to parse usable_donor_parts for row:`, value);
+                console.error(`Failed to parse usable_donor_parts for row:`, value);
               }
             } else if (value && value.toString().trim()) {
               // Only add non-empty string values

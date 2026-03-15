@@ -30,7 +30,7 @@ export const ImportExport: React.FC = () => {
       const { data, error } = await getJobs();
       if (error) {
         // Table might not exist yet - return empty array
-        console.warn('Import/Export tables not found. Please apply migrations.');
+        console.error('Import/Export tables not found. Please apply migrations.');
         return [];
       }
       return data?.slice(0, 10) || [];

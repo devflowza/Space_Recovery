@@ -58,7 +58,7 @@ const PortalLogin = lazy(() => import('./pages/portal/PortalLogin').then(m => ({
 const PortalDashboard = lazy(() => import('./pages/portal/PortalDashboard').then(m => ({ default: m.PortalDashboard })));
 const PortalCases = lazy(() => import('./pages/portal/PortalCases').then(m => ({ default: m.PortalCases })));
 const PortalQuotes = lazy(() => import('./pages/portal/PortalQuotes').then(m => ({ default: m.PortalQuotes })));
-const PortalReports = lazy(() => import('./pages/portal/PortalReports').then(m => ({ default: m.default })));
+const PortalReports = lazy(() => import('./pages/portal/PortalReports'));
 const PortalCommunications = lazy(() => import('./pages/portal/PortalCommunications').then(m => ({ default: m.PortalCommunications })));
 const PortalSettings = lazy(() => import('./pages/portal/PortalSettings').then(m => ({ default: m.PortalSettings })));
 const PortalPurchasesPage = lazy(() => import('./pages/portal/PortalPurchasesPage').then(m => ({ default: m.PortalPurchasesPage })));
@@ -81,24 +81,23 @@ const DatabaseManagement = lazy(() => import('./pages/admin/DatabaseManagement')
 const RolePermissions = lazy(() => import('./pages/admin/RolePermissions').then(m => ({ default: m.RolePermissions })));
 const TenantManagement = lazy(() => import('./pages/admin/TenantManagement').then(m => ({ default: m.TenantManagement })));
 const CloneDrivesList = lazy(() => import('./pages/resources/CloneDrivesList').then(m => ({ default: m.CloneDrivesList })));
-const StockListPage = lazy(() => import('./pages/stock/StockListPage').then(m => ({ default: m.default })));
-const StockItemDetail = lazy(() => import('./pages/stock/StockItemDetail').then(m => ({ default: m.default })));
-const StockCategoriesPage = lazy(() => import('./pages/stock/StockCategoriesPage').then(m => ({ default: m.default })));
-const StockSalesPage = lazy(() => import('./pages/stock/StockSalesPage').then(m => ({ default: m.default })));
-const StockSaleDetailPage = lazy(() => import('./pages/stock/StockSaleDetailPage').then(m => ({ default: m.default })));
-const StockAdjustmentsPage = lazy(() => import('./pages/stock/StockAdjustmentsPage').then(m => ({ default: m.default })));
-const StockReportsPage = lazy(() => import('./pages/stock/StockReportsPage').then(m => ({ default: m.default })));
+const StockListPage = lazy(() => import('./pages/stock/StockListPage'));
+const StockItemDetail = lazy(() => import('./pages/stock/StockItemDetail'));
+const StockCategoriesPage = lazy(() => import('./pages/stock/StockCategoriesPage'));
+const StockSalesPage = lazy(() => import('./pages/stock/StockSalesPage'));
+const StockSaleDetailPage = lazy(() => import('./pages/stock/StockSaleDetailPage'));
+const StockAdjustmentsPage = lazy(() => import('./pages/stock/StockAdjustmentsPage'));
+const StockReportsPage = lazy(() => import('./pages/stock/StockReportsPage'));
 const StockReturnsPage = lazy(() => import('./pages/stock/StockReturnsPage'));
 const StockLocationsPage = lazy(() => import('./pages/stock/StockLocationsPage'));
 const StockTransfersPage = lazy(() => import('./pages/stock/StockTransfersPage'));
 const StockTransferDetail = lazy(() => import('./pages/stock/StockTransferDetail'));
-const InventoryListPage = lazy(() => import('./pages/inventory/InventoryListPage').then(m => ({ default: m.default })));
-const InventoryFormPage = lazy(() => import('./pages/inventory/InventoryFormPage').then(m => ({ default: m.default })));
-const DonorSearchPage = lazy(() => import('./pages/inventory/DonorSearchPage').then(m => ({ default: m.default })));
+const InventoryListPage = lazy(() => import('./pages/inventory/InventoryListPage'));
+const InventoryFormPage = lazy(() => import('./pages/inventory/InventoryFormPage'));
+const DonorSearchPage = lazy(() => import('./pages/inventory/DonorSearchPage'));
 
-const InvoicesList = lazy(() => import('./pages/financial/InvoicesList').then(m => ({ default: m.InvoicesList })));
-const InvoicesListPage = lazy(() => import('./pages/financial/InvoicesListPage').then(m => ({ default: m.default })));
-const InvoiceDetailPage = lazy(() => import('./pages/financial/InvoiceDetailPage').then(m => ({ default: m.default })));
+const InvoicesListPage = lazy(() => import('./pages/financial/InvoicesListPage'));
+const InvoiceDetailPage = lazy(() => import('./pages/financial/InvoiceDetailPage'));
 const PaymentsList = lazy(() => import('./pages/financial/PaymentsList').then(m => ({ default: m.PaymentsList })));
 const ExpensesList = lazy(() => import('./pages/financial/ExpensesList').then(m => ({ default: m.ExpensesList })));
 const RevenueDashboard = lazy(() => import('./pages/financial/RevenueDashboard').then(m => ({ default: m.RevenueDashboard })));
@@ -107,14 +106,14 @@ const BankingPage = lazy(() => import('./pages/financial/BankingPage').then(m =>
 const VATAuditPage = lazy(() => import('./pages/financial/VATAuditPage').then(m => ({ default: m.VATAuditPage })));
 const ReportsDashboard = lazy(() => import('./pages/financial/ReportsDashboard').then(m => ({ default: m.ReportsDashboard })));
 
-const QuotesListPage = lazy(() => import('./pages/quotes/QuotesListPage').then(m => ({ default: m.default })));
-const QuoteDetailPage = lazy(() => import('./pages/quotes/QuoteDetailPage').then(m => ({ default: m.default })));
-const QuotesRecycleBin = lazy(() => import('./pages/quotes/QuotesRecycleBin').then(m => ({ default: m.default })));
+const QuotesListPage = lazy(() => import('./pages/quotes/QuotesListPage'));
+const QuoteDetailPage = lazy(() => import('./pages/quotes/QuoteDetailPage'));
+const QuotesRecycleBin = lazy(() => import('./pages/quotes/QuotesRecycleBin'));
 
-const SuppliersListPage = lazy(() => import('./pages/suppliers/SuppliersListPage').then(m => ({ default: m.default })));
-const SupplierProfilePage = lazy(() => import('./pages/suppliers/SupplierProfilePage').then(m => ({ default: m.default })));
-const PurchaseOrdersListPage = lazy(() => import('./pages/suppliers/PurchaseOrdersListPage').then(m => ({ default: m.default })));
-const PurchaseOrderDetailPage = lazy(() => import('./pages/suppliers/PurchaseOrderDetailPage').then(m => ({ default: m.default })));
+const SuppliersListPage = lazy(() => import('./pages/suppliers/SuppliersListPage'));
+const SupplierProfilePage = lazy(() => import('./pages/suppliers/SupplierProfilePage'));
+const PurchaseOrdersListPage = lazy(() => import('./pages/suppliers/PurchaseOrdersListPage'));
+const PurchaseOrderDetailPage = lazy(() => import('./pages/suppliers/PurchaseOrderDetailPage'));
 
 const PlatformDashboard = lazy(() => import('./pages/platform-admin/PlatformDashboard').then(m => ({ default: m.PlatformDashboard })));
 const TenantsListPage = lazy(() => import('./pages/platform-admin/TenantsListPage').then(m => ({ default: m.TenantsListPage })));

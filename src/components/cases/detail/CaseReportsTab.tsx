@@ -4,8 +4,8 @@ import { CreditCard as Edit } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
-import { REPORT_TYPES, getReportTypeConfig, getReportStatusConfig, type ReportType, type ReportStatus } from '../../../lib/reportTypes';
-import { formatDate } from '../../../lib/format';
+import { REPORT_TYPES, getReportTypeConfig, getReportStatusConfig, type ReportType, type ReportStatus } from '@/lib/reportTypes';
+import { formatDate } from '@/lib/format';
 
 interface CaseReport {
   id: string;

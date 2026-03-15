@@ -2,7 +2,7 @@ import React from 'react';
 import { Lock, User, Headphones } from 'lucide-react';
 import { Badge } from '../../ui/Badge';
 import { formatDistanceToNow } from 'date-fns';
-import type { Database } from '../../../types/database.types';
+import type { Database } from '@/types/database.types';
 
 type SupportTicketMessage = Database['public']['Tables']['support_ticket_messages']['Row'];
 

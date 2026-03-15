@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../../lib/supabaseClient';
-import { quotesService } from '../../../lib/quotesService';
-import { invoiceService } from '../../../lib/invoiceService';
-import { getCaseFinancialSummary } from '../../../lib/caseFinanceService';
-import { type ReportType, type ReportStatus } from '../../../lib/reportTypes';
+import { supabase } from '@/lib/supabaseClient';
+import { quotesService } from '@/lib/quotesService';
+import { invoiceService } from '@/lib/invoiceService';
+import { getCaseFinancialSummary } from '@/lib/caseFinanceService';
+import { type ReportType, type ReportStatus } from '@/lib/reportTypes';
 
 export function useCaseQueries(
   id: string | undefined,

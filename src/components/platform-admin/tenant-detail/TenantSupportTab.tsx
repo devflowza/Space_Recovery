@@ -6,8 +6,8 @@ import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Table } from '../../ui/Table';
 import { Button } from '../../ui/Button';
-import { getSupportTickets } from '../../../lib/platformAdminService';
-import { platformAdminKeys } from '../../../lib/queryKeys';
+import { getSupportTickets } from '@/lib/platformAdminService';
+import { platformAdminKeys } from '@/lib/queryKeys';
 
 interface TenantSupportTabProps {
   tenantId: string;

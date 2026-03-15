@@ -40,7 +40,7 @@ async function arrayBufferToBase64(buffer: ArrayBuffer): Promise<string> {
 
 function validateTTFFont(buffer: ArrayBuffer): boolean {
   if (buffer.byteLength < MIN_FONT_SIZE) {
-    console.warn('[Font Loader] Font file too small:', buffer.byteLength, 'bytes');
+    console.error('[Font Loader] Font file too small:', buffer.byteLength, 'bytes');
     return false;
   }
 
@@ -56,7 +56,7 @@ function validateTTFFont(buffer: ArrayBuffer): boolean {
   const isValid = validMagics.includes(magic);
 
   if (!isValid) {
-    console.warn('[Font Loader] Invalid TTF magic bytes:', magic.toString(16));
+    console.error('[Font Loader] Invalid TTF magic bytes:', magic.toString(16));
   }
 
   return isValid;
@@ -64,7 +64,6 @@ function validateTTFFont(buffer: ArrayBuffer): boolean {
 
 async function loadFontFromURL(url: string, fontName: string): Promise<FontFile | null> {
   try {
-    console.log(`[Font Loader] Fetching font from: ${url}`);
     const response = await fetchWithTimeout(url, FONT_FETCH_TIMEOUT);
 
     if (!response.ok) {
@@ -80,7 +79,6 @@ async function loadFontFromURL(url: string, fontName: string): Promise<FontFile 
     }
 
     const base64 = await arrayBufferToBase64(arrayBuffer);
-    console.log(`[Font Loader] ✓ Loaded ${fontName} (${arrayBuffer.byteLength} bytes)`);
 
     return { name: fontName, base64 };
   } catch (error) {
@@ -90,8 +88,6 @@ async function loadFontFromURL(url: string, fontName: string): Promise<FontFile 
 }
 
 export async function loadRobotoFontsFromLocal(): Promise<FontLoadResult> {
-  console.log('[Font Loader] Loading Roboto fonts from local files...');
-
   try {
     const [regularFont, boldFont, italicFont, boldItalicFont] = await Promise.all([
       loadFontFromURL('/fonts/Roboto-Regular.ttf', 'Roboto-Regular.ttf'),
@@ -101,7 +97,6 @@ export async function loadRobotoFontsFromLocal(): Promise<FontLoadResult> {
     ]);
 
     if (!regularFont || !boldFont || !italicFont || !boldItalicFont) {
-      console.warn('[Font Loader] Failed to load local Roboto fonts');
       return { success: false, error: 'Failed to load local Roboto fonts', source: 'failed' };
     }
 
@@ -121,8 +116,6 @@ export async function loadRobotoFontsFromLocal(): Promise<FontLoadResult> {
 }
 
 export async function loadTajawalFontsFromLocal(): Promise<FontLoadResult> {
-  console.log('[Font Loader] Loading Tajawal fonts from local files...');
-
   try {
     const [regularFont, boldFont] = await Promise.all([
       loadFontFromURL('/fonts/Tajawal-Regular.ttf', 'Tajawal-Regular.ttf'),
@@ -130,7 +123,6 @@ export async function loadTajawalFontsFromLocal(): Promise<FontLoadResult> {
     ]);
 
     if (!regularFont || !boldFont) {
-      console.warn('[Font Loader] Failed to load local Tajawal fonts');
       return { success: false, error: 'Failed to load local Tajawal fonts', source: 'failed' };
     }
 
@@ -150,8 +142,6 @@ export async function loadTajawalFontsFromLocal(): Promise<FontLoadResult> {
 }
 
 export async function loadTajawalFontsFromCDN(): Promise<FontLoadResult> {
-  console.log('[Font Loader] Loading Tajawal fonts from CDN...');
-
   const CDN_BASE = 'https://github.com/googlefonts/tajawal/raw/master/fonts/ttf';
 
   try {
@@ -167,7 +157,6 @@ export async function loadTajawalFontsFromCDN(): Promise<FontLoadResult> {
     ]);
 
     if (!regularFont || !boldFont) {
-      console.warn('[Font Loader] Failed to load Tajawal fonts from CDN');
       return { success: false, error: 'Failed to load CDN fonts', source: 'failed' };
     }
 
@@ -190,13 +179,10 @@ export async function loadTajawalFonts(): Promise<FontLoadResult> {
   let result = await loadTajawalFontsFromLocal();
 
   if (!result.success) {
-    console.log('[Font Loader] Falling back to CDN...');
     result = await loadTajawalFontsFromCDN();
   }
 
-  if (result.success) {
-    console.log(`[Font Loader] ✓ Tajawal fonts loaded from ${result.source}`);
-  } else {
+  if (!result.success) {
     console.error('[Font Loader] ✗ All Tajawal font loading attempts failed');
   }
 
@@ -204,8 +190,6 @@ export async function loadTajawalFonts(): Promise<FontLoadResult> {
 }
 
 export async function loadArabicFontsFromLocal(): Promise<FontLoadResult> {
-  console.log('[Font Loader] Loading Arabic fonts from local files...');
-
   try {
     const [regularFont, boldFont] = await Promise.all([
       loadFontFromURL('/fonts/notosansarabic-regular.ttf', 'NotoSansArabic-Regular.ttf'),
@@ -213,7 +197,6 @@ export async function loadArabicFontsFromLocal(): Promise<FontLoadResult> {
     ]);
 
     if (!regularFont || !boldFont) {
-      console.warn('[Font Loader] Failed to load local Arabic fonts');
       return { success: false, error: 'Failed to load local fonts', source: 'failed' };
     }
 
@@ -233,8 +216,6 @@ export async function loadArabicFontsFromLocal(): Promise<FontLoadResult> {
 }
 
 export async function loadArabicFontsFromCDN(): Promise<FontLoadResult> {
-  console.log('[Font Loader] Loading Arabic fonts from CDN...');
-
   const CDN_BASE = 'https://fonts.gstatic.com/s/notosansarabic/v18';
 
   try {
@@ -250,7 +231,6 @@ export async function loadArabicFontsFromCDN(): Promise<FontLoadResult> {
     ]);
 
     if (!regularFont || !boldFont) {
-      console.warn('[Font Loader] Failed to load Arabic fonts from CDN');
       return { success: false, error: 'Failed to load CDN fonts', source: 'failed' };
     }
 
@@ -273,13 +253,10 @@ export async function loadArabicFonts(): Promise<FontLoadResult> {
   let result = await loadArabicFontsFromLocal();
 
   if (!result.success) {
-    console.log('[Font Loader] Falling back to CDN...');
     result = await loadArabicFontsFromCDN();
   }
 
-  if (result.success) {
-    console.log(`[Font Loader] ✓ Arabic fonts loaded from ${result.source}`);
-  } else {
+  if (!result.success) {
     console.error('[Font Loader] ✗ All font loading attempts failed');
   }
 
@@ -287,8 +264,6 @@ export async function loadArabicFonts(): Promise<FontLoadResult> {
 }
 
 export async function loadKoreanFontsFromCDN(): Promise<FontLoadResult> {
-  console.log('[Font Loader] Loading Korean fonts from CDN...');
-
   const CDN_BASE = 'https://fonts.gstatic.com/s/notosanskr/v36';
 
   try {
@@ -304,7 +279,6 @@ export async function loadKoreanFontsFromCDN(): Promise<FontLoadResult> {
     ]);
 
     if (!regularFont || !boldFont) {
-      console.warn('[Font Loader] Failed to load Korean fonts from CDN');
       return { success: false, error: 'Failed to load CDN fonts', source: 'failed' };
     }
 
@@ -324,8 +298,6 @@ export async function loadKoreanFontsFromCDN(): Promise<FontLoadResult> {
 }
 
 export async function loadThaiFontsFromCDN(): Promise<FontLoadResult> {
-  console.log('[Font Loader] Loading Thai fonts from CDN...');
-
   const CDN_BASE = 'https://fonts.gstatic.com/s/notosansthai/v25';
 
   try {
@@ -341,7 +313,7 @@ export async function loadThaiFontsFromCDN(): Promise<FontLoadResult> {
     ]);
 
     if (!regularFont || !boldFont) {
-      console.warn('[Font Loader] Failed to load Thai fonts from CDN');
+      console.error('[Font Loader] Failed to load Thai fonts from CDN');
       return { success: false, error: 'Failed to load CDN fonts', source: 'failed' };
     }
 
@@ -361,8 +333,6 @@ export async function loadThaiFontsFromCDN(): Promise<FontLoadResult> {
 }
 
 export async function loadJapaneseFontsFromCDN(): Promise<FontLoadResult> {
-  console.log('[Font Loader] Loading Japanese fonts from CDN...');
-
   const CDN_BASE = 'https://fonts.gstatic.com/s/notosansjp/v52';
 
   try {
@@ -378,7 +348,7 @@ export async function loadJapaneseFontsFromCDN(): Promise<FontLoadResult> {
     ]);
 
     if (!regularFont || !boldFont) {
-      console.warn('[Font Loader] Failed to load Japanese fonts from CDN');
+      console.error('[Font Loader] Failed to load Japanese fonts from CDN');
       return { success: false, error: 'Failed to load CDN fonts', source: 'failed' };
     }
 
@@ -398,8 +368,6 @@ export async function loadJapaneseFontsFromCDN(): Promise<FontLoadResult> {
 }
 
 export async function loadChineseFontsFromCDN(): Promise<FontLoadResult> {
-  console.log('[Font Loader] Loading Chinese fonts from CDN...');
-
   const CDN_BASE = 'https://fonts.gstatic.com/s/notosanssc/v36';
 
   try {
@@ -415,7 +383,7 @@ export async function loadChineseFontsFromCDN(): Promise<FontLoadResult> {
     ]);
 
     if (!regularFont || !boldFont) {
-      console.warn('[Font Loader] Failed to load Chinese fonts from CDN');
+      console.error('[Font Loader] Failed to load Chinese fonts from CDN');
       return { success: false, error: 'Failed to load CDN fonts', source: 'failed' };
     }
 

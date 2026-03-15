@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, FileText, Users, CreditCard, Settings, AlertCircle } from 'lucide-react';
 import { Card } from '../../ui/Card';
-import { getTenantActivityLog } from '../../../lib/platformAdminService';
-import { platformAdminKeys } from '../../../lib/queryKeys';
+import { getTenantActivityLog } from '@/lib/platformAdminService';
+import { platformAdminKeys } from '@/lib/queryKeys';
 import { formatDistanceToNow } from 'date-fns';
 
 interface TenantActivityTabProps {

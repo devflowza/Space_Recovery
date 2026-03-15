@@ -5,11 +5,11 @@ import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { AnnouncementPreview } from './AnnouncementPreview';
-import { createAnnouncement, updateAnnouncement } from '../../../lib/platformAdminService';
-import { platformAdminKeys } from '../../../lib/queryKeys';
-import { usePlatformAdmin } from '../../../contexts/PlatformAdminContext';
-import { useToast } from '../../../hooks/useToast';
-import type { Database } from '../../../types/database.types';
+import { createAnnouncement, updateAnnouncement } from '@/lib/platformAdminService';
+import { platformAdminKeys } from '@/lib/queryKeys';
+import { usePlatformAdmin } from '@/contexts/PlatformAdminContext';
+import { useToast } from '@/hooks/useToast';
+import type { Database } from '@/types/database.types';
 
 type PlatformAnnouncement = Database['public']['Tables']['platform_announcements']['Row'];
 
