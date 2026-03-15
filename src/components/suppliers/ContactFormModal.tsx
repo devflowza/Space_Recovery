@@ -11,7 +11,7 @@ interface ContactFormModalProps {
   onClose: () => void;
   onSuccess: () => void;
   supplierId: string;
-  contact?: any;
+  contact?: Record<string, unknown> | null;
 }
 
 export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierId, contact }: ContactFormModalProps) {

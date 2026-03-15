@@ -114,7 +114,7 @@ export const TenantBillingTab: React.FC<TenantBillingTabProps> = ({ tenantId, su
               </tr>
             </thead>
             <tbody>
-              {invoices.map((invoice: any) => (
+              {invoices.map((invoice) => (
                 <tr key={invoice.id}>
                   <td className="font-medium">{invoice.invoice_number}</td>
                   <td className="text-slate-600">

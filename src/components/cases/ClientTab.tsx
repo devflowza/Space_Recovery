@@ -31,7 +31,7 @@ import {
 
 interface ClientTabProps {
   caseId: string;
-  caseData: any;
+  caseData: Record<string, unknown>;
 }
 
 export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
@@ -41,8 +41,8 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
   const [showChangeClientModal, setShowChangeClientModal] = useState(false);
   const [showChangeCompanyModal, setShowChangeCompanyModal] = useState(false);
 
-  const [editedClientData, setEditedClientData] = useState<any>({});
-  const [editedCompanyData, setEditedCompanyData] = useState<any>({});
+  const [editedClientData, setEditedClientData] = useState<Record<string, unknown>>({});
+  const [editedCompanyData, setEditedCompanyData] = useState<Record<string, unknown>>({});
   const [caseHistoryPage, setCaseHistoryPage] = useState(1);
   const [caseHistorySearch, setCaseHistorySearch] = useState('');
   const CASES_PER_PAGE = 5;
@@ -144,7 +144,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
 
   // Update customer mutation
   const updateCustomerMutation = useMutation({
-    mutationFn: async (updates: any) => {
+    mutationFn: async (updates: Record<string, unknown>) => {
       const { error } = await supabase
         .from('customers_enhanced')
         .update(updates)
@@ -161,7 +161,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
 
   // Update company mutation
   const updateCompanyMutation = useMutation({
-    mutationFn: async (updates: any) => {
+    mutationFn: async (updates: Record<string, unknown>) => {
       const { error } = await supabase
         .from('companies')
         .update(updates)

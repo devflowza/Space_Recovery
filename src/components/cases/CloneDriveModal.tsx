@@ -30,7 +30,13 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
   const { profile } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [showSpaceWarning, setShowSpaceWarning] = useState(false);
-  const [spaceWarningData, setSpaceWarningData] = useState<any>(null);
+  const [spaceWarningData, setSpaceWarningData] = useState<{
+    cloneId: string;
+    totalCapacity: number;
+    currentUsed: number;
+    availableSpace: number;
+    requiredSpace: number;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     patient_device_id: '',
@@ -45,7 +51,7 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
     notes: '',
   });
 
-  const [selectedResource, setSelectedResource] = useState<any>(null);
+  const [selectedResource, setSelectedResource] = useState<Record<string, unknown> | null>(null);
 
   const { data: companySettings } = useQuery({
     queryKey: ['company_settings'],
@@ -101,7 +107,7 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
         .order('clone_id');
       if (error) throw error;
 
-      return data.map((drive: any) => ({
+      return data.map((drive: Record<string, unknown>) => ({
         ...drive,
         brand_name: drive.brands?.name || drive.brand,
         capacity_name: drive.capacities?.name || drive.capacity,

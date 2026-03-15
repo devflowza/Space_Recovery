@@ -11,7 +11,7 @@ interface CommunicationFormModalProps {
   onClose: () => void;
   onSuccess: () => void;
   supplierId: string;
-  communication?: any;
+  communication?: Record<string, unknown> | null;
 }
 
 export default function CommunicationFormModal({ isOpen, onClose, onSuccess, supplierId, communication }: CommunicationFormModalProps) {

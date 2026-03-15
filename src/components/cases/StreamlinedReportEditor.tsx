@@ -46,7 +46,7 @@ interface StreamlinedReportEditorProps {
     diagnostic_notes?: string;
   };
   reportId?: string;
-  existingReport?: any;
+  existingReport?: Record<string, unknown>;
   onSuccess: () => void;
 }
 
@@ -182,7 +182,7 @@ export function StreamlinedReportEditor({
           await loadSectionsFromDatabase(reportData.report_template_id);
 
           const loadedSections: Record<string, string> = {};
-          sectionsData.forEach((section: any) => {
+          sectionsData.forEach((section: { section_key: string; section_content?: string }) => {
             loadedSections[section.section_key] = section.section_content || '';
           });
 

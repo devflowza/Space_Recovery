@@ -56,14 +56,14 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({ isOpen, onClose })
   });
 
   const createLoanMutation = useMutation({
-    mutationFn: (data: any) => payrollService.createEmployeeLoan(data),
+    mutationFn: (data: Parameters<typeof payrollService.createEmployeeLoan>[0]) => payrollService.createEmployeeLoan(data),
     onSuccess: (loan) => {
       queryClient.invalidateQueries({ queryKey: payrollKeys.loans() });
       showToast(`Loan ${loan.loan_number} created successfully`, 'success');
       onClose();
     },
-    onError: (error: any) => {
-      showToast(error.message || 'Failed to create loan', 'error');
+    onError: (error: unknown) => {
+      showToast(error instanceof Error ? error.message : 'Failed to create loan', 'error');
     },
   });
 

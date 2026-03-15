@@ -14,19 +14,33 @@ interface LineItem {
   total: number;
 }
 
+interface PurchaseOrderData {
+  id?: string;
+  po_number?: string;
+  supplier_id?: string;
+  status_id?: string;
+  order_date?: string;
+  expected_delivery?: string;
+  shipping_address?: string;
+  shipping_method?: string;
+  notes?: string;
+  internal_notes?: string;
+  line_items?: LineItem[];
+}
+
 interface PurchaseOrderFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  purchaseOrder?: any;
+  purchaseOrder?: PurchaseOrderData | null;
   supplierId?: string;
 }
 
 export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, purchaseOrder, supplierId }: PurchaseOrderFormModalProps) {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [statuses, setStatuses] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string; supplier_number: string }>>([]);
+  const [statuses, setStatuses] = useState<Array<{ id: number; name: string; sort_order?: number; is_active?: boolean }>>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { description: '', quantity: 1, unit_price: 0, total: 0 }
   ]);
@@ -108,7 +122,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
     }
   };
 
-  const updateLineItem = (index: number, field: keyof LineItem, value: any) => {
+  const updateLineItem = (index: number, field: keyof LineItem, value: string | number) => {
     const updated = [...lineItems];
     updated[index] = { ...updated[index], [field]: value };
 
@@ -173,9 +187,9 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving purchase order:', error);
-      showToast(error.message || 'Failed to save purchase order', 'error');
+      showToast(error instanceof Error ? error.message : 'Failed to save purchase order', 'error');
     } finally {
       setLoading(false);
     }

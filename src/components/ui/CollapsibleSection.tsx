@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react';
 
 interface CollapsibleSectionProps {
   title: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   children: ReactNode;
   defaultOpen?: boolean;

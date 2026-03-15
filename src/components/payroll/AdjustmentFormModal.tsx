@@ -42,14 +42,14 @@ export function AdjustmentFormModal({ onClose }: Props) {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (data: any) => payrollService.createPayrollAdjustment(data),
+    mutationFn: (data: Parameters<typeof payrollService.createPayrollAdjustment>[0]) => payrollService.createPayrollAdjustment(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: payrollKeys.adjustments({}) });
       showToast('Adjustment created successfully', 'success');
       onClose();
     },
-    onError: (error: any) => {
-      showToast(error.message || 'Failed to create adjustment', 'error');
+    onError: (error: unknown) => {
+      showToast(error instanceof Error ? error.message : 'Failed to create adjustment', 'error');
     },
   });
 
@@ -71,7 +71,7 @@ export function AdjustmentFormModal({ onClose }: Props) {
     });
   };
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

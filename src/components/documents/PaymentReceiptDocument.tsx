@@ -46,7 +46,7 @@ interface CurrencyFormat {
 }
 
 interface PaymentReceiptDocumentProps {
-  payment: any;
+  payment: Record<string, unknown>;
   companySettings: CompanySettings | null;
   currencyFormat: CurrencyFormat;
   t: (key: string, fallback: string) => string;
@@ -318,7 +318,7 @@ export const PaymentReceiptDocument: React.FC<PaymentReceiptDocumentProps> = ({
               </tr>
             </thead>
             <tbody>
-              {payment.allocations.map((allocation: any, index: number) => (
+              {payment.allocations.map((allocation: Record<string, unknown> & { amount?: number; invoice?: Record<string, unknown> }, index: number) => (
                 <tr key={index} style={{ borderBottom: '1px solid #e2e8f0' }}>
                   <td style={{ padding: '10px 12px', color: '#1e293b' }}>
                     {allocation.invoice?.invoice_number || 'N/A'}
@@ -347,7 +347,7 @@ export const PaymentReceiptDocument: React.FC<PaymentReceiptDocumentProps> = ({
                   fontSize: '12px'
                 }}>
                   {formatCurrency(
-                    payment.allocations.reduce((sum: number, a: any) => sum + (a.amount || 0), 0)
+                    payment.allocations.reduce((sum: number, a: Record<string, unknown>) => sum + ((a.amount as number) || 0), 0)
                   )}
                 </td>
               </tr>

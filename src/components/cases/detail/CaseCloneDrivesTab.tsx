@@ -5,12 +5,12 @@ import { Card } from '../../ui/Card';
 import { CloneDriveCard } from '../CloneDriveCard';
 
 interface CaseCloneDrivesTabProps {
-  caseData: any;
-  devices: any[];
-  cloneDrives: any[];
+  caseData: Record<string, unknown>;
+  devices: Record<string, unknown>[];
+  cloneDrives: Record<string, unknown>[];
   onSetShowCloneDriveModal: (v: boolean) => void;
-  onSetViewCloneModal: (clone: any) => void;
-  onSetSelectedClone: (clone: any) => void;
+  onSetViewCloneModal: (clone: Record<string, unknown>) => void;
+  onSetSelectedClone: (clone: Record<string, unknown>) => void;
   onSetShowMarkAsDeliveredModal: (v: boolean) => void;
   onSetShowPreserveLongTermModal: (v: boolean) => void;
 }

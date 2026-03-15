@@ -76,7 +76,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
       setShowForm(false);
       setForm(defaultForm());
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to create category'),
+    onError: (err: unknown) => toast.error(err instanceof Error ? err.message : 'Failed to create category'),
   });
 
   const updateMutation = useMutation({
@@ -95,7 +95,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
       setShowForm(false);
       setForm(defaultForm());
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to update category'),
+    onError: (err: unknown) => toast.error(err instanceof Error ? err.message : 'Failed to update category'),
   });
 
   const deleteMutation = useMutation({
@@ -105,14 +105,14 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
       toast.success('Category deactivated');
       setDeleteConfirmId(null);
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to delete category'),
+    onError: (err: unknown) => toast.error(err instanceof Error ? err.message : 'Failed to delete category'),
   });
 
   const toggleActiveMutation = useMutation({
     mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
       updateKBCategory(id, { is_active }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: kbKeys.all }),
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: unknown) => toast.error(err instanceof Error ? err.message : 'Unknown error'),
   });
 
   const startEdit = (cat: KBCategory) => {

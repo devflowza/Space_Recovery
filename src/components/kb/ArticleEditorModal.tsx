@@ -83,7 +83,7 @@ export const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({ isOpen, 
       toast.success('Article created successfully');
       onClose();
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to create article'),
+    onError: (err: unknown) => toast.error(err instanceof Error ? err.message : 'Failed to create article'),
   });
 
   const updateMutation = useMutation({
@@ -104,7 +104,7 @@ export const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({ isOpen, 
       toast.success('Article updated successfully');
       onClose();
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to update article'),
+    onError: (err: unknown) => toast.error(err instanceof Error ? err.message : 'Failed to update article'),
   });
 
   const createTagMutation = useMutation({
@@ -115,7 +115,7 @@ export const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({ isOpen, 
       setNewTagInput('');
       setIsCreatingTag(false);
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to create tag'),
+    onError: (err: unknown) => toast.error(err instanceof Error ? err.message : 'Failed to create tag'),
   });
 
   const handleSave = (saveStatus: 'draft' | 'published') => {

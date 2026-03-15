@@ -75,9 +75,9 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
       setStep(4);
       queryClient.invalidateQueries({ queryKey: ['import_export_jobs_recent'] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Export failed:', error);
-      alert(`Export failed: ${error.message || 'Unknown error'}`);
+      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     },
   });
 
