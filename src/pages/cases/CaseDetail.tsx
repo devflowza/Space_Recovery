@@ -31,10 +31,8 @@ import { ReportTypeSelectionModal } from '../../components/cases/ReportTypeSelec
 import { StreamlinedReportEditor } from '../../components/cases/StreamlinedReportEditor';
 import ReportViewModal from '../../components/cases/ReportViewModal';
 import { reportsService } from '../../lib/reportsService';
-import { type ReportType, type ReportStatus } from '../../lib/reportTypes';
 import { PDFPreviewModal } from '../../components/cases/PDFPreviewModal';
 import { EmailDocumentModal } from '../../components/cases/EmailDocumentModal';
-import type { DocumentType } from '../../lib/pdf/types';
 import {
   CaseOverviewTab,
   CaseDevicesTab,
@@ -46,6 +44,7 @@ import {
   CaseNotesTab,
   CasePortalTab,
 } from '../../components/cases/detail';
+import { useCaseModals } from '../../components/cases/detail/useCaseModals';
 
 type TabType = 'overview' | 'client' | 'devices' | 'clones' | 'reports' | 'quotes' | 'files' | 'engineers' | 'notes' | 'portal' | 'history' | 'stock';
 

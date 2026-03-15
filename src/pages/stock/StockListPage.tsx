@@ -331,7 +331,18 @@ export const StockListPage: React.FC = () => {
         </div>
 
         <div className={showGrid ? 'p-4' : ''}>
-          {showGrid ? (
+          {!itemsLoading && items.length === 0 ? (
+            <EmptyState
+              icon={Package}
+              title="No stock items found"
+              description={
+                debouncedSearch || categoryId || activeTab !== 'all'
+                  ? 'No stock items found matching your criteria.'
+                  : 'No stock items yet. Add your first item to get started.'
+              }
+              action={{ label: 'Add Item', onClick: () => { setEditingItem(null); setFormModalOpen(true); } }}
+            />
+          ) : showGrid ? (
             <SaleableItemsGrid
               items={items}
               onSelect={(item) => handleEdit(item)}
