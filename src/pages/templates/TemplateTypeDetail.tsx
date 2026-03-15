@@ -139,7 +139,7 @@ export const TemplateTypeDetail: React.FC = () => {
     }
   };
 
-  const handleSaveTemplate = async (templateData: any) => {
+  const handleSaveTemplate = async (templateData: Record<string, unknown>) => {
     try {
       if (selectedTemplate) {
         const { error } = await supabase

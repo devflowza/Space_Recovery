@@ -57,7 +57,7 @@ export const AccountingLocales: React.FC = () => {
       setIsModalOpen(false);
       setEditingLocale(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       alert(`Error creating locale: ${error.message}`);
     },
   });
@@ -91,7 +91,7 @@ export const AccountingLocales: React.FC = () => {
       setIsModalOpen(false);
       setEditingLocale(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       alert(`Error updating locale: ${error.message}`);
     },
   });
@@ -104,7 +104,7 @@ export const AccountingLocales: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounting_locales'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       alert(`Error deleting locale: ${error.message}`);
     },
   });
@@ -120,7 +120,7 @@ export const AccountingLocales: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounting_locales'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       alert(`Error setting default locale: ${error.message}`);
     },
   });

@@ -385,9 +385,9 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
         lineItems
       );
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving quote:', error);
-      const errorMessage = error?.message || 'Quote couldn\'t be saved. Check your connection and try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Quote couldn\'t be saved. Check your connection and try again.';
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);

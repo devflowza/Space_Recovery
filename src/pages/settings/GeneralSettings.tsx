@@ -30,16 +30,16 @@ import {
 
 interface CompanySettings {
   id: number;
-  basic_info: any;
-  location: any;
-  contact_info: any;
-  branding: any;
-  online_presence: any;
-  business_hours: any;
-  company_profile: any;
-  legal_compliance: any;
-  financial_settings: any;
-  banking_info: any;
+  basic_info: Record<string, string | number | boolean | null>;
+  location: Record<string, string | number | boolean | null>;
+  contact_info: Record<string, string | number | boolean | null>;
+  branding: Record<string, string | number | boolean | null>;
+  online_presence: Record<string, string | number | boolean | null>;
+  business_hours: Record<string, string | number | boolean | null>;
+  company_profile: Record<string, string | number | boolean | null>;
+  legal_compliance: Record<string, string | number | boolean | null>;
+  financial_settings: Record<string, string | number | boolean | null>;
+  banking_info: Record<string, string | number | boolean | null>;
   localization?: {
     document_language_settings?: {
       mode: 'english_only' | 'bilingual';
@@ -282,7 +282,7 @@ export const GeneralSettings: React.FC = () => {
     },
   });
 
-  const updateField = (section: string, field: string, value: any) => {
+  const updateField = (section: string, field: string, value: string | number | boolean | null) => {
     if (!formData) return;
     setFormData({
       ...formData,

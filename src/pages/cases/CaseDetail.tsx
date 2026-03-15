@@ -610,7 +610,7 @@ export const CaseDetail: React.FC = () => {
       paymentData,
       allocations,
     }: {
-      paymentData: any;
+      paymentData: Omit<import('../../lib/paymentsService').Payment, 'id' | 'payment_number' | 'created_at' | 'updated_at'>;
       allocations: Array<{ invoice_id: string; amount: number }>;
     }) => {
       return createPayment(paymentData, allocations);
@@ -625,7 +625,7 @@ export const CaseDetail: React.FC = () => {
   });
 
   const updateCaseInfoMutation = useMutation({
-    mutationFn: async (updates: any) => {
+    mutationFn: async (updates: Record<string, unknown>) => {
       const { error } = await supabase
         .from('cases')
         .update(updates)
@@ -640,7 +640,7 @@ export const CaseDetail: React.FC = () => {
   });
 
   const updateDeviceInfoMutation = useMutation({
-    mutationFn: async ({ deviceId, updates }: { deviceId: string; updates: any }) => {
+    mutationFn: async ({ deviceId, updates }: { deviceId: string; updates: Record<string, unknown> }) => {
       const { error } = await supabase
         .from('case_devices')
         .update(updates)
@@ -659,7 +659,7 @@ export const CaseDetail: React.FC = () => {
   });
 
   const updateCustomerInfoMutation = useMutation({
-    mutationFn: async (updates: any) => {
+    mutationFn: async (updates: Record<string, unknown>) => {
       const { error } = await supabase
         .from('customers_enhanced')
         .update(updates)
@@ -780,7 +780,7 @@ export const CaseDetail: React.FC = () => {
     setShowPDFPreviewModal(true);
   };
 
-  const handleRecordPayment = async (invoice: any) => {
+  const handleRecordPayment = async (invoice: { id: string; invoice_type?: string }) => {
     // Only allow payment recording for tax invoices, not proforma invoices
     if (invoice.invoice_type !== 'tax_invoice') {
       toast.error('Payments can only be recorded against Tax Invoices, not Proforma Invoices. Please convert this to a Tax Invoice first.');
@@ -806,9 +806,9 @@ export const CaseDetail: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['case', id] });
       queryClient.invalidateQueries({ queryKey: ['case-financial-summary', id] });
       toast.success('Proforma invoice successfully converted to Tax Invoice');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error converting invoice:', error);
-      toast.error(error.message || 'Failed to convert invoice');
+      toast.error(error instanceof Error ? error.message : 'Failed to convert invoice');
     }
   };
 
@@ -822,7 +822,7 @@ export const CaseDetail: React.FC = () => {
         throw new Error('Failed to get next case number');
       }
 
-      const newCaseData: any = {
+      const newCaseData: Record<string, unknown> = {
         case_no: nextCaseNumber,
         customer_id: caseData!.customer_id,
         service_type_id: caseData!.service_type_id,
@@ -951,7 +951,7 @@ export const CaseDetail: React.FC = () => {
       toast.success(`Case ${result.case_number} deleted successfully. ${result.total_records_deleted} total records removed.`);
       navigate('/cases');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Failed to delete case:', error);
       toast.error(`Failed to delete case: ${error.message}`);
     },

@@ -133,10 +133,10 @@ export default function InventoryListPage() {
         totalValue: 0,
         totalInUse: 0,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       setIsRefreshing(false);
       console.error('Error loading inventory data:', error);
-      const errorMessage = error?.message || 'Failed to load inventory data. Please try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load inventory data. Please try again.';
       setError(errorMessage);
 
       setItems([]);
@@ -174,7 +174,7 @@ export default function InventoryListPage() {
     loadData();
   };
 
-  const handleRowClick = (item: any, e: React.MouseEvent) => {
+  const handleRowClick = (item: { id: string }, e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (
       target.closest('.status-dropdown') ||

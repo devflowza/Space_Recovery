@@ -92,6 +92,8 @@ export const getNextPaymentNumber = async (): Promise<string> => {
   return data || `PAY-${Date.now()}`;
 };
 
+const DEFAULT_PAGE_SIZE = 100;
+
 export const fetchPayments = async (filters?: {
   status?: string;
   customerId?: string;
@@ -99,6 +101,8 @@ export const fetchPayments = async (filters?: {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+  page?: number;
+  pageSize?: number;
 }) => {
   let query = supabase
     .from('payments')
@@ -141,6 +145,10 @@ export const fetchPayments = async (filters?: {
   if (filters?.search) {
     query = query.or(`payment_number.ilike.%${filters.search}%,reference_number.ilike.%${filters.search}%`);
   }
+
+  const pageSize = filters?.pageSize || DEFAULT_PAGE_SIZE;
+  const page = filters?.page || 0;
+  query = query.range(page * pageSize, (page + 1) * pageSize - 1);
 
   const { data, error } = await query;
   if (error) throw error;

@@ -79,9 +79,9 @@ export default function SuppliersListPage() {
 
       setSuppliers(data || []);
       calculateStats(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading suppliers:', error);
-      showToast(error.message || 'Failed to load suppliers', 'error');
+      showToast(error instanceof Error ? error.message : 'Failed to load suppliers', 'error');
     } finally {
       setLoading(false);
     }

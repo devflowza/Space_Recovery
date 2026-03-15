@@ -38,11 +38,30 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     checkPortalSession();
   }, []);
 
+  const isValidPortalCustomer = (data: unknown): data is PortalCustomer => {
+    if (!data || typeof data !== 'object') return false;
+    const obj = data as Record<string, unknown>;
+    return (
+      typeof obj.id === 'string' &&
+      typeof obj.customer_number === 'string' &&
+      typeof obj.customer_name === 'string' &&
+      (obj.email === null || typeof obj.email === 'string') &&
+      (obj.mobile_number === null || typeof obj.mobile_number === 'string') &&
+      (obj.profile_photo_url === null || typeof obj.profile_photo_url === 'string')
+    );
+  };
+
   const checkPortalSession = async () => {
     try {
       const customerData = sessionStorage.getItem('portal_customer');
       if (customerData) {
-        setCustomer(JSON.parse(customerData));
+        const parsed = JSON.parse(customerData);
+        if (isValidPortalCustomer(parsed)) {
+          setCustomer(parsed);
+        } else {
+          console.error('Invalid portal customer data in session, clearing');
+          sessionStorage.removeItem('portal_customer');
+        }
       }
     } catch (err) {
       console.error('Session check error:', err);

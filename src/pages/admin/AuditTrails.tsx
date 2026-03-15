@@ -12,8 +12,8 @@ interface AuditTrail {
   action_type: 'create' | 'update' | 'delete' | 'view';
   table_name: string;
   record_id: string | null;
-  old_values: any;
-  new_values: any;
+  old_values: Record<string, unknown> | null;
+  new_values: Record<string, unknown> | null;
   ip_address: string | null;
   user_agent: string | null;
   created_at: string;
@@ -49,7 +49,7 @@ export const AuditTrails: React.FC = () => {
       const { data, error } = await query;
       if (error) throw error;
 
-      const formattedData = (data || []).map((trail: any) => ({
+      const formattedData = (data || []).map((trail: { profiles?: { full_name?: string } | null } & AuditTrail) => ({
         ...trail,
         user_name: trail.profiles?.full_name || 'Unknown User',
       }));

@@ -186,9 +186,9 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
 
       await onSave(accountData);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Account save error:', err);
-      setError(err.message || 'Failed to save account. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to save account. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -328,7 +328,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
                   required
                 >
                   <option value="">Select Employee</option>
-                  {employees.map((emp: any) => (
+                  {employees.map((emp: { id: string; first_name?: string; last_name?: string; employee_number?: string }) => (
                     <option key={emp.id} value={emp.id}>
                       {emp.full_name}
                     </option>
@@ -373,7 +373,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">{defaultCurrency ? `${defaultCurrency.code} (Default)` : 'Select Currency'}</option>
-              {currencies.map((curr: any) => (
+              {currencies.map((curr: { code: string; name: string; symbol?: string }) => (
                 <option key={curr.id} value={curr.id}>
                   {curr.code} - {curr.name} ({curr.symbol})
                 </option>

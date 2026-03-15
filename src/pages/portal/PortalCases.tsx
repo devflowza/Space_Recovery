@@ -33,7 +33,7 @@ interface CaseDevice {
 interface CaseHistory {
   id: string;
   action: string;
-  details_json: any;
+  details_json: Record<string, unknown> | null;
   created_at: string;
 }
 

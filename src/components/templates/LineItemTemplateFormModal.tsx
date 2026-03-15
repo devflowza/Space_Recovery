@@ -82,9 +82,9 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
         template_type_id: templateTypeId,
       });
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving template:', error);
-      alert(error?.message || 'Failed to save template. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to save template. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

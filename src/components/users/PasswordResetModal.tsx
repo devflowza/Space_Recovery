@@ -55,8 +55,8 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({
     try {
       await onConfirm(temporaryPassword);
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to reset password');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to reset password');
     } finally {
       setLoading(false);
     }

@@ -79,7 +79,7 @@ export const QuotesListPage: React.FC = () => {
     return colors[status] || '#64748b';
   };
 
-  const getClientName = (quote: any) => {
+  const getClientName = (quote: { customers?: { name?: string } | null; companies?: { company_name?: string } | null }) => {
     if (quote?.customers?.name) {
       return quote.customers.name;
     }
@@ -494,7 +494,7 @@ export const QuotesListPage: React.FC = () => {
             setShowQuoteModal(false);
             setEditingQuote(null);
           }}
-          onSave={async (quoteData: any, items: any[]) => {
+          onSave={async (quoteData: Record<string, unknown>, items: Array<{ description: string; quantity: number; unit_price: number; tax_rate?: number; discount_percent?: number; sort_order?: number }>) => {
             if (editingQuote) {
               const { error } = await supabase
                 .from('quotes')

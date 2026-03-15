@@ -51,7 +51,7 @@ export const CloneDrivesList: React.FC = () => {
 
       if (error) throw error;
 
-      return data.map((item: any) => {
+      return data.map((item: Record<string, unknown> & { capacity_gb?: string; capacities?: { gb_value?: string }; current_used_gb?: string; available_space_gb?: string }) => {
         const capacityGb =
           (item.capacity_gb && parseFloat(item.capacity_gb) > 0)
             ? parseFloat(item.capacity_gb)
@@ -233,7 +233,7 @@ export const CloneDrivesList: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleEditDrive = (drive: any) => {
+  const handleEditDrive = (drive: Record<string, unknown>) => {
     setEditingDrive(drive);
     setIsModalOpen(true);
   };
@@ -479,7 +479,7 @@ export const CloneDrivesList: React.FC = () => {
                 Case Assignment Results ({caseAssignments.length})
               </h3>
               <div className="space-y-2">
-                {caseAssignments.map((assignment: any) => {
+                {caseAssignments.map((assignment: Record<string, unknown> & { id: string; status?: string; resource_clone_drive?: { drive_label?: string; serial_number?: string }; cases?: { case_no?: string } }) => {
                   const getStatusColor = (status: string) => {
                     switch (status) {
                       case 'active':
@@ -879,7 +879,7 @@ export const CloneDrivesList: React.FC = () => {
                                 <div className="grid grid-cols-2 gap-2">
                                   {cloneAssignments
                                     .filter(a => a.resource_clone_drive_id === drive.id)
-                                    .map((assignment: any) => (
+                                    .map((assignment: Record<string, unknown> & { id: string; status?: string; cases?: { case_no?: string } }) => (
                                       <div key={assignment.id} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded">
                                         <div className="flex items-center gap-2">
                                           <FileText className="w-3 h-3 text-slate-400" />

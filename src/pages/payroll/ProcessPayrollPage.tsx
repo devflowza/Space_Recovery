@@ -21,13 +21,13 @@ export default function ProcessPayrollPage() {
   const [createdPeriodId, setCreatedPeriodId] = useState<string | null>(null);
 
   const createPeriodMutation = useMutation({
-    mutationFn: (data: any) => payrollService.createPayrollPeriod(data),
+    mutationFn: (data: { period_name: string; period_type: string; start_date: string; end_date: string; payment_date: string }) => payrollService.createPayrollPeriod(data),
     onSuccess: (period) => {
       setCreatedPeriodId(period.id);
       setStep(2);
       queryClient.invalidateQueries({ queryKey: payrollKeys.periods({}) });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showToast(error.message || 'Failed to create payroll period', 'error');
     },
   });
@@ -44,7 +44,7 @@ export default function ProcessPayrollPage() {
         navigate(`/payroll/periods/${createdPeriodId}`);
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showToast(error.message || 'Failed to process payroll', 'error');
     },
   });

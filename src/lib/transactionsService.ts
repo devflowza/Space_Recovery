@@ -47,6 +47,8 @@ export interface TransactionWithDetails extends Transaction {
   };
 }
 
+const DEFAULT_PAGE_SIZE = 100;
+
 export const fetchTransactions = async (filters?: {
   type?: string;
   status?: string;
@@ -55,6 +57,8 @@ export const fetchTransactions = async (filters?: {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+  page?: number;
+  pageSize?: number;
 }) => {
   let query = supabase
     .from('financial_transactions')
@@ -97,6 +101,10 @@ export const fetchTransactions = async (filters?: {
     query = query.or(`description.ilike.%${filters.search}%,reference_number.ilike.%${filters.search}%`);
   }
 
+  const pageSize = filters?.pageSize || DEFAULT_PAGE_SIZE;
+  const page = filters?.page || 0;
+  query = query.range(page * pageSize, (page + 1) * pageSize - 1);
+
   const { data, error } = await query;
   if (error) throw error;
   return data as TransactionWithDetails[];
@@ -123,6 +131,18 @@ export const fetchTransactionById = async (id: string) => {
 export const createTransaction = async (
   transaction: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>
 ) => {
+  if (transaction.bank_account_id && transaction.type === 'expense' && transaction.status === 'completed') {
+    const { data: account } = await supabase
+      .from('bank_accounts')
+      .select('current_balance')
+      .eq('id', transaction.bank_account_id)
+      .maybeSingle();
+
+    if (account && (account.current_balance || 0) < transaction.amount) {
+      throw new Error(`Insufficient balance. Available: ${account.current_balance}, Required: ${transaction.amount}`);
+    }
+  }
+
   const { data, error } = await supabase
     .from('financial_transactions')
     .insert([transaction])

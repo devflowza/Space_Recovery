@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { ProtectedPortalRoute } from './components/ProtectedPortalRoute';
 import { ProtectedPlatformAdminRoute } from './components/ProtectedPlatformAdminRoute';
 import { AppLayout } from './components/layout/AppLayout';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { PortalLayout } from './components/layout/PortalLayout';
 import { PlatformAdminLayout } from './components/layout/PlatformAdminLayout';
 
@@ -171,7 +172,9 @@ function App() {
                 path="/portal"
                 element={
                   <ProtectedPortalRoute>
-                    <PortalLayout />
+                    <ErrorBoundary>
+                      <PortalLayout />
+                    </ErrorBoundary>
                   </ProtectedPortalRoute>
                 }
               >
@@ -189,7 +192,9 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute>
-                  <AppLayout />
+                  <ErrorBoundary>
+                    <AppLayout />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             >
@@ -647,7 +652,9 @@ function App() {
             path="/platform-admin"
             element={
               <ProtectedPlatformAdminRoute>
-                <PlatformAdminLayout />
+                <ErrorBoundary>
+                  <PlatformAdminLayout />
+                </ErrorBoundary>
               </ProtectedPlatformAdminRoute>
             }
           >

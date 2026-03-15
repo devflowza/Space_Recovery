@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { bankingService, BankAccount } from '../../lib/bankingService';
+import { bankingService, BankAccount, PaymentReceipt, AccountTransfer } from '../../lib/bankingService';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -49,7 +49,7 @@ export const BankingPage: React.FC = () => {
   const { data: accounts = [], isLoading: accountsLoading, refetch: refetchAccounts } = useQuery({
     queryKey: ['bank_accounts', accountFilter],
     queryFn: async () => {
-      const filters: any = {};
+      const filters: Record<string, string> = {};
       if (accountFilter !== 'all') {
         filters.account_type = accountFilter;
       }
@@ -65,7 +65,7 @@ export const BankingPage: React.FC = () => {
   const { data: receipts = [] } = useQuery({
     queryKey: ['payment_receipts', selectedAccount],
     queryFn: async () => {
-      const filters: any = {};
+      const filters: Record<string, string> = {};
       if (selectedAccount) {
         filters.account_id = selectedAccount;
       }
@@ -77,7 +77,7 @@ export const BankingPage: React.FC = () => {
   const { data: transfers = [] } = useQuery({
     queryKey: ['account_transfers', selectedAccount],
     queryFn: async () => {
-      const filters: any = {};
+      const filters: Record<string, string> = {};
       if (selectedAccount) {
         filters.account_id = selectedAccount;
       }
@@ -126,7 +126,7 @@ export const BankingPage: React.FC = () => {
   });
 
   const createReceiptMutation = useMutation({
-    mutationFn: ({ receiptData, allocations }: { receiptData: any; allocations?: any[] }) => {
+    mutationFn: ({ receiptData, allocations }: { receiptData: Partial<PaymentReceipt>; allocations?: Array<{ invoice_id: string; allocated_amount: number }> }) => {
       if (allocations && allocations.length > 0) {
         return bankingService.createReceiptWithAllocations(receiptData, allocations);
       }
@@ -143,7 +143,7 @@ export const BankingPage: React.FC = () => {
   });
 
   const createTransferMutation = useMutation({
-    mutationFn: (data: any) => bankingService.createTransfer({ ...data, status: 'completed' }),
+    mutationFn: (data: Partial<AccountTransfer>) => bankingService.createTransfer({ ...data, status: 'completed' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account_transfers'] });
       queryClient.invalidateQueries({ queryKey: ['bank_accounts'] });
@@ -176,7 +176,7 @@ export const BankingPage: React.FC = () => {
   const mobileAccounts = activeAccounts.filter(a => a.account_type === 'mobile');
 
   const selectedAccountData = accounts.find(acc => acc.id === selectedAccount);
-  const unreconciledTransactions = bankTransactions.filter((t: any) => !t.is_reconciled);
+  const unreconciledTransactions = bankTransactions.filter((t: { is_reconciled?: boolean }) => !t.is_reconciled);
 
   const getAccountTypeIcon = (type: string) => {
     switch (type) {
@@ -608,7 +608,7 @@ export const BankingPage: React.FC = () => {
                           </td>
                         </tr>
                       ) : (
-                        bankTransactions.map((transaction: any) => (
+                        bankTransactions.map((transaction: Record<string, unknown> & { id: string; transaction_date: string; description: string; reference?: string; debit_amount: number; credit_amount: number; balance: number; is_reconciled: boolean }) => (
                           <tr key={transaction.id} className="hover:bg-slate-50 transition-colors">
                             <td className="py-2 px-4 text-xs text-slate-600">
                               {new Date(transaction.transaction_date).toLocaleDateString()}
@@ -660,7 +660,7 @@ export const BankingPage: React.FC = () => {
                   <div className="p-4">
                     <p className="text-sm text-slate-600 mb-4">{receipts.length} receipts found</p>
                     <div className="space-y-2">
-                      {receipts.map((receipt: any) => (
+                      {receipts.map((receipt: PaymentReceipt) => (
                         <div
                           key={receipt.id}
                           className="border border-slate-200 rounded-lg p-3 hover:bg-slate-50"
@@ -696,7 +696,7 @@ export const BankingPage: React.FC = () => {
                   <div className="p-4">
                     <p className="text-sm text-slate-600 mb-4">{transfers.length} transfers found</p>
                     <div className="space-y-2">
-                      {transfers.map((transfer: any) => (
+                      {transfers.map((transfer: AccountTransfer & { from_account?: { account_name: string }; to_account?: { account_name: string } }) => (
                         <div
                           key={transfer.id}
                           className="border border-slate-200 rounded-lg p-3 hover:bg-slate-50"

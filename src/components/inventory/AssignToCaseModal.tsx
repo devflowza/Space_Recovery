@@ -99,9 +99,9 @@ export function AssignToCaseModal({
       await assignInventoryToCase(inventoryItemId, selectedCaseId, notes || undefined);
       onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error assigning to case:', err);
-      setError(err.message || 'Failed to assign item to case. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to assign item to case. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -162,8 +162,8 @@ export const ClientPortalSettings: React.FC = () => {
       } else {
         setUrlError(result.error || 'Failed to save settings');
       }
-    } catch (error: any) {
-      setUrlError(error.message || 'An error occurred while saving');
+    } catch (error: unknown) {
+      setUrlError(error instanceof Error ? error.message : 'An error occurred while saving');
     } finally {
       setIsSaving(false);
     }
@@ -214,7 +214,7 @@ export const ClientPortalSettings: React.FC = () => {
     setTimeout(() => setCopiedUrl(false), 2000);
   };
 
-  const updateField = (field: keyof PortalSettings, value: any) => {
+  const updateField = (field: keyof PortalSettings, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setUrlError(null);
   };
