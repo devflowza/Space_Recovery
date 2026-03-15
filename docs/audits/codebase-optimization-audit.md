@@ -24,28 +24,73 @@
 | Security vulnerabilities | **0** (resolved in prior audit) |
 | Files over 500 lines | **80** |
 | Files 300–500 lines | **83** |
-| Estimated removable lines (Tier 1) | **~4,582** |
+| Unused service files | **6 files** (793 lines) — supplier services never imported |
+| Unused page files | **3 files** (1,256 lines) — orphaned pages with zero imports |
+| Unused hooks/utils | **2 files** (133 lines) — useMutationToast + errors.ts |
+| Dead lazy import in App.tsx | **1** — InvoicesList imported but never routed |
+| Estimated removable lines (Tier 1) | **~8,465** |
 
-**Bottom line**: The codebase is architecturally sound with excellent code splitting and no dependency bloat. The main opportunities are dead file removal, console cleanup, and progressive improvement of `.select('*')` queries and `any` types.
+**Bottom line**: The codebase is architecturally sound with excellent code splitting and no dependency bloat. The main opportunities are dead file/code removal (~8.5K lines), console cleanup, and progressive improvement of `.select('*')` queries and `any` types.
 
 ---
 
 ## Phase 1: Dead Code & Dead File Detection
 
-### 1A. Dead Files
+### 1A. Dead Files — Backup & Legacy (4,501 lines)
 
 | File | Lines | Reason |
 |---|---|---|
-| `src/types/database.ts` | 1,733 | Legacy type file — **ZERO imports** anywhere in codebase. Canonical file is `src/types/database.types.ts` (imported by 36 files). CLAUDE.md confirms: "legacy, kept for reference only during transition." |
-| `src/pages/financial/InvoiceDetailPage.tsx.backup2` | 1,176 | Backup file with `.backup2` extension — not a valid module, never imported, not referenced in routes |
-| `src/pages/quotes/QuoteDetailPage.tsx.backup2` | 1,592 | Backup file with `.backup2` extension — not a valid module, never imported, not referenced in routes |
-| **Total dead file lines** | **4,501** | |
+| `src/types/database.ts` | 1,733 | Legacy type file — **ZERO imports** anywhere. `database.types.ts` is canonical (36 imports). CLAUDE.md: "legacy, kept for reference only during transition." |
+| `src/pages/financial/InvoiceDetailPage.tsx.backup2` | 1,176 | Backup file — not a valid module, never imported |
+| `src/pages/quotes/QuoteDetailPage.tsx.backup2` | 1,592 | Backup file — not a valid module, never imported |
+| **Subtotal** | **4,501** | |
 
-**Verification**: Confirmed via `grep -r "types/database'" src/` (0 results) and `grep -r "backup2" src/` (0 results outside the backup files themselves).
+### 1B. Dead Files — Orphaned Pages (1,256 lines)
 
-### 1B. Dead Exports
+| File | Lines | Reason |
+|---|---|---|
+| `src/pages/financial/InvoicesList.tsx` | 417 | Lazy-imported in `App.tsx:99` but **never used in any route** — `InvoicesListPage` is used instead at `App.tsx:283` |
+| `src/pages/settings/GeneralSettingsTab.tsx` | 592 | Zero imports across entire codebase — replaced by `GeneralSettings.tsx` |
+| `src/pages/settings/Settings.tsx` | 247 | Zero imports across entire codebase — functionality migrated to other pages |
+| **Subtotal** | **1,256** | |
 
-No comprehensive dead export scan was performed at the individual function level — the TypeScript compiler with `noUnusedLocals: true` catches most of these. The service files export functions that are consumed by page/component files via TanStack Query hooks. No obvious orphaned exports were found during exploration.
+### 1C. Dead Files — Unused Service Files (793 lines)
+
+All 6 supplier-related service files have **zero imports** anywhere. The supplier pages use inline Supabase queries instead.
+
+| File | Lines |
+|---|---|
+| `src/lib/purchaseOrdersService.ts` | 273 |
+| `src/lib/suppliersService.ts` | 214 |
+| `src/lib/supplierPerformanceService.ts` | 81 |
+| `src/lib/supplierCommunicationsService.ts` | 81 |
+| `src/lib/supplierDocumentsService.ts` | 80 |
+| `src/lib/supplierContactsService.ts` | 64 |
+| **Subtotal** | **793** |
+
+### 1D. Dead Files — Unused Hooks & Utilities (133 lines)
+
+| File | Lines | Reason |
+|---|---|---|
+| `src/hooks/useMutationToast.ts` | 75 | Zero imports — custom hook for mutation toasts, never adopted |
+| `src/lib/errors.ts` | 58 | Zero imports — exports `ok()`, `err()`, `getErrorMessage()`, `withErrorHandling()` |
+| **Subtotal** | **133** | |
+
+### Dead Files Summary
+
+| Category | Files | Lines |
+|---|---|---|
+| Backup & legacy files | 3 | 4,501 |
+| Orphaned pages | 3 | 1,256 |
+| Unused services | 6 | 793 |
+| Unused hooks/utils | 2 | 133 |
+| **Total dead files** | **14** | **6,683** |
+
+**Also**: Remove dead lazy import of `InvoicesList` from `App.tsx:99` (1 line).
+
+### 1E. Dead Exports
+
+The 6 unused supplier services collectively export ~50+ functions — all dead since the services themselves are never imported. Beyond those, no orphaned exports were found — `noUnusedLocals: true` in tsconfig catches most within-file dead exports.
 
 ### 1C. Console Statements (non-error)
 
@@ -497,32 +542,36 @@ No duplicate type definitions found across files. Types are well-organized.
 
 | # | Action | Impact | Files | Effort |
 |---|---|---|---|---|
-| 1 | **Delete `src/types/database.ts`** | -1,733 dead lines | 1 file | Trivial |
-| 2 | **Delete `src/pages/financial/InvoiceDetailPage.tsx.backup2`** | -1,176 dead lines | 1 file | Trivial |
-| 3 | **Delete `src/pages/quotes/QuoteDetailPage.tsx.backup2`** | -1,592 dead lines | 1 file | Trivial |
-| 4 | **Remove 81 console.log/debug/warn/info statements** | Cleaner production logs | 14 files | Low |
-| | **Tier 1 Total** | **-4,582 lines** | | |
+| 1 | **Delete `src/types/database.ts`** (legacy) | -1,733 lines | 1 file | Trivial |
+| 2 | **Delete `InvoiceDetailPage.tsx.backup2`** | -1,176 lines | 1 file | Trivial |
+| 3 | **Delete `QuoteDetailPage.tsx.backup2`** | -1,592 lines | 1 file | Trivial |
+| 4 | **Delete 3 orphaned page files** (`InvoicesList.tsx`, `GeneralSettingsTab.tsx`, `Settings.tsx`) | -1,256 lines | 3 files | Trivial |
+| 5 | **Delete 6 unused supplier service files** | -793 lines | 6 files | Trivial |
+| 6 | **Delete unused `useMutationToast.ts` + `errors.ts`** | -133 lines | 2 files | Trivial |
+| 7 | **Remove dead `InvoicesList` lazy import** from `App.tsx:99` | -1 line | 1 file | Trivial |
+| 8 | **Remove 81 console.log/debug/warn/info statements** | Cleaner production logs | 14 files | Low |
+| | **Tier 1 Total** | **-6,765 lines** | | |
 
 ### Tier 2: Low-Risk Optimizations
 
 | # | Action | Impact | Files | Effort |
 |---|---|---|---|---|
-| 5 | **Extract `logAuditTrail()` to shared `auditTrailService.ts`** | Eliminate duplication across 5 services (~60 lines saved) | 5 service files | Low |
-| 6 | **Extract `sanitizeUuidFields()` to shared utility** | Eliminate duplication (~22 lines saved) | 2 service files | Low |
-| 7 | **Extract `getNextNumber` wrappers to shared utility** | Consolidate 4+ near-identical wrappers | 4+ service files | Low |
-| 8 | **Replace 54 deep `../../../` imports with `@/` alias** | Cleaner, more maintainable imports | 20 files | Low |
-| 9 | **Replace `.select('*')` with specific columns** in top-10 highest-traffic services | Reduced Supabase bandwidth, faster queries | ~15 files | Medium |
-| 10 | **Standardize lazy-load export pattern** in `App.tsx` | Consistency (34 routes use `m.default` vs 91 using `m.NamedExport`) | 1 file | Low |
+| 9 | **Extract `logAuditTrail()` to shared `auditTrailService.ts`** | Eliminate duplication across 5 services (~60 lines saved) | 5 service files | Low |
+| 10 | **Extract `sanitizeUuidFields()` to shared utility** | Eliminate duplication (~22 lines saved) | 2 service files | Low |
+| 11 | **Extract `getNextNumber` wrappers to shared utility** | Consolidate 4+ near-identical wrappers | 4+ service files | Low |
+| 12 | **Replace 54 deep `../../../` imports with `@/` alias** | Cleaner, more maintainable imports | 20 files | Low |
+| 13 | **Replace `.select('*')` with specific columns** in top-10 highest-traffic services | Reduced Supabase bandwidth, faster queries | ~15 files | Medium |
+| 14 | **Standardize lazy-load export pattern** in `App.tsx` | Consistency (34 routes use `m.default` vs 91 using `m.NamedExport`) | 1 file | Low |
 
 ### Tier 3: Refactoring Opportunities — Higher Effort, Needs Review
 
 | # | Action | Impact | Effort | Risk |
 |---|---|---|---|---|
-| 11 | **Decompose `stockService.ts`** (2,069 lines) | Split into stockItemsService, stockMovementsService, stockAdjustmentsService, stockSalesService | High | Medium |
-| 12 | **Decompose `GeneralSettings.tsx`** (1,427 lines) | Extract settings sections into separate tab components | High | Medium |
-| 13 | **Reduce `any` usage** (~195 occurrences) | Better type safety, IDE support | Medium | Low |
-| 14 | **Create shared base `FormModal` component** | Reduce boilerplate across 78 modal components (~60% shared patterns) | High | Medium |
-| 15 | **Generic CRUD service factory** for 48 service files | DRY, less boilerplate for new services | Very High | High |
+| 15 | **Decompose `stockService.ts`** (2,069 lines) | Split into stockItemsService, stockMovementsService, stockAdjustmentsService, stockSalesService | High | Medium |
+| 16 | **Decompose `GeneralSettings.tsx`** (1,427 lines) | Extract settings sections into separate tab components | High | Medium |
+| 17 | **Reduce `any` usage** (~195 occurrences) | Better type safety, IDE support | Medium | Low |
+| 18 | **Create shared base `FormModal` component** | Reduce boilerplate across 78 modal components (~60% shared patterns) | High | Medium |
+| 19 | **Generic CRUD service factory** for 48 service files | DRY, less boilerplate for new services | Very High | High |
 
 ---
 
@@ -530,8 +579,8 @@ No duplicate type definitions found across files. Types are well-organized.
 
 | Metric | Current | After Tier 1 | After Tier 1+2 | After All |
 |---|---|---|---|---|
-| Total lines of code | 136,744 | ~132,162 | ~132,000 | ~130,000 |
-| Dead files | 3 | 0 | 0 | 0 |
+| Total lines of code | 136,744 | ~129,979 | ~129,800 | ~127,500 |
+| Dead files | 14 | 0 | 0 | 0 |
 | Console noise | 81 statements | 0 | 0 | 0 |
 | `.select('*')` calls | 193 | 193 | ~150 | ~100 |
 | `any` types | ~195 | ~195 | ~195 | ~30 |
