@@ -2,6 +2,7 @@ import React from 'react';
 import { User, Building2, FileText, HardDrive, Cpu, CheckCircle2, XCircle, AlertTriangle, Wrench, HelpCircle } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { formatDate } from '../../lib/format';
+import { sanitizeHtml } from '../../lib/sanitizeHtml';
 import { getReportTypeConfig, getReportStatusConfig } from '../../lib/reportTypes';
 
 interface CompanySettings {
@@ -102,7 +103,7 @@ export const ReportDocument: React.FC<ReportDocumentProps> = ({
 
   const stripHtml = (html: string) => {
     const tmp = document.createElement('div');
-    tmp.innerHTML = html;
+    tmp.innerHTML = sanitizeHtml(html);
     return tmp.textContent || tmp.innerText || '';
   };
 
@@ -508,7 +509,7 @@ export const ReportDocument: React.FC<ReportDocumentProps> = ({
                       </div>
                     ) : (
                       <div className="prose max-w-none text-xs text-slate-700 terms-content">
-                        <div dangerouslySetInnerHTML={{ __html: section.section_content }} />
+                        <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(section.section_content || '') }} />
                       </div>
                     )}
                   </div>

@@ -358,8 +358,8 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
 
   const stripHtmlTags = (html: string): string => {
     const div = document.createElement('div');
-    div.innerHTML = html;
-    return (div.textContent || div.innerText || '').trim();
+    div.textContent = html.replace(/<[^>]*>/g, ' ');
+    return (div.textContent || '').trim();
   };
 
   const applyTermsTemplate = async (template: InvoiceTermsTemplate) => {

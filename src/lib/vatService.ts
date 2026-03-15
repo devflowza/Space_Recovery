@@ -150,7 +150,7 @@ export const createVATReturn = async (
     .from('vat_returns')
     .insert([vatReturn])
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -185,7 +185,7 @@ export const updateVATReturn = async (
     .update(vatReturn)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -209,7 +209,7 @@ export const updateVATReturnStatus = async (
 export const deleteVATReturn = async (id: string) => {
   const { error } = await supabase
     .from('vat_returns')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;
@@ -222,7 +222,7 @@ export const createVATRecord = async (
     .from('vat_records')
     .insert([record])
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;

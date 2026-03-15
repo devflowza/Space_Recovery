@@ -212,7 +212,7 @@ export async function getOrCreateCompanySettings(): Promise<CompanySettings> {
       .from('company_settings')
       .insert({ id: 1, ...DEFAULT_COMPANY_SETTINGS })
       .select()
-      .single();
+      .maybeSingle();
 
     if (insertError) {
       if (insertError.code === '23505') {

@@ -123,7 +123,7 @@ export async function createSupplier(
       category:supplier_categories(id, name),
       payment_term:supplier_payment_terms(id, name, days)
     `)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data as SupplierWithRelations;
@@ -147,7 +147,7 @@ export async function updateSupplier(
       category:supplier_categories(id, name),
       payment_term:supplier_payment_terms(id, name, days)
     `)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data as SupplierWithRelations;
@@ -160,7 +160,7 @@ export async function toggleSupplierStatus(id: string, isActive: boolean, userId
 export async function deleteSupplier(id: string) {
   const { error } = await supabase
     .from('suppliers')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;

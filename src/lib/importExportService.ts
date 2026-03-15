@@ -376,7 +376,7 @@ export async function createJob(
       status: 'pending',
     })
     .select()
-    .single();
+    .maybeSingle();
 
   return { data, error };
 }
@@ -391,7 +391,7 @@ export async function updateJobProgress(
     .update(updates)
     .eq('id', jobId)
     .select()
-    .single();
+    .maybeSingle();
 
   return { data, error };
 }
@@ -489,7 +489,7 @@ export async function saveFieldMapping(
       description,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   return { data, error };
 }

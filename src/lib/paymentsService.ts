@@ -1,5 +1,19 @@
 import { supabase } from './supabaseClient';
 
+const logAuditTrail = async (actionType: string, tableName: string, recordId: string, oldValues: object, newValues: object) => {
+  try {
+    await supabase.rpc('log_audit_trail', {
+      p_action_type: actionType,
+      p_table_name: tableName,
+      p_record_id: recordId,
+      p_old_values: oldValues,
+      p_new_values: newValues,
+    });
+  } catch (e) {
+    console.error('Audit trail logging failed:', e);
+  }
+};
+
 export interface Payment {
   id?: string;
   payment_number?: string;
@@ -101,6 +115,7 @@ export const fetchPayments = async (filters?: {
       ),
       created_by_profile:profiles!payments_created_by_fkey(id, full_name)
     `)
+    .is('deleted_at', null)
     .order('payment_date', { ascending: false });
 
   if (filters?.status && filters.status !== 'all') {
@@ -174,13 +189,15 @@ export const createPayment = async (
       payment_number: paymentNumber,
     }])
     .select()
-    .single();
+    .maybeSingle();
 
   if (paymentError) throw paymentError;
 
   if (allocations && allocations.length > 0) {
     await allocatePaymentToInvoices(paymentData.id, allocations);
   }
+
+  await logAuditTrail('create', 'payments', paymentData.id, {}, { payment_number: paymentNumber, amount: payment.amount });
 
   return paymentData;
 };
@@ -206,12 +223,12 @@ export const allocatePaymentToInvoices = async (
       .from('invoices')
       .select('total_amount, amount_paid, amount_due')
       .eq('id', alloc.invoice_id)
-      .single();
+      .maybeSingle();
 
     if (fetchError) throw fetchError;
 
-    const newAmountPaid = (invoice.amount_paid || 0) + alloc.amount;
-    const newAmountDue = (invoice.total_amount || 0) - newAmountPaid;
+    const newAmountPaid = Math.round(((invoice.amount_paid || 0) + alloc.amount) * 100) / 100;
+    const newAmountDue = Math.round(((invoice.total_amount || 0) - newAmountPaid) * 100) / 100;
 
     let newStatus = 'sent';
     if (newAmountDue <= 0) {
@@ -253,7 +270,7 @@ export const updatePaymentStatus = async (
     .update({ status, notes: notes || undefined })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -272,7 +289,7 @@ export const voidPayment = async (paymentId: string) => {
       .from('invoices')
       .select('total_amount, amount_paid')
       .eq('id', alloc.invoice_id)
-      .single();
+      .maybeSingle();
 
     if (fetchError) throw fetchError;
 
@@ -298,7 +315,7 @@ export const voidPayment = async (paymentId: string) => {
 
   const { error: deleteAllocError } = await supabase
     .from('payment_allocations')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('payment_id', paymentId);
 
   if (deleteAllocError) throw deleteAllocError;
@@ -308,7 +325,7 @@ export const voidPayment = async (paymentId: string) => {
     .update({ status: 'refunded' })
     .eq('id', paymentId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -484,6 +501,7 @@ const createFinancialTransaction = async (transaction: {
 
   if (error) {
     console.error('Error creating financial transaction:', error);
+    throw new Error(`Failed to create financial audit record: ${error.message}`);
   }
 };
 

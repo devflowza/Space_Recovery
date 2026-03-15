@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { sanitizeHtml } from '../../lib/sanitizeHtml';
 import {
   Bold,
   Italic,
@@ -58,8 +59,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   useEffect(() => {
     if (editorRef.current && !isSourceMode) {
-      if (editorRef.current.innerHTML !== value) {
-        editorRef.current.innerHTML = value || '';
+      const sanitized = sanitizeHtml(value || '');
+      if (editorRef.current.innerHTML !== sanitized) {
+        editorRef.current.innerHTML = sanitized;
       }
     }
   }, [value, isSourceMode]);

@@ -122,7 +122,7 @@ export const reportsService = {
         created_by: user.id,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (reportError) {
       console.error('Error creating report:', reportError);
@@ -204,7 +204,7 @@ export const reportsService = {
         visible_to_customer: false,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (createError) {
       console.error('Error creating report version:', createError);
@@ -355,7 +355,7 @@ export const reportsService = {
     // Delete existing sections
     const { error: deleteError } = await supabase
       .from('case_report_sections')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('report_id', reportId);
 
     if (deleteError) {
@@ -401,7 +401,7 @@ export const reportsService = {
       .update(updates)
       .eq('id', reportId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error updating report:', error);
@@ -424,7 +424,7 @@ export const reportsService = {
       })
       .eq('id', reportId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error approving report:', error);
@@ -447,7 +447,7 @@ export const reportsService = {
       })
       .eq('id', reportId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error sending report to customer:', error);
@@ -463,7 +463,7 @@ export const reportsService = {
   async deleteReport(reportId: string): Promise<void> {
     const { error } = await supabase
       .from('case_reports')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', reportId);
 
     if (error) {

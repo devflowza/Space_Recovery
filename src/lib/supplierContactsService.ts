@@ -28,7 +28,7 @@ export async function createSupplierContact(
       created_by: userId,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data as SupplierContact;
@@ -48,7 +48,7 @@ export async function updateSupplierContact(
     })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data as SupplierContact;
@@ -57,7 +57,7 @@ export async function updateSupplierContact(
 export async function deleteSupplierContact(id: string) {
   const { error } = await supabase
     .from('supplier_contacts')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;

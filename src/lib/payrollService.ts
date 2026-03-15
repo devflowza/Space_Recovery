@@ -60,7 +60,7 @@ export const payrollService = {
       .from('salary_components')
       .insert(component)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data;
@@ -72,7 +72,7 @@ export const payrollService = {
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data;
@@ -145,7 +145,7 @@ export const payrollService = {
       .from('payroll_periods')
       .insert(data)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return period as PayrollPeriod;
@@ -157,7 +157,7 @@ export const payrollService = {
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as PayrollPeriod;
@@ -459,7 +459,7 @@ export const payrollService = {
       .from('payroll_adjustments')
       .insert(data)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return adjustment as PayrollAdjustment;
@@ -475,7 +475,7 @@ export const payrollService = {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as PayrollAdjustment;
@@ -493,7 +493,7 @@ export const payrollService = {
       .update({ status: 'cancelled' })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as PayrollAdjustment;
@@ -571,7 +571,7 @@ export const payrollService = {
       .from('employee_loans')
       .insert(loanData)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return loan as EmployeeLoan;
@@ -587,7 +587,7 @@ export const payrollService = {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as EmployeeLoan;
@@ -624,7 +624,7 @@ export const payrollService = {
         notes: repayment.notes,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -677,7 +677,7 @@ export const payrollService = {
       .from('employee_salary_structures')
       .insert({ ...data, is_active: true })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return structure as EmployeeSalaryStructure;
@@ -764,7 +764,7 @@ export const payrollService = {
   async resetPayrollSettings() {
     const { error } = await supabase
       .from('payroll_settings')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .neq('id', '00000000-0000-0000-0000-000000000000');
 
     if (error) throw error;
@@ -842,7 +842,7 @@ export const payrollService = {
         status: 'generated',
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return bankFile;

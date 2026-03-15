@@ -302,7 +302,7 @@ export async function updateKBArticle(
   });
 
   if (input.tag_ids !== undefined) {
-    await supabase.from('kb_article_tags').delete().eq('article_id', id);
+    await supabase.from('kb_article_tags').update({ deleted_at: new Date().toISOString() }).eq('article_id', id);
     if (input.tag_ids.length > 0) {
       await supabase.from('kb_article_tags').insert(
         input.tag_ids.map((tag_id) => ({ article_id: id, tag_id }))

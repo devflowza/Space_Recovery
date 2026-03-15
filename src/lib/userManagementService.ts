@@ -59,7 +59,7 @@ export const userManagementService = {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       const updateData: any = {
         full_name: userData.full_name,
