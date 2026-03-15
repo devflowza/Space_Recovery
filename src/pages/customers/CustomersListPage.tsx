@@ -1,0 +1,1065 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabaseClient';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Modal } from '../../components/ui/Modal';
+import { Badge } from '../../components/ui/Badge';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
+import { CustomerAvatar } from '../../components/ui/CustomerAvatar';
+import { Plus, Search, Filter, Mail, Phone, Building2, User, MapPin, Eye, Pencil, Users, UserCheck, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { formatDate } from '../../lib/format';
+import { useAuth } from '../../contexts/AuthContext';
+
+interface Customer {
+  id: string;
+  customer_number: string;
+  customer_name: string;
+  email: string | null;
+  mobile_number: string | null;
+  phone_number: string | null;
+  customer_group_id: string | null;
+  country: string | null;
+  city: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  postal_code: string | null;
+  portal_enabled: boolean;
+  portal_token: string;
+  profile_photo_url: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  customer_groups: { id: string; name: string } | null;
+  customer_company_relationships?: Array<{
+    companies: {
+      id: string;
+      company_name: string;
+      company_number: string;
+    };
+  }>;
+}
+
+interface CustomerGroup {
+  id: string;
+  name: string;
+}
+
+interface Company {
+  id: string;
+  company_number: string;
+  company_name: string;
+}
+
+interface Country {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
+
+interface City {
+  id: string;
+  name: string;
+  country_id: string;
+  is_active: boolean;
+}
+
+export const CustomersListPage: React.FC = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterGroup, setFilterGroup] = useState<string>('all');
+  const [filterPortal, setFilterPortal] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const CUSTOMERS_PER_PAGE = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterGroup, filterPortal]);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    mobile_number: '',
+    phone_number: '',
+    customer_group_id: '',
+    country_id: '',
+    city_id: '',
+    address: '',
+    portal_enabled: true,
+    notes: '',
+    company_id: '',
+  });
+
+  const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    customer_name: '',
+    email: '',
+    mobile_number: '',
+    phone_number: '',
+    customer_group_id: '',
+    country_id: '',
+    city_id: '',
+    address_line1: '',
+    portal_enabled: false,
+    notes: '',
+  });
+  const [newCompanyData, setNewCompanyData] = useState({
+    company_name: '',
+  });
+
+  const { data: customers = [], isLoading } = useQuery({
+    queryKey: ['customers_enhanced'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customers_enhanced')
+        .select(`
+          *,
+          customer_groups (id, name),
+          customer_company_relationships (
+            companies (id, company_name, company_number)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Customer[];
+    },
+  });
+
+  const { data: customerGroups = [] } = useQuery({
+    queryKey: ['customer_groups'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customer_groups')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      return data as CustomerGroup[];
+    },
+  });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, company_number, company_name')
+        .order('company_name');
+
+      if (error) throw error;
+      return data as Company[];
+    },
+  });
+
+  const { data: countries = [] } = useQuery({
+    queryKey: ['countries'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('countries')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      return data as Country[];
+    },
+  });
+
+  const { data: cities = [] } = useQuery({
+    queryKey: ['cities'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cities')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      return data as City[];
+    },
+  });
+
+  const { data: companySettings } = useQuery({
+    queryKey: ['company_settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('company_settings')
+        .select('location')
+        .eq('id', 1)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const filteredCities = cities.filter(
+    (city) => !formData.country_id || city.country_id === formData.country_id
+  );
+
+  const createMutation = useMutation({
+    mutationFn: async (customer: typeof formData) => {
+      const { data: customerNumber, error: numberError } = await supabase.rpc('get_next_customer_number');
+
+      if (numberError) throw numberError;
+
+      const selectedCountry = countries.find((c) => c.id === customer.country_id);
+      const selectedCity = cities.find((c) => c.id === customer.city_id);
+
+      const { data: newCustomer, error: createError } = await supabase
+        .from('customers_enhanced')
+        .insert({
+          customer_number: customerNumber,
+          customer_name: customer.name,
+          email: customer.email || null,
+          mobile_number: customer.mobile_number || null,
+          phone_number: customer.phone_number || null,
+          customer_group_id: customer.customer_group_id || null,
+          country: selectedCountry?.name || null,
+          city: selectedCity?.name || null,
+          address_line1: customer.address || null,
+          address_line2: null,
+          postal_code: null,
+          portal_enabled: customer.portal_enabled,
+          notes: customer.notes || null,
+          created_by: profile?.id,
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      if (customer.company_id && newCustomer) {
+        const { error: relError } = await supabase
+          .from('customer_company_relationships')
+          .insert({
+            customer_id: newCustomer.id,
+            company_id: customer.company_id,
+            is_primary_contact: false,
+          });
+
+        if (relError) throw relError;
+      }
+
+      return newCustomer;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers_enhanced'] });
+      setIsModalOpen(false);
+      resetForm();
+    },
+  });
+
+  const updateCustomerMutation = useMutation({
+    mutationFn: async (data: typeof editFormData) => {
+      if (!editingCustomer) throw new Error('No customer selected');
+
+      const selectedCountry = countries.find((c) => c.id === data.country_id);
+      const selectedCity = cities.find((c) => c.id === data.city_id);
+
+      const { data: updatedCustomer, error } = await supabase
+        .from('customers_enhanced')
+        .update({
+          customer_name: data.customer_name,
+          email: data.email || null,
+          mobile_number: data.mobile_number || null,
+          phone_number: data.phone_number || null,
+          customer_group_id: data.customer_group_id || null,
+          country: selectedCountry?.name || null,
+          city: selectedCity?.name || null,
+          address_line1: data.address_line1 || null,
+          portal_enabled: data.portal_enabled,
+          notes: data.notes || null,
+        })
+        .eq('id', editingCustomer.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return updatedCustomer;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers_enhanced'] });
+      setIsEditModalOpen(false);
+      setEditingCustomer(null);
+    },
+  });
+
+  const createCompanyMutation = useMutation({
+    mutationFn: async (companyData: typeof newCompanyData) => {
+      const { data: companyNumber, error: numberError } = await supabase.rpc('get_next_company_number');
+
+      if (numberError) throw numberError;
+
+      const { data: newCompany, error: createError } = await supabase
+        .from('companies')
+        .insert({
+          company_number: companyNumber,
+          company_name: companyData.company_name,
+          created_by: profile?.id,
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      return newCompany;
+    },
+    onSuccess: async (newCompany) => {
+      await queryClient.invalidateQueries({ queryKey: ['companies'] });
+      await queryClient.refetchQueries({ queryKey: ['companies'] });
+      setFormData({ ...formData, company_id: newCompany.id });
+      setIsAddCompanyModalOpen(false);
+      setNewCompanyData({ company_name: '' });
+    },
+  });
+
+  const resetForm = () => {
+    const defaultCountryId = companySettings?.location?.default_country_id || '';
+    setFormData({
+      name: '',
+      email: '',
+      mobile_number: '',
+      phone_number: '',
+      customer_group_id: '',
+      country_id: defaultCountryId,
+      city_id: '',
+      address: '',
+      portal_enabled: true,
+      notes: '',
+      company_id: '',
+    });
+  };
+
+  const handleOpenModal = () => {
+    const defaultCountryId = companySettings?.location?.default_country_id || '';
+    setFormData((prev) => ({ ...prev, country_id: defaultCountryId }));
+    setIsModalOpen(true);
+  };
+
+  const handleAddNewCompany = () => {
+    setIsAddCompanyModalOpen(true);
+  };
+
+  const handleCreateCompany = (e: React.FormEvent) => {
+    e.preventDefault();
+    createCompanyMutation.mutate(newCompanyData);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
+  };
+
+  const handleOpenEditModal = (customer: Customer) => {
+    setEditingCustomer(customer);
+
+    const customerCountry = countries.find((c) => c.name === customer.country);
+    const customerCity = cities.find((c) => c.name === customer.city);
+
+    setEditFormData({
+      customer_name: customer.customer_name,
+      email: customer.email || '',
+      mobile_number: customer.mobile_number || '',
+      phone_number: customer.phone_number || '',
+      customer_group_id: customer.customer_group_id || '',
+      country_id: customerCountry?.id || '',
+      city_id: customerCity?.id || '',
+      address_line1: customer.address_line1 || '',
+      portal_enabled: customer.portal_enabled,
+      notes: customer.notes || '',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSubmitEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateCustomerMutation.mutate(editFormData);
+  };
+
+  const filteredCustomers = customers.filter((customer) => {
+    const matchesSearch =
+      customer.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.customer_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.mobile_number?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesGroup =
+      filterGroup === 'all' || customer.customer_group_id === filterGroup;
+
+    const matchesPortal =
+      filterPortal === 'all' ||
+      (filterPortal === 'enabled' && customer.portal_enabled) ||
+      (filterPortal === 'disabled' && !customer.portal_enabled);
+
+    return matchesSearch && matchesGroup && matchesPortal;
+  });
+
+  const totalPages = Math.ceil(filteredCustomers.length / CUSTOMERS_PER_PAGE);
+  const startIndex = (currentPage - 1) * CUSTOMERS_PER_PAGE;
+  const endIndex = Math.min(startIndex + CUSTOMERS_PER_PAGE, filteredCustomers.length);
+  const paginatedCustomers = filteredCustomers.slice(startIndex, endIndex);
+
+  const recentCustomers = customers.filter((c) => {
+    const createdDate = new Date(c.created_at);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return createdDate >= thirtyDaysAgo;
+  });
+
+  return (
+    <div className="p-6 max-w-[1800px] mx-auto">
+      <div className="mb-6 flex items-start justify-between">
+        <div className="flex items-start gap-4">
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
+            style={{
+              backgroundColor: '#3b82f6',
+              boxShadow: '0 10px 40px -10px #3b82f680',
+            }}
+          >
+            <Users className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 mb-1">Customers</h1>
+            <p className="text-slate-600 text-base">
+              Manage individual customer records and relationships
+            </p>
+          </div>
+        </div>
+        <Button onClick={handleOpenModal} style={{ backgroundColor: '#3b82f6' }}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Customer
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Customers</p>
+              <p className="text-2xl font-bold text-blue-900 mt-1">{customers.length}</p>
+            </div>
+            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Portal Enabled</p>
+              <p className="text-2xl font-bold text-green-900 mt-1">{customers.filter((c) => c.portal_enabled).length}</p>
+            </div>
+            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-4 border border-violet-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-violet-600 uppercase tracking-wide">Recent (30d)</p>
+              <p className="text-2xl font-bold text-violet-900 mt-1">{recentCustomers.length}</p>
+            </div>
+            <div className="w-10 h-10 bg-violet-500 rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Active</p>
+              <p className="text-2xl font-bold text-emerald-900 mt-1">{customers.filter((c) => c.is_active).length}</p>
+            </div>
+            <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 mb-6">
+        <div className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            <div className="w-full lg:w-80 relative flex-shrink-0">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search customers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div className="flex-1 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setFilterPortal(filterPortal === 'enabled' ? 'all' : 'enabled')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  filterPortal === 'enabled'
+                    ? 'bg-green-500 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Portal Enabled
+              </button>
+              <button
+                onClick={() => setFilterPortal(filterPortal === 'disabled' ? 'all' : 'disabled')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  filterPortal === 'disabled'
+                    ? 'bg-slate-500 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Portal Disabled
+              </button>
+              {(filterGroup !== 'all' || filterPortal !== 'all') && (
+                <button
+                  onClick={() => {
+                    setFilterGroup('all');
+                    setFilterPortal('all');
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 transition-all"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+
+            <Button
+              variant="secondary"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 flex-shrink-0"
+            >
+              <Filter className="w-4 h-4" />
+              More Filters
+              {(filterGroup !== 'all' || filterPortal !== 'all') && (
+                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500"></span>
+              )}
+            </Button>
+          </div>
+
+          {showFilters && (
+            <div className="mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Customer Group
+                </label>
+                <select
+                  value={filterGroup}
+                  onChange={(e) => setFilterGroup(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">All Groups</option>
+                  {customerGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Portal Status
+                </label>
+                <select
+                  value={filterPortal}
+                  onChange={(e) => setFilterPortal(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="enabled">Portal Enabled</option>
+                  <option value="disabled">Portal Disabled</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-500 mt-4">Loading customers...</p>
+        </div>
+      ) : filteredCustomers.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
+          <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+          <p className="text-slate-500 text-lg">
+            {searchTerm || filterGroup !== 'all' || filterPortal !== 'all'
+              ? 'No customers found matching your criteria.'
+              : 'No customers yet. Add your first customer to get started.'}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Customer Number
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Phone
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Location
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Group
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Company
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Portal Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Created At
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {paginatedCustomers.map((customer) => (
+                    <tr
+                      key={customer.id}
+                      onClick={() => navigate(`/customers/${customer.id}`)}
+                      className="hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-semibold text-blue-600">
+                          {customer.customer_number}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <CustomerAvatar
+                            firstName={customer.customer_name}
+                            lastName=""
+                            photoUrl={customer.profile_photo_url}
+                            size="sm"
+                          />
+                          <div>
+                            <div className="font-medium text-slate-900">
+                              {customer.customer_name}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {customer.email ? (
+                          <div className="text-sm text-slate-700 flex items-center gap-1">
+                            <Mail className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="truncate max-w-[200px]">{customer.email}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {customer.mobile_number ? (
+                          <div className="text-sm text-slate-700 flex items-center gap-1">
+                            <Phone className="w-3.5 h-3.5 text-slate-400" />
+                            {customer.mobile_number}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {(customer.city || customer.country) ? (
+                          <div className="text-sm text-slate-700 flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{[customer.city, customer.country].filter(Boolean).join(', ')}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {customer.customer_groups ? (
+                          <Badge variant="custom" color="#8b5cf6" size="sm">
+                            {customer.customer_groups.name}
+                          </Badge>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {customer.customer_company_relationships && customer.customer_company_relationships.length > 0 ? (
+                          <div className="flex items-center gap-1 text-sm text-slate-700">
+                            <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="truncate max-w-[150px]">
+                              {customer.customer_company_relationships[0].companies.company_name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {customer.portal_enabled ? (
+                          <Badge variant="success" size="sm">
+                            Enabled
+                          </Badge>
+                        ) : (
+                          <Badge variant="default" size="sm">
+                            Disabled
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                        {formatDate(customer.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 mt-4 p-2.5">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-slate-600">
+                  Showing <span className="font-medium text-slate-900">{startIndex + 1}</span> to{' '}
+                  <span className="font-medium text-slate-900">{endIndex}</span> of{' '}
+                  <span className="font-medium text-slate-900">{filteredCustomers.length}</span> customers
+                </div>
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-slate-600">
+                    Page <span className="font-medium text-slate-900">{currentPage}</span> of{' '}
+                    <span className="font-medium text-slate-900">{totalPages}</span>
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="flex items-center gap-1"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="flex items-center gap-1"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          resetForm();
+        }}
+        title="Add New Customer"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+            <Input
+              label="Mobile Number"
+              value={formData.mobile_number}
+              onChange={(e) => setFormData({ ...formData, mobile_number: e.target.value })}
+            />
+          </div>
+
+          <Input
+            label="Phone Number (Alternative)"
+            value={formData.phone_number}
+            onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <SearchableSelect
+              label="Customer Group"
+              value={formData.customer_group_id}
+              onChange={(value) => setFormData({ ...formData, customer_group_id: value })}
+              options={customerGroups.map((g) => ({ id: g.id, name: g.name }))}
+              placeholder="Select Group"
+            />
+
+            <SearchableSelect
+              label="Company (Optional)"
+              value={formData.company_id}
+              onChange={(value) => setFormData({ ...formData, company_id: value })}
+              options={companies.map((c) => ({ id: c.id, name: `${c.company_name} (${c.company_number})` }))}
+              placeholder="No Company"
+              onAddNew={handleAddNewCompany}
+              addNewLabel="Add New Company"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <SearchableSelect
+              label="Country"
+              value={formData.country_id}
+              onChange={(value) => {
+                setFormData({ ...formData, country_id: value, city_id: '' });
+              }}
+              options={countries.map((c) => ({ id: c.id, name: c.name }))}
+              placeholder="Select Country"
+            />
+            <SearchableSelect
+              label="City"
+              value={formData.city_id}
+              onChange={(value) => setFormData({ ...formData, city_id: value })}
+              options={filteredCities.map((c) => ({ id: c.id, name: c.name }))}
+              placeholder="Select City"
+              disabled={!formData.country_id}
+            />
+          </div>
+
+          <Input
+            label="Address"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          />
+
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.portal_enabled}
+                onChange={(e) =>
+                  setFormData({ ...formData, portal_enabled: e.target.checked })
+                }
+                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-slate-700">
+                Enable Client Portal Access
+              </span>
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Internal Notes
+            </label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              rows={2}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              placeholder="Add any internal notes..."
+            />
+          </div>
+
+          <div className="flex gap-3 justify-end pt-3 border-t">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setIsModalOpen(false);
+                resetForm();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" style={{ backgroundColor: '#3b82f6' }}>
+              Create Customer
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isAddCompanyModalOpen}
+        onClose={() => {
+          setIsAddCompanyModalOpen(false);
+          setNewCompanyData({ company_name: '' });
+        }}
+        title="Add New Company"
+      >
+        <form onSubmit={handleCreateCompany} className="space-y-4">
+          <Input
+            label="Company Name"
+            value={newCompanyData.company_name}
+            onChange={(e) => setNewCompanyData({ ...newCompanyData, company_name: e.target.value })}
+            required
+          />
+
+          <div className="flex gap-3 justify-end pt-3 border-t">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setIsAddCompanyModalOpen(false);
+                setNewCompanyData({ company_name: '' });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" style={{ backgroundColor: '#3b82f6' }}>
+              Create Company
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingCustomer(null);
+        }}
+        title="Edit Customer"
+      >
+        <form onSubmit={handleSubmitEdit} className="space-y-4">
+          <Input
+            label="Customer Name"
+            value={editFormData.customer_name}
+            onChange={(e) => setEditFormData({ ...editFormData, customer_name: e.target.value })}
+            required
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Email"
+              type="email"
+              value={editFormData.email}
+              onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+            />
+            <Input
+              label="Mobile Number"
+              value={editFormData.mobile_number}
+              onChange={(e) => setEditFormData({ ...editFormData, mobile_number: e.target.value })}
+            />
+          </div>
+
+          <Input
+            label="Phone Number (Alternative)"
+            value={editFormData.phone_number}
+            onChange={(e) => setEditFormData({ ...editFormData, phone_number: e.target.value })}
+          />
+
+          <SearchableSelect
+            label="Customer Group"
+            value={editFormData.customer_group_id}
+            onChange={(value) => setEditFormData({ ...editFormData, customer_group_id: value })}
+            options={customerGroups.map((g) => ({ id: g.id, name: g.name }))}
+            placeholder="Select Group"
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <SearchableSelect
+              label="Country"
+              value={editFormData.country_id}
+              onChange={(value) => {
+                setEditFormData({ ...editFormData, country_id: value, city_id: '' });
+              }}
+              options={countries.map((c) => ({ id: c.id, name: c.name }))}
+              placeholder="Select Country"
+            />
+            <SearchableSelect
+              label="City"
+              value={editFormData.city_id}
+              onChange={(value) => setEditFormData({ ...editFormData, city_id: value })}
+              options={filteredCities.map((c) => ({ id: c.id, name: c.name }))}
+              placeholder="Select City"
+              disabled={!editFormData.country_id}
+            />
+          </div>
+
+          <Input
+            label="Address"
+            value={editFormData.address_line1}
+            onChange={(e) => setEditFormData({ ...editFormData, address_line1: e.target.value })}
+          />
+
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={editFormData.portal_enabled}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, portal_enabled: e.target.checked })
+                }
+                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-slate-700">
+                Enable Client Portal Access
+              </span>
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Internal Notes
+            </label>
+            <textarea
+              value={editFormData.notes}
+              onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+              rows={2}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              placeholder="Add any internal notes..."
+            />
+          </div>
+
+          <div className="flex gap-3 justify-end pt-3 border-t">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setEditingCustomer(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" style={{ backgroundColor: '#3b82f6' }} disabled={updateCustomerMutation.isPending}>
+              {updateCustomerMutation.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+};

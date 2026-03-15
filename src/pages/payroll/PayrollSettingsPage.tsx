@@ -1,0 +1,334 @@
+import React, { useState } from 'react';
+import { Save, RotateCcw, Settings } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { payrollService } from '../../lib/payrollService';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Card } from '../../components/ui/Card';
+import { PageHeader } from '../../components/shared/PageHeader';
+import { useToast } from '../../hooks/useToast';
+
+export const PayrollSettingsPage: React.FC = () => {
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['payroll-settings'],
+    queryFn: () => payrollService.getPayrollSettings(),
+  });
+
+  const [formData, setFormData] = useState({
+    working_days_per_month: settings?.working_days_per_month || 22,
+    working_hours_per_day: settings?.working_hours_per_day || 8,
+    overtime_regular: settings?.overtime_rate_multiplier?.regular || 1.25,
+    overtime_weekend: settings?.overtime_rate_multiplier?.weekend || 1.5,
+    overtime_holiday: settings?.overtime_rate_multiplier?.holiday || 2.0,
+    currency_code: settings?.currency?.code || 'OMR',
+    currency_symbol: settings?.currency?.symbol || 'ر.ع.',
+    currency_decimals: settings?.currency?.decimals || 3,
+    payment_day: settings?.payment_day || 28,
+  });
+
+  React.useEffect(() => {
+    if (settings) {
+      setFormData({
+        working_days_per_month: settings.working_days_per_month,
+        working_hours_per_day: settings.working_hours_per_day,
+        overtime_regular: settings.overtime_rate_multiplier.regular,
+        overtime_weekend: settings.overtime_rate_multiplier.weekend,
+        overtime_holiday: settings.overtime_rate_multiplier.holiday,
+        currency_code: settings.currency.code,
+        currency_symbol: settings.currency.symbol,
+        currency_decimals: settings.currency.decimals,
+        payment_day: settings.payment_day,
+      });
+    }
+  }, [settings]);
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      await payrollService.updatePayrollSettings({
+        working_days_per_month: data.working_days_per_month,
+        working_hours_per_day: data.working_hours_per_day,
+        overtime_rate_multiplier: {
+          regular: data.overtime_regular,
+          weekend: data.overtime_weekend,
+          holiday: data.overtime_holiday,
+        },
+        currency: {
+          code: data.currency_code,
+          symbol: data.currency_symbol,
+          decimals: data.currency_decimals,
+        },
+        payment_day: data.payment_day,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payroll-settings'] });
+      showToast('Payroll settings updated successfully', 'success');
+    },
+    onError: (error: any) => {
+      showToast(error.message || 'Failed to update settings', 'error');
+    },
+  });
+
+  const resetSettingsMutation = useMutation({
+    mutationFn: () => payrollService.resetPayrollSettings(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payroll-settings'] });
+      showToast('Settings reset to defaults', 'success');
+    },
+    onError: (error: any) => {
+      showToast(error.message || 'Failed to reset settings', 'error');
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSettingsMutation.mutate(formData);
+  };
+
+  const handleReset = () => {
+    if (confirm('Are you sure you want to reset all settings to default values?')) {
+      resetSettingsMutation.mutate();
+    }
+  };
+
+  const handleChange = (field: string, value: string | number) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-gray-500">Loading payroll settings...</div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Payroll Settings"
+        description="Configure payroll calculation parameters and defaults"
+        icon={Settings}
+      />
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Working Hours Configuration</h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Set default working hours used for salary calculations
+            </p>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Working Days per Month
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={formData.working_days_per_month}
+                  onChange={(e) =>
+                    handleChange('working_days_per_month', parseInt(e.target.value))
+                  }
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Typically 22 days for 5-day workweek
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Working Hours per Day
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="24"
+                  value={formData.working_hours_per_day}
+                  onChange={(e) =>
+                    handleChange('working_hours_per_day', parseInt(e.target.value))
+                  }
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Standard daily working hours</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Overtime Rate Multipliers</h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Set multipliers for different types of overtime pay
+            </p>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Regular Overtime
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  max="5"
+                  value={formData.overtime_regular}
+                  onChange={(e) =>
+                    handleChange('overtime_regular', parseFloat(e.target.value))
+                  }
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Weekday overtime multiplier (e.g., 1.25 = 125%)
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Weekend Overtime
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  max="5"
+                  value={formData.overtime_weekend}
+                  onChange={(e) =>
+                    handleChange('overtime_weekend', parseFloat(e.target.value))
+                  }
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Weekend overtime multiplier</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Holiday Overtime
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  max="5"
+                  value={formData.overtime_holiday}
+                  onChange={(e) =>
+                    handleChange('overtime_holiday', parseFloat(e.target.value))
+                  }
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Holiday overtime multiplier</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Currency & Payment Settings</h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Configure currency display and payment defaults
+            </p>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Currency Code
+                </label>
+                <select
+                  value={formData.currency_code}
+                  onChange={(e) => {
+                    const code = e.target.value;
+                    const currencyMap: Record<string, { symbol: string; decimals: number }> =
+                      {
+                        OMR: { symbol: 'ر.ع.', decimals: 3 },
+                        USD: { symbol: '$', decimals: 2 },
+                        EUR: { symbol: '€', decimals: 2 },
+                        GBP: { symbol: '£', decimals: 2 },
+                        AED: { symbol: 'د.إ', decimals: 2 },
+                        SAR: { symbol: 'ر.س', decimals: 2 },
+                      };
+                    const currency = currencyMap[code] || { symbol: code, decimals: 2 };
+                    handleChange('currency_code', code);
+                    handleChange('currency_symbol', currency.symbol);
+                    handleChange('currency_decimals', currency.decimals);
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="OMR">Omani Rial (OMR)</option>
+                  <option value="USD">US Dollar (USD)</option>
+                  <option value="EUR">Euro (EUR)</option>
+                  <option value="GBP">British Pound (GBP)</option>
+                  <option value="AED">UAE Dirham (AED)</option>
+                  <option value="SAR">Saudi Riyal (SAR)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Currency Symbol
+                </label>
+                <Input
+                  type="text"
+                  value={formData.currency_symbol}
+                  onChange={(e) => handleChange('currency_symbol', e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Decimal Places
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="4"
+                  value={formData.currency_decimals}
+                  onChange={(e) =>
+                    handleChange('currency_decimals', parseInt(e.target.value))
+                  }
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Number of decimal places to display</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Default Payment Day
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={formData.payment_day}
+                  onChange={(e) => handleChange('payment_day', parseInt(e.target.value))}
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Day of month for salary payments</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <div className="flex justify-between items-center pt-6">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleReset}
+            disabled={resetSettingsMutation.isPending}
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset to Defaults
+          </Button>
+          <Button type="submit" disabled={updateSettingsMutation.isPending}>
+            <Save className="h-4 w-4 mr-2" />
+            {updateSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+};

@@ -1,0 +1,139 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabaseClient';
+import { SETTINGS_CATEGORIES } from '../../config/settingsCategories';
+import { Settings as SettingsIcon, ChevronRight } from 'lucide-react';
+
+export const SettingsDashboard: React.FC = () => {
+  const navigate = useNavigate();
+
+  const { data: categoryCounts, isLoading } = useQuery({
+    queryKey: ['settings_category_counts'],
+    queryFn: async () => {
+      const counts: Record<string, number> = {};
+
+      for (const category of SETTINGS_CATEGORIES) {
+        if (category.tables.length > 0) {
+          let totalCount = 0;
+          for (const table of category.tables) {
+            const { count, error } = await supabase
+              .from(table)
+              .select('*', { count: 'exact', head: true });
+
+            if (!error && count !== null) {
+              totalCount += count;
+            }
+          }
+          counts[category.id] = totalCount;
+        } else {
+          counts[category.id] = 0;
+        }
+      }
+
+      return counts;
+    },
+  });
+
+  const handleCategoryClick = (categoryId: string) => {
+    if (categoryId === 'system-numbers') {
+      navigate('/settings/system-numbers');
+    } else if (categoryId === 'general-settings') {
+      navigate('/settings/general-settings');
+    } else if (categoryId === 'templates') {
+      navigate('/templates');
+    } else if (categoryId === 'report-sections') {
+      navigate('/settings/report-sections');
+    } else if (categoryId === 'localization') {
+      navigate('/settings/localization');
+    } else if (categoryId === 'client-portal') {
+      navigate('/settings/client-portal');
+    } else if (categoryId === 'import-export') {
+      navigate('/settings/import-export');
+    } else {
+      navigate(`/settings/${categoryId}`);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="mb-6 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+            style={{
+              background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
+              boxShadow: '0 6px 20px -4px rgba(6, 182, 212, 0.4)'
+            }}
+          >
+            <SettingsIcon className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 mb-0.5">System Settings</h1>
+            <p className="text-slate-600 text-sm">Configure and manage your system options</p>
+          </div>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-20">
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-500 mt-4 text-base">Loading settings...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {SETTINGS_CATEGORIES.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => handleCategoryClick(category.id)}
+              className="group bg-white rounded-xl shadow-md border border-slate-200 p-6 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 text-left relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 opacity-[0.03] -mr-6 -mt-6">
+                <category.icon className="w-full h-full" />
+              </div>
+
+              <div
+                className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 shadow-md relative z-10"
+                style={{
+                  backgroundColor: category.backgroundColor,
+                  boxShadow: `0 8px 20px -6px ${category.backgroundColor}70`
+                }}
+              >
+                <category.icon className="w-7 h-7 text-white" />
+              </div>
+
+              <h3 className="text-lg font-bold text-slate-900 mb-2 relative z-10">
+                {category.title}
+              </h3>
+              <p className="text-slate-600 text-sm mb-5 leading-relaxed relative z-10 line-clamp-2">
+                {category.description}
+              </p>
+
+              <div className="flex items-center justify-between relative z-10">
+                {category.tables.length > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold" style={{ color: category.backgroundColor }}>
+                      {categoryCounts?.[category.id] || 0}
+                    </span>
+                    <span className="text-slate-500 text-xs font-medium">items</span>
+                  </div>
+                ) : (
+                  <span className="text-slate-500 text-xs font-medium">
+                    {category.actionLabel}
+                  </span>
+                )}
+
+                <div
+                  className="p-1.5 rounded-lg transition-all group-hover:translate-x-0.5"
+                  style={{ backgroundColor: category.backgroundColor + '15' }}
+                >
+                  <ChevronRight className="w-4 h-4" style={{ color: category.backgroundColor }} />
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};

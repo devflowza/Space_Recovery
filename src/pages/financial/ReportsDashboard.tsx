@@ -1,0 +1,770 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabaseClient';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Modal } from '../../components/ui/Modal';
+import { useCurrency } from '../../hooks/useCurrency';
+import { getFinancialYearDates } from '../../lib/financialService';
+import {
+  generateProfitLossReport,
+  generateAgedReceivablesReport,
+  generateCashFlowReport,
+  generateInvoiceSummaryReport,
+  exportReportToCSV,
+  ProfitLossData,
+  AgedReceivablesData,
+  CashFlowData,
+  InvoiceSummaryData,
+} from '../../lib/financialReportsService';
+import {
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  FileText,
+  Download,
+  Calendar,
+  PieChart,
+  Receipt,
+  Wallet,
+  AlertCircle,
+  X,
+} from 'lucide-react';
+
+interface ReportData {
+  totalRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
+  profitMargin: number;
+  invoiceCount: number;
+  expenseCount: number;
+}
+
+export const ReportsDashboard: React.FC = () => {
+  const { formatCurrency } = useCurrency();
+  const [dateRange, setDateRange] = useState<string>('thisMonth');
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [profitLossData, setProfitLossData] = useState<ProfitLossData | null>(null);
+  const [agedReceivablesData, setAgedReceivablesData] = useState<AgedReceivablesData | null>(null);
+  const [cashFlowData, setCashFlowData] = useState<CashFlowData | null>(null);
+  const [invoiceSummaryData, setInvoiceSummaryData] = useState<InvoiceSummaryData | null>(null);
+
+  const dates = getFinancialYearDates();
+  const selectedDateRange = dates[dateRange as keyof typeof dates] || dates.thisMonth;
+
+  const handleGenerateReport = async (reportId: string) => {
+    setSelectedReport(reportId);
+    setReportLoading(true);
+    setShowReportModal(true);
+
+    try {
+      switch (reportId) {
+        case 'profit-loss':
+          const plData = await generateProfitLossReport(selectedDateRange.start, selectedDateRange.end);
+          setProfitLossData(plData);
+          break;
+        case 'aged-receivables':
+          const arData = await generateAgedReceivablesReport();
+          setAgedReceivablesData(arData);
+          break;
+        case 'cash-flow':
+          const cfData = await generateCashFlowReport(selectedDateRange.start, selectedDateRange.end);
+          setCashFlowData(cfData);
+          break;
+        case 'invoice-report':
+          const isData = await generateInvoiceSummaryReport(selectedDateRange.start, selectedDateRange.end);
+          setInvoiceSummaryData(isData);
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error('Error generating report:', error);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (!selectedReport) return;
+
+    switch (selectedReport) {
+      case 'profit-loss':
+        if (profitLossData) {
+          const data = [
+            { category: 'Total Revenue', amount: profitLossData.revenue.total },
+            { category: 'Total Expenses', amount: profitLossData.expenses.total },
+            { category: 'Gross Profit', amount: profitLossData.grossProfit },
+            { category: 'Net Profit', amount: profitLossData.netProfit },
+          ];
+          exportReportToCSV(data, [{ key: 'category', label: 'Category' }, { key: 'amount', label: 'Amount' }], 'profit-loss-report');
+        }
+        break;
+      case 'aged-receivables':
+        if (agedReceivablesData) {
+          const data = [
+            { period: 'Current', amount: agedReceivablesData.totals.current },
+            { period: '1-30 Days', amount: agedReceivablesData.totals.thirtyDays },
+            { period: '31-60 Days', amount: agedReceivablesData.totals.sixtyDays },
+            { period: '61-90 Days', amount: agedReceivablesData.totals.ninetyDays },
+            { period: '90+ Days', amount: agedReceivablesData.totals.overNinetyDays },
+            { period: 'Total', amount: agedReceivablesData.totals.total },
+          ];
+          exportReportToCSV(data, [{ key: 'period', label: 'Period' }, { key: 'amount', label: 'Amount' }], 'aged-receivables-report');
+        }
+        break;
+      case 'cash-flow':
+        if (cashFlowData) {
+          const data = [
+            { item: 'Operating Receipts', amount: cashFlowData.operatingActivities.receipts },
+            { item: 'Operating Payments', amount: cashFlowData.operatingActivities.payments },
+            { item: 'Net Operating', amount: cashFlowData.operatingActivities.net },
+            { item: 'Net Cash Flow', amount: cashFlowData.netCashFlow },
+          ];
+          exportReportToCSV(data, [{ key: 'item', label: 'Item' }, { key: 'amount', label: 'Amount' }], 'cash-flow-report');
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  const closeReportModal = () => {
+    setShowReportModal(false);
+    setSelectedReport(null);
+    setProfitLossData(null);
+    setAgedReceivablesData(null);
+    setCashFlowData(null);
+    setInvoiceSummaryData(null);
+  };
+
+  const { data: reportData, isLoading } = useQuery({
+    queryKey: ['financial_report', dateRange],
+    queryFn: async () => {
+      const { start, end } = selectedDateRange;
+
+      const [invoicesResult, expensesResult] = await Promise.all([
+        supabase
+          .from('invoices')
+          .select('total_amount, amount_paid, status, invoice_date')
+          .gte('invoice_date', start)
+          .lte('invoice_date', end),
+        supabase
+          .from('expenses')
+          .select('amount, status, expense_date')
+          .gte('expense_date', start)
+          .lte('expense_date', end)
+          .in('status', ['approved', 'paid']),
+      ]);
+
+      const invoices = invoicesResult.data || [];
+      const expenses = expensesResult.data || [];
+
+      const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.amount_paid || 0), 0);
+      const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+      const netProfit = totalRevenue - totalExpenses;
+      const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+      return {
+        totalRevenue,
+        totalExpenses,
+        netProfit,
+        profitMargin,
+        invoiceCount: invoices.length,
+        expenseCount: expenses.length,
+      } as ReportData;
+    },
+  });
+
+  const { data: invoicesByStatus } = useQuery({
+    queryKey: ['invoices_by_status', dateRange],
+    queryFn: async () => {
+      const { start, end } = selectedDateRange;
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('status, total_amount')
+        .gte('invoice_date', start)
+        .lte('invoice_date', end);
+
+      if (error) throw error;
+
+      const statusCounts: Record<string, { count: number; amount: number }> = {};
+      (data || []).forEach((invoice) => {
+        if (!statusCounts[invoice.status]) {
+          statusCounts[invoice.status] = { count: 0, amount: 0 };
+        }
+        statusCounts[invoice.status].count += 1;
+        statusCounts[invoice.status].amount += invoice.total_amount || 0;
+      });
+
+      return statusCounts;
+    },
+  });
+
+  const { data: expensesByCategory } = useQuery({
+    queryKey: ['expenses_by_category', dateRange],
+    queryFn: async () => {
+      const { start, end } = selectedDateRange;
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('amount, category:expense_categories(name)')
+        .gte('expense_date', start)
+        .lte('expense_date', end)
+        .in('status', ['approved', 'paid']);
+
+      if (error) throw error;
+
+      const categoryCounts: Record<string, number> = {};
+      (data || []).forEach((expense: any) => {
+        const categoryName = expense.category?.name || 'Uncategorized';
+        if (!categoryCounts[categoryName]) {
+          categoryCounts[categoryName] = 0;
+        }
+        categoryCounts[categoryName] += expense.amount || 0;
+      });
+
+      return categoryCounts;
+    },
+  });
+
+  const { data: topCustomers } = useQuery({
+    queryKey: ['top_customers', dateRange],
+    queryFn: async () => {
+      const { start, end } = selectedDateRange;
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('customer_id, amount_paid, customers_enhanced(customer_name)')
+        .gte('invoice_date', start)
+        .lte('invoice_date', end);
+
+      if (error) throw error;
+
+      const customerRevenue: Record<string, { name: string; amount: number }> = {};
+      (data || []).forEach((invoice: any) => {
+        const customerId = invoice.customer_id;
+        const customerName = invoice.customers_enhanced?.customer_name || 'Unknown';
+        if (!customerRevenue[customerId]) {
+          customerRevenue[customerId] = { name: customerName, amount: 0 };
+        }
+        customerRevenue[customerId].amount += invoice.amount_paid || 0;
+      });
+
+      return Object.values(customerRevenue)
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 10);
+    },
+  });
+
+  const reports = [
+    {
+      id: 'profit-loss',
+      name: 'Profit & Loss Statement',
+      description: 'Revenue, expenses, and net profit',
+      icon: TrendingUp,
+      color: 'blue',
+    },
+    {
+      id: 'balance-sheet',
+      name: 'Balance Sheet',
+      description: 'Assets, liabilities, and equity',
+      icon: BarChart3,
+      color: 'green',
+    },
+    {
+      id: 'cash-flow',
+      name: 'Cash Flow Statement',
+      description: 'Operating, investing, and financing activities',
+      icon: DollarSign,
+      color: 'teal',
+    },
+    {
+      id: 'aged-receivables',
+      name: 'Aged Receivables',
+      description: 'Outstanding invoices by aging period',
+      icon: Receipt,
+      color: 'orange',
+    },
+    {
+      id: 'aged-payables',
+      name: 'Aged Payables',
+      description: 'Outstanding expenses and payments',
+      icon: Wallet,
+      color: 'red',
+    },
+    {
+      id: 'revenue-by-service',
+      name: 'Revenue by Service',
+      description: 'Income breakdown by service type',
+      icon: PieChart,
+      color: 'purple',
+    },
+    {
+      id: 'expense-by-category',
+      name: 'Expense by Category',
+      description: 'Cost analysis by category',
+      icon: BarChart3,
+      color: 'slate',
+    },
+    {
+      id: 'invoice-report',
+      name: 'Invoice Report',
+      description: 'Detailed invoice analysis',
+      icon: FileText,
+      color: 'blue',
+    },
+    {
+      id: 'invoice-vs-expense',
+      name: 'Invoice vs Expense',
+      description: 'Profitability and margin analysis',
+      icon: TrendingDown,
+      color: 'indigo',
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-600 mt-4">Loading reports...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 max-w-[1800px] mx-auto">
+      <div className="mb-8 flex items-start justify-between">
+        <div className="flex items-start gap-6">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
+            style={{
+              backgroundColor: '#3b82f6',
+              boxShadow: '0 10px 40px -10px #3b82f680',
+            }}
+          >
+            <BarChart3 className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">Financial Reports</h1>
+            <p className="text-slate-600 text-base">
+              Comprehensive financial analysis and insights
+            </p>
+            <div className="flex gap-4 mt-3">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-slate-600">{formatCurrency(reportData?.totalRevenue || 0)} Revenue</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <span className="text-slate-600">{formatCurrency(reportData?.totalExpenses || 0)} Expenses</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <span className="text-slate-600">{formatCurrency(reportData?.netProfit || 0)} Net Profit</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="thisQuarter">This Quarter</option>
+            <option value="thisYear">This Year</option>
+            <option value="lastYear">Last Year</option>
+          </select>
+          <Button variant="secondary" className="flex items-center gap-2">
+            <Download className="w-4 h-4 mr-2" />
+            Export All
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Total Revenue</p>
+              <p className="text-2xl font-bold text-green-900 mt-1">
+                {formatCurrency(reportData?.totalRevenue || 0)}
+              </p>
+              <p className="text-xs text-green-600 mt-1 font-medium">
+                {reportData?.invoiceCount || 0} invoices
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Total Expenses</p>
+              <p className="text-2xl font-bold text-red-900 mt-1">
+                {formatCurrency(reportData?.totalExpenses || 0)}
+              </p>
+              <p className="text-xs text-red-600 mt-1 font-medium">
+                {reportData?.expenseCount || 0} expenses
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+              <TrendingDown className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Net Profit</p>
+              <p className="text-2xl font-bold text-blue-900 mt-1">
+                {formatCurrency(reportData?.netProfit || 0)}
+              </p>
+              <p className="text-xs text-blue-600 mt-1 font-medium">
+                {(reportData?.netProfit || 0) >= 0 ? 'Profit' : 'Loss'}
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Profit Margin</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">
+                {(reportData?.profitMargin || 0).toFixed(2)}%
+              </p>
+              <p className="text-xs text-slate-600 mt-1 font-medium">Net margin</p>
+            </div>
+            <div className="w-10 h-10 bg-slate-500 rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            <div className="p-6 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-900">Invoices by Status</h2>
+            </div>
+            <div className="p-4">
+              {invoicesByStatus && Object.keys(invoicesByStatus).length > 0 ? (
+                <div className="space-y-3">
+                  {Object.entries(invoicesByStatus).map(([status, data]) => (
+                    <div key={status} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="secondary" className="capitalize">
+                          {status}
+                        </Badge>
+                        <span className="text-sm text-slate-600">{data.count} invoices</span>
+                      </div>
+                      <span className="text-sm font-semibold text-slate-900">
+                        {formatCurrency(data.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                  <p className="text-slate-500 text-sm">No invoice data</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            <div className="p-6 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-900">Expenses by Category</h2>
+            </div>
+            <div className="p-4">
+              {expensesByCategory && Object.keys(expensesByCategory).length > 0 ? (
+                <div className="space-y-3">
+                  {Object.entries(expensesByCategory)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 6)
+                    .map(([category, amount]) => (
+                      <div key={category} className="flex items-center justify-between">
+                        <span className="text-sm text-slate-900">{category}</span>
+                        <span className="text-sm font-semibold text-red-600">
+                          {formatCurrency(amount)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                  <p className="text-slate-500 text-sm">No expense data</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            <div className="p-6 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-900">Top Customers</h2>
+            </div>
+            <div className="p-4">
+              {topCustomers && topCustomers.length > 0 ? (
+                <div className="space-y-3">
+                  {topCustomers.slice(0, 6).map((customer, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-500">#{index + 1}</span>
+                        <span className="text-sm text-slate-900">{customer.name}</span>
+                      </div>
+                      <span className="text-sm font-semibold text-green-600">
+                        {formatCurrency(customer.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                  <p className="text-slate-500 text-sm">No customer data</p>
+                </div>
+              )}
+            </div>
+          </div>
+      </div>
+
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-slate-900 mb-4">Available Reports</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {reports.map((report) => {
+              const IconComponent = report.icon;
+              return (
+                <div
+                  key={report.id}
+                  className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 cursor-pointer hover:shadow-xl transition-shadow overflow-hidden"
+                  onClick={() => handleGenerateReport(report.id)}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <IconComponent className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-slate-900 mb-1">
+                        {report.name}
+                      </h3>
+                      <p className="text-xs text-slate-600 mb-3">{report.description}</p>
+                      <Button size="sm" variant="outline" className="text-xs">
+                        <Download className="w-3 h-3 mr-1" />
+                        Generate
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+          <div className="text-center">
+            <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-slate-700 mb-2">Report Period</h3>
+            <p className="text-slate-600">
+              Viewing data from{' '}
+              <span className="font-semibold">{selectedDateRange.start}</span> to{' '}
+              <span className="font-semibold">{selectedDateRange.end}</span>
+            </p>
+            <p className="text-sm text-slate-500 mt-2">
+              Select different date ranges from the dropdown above to analyze different periods
+            </p>
+          </div>
+      </div>
+
+      <Modal isOpen={showReportModal} onClose={closeReportModal} title={reports.find(r => r.id === selectedReport)?.name || 'Report'} size="lg">
+        <div className="space-y-6">
+          {reportLoading ? (
+            <div className="text-center py-12">
+              <div className="inline-block w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <p className="text-slate-500 mt-4">Generating report...</p>
+            </div>
+          ) : (
+            <>
+              {selectedReport === 'profit-loss' && profitLossData && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                      <p className="text-sm font-medium text-green-600">Total Revenue</p>
+                      <p className="text-2xl font-bold text-green-900">{formatCurrency(profitLossData.revenue.total)}</p>
+                    </div>
+                    <div className="bg-red-50 rounded-xl p-4 border border-red-200">
+                      <p className="text-sm font-medium text-red-600">Total Expenses</p>
+                      <p className="text-2xl font-bold text-red-900">{formatCurrency(profitLossData.expenses.total)}</p>
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium text-blue-600">Net Profit</p>
+                        <p className="text-2xl font-bold text-blue-900">{formatCurrency(profitLossData.netProfit)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-blue-600">Profit Margin</p>
+                        <p className="text-2xl font-bold text-blue-900">{profitLossData.profitMargin.toFixed(2)}%</p>
+                      </div>
+                    </div>
+                  </div>
+                  {profitLossData.expenses.byCategory.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-700 mb-3">Expenses by Category</h4>
+                      <div className="space-y-2">
+                        {profitLossData.expenses.byCategory.map((cat, i) => (
+                          <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100">
+                            <span className="text-sm text-slate-600">{cat.category}</span>
+                            <span className="text-sm font-semibold text-slate-900">{formatCurrency(cat.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {selectedReport === 'aged-receivables' && agedReceivablesData && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-5 gap-3">
+                    <div className="bg-green-50 rounded-lg p-3 border border-green-200 text-center">
+                      <p className="text-xs font-medium text-green-600">Current</p>
+                      <p className="text-lg font-bold text-green-900">{formatCurrency(agedReceivablesData.totals.current)}</p>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 text-center">
+                      <p className="text-xs font-medium text-amber-600">1-30 Days</p>
+                      <p className="text-lg font-bold text-amber-900">{formatCurrency(agedReceivablesData.totals.thirtyDays)}</p>
+                    </div>
+                    <div className="bg-orange-50 rounded-lg p-3 border border-orange-200 text-center">
+                      <p className="text-xs font-medium text-orange-600">31-60 Days</p>
+                      <p className="text-lg font-bold text-orange-900">{formatCurrency(agedReceivablesData.totals.sixtyDays)}</p>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-3 border border-red-200 text-center">
+                      <p className="text-xs font-medium text-red-600">61-90 Days</p>
+                      <p className="text-lg font-bold text-red-900">{formatCurrency(agedReceivablesData.totals.ninetyDays)}</p>
+                    </div>
+                    <div className="bg-red-100 rounded-lg p-3 border border-red-300 text-center">
+                      <p className="text-xs font-medium text-red-700">90+ Days</p>
+                      <p className="text-lg font-bold text-red-900">{formatCurrency(agedReceivablesData.totals.overNinetyDays)}</p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-center">
+                    <p className="text-sm font-medium text-slate-600">Total Outstanding</p>
+                    <p className="text-3xl font-bold text-slate-900">{formatCurrency(agedReceivablesData.totals.total)}</p>
+                  </div>
+                </div>
+              )}
+
+              {selectedReport === 'cash-flow' && cashFlowData && (
+                <div className="space-y-6">
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <h4 className="text-sm font-semibold text-slate-700 mb-4">Operating Activities</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-slate-600">Cash Receipts</span>
+                        <span className="text-sm font-semibold text-green-600">+{formatCurrency(cashFlowData.operatingActivities.receipts)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-slate-600">Cash Payments</span>
+                        <span className="text-sm font-semibold text-red-600">-{formatCurrency(cashFlowData.operatingActivities.payments)}</span>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t border-slate-200">
+                        <span className="text-sm font-medium text-slate-700">Net Operating</span>
+                        <span className={`text-sm font-bold ${cashFlowData.operatingActivities.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(cashFlowData.operatingActivities.net)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200 text-center">
+                    <p className="text-sm font-medium text-blue-600">Net Cash Flow</p>
+                    <p className={`text-3xl font-bold ${cashFlowData.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(cashFlowData.netCashFlow)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {selectedReport === 'invoice-report' && invoiceSummaryData && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 text-center">
+                      <p className="text-xs font-medium text-blue-600">Invoiced</p>
+                      <p className="text-lg font-bold text-blue-900">{formatCurrency(invoiceSummaryData.totals.invoiced)}</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3 border border-green-200 text-center">
+                      <p className="text-xs font-medium text-green-600">Paid</p>
+                      <p className="text-lg font-bold text-green-900">{formatCurrency(invoiceSummaryData.totals.paid)}</p>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 text-center">
+                      <p className="text-xs font-medium text-amber-600">Outstanding</p>
+                      <p className="text-lg font-bold text-amber-900">{formatCurrency(invoiceSummaryData.totals.outstanding)}</p>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-3 border border-red-200 text-center">
+                      <p className="text-xs font-medium text-red-600">Overdue</p>
+                      <p className="text-lg font-bold text-red-900">{formatCurrency(invoiceSummaryData.totals.overdue)}</p>
+                    </div>
+                  </div>
+                  {invoiceSummaryData.byStatus.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-700 mb-3">By Status</h4>
+                      <div className="space-y-2">
+                        {invoiceSummaryData.byStatus.map((status, i) => (
+                          <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="capitalize">{status.status}</Badge>
+                              <span className="text-sm text-slate-600">{status.count} invoices</span>
+                            </div>
+                            <span className="text-sm font-semibold text-slate-900">{formatCurrency(status.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-center">
+                    <p className="text-sm font-medium text-slate-600">Quote to Invoice Conversion Rate</p>
+                    <p className="text-3xl font-bold text-slate-900">{invoiceSummaryData.conversionRate.toFixed(1)}%</p>
+                  </div>
+                </div>
+              )}
+
+              {!['profit-loss', 'aged-receivables', 'cash-flow', 'invoice-report'].includes(selectedReport || '') && (
+                <div className="text-center py-12">
+                  <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-500">This report is not yet available.</p>
+                  <p className="text-sm text-slate-400 mt-2">Coming soon!</p>
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+            <Button variant="secondary" onClick={closeReportModal}>Close</Button>
+            {(profitLossData || agedReceivablesData || cashFlowData) && (
+              <Button onClick={handleExportCSV} className="flex items-center gap-2" style={{ backgroundColor: '#3b82f6' }}>
+                <Download className="w-4 h-4" />
+                Export CSV
+              </Button>
+            )}
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+};

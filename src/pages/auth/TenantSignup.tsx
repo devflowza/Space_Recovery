@@ -1,0 +1,286 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Building2, Check } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { FormField } from '../../components/ui/FormField';
+import { tenantService } from '../../lib/tenantService';
+import { useToast } from '../../hooks/useToast';
+import type { Database } from '../../types/database.types';
+
+type SubscriptionPlan = Database['public']['Tables']['subscription_plans']['Row'];
+
+export const TenantSignup = () => {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<'plan' | 'details'>('plan');
+
+  const [formData, setFormData] = useState({
+    companyName: '',
+    slug: '',
+    adminFullName: '',
+    adminEmail: '',
+    adminPassword: '',
+    confirmPassword: '',
+  });
+
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const data = await tenantService.listPlans();
+        setPlans(data);
+        if (data.length > 0) {
+          setSelectedPlanId(data[1]?.id || data[0].id);
+        }
+      } catch (error) {
+        showToast('Failed to load subscription plans', 'error');
+        console.error(error);
+      }
+    };
+    loadPlans();
+  }, []);
+
+  const handleCompanyNameChange = (value: string) => {
+    setFormData({
+      ...formData,
+      companyName: value,
+      slug: value.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'),
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (formData.adminPassword !== formData.confirmPassword) {
+      showToast('Passwords do not match', 'error');
+      return;
+    }
+
+    if (formData.adminPassword.length < 6) {
+      showToast('Password must be at least 6 characters', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await tenantService.createTenant({
+        name: formData.companyName,
+        slug: formData.slug,
+        adminEmail: formData.adminEmail,
+        adminPassword: formData.adminPassword,
+        adminFullName: formData.adminFullName,
+        planId: selectedPlanId,
+      });
+
+      showToast('Account created successfully! Please log in.', 'success');
+      navigate('/login');
+    } catch (error: any) {
+      showToast(error.message || 'Failed to create account', 'error');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (step === 'plan') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-6xl w-full">
+          <div className="text-center mb-8">
+            <Building2 className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Choose Your Plan</h1>
+            <p className="text-gray-600">Select the plan that best fits your lab's needs</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            {plans.map((plan) => {
+              const features = plan.features as Record<string, any> || {};
+              const limits = plan.limits as Record<string, any> || {};
+              const isSelected = selectedPlanId === plan.id;
+
+              return (
+                <Card
+                  key={plan.id}
+                  className={`p-6 cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-2 border-blue-500 shadow-lg'
+                      : 'border border-gray-200 hover:border-blue-300'
+                  }`}
+                  onClick={() => setSelectedPlanId(plan.id)}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                    {isSelected && <Check className="w-6 h-6 text-blue-500" />}
+                  </div>
+
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold text-gray-900">
+                      ${plan.price_monthly}
+                    </span>
+                    <span className="text-gray-500">/month</span>
+                    <p className="text-sm text-gray-500 mt-1">
+                      ${plan.price_yearly}/year (save 2 months)
+                    </p>
+                  </div>
+
+                  <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
+
+                  <div className="border-t pt-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">Limits:</p>
+                    <ul className="space-y-1 text-sm text-gray-600">
+                      {limits.max_users !== -1 && (
+                        <li>• {limits.max_users} team members</li>
+                      )}
+                      {limits.max_users === -1 && (
+                        <li>• Unlimited team members</li>
+                      )}
+                      {limits.max_cases !== -1 && (
+                        <li>• {limits.max_cases} cases/month</li>
+                      )}
+                      {limits.max_cases === -1 && (
+                        <li>• Unlimited cases</li>
+                      )}
+                      {limits.max_storage_gb !== -1 && (
+                        <li>• {limits.max_storage_gb}GB storage</li>
+                      )}
+                      {limits.max_storage_gb === -1 && (
+                        <li>• Unlimited storage</li>
+                      )}
+                    </ul>
+                  </div>
+
+                  {plan.slug === 'professional' && (
+                    <div className="mt-4">
+                      <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+
+          <div className="text-center">
+            <Button
+              onClick={() => setStep('details')}
+              disabled={!selectedPlanId}
+              size="lg"
+            >
+              Continue with {plans.find(p => p.id === selectedPlanId)?.name}
+            </Button>
+            <p className="text-sm text-gray-500 mt-4">
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-500 hover:underline">
+                Log in
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <Card className="max-w-md w-full p-8">
+        <div className="text-center mb-8">
+          <Building2 className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h1>
+          <p className="text-gray-600">Start your 14-day free trial</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FormField label="Company Name" required>
+            <Input
+              value={formData.companyName}
+              onChange={(e) => handleCompanyNameChange(e.target.value)}
+              placeholder="ACME Data Recovery"
+              required
+            />
+          </FormField>
+
+          <FormField
+            label="Company Slug"
+            required
+            helpText="Used for your unique URL: acme.xsuite.com"
+          >
+            <Input
+              value={formData.slug}
+              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+              placeholder="acme-data-recovery"
+              required
+              pattern="[a-z0-9-]+"
+            />
+          </FormField>
+
+          <FormField label="Your Full Name" required>
+            <Input
+              value={formData.adminFullName}
+              onChange={(e) => setFormData({ ...formData, adminFullName: e.target.value })}
+              placeholder="John Doe"
+              required
+            />
+          </FormField>
+
+          <FormField label="Email Address" required>
+            <Input
+              type="email"
+              value={formData.adminEmail}
+              onChange={(e) => setFormData({ ...formData, adminEmail: e.target.value })}
+              placeholder="john@acme.com"
+              required
+            />
+          </FormField>
+
+          <FormField label="Password" required>
+            <Input
+              type="password"
+              value={formData.adminPassword}
+              onChange={(e) => setFormData({ ...formData, adminPassword: e.target.value })}
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
+          </FormField>
+
+          <FormField label="Confirm Password" required>
+            <Input
+              type="password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
+          </FormField>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setStep('plan')}
+              className="flex-1"
+            >
+              Back
+            </Button>
+            <Button type="submit" disabled={loading} className="flex-1">
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </Button>
+          </div>
+        </form>
+
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Already have an account?{' '}
+          <Link to="/login" className="text-blue-500 hover:underline">
+            Log in
+          </Link>
+        </p>
+      </Card>
+    </div>
+  );
+};

@@ -1,0 +1,181 @@
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabaseClient';
+
+interface Profile {
+  id: string;
+  full_name: string;
+  role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr' | null;
+  phone: string | null;
+  avatar_url: string | null;
+  is_active: boolean;
+  last_login: string | null;
+  password_reset_required: boolean;
+  case_access_level: 'restricted' | 'full';
+  tenant_id: string | null;
+  sidebar_preferences?: {
+    collapsed_sections?: string[];
+  } | null;
+}
+
+export type ProfileStatus = 'loading' | 'pending_approval' | 'approved' | 'inactive' | 'error';
+
+interface AuthContextType {
+  user: User | null;
+  profile: Profile | null;
+  session: Session | null;
+  loading: boolean;
+  profileStatus: ProfileStatus;
+  passwordResetRequired: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signUp: (email: string, password: string, fullName: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [profileStatus, setProfileStatus] = useState<ProfileStatus>('loading');
+  const [passwordResetRequired, setPasswordResetRequired] = useState(false);
+  const profileCache = useRef<Profile | null>(null);
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      profileCache.current = data;
+      setProfile(data);
+      setPasswordResetRequired(data?.password_reset_required || false);
+
+      if (data?.tenant_id) {
+        localStorage.setItem('tenant_id', data.tenant_id);
+      } else {
+        localStorage.removeItem('tenant_id');
+      }
+
+      if (!data) {
+        setProfileStatus('error');
+      } else if (data.role === null) {
+        setProfileStatus('pending_approval');
+      } else if (!data.is_active) {
+        setProfileStatus('inactive');
+      } else {
+        setProfileStatus('approved');
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setProfileStatus('error');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      (async () => {
+        if (!mounted) return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
+          profileCache.current = null;
+          setLoading(false);
+        }
+      })();
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
+
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+  };
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+    if (error) throw error;
+  };
+
+  const signUp = async (email: string, password: string, fullName: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+      },
+    });
+    if (error) throw error;
+  };
+
+  const signOut = async () => {
+    profileCache.current = null;
+    setProfile(null);
+    setProfileStatus('loading');
+    localStorage.removeItem('tenant_id');
+    try {
+      await supabase.auth.signOut();
+    } catch {
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, profile, session, loading, profileStatus, passwordResetRequired, signIn, signInWithGoogle, signUp, signOut, refreshProfile }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

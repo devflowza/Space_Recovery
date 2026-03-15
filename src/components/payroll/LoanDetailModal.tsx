@@ -1,0 +1,380 @@
+import React from 'react';
+import { X, CheckCircle, Clock, XCircle, DollarSign, Calendar, TrendingUp } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { payrollService } from '../../lib/payrollService';
+import { payrollKeys } from '../../lib/queryKeys';
+import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Card } from '../ui/Card';
+import { useCurrency } from '../../hooks/useCurrency';
+import { useToast } from '../../hooks/useToast';
+import { useAuth } from '../../contexts/AuthContext';
+
+interface LoanDetailModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  loanId: string;
+}
+
+export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
+  isOpen,
+  onClose,
+  loanId,
+}) => {
+  const { formatCurrency } = useCurrency();
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  const { data: loan, isLoading } = useQuery({
+    queryKey: ['loan', loanId],
+    queryFn: () => payrollService.getEmployeeLoan(loanId),
+    enabled: !!loanId,
+  });
+
+  const { data: repayments = [] } = useQuery({
+    queryKey: ['loan-repayments', loanId],
+    queryFn: () => payrollService.getLoanRepaymentHistory(loanId),
+    enabled: !!loanId,
+  });
+
+  const cancelLoanMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await payrollService.supabase
+        .from('employee_loans')
+        .update({ status: 'cancelled' })
+        .eq('id', loanId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: payrollKeys.loans() });
+      queryClient.invalidateQueries({ queryKey: ['loan', loanId] });
+      showToast('Loan cancelled successfully', 'success');
+      onClose();
+    },
+    onError: (error: any) => {
+      showToast(error.message || 'Failed to cancel loan', 'error');
+    },
+  });
+
+  const approveLoanMutation = useMutation({
+    mutationFn: () => payrollService.approveLoan(loanId, user?.id || ''),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: payrollKeys.loans() });
+      queryClient.invalidateQueries({ queryKey: ['loan', loanId] });
+      showToast('Loan approved successfully', 'success');
+    },
+    onError: (error: any) => {
+      showToast(error.message || 'Failed to approve loan', 'error');
+    },
+  });
+
+  if (isLoading || !loan) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose} title="Loan Details">
+        <div className="p-8 text-center text-gray-500">Loading loan details...</div>
+      </Modal>
+    );
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <TrendingUp className="h-5 w-5 text-green-600" />;
+      case 'pending':
+        return <Clock className="h-5 w-5 text-yellow-600" />;
+      case 'completed':
+        return <CheckCircle className="h-5 w-5 text-blue-600" />;
+      case 'cancelled':
+        return <XCircle className="h-5 w-5 text-red-600" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'green';
+      case 'pending':
+        return 'yellow';
+      case 'completed':
+        return 'blue';
+      case 'cancelled':
+        return 'red';
+      default:
+        return 'gray';
+    }
+  };
+
+  const generateRepaymentSchedule = () => {
+    const schedule = [];
+    const startDate = new Date(loan.start_date);
+    const installments = loan.installments_count;
+    const installmentAmount = Number(loan.installment_amount);
+
+    for (let i = 0; i < installments; i++) {
+      const dueDate = new Date(startDate);
+      dueDate.setMonth(dueDate.getMonth() + i);
+
+      const isPaid = i < (loan.installments_paid || 0);
+      const repayment = repayments.find((r) => {
+        const repaymentDate = new Date(r.payment_date);
+        return (
+          repaymentDate.getMonth() === dueDate.getMonth() &&
+          repaymentDate.getFullYear() === dueDate.getFullYear()
+        );
+      });
+
+      schedule.push({
+        installmentNumber: i + 1,
+        dueDate,
+        amount: installmentAmount,
+        status: isPaid ? 'paid' : 'pending',
+        paymentDate: repayment?.payment_date,
+      });
+    }
+
+    return schedule;
+  };
+
+  const schedule = generateRepaymentSchedule();
+  const progress = ((loan.installments_paid || 0) / loan.installments_count) * 100;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Loan Details" size="large">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between pb-4 border-b">
+          <div className="flex items-center space-x-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{loan.loan_number}</h2>
+              <p className="text-sm text-gray-600">
+                {loan.employee.first_name} {loan.employee.last_name} (
+                {loan.employee.employee_number})
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            {getStatusIcon(loan.status || 'pending')}
+            <Badge color={getStatusColor(loan.status || 'pending')}>
+              {(loan.status || 'pending').charAt(0).toUpperCase() +
+                (loan.status || 'pending').slice(1)}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">Principal</span>
+              <DollarSign className="h-4 w-4 text-gray-400" />
+            </div>
+            <p className="text-xl font-bold text-gray-900">
+              {formatCurrency(Number(loan.principal_amount))}
+            </p>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">Total Amount</span>
+              <DollarSign className="h-4 w-4 text-gray-400" />
+            </div>
+            <p className="text-xl font-bold text-gray-900">
+              {formatCurrency(Number(loan.total_amount))}
+            </p>
+            {loan.interest_rate && Number(loan.interest_rate) > 0 && (
+              <p className="text-xs text-gray-500 mt-1">{loan.interest_rate}% interest</p>
+            )}
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">Remaining</span>
+              <TrendingUp className="h-4 w-4 text-gray-400" />
+            </div>
+            <p className="text-xl font-bold text-orange-600">
+              {formatCurrency(Number(loan.remaining_balance))}
+            </p>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">Next Payment</span>
+              <Calendar className="h-4 w-4 text-gray-400" />
+            </div>
+            <p className="text-xl font-bold text-gray-900">
+              {formatCurrency(Number(loan.installment_amount))}
+            </p>
+            {loan.status === 'active' && (
+              <p className="text-xs text-gray-500 mt-1">
+                Due {new Date(loan.start_date).toLocaleDateString()}
+              </p>
+            )}
+          </Card>
+        </div>
+
+        <div className="bg-gray-50 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Repayment Progress</span>
+            <span className="text-sm text-gray-600">
+              {loan.installments_paid || 0} of {loan.installments_count} installments
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              className="bg-blue-600 h-3 rounded-full transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-xs text-gray-500">
+              {formatCurrency(
+                Number(loan.total_amount) - Number(loan.remaining_balance)
+              )}{' '}
+              paid
+            </span>
+            <span className="text-xs text-gray-500">{progress.toFixed(1)}%</span>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Loan Information</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-600">Loan Type:</span>
+              <p className="font-medium text-gray-900 mt-1">
+                {loan.loan_type
+                  .split('_')
+                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(' ')}
+              </p>
+            </div>
+            <div>
+              <span className="text-gray-600">Interest Rate:</span>
+              <p className="font-medium text-gray-900 mt-1">
+                {loan.interest_rate ? `${loan.interest_rate}%` : 'Interest-free'}
+              </p>
+            </div>
+            <div>
+              <span className="text-gray-600">Start Date:</span>
+              <p className="font-medium text-gray-900 mt-1">
+                {new Date(loan.start_date).toLocaleDateString()}
+              </p>
+            </div>
+            <div>
+              <span className="text-gray-600">End Date:</span>
+              <p className="font-medium text-gray-900 mt-1">
+                {loan.end_date ? new Date(loan.end_date).toLocaleDateString() : '-'}
+              </p>
+            </div>
+          </div>
+          {loan.notes && (
+            <div className="mt-4">
+              <span className="text-gray-600">Notes:</span>
+              <p className="text-gray-900 mt-1">{loan.notes}</p>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Repayment Schedule</h3>
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    #
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Due Date
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {schedule.map((item) => (
+                  <tr
+                    key={item.installmentNumber}
+                    className={
+                      item.status === 'paid'
+                        ? 'bg-green-50'
+                        : item.installmentNumber === (loan.installments_paid || 0) + 1
+                          ? 'bg-blue-50'
+                          : ''
+                    }
+                  >
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {item.installmentNumber}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {item.dueDate.toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-right text-gray-900">
+                      {formatCurrency(item.amount)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {item.status === 'paid' ? (
+                        <Badge color="green">
+                          <CheckCircle className="h-3 w-3 mr-1 inline" />
+                          Paid
+                        </Badge>
+                      ) : (
+                        <Badge color="gray">
+                          <Clock className="h-3 w-3 mr-1 inline" />
+                          Pending
+                        </Badge>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="flex justify-between pt-6 border-t">
+          <div className="space-x-3">
+            {loan.status === 'pending' && (
+              <Button
+                onClick={() => approveLoanMutation.mutate()}
+                disabled={approveLoanMutation.isPending}
+              >
+                Approve Loan
+              </Button>
+            )}
+            {(loan.status === 'pending' || loan.status === 'active') && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  if (
+                    confirm(
+                      'Are you sure you want to cancel this loan? This action cannot be undone.'
+                    )
+                  ) {
+                    cancelLoanMutation.mutate();
+                  }
+                }}
+                disabled={cancelLoanMutation.isPending}
+              >
+                Cancel Loan
+              </Button>
+            )}
+          </div>
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};

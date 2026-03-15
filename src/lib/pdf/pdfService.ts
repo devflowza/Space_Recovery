@@ -1,0 +1,928 @@
+import { initializePDFFonts, getFontFamily, areFontsLoaded, createPdfWithFonts } from './fonts';
+import { fetchReceiptData, fetchQuoteData, fetchInvoiceData } from './dataFetcher';
+import { buildOfficeReceiptDocument } from './documents/OfficeReceiptDocument';
+import { buildCustomerCopyDocument } from './documents/CustomerCopyDocument';
+import { buildCheckoutFormDocument } from './documents/CheckoutFormDocument';
+import { buildCaseLabelDocument } from './documents/CaseLabelDocument';
+import { buildQuoteDocument } from './documents/QuoteDocument';
+import { buildInvoiceDocument } from './documents/InvoiceDocument';
+import { loadImageAsBase64 } from './utils';
+import { logPDFGeneration } from './loggingService';
+import type { TranslationContext, DocumentType } from './types';
+import {
+  getTranslation,
+  isRTLLanguage,
+  formatBilingualText,
+  type LanguageCode,
+  type TranslationKey,
+} from '../documentTranslations';
+
+const PDF_GENERATION_TIMEOUT = 45000; // 45 seconds
+
+export interface PDFGenerationResult {
+  success: boolean;
+  error?: string;
+  errorCode?: string;
+}
+
+export interface PDFBlobResult {
+  success: boolean;
+  blobUrl?: string;
+  blob?: Blob;
+  filename?: string;
+  error?: string;
+  errorCode?: string;
+}
+
+export interface PDFGenerationOptions {
+  caseId: string;
+  documentType: DocumentType;
+  download?: boolean;
+  filename?: string;
+}
+
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  errorMessage: string
+): Promise<T> {
+  let timeoutId: NodeJS.Timeout;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${errorMessage} (timeout after ${timeoutMs}ms)`));
+    }, timeoutMs);
+  });
+
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timeoutId!);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId!);
+    throw error;
+  }
+}
+
+function createTranslationContext(
+  mode: 'english_only' | 'bilingual',
+  languageCode: LanguageCode | null
+): TranslationContext {
+  const isRTL = languageCode ? isRTLLanguage(languageCode) : false;
+  const isBilingual = mode === 'bilingual' && languageCode !== null;
+  const fontFamily = getFontFamily(languageCode);
+
+  const t = (key: string, englishText: string): string => {
+    if (!isBilingual || !languageCode) return englishText;
+    const translated = getTranslation(key as TranslationKey, languageCode);
+    return formatBilingualText(englishText, translated, isRTL);
+  };
+
+  return {
+    t,
+    isRTL,
+    isBilingual,
+    languageCode,
+    fontFamily,
+  };
+}
+
+export async function generateOfficeReceipt(caseId: string, download: boolean = true): Promise<PDFGenerationResult> {
+  const startTime = Date.now();
+  let languageCode: LanguageCode | null = null;
+  let mode: 'english_only' | 'bilingual' = 'english_only';
+  let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
+
+  try {
+    console.log('[PDF Service] Starting Office Receipt generation for case:', caseId);
+
+    const data = await withTimeout(
+      fetchReceiptData(caseId),
+      10000,
+      'Failed to fetch case data'
+    );
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    mode = languageSettings?.mode || 'english_only';
+
+    console.log('[PDF Service] Language settings:', { languageCode, mode });
+
+    const fontsLoaded = await withTimeout(
+      initializePDFFonts(languageCode),
+      15000,
+      'Font initialization timeout'
+    );
+
+    if (!fontsLoaded && languageCode) {
+      console.warn(`[PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
+      languageCode = null;
+      mode = 'english_only';
+      fontSource = 'fallback';
+    }
+
+    const ctx = createTranslationContext(mode, languageCode);
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? withTimeout(
+            loadImageAsBase64(data.companySettings.branding.logo_url),
+            5000,
+            'Logo loading timeout'
+          )
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_general_url
+        ? withTimeout(
+            loadImageAsBase64(data.companySettings.branding.qr_code_general_url),
+            5000,
+            'QR code loading timeout'
+          )
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
+
+    const docDefinition = buildOfficeReceiptDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+
+    const filename = `Office_Receipt_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    if (download) {
+      createPdfWithFonts(docDefinition).download(filename);
+    } else {
+      createPdfWithFonts(docDefinition).open();
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(`[PDF Service] Office Receipt generated successfully in ${duration}ms`);
+
+    await logPDFGeneration({
+      caseId,
+      documentType: 'office_receipt',
+      languageCode,
+      mode,
+      success: true,
+      durationMs: duration,
+      fontSource,
+    });
+
+    return { success: true };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate office receipt';
+    const errorCode = error instanceof Error && error.message.includes('timeout') ? 'TIMEOUT' : 'GENERATION_FAILED';
+
+    console.error('[PDF Service] Error generating office receipt:', error);
+
+    await logPDFGeneration({
+      caseId,
+      documentType: 'office_receipt',
+      languageCode,
+      mode,
+      success: false,
+      durationMs: duration,
+      errorMessage,
+      errorCode,
+      fontSource,
+    });
+
+    return {
+      success: false,
+      error: errorMessage,
+      errorCode,
+    };
+  }
+}
+
+export async function generateCustomerCopy(caseId: string, download: boolean = true): Promise<PDFGenerationResult> {
+  try {
+    const data = await fetchReceiptData(caseId);
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    let languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    let mode = languageSettings?.mode || 'english_only';
+
+    const fontsLoaded = await initializePDFFonts(languageCode);
+
+    if (!fontsLoaded && languageCode) {
+      console.warn(`${languageCode} fonts unavailable, falling back to English-only mode`);
+      languageCode = null;
+      mode = 'english_only';
+    }
+
+    const ctx = createTranslationContext(mode, languageCode);
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? loadImageAsBase64(data.companySettings.branding.logo_url)
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_general_url
+        ? loadImageAsBase64(data.companySettings.branding.qr_code_general_url)
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
+
+    const docDefinition = buildCustomerCopyDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+
+    const filename = `Customer_Copy_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    if (download) {
+      createPdfWithFonts(docDefinition).download(filename);
+    } else {
+      createPdfWithFonts(docDefinition).open();
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error generating customer copy:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate customer copy',
+    };
+  }
+}
+
+export async function generateCheckoutForm(caseId: string, download: boolean = true): Promise<PDFGenerationResult> {
+  try {
+    const data = await fetchReceiptData(caseId);
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    let languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    let mode = languageSettings?.mode || 'english_only';
+
+    const fontsLoaded = await initializePDFFonts(languageCode);
+
+    if (!fontsLoaded && languageCode) {
+      console.warn(`${languageCode} fonts unavailable, falling back to English-only mode`);
+      languageCode = null;
+      mode = 'english_only';
+    }
+
+    const ctx = createTranslationContext(mode, languageCode);
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? loadImageAsBase64(data.companySettings.branding.logo_url)
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_general_url
+        ? loadImageAsBase64(data.companySettings.branding.qr_code_general_url)
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
+
+    const docDefinition = buildCheckoutFormDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+
+    const filename = `Checkout_Form_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    if (download) {
+      createPdfWithFonts(docDefinition).download(filename);
+    } else {
+      createPdfWithFonts(docDefinition).open();
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error generating checkout form:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate checkout form',
+    };
+  }
+}
+
+export async function generateCaseLabel(caseId: string, download: boolean = true): Promise<PDFGenerationResult> {
+  try {
+    const data = await fetchReceiptData(caseId);
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    let languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    let mode = languageSettings?.mode || 'english_only';
+
+    const fontsLoaded = await initializePDFFonts(languageCode);
+
+    if (!fontsLoaded && languageCode) {
+      console.warn(`${languageCode} fonts unavailable, falling back to English-only mode`);
+      languageCode = null;
+      mode = 'english_only';
+    }
+
+    const ctx = createTranslationContext(mode, languageCode);
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? loadImageAsBase64(data.companySettings.branding.logo_url)
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_label_url
+        ? loadImageAsBase64(data.companySettings.branding.qr_code_label_url)
+        : Promise.resolve(null),
+    ]);
+
+    const docDefinition = buildCaseLabelDocument(data, ctx, logoBase64, qrCodeBase64);
+
+    const filename = `Label_${data.caseData.case_number}.pdf`;
+
+    if (download) {
+      createPdfWithFonts(docDefinition).download(filename);
+    } else {
+      createPdfWithFonts(docDefinition).open();
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error generating case label:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate case label',
+    };
+  }
+}
+
+export async function generateQuote(quoteId: string, download: boolean = true): Promise<PDFGenerationResult> {
+  const startTime = Date.now();
+  let languageCode: LanguageCode | null = null;
+  let mode: 'english_only' | 'bilingual' = 'english_only';
+  let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
+
+  try {
+    console.log('[PDF Service] Starting Quote generation for quote:', quoteId);
+
+    const data = await withTimeout(
+      fetchQuoteData(quoteId),
+      10000,
+      'Failed to fetch quote data'
+    );
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    mode = languageSettings?.mode || 'english_only';
+
+    console.log('[PDF Service] Language settings:', { languageCode, mode });
+
+    const fontsLoaded = await withTimeout(
+      initializePDFFonts(languageCode),
+      15000,
+      'Font initialization timeout'
+    );
+
+    if (!fontsLoaded && languageCode) {
+      console.warn(`[PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
+      languageCode = null;
+      mode = 'english_only';
+      fontSource = 'fallback';
+    }
+
+    const ctx = createTranslationContext(mode, languageCode);
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? withTimeout(
+            loadImageAsBase64(data.companySettings.branding.logo_url),
+            5000,
+            'Logo loading timeout'
+          )
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_quote_url
+        ? withTimeout(
+            loadImageAsBase64(data.companySettings.branding.qr_code_quote_url),
+            5000,
+            'QR code loading timeout'
+          )
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_quote_caption || 'Scan to approve this quote';
+
+    const docDefinition = buildQuoteDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+
+    const filename = `Quote_${data.quoteData.quote_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    if (download) {
+      createPdfWithFonts(docDefinition).download(filename);
+    } else {
+      createPdfWithFonts(docDefinition).open();
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(`[PDF Service] Quote generated successfully in ${duration}ms`);
+
+    await logPDFGeneration({
+      caseId: data.quoteData.case_id || '',
+      documentType: 'quote',
+      languageCode,
+      mode,
+      success: true,
+      durationMs: duration,
+      fontSource,
+    });
+
+    return { success: true };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate quote';
+    const errorCode = error instanceof Error && error.message.includes('timeout') ? 'TIMEOUT' : 'GENERATION_FAILED';
+
+    console.error('[PDF Service] Error generating quote:', error);
+
+    await logPDFGeneration({
+      caseId: '',
+      documentType: 'quote',
+      languageCode,
+      mode,
+      success: false,
+      durationMs: duration,
+      errorMessage,
+      errorCode,
+      fontSource,
+    });
+
+    return {
+      success: false,
+      error: errorMessage,
+      errorCode,
+    };
+  }
+}
+
+export async function generateInvoice(invoiceId: string, download: boolean = true): Promise<PDFGenerationResult> {
+  const startTime = Date.now();
+  let languageCode: LanguageCode | null = null;
+  let mode: 'english_only' | 'bilingual' = 'english_only';
+  let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
+
+  try {
+    console.log('[PDF Service] Starting Invoice generation for invoice:', invoiceId);
+
+    const data = await withTimeout(
+      fetchInvoiceData(invoiceId),
+      10000,
+      'Failed to fetch invoice data'
+    );
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    mode = languageSettings?.mode || 'english_only';
+
+    console.log('[PDF Service] Language settings:', { languageCode, mode });
+
+    const fontsLoaded = await withTimeout(
+      initializePDFFonts(languageCode),
+      15000,
+      'Font initialization timeout'
+    );
+
+    if (!fontsLoaded && languageCode) {
+      console.warn(`[PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
+      languageCode = null;
+      mode = 'english_only';
+      fontSource = 'fallback';
+    }
+
+    const ctx = createTranslationContext(mode, languageCode);
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? withTimeout(
+            loadImageAsBase64(data.companySettings.branding.logo_url),
+            5000,
+            'Logo loading timeout'
+          )
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_invoice_url
+        ? withTimeout(
+            loadImageAsBase64(data.companySettings.branding.qr_code_invoice_url),
+            5000,
+            'QR code loading timeout'
+          )
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_invoice_caption || 'Scan to pay this invoice';
+
+    const docDefinition = buildInvoiceDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+
+    const invoiceType = data.invoiceData.invoice_type === 'proforma' ? 'Proforma' : 'Tax';
+    const filename = `${invoiceType}_Invoice_${data.invoiceData.invoice_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    if (download) {
+      createPdfWithFonts(docDefinition).download(filename);
+    } else {
+      createPdfWithFonts(docDefinition).open();
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(`[PDF Service] Invoice generated successfully in ${duration}ms`);
+
+    await logPDFGeneration({
+      caseId: data.invoiceData.case_id || '',
+      documentType: 'invoice',
+      languageCode,
+      mode,
+      success: true,
+      durationMs: duration,
+      fontSource,
+    });
+
+    return { success: true };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate invoice';
+    const errorCode = error instanceof Error && error.message.includes('timeout') ? 'TIMEOUT' : 'GENERATION_FAILED';
+
+    console.error('[PDF Service] Error generating invoice:', error);
+
+    await logPDFGeneration({
+      caseId: '',
+      documentType: 'invoice',
+      languageCode,
+      mode,
+      success: false,
+      durationMs: duration,
+      errorMessage,
+      errorCode,
+      fontSource,
+    });
+
+    return {
+      success: false,
+      error: errorMessage,
+      errorCode,
+    };
+  }
+}
+
+export async function generatePDF(options: PDFGenerationOptions): Promise<PDFGenerationResult> {
+  const { caseId, documentType, download = true } = options;
+
+  switch (documentType) {
+    case 'office_receipt':
+      return generateOfficeReceipt(caseId, download);
+    case 'customer_copy':
+      return generateCustomerCopy(caseId, download);
+    case 'checkout_form':
+      return generateCheckoutForm(caseId, download);
+    case 'case_label':
+      return generateCaseLabel(caseId, download);
+    case 'quote':
+      return generateQuote(caseId, download);
+    case 'invoice':
+      return generateInvoice(caseId, download);
+    default:
+      return { success: false, error: `Unknown document type: ${documentType}` };
+  }
+}
+
+export async function generateOfficeReceiptAsBlob(caseId: string): Promise<PDFBlobResult> {
+  const startTime = Date.now();
+  let languageCode: LanguageCode | null = null;
+  let mode: 'english_only' | 'bilingual' = 'english_only';
+  let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
+
+  try {
+    console.log('[PDF Service] Starting Office Receipt blob generation for case:', caseId);
+
+    const data = await withTimeout(
+      fetchReceiptData(caseId),
+      10000,
+      'Failed to fetch case data'
+    );
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+    mode = languageSettings?.mode || 'english_only';
+
+    console.log('[PDF Service] Language settings:', { languageCode, mode });
+
+    const fontsLoaded = await withTimeout(
+      initializePDFFonts(languageCode),
+      15000,
+      'Font initialization timeout'
+    );
+
+    if (!fontsLoaded && languageCode) {
+      console.warn(`[PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
+      languageCode = null;
+      mode = 'english_only';
+      fontSource = 'fallback';
+    }
+
+    const ctx = createTranslationContext(mode, languageCode);
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? withTimeout(
+            loadImageAsBase64(data.companySettings.branding.logo_url),
+            5000,
+            'Logo loading timeout'
+          )
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_general_url
+        ? withTimeout(
+            loadImageAsBase64(data.companySettings.branding.qr_code_general_url),
+            5000,
+            'QR code loading timeout'
+          )
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
+
+    const docDefinition = buildOfficeReceiptDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const filename = `Office_Receipt_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    const blobPromise = new Promise<{ blobUrl: string; blob: Blob }>((resolve, reject) => {
+      try {
+        const pdf = createPdfWithFonts(docDefinition);
+
+        pdf.getBlob((blob: Blob) => {
+          const blobUrl = URL.createObjectURL(blob);
+          resolve({ blobUrl, blob });
+        }, undefined, (err: any) => {
+          console.error('[PDF Service] Error in getBlob callback:', err);
+          reject(err);
+        });
+      } catch (error) {
+        console.error('[PDF Service] Error creating PDF:', error);
+        reject(error);
+      }
+    });
+
+    const { blobUrl, blob } = await withTimeout(
+      blobPromise,
+      PDF_GENERATION_TIMEOUT,
+      'PDF blob generation timeout'
+    );
+
+    const duration = Date.now() - startTime;
+    console.log(`[PDF Service] Office Receipt blob generated successfully in ${duration}ms`);
+
+    await logPDFGeneration({
+      caseId,
+      documentType: 'office_receipt',
+      languageCode,
+      mode,
+      success: true,
+      durationMs: duration,
+      fontSource,
+    });
+
+    return { success: true, blobUrl, blob, filename };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Failed to generate office receipt';
+    const errorCode = error instanceof Error && error.message.includes('timeout') ? 'TIMEOUT' : 'GENERATION_FAILED';
+
+    console.error('[PDF Service] Error generating office receipt blob:', error);
+
+    await logPDFGeneration({
+      caseId,
+      documentType: 'office_receipt',
+      languageCode,
+      mode,
+      success: false,
+      durationMs: duration,
+      errorMessage,
+      errorCode,
+      fontSource,
+    });
+
+    return {
+      success: false,
+      error: errorMessage,
+      errorCode,
+    };
+  }
+}
+
+export async function generateCustomerCopyAsBlob(caseId: string): Promise<PDFBlobResult> {
+  try {
+    const data = await fetchReceiptData(caseId);
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    const languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+
+    await initializePDFFonts(languageCode);
+
+    const ctx = createTranslationContext(
+      languageSettings?.mode || 'english_only',
+      languageCode
+    );
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? loadImageAsBase64(data.companySettings.branding.logo_url)
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_general_url
+        ? loadImageAsBase64(data.companySettings.branding.qr_code_general_url)
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
+
+    const docDefinition = buildCustomerCopyDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const filename = `Customer_Copy_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    return new Promise((resolve) => {
+      createPdfWithFonts(docDefinition).getBlob((blob: Blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        resolve({ success: true, blobUrl, blob, filename });
+      });
+    });
+  } catch (error) {
+    console.error('Error generating customer copy blob:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate customer copy',
+    };
+  }
+}
+
+export async function generateCheckoutFormAsBlob(caseId: string): Promise<PDFBlobResult> {
+  try {
+    const data = await fetchReceiptData(caseId);
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    const languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+
+    await initializePDFFonts(languageCode);
+
+    const ctx = createTranslationContext(
+      languageSettings?.mode || 'english_only',
+      languageCode
+    );
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? loadImageAsBase64(data.companySettings.branding.logo_url)
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_general_url
+        ? loadImageAsBase64(data.companySettings.branding.qr_code_general_url)
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
+
+    const docDefinition = buildCheckoutFormDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const filename = `Checkout_Form_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    return new Promise((resolve) => {
+      createPdfWithFonts(docDefinition).getBlob((blob: Blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        resolve({ success: true, blobUrl, blob, filename });
+      });
+    });
+  } catch (error) {
+    console.error('Error generating checkout form blob:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate checkout form',
+    };
+  }
+}
+
+export async function generateCaseLabelAsBlob(caseId: string): Promise<PDFBlobResult> {
+  try {
+    const data = await fetchReceiptData(caseId);
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    const languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+
+    await initializePDFFonts(languageCode);
+
+    const ctx = createTranslationContext(
+      languageSettings?.mode || 'english_only',
+      languageCode
+    );
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? loadImageAsBase64(data.companySettings.branding.logo_url)
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_label_url
+        ? loadImageAsBase64(data.companySettings.branding.qr_code_label_url)
+        : Promise.resolve(null),
+    ]);
+
+    const docDefinition = buildCaseLabelDocument(data, ctx, logoBase64, qrCodeBase64);
+    const filename = `Label_${data.caseData.case_number}.pdf`;
+
+    return new Promise((resolve) => {
+      createPdfWithFonts(docDefinition).getBlob((blob: Blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        resolve({ success: true, blobUrl, blob, filename });
+      });
+    });
+  } catch (error) {
+    console.error('Error generating case label blob:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate case label',
+    };
+  }
+}
+
+export async function generateQuoteAsBlob(quoteId: string): Promise<PDFBlobResult> {
+  try {
+    const data = await fetchQuoteData(quoteId);
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    const languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+
+    await initializePDFFonts(languageCode);
+
+    const ctx = createTranslationContext(
+      languageSettings?.mode || 'english_only',
+      languageCode
+    );
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? loadImageAsBase64(data.companySettings.branding.logo_url)
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_quote_url
+        ? loadImageAsBase64(data.companySettings.branding.qr_code_quote_url)
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_quote_caption || 'Scan to approve this quote';
+
+    const docDefinition = buildQuoteDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const filename = `Quote_${data.quoteData.quote_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    return new Promise((resolve) => {
+      createPdfWithFonts(docDefinition).getBlob((blob: Blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        resolve({ success: true, blobUrl, blob, filename });
+      });
+    });
+  } catch (error) {
+    console.error('Error generating quote blob:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate quote',
+    };
+  }
+}
+
+export async function generateInvoiceAsBlob(invoiceId: string): Promise<PDFBlobResult> {
+  try {
+    const data = await fetchInvoiceData(invoiceId);
+
+    const languageSettings = data.companySettings.localization?.document_language_settings;
+    const languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+
+    await initializePDFFonts(languageCode);
+
+    const ctx = createTranslationContext(
+      languageSettings?.mode || 'english_only',
+      languageCode
+    );
+
+    const [logoBase64, qrCodeBase64] = await Promise.all([
+      data.companySettings.branding?.logo_url
+        ? loadImageAsBase64(data.companySettings.branding.logo_url)
+        : Promise.resolve(null),
+      data.companySettings.branding?.qr_code_invoice_url
+        ? loadImageAsBase64(data.companySettings.branding.qr_code_invoice_url)
+        : Promise.resolve(null),
+    ]);
+
+    const qrCodeCaption = data.companySettings.branding?.qr_code_invoice_caption || 'Scan to pay this invoice';
+
+    const docDefinition = buildInvoiceDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const invoiceType = data.invoiceData.invoice_type === 'proforma' ? 'Proforma' : 'Tax';
+    const filename = `${invoiceType}_Invoice_${data.invoiceData.invoice_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    return new Promise((resolve) => {
+      createPdfWithFonts(docDefinition).getBlob((blob: Blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        resolve({ success: true, blobUrl, blob, filename });
+      });
+    });
+  } catch (error) {
+    console.error('Error generating invoice blob:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate invoice',
+    };
+  }
+}
+
+export async function generatePDFAsBlob(documentType: DocumentType, caseId: string): Promise<PDFBlobResult> {
+  switch (documentType) {
+    case 'office_receipt':
+      return generateOfficeReceiptAsBlob(caseId);
+    case 'customer_copy':
+      return generateCustomerCopyAsBlob(caseId);
+    case 'checkout_form':
+      return generateCheckoutFormAsBlob(caseId);
+    case 'case_label':
+      return generateCaseLabelAsBlob(caseId);
+    case 'quote':
+      return generateQuoteAsBlob(caseId);
+    case 'invoice':
+      return generateInvoiceAsBlob(caseId);
+    default:
+      return { success: false, error: `Unknown document type: ${documentType}` };
+  }
+}

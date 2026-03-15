@@ -1,0 +1,382 @@
+import React, { useState, useEffect } from 'react';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import {
+  rolePermissionsService,
+  Module,
+  ModulesByCategory,
+} from '../../lib/rolePermissionsService';
+import { useToast } from '../../hooks/useToast';
+import {
+  Shield,
+  CheckCircle,
+  XCircle,
+  Save,
+  RotateCcw,
+  AlertCircle,
+  Info,
+} from 'lucide-react';
+
+type Role = 'admin' | 'technician' | 'sales' | 'accounts' | 'hr';
+
+const ROLES: Role[] = ['admin', 'technician', 'sales', 'accounts', 'hr'];
+
+const ROLE_DETAILS = {
+  admin: {
+    name: 'Admin',
+    color: 'red' as const,
+    description: 'Full system access - cannot be modified',
+  },
+  technician: {
+    name: 'Technician',
+    color: 'blue' as const,
+    description: 'Technical staff managing cases and repairs',
+  },
+  sales: {
+    name: 'Sales',
+    color: 'green' as const,
+    description: 'Sales team managing customers and quotes',
+  },
+  accounts: {
+    name: 'Accounts',
+    color: 'orange' as const,
+    description: 'Finance team managing invoices and payments',
+  },
+  hr: {
+    name: 'HR',
+    color: 'teal' as const,
+    description: 'Human resources managing employees and payroll',
+  },
+};
+
+export const RolePermissions: React.FC = () => {
+  const toast = useToast();
+  const [selectedRole, setSelectedRole] = useState<Role>('technician');
+  const [modulesByCategory, setModulesByCategory] = useState<ModulesByCategory>({});
+  const [permissions, setPermissions] = useState<Map<string, boolean>>(new Map());
+  const [originalPermissions, setOriginalPermissions] = useState<Map<string, boolean>>(
+    new Map()
+  );
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    if (Object.keys(modulesByCategory).length > 0) {
+      loadRolePermissions(selectedRole);
+    }
+  }, [selectedRole, modulesByCategory]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const grouped = await rolePermissionsService.getModulesByCategory();
+      setModulesByCategory(grouped);
+    } catch (error) {
+      console.error('Error loading modules:', error);
+      toast.error('Failed to load modules');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadRolePermissions = async (role: Role) => {
+    try {
+      const perms = await rolePermissionsService.getRolePermissionsWithModules(role);
+      setPermissions(new Map(perms));
+      setOriginalPermissions(new Map(perms));
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Error loading permissions:', error);
+      toast.error('Failed to load permissions');
+    }
+  };
+
+  const handlePermissionToggle = (moduleId: string) => {
+    if (selectedRole === 'admin') return;
+
+    const newPermissions = new Map(permissions);
+    const currentValue = newPermissions.get(moduleId) || false;
+    newPermissions.set(moduleId, !currentValue);
+    setPermissions(newPermissions);
+
+    const hasChanges = Array.from(newPermissions.entries()).some(
+      ([id, value]) => value !== originalPermissions.get(id)
+    );
+    setHasChanges(hasChanges);
+  };
+
+  const handleSelectAll = (category: string) => {
+    if (selectedRole === 'admin') return;
+
+    const modules = modulesByCategory[category] || [];
+    const newPermissions = new Map(permissions);
+
+    modules.forEach((module) => {
+      newPermissions.set(module.id, true);
+    });
+
+    setPermissions(newPermissions);
+    setHasChanges(true);
+  };
+
+  const handleClearAll = (category: string) => {
+    if (selectedRole === 'admin') return;
+
+    const modules = modulesByCategory[category] || [];
+    const newPermissions = new Map(permissions);
+
+    modules.forEach((module) => {
+      newPermissions.set(module.id, false);
+    });
+
+    setPermissions(newPermissions);
+    setHasChanges(true);
+  };
+
+  const handleResetChanges = () => {
+    setPermissions(new Map(originalPermissions));
+    setHasChanges(false);
+  };
+
+  const handleSaveChanges = async () => {
+    if (selectedRole === 'admin') return;
+
+    try {
+      setSaving(true);
+
+      const updates = Array.from(permissions.entries()).map(([moduleId, canAccess]) => ({
+        moduleId,
+        canAccess,
+      }));
+
+      const result = await rolePermissionsService.updateRolePermissions(
+        selectedRole,
+        updates
+      );
+
+      if (result.success) {
+        setOriginalPermissions(new Map(permissions));
+        setHasChanges(false);
+        toast.success('Permissions updated successfully');
+      } else {
+        toast.error(result.error || 'Failed to update permissions');
+      }
+    } catch (error) {
+      console.error('Error saving permissions:', error);
+      toast.error('Failed to save permissions');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    return modulesByCategory[category]?.[0]?.icon || 'Shield';
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-600 mt-4">Loading permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Role Permissions</h1>
+            <p className="text-slate-600 mt-1">
+              Manage module access for each user role
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Shield className="w-8 h-8 text-blue-600" />
+          </div>
+        </div>
+
+        <Card className="p-4 bg-blue-50 border-blue-200">
+          <div className="flex items-start gap-3">
+            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-900">
+              <p className="font-medium mb-1">About Role Permissions</p>
+              <p>
+                Use the checkboxes below to control which modules each role can access.
+                Changes take effect immediately after clicking the Apply button. Admin role
+                has full access to all modules and cannot be modified.
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-slate-700 mb-3">
+          Select Role to Manage
+        </label>
+        <div className="grid grid-cols-5 gap-3">
+          {ROLES.map((role) => {
+            const roleInfo = ROLE_DETAILS[role];
+            const isSelected = selectedRole === role;
+            return (
+              <button
+                key={role}
+                onClick={() => setSelectedRole(role)}
+                className={`
+                  p-4 rounded-lg border-2 transition-all
+                  ${
+                    isSelected
+                      ? 'border-blue-500 bg-blue-50 shadow-md'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                  }
+                `}
+              >
+                <div className="flex items-center justify-center mb-2">
+                  <Shield
+                    className={`w-6 h-6 ${
+                      isSelected ? 'text-blue-600' : 'text-slate-400'
+                    }`}
+                  />
+                </div>
+                <div className="text-center">
+                  <Badge color={roleInfo.color} className="mb-2">
+                    {roleInfo.name}
+                  </Badge>
+                  <p className="text-xs text-slate-500 line-clamp-2">
+                    {roleInfo.description}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <Card>
+        <div className="border-b border-slate-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                {ROLE_DETAILS[selectedRole].name} Permissions
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                {selectedRole === 'admin'
+                  ? 'Admin role has full access to all modules (cannot be modified)'
+                  : `Configure which modules ${ROLE_DETAILS[selectedRole].name} role can access`}
+              </p>
+            </div>
+            {hasChanges && selectedRole !== 'admin' && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleResetChanges}
+                  disabled={saving}
+                  className="gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Reset
+                </Button>
+                <Button
+                  onClick={handleSaveChanges}
+                  disabled={saving}
+                  className="gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  {saving ? 'Applying...' : 'Apply Changes'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="space-y-6">
+            {Object.entries(modulesByCategory).map(([category, modules]) => (
+              <div key={category} className="border border-slate-200 rounded-lg overflow-hidden">
+                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-slate-900">
+                      {rolePermissionsService.getCategoryDisplayName(category)}
+                    </h3>
+                    {selectedRole !== 'admin' && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleSelectAll(category)}
+                          className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          Select All
+                        </button>
+                        <span className="text-slate-300">|</span>
+                        <button
+                          onClick={() => handleClearAll(category)}
+                          className="text-xs text-slate-600 hover:text-slate-700 font-medium"
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {modules.map((module) => {
+                      const hasAccess = permissions.get(module.id) || false;
+                      const isDisabled = selectedRole === 'admin';
+
+                      return (
+                        <div
+                          key={module.id}
+                          className={`
+                            flex items-center gap-3 p-3 rounded-lg border
+                            ${
+                              isDisabled
+                                ? 'bg-slate-50 border-slate-200 cursor-not-allowed'
+                                : hasAccess
+                                ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                                : 'bg-white border-slate-200 hover:bg-slate-50'
+                            }
+                            transition-colors cursor-pointer
+                          `}
+                          onClick={() => handlePermissionToggle(module.id)}
+                        >
+                          <div className="flex-shrink-0">
+                            {hasAccess ? (
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                            ) : (
+                              <XCircle className="w-5 h-5 text-slate-300" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">
+                              {module.name}
+                            </p>
+                            {module.description && (
+                              <p className="text-xs text-slate-500 truncate">
+                                {module.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+    </div>
+  );
+};

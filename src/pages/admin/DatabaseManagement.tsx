@@ -1,0 +1,237 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../contexts/AuthContext';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Badge } from '../../components/ui/Badge';
+import { Database, Download, Upload, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+
+interface Backup {
+  id: string;
+  backup_type: 'full' | 'incremental' | 'manual';
+  file_path: string | null;
+  file_size_bytes: number;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  error_message: string | null;
+  created_by: string;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export const DatabaseManagement: React.FC = () => {
+  const { profile } = useAuth();
+  const [backups, setBackups] = useState<Backup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    fetchBackups();
+  }, []);
+
+  const fetchBackups = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('database_backups')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setBackups(data || []);
+    } catch (error) {
+      console.error('Error fetching backups:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    if (!profile) return;
+
+    setCreating(true);
+    try {
+      const { error } = await supabase.from('database_backups').insert({
+        backup_type: 'manual',
+        status: 'pending',
+        created_by: profile.id,
+      });
+
+      if (error) throw error;
+
+      alert('Backup initiated. This is a demo - in production, this would trigger an actual backup process.');
+      fetchBackups();
+    } catch (error) {
+      console.error('Error creating backup:', error);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'green';
+      case 'in_progress':
+        return 'blue';
+      case 'pending':
+        return 'orange';
+      case 'failed':
+        return 'red';
+      default:
+        return 'gray';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'in_progress':
+        return <Clock className="w-4 h-4 animate-spin" />;
+      case 'pending':
+        return <Clock className="w-4 h-4" />;
+      case 'failed':
+        return <XCircle className="w-4 h-4" />;
+      default:
+        return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Database Management</h1>
+            <p className="text-slate-600 mt-1">Backup and restore operations</p>
+          </div>
+          <Button onClick={handleCreateBackup} disabled={creating} className="gap-2">
+            <Download className="w-4 h-4" />
+            {creating ? 'Creating...' : 'Create Backup'}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <div className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600 mb-1">Total Backups</p>
+                <p className="text-2xl font-bold text-slate-900">{backups.length}</p>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                <Database className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600 mb-1">Successful</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {backups.filter((b) => b.status === 'completed').length}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600 mb-1">Failed</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {backups.filter((b) => b.status === 'failed').length}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
+                <XCircle className="w-6 h-6 text-red-600" />
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <Card>
+        <div className="p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Backup History</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-slate-200">
+                <tr>
+                  <th className="pb-3 text-left text-sm font-medium text-slate-600">Type</th>
+                  <th className="pb-3 text-left text-sm font-medium text-slate-600">Status</th>
+                  <th className="pb-3 text-left text-sm font-medium text-slate-600">Size</th>
+                  <th className="pb-3 text-left text-sm font-medium text-slate-600">Created</th>
+                  <th className="pb-3 text-right text-sm font-medium text-slate-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {backups.map((backup) => (
+                  <tr key={backup.id} className="hover:bg-slate-50">
+                    <td className="py-3">
+                      <Badge color="blue">{backup.backup_type}</Badge>
+                    </td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(backup.status)}
+                        <Badge color={getStatusColor(backup.status)}>{backup.status}</Badge>
+                      </div>
+                    </td>
+                    <td className="py-3 text-sm text-slate-600">
+                      {formatBytes(backup.file_size_bytes)}
+                    </td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Calendar className="w-3 h-3" />
+                        {format(new Date(backup.created_at), 'MMM dd, yyyy HH:mm')}
+                      </div>
+                    </td>
+                    <td className="py-3 text-right">
+                      {backup.status === 'completed' && (
+                        <Button variant="outline" size="sm" className="gap-2">
+                          <Download className="w-3 h-3" />
+                          Download
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {loading && (
+            <div className="text-center py-12">
+              <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+            </div>
+          )}
+
+          {!loading && backups.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-slate-500">No backups found</p>
+            </div>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+};

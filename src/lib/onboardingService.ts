@@ -1,0 +1,154 @@
+import { supabase } from './supabaseClient';
+import type { Database } from '../types/database.types';
+
+type OnboardingProgress = Database['public']['Tables']['onboarding_progress']['Row'];
+
+export type OnboardingStep =
+  | 'company_info'
+  | 'default_settings'
+  | 'sample_data'
+  | 'invite_team'
+  | 'complete';
+
+interface OnboardingStepData {
+  id: OnboardingStep;
+  title: string;
+  description: string;
+}
+
+export const ONBOARDING_STEPS: OnboardingStepData[] = [
+  {
+    id: 'company_info',
+    title: 'Company Information',
+    description: 'Set up your company profile and contact details',
+  },
+  {
+    id: 'default_settings',
+    title: 'Default Settings',
+    description: 'Configure currency, timezone, and localization',
+  },
+  {
+    id: 'sample_data',
+    title: 'Sample Data',
+    description: 'Load demo data or start from scratch',
+  },
+  {
+    id: 'invite_team',
+    title: 'Invite Team',
+    description: 'Add team members to collaborate',
+  },
+  {
+    id: 'complete',
+    title: 'Complete',
+    description: 'You are all set up!',
+  },
+];
+
+export const onboardingService = {
+  async getProgress(tenantId: string): Promise<OnboardingProgress | null> {
+    const { data, error } = await supabase
+      .from('onboarding_progress')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async markStepComplete(tenantId: string, step: OnboardingStep): Promise<void> {
+    const progress = await this.getProgress(tenantId);
+    if (!progress) throw new Error('Onboarding progress not found');
+
+    const stepsCompleted = progress.steps_completed as string[] || [];
+    if (!stepsCompleted.includes(step)) {
+      stepsCompleted.push(step);
+    }
+
+    const currentStepIndex = ONBOARDING_STEPS.findIndex(s => s.id === step);
+    const nextStep = ONBOARDING_STEPS[currentStepIndex + 1]?.id || 'complete';
+
+    const { error } = await supabase
+      .from('onboarding_progress')
+      .update({
+        steps_completed: stepsCompleted,
+        current_step: nextStep,
+        completed_at: nextStep === 'complete' ? new Date().toISOString() : null,
+      })
+      .eq('id', progress.id);
+
+    if (error) throw error;
+  },
+
+  async completeOnboarding(tenantId: string): Promise<void> {
+    const progress = await this.getProgress(tenantId);
+    if (!progress) throw new Error('Onboarding progress not found');
+
+    const { error } = await supabase
+      .from('onboarding_progress')
+      .update({
+        current_step: 'complete',
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', progress.id);
+
+    if (error) throw error;
+  },
+
+  async seedDemoData(tenantId: string): Promise<void> {
+    const defaultTenantId = await supabase
+      .from('tenants')
+      .select('id')
+      .eq('slug', 'default')
+      .maybeSingle()
+      .then(res => res.data?.id);
+
+    if (!defaultTenantId) {
+      throw new Error('Default tenant not found for demo data');
+    }
+
+    const { data: demoCustomer, error: customerError } = await supabase
+      .from('customers_enhanced')
+      .insert({
+        tenant_id: tenantId,
+        name: 'Demo Customer',
+        email: 'demo@example.com',
+        phone: '+1234567890',
+        type: 'individual',
+        status: 'active',
+      })
+      .select()
+      .single();
+
+    if (customerError) throw customerError;
+
+    const { error: caseError } = await supabase
+      .from('cases')
+      .insert({
+        tenant_id: tenantId,
+        customer_id: demoCustomer.id,
+        service_type_id: null,
+        service_location_id: null,
+        priority_id: null,
+        status_id: null,
+        title: 'Demo Data Recovery Case',
+        description: 'This is a sample case to help you get started. Feel free to delete it.',
+      });
+
+    if (caseError) throw caseError;
+  },
+
+  async isOnboardingComplete(tenantId: string): Promise<boolean> {
+    const progress = await this.getProgress(tenantId);
+    return progress?.completed_at != null;
+  },
+
+  async getCompletionPercentage(tenantId: string): Promise<number> {
+    const progress = await this.getProgress(tenantId);
+    if (!progress) return 0;
+
+    const stepsCompleted = (progress.steps_completed as string[] || []).length;
+    const totalSteps = ONBOARDING_STEPS.length - 1;
+    return Math.round((stepsCompleted / totalSteps) * 100);
+  },
+};

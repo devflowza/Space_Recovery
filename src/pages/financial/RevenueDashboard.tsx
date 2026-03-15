@@ -1,0 +1,419 @@
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabaseClient';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { FinancialModuleHeader } from '../../components/financial/FinancialModuleHeader';
+import { FinancialStatsCard } from '../../components/financial/FinancialStatsCard';
+import { formatDate } from '../../lib/format';
+import { useCurrency } from '../../hooks/useCurrency';
+import {
+  generateRevenueByCustomerReport,
+  generateRevenueByCaseReport,
+} from '../../lib/financialReportsService';
+import { TrendingUp, DollarSign, PieChart, BarChart3, Plus, Search, Filter, Users, Briefcase } from 'lucide-react';
+
+export const RevenueDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { formatCurrency } = useCurrency();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState<string>('month');
+  const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'invoices' | 'customers' | 'cases'>('invoices');
+
+  const getDateRange = () => {
+    const now = new Date();
+    let startDate: Date;
+    switch (dateFilter) {
+      case 'today':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        break;
+      default:
+        startDate = new Date(2020, 0, 1);
+    }
+    return {
+      from: startDate.toISOString().split('T')[0],
+      to: new Date().toISOString().split('T')[0],
+    };
+  };
+
+  const dateRange = useMemo(() => getDateRange(), [dateFilter]);
+
+  const { data: revenueData = [], isLoading } = useQuery({
+    queryKey: ['revenue_data', dateFilter],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select(`
+          id,
+          invoice_number,
+          invoice_date,
+          total_amount,
+          amount_paid,
+          status,
+          customer:customers_enhanced(customer_name)
+        `)
+        .gte('invoice_date', dateRange.from)
+        .order('invoice_date', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: customerRevenue = [] } = useQuery({
+    queryKey: ['revenue_by_customer', dateFilter],
+    queryFn: () => generateRevenueByCustomerReport(dateRange.from, dateRange.to),
+    enabled: viewMode === 'customers',
+  });
+
+  const { data: caseRevenue = [] } = useQuery({
+    queryKey: ['revenue_by_case', dateFilter],
+    queryFn: () => generateRevenueByCaseReport(dateRange.from, dateRange.to),
+    enabled: viewMode === 'cases',
+  });
+
+  const { data: prevPeriodRevenue = 0 } = useQuery({
+    queryKey: ['prev_period_revenue', dateFilter],
+    queryFn: async () => {
+      const periodLength = dateFilter === 'year' ? 365 : dateFilter === 'month' ? 30 : dateFilter === 'week' ? 7 : 1;
+      const prevStart = new Date(new Date(dateRange.from).getTime() - periodLength * 24 * 60 * 60 * 1000);
+      const prevEnd = new Date(dateRange.from);
+      const { data } = await supabase
+        .from('invoices')
+        .select('amount_paid')
+        .gte('invoice_date', prevStart.toISOString().split('T')[0])
+        .lt('invoice_date', prevEnd.toISOString().split('T')[0]);
+      return (data || []).reduce((sum: number, inv: any) => sum + (inv.amount_paid || 0), 0);
+    },
+  });
+
+  const totalRevenue = revenueData.reduce((sum: number, inv: any) => sum + (inv.amount_paid || 0), 0);
+  const thisMonth = revenueData.filter((inv: any) => new Date(inv.invoice_date).getMonth() === new Date().getMonth());
+  const thisMonthRevenue = thisMonth.reduce((sum: number, inv: any) => sum + (inv.amount_paid || 0), 0);
+  const paidInvoices = revenueData.filter((inv: any) => inv.status === 'paid');
+  const growthRate = prevPeriodRevenue > 0 ? ((totalRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100 : 0;
+
+  if (isLoading) {
+    return (
+      <div className="p-8 max-w-[1800px] mx-auto">
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-500 mt-4">Loading revenue data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 max-w-[1800px] mx-auto">
+      <FinancialModuleHeader
+        icon={<TrendingUp className="w-7 h-7 text-white" />}
+        title="Revenue Dashboard"
+        description="Track revenue streams and performance analytics"
+        iconBgColor="#10b981"
+        statistics={[
+          { label: 'Total Revenue', value: formatCurrency(totalRevenue), color: '#10b981' },
+          { label: 'This Month', value: formatCurrency(thisMonthRevenue), color: '#3b82f6' },
+          { label: 'Paid Invoices', value: paidInvoices.length, color: '#10b981' },
+        ]}
+        primaryAction={{
+          label: 'View Reports',
+          onClick: () => navigate('/financial/reports'),
+          icon: <Plus className="w-4 h-4" />,
+        }}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <FinancialStatsCard
+          label="Total Revenue"
+          value={formatCurrency(totalRevenue)}
+          icon={<DollarSign className="w-5 h-5 text-white" />}
+          color="green"
+        />
+        <FinancialStatsCard
+          label="This Month"
+          value={formatCurrency(thisMonthRevenue)}
+          icon={<TrendingUp className="w-5 h-5 text-white" />}
+          color="blue"
+        />
+        <FinancialStatsCard
+          label="Growth Rate"
+          value={`${growthRate.toFixed(2)}%`}
+          icon={<BarChart3 className="w-5 h-5 text-white" />}
+          color="green"
+        />
+        <FinancialStatsCard
+          label="Revenue Streams"
+          value={revenueData.length}
+          icon={<PieChart className="w-5 h-5 text-white" />}
+          color="slate"
+        />
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 mb-6">
+        <div className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            <div className="w-full lg:w-80 relative flex-shrink-0">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search revenue records..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div className="flex-1 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setDateFilter(dateFilter === 'today' ? 'month' : 'today')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  dateFilter === 'today'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setDateFilter(dateFilter === 'week' ? 'month' : 'week')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  dateFilter === 'week'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                This Week
+              </button>
+              <button
+                onClick={() => setDateFilter('month')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  dateFilter === 'month'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                This Month
+              </button>
+              <button
+                onClick={() => setDateFilter(dateFilter === 'year' ? 'month' : 'year')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  dateFilter === 'year'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                This Year
+              </button>
+            </div>
+
+            <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+              <button
+                onClick={() => setViewMode('invoices')}
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-all flex items-center gap-1 ${
+                  viewMode === 'invoices'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                Invoices
+              </button>
+              <button
+                onClick={() => setViewMode('customers')}
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-all flex items-center gap-1 ${
+                  viewMode === 'customers'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                By Customer
+              </button>
+              <button
+                onClick={() => setViewMode('cases')}
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-all flex items-center gap-1 ${
+                  viewMode === 'cases'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Briefcase className="w-4 h-4" />
+                By Case
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {viewMode === 'invoices' && (
+        revenueData.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
+            <TrendingUp className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <p className="text-slate-500 text-lg">
+              {searchTerm || dateFilter !== 'all'
+                ? 'No revenue data found matching your criteria.'
+                : 'No revenue data yet. Start generating invoices to track revenue.'}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Invoice #</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer</th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Total Amount</th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Amount Paid</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {revenueData
+                    .filter((inv: any) =>
+                      searchTerm === '' ||
+                      inv.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      inv.customer?.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map((invoice: any) => (
+                      <tr key={invoice.id} onClick={() => navigate(`/invoices/${invoice.id}`)} className="hover:bg-slate-50 transition-colors cursor-pointer">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="font-semibold text-blue-600">{invoice.invoice_number}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{formatDate(invoice.invoice_date)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{invoice.customer?.customer_name || 'N/A'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 text-right">{formatCurrency(invoice.total_amount || 0)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 text-right">{formatCurrency(invoice.amount_paid || 0)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge variant={invoice.status === 'paid' ? 'success' : 'secondary'} size="sm">{invoice.status}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      )}
+
+      {viewMode === 'customers' && (
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+          <div className="p-6 border-b border-slate-200">
+            <h2 className="text-lg font-semibold text-slate-900">Revenue by Customer</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Invoices</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Revenue</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">% of Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {customerRevenue.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center">
+                      <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="text-slate-500">No customer revenue data found</p>
+                    </td>
+                  </tr>
+                ) : (
+                  customerRevenue.map((customer: any) => {
+                    const totalCustomerRevenue = customerRevenue.reduce((sum: number, c: any) => sum + c.amount, 0);
+                    const percentage = totalCustomerRevenue > 0 ? (customer.amount / totalCustomerRevenue) * 100 : 0;
+                    return (
+                      <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Users className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <span className="font-medium text-slate-900">{customer.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{customer.email || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 text-right">{customer.count}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600 text-right">{formatCurrency(customer.amount)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-green-500 rounded-full" style={{ width: `${Math.min(percentage, 100)}%` }} />
+                            </div>
+                            <span className="text-sm text-slate-600 w-12 text-right">{percentage.toFixed(1)}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {viewMode === 'cases' && (
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+          <div className="p-6 border-b border-slate-200">
+            <h2 className="text-lg font-semibold text-slate-900">Revenue by Case</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Case #</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Title</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Revenue</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Expenses</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Profit</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {caseRevenue.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center">
+                      <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <p className="text-slate-500">No case revenue data found</p>
+                    </td>
+                  </tr>
+                ) : (
+                  caseRevenue.map((c: any) => (
+                    <tr key={c.id} onClick={() => navigate(`/cases/${c.id}`)} className="hover:bg-slate-50 transition-colors cursor-pointer">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-semibold text-blue-600">{c.caseNo}</span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-900">{c.title || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600 text-right">{formatCurrency(c.revenue)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600 text-right">{formatCurrency(c.expenses)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <span className={`text-sm font-bold ${c.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(c.profit)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

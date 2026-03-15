@@ -1,0 +1,1176 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { fetchInvoiceById, convertProformaToTaxInvoice, getConversionHistory } from '../../lib/invoiceService';
+import { PageHeader } from '../../components/shared/PageHeader';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { useAccountingLocale } from '../../hooks/useAccountingLocale';
+import { useCurrency } from '../../hooks/useCurrency';
+import { useDocumentTranslations } from '../../hooks/useDocumentTranslations';
+import { FileText, ArrowLeft, Edit, Send, DollarSign, Download, User, Building2, AlertCircle, RefreshCw, CheckCircle, ArrowRight } from 'lucide-react';
+import { formatDate, cleanBankFieldValue } from '../../lib/format';
+import { RecordReceiptModal } from '../../components/banking/RecordReceiptModal';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabaseClient';
+import { bankingService } from '../../lib/bankingService';
+import { Modal } from '../../components/ui/Modal';
+import { Input } from '../../components/ui/Input';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+interface CompanySettings {
+  basic_info?: {
+    company_name?: string;
+    legal_name?: string;
+    registration_number?: string;
+    vat_number?: string;
+  };
+  location?: {
+    address_line1?: string;
+    address_line2?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+    building_name?: string;
+    unit_number?: string;
+  };
+  contact_info?: {
+    phone_primary?: string;
+    email_general?: string;
+  };
+  branding?: {
+    logo_url?: string;
+    brand_tagline?: string;
+    qr_code_invoice_url?: string;
+    qr_code_invoice_caption?: string;
+  };
+  online_presence?: {
+    website?: string;
+  };
+  banking_info?: {
+    bank_name?: string;
+    account_name?: string;
+    account_number?: string;
+    iban?: string;
+  };
+}
+
+export const InvoiceDetailPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { formatCurrencyValue, getTaxLabel } = useAccountingLocale();
+  const { currencyFormat } = useCurrency();
+  const { t, isLoading: isLoadingTranslations, isReady: translationsReady, hasError: translationsError, errorMessage: translationsErrorMessage } = useDocumentTranslations();
+
+  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [settingsReady, setSettingsReady] = useState(false);
+  const [settingsError, setSettingsError] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [loadingSteps, setLoadingSteps] = useState<LoadingStep[]>([]);
+  const [showLoadingProgress, setShowLoadingProgress] = useState(false);
+  const [resourceError, setResourceError] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showConvertModal, setShowConvertModal] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertError, setConvertError] = useState<string>('');
+  const [convertFormData, setConvertFormData] = useState({
+    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    notes: '',
+  });
+
+  const MAX_QR_RETRIES = 3;
+  const IMAGE_LOAD_TIMEOUT = 10000;
+  const SETTINGS_TIMEOUT = 5000;
+  const PDF_GENERATION_TIMEOUT = 30000;
+
+  const { data: invoice, isLoading } = useQuery({
+    queryKey: ['invoice', id],
+    queryFn: () => fetchInvoiceById(id!),
+    enabled: !!id,
+  });
+
+  const { data: conversionHistory } = useQuery({
+    queryKey: ['conversion_history', id],
+    queryFn: () => getConversionHistory(id!),
+    enabled: !!id && invoice?.invoice_type === 'proforma',
+  });
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const fetchCompanySettings = async () => {
+      try {
+        setIsLoadingSettings(true);
+        setSettingsReady(false);
+        setSettingsError(false);
+        setResourceError(null);
+
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => {
+            reject(new Error('Company settings loading timeout'));
+          }, SETTINGS_TIMEOUT);
+        });
+
+        const fetchPromise = supabase
+          .from('company_settings')
+          .select('*')
+          .eq('id', 1)
+          .maybeSingle();
+
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
+        clearTimeout(timeoutId);
+
+        if (error) {
+          console.error('Error fetching company settings:', error);
+          setSettingsError(true);
+          setResourceError('Failed to load company settings from database');
+          setSettingsReady(false);
+        } else {
+          setCompanySettings(data);
+          setSettingsReady(true);
+          setSettingsError(false);
+        }
+      } catch (error) {
+        console.error('Error fetching company settings:', error);
+        setSettingsError(true);
+        setResourceError(error instanceof Error ? error.message : 'Failed to load company settings');
+        setSettingsReady(false);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    fetchCompanySettings();
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, []);
+
+  const loadImageWithRetry = async (url: string, retryCount = 0): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      const timeout = setTimeout(() => {
+        img.src = '';
+        resolve(false);
+      }, IMAGE_LOAD_TIMEOUT);
+
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+
+      img.onerror = async () => {
+        clearTimeout(timeout);
+        if (retryCount < MAX_QR_RETRIES) {
+          await new Promise(r => setTimeout(r, 3000));
+          const result = await loadImageWithRetry(url, retryCount + 1);
+          resolve(result);
+        } else {
+          resolve(false);
+        }
+      };
+
+      img.src = url;
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      draft: '#94a3b8',
+      sent: '#3b82f6',
+      paid: '#10b981',
+      partial: '#f59e0b',
+      overdue: '#ef4444',
+      cancelled: '#64748b',
+    };
+    return colors[status] || '#64748b';
+  };
+
+  const getTypeColor = (type: string) => {
+    return type === 'proforma' ? '#8b5cf6' : '#0ea5e9';
+  };
+
+  const handleConvertToTaxInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setConvertError('');
+    setIsConverting(true);
+
+    try {
+      const newInvoiceId = await convertProformaToTaxInvoice(
+        id!,
+        convertFormData.due_date,
+        convertFormData.notes
+      );
+
+      queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice_stats'] });
+      queryClient.invalidateQueries({ queryKey: ['conversion_history', id] });
+
+      setShowConvertModal(false);
+      navigate(`/invoices/${newInvoiceId}`);
+    } catch (err: any) {
+      setConvertError(err.message || 'Failed to convert invoice');
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-600">Loading invoice...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-600">Invoice not found</p>
+        <Button onClick={() => navigate('/invoices')} className="mt-4">
+          Back to Invoices
+        </Button>
+      </div>
+    );
+  }
+
+  const customerAssociatedCompany = invoice.customer_associated_company;
+  const customerName = invoice.customers_enhanced?.first_name || invoice.customers?.first_name || 'N/A';
+  const companyName = customerAssociatedCompany?.company_name || invoice.companies?.company_name || null;
+  const customerEmail = invoice.customers_enhanced?.email || invoice.customers?.email || invoice.companies?.email || 'N/A';
+  const customerPhone = invoice.customers_enhanced?.mobile_number || invoice.customers?.mobile_number || invoice.companies?.phone_number || 'N/A';
+
+  const handleDownloadPDF = async () => {
+    if (translationsError) {
+      alert(`Cannot generate PDF: ${translationsErrorMessage || 'Translations failed to load'}\n\nPlease refresh the page to retry.`);
+      return;
+    }
+
+    if (settingsError) {
+      alert(`Cannot generate PDF: ${resourceError || 'Company settings failed to load'}\n\nPlease refresh the page to retry.`);
+      return;
+    }
+
+    if (!translationsReady || !settingsReady) {
+      alert('Please wait for the document to fully load before generating PDF.\n\nTranslations and company settings must be loaded first.');
+      return;
+    }
+
+    if (isLoadingSettings || isLoadingTranslations) {
+      alert('Resources are still loading. Please wait a moment and try again.');
+      return;
+    }
+
+    const pdfGenerationStartTime = Date.now();
+
+    try {
+      setIsGeneratingPDF(true);
+      setShowLoadingProgress(true);
+
+      const steps: LoadingStep[] = [
+        { id: 'translations', label: 'Validating translations', status: 'loading' },
+        { id: 'settings', label: 'Validating company settings', status: 'pending' },
+        { id: 'images', label: 'Loading images', status: 'pending' },
+        { id: 'qrcode', label: 'Loading QR code', status: 'pending' },
+        { id: 'render', label: 'Preparing document', status: 'pending' },
+        { id: 'generate', label: 'Generating PDF', status: 'pending' },
+      ];
+      setLoadingSteps(steps);
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      steps[0].status = translationsReady ? 'complete' : 'error';
+      if (!translationsReady) {
+        steps[0].errorMessage = 'Translations not ready';
+        throw new Error('Translations validation failed');
+      }
+      setLoadingSteps([...steps]);
+
+      steps[1].status = 'loading';
+      setLoadingSteps([...steps]);
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      steps[1].status = settingsReady ? 'complete' : 'error';
+      if (!settingsReady) {
+        steps[1].errorMessage = 'Company settings not ready';
+        throw new Error('Company settings validation failed');
+      }
+      setLoadingSteps([...steps]);
+
+      steps[2].status = 'loading';
+      setLoadingSteps([...steps]);
+
+      const element = document.getElementById('invoice-print-content') as HTMLElement;
+      if (!element) {
+        throw new Error('Unable to find printable content');
+      }
+
+      const checkTimeout = () => {
+        const elapsed = Date.now() - pdfGenerationStartTime;
+        if (elapsed > PDF_GENERATION_TIMEOUT) {
+          throw new Error('PDF generation timeout after 30 seconds. Please try again.');
+        }
+      };
+
+      const images = element.querySelectorAll('img');
+      const imageLoadPromises = Array.from(images).map(async (img) => {
+        checkTimeout();
+        if (img.complete && img.naturalHeight !== 0) return true;
+        return loadImageWithRetry(img.src);
+      });
+
+      const imageResults = await Promise.all(imageLoadPromises);
+      const allImagesLoaded = imageResults.every(result => result);
+
+      checkTimeout();
+
+      steps[2].status = allImagesLoaded ? 'complete' : 'error';
+      if (!allImagesLoaded) {
+        steps[2].errorMessage = 'Some images failed to load';
+      }
+      setLoadingSteps([...steps]);
+
+      if (!allImagesLoaded) {
+        throw new Error('Failed to load all images. Please check your internet connection and try again.');
+      }
+
+      steps[3].status = 'loading';
+      setLoadingSteps([...steps]);
+
+      checkTimeout();
+
+      if (companySettings?.branding?.qr_code_invoice_url) {
+        const qrLoaded = await loadImageWithRetry(companySettings.branding.qr_code_invoice_url, 0);
+
+        checkTimeout();
+
+        if (!qrLoaded) {
+          steps[3].status = 'error';
+          steps[3].errorMessage = `QR code failed to load after ${MAX_QR_RETRIES} attempts`;
+          setLoadingSteps([...steps]);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          throw new Error('QR code failed to load. Please check your QR code URL in settings and try again.');
+        }
+
+        steps[3].status = 'complete';
+      } else {
+        steps[3].status = 'complete';
+        steps[3].label = 'No QR code configured';
+      }
+      setLoadingSteps([...steps]);
+
+      steps[4].status = 'loading';
+      setLoadingSteps([...steps]);
+
+      checkTimeout();
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      steps[4].status = 'complete';
+      setLoadingSteps([...steps]);
+
+      steps[5].status = 'loading';
+      setLoadingSteps([...steps]);
+
+      checkTimeout();
+
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        imageTimeout: 15000,
+      });
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: false,
+        precision: 16
+      });
+
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+
+      const fileName = `${invoice.invoice_type === 'proforma' ? 'Proforma_Invoice' : 'Invoice'}_${invoice.invoice_number || 'Draft'}_${customerName.replace(/\s+/g, '_')}.pdf`;
+      pdf.save(fileName);
+
+      steps[5].status = 'complete';
+      setLoadingSteps([...steps]);
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setShowLoadingProgress(false);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate PDF. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setIsGeneratingPDF(false);
+      setTimeout(() => setShowLoadingProgress(false), 500);
+    }
+  };
+
+  return (
+    <>
+      <style>{`
+        .hide-in-pdf {
+          display: block !important;
+        }
+
+        @media print {
+          .hide-in-pdf {
+            display: none !important;
+          }
+        }
+      `}</style>
+      {showLoadingProgress && <LoadingProgress steps={loadingSteps} title="Generating PDF" />}
+
+      {showPaymentModal && invoice && (
+        <RecordReceiptModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          singleInvoiceMode={true}
+          invoiceId={invoice.id}
+          onSave={async (receiptData: any, allocations?: any[]) => {
+            await bankingService.createReceiptWithAllocations(receiptData, allocations || []);
+
+            queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['invoice_stats'] });
+            queryClient.invalidateQueries({ queryKey: ['active_accounts'] });
+            queryClient.invalidateQueries({ queryKey: ['receipts'] });
+          }}
+          prefilledData={{
+            customer_id: invoice.customer_id,
+            company_id: invoice.company_id,
+            case_id: invoice.case_id,
+            amount: invoice.amount_due || invoice.total_amount,
+          }}
+        />
+      )}
+
+      {showConvertModal && invoice && (
+        <Modal
+          isOpen={showConvertModal}
+          onClose={() => {
+            setShowConvertModal(false);
+            setConvertError('');
+          }}
+          title="Convert Proforma to Tax Invoice"
+          size="medium"
+        >
+          <form onSubmit={handleConvertToTaxInvoice} className="space-y-4">
+            {convertError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-800">{convertError}</p>
+              </div>
+            )}
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-900">
+                  <p className="font-medium mb-1">Converting Proforma to Tax Invoice</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs">
+                    <li>A new tax invoice will be created with the same line items and amounts</li>
+                    <li>The proforma invoice will be marked as "Converted" and cannot accept payments</li>
+                    <li>Payments can only be recorded against the new tax invoice</li>
+                    <li>This action follows global accounting standards and cannot be reversed</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+              <h4 className="text-sm font-semibold text-slate-900 mb-3">Current Proforma Invoice</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Invoice Number:</span>
+                  <span className="font-medium">{invoice.invoice_number}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Total Amount:</span>
+                  <span className="font-medium">{currencyFormat.currencySymbol}{invoice.total_amount?.toFixed(currencyFormat.decimalPlaces)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Customer:</span>
+                  <span className="font-medium">{customerName}</span>
+                </div>
+              </div>
+            </div>
+
+            <Input
+              label="Due Date for Tax Invoice"
+              type="date"
+              value={convertFormData.due_date}
+              onChange={(e) => setConvertFormData({ ...convertFormData, due_date: e.target.value })}
+              required
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Additional Notes (Optional)
+              </label>
+              <textarea
+                value={convertFormData.notes}
+                onChange={(e) => setConvertFormData({ ...convertFormData, notes: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Any additional notes for the tax invoice..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setShowConvertModal(false);
+                  setConvertError('');
+                }}
+                disabled={isConverting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isConverting}>
+                {isConverting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Converting...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Convert to Tax Invoice
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      <div>
+        <PageHeader
+          title={`Invoice ${invoice.invoice_number}`}
+          description={`${invoice.invoice_type === 'proforma' ? 'Proforma Invoice' : 'Tax Invoice'} Details`}
+          icon={FileText}
+          actions={
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => navigate('/invoices')}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              {['draft', 'sent'].includes(invoice.status) && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    alert('Edit functionality: Click the Edit button in the Actions section below to modify this invoice.');
+                  }}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+            </div>
+          }
+        />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+              <div id="invoice-print-content" className="p-8 bg-white">
+                <div className="space-y-6 max-w-5xl mx-auto">
+                  {/* Professional Header */}
+                  <div className="border-b border-red-600 pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-shrink-0">
+                        {companySettings?.branding?.logo_url ? (
+                          <img
+                            src={companySettings.branding.logo_url}
+                            alt="Company Logo"
+                            className="h-14 w-auto object-contain"
+                            crossOrigin="anonymous"
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-10 h-10 text-blue-600" />
+                            <span className="text-lg font-bold text-slate-900">
+                              {companySettings?.basic_info?.company_name || 'Company Name'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="text-right text-sm leading-tight">
+                        <h3 className="font-bold text-slate-900 text-base mb-1">
+                          {companySettings?.basic_info?.company_name || 'Company Name'}
+                        </h3>
+                        {(companySettings?.basic_info?.registration_number || companySettings?.basic_info?.vat_number) && (
+                          <p className="text-slate-600 mb-1">
+                            {companySettings?.basic_info?.registration_number && `Reg No: ${companySettings.basic_info.registration_number}`}
+                            {companySettings?.basic_info?.registration_number && companySettings?.basic_info?.vat_number && ' | '}
+                            {companySettings?.basic_info?.vat_number && `VAT No: ${companySettings.basic_info.vat_number}`}
+                          </p>
+                        )}
+                        <div className="space-y-0.5">
+                          {companySettings?.location?.building_name && (
+                            <p className="text-slate-700">{companySettings.location.building_name}</p>
+                          )}
+                          {companySettings?.location?.address_line1 && (
+                            <p className="text-slate-700">{companySettings.location.address_line1}</p>
+                          )}
+                          {(companySettings?.location?.city || companySettings?.location?.country) && (
+                            <p className="text-slate-700">
+                              {companySettings?.location?.city}
+                              {companySettings?.location?.city && companySettings?.location?.country && ', '}
+                              {companySettings?.location?.country}
+                            </p>
+                          )}
+                        </div>
+                        <div className="mt-1 space-y-0.5">
+                          {companySettings?.contact_info?.email_general && (
+                            <p className="text-blue-600">{companySettings.contact_info.email_general}</p>
+                          )}
+                          {companySettings?.contact_info?.phone_primary && (
+                            <p className="text-slate-700">{companySettings.contact_info.phone_primary}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Document Title */}
+                  <div className="text-center">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-3">
+                      {invoice.invoice_type === 'proforma'
+                        ? t('proformaInvoice', 'PROFORMA INVOICE')
+                        : t('taxInvoice', 'TAX INVOICE')}
+                    </h2>
+                    <div className="flex justify-center mt-2 hide-in-pdf">
+                      <div className="flex gap-2">
+                        <Badge variant="custom" color={getTypeColor(invoice.invoice_type)}>
+                          {invoice.invoice_type === 'proforma' ? 'Proforma' : 'Tax Invoice'}
+                        </Badge>
+                        <Badge variant="custom" color={getStatusColor(invoice.status)}>
+                          {invoice.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer and Invoice Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border border-blue-200 rounded-lg bg-blue-50 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <User className="w-5 h-5 text-blue-600" />
+                        <h3 className="font-bold text-base text-slate-900">
+                          {t('customerInformation', 'Customer Information')}
+                        </h3>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        {companyName && (
+                          <div className="flex">
+                            <span className="font-semibold text-slate-700 w-28">Company:</span>
+                            <span className="text-slate-900 flex-1">{companyName}</span>
+                          </div>
+                        )}
+                        <div className="flex">
+                          <span className="font-semibold text-slate-700 w-28">Name:</span>
+                          <span className="text-slate-900 flex-1">{customerName}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="font-semibold text-slate-700 w-28">Phone:</span>
+                          <span className="text-slate-900 flex-1">{customerPhone}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="font-semibold text-slate-700 w-28">Email:</span>
+                          <span className="text-blue-600 flex-1 break-words">{customerEmail}</span>
+                        </div>
+                        {invoice.client_reference && (
+                          <div className="flex">
+                            <span className="font-semibold text-slate-700 w-28">Client Ref:</span>
+                            <span className="text-slate-900 flex-1">{invoice.client_reference}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border border-blue-200 rounded-lg bg-blue-50 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <FileText className="w-5 h-5 text-blue-600" />
+                        <h3 className="font-bold text-base text-slate-900">
+                          {t('invoiceDetails', 'Invoice Details')}
+                        </h3>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex">
+                          <span className="font-semibold text-slate-700 w-32">Invoice No:</span>
+                          <span className="text-slate-900 font-mono flex-1">{invoice.invoice_number || 'Draft'}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="font-semibold text-slate-700 w-32">Invoice Date:</span>
+                          <span className="text-slate-900 flex-1">{formatDate(invoice.invoice_date)}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="font-semibold text-slate-700 w-32">Due Date:</span>
+                          <span className="text-slate-900 flex-1">{formatDate(invoice.due_date)}</span>
+                        </div>
+                        {invoice.cases?.case_no && (
+                          <div className="flex">
+                            <span className="font-semibold text-slate-700 w-32">Job ID:</span>
+                            <span className="text-slate-900 flex-1">{invoice.cases.case_no}</span>
+                          </div>
+                        )}
+                        <div className="flex">
+                          <span className="font-semibold text-slate-700 w-32">Invoice Value:</span>
+                          <span className="text-slate-900 flex-1">
+                            {currencyFormat.currencySymbol}{invoice.total_amount?.toFixed(currencyFormat.decimalPlaces) || (0).toFixed(currencyFormat.decimalPlaces)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Line Items Table */}
+                  <div className="border border-slate-300 rounded-lg overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-slate-100 border-b border-slate-300">
+                        <tr>
+                          <th className="text-center text-sm font-bold text-slate-900 px-4 py-3">
+                            {t('description', 'Description')}
+                          </th>
+                          <th className="text-center text-sm font-bold text-slate-900 px-4 py-3">
+                            {t('qty', 'Qty')}
+                          </th>
+                          <th className="text-center text-sm font-bold text-slate-900 px-4 py-3">
+                            {t('unitPrice', 'Unit Price')}
+                          </th>
+                          <th className="text-center text-sm font-bold text-slate-900 px-4 py-3">
+                            {t('amount', 'Amount')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 bg-white">
+                        {invoice.invoice_line_items?.map((item: any, index: number) => (
+                          <tr key={index}>
+                            <td className="px-4 py-3 text-sm text-slate-900">{item.description}</td>
+                            <td className="px-4 py-3 text-sm text-slate-900 text-center font-medium">{item.quantity}</td>
+                            <td className="px-4 py-3 text-sm text-slate-900 text-right font-medium">
+                              {currencyFormat.currencySymbol} {item.unit_price.toFixed(currencyFormat.decimalPlaces)}
+                            </td>
+                            <td className="px-4 py-3 text-sm font-semibold text-slate-900 text-right">
+                              {currencyFormat.currencySymbol} {(item.line_total || (item.quantity * item.unit_price)).toFixed(currencyFormat.decimalPlaces)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Financial Summary */}
+                  <div className="pt-4">
+                    <div className="space-y-3 max-w-md ml-auto">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-700 font-medium">{t('subtotal', 'Subtotal')}:</span>
+                        <span className="font-semibold text-slate-900">
+                          {currencyFormat.currencySymbol} {invoice.subtotal?.toFixed(currencyFormat.decimalPlaces) || (0).toFixed(currencyFormat.decimalPlaces)}
+                        </span>
+                      </div>
+                      {invoice.discount_amount > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-700 font-medium">{t('discount', 'Discount')}:</span>
+                          <span className="font-semibold text-red-600">
+                            - {currencyFormat.currencySymbol} {invoice.discount_amount.toFixed(currencyFormat.decimalPlaces)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm mb-4">
+                        <span className="text-slate-700 font-medium">
+                          VAT {invoice.tax_rate || 0}% | ضريبة القيمة المضافة:
+                        </span>
+                        <span className="font-semibold text-slate-900">
+                          {currencyFormat.currencySymbol} {invoice.tax_amount?.toFixed(currencyFormat.decimalPlaces) || (0).toFixed(currencyFormat.decimalPlaces)}
+                        </span>
+                      </div>
+                      <div className="border border-slate-300 rounded-lg bg-slate-50 p-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-base font-semibold text-slate-900">{t('total', 'Total')} | الإجمالي:</span>
+                          <span className="text-xl font-bold text-blue-700">
+                            {currencyFormat.currencySymbol} {invoice.total_amount?.toFixed(currencyFormat.decimalPlaces) || (0).toFixed(currencyFormat.decimalPlaces)}
+                          </span>
+                        </div>
+                      </div>
+                      {invoice.amount_paid > 0 && (
+                        <>
+                          <div className="flex justify-between text-sm mt-3">
+                            <span className="text-green-700 font-medium">{t('amountPaid', 'Amount Paid')}:</span>
+                            <span className="font-semibold text-green-600">
+                              {currencyFormat.currencySymbol} {invoice.amount_paid.toFixed(currencyFormat.decimalPlaces)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-orange-700 font-medium">{t('balanceDue', 'Balance Due')}:</span>
+                            <span className="font-bold text-orange-600">
+                              {currencyFormat.currencySymbol} {(invoice.balance_due || (invoice.total_amount - invoice.amount_paid)).toFixed(currencyFormat.decimalPlaces)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Terms and Bank Account */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      {invoice.payment_terms && (
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900 mb-2">
+                            {t('paymentTerms', 'Payment Terms')}
+                          </h4>
+                          <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 text-sm text-slate-700" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                            {invoice.payment_terms}
+                          </div>
+                        </div>
+                      )}
+                      {invoice.notes && (
+                        <div className={invoice.payment_terms ? 'mt-3' : ''}>
+                          <h4 className="text-sm font-bold text-slate-900 mb-2">Notes</h4>
+                          <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200 text-sm text-slate-700" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                            {invoice.notes}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {(invoice.bank_accounts || companySettings?.banking_info) && (
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 mb-2">
+                          Bank Account / تفاصيل البنك
+                        </h4>
+                        <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                          <div className="space-y-2 text-sm">
+                            {(invoice.bank_accounts?.account_name || companySettings?.banking_info?.account_name) && (
+                              <div className="flex">
+                                <span className="font-semibold text-slate-700 w-32">Account Name:</span>
+                                <span className="text-slate-900 flex-1">{invoice.bank_accounts?.account_name || companySettings.banking_info.account_name}</span>
+                              </div>
+                            )}
+                            {(invoice.bank_accounts?.account_number || companySettings?.banking_info?.account_number) && (
+                              <div className="flex">
+                                <span className="font-semibold text-slate-700 w-32">Account No:</span>
+                                <span className="text-slate-900 font-mono flex-1">{invoice.bank_accounts?.account_number || companySettings.banking_info.account_number}</span>
+                              </div>
+                            )}
+                            {(invoice.bank_accounts?.bank_name || companySettings?.banking_info?.bank_name) && (
+                              <div className="flex">
+                                <span className="font-semibold text-slate-700 w-32">Bank Name:</span>
+                                <span className="text-slate-900 flex-1">{invoice.bank_accounts?.bank_name || companySettings.banking_info.bank_name}</span>
+                              </div>
+                            )}
+                            {(invoice.bank_accounts?.iban || companySettings?.banking_info?.iban) && (
+                              <div className="flex">
+                                <span className="font-semibold text-slate-700 w-32">IBAN:</span>
+                                <span className="text-slate-900 font-mono flex-1 break-words">{cleanBankFieldValue(invoice.bank_accounts?.iban || companySettings.banking_info.iban)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  {(companySettings?.branding?.qr_code_invoice_url || companySettings?.branding?.brand_tagline || companySettings?.online_presence?.website) && (
+                    <div className="border-t border-red-600 pt-4 mt-6">
+                      <div className="flex justify-between items-end">
+                        {companySettings?.branding?.qr_code_invoice_url && (
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={companySettings.branding.qr_code_invoice_url}
+                              alt="Invoice QR Code"
+                              className="w-20 h-20 object-contain"
+                              crossOrigin="anonymous"
+                            />
+                            {companySettings.branding.qr_code_invoice_caption && (
+                              <p className="text-xs text-slate-600 max-w-[200px]">
+                                {companySettings.branding.qr_code_invoice_caption}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        <div className="text-right">
+                          {companySettings?.branding?.brand_tagline && (
+                            <p className="text-sm font-semibold text-blue-600 mb-1">
+                              {companySettings.branding.brand_tagline}
+                            </p>
+                          )}
+                          {companySettings?.online_presence?.website && (
+                            <p className="text-xs text-slate-600">
+                              {companySettings.online_presence.website}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card>
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Customer Information</h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    {invoice.customers_enhanced ? (
+                      <User className="w-5 h-5 text-slate-400 mt-0.5" />
+                    ) : (
+                      <Building2 className="w-5 h-5 text-slate-400 mt-0.5" />
+                    )}
+                    <div>
+                      <p className="font-medium text-slate-900">{customerName}</p>
+                      {invoice.customers_enhanced && (
+                        <>
+                          {invoice.customers_enhanced.email && (
+                            <p className="text-sm text-slate-600">
+                              {invoice.customers_enhanced.email}
+                            </p>
+                          )}
+                          {invoice.customers_enhanced.mobile_number && (
+                            <p className="text-sm text-slate-600">
+                              {invoice.customers_enhanced.mobile_number}
+                            </p>
+                          )}
+                        </>
+                      )}
+                      {invoice.companies && (
+                        <>
+                          {invoice.companies.email && (
+                            <p className="text-sm text-slate-600">{invoice.companies.email}</p>
+                          )}
+                          {invoice.companies.phone_number && (
+                            <p className="text-sm text-slate-600">
+                              {invoice.companies.phone_number}
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {(translationsError || settingsError || resourceError) && (
+              <Card>
+                <div className="p-4 bg-red-50 border-t-4 border-red-600">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-red-900 mb-1">Cannot Generate PDF</h4>
+                      <p className="text-sm text-red-700">
+                        {translationsError && translationsErrorMessage}
+                        {settingsError && resourceError}
+                      </p>
+                      <p className="text-xs text-red-600 mt-1">Please refresh the page to retry loading resources.</p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {(isLoadingTranslations || isLoadingSettings) && !translationsError && !settingsError && (
+              <Card>
+                <div className="p-4 bg-blue-50">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-sm text-blue-900">
+                      Loading resources: {isLoadingTranslations && 'translations'}{isLoadingTranslations && isLoadingSettings && ', '}{isLoadingSettings && 'company settings'}...
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <Card>
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Actions</h3>
+                <div className="space-y-2">
+                  {invoice.invoice_type === 'proforma' && invoice.status !== 'converted' && (
+                    <Button
+                      className="w-full"
+                      variant="primary"
+                      onClick={() => setShowConvertModal(true)}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Convert to Tax Invoice
+                    </Button>
+                  )}
+                  {invoice.status === 'draft' && invoice.invoice_type === 'tax_invoice' && (
+                    <Button className="w-full" variant="primary">
+                      <Send className="w-4 h-4 mr-2" />
+                      Send to Customer
+                    </Button>
+                  )}
+                  {invoice.invoice_type === 'tax_invoice' && invoice.status !== 'paid' && (
+                    <Button
+                      className="w-full"
+                      variant="secondary"
+                      onClick={() => setShowPaymentModal(true)}
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Record Payment
+                    </Button>
+                  )}
+                  {invoice.invoice_type === 'proforma' && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-yellow-900">Proforma Invoice</p>
+                          <p className="text-xs text-yellow-700 mt-1">
+                            Payments cannot be recorded on proforma invoices. Convert to tax invoice first.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    className="w-full"
+                    onClick={handleDownloadPDF}
+                    disabled={isGeneratingPDF || isLoadingSettings || isLoadingTranslations || !translationsReady || !settingsReady || translationsError || settingsError}
+                    style={{ backgroundColor: isGeneratingPDF ? '#64748b' : '#10b981', color: 'white' }}
+                    title={
+                      !translationsReady || !settingsReady
+                        ? 'Waiting for resources to load...'
+                        : translationsError || settingsError
+                        ? 'Cannot generate PDF due to loading errors'
+                        : 'Download PDF'
+                    }
+                  >
+                    {isGeneratingPDF ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download PDF
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {conversionHistory && invoice.status === 'converted' && (
+              <Card>
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <h3 className="text-lg font-semibold text-green-900">Converted to Tax Invoice</h3>
+                  </div>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-sm text-green-900 mb-3">
+                      This proforma invoice has been converted to a tax invoice. Payments should be recorded against the tax invoice.
+                    </p>
+                    {conversionHistory.tax_invoice_number && (
+                      <Button
+                        className="w-full"
+                        variant="primary"
+                        onClick={() => navigate(`/invoices/${conversionHistory.tax_invoice_id}`)}
+                      >
+                        <ArrowRight className="w-4 h-4 mr-2" />
+                        View Tax Invoice {conversionHistory.tax_invoice_number}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {invoice.proforma_invoice_id && (
+              <Card>
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold">Converted from Proforma</h3>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-900 mb-3">
+                      This tax invoice was created from a proforma invoice.
+                    </p>
+                    <Button
+                      className="w-full"
+                      variant="secondary"
+                      onClick={() => navigate(`/invoices/${invoice.proforma_invoice_id}`)}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      View Original Proforma
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {invoice.created_by_profile && (
+              <Card>
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Invoice Details</h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <p className="text-slate-500">Created By</p>
+                      <p className="font-medium">{invoice.created_by_profile.full_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">Created At</p>
+                      <p className="font-medium">{formatDate(invoice.created_at || '')}</p>
+                    </div>
+                    {invoice.sent_at && (
+                      <div>
+                        <p className="text-slate-500">Sent At</p>
+                        <p className="font-medium">{formatDate(invoice.sent_at)}</p>
+                      </div>
+                    )}
+                    {invoice.converted_at && (
+                      <div>
+                        <p className="text-slate-500">Converted At</p>
+                        <p className="font-medium">{formatDate(invoice.converted_at)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default InvoiceDetailPage;

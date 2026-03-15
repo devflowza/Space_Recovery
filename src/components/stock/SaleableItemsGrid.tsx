@@ -1,0 +1,111 @@
+import React from 'react';
+import { HardDrive, Check } from 'lucide-react';
+import type { StockItemWithCategory } from '../../lib/stockService';
+
+interface SaleableItemsGridProps {
+  items: StockItemWithCategory[];
+  onSelect: (item: StockItemWithCategory) => void;
+  selectedIds: string[];
+}
+
+export const SaleableItemsGrid: React.FC<SaleableItemsGridProps> = ({
+  items,
+  onSelect,
+  selectedIds,
+}) => {
+  const formatPrice = (price: number | null): string => {
+    if (price === null || price === undefined) return '—';
+    return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+        <HardDrive className="w-10 h-10 mb-3" />
+        <p className="text-sm">No items found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {items.map((item) => {
+        const isSelected = selectedIds.includes(item.id);
+        const inStock = item.current_quantity > 0;
+
+        return (
+          <div
+            key={item.id}
+            onClick={() => onSelect(item)}
+            className={`relative bg-white rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+              isSelected
+                ? 'border-blue-500 ring-2 ring-blue-200'
+                : 'border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            {isSelected && (
+              <div className="absolute top-2 right-2 z-10 bg-blue-500 rounded-full p-0.5">
+                <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+              </div>
+            )}
+
+            <div className="aspect-video bg-slate-100 rounded-t-md overflow-hidden flex items-center justify-center">
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-slate-400 gap-2">
+                  <HardDrive className="w-10 h-10" />
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 space-y-2">
+              <p className="font-semibold text-slate-900 text-sm leading-tight line-clamp-2">
+                {item.name}
+              </p>
+
+              <p className="text-xs text-slate-500 truncate">
+                {[item.brand, item.capacity, item.model].filter(Boolean).join(' · ')}
+              </p>
+
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-base font-bold text-slate-900">
+                  {formatPrice(item.selling_price)}
+                </span>
+
+                {inStock ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 ring-1 ring-green-200 whitespace-nowrap">
+                    In Stock {item.current_quantity}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 ring-1 ring-red-200 whitespace-nowrap">
+                    Out of Stock
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(item);
+                }}
+                className={`w-full py-1.5 px-3 rounded-md text-sm font-medium transition-colors ${
+                  isSelected
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                }`}
+              >
+                {isSelected ? 'Selected' : 'Select'}
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};

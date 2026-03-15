@@ -1,0 +1,143 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../lib/supabaseClient';
+
+interface SidebarBadgeCounts {
+  casesTodayCount: number;
+  invoicesAttentionCount: number;
+  pendingQuotesCount: number;
+  lowStockCount: number;
+  isLoading: boolean;
+}
+
+/**
+ * Custom hook to fetch real-time badge counts for the sidebar navigation
+ *
+ * Returns:
+ * - casesTodayCount: Number of cases created today (active statuses only)
+ * - invoicesAttentionCount: Number of invoices requiring attention (sent, partially-paid, overdue)
+ * - pendingQuotesCount: Number of quotes pending customer response (sent status)
+ */
+export const useSidebarBadges = (): SidebarBadgeCounts => {
+  // Get cases created today with active statuses (not completed, delivered, or cancelled)
+  const { data: casesTodayCount = 0 } = useQuery({
+    queryKey: ['sidebar_badges_cases_today'],
+    queryFn: async () => {
+      try {
+        // Get start of today in user's timezone
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayISO = today.toISOString();
+
+        // First, get all case statuses to filter by type
+        const { data: statuses, error: statusError } = await supabase
+          .from('case_statuses')
+          .select('name, type')
+          .eq('is_active', true);
+
+        if (statusError) throw statusError;
+
+        // Filter out completed, delivered, and cancelled status types
+        const excludedTypes = ['completed', 'delivered', 'cancelled'];
+        const activeStatusNames = statuses
+          ?.filter(s => !excludedTypes.includes(s.type?.toLowerCase() || ''))
+          .map(s => s.name) || [];
+
+        // If no active statuses found, return 0
+        if (activeStatusNames.length === 0) {
+          return 0;
+        }
+
+        // Count cases created today with active statuses
+        const { count, error } = await supabase
+          .from('cases')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', todayISO)
+          .in('status', activeStatusNames);
+
+        if (error) throw error;
+        return count || 0;
+      } catch (error) {
+        console.error('Error fetching cases today count:', error);
+        return 0;
+      }
+    },
+    staleTime: 60000, // 1 minute
+    refetchInterval: 120000, // 2 minutes
+    refetchOnWindowFocus: true,
+  });
+
+  // Get invoices requiring attention (sent, partially-paid, overdue)
+  const { data: invoicesAttentionCount = 0 } = useQuery({
+    queryKey: ['sidebar_badges_invoices_attention'],
+    queryFn: async () => {
+      try {
+        const { count, error } = await supabase
+          .from('invoices')
+          .select('id', { count: 'exact', head: true })
+          .in('status', ['sent', 'partially-paid', 'overdue']);
+
+        if (error) throw error;
+        return count || 0;
+      } catch (error) {
+        console.error('Error fetching invoices attention count:', error);
+        return 0;
+      }
+    },
+    staleTime: 60000, // 1 minute
+    refetchInterval: 120000, // 2 minutes
+    refetchOnWindowFocus: true,
+  });
+
+  // Get pending quotes (sent status only)
+  const { data: pendingQuotesCount = 0 } = useQuery({
+    queryKey: ['sidebar_badges_pending_quotes'],
+    queryFn: async () => {
+      try {
+        const { count, error } = await supabase
+          .from('quotes')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'sent');
+
+        if (error) throw error;
+        return count || 0;
+      } catch (error) {
+        console.error('Error fetching pending quotes count:', error);
+        return 0;
+      }
+    },
+    staleTime: 60000, // 1 minute
+    refetchInterval: 120000, // 2 minutes
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: lowStockCount = 0 } = useQuery({
+    queryKey: ['sidebar_badges_low_stock'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('stock_items')
+          .select('id, current_quantity, minimum_quantity')
+          .is('deleted_at', null)
+          .eq('is_active', true);
+
+        if (error) throw error;
+        return (data ?? []).filter(
+          (item) => item.current_quantity <= item.minimum_quantity
+        ).length;
+      } catch {
+        return 0;
+      }
+    },
+    staleTime: 60000,
+    refetchInterval: 120000,
+    refetchOnWindowFocus: true,
+  });
+
+  return {
+    casesTodayCount,
+    invoicesAttentionCount,
+    pendingQuotesCount,
+    lowStockCount,
+    isLoading: false,
+  };
+};

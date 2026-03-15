@@ -1,0 +1,260 @@
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { supabase } from '../../lib/supabaseClient';
+import { getTransactionCategories, Transaction } from '../../lib/transactionsService';
+import {
+  DollarSign,
+  Calendar,
+  Tag,
+  FileText,
+  TrendingUp,
+  TrendingDown,
+  Save,
+} from 'lucide-react';
+
+interface TransactionFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (transaction: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+}
+
+export const TransactionFormModal: React.FC<TransactionFormModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+}) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [amount, setAmount] = useState<number>(0);
+  const [type, setType] = useState<'income' | 'expense'>('income');
+  const [description, setDescription] = useState('');
+  const [referenceNumber, setReferenceNumber] = useState('');
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [bankAccountId, setBankAccountId] = useState<string>('');
+  const [notes, setNotes] = useState('');
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['transaction_categories'],
+    queryFn: getTransactionCategories,
+  });
+
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ['bank_accounts_active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .select('id, account_name, bank_name, account_type')
+        .eq('is_active', true)
+        .order('account_name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (amount <= 0 || !description.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      await onSave({
+        transaction_date: transactionDate,
+        amount,
+        type,
+        description: description.trim(),
+        reference_number: referenceNumber.trim() || undefined,
+        category_id: categoryId || null,
+        bank_account_id: bankAccountId || null,
+        status: 'completed',
+        notes: notes.trim() || undefined,
+      });
+      handleClose();
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    setTransactionDate(new Date().toISOString().split('T')[0]);
+    setAmount(0);
+    setType('income');
+    setDescription('');
+    setReferenceNumber('');
+    setCategoryId('');
+    setBankAccountId('');
+    setNotes('');
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title="New Transaction" size="md">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
+          <button
+            type="button"
+            onClick={() => setType('income')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              type === 'income'
+                ? 'bg-green-500 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            Income
+          </button>
+          <button
+            type="button"
+            onClick={() => setType('expense')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              type === 'expense'
+                ? 'bg-red-500 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <TrendingDown className="w-4 h-4" />
+            Expense
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Date
+            </label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Input
+                type="date"
+                value={transactionDate}
+                onChange={(e) => setTransactionDate(e.target.value)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Amount
+            </label>
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={amount}
+                onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Description
+          </label>
+          <div className="relative">
+            <FileText className="absolute left-3 top-3 text-slate-400 w-4 h-4" />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Transaction description..."
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Category
+            </label>
+            <div className="relative">
+              <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Category</option>
+                {categories.map((cat: any) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Bank Account
+            </label>
+            <select
+              value={bankAccountId}
+              onChange={(e) => setBankAccountId(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select Account</option>
+              {bankAccounts.map((account: any) => (
+                <option key={account.id} value={account.id}>
+                  {account.account_name} ({account.account_type})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Reference Number
+          </label>
+          <Input
+            type="text"
+            value={referenceNumber}
+            onChange={(e) => setReferenceNumber(e.target.value)}
+            placeholder="e.g., Check #, Receipt #"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Notes (Optional)
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Additional notes..."
+          />
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <Button type="button" variant="secondary" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || amount <= 0}
+            className="flex items-center gap-2"
+            style={{ backgroundColor: type === 'income' ? '#10b981' : '#ef4444' }}
+          >
+            <Save className="w-4 h-4" />
+            {isSubmitting ? 'Saving...' : 'Save Transaction'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
