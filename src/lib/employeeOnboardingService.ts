@@ -66,7 +66,7 @@ export async function createChecklist(checklist: OnboardingChecklistInsert) {
     .from('onboarding_checklists')
     .insert(checklist)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -78,7 +78,7 @@ export async function updateChecklist(id: string, updates: OnboardingChecklistUp
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -87,7 +87,7 @@ export async function updateChecklist(id: string, updates: OnboardingChecklistUp
 export async function deleteChecklist(id: string) {
   const { error } = await supabase
     .from('onboarding_checklists')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;
@@ -109,7 +109,7 @@ export async function createChecklistItem(item: OnboardingChecklistItemInsert) {
     .from('onboarding_checklist_items')
     .insert(item)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -121,7 +121,7 @@ export async function updateChecklistItem(id: string, updates: OnboardingCheckli
     .update(updates)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -130,7 +130,7 @@ export async function updateChecklistItem(id: string, updates: OnboardingCheckli
 export async function deleteChecklistItem(id: string) {
   const { error } = await supabase
     .from('onboarding_checklist_items')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;
@@ -157,7 +157,7 @@ export async function updateTask(id: string, updates: OnboardingTaskUpdate) {
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;

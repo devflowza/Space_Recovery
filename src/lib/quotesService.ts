@@ -123,6 +123,7 @@ export const fetchQuotes = async (filters?: {
           full_name
         )
       `)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (filters?.status && filters.status !== 'all') {
@@ -297,17 +298,19 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
       throw new Error('Failed to generate quote number. Please try again.');
     }
 
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    const subtotal = items.reduce((sum, item) => {
+      const lineTotal = Math.round(item.quantity * item.unit_price * 100) / 100;
+      return Math.round((sum + lineTotal) * 100) / 100;
+    }, 0);
 
     const discountValue = quote.discount_type === 'percentage'
-      ? (subtotal * (quote.discount_amount || 0)) / 100
+      ? Math.round((subtotal * (quote.discount_amount || 0)) / 100 * 100) / 100
       : (quote.discount_amount || 0);
 
-    // Apply discount to subtotal first, then calculate VAT on discounted amount
-    const discountedSubtotal = subtotal - discountValue;
-    const taxAmount = discountedSubtotal * ((quote.tax_rate || 0) / 100);
+    const discountedSubtotal = Math.round((subtotal - discountValue) * 100) / 100;
+    const taxAmount = Math.round(discountedSubtotal * ((quote.tax_rate || 0) / 100) * 100) / 100;
 
-    const totalAmount = discountedSubtotal + taxAmount;
+    const totalAmount = Math.round((discountedSubtotal + taxAmount) * 100) / 100;
 
     const quoteToInsert = sanitizeUuidFields({
       case_id: quote.case_id,
@@ -336,7 +339,7 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
       .from('quotes')
       .insert([quoteToInsert])
       .select()
-      .single();
+      .maybeSingle();
 
     if (quoteError) {
       console.error('Error creating quote:', quoteError);
@@ -370,7 +373,7 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
 
     if (itemsError) {
       console.error('Error creating quote items:', itemsError);
-      await supabase.from('quotes').delete().eq('id', quoteData.id);
+      await supabase.from('quotes').update({ deleted_at: new Date().toISOString() }).eq('id', quoteData.id);
       throw new Error(`Failed to add quote items: ${itemsError.message}`);
     }
 
@@ -385,17 +388,19 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
   let updateData: any = sanitizeUuidFields({ ...quote });
 
   if (items) {
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    const subtotal = items.reduce((sum, item) => {
+      const lineTotal = Math.round(item.quantity * item.unit_price * 100) / 100;
+      return Math.round((sum + lineTotal) * 100) / 100;
+    }, 0);
 
     const discountValue = quote.discount_type === 'percentage'
-      ? (subtotal * (quote.discount_amount || 0)) / 100
+      ? Math.round((subtotal * (quote.discount_amount || 0)) / 100 * 100) / 100
       : (quote.discount_amount || 0);
 
-    // Apply discount to subtotal first, then calculate VAT on discounted amount
-    const discountedSubtotal = subtotal - discountValue;
-    const taxAmount = discountedSubtotal * ((quote.tax_rate || 0) / 100);
+    const discountedSubtotal = Math.round((subtotal - discountValue) * 100) / 100;
+    const taxAmount = Math.round(discountedSubtotal * ((quote.tax_rate || 0) / 100) * 100) / 100;
 
-    const totalAmount = discountedSubtotal + taxAmount;
+    const totalAmount = Math.round((discountedSubtotal + taxAmount) * 100) / 100;
 
     updateData = {
       ...updateData,
@@ -404,7 +409,7 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
       total_amount: totalAmount,
     };
 
-    await supabase.from('quote_items').delete().eq('quote_id', id);
+    await supabase.from('quote_items').update({ deleted_at: new Date().toISOString() }).eq('quote_id', id);
 
     const itemsWithQuoteId = items.map((item, index) => ({
       quote_id: id,
@@ -426,7 +431,7 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
     .update(updateData)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -460,7 +465,7 @@ export const restoreQuote = async (id: string) => {
 };
 
 export const permanentDeleteQuote = async (id: string) => {
-  const { error } = await supabase.from('quotes').delete().eq('id', id);
+  const { error } = await supabase.from('quotes').update({ deleted_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 };
 
@@ -515,7 +520,7 @@ export const updateQuoteStatus = async (
     })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;

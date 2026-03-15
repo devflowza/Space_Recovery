@@ -120,7 +120,7 @@ export async function createStockCategory(data: StockCategoryInsert): Promise<St
     .from('stock_categories')
     .insert(data)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return result;
 }
@@ -131,7 +131,7 @@ export async function updateStockCategory(id: string, data: Partial<StockCategor
     .update({ ...data, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return result;
 }
@@ -228,7 +228,7 @@ export async function createStockItem(data: StockItemInsert): Promise<StockItem>
     .from('stock_items')
     .insert({ ...data, sku: sku.data ?? data.sku })
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return result;
 }
@@ -276,7 +276,7 @@ export async function updateStockItem(id: string, data: StockItemUpdate): Promis
     .update({ ...data, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return result;
 }
@@ -525,7 +525,7 @@ export async function createStockSale(data: StockSaleCreateData): Promise<StockS
     .from('stock_sales')
     .insert(saleInsert)
     .select()
-    .single();
+    .maybeSingle();
   if (saleError) throw saleError;
 
   const saleItemsInsert: StockSaleItemInsert[] = itemsWithTotals.map((item) => ({
@@ -592,7 +592,7 @@ export async function updateStockSale(id: string, data: Partial<StockSaleInsert>
     .update({ ...data, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return result;
 }
@@ -741,7 +741,7 @@ export async function createStockAdjustment(
     .from('stock_adjustment_sessions')
     .insert({ ...data, adjustment_number: numberResult.data })
     .select()
-    .single();
+    .maybeSingle();
   if (sessionError) throw sessionError;
 
   if (data.items && data.items.length > 0) {
@@ -1230,7 +1230,7 @@ export async function createStockReturn(data: CreateStockReturnInput): Promise<S
       notes: data.notes ?? null,
     })
     .select()
-    .single();
+    .maybeSingle();
   if (returnError) throw returnError;
 
   if (data.items.length > 0) {
@@ -1378,7 +1378,7 @@ export async function createReservation(data: CreateReservationInput): Promise<S
       reserved_by: data.reserved_by ?? null,
     })
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return reservation as unknown as StockReservation;
 }
@@ -1755,7 +1755,7 @@ export async function createStockLocation(data: Omit<StockLocation, 'id' | 'crea
     .from('stock_locations')
     .insert(data)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return result as unknown as StockLocation;
 }
@@ -1766,7 +1766,7 @@ export async function updateStockLocation(id: string, data: Partial<StockLocatio
     .update({ ...data, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return result as unknown as StockLocation;
 }
@@ -1834,7 +1834,7 @@ export async function createStockTransfer(data: CreateTransferInput): Promise<St
       created_by: data.created_by ?? null,
     })
     .select()
-    .single();
+    .maybeSingle();
   if (transferError) throw transferError;
 
   if (data.items.length > 0) {

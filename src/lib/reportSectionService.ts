@@ -113,7 +113,7 @@ export const reportSectionService = {
       .from('report_section_library')
       .insert(section)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error creating section:', error);
@@ -132,7 +132,7 @@ export const reportSectionService = {
       .update(updates)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error updating section:', error);
@@ -148,7 +148,7 @@ export const reportSectionService = {
   async deleteSection(id: string): Promise<void> {
     const { error } = await supabase
       .from('report_section_library')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
       .eq('is_system', false);
 
@@ -185,7 +185,7 @@ export const reportSectionService = {
       .from('report_section_presets')
       .insert(preset)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error creating preset:', error);
@@ -204,7 +204,7 @@ export const reportSectionService = {
       .update(updates)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error updating preset:', error);
@@ -220,7 +220,7 @@ export const reportSectionService = {
   async deletePreset(id: string): Promise<void> {
     const { error } = await supabase
       .from('report_section_presets')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {
@@ -244,7 +244,7 @@ export const reportSectionService = {
         .from('report_section_presets')
         .select('usage_count')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (preset) {
         await supabase
@@ -286,7 +286,7 @@ export const reportSectionService = {
     // Delete existing mappings
     await supabase
       .from('report_template_section_mappings')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('template_id', templateId);
 
     // Insert new mappings

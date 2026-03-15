@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { getReportTypeConfig, getReportStatusConfig, type ReportType } from '../../lib/reportTypes';
 import { reportPDFService } from '../../lib/reportPDFService';
 import { format } from 'date-fns';
+import { sanitizeHtml } from '../../lib/sanitizeHtml';
 
 interface PortalReport {
   id: string;
@@ -313,7 +314,7 @@ function PortalReportViewModal({ reportId, onClose }: PortalReportViewModalProps
               <h3 className="text-lg font-medium text-gray-900 mb-2">{section.section_title}</h3>
               <div
                 className="prose max-w-none text-gray-700"
-                dangerouslySetInnerHTML={{ __html: section.section_content || 'No content' }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(section.section_content || 'No content') }}
               />
             </div>
           ))}

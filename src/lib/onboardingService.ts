@@ -118,7 +118,7 @@ export const onboardingService = {
         status: 'active',
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (customerError) throw customerError;
 

@@ -97,7 +97,7 @@ export const timesheetService = {
       .from('timesheets')
       .insert({ ...payload, status: payload.status ?? 'draft' })
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -108,13 +108,13 @@ export const timesheetService = {
       .update({ ...payload, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
 
   async deleteTimesheet(id: string): Promise<void> {
-    const { error } = await supabase.from('timesheets').delete().eq('id', id);
+    const { error } = await supabase.from('timesheets').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     if (error) throw error;
   },
 
@@ -128,7 +128,7 @@ export const timesheetService = {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -145,7 +145,7 @@ export const timesheetService = {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },
@@ -162,7 +162,7 @@ export const timesheetService = {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
     return data;
   },

@@ -3,7 +3,7 @@ const ALLOWED_TAGS = [
   'ul', 'ol', 'li', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
 ];
 
-const ALLOWED_ATTRIBUTES = ['style', 'class'];
+const ALLOWED_ATTRIBUTES = ['style'];
 
 const ALLOWED_STYLES = [
   'color',

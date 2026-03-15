@@ -67,7 +67,7 @@ export async function createReview(review: PerformanceReviewInsert) {
     .from('performance_reviews')
     .insert(review)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -79,7 +79,7 @@ export async function updateReview(id: string, updates: PerformanceReviewUpdate)
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -88,7 +88,7 @@ export async function updateReview(id: string, updates: PerformanceReviewUpdate)
 export async function deleteReview(id: string) {
   const { error } = await supabase
     .from('performance_reviews')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;

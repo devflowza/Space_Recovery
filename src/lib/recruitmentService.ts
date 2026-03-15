@@ -95,7 +95,7 @@ export async function createJob(job: RecruitmentJobInsert) {
     .from('recruitment_jobs')
     .insert(job)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -107,7 +107,7 @@ export async function updateJob(id: string, updates: RecruitmentJobUpdate) {
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -116,7 +116,7 @@ export async function updateJob(id: string, updates: RecruitmentJobUpdate) {
 export async function deleteJob(id: string) {
   const { error } = await supabase
     .from('recruitment_jobs')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;
@@ -142,7 +142,7 @@ export async function createCandidate(candidate: RecruitmentCandidateInsert) {
     .from('recruitment_candidates')
     .insert(candidate)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -154,7 +154,7 @@ export async function updateCandidate(id: string, updates: RecruitmentCandidateU
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -163,7 +163,7 @@ export async function updateCandidate(id: string, updates: RecruitmentCandidateU
 export async function deleteCandidate(id: string) {
   const { error } = await supabase
     .from('recruitment_candidates')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;

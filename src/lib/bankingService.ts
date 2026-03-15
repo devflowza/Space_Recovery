@@ -169,7 +169,7 @@ export const bankingService = {
         currency:currency_codes(code, symbol, name),
         employee:profiles!bank_accounts_employee_id_fkey(id, full_name)
       `)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as BankAccount;
@@ -201,7 +201,7 @@ export const bankingService = {
         currency:currency_codes(code, symbol, name),
         employee:profiles!bank_accounts_employee_id_fkey(id, full_name)
       `)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as BankAccount;
@@ -292,7 +292,7 @@ export const bankingService = {
         created_by: user?.id,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -364,7 +364,7 @@ export const bankingService = {
         created_by: user?.id,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -388,7 +388,7 @@ export const bankingService = {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as PaymentDisbursement;
@@ -453,7 +453,7 @@ export const bankingService = {
         created_by: user?.id,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -478,7 +478,7 @@ export const bankingService = {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as AccountTransfer;
@@ -489,7 +489,7 @@ export const bankingService = {
       .from('account_transfers')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (!transfer) throw new Error('Transfer not found');
 
@@ -498,7 +498,7 @@ export const bankingService = {
       .update({ status: 'completed' })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
 
@@ -530,7 +530,7 @@ export const bankingService = {
       .from('invoices')
       .select('amount_paid, amount_due')
       .eq('id', invoiceId)
-      .single();
+      .maybeSingle();
 
     if (invoice) {
       const newAmountPaid = (invoice.amount_paid || 0) + amount;
@@ -556,7 +556,7 @@ export const bankingService = {
       .from('bank_accounts')
       .select('current_balance')
       .eq('id', accountId)
-      .single();
+      .maybeSingle();
 
     if (!account) throw new Error('Account not found');
 
@@ -779,7 +779,7 @@ export const bankingService = {
         created_by: user?.id,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (receiptError) throw receiptError;
 
@@ -802,7 +802,7 @@ export const bankingService = {
           .from('invoices')
           .select('amount_paid, amount_due, total_amount')
           .eq('id', allocation.invoice_id)
-          .single();
+          .maybeSingle();
 
         if (invoice) {
           const newAmountPaid = (invoice.amount_paid || 0) + allocation.allocated_amount;

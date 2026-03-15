@@ -313,7 +313,7 @@ class ReportPDFService {
         created_by_profile:profiles!case_reports_created_by_fkey(full_name, email)
       `)
       .eq('id', reportId)
-      .single();
+      .maybeSingle();
 
     if (reportError || !report) {
       throw new Error('Failed to fetch report');
@@ -340,7 +340,7 @@ class ReportPDFService {
         profiles!assigned_engineer_id(full_name)
       `)
       .eq('id', report.case_id)
-      .single();
+      .maybeSingle();
 
     if (caseError) {
       console.error('[Report PDF Service] Error fetching case data:', caseError);
@@ -410,7 +410,7 @@ class ReportPDFService {
     const { data: companySettings } = await supabase
       .from('company_settings')
       .select('*')
-      .single();
+      .maybeSingle();
 
     let chainOfCustodyEvents: any[] = [];
     if (report.report_type === 'forensic' && report.forensic_chain_of_custody_id) {

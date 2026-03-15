@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, BookOpen, Star, Eye, Clock, Tag, User, History, ChevronRight, ChevronDown, CreditCard as Edit3, RotateCcw, Calendar } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { sanitizeHtml } from '../../lib/sanitizeHtml';
 import { ArticleEditorModal } from '../../components/kb/ArticleEditorModal';
 import {
   getKBArticleById,
@@ -70,7 +71,7 @@ function VersionItem({
           <div className="text-xs font-medium text-gray-700 mb-1">{version.title}</div>
           <div
             className="text-xs text-gray-500 line-clamp-4 prose-sm"
-            dangerouslySetInnerHTML={{ __html: version.content?.substring(0, 300) + (version.content && version.content.length > 300 ? '...' : '') || '' }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(version.content?.substring(0, 300) + (version.content && version.content.length > 300 ? '...' : '') || '') }}
           />
         </div>
       )}
@@ -254,7 +255,7 @@ export const KBArticleDetailPage: React.FC = () => {
             style={{
               fontFamily: 'inherit',
             }}
-            dangerouslySetInnerHTML={{ __html: article.content || '' }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content || '') }}
           />
         </div>
 

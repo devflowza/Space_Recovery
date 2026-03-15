@@ -27,6 +27,17 @@ const BUCKETS = {
   CUSTOMER_PHOTOS: 'customer-profile-photos',
 } as const;
 
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'application/pdf',
+];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 export const uploadCompanyAsset = async (
   file: File,
   bucketName: 'company-assets' | 'company-qrcodes' | 'customer-profile-photos',
@@ -34,6 +45,20 @@ export const uploadCompanyAsset = async (
   metadata?: Partial<FileMetadata>
 ): Promise<UploadResult> => {
   try {
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return {
+        success: false,
+        error: `File type "${file.type}" is not allowed. Accepted types: JPEG, PNG, GIF, WebP, SVG, PDF.`,
+      };
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return {
+        success: false,
+        error: `File size (${(file.size / 1024 / 1024).toFixed(1)} MB) exceeds the maximum allowed size of ${MAX_FILE_SIZE / 1024 / 1024} MB.`,
+      };
+    }
+
     const timestamp = Date.now();
     const fileExt = file.name.split('.').pop();
     const fileName = `${folder ? folder + '/' : ''}${timestamp}.${fileExt}`;

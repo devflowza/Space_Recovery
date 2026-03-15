@@ -236,7 +236,7 @@ function App() {
             <Route path="quotes" element={<QuotesListPage />} />
             <Route path="quotes/recycle-bin" element={<QuotesRecycleBin />} />
             <Route path="quotes/:id" element={<QuoteDetailPage />} />
-            <Route path="assets" element={<div className="text-xl">Assets - Coming Soon</div>} />
+            {/* Assets route removed - not yet implemented */}
             <Route path="stock" element={<StockListPage />} />
             <Route path="stock/categories" element={<StockCategoriesPage />} />
             <Route path="stock/sales" element={<StockSalesPage />} />
@@ -336,7 +336,7 @@ function App() {
               }
             />
             <Route path="profile" element={<UserProfile />} />
-            <Route path="integrations" element={<div className="text-xl">Integrations - Coming Soon</div>} />
+            {/* Integrations route removed - not yet implemented */}
 
             <Route path="hr">
               <Route
@@ -640,7 +640,7 @@ function App() {
                 }
               />
             </Route>
-            <Route path="search" element={<div className="text-xl">Search - Coming Soon</div>} />
+            {/* Search route removed - not yet implemented */}
           </Route>
 
           <Route
@@ -659,7 +659,13 @@ function App() {
             <Route path="announcements" element={<AnnouncementsPage />} />
           </Route>
 
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+                  <h1 className="text-4xl font-bold text-gray-900 mb-2">404</h1>
+                  <p className="text-lg text-gray-600 mb-6">Page not found</p>
+                  <a href="/" className="text-blue-600 hover:text-blue-800 font-medium">Go back to dashboard</a>
+                </div>
+              } />
             </Routes>
           </Suspense>
           </PortalAuthProvider>

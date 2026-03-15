@@ -87,6 +87,7 @@ export const fetchExpenses = async (filters?: {
       submitter:profiles!expenses_submitted_by_fkey(id, full_name),
       approver:profiles!expenses_approved_by_fkey(id, full_name)
     `)
+    .is('deleted_at', null)
     .order('expense_date', { ascending: false });
 
   if (filters?.status && filters.status !== 'all') {
@@ -162,7 +163,7 @@ export const createExpense = async (
       expense_number: expenseNumber,
     }])
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -177,7 +178,7 @@ export const updateExpense = async (
     .update(expense)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -186,12 +187,12 @@ export const updateExpense = async (
 export const deleteExpense = async (id: string) => {
   await supabase
     .from('expense_attachments')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('expense_id', id);
 
   const { error } = await supabase
     .from('expenses')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;
@@ -206,7 +207,7 @@ export const submitExpense = async (id: string, submittedBy: string) => {
     })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -217,7 +218,7 @@ export const approveExpense = async (id: string, approvedBy: string) => {
     .from('expenses')
     .select('amount, description, case_id')
     .eq('id', id)
-    .single();
+    .maybeSingle();
 
   if (fetchError) throw fetchError;
 
@@ -231,7 +232,7 @@ export const approveExpense = async (id: string, approvedBy: string) => {
     })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -275,7 +276,7 @@ export const rejectExpense = async (
     })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -287,7 +288,7 @@ export const markExpenseAsPaid = async (id: string) => {
     .update({ status: 'paid' })
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -317,7 +318,7 @@ export const uploadExpenseAttachment = async (
       file_size: file.size,
     }])
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -328,7 +329,7 @@ export const deleteExpenseAttachment = async (attachmentId: string) => {
     .from('expense_attachments')
     .select('file_path')
     .eq('id', attachmentId)
-    .single();
+    .maybeSingle();
 
   if (fetchError) throw fetchError;
 
@@ -338,7 +339,7 @@ export const deleteExpenseAttachment = async (attachmentId: string) => {
 
   const { error } = await supabase
     .from('expense_attachments')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', attachmentId);
 
   if (error) throw error;

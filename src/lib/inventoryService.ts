@@ -284,7 +284,7 @@ export async function createInventoryItem(item: Partial<InventoryItem>) {
     .from('inventory_items')
     .insert([item])
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -296,7 +296,7 @@ export async function updateInventoryItem(id: string, updates: Partial<Inventory
     .update(updates)
     .eq('id', id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -305,7 +305,7 @@ export async function updateInventoryItem(id: string, updates: Partial<Inventory
 export async function deleteInventoryItem(id: string) {
   const { error } = await supabase
     .from('inventory_items')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id);
 
   if (error) throw error;
@@ -356,7 +356,7 @@ export async function createInventoryTransaction(transaction: Partial<InventoryT
     .from('inventory_transactions')
     .insert([transaction])
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -375,7 +375,7 @@ export async function adjustInventoryQuantity(
     .from('inventory_items')
     .select('quantity_available')
     .eq('id', itemId)
-    .single();
+    .maybeSingle();
 
   if (fetchError) throw fetchError;
 
@@ -403,7 +403,7 @@ export async function adjustInventoryQuantity(
     .update({ quantity_available: quantityAfter })
     .eq('id', itemId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (updateError) throw updateError;
   return data;
@@ -427,7 +427,7 @@ export async function addInventoryPhoto(photo: Partial<InventoryPhoto>) {
     .from('inventory_photos')
     .insert([photo])
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data as InventoryPhoto;
@@ -436,7 +436,7 @@ export async function addInventoryPhoto(photo: Partial<InventoryPhoto>) {
 export async function deleteInventoryPhoto(photoId: string) {
   const { error } = await supabase
     .from('inventory_photos')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', photoId);
 
   if (error) throw error;
