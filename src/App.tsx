@@ -96,7 +96,6 @@ const InventoryListPage = lazy(() => import('./pages/inventory/InventoryListPage
 const InventoryFormPage = lazy(() => import('./pages/inventory/InventoryFormPage').then(m => ({ default: m.default })));
 const DonorSearchPage = lazy(() => import('./pages/inventory/DonorSearchPage').then(m => ({ default: m.default })));
 
-const InvoicesList = lazy(() => import('./pages/financial/InvoicesList').then(m => ({ default: m.InvoicesList })));
 const InvoicesListPage = lazy(() => import('./pages/financial/InvoicesListPage').then(m => ({ default: m.default })));
 const InvoiceDetailPage = lazy(() => import('./pages/financial/InvoiceDetailPage').then(m => ({ default: m.default })));
 const PaymentsList = lazy(() => import('./pages/financial/PaymentsList').then(m => ({ default: m.PaymentsList })));
