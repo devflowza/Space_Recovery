@@ -315,13 +315,135 @@ export interface InvoiceDocumentData {
   companySettings: CompanySettingsData;
 }
 
+export interface PaymentReceiptData {
+  id: string;
+  receipt_number?: string;
+  payment_date: string;
+  amount: number;
+  payment_method?: string;
+  reference_number?: string;
+  notes?: string;
+  created_at: string;
+  invoice?: {
+    id: string;
+    invoice_number: string;
+    total_amount: number;
+    invoice_type: string;
+  };
+  customer?: {
+    id: string;
+    customer_name: string;
+    email?: string;
+    mobile_number?: string;
+    phone_number?: string;
+  };
+  company?: {
+    id: string;
+    company_name: string;
+  };
+  cases?: {
+    id: string;
+    case_no: string;
+  };
+  created_by_profile?: {
+    id: string;
+    full_name: string;
+  };
+  bank_accounts?: {
+    id: string;
+    account_name: string;
+    bank_name: string;
+    account_number: string;
+    iban?: string;
+    swift_code?: string;
+  };
+  accounting_locales?: {
+    currency_symbol: string;
+    currency_position: 'before' | 'after';
+    decimal_places: number;
+  };
+}
+
+export interface PaymentReceiptDocumentData {
+  paymentData: PaymentReceiptData;
+  companySettings: CompanySettingsData;
+}
+
+export interface PayslipData {
+  id: string;
+  employee: {
+    first_name: string;
+    last_name: string;
+    employee_number: string;
+  };
+  payroll_period: {
+    period_name: string;
+    start_date: string;
+    end_date: string;
+  };
+  payment_date?: string;
+  working_days?: number;
+  days_worked?: number;
+  days_absent?: number;
+  regular_hours?: number;
+  overtime_hours?: number;
+  gross_salary?: number;
+  net_salary: number;
+  items: Array<{
+    component_code: string;
+    component_name: string;
+    component_type: string;
+    amount: number;
+    calculation_basis?: string;
+  }>;
+  accounting_locales?: {
+    currency_symbol: string;
+    currency_position: 'before' | 'after';
+    decimal_places: number;
+  };
+}
+
+export interface PayslipDocumentData {
+  payslipData: PayslipData;
+  companySettings: CompanySettingsData;
+}
+
+export interface ChainOfCustodyEntryData {
+  entry_number: number;
+  action_category: string;
+  action_type: string;
+  action_description: string;
+  actor_name: string;
+  actor_role?: string;
+  occurred_at: string;
+  evidence_reference?: string;
+  hash_algorithm?: string;
+  hash_value?: string;
+  digital_signature?: string;
+}
+
+export interface ChainOfCustodyDocumentData {
+  caseNumber: string;
+  entries: ChainOfCustodyEntryData[];
+  options?: {
+    includeMetadata?: boolean;
+    includeHashes?: boolean;
+    includeSignatures?: boolean;
+    watermark?: string;
+  };
+  companySettings: CompanySettingsData;
+}
+
 export type DocumentType =
   | 'office_receipt'
   | 'customer_copy'
   | 'checkout_form'
   | 'case_label'
   | 'quote'
-  | 'invoice';
+  | 'invoice'
+  | 'payment_receipt'
+  | 'payslip'
+  | 'chain_of_custody';
 
 export interface TranslationContext {
   t: (key: string, englishText: string) => string;

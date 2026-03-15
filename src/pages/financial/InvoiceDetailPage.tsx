@@ -39,14 +39,13 @@ export const InvoiceDetailPage: React.FC = () => {
     settingsReady,
     settingsError,
     resourceError,
-    isGenerating,
     translationsReady,
     translationsError,
     translationsErrorMessage,
     isLoadingTranslations,
-    downloadPDF,
     t,
   } = usePDFDownload();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showConversionHistoryModal, setShowConversionHistoryModal] = useState(false);
@@ -62,6 +61,7 @@ export const InvoiceDetailPage: React.FC = () => {
   const handleDownloadPDF = async () => {
     if (!invoice) return;
 
+    setIsGenerating(true);
     try {
       const { generateInvoicePDF } = await import('../../lib/invoiceService');
       const result = await generateInvoicePDF(invoice.id, true);
@@ -72,6 +72,8 @@ export const InvoiceDetailPage: React.FC = () => {
     } catch (error) {
       console.error('Error generating invoice PDF:', error);
       toast.error('Failed to generate PDF');
+    } finally {
+      setIsGenerating(false);
     }
   };
 

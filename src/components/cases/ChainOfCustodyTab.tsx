@@ -44,10 +44,10 @@ import {
 } from '../../lib/chainOfCustodyService';
 import { formatDateTime } from '../../lib/format';
 import {
-  exportChainOfCustodyToPDF,
   exportToCSV,
   exportToJSON,
 } from '../../lib/chainOfCustodyExport';
+import { generateChainOfCustody } from '../../lib/pdf/pdfService';
 
 interface ChainOfCustodyTabProps {
   caseId: string;
@@ -159,7 +159,7 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
 
     switch (format) {
       case 'pdf':
-        exportChainOfCustodyToPDF(dataToExport, caseNumber, {
+        generateChainOfCustody(caseId, caseNumber, {
           includeMetadata: true,
           includeHashes: true,
           includeSignatures: true,

@@ -48,7 +48,6 @@ export default defineConfig({
           'ui-libs': ['lucide-react', '@tanstack/react-query', '@tanstack/react-table'],
           'form-libs': ['react-hook-form', '@hookform/resolvers', 'zod'],
           'chart-libs': ['recharts'],
-          'pdf-libs': ['@react-pdf/renderer', 'jspdf', 'html2canvas'],
           'pdfmake-libs': ['pdfmake/build/pdfmake', 'pdfmake/build/vfs_fonts'],
           'date-libs': ['date-fns'],
           'i18n': ['i18next', 'react-i18next'],

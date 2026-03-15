@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { generatePDF, PDFGenerationOptions } from '../lib/pdfGenerationService';
 import { useDocumentTranslations } from './useDocumentTranslations';
 
 interface CompanySettings {
@@ -53,7 +52,6 @@ export function usePDFDownload() {
   const [settingsReady, setSettingsReady] = useState(false);
   const [settingsError, setSettingsError] = useState(false);
   const [resourceError, setResourceError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -107,59 +105,16 @@ export function usePDFDownload() {
     };
   }, []);
 
-  const downloadPDF = async (options: PDFGenerationOptions): Promise<boolean> => {
-    if (translationsError) {
-      alert(`Cannot generate PDF: ${translationsErrorMessage || 'Translations failed to load'}\n\nPlease refresh the page to retry.`);
-      return false;
-    }
-
-    if (settingsError) {
-      alert(`Cannot generate PDF: ${resourceError || 'Company settings failed to load'}\n\nPlease refresh the page to retry.`);
-      return false;
-    }
-
-    if (!translationsReady || !settingsReady) {
-      alert('Please wait for the document to fully load before generating PDF.\n\nTranslations and company settings must be loaded first.');
-      return false;
-    }
-
-    if (isLoadingSettings || isLoadingTranslations) {
-      alert('Resources are still loading. Please wait a moment and try again.');
-      return false;
-    }
-
-    setIsGenerating(true);
-
-    try {
-      const result = await generatePDF(options);
-
-      if (!result.success) {
-        alert(result.error || 'Failed to generate PDF. Please try again.');
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error in downloadPDF:', error);
-      alert('An unexpected error occurred while generating the PDF. Please try again.');
-      return false;
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   return {
     companySettings,
     isLoadingSettings,
     settingsReady,
     settingsError,
     resourceError,
-    isGenerating,
     translationsReady,
     translationsError,
     translationsErrorMessage,
     isLoadingTranslations,
-    downloadPDF,
     t,
   };
 }

@@ -80,7 +80,7 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
 
         uploaded++;
       } catch (err: unknown) {
-        toast.error(`Failed to upload ${file.name}: ${${err instanceof Error ? err.message : 'Unknown error'}}`);
+        toast.error(`Failed to upload ${file.name}: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     }
 
@@ -110,7 +110,7 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
       a.click();
       document.body.removeChild(a);
     } catch (err: unknown) {
-      toast.error(`Failed to download file: ${${err instanceof Error ? err.message : 'Unknown error'}}`);
+      toast.error(`Failed to download file: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -131,7 +131,7 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
       toast.success('File deleted');
       queryClient.invalidateQueries({ queryKey: ['case_attachments', caseId] });
     } catch (err: unknown) {
-      toast.error(`Failed to delete file: ${${err instanceof Error ? err.message : 'Unknown error'}}`);
+      toast.error(`Failed to delete file: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setDeletingId(null);
     }
