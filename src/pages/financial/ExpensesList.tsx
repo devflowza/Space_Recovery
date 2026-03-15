@@ -18,6 +18,7 @@ import {
   Expense,
 } from '../../lib/expensesService';
 import { useAuth } from '../../contexts/AuthContext';
+import { EmptyState } from '../../components/shared/EmptyState';
 import {
   Plus,
   Search,
@@ -341,23 +342,17 @@ export const ExpensesList: React.FC = () => {
       </div>
 
       {expenses.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <Wallet className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 text-lg mb-4">
-            {searchTerm || statusFilter !== 'all'
-              ? 'No expenses found matching your criteria.'
-              : 'No expenses yet. Submit your first expense to get started.'}
-          </p>
-          <Button
-            onClick={() => {
-              setEditingExpense(null);
-              setShowExpenseModal(true);
-            }}
-            style={{ backgroundColor: '#f97316' }}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Submit Expense
-          </Button>
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200">
+          <EmptyState
+            icon={Wallet}
+            title="No expenses found"
+            description={
+              searchTerm || statusFilter !== 'all'
+                ? 'No expenses found matching your criteria.'
+                : 'No expenses yet. Submit your first expense to get started.'
+            }
+            action={{ label: 'Submit Expense', onClick: () => { setEditingExpense(null); setShowExpenseModal(true); } }}
+          />
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Search, Filter, Users, RefreshCw } from 'lucide-react';
+import { EmptyState } from '../../components/shared/EmptyState';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
@@ -146,11 +147,16 @@ export const EmployeesList: React.FC = () => {
           <p className="text-slate-500 mt-4">Loading employees...</p>
         </div>
       ) : filteredEmployees.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 text-lg">
-            {searchTerm ? 'No employees found matching your search.' : 'No employees found. Add your first employee to get started.'}
-          </p>
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200">
+          <EmptyState
+            icon={Users}
+            title="No employees found"
+            description={
+              searchTerm
+                ? 'No employees found matching your search.'
+                : 'No employees found. Add your first employee to get started.'
+            }
+          />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">

@@ -10,6 +10,7 @@ import { InvoiceFormModal } from '../../components/cases/InvoiceFormModal';
 import { RecordReceiptModal } from '../../components/banking/RecordReceiptModal';
 import { useCurrency } from '../../hooks/useCurrency';
 import { supabase } from '../../lib/supabaseClient';
+import { EmptyState } from '../../components/shared/EmptyState';
 import {
   FileText,
   Plus,
@@ -307,13 +308,17 @@ export const InvoicesListPage: React.FC = () => {
       </div>
 
       {invoices.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 text-lg">
-            {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
-              ? 'No invoices found matching your criteria.'
-              : 'No invoices yet. Create your first invoice to get started.'}
-          </p>
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200">
+          <EmptyState
+            icon={FileText}
+            title="No invoices found"
+            description={
+              searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
+                ? 'No invoices found matching your criteria.'
+                : 'No invoices yet. Create your first invoice to get started.'
+            }
+            action={{ label: 'Create Invoice', onClick: () => setShowInvoiceModal(true) }}
+          />
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
