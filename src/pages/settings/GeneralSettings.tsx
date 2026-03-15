@@ -206,8 +206,6 @@ export const GeneralSettings: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async (updates: Partial<CompanySettings>) => {
-      console.log('Updating company settings with:', updates);
-
       // Refresh session to ensure we have a valid, non-expired token
       const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
 
@@ -265,7 +263,6 @@ export const GeneralSettings: React.FC = () => {
         throw new Error('Failed to save: Permission denied or record not found. Please refresh and try again.');
       }
 
-      console.log('Update successful:', data);
       return data;
     },
     onSuccess: () => {

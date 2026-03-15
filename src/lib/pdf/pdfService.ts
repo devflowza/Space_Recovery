@@ -97,8 +97,6 @@ export async function generateOfficeReceipt(caseId: string, download: boolean = 
   let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
 
   try {
-    console.log('[PDF Service] Starting Office Receipt generation for case:', caseId);
-
     const data = await withTimeout(
       fetchReceiptData(caseId),
       10000,
@@ -109,8 +107,6 @@ export async function generateOfficeReceipt(caseId: string, download: boolean = 
     languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
     mode = languageSettings?.mode || 'english_only';
 
-    console.log('[PDF Service] Language settings:', { languageCode, mode });
-
     const fontsLoaded = await withTimeout(
       initializePDFFonts(languageCode),
       15000,
@@ -118,7 +114,6 @@ export async function generateOfficeReceipt(caseId: string, download: boolean = 
     );
 
     if (!fontsLoaded && languageCode) {
-      console.warn(`[PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
       languageCode = null;
       mode = 'english_only';
       fontSource = 'fallback';
@@ -156,7 +151,6 @@ export async function generateOfficeReceipt(caseId: string, download: boolean = 
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[PDF Service] Office Receipt generated successfully in ${duration}ms`);
 
     await logPDFGeneration({
       caseId,
@@ -207,7 +201,7 @@ export async function generateCustomerCopy(caseId: string, download: boolean = t
     const fontsLoaded = await initializePDFFonts(languageCode);
 
     if (!fontsLoaded && languageCode) {
-      console.warn(`${languageCode} fonts unavailable, falling back to English-only mode`);
+      console.error(`${languageCode} fonts unavailable, falling back to English-only mode`);
       languageCode = null;
       mode = 'english_only';
     }
@@ -256,7 +250,7 @@ export async function generateCheckoutForm(caseId: string, download: boolean = t
     const fontsLoaded = await initializePDFFonts(languageCode);
 
     if (!fontsLoaded && languageCode) {
-      console.warn(`${languageCode} fonts unavailable, falling back to English-only mode`);
+      console.error(`${languageCode} fonts unavailable, falling back to English-only mode`);
       languageCode = null;
       mode = 'english_only';
     }
@@ -305,7 +299,7 @@ export async function generateCaseLabel(caseId: string, download: boolean = true
     const fontsLoaded = await initializePDFFonts(languageCode);
 
     if (!fontsLoaded && languageCode) {
-      console.warn(`${languageCode} fonts unavailable, falling back to English-only mode`);
+      console.error(`${languageCode} fonts unavailable, falling back to English-only mode`);
       languageCode = null;
       mode = 'english_only';
     }
@@ -348,8 +342,6 @@ export async function generateQuote(quoteId: string, download: boolean = true): 
   let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
 
   try {
-    console.log('[PDF Service] Starting Quote generation for quote:', quoteId);
-
     const data = await withTimeout(
       fetchQuoteData(quoteId),
       10000,
@@ -360,8 +352,6 @@ export async function generateQuote(quoteId: string, download: boolean = true): 
     languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
     mode = languageSettings?.mode || 'english_only';
 
-    console.log('[PDF Service] Language settings:', { languageCode, mode });
-
     const fontsLoaded = await withTimeout(
       initializePDFFonts(languageCode),
       15000,
@@ -369,7 +359,6 @@ export async function generateQuote(quoteId: string, download: boolean = true): 
     );
 
     if (!fontsLoaded && languageCode) {
-      console.warn(`[PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
       languageCode = null;
       mode = 'english_only';
       fontSource = 'fallback';
@@ -407,7 +396,6 @@ export async function generateQuote(quoteId: string, download: boolean = true): 
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[PDF Service] Quote generated successfully in ${duration}ms`);
 
     await logPDFGeneration({
       caseId: data.quoteData.case_id || '',
@@ -454,8 +442,6 @@ export async function generateInvoice(invoiceId: string, download: boolean = tru
   let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
 
   try {
-    console.log('[PDF Service] Starting Invoice generation for invoice:', invoiceId);
-
     const data = await withTimeout(
       fetchInvoiceData(invoiceId),
       10000,
@@ -466,8 +452,6 @@ export async function generateInvoice(invoiceId: string, download: boolean = tru
     languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
     mode = languageSettings?.mode || 'english_only';
 
-    console.log('[PDF Service] Language settings:', { languageCode, mode });
-
     const fontsLoaded = await withTimeout(
       initializePDFFonts(languageCode),
       15000,
@@ -475,7 +459,6 @@ export async function generateInvoice(invoiceId: string, download: boolean = tru
     );
 
     if (!fontsLoaded && languageCode) {
-      console.warn(`[PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
       languageCode = null;
       mode = 'english_only';
       fontSource = 'fallback';
@@ -514,7 +497,6 @@ export async function generateInvoice(invoiceId: string, download: boolean = tru
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[PDF Service] Invoice generated successfully in ${duration}ms`);
 
     await logPDFGeneration({
       caseId: data.invoiceData.case_id || '',
@@ -724,8 +706,6 @@ export async function generateOfficeReceiptAsBlob(caseId: string): Promise<PDFBl
   let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
 
   try {
-    console.log('[PDF Service] Starting Office Receipt blob generation for case:', caseId);
-
     const data = await withTimeout(
       fetchReceiptData(caseId),
       10000,
@@ -736,8 +716,6 @@ export async function generateOfficeReceiptAsBlob(caseId: string): Promise<PDFBl
     languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
     mode = languageSettings?.mode || 'english_only';
 
-    console.log('[PDF Service] Language settings:', { languageCode, mode });
-
     const fontsLoaded = await withTimeout(
       initializePDFFonts(languageCode),
       15000,
@@ -745,7 +723,6 @@ export async function generateOfficeReceiptAsBlob(caseId: string): Promise<PDFBl
     );
 
     if (!fontsLoaded && languageCode) {
-      console.warn(`[PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
       languageCode = null;
       mode = 'english_only';
       fontSource = 'fallback';
@@ -799,7 +776,6 @@ export async function generateOfficeReceiptAsBlob(caseId: string): Promise<PDFBl
     );
 
     const duration = Date.now() - startTime;
-    console.log(`[PDF Service] Office Receipt blob generated successfully in ${duration}ms`);
 
     await logPDFGeneration({
       caseId,

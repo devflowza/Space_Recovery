@@ -284,8 +284,6 @@ export async function updateCompanySettings(updates: Partial<CompanySettings>): 
       throw new Error('Your account is inactive. Please contact your administrator.');
     }
 
-    console.log(`User ${userProfile.full_name} (${session.user.email}) updating company settings...`);
-
     // Perform the update
     const { data, error } = await supabase
       .from('company_settings')
@@ -303,8 +301,6 @@ export async function updateCompanySettings(updates: Partial<CompanySettings>): 
       console.error('Update returned empty array - RLS policy blocked the update');
       throw new Error('Failed to save: Permission denied or record not found. Please refresh the page and try again.');
     }
-
-    console.log('Company settings updated successfully:', data[0]);
 
     // Invalidate cache so next fetch gets fresh data
     invalidateCompanySettingsCache();
