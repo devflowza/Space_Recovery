@@ -4,6 +4,30 @@ import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "https://app.xsuite.io";
 
+async function checkRateLimit(
+  supabase: ReturnType<typeof createClient>,
+  key: string,
+  maxRequests: number,
+  windowSeconds: number
+): Promise<boolean> {
+  const { data } = await supabase.rpc('check_rate_limit', {
+    p_key: key,
+    p_max_requests: maxRequests,
+    p_window_seconds: windowSeconds,
+  });
+  return data === true;
+}
+
+function rateLimitResponse(headers: Record<string, string>, retryAfter: number) {
+  return new Response(
+    JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+    {
+      status: 429,
+      headers: { ...headers, 'Content-Type': 'application/json', 'Retry-After': String(retryAfter) },
+    }
+  );
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -74,6 +98,13 @@ Deno.serve(async (req: Request) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
+    }
+
+    // Rate limit: 5 emails per 60 seconds per user
+    const rateLimitKey = `send-email:${user.id}`;
+    const allowed = await checkRateLimit(supabaseClient, rateLimitKey, 5, 60);
+    if (!allowed) {
+      return rateLimitResponse(corsHeaders, 60);
     }
 
     const body: SendEmailRequest = await req.json();

@@ -4,6 +4,36 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "https://app.xsuite.io";
 
+function getClientIP(req: Request): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('cf-connecting-ip')
+    || 'unknown';
+}
+
+async function checkRateLimit(
+  supabase: ReturnType<typeof createClient>,
+  key: string,
+  maxRequests: number,
+  windowSeconds: number
+): Promise<boolean> {
+  const { data } = await supabase.rpc('check_rate_limit', {
+    p_key: key,
+    p_max_requests: maxRequests,
+    p_window_seconds: windowSeconds,
+  });
+  return data === true;
+}
+
+function rateLimitResponse(headers: Record<string, string>, retryAfter: number) {
+  return new Response(
+    JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+    {
+      status: 429,
+      headers: { ...headers, 'Content-Type': 'application/json', 'Retry-After': String(retryAfter) },
+    }
+  );
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -71,6 +101,14 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Forbidden: Admin access required" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Rate limit: 3 requests per 60 seconds per IP
+    const ip = getClientIP(req);
+    const rateLimitKey = `user-mgmt:${ip}`;
+    const allowed = await checkRateLimit(supabaseClient, rateLimitKey, 3, 60);
+    if (!allowed) {
+      return rateLimitResponse(corsHeaders, 60);
     }
 
     const url = new URL(req.url);

@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
 
 const PDF_GENERATION_TIMEOUT = 30000;
 const IMAGE_LOAD_TIMEOUT = 10000;
@@ -54,6 +55,11 @@ async function loadImageWithRetry(url: string, retryCount = 0): Promise<boolean>
 }
 
 export async function generatePDF(options: PDFGenerationOptions): Promise<PDFGenerationResult> {
+  const rl = checkRateLimit(RATE_LIMITS.PDF_GENERATION);
+  if (!rl.allowed) {
+    return { success: false, error: rl.message };
+  }
+
   const pdfGenerationStartTime = Date.now();
 
   const checkTimeout = () => {
