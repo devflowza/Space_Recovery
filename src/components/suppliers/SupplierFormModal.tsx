@@ -6,11 +6,36 @@ import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 
+interface SupplierData {
+  id?: string;
+  name?: string;
+  supplier_number?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  tax_id?: string;
+  website?: string;
+  category_id?: string;
+  payment_terms_id?: string;
+  description?: string;
+  primary_contact_name?: string;
+  primary_contact_email?: string;
+  primary_contact_phone?: string;
+  primary_contact_position?: string;
+  preferred_shipping_method?: string;
+  is_active?: boolean;
+  is_approved?: boolean;
+}
+
 interface SupplierFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  supplier?: Record<string, unknown> | null;
+  supplier?: SupplierData | null;
 }
 
 export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier }: SupplierFormModalProps) {
