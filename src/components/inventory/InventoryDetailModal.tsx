@@ -165,9 +165,9 @@ export default function InventoryDetailModal({
       if (onUpdate) {
         onUpdate();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error assigning to case:', err);
-      setAssignmentError(err.message || 'Failed to assign item to case');
+      setAssignmentError(err instanceof Error ? err.message : 'Failed to assign item to case');
     } finally {
       setAssignmentLoading(false);
     }

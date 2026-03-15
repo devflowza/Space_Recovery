@@ -89,9 +89,9 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
       showToast('Document uploaded successfully', 'success');
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error uploading document:', error);
-      showToast(error.message || 'Failed to upload document', 'error');
+      showToast(error instanceof Error ? error.message : 'Failed to upload document', 'error');
     } finally {
       setLoading(false);
     }

@@ -61,8 +61,8 @@ interface AuditLog {
   table_name: string;
   record_id: string;
   action: string;
-  old_values?: any;
-  new_values?: any;
+  old_values?: Record<string, unknown> | null;
+  new_values?: Record<string, unknown> | null;
   changed_by?: string;
   changed_at: string;
   profile?: { full_name: string };

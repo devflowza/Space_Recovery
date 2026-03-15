@@ -475,9 +475,9 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving device:', error);
-      toast.error(`Failed to save device: ${error.message}`);
+      toast.error(`Failed to save device: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -495,9 +495,9 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting device:', error);
-      toast.error(`Failed to delete device: ${error.message}`);
+      toast.error(`Failed to delete device: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
       setShowDeleteConfirm(false);

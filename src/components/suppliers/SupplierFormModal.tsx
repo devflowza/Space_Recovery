@@ -137,9 +137,9 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving supplier:', error);
-      showToast(error.message || 'Failed to save supplier', 'error');
+      showToast(error instanceof Error ? error.message : 'Failed to save supplier', 'error');
     } finally {
       setLoading(false);
     }

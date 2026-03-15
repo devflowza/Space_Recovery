@@ -174,7 +174,7 @@ export const TicketDetailPage: React.FC = () => {
               ) : messages.length === 0 ? (
                 <p className="text-center text-slate-500 py-8">No messages yet</p>
               ) : (
-                messages.map((message: any) => (
+                messages.map((message: Record<string, unknown> & { id: string; sender_type: string }) => (
                   <TicketMessage
                     key={message.id}
                     message={{

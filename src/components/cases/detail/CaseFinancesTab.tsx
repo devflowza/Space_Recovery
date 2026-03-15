@@ -11,23 +11,23 @@ import { useNavigate } from 'react-router-dom';
 
 interface CaseFinancesTabProps {
   caseId: string;
-  caseData: any;
-  quotes: any[];
-  invoices: any[];
+  caseData: Record<string, unknown>;
+  quotes: Record<string, unknown>[];
+  invoices: Record<string, unknown>[];
   caseFinancialSummary: CaseFinancialSummary | null | undefined;
   formatCurrency: (amount: number) => string;
   formatCurrencyAmount: (amount: number, symbol: string, position: string, decimals: number) => string;
   onSetShowQuoteModal: (v: boolean) => void;
   onSetShowInvoiceModal: (v: boolean) => void;
-  onSetEditingQuote: (q: any) => void;
-  onSetEditingInvoice: (inv: any) => void;
-  onSetViewingQuote: (q: any) => void;
-  onSetViewingInvoice: (inv: any) => void;
-  onHandleRecordPayment: (invoice: any) => void;
-  onSetConvertingInvoice: (inv: any) => void;
+  onSetEditingQuote: (q: Record<string, unknown>) => void;
+  onSetEditingInvoice: (inv: Record<string, unknown>) => void;
+  onSetViewingQuote: (q: Record<string, unknown>) => void;
+  onSetViewingInvoice: (inv: Record<string, unknown>) => void;
+  onHandleRecordPayment: (invoice: Record<string, unknown>) => void;
+  onSetConvertingInvoice: (inv: Record<string, unknown>) => void;
   onSetShowConvertProformaModal: (v: boolean) => void;
-  quotesService: any;
-  invoiceService: any;
+  quotesService: Record<string, unknown>;
+  invoiceService: Record<string, unknown>;
 }
 
 export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({

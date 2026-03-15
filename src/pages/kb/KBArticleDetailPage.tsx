@@ -117,7 +117,7 @@ export const KBArticleDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: kbKeys.all });
       toast.success('Version restored successfully');
     },
-    onError: (err: any) => toast.error(err.message || 'Failed to restore version'),
+    onError: (err: Error) => toast.error(err.message || 'Failed to restore version'),
   });
 
   if (isLoading) {

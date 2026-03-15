@@ -218,7 +218,7 @@ export const ReportsDashboard: React.FC = () => {
       if (error) throw error;
 
       const categoryCounts: Record<string, number> = {};
-      (data || []).forEach((expense: any) => {
+      (data || []).forEach((expense: { amount?: number; category?: { name?: string } | null }) => {
         const categoryName = expense.category?.name || 'Uncategorized';
         if (!categoryCounts[categoryName]) {
           categoryCounts[categoryName] = 0;
@@ -243,7 +243,7 @@ export const ReportsDashboard: React.FC = () => {
       if (error) throw error;
 
       const customerRevenue: Record<string, { name: string; amount: number }> = {};
-      (data || []).forEach((invoice: any) => {
+      (data || []).forEach((invoice: { customer_id: string; amount_paid?: number; customers_enhanced?: { customer_name?: string } | null }) => {
         const customerId = invoice.customer_id;
         const customerName = invoice.customers_enhanced?.customer_name || 'Unknown';
         if (!customerRevenue[customerId]) {

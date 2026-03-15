@@ -34,8 +34,8 @@ export const Login: React.FC = () => {
 
     try {
       await signIn(email, password);
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in');
     } finally {
       setLoading(false);
     }
@@ -47,8 +47,8 @@ export const Login: React.FC = () => {
 
     try {
       await signInWithGoogle();
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in with Google');
       setGoogleLoading(false);
     }
   };
@@ -56,7 +56,7 @@ export const Login: React.FC = () => {
   useEffect(() => {
     if (profile && !passwordResetRequired && !hasRedirected.current && profileStatus === 'approved') {
       hasRedirected.current = true;
-      const from = (location.state as any)?.from?.pathname || '/';
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/';
       navigate(from, { replace: true });
     }
   }, [profile, passwordResetRequired, navigate, location, profileStatus]);

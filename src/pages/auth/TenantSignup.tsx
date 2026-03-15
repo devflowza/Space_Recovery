@@ -78,8 +78,8 @@ export const TenantSignup = () => {
 
       showToast('Account created successfully! Please log in.', 'success');
       navigate('/login');
-    } catch (error: any) {
-      showToast(error.message || 'Failed to create account', 'error');
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : 'Failed to create account', 'error');
       console.error(error);
     } finally {
       setLoading(false);

@@ -115,6 +115,8 @@ export interface InvoiceWithDetails extends Invoice {
   };
 }
 
+const DEFAULT_PAGE_SIZE = 100;
+
 export const fetchInvoices = async (filters?: {
   status?: string;
   invoiceType?: string;
@@ -122,6 +124,8 @@ export const fetchInvoices = async (filters?: {
   caseId?: string;
   customerId?: string;
   companyId?: string;
+  page?: number;
+  pageSize?: number;
 }) => {
   let query = supabase
     .from('invoices')
@@ -179,6 +183,10 @@ export const fetchInvoices = async (filters?: {
   if (filters?.companyId) {
     query = query.eq('company_id', filters.companyId);
   }
+
+  const pageSize = filters?.pageSize || DEFAULT_PAGE_SIZE;
+  const page = filters?.page || 0;
+  query = query.range(page * pageSize, (page + 1) * pageSize - 1);
 
   const { data, error } = await query;
 

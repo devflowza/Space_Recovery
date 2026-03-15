@@ -159,7 +159,7 @@ export const ExpensesList: React.FC = () => {
     await approveExpenseMutation.mutateAsync(expenseToApprove);
   };
 
-  const handleEdit = (expense: any, e: React.MouseEvent) => {
+  const handleEdit = (expense: { id: string }, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingExpense(expense);
     setShowExpenseModal(true);
@@ -207,10 +207,10 @@ export const ExpensesList: React.FC = () => {
   };
 
   const totalExpenses = expenses
-    .filter((e: any) => e.status === 'approved' || e.status === 'paid')
-    .reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0);
-  const pendingExpenses = expenses.filter((e: any) => e.status === 'pending');
-  const approvedExpenses = expenses.filter((e: any) => e.status === 'approved' || e.status === 'paid');
+    .filter((e: { status?: string }) => e.status === 'approved' || e.status === 'paid')
+    .reduce((sum: number, exp: { amount?: number }) => sum + (exp.amount || 0), 0);
+  const pendingExpenses = expenses.filter((e: { status?: string }) => e.status === 'pending');
+  const approvedExpenses = expenses.filter((e: { status?: string }) => e.status === 'approved' || e.status === 'paid');
 
   if (isLoading) {
     return (
@@ -376,7 +376,7 @@ export const ExpensesList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {expenses.map((expense: any) => (
+                {expenses.map((expense: { id: string; expense_date: string; description: string; amount: number; status: string; category?: { name?: string }; case?: { case_no?: string }; payment_method?: { name?: string }; created_by_profile?: { full_name?: string } }) => (
                   <tr
                     key={expense.id}
                     className="hover:bg-slate-50 transition-colors"

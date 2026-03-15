@@ -94,14 +94,14 @@ export const RevenueDashboard: React.FC = () => {
         .select('amount_paid')
         .gte('invoice_date', prevStart.toISOString().split('T')[0])
         .lt('invoice_date', prevEnd.toISOString().split('T')[0]);
-      return (data || []).reduce((sum: number, inv: any) => sum + (inv.amount_paid || 0), 0);
+      return (data || []).reduce((sum: number, inv: { amount_paid?: number }) => sum + (inv.amount_paid || 0), 0);
     },
   });
 
-  const totalRevenue = revenueData.reduce((sum: number, inv: any) => sum + (inv.amount_paid || 0), 0);
-  const thisMonth = revenueData.filter((inv: any) => new Date(inv.invoice_date).getMonth() === new Date().getMonth());
-  const thisMonthRevenue = thisMonth.reduce((sum: number, inv: any) => sum + (inv.amount_paid || 0), 0);
-  const paidInvoices = revenueData.filter((inv: any) => inv.status === 'paid');
+  const totalRevenue = revenueData.reduce((sum: number, inv: { amount_paid?: number }) => sum + (inv.amount_paid || 0), 0);
+  const thisMonth = revenueData.filter((inv: { invoice_date: string }) => new Date(inv.invoice_date).getMonth() === new Date().getMonth());
+  const thisMonthRevenue = thisMonth.reduce((sum: number, inv: { amount_paid?: number }) => sum + (inv.amount_paid || 0), 0);
+  const paidInvoices = revenueData.filter((inv: { status?: string }) => inv.status === 'paid');
   const growthRate = prevPeriodRevenue > 0 ? ((totalRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100 : 0;
 
   if (isLoading) {
@@ -283,12 +283,12 @@ export const RevenueDashboard: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {revenueData
-                    .filter((inv: any) =>
+                    .filter((inv: { invoice_number: string; customer?: { customer_name?: string } }) =>
                       searchTerm === '' ||
                       inv.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                       inv.customer?.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
                     )
-                    .map((invoice: any) => (
+                    .map((invoice: { id: string; invoice_number: string; invoice_date: string; customer?: { customer_name?: string }; total_amount?: number; amount_paid?: number; status?: string }) => (
                       <tr key={invoice.id} onClick={() => navigate(`/invoices/${invoice.id}`)} className="hover:bg-slate-50 transition-colors cursor-pointer">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="font-semibold text-blue-600">{invoice.invoice_number}</span>
@@ -334,8 +334,8 @@ export const RevenueDashboard: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  customerRevenue.map((customer: any) => {
-                    const totalCustomerRevenue = customerRevenue.reduce((sum: number, c: any) => sum + c.amount, 0);
+                  customerRevenue.map((customer: { id: string; name: string; email?: string; count: number; amount: number }) => {
+                    const totalCustomerRevenue = customerRevenue.reduce((sum: number, c: { amount: number }) => sum + c.amount, 0);
                     const percentage = totalCustomerRevenue > 0 ? (customer.amount / totalCustomerRevenue) * 100 : 0;
                     return (
                       <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
@@ -393,7 +393,7 @@ export const RevenueDashboard: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  caseRevenue.map((c: any) => (
+                  caseRevenue.map((c: { id: string; caseNo: string; title?: string; revenue: number; expenses: number; profit: number }) => (
                     <tr key={c.id} onClick={() => navigate(`/cases/${c.id}`)} className="hover:bg-slate-50 transition-colors cursor-pointer">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="font-semibold text-blue-600">{c.caseNo}</span>

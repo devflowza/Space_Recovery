@@ -32,7 +32,7 @@ interface DonorDrive {
   reserved_quantity: number;
   true_available: number;
   condition_rating: number;
-  usable_donor_parts: any;
+  usable_donor_parts: Record<string, boolean> | null;
   compatibility_score: number;
 }
 
@@ -149,7 +149,7 @@ export default function DonorSearchPage() {
     }
   };
 
-  const handleLoadTemplate = async (template: any) => {
+  const handleLoadTemplate = async (template: { id: string; search_criteria: DonorSearchCriteria; usage_count: number }) => {
     setCriteria(template.search_criteria);
 
     await supabase
@@ -165,7 +165,7 @@ export default function DonorSearchPage() {
     return 'bg-gray-100 text-gray-800 border-gray-300';
   };
 
-  const renderUsableParts = (parts: any) => {
+  const renderUsableParts = (parts: Record<string, boolean> | null) => {
     if (!parts) return null;
     const usableParts = Object.entries(parts)
       .filter(([, value]) => value === true)

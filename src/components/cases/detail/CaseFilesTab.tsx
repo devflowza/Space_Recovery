@@ -9,7 +9,7 @@ import { formatDate } from '../../../lib/format';
 
 interface CaseFilesTabProps {
   caseId: string;
-  attachments: any[];
+  attachments: Array<{ id: string; file_name: string; file_path: string; file_size?: number; file_type?: string; created_at?: string }>;
   uploadedBy: string;
 }
 
@@ -79,8 +79,8 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
         }
 
         uploaded++;
-      } catch (err: any) {
-        toast.error(`Failed to upload ${file.name}: ${err.message}`);
+      } catch (err: unknown) {
+        toast.error(`Failed to upload ${file.name}: ${${err instanceof Error ? err.message : 'Unknown error'}}`);
       }
     }
 
@@ -93,7 +93,7 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
     }
   };
 
-  const handleDownload = async (attachment: any) => {
+  const handleDownload = async (attachment: { id: string; file_path: string; file_name: string }) => {
     try {
       const { data, error } = await supabase.storage
         .from(BUCKET)
@@ -109,12 +109,12 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    } catch (err: any) {
-      toast.error(`Failed to download file: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Failed to download file: ${${err instanceof Error ? err.message : 'Unknown error'}}`);
     }
   };
 
-  const handleDelete = async (attachment: any) => {
+  const handleDelete = async (attachment: { id: string; file_path: string; file_name: string }) => {
     if (!window.confirm(`Delete "${attachment.file_name}"? This cannot be undone.`)) return;
 
     setDeletingId(attachment.id);
@@ -130,8 +130,8 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
 
       toast.success('File deleted');
       queryClient.invalidateQueries({ queryKey: ['case_attachments', caseId] });
-    } catch (err: any) {
-      toast.error(`Failed to delete file: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Failed to delete file: ${${err instanceof Error ? err.message : 'Unknown error'}}`);
     } finally {
       setDeletingId(null);
     }

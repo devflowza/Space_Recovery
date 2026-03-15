@@ -32,7 +32,7 @@ export default function SalaryComponentsPage() {
       queryClient.invalidateQueries({ queryKey: payrollKeys.salaryComponents() });
       showToast('Component status updated', 'success');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showToast(error.message || 'Failed to update component', 'error');
     },
   });
@@ -44,7 +44,7 @@ export default function SalaryComponentsPage() {
       showToast('Component deleted successfully', 'success');
       setDeletingComponent(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       showToast(error.message || 'Failed to delete component', 'error');
     },
   });

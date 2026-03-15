@@ -122,7 +122,7 @@ export const SystemNumbers: React.FC = () => {
 
       toast.success('Number sequence updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Failed to update number sequence:', error);
       toast.error(`Failed to update: ${error.message || 'Unknown error occurred'}`);
     },

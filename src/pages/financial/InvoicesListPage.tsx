@@ -89,7 +89,7 @@ export const InvoicesListPage: React.FC = () => {
     return type === 'proforma' ? '#8b5cf6' : '#0ea5e9';
   };
 
-  const getClientName = (invoice: any) => {
+  const getClientName = (invoice: { customers_enhanced?: { customer_name?: string } | null; companies?: { company_name?: string } | null }) => {
     if (invoice.customers_enhanced) {
       return invoice.customers_enhanced.customer_name;
     }
@@ -533,7 +533,7 @@ export const InvoicesListPage: React.FC = () => {
             setShowPaymentModal(false);
             setPaymentInvoice(null);
           }}
-          onSave={async (receiptData: any, allocations?: any[]) => {
+          onSave={async (receiptData: Partial<import('../../lib/bankingService').PaymentReceipt>, allocations?: Array<{ invoice_id: string; allocated_amount: number }>) => {
             const { data: receipt, error: receiptError } = await supabase
               .from('receipts')
               .insert({
@@ -626,7 +626,7 @@ export const InvoicesListPage: React.FC = () => {
             setShowInvoiceModal(false);
             setEditingInvoice(null);
           }}
-          onSave={async (invoiceData: any, items: any[]) => {
+          onSave={async (invoiceData: Partial<import('../../lib/invoiceService').Invoice>, items: import('../../lib/invoiceService').InvoiceItem[]) => {
             if (editingInvoice) {
               await updateInvoice(editingInvoice.id, {
                 title: invoiceData.title,

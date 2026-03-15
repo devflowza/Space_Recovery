@@ -12,7 +12,7 @@ import { AlertCircle, Check, Clock, AlertTriangle, Receipt, CheckCircle } from '
 interface RecordReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (receiptData: any, allocations?: any[]) => Promise<void>;
+  onSave: (receiptData: Record<string, unknown>, allocations?: Array<{ invoice_id: string; allocated_amount: number }>) => Promise<void>;
   prefilledData?: {
     customer_id?: string;
     company_id?: string;
@@ -250,15 +250,15 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
 
       await onSave(receiptData, allocationRecords);
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to record receipt');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to record receipt');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { color: string; icon: any }> = {
+    const statusConfig: Record<string, { color: string; icon: React.ComponentType<{ className?: string }> }> = {
       paid: { color: 'bg-green-100 text-green-800', icon: Check },
       'partially-paid': { color: 'bg-blue-100 text-blue-800', icon: Clock },
       sent: { color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle },
@@ -312,7 +312,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
               required
             >
               <option value="">Select Account</option>
-              {accounts.map((acc: any) => (
+              {accounts.map((acc: { id: string; account_name: string }) => (
                 <option key={acc.id} value={acc.id}>
                   {acc.account_name} ({acc.account_type}) - Balance: {formatCurrencyValue(acc.current_balance)}
                 </option>
@@ -331,7 +331,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
                 setSelectedInvoices(new Set());
                 setAllocations(new Map());
               }}
-              options={cases.map((caseItem: any) => ({
+              options={cases.map((caseItem: { id: string; case_no?: string; customer?: { customer_name?: string } }) => ({
                 id: caseItem.id,
                 name: `${caseItem.case_number} - ${caseItem.title} (${caseItem.client_name})`,
               }))}
@@ -366,8 +366,8 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
 
             <div className="grid grid-cols-1 gap-3 max-h-80 overflow-y-auto">
               {invoices
-                .filter((invoice: any) => singleInvoiceMode ? invoice.id === invoiceId : true)
-                .map((invoice: any) => {
+                .filter((invoice: { id: string }) => singleInvoiceMode ? invoice.id === invoiceId : true)
+                .map((invoice: { id: string; invoice_number?: string; total_amount?: number; amount_paid?: number; amount_due?: number; status?: string }) => {
                 const outstanding = invoice.amount_due || 0;
                 const isSelected = selectedInvoices.has(invoice.id);
                 const allocation = allocations.get(invoice.id) || 0;
@@ -504,7 +504,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select Method</option>
-              {paymentMethods.map((method: any) => (
+              {paymentMethods.map((method: { id: string; name: string }) => (
                 <option key={method.id} value={method.id}>
                   {method.name}
                 </option>

@@ -10,7 +10,7 @@ import { AlertCircle, ArrowRight } from 'lucide-react';
 interface TransferFundsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (transferData: any) => Promise<void>;
+  onSave: (transferData: Record<string, unknown>) => Promise<void>;
 }
 
 export const TransferFundsModal: React.FC<TransferFundsModalProps> = ({
@@ -86,8 +86,8 @@ export const TransferFundsModal: React.FC<TransferFundsModalProps> = ({
 
       await onSave(formData);
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create transfer');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create transfer');
     } finally {
       setIsSubmitting(false);
     }
@@ -128,7 +128,7 @@ export const TransferFundsModal: React.FC<TransferFundsModalProps> = ({
               required
             >
               <option value="">Select Source</option>
-              {accounts.map((acc: any) => (
+              {accounts.map((acc: { id: string; account_name: string; current_balance: number; currency?: string }) => (
                 <option key={acc.id} value={acc.id}>
                   {acc.account_name} - Balance: {formatCurrencyValue(acc.current_balance)}
                 </option>
@@ -156,7 +156,7 @@ export const TransferFundsModal: React.FC<TransferFundsModalProps> = ({
               <option value="">Select Destination</option>
               {accounts
                 .filter(a => a.id !== formData.from_account_id)
-                .map((acc: any) => (
+                .map((acc: { id: string; account_name: string; current_balance: number; currency?: string }) => (
                   <option key={acc.id} value={acc.id}>
                     {acc.account_name} - Balance: {formatCurrencyValue(acc.current_balance)}
                   </option>
