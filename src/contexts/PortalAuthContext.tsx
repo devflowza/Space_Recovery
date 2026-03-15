@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { checkRateLimit, RATE_LIMITS } from '../lib/rateLimiter';
 
 interface PortalCustomer {
   id: string;
@@ -75,22 +76,55 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setLoading(true);
     setError(null);
 
+    // Check lockout from failed attempts
+    const lockoutKey = `portal_lockout_${email}`;
+    const lockoutData = sessionStorage.getItem(lockoutKey);
+    if (lockoutData) {
+      const { lockedUntil } = JSON.parse(lockoutData);
+      if (Date.now() < lockedUntil) {
+        const minutesLeft = Math.ceil((lockedUntil - Date.now()) / 60_000);
+        setError(`Account temporarily locked. Please try again in ${minutesLeft} minute${minutesLeft === 1 ? '' : 's'}.`);
+        setLoading(false);
+        return false;
+      }
+      sessionStorage.removeItem(lockoutKey);
+    }
+
+    // Rate limit check
+    const rl = checkRateLimit({ ...RATE_LIMITS.PORTAL_LOGIN, key: `portal_login:${email}` });
+    if (!rl.allowed) {
+      setError(rl.message);
+      setLoading(false);
+      return false;
+    }
+
     try {
       const { data, error } = await supabase.rpc('authenticate_portal_customer', {
         p_email: email,
         p_password: password,
       });
 
-      if (error) {
+      if (error || !data) {
         console.error('Authentication error:', error);
-        setError('Invalid email or password');
+        // Track failed attempts
+        const failKey = `portal_fails_${email}`;
+        const fails = parseInt(sessionStorage.getItem(failKey) || '0') + 1;
+        sessionStorage.setItem(failKey, String(fails));
+
+        if (fails >= 5) {
+          const lockedUntil = Date.now() + 15 * 60_000; // 15 minutes
+          sessionStorage.setItem(lockoutKey, JSON.stringify({ lockedUntil }));
+          sessionStorage.removeItem(failKey);
+          setError('Too many failed attempts. Account locked for 15 minutes.');
+        } else {
+          setError('Invalid email or password');
+        }
         return false;
       }
 
-      if (!data) {
-        setError('Invalid email or password');
-        return false;
-      }
+      // Successful login — clear failed attempts
+      sessionStorage.removeItem(`portal_fails_${email}`);
+      sessionStorage.removeItem(lockoutKey);
 
       const customerData = data as PortalCustomer;
       setCustomer(customerData);

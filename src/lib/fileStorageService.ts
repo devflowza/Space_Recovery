@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
 
 export interface UploadResult {
   success: boolean;
@@ -44,6 +45,11 @@ export const uploadCompanyAsset = async (
   folder: string = '',
   metadata?: Partial<FileMetadata>
 ): Promise<UploadResult> => {
+  const rl = checkRateLimit(RATE_LIMITS.FILE_UPLOAD);
+  if (!rl.allowed) {
+    return { success: false, error: rl.message };
+  }
+
   try {
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       return {

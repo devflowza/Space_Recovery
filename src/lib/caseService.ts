@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
 
 interface DeleteCaseResult {
   success: boolean;
@@ -20,6 +21,11 @@ interface DeleteCaseResult {
 }
 
 export async function deleteCaseService(caseId: string): Promise<DeleteCaseResult> {
+  const rl = checkRateLimit(RATE_LIMITS.CASE_DELETION);
+  if (!rl.allowed) {
+    throw new Error(rl.message);
+  }
+
   try {
     const { data, error } = await supabase.rpc('delete_case_permanently', {
       p_case_id: caseId,

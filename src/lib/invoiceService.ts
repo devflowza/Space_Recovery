@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
 
 const logAuditTrail = async (actionType: string, tableName: string, recordId: string, oldValues: object, newValues: object) => {
   try {
@@ -697,6 +698,11 @@ export const convertProformaToTaxInvoice = async (
   dueDate?: string,
   notes?: string
 ) => {
+  const rl = checkRateLimit(RATE_LIMITS.INVOICE_CONVERSION);
+  if (!rl.allowed) {
+    throw new Error(rl.message);
+  }
+
   const { data, error } = await supabase.rpc('convert_proforma_to_tax_invoice', {
     p_proforma_id: proformaId,
     p_due_date: dueDate || null,

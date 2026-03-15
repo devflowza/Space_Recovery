@@ -3,6 +3,30 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "https://app.xsuite.io";
 
+async function checkRateLimit(
+  supabase: ReturnType<typeof createClient>,
+  key: string,
+  maxRequests: number,
+  windowSeconds: number
+): Promise<boolean> {
+  const { data } = await supabase.rpc('check_rate_limit', {
+    p_key: key,
+    p_max_requests: maxRequests,
+    p_window_seconds: windowSeconds,
+  });
+  return data === true;
+}
+
+function rateLimitResponse(headers: Record<string, string>, retryAfter: number) {
+  return new Response(
+    JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+    {
+      status: 429,
+      headers: { ...headers, 'Content-Type': 'application/json', 'Retry-After': String(retryAfter) },
+    }
+  );
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -107,6 +131,13 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "Forbidden: Admin access required" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Rate limit: 3 requests per 60 seconds per user
+    const rateLimitKey = `paypal-create:${user.id}`;
+    const rlAllowed = await checkRateLimit(supabase, rateLimitKey, 3, 60);
+    if (!rlAllowed) {
+      return rateLimitResponse(corsHeaders, 60);
     }
 
     const requestBody: PayPalSubscriptionRequest = await req.json();

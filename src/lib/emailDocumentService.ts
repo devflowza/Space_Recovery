@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
 
 export interface SendDocumentEmailParams {
   to: string;
@@ -51,6 +52,11 @@ function validatePDFBlob(blob: Blob): boolean {
 }
 
 export async function sendDocumentEmail(params: SendDocumentEmailParams): Promise<SendEmailResult> {
+  const rl = checkRateLimit(RATE_LIMITS.EMAIL_SEND);
+  if (!rl.allowed) {
+    return { success: false, error: rl.message };
+  }
+
   try {
     if (!validatePDFBlob(params.blob)) {
       return {

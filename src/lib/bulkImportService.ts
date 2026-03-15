@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { parseCSV, csvToObjects } from './importExportService';
+import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
 
 export interface ImportProgress {
   total: number;
@@ -37,6 +38,8 @@ export interface ReferenceLookupCache {
   conditionTypes: Map<string, string>;
 }
 
+let isImporting = false;
+
 export class BulkInventoryImporter {
   private progress: ImportProgress = {
     total: 0,
@@ -67,6 +70,20 @@ export class BulkInventoryImporter {
   }
 
   async importFromCSV(csvContent: string, fieldMappings: Record<string, string>): Promise<ImportProgress> {
+    if (isImporting) {
+      this.progress.status = 'failed';
+      this.progress.errors.push({ row: 0, field: '', message: 'An import is already in progress. Please wait for it to complete.', value: null });
+      return this.progress;
+    }
+
+    const rl = checkRateLimit(RATE_LIMITS.BULK_IMPORT);
+    if (!rl.allowed) {
+      this.progress.status = 'failed';
+      this.progress.errors.push({ row: 0, field: '', message: rl.message, value: null });
+      return this.progress;
+    }
+
+    isImporting = true;
     try {
       this.progress.status = 'preparing';
       this.notifyProgress();
@@ -99,6 +116,8 @@ export class BulkInventoryImporter {
       });
       this.notifyProgress();
       return this.progress;
+    } finally {
+      isImporting = false;
     }
   }
 
