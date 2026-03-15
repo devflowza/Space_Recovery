@@ -3,8 +3,8 @@ import { Eye, Save, Bell, Globe, Shield } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
-import { supabase } from '../../../lib/supabaseClient';
-import { useToast } from '../../../hooks/useToast';
+import { supabase } from '@/lib/supabaseClient';
+import { useToast } from '@/hooks/useToast';
 
 interface PortalSettings {
   id?: string;

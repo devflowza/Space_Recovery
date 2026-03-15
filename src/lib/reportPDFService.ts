@@ -86,8 +86,6 @@ class ReportPDFService {
     let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
 
     try {
-      console.log('[Report PDF Service] Starting report generation for:', reportId);
-
       const data = await withTimeout(
         this.fetchReportData(reportId),
         10000,
@@ -98,8 +96,6 @@ class ReportPDFService {
       languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
       mode = languageSettings?.mode || 'english_only';
 
-      console.log('[Report PDF Service] Language settings:', { languageCode, mode });
-
       const fontsLoaded = await withTimeout(
         initializePDFFonts(languageCode),
         15000,
@@ -107,7 +103,7 @@ class ReportPDFService {
       );
 
       if (!fontsLoaded && languageCode) {
-        console.warn(`[Report PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
+        console.error(`[Report PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
         languageCode = null;
         mode = 'english_only';
         fontSource = 'fallback';
@@ -145,7 +141,6 @@ class ReportPDFService {
       }
 
       const duration = Date.now() - startTime;
-      console.log(`[Report PDF Service] Report generated successfully in ${duration}ms`);
 
       await logPDFGeneration({
         caseId: data.report.case_id,
@@ -192,7 +187,6 @@ class ReportPDFService {
     let fontSource: 'local' | 'cdn' | 'fallback' = 'local';
 
     try {
-      console.log('[Report PDF Service] Starting report blob generation for:', reportId);
 
       const data = await withTimeout(
         this.fetchReportData(reportId),
@@ -211,7 +205,7 @@ class ReportPDFService {
       );
 
       if (!fontsLoaded && languageCode) {
-        console.warn(`[Report PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
+        console.error(`[Report PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
         languageCode = null;
         mode = 'english_only';
         fontSource = 'fallback';
@@ -265,7 +259,6 @@ class ReportPDFService {
       );
 
       const duration = Date.now() - startTime;
-      console.log(`[Report PDF Service] Report blob generated successfully in ${duration}ms`);
 
       await logPDFGeneration({
         caseId: data.report.case_id,

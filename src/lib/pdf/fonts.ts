@@ -84,7 +84,6 @@ function initVFSWithBaseFont(): void {
     (pdfMake as any).vfs = { ...baseVFS, ...cachedFonts };
     (pdfMake as any).fonts = PDF_FONTS;
     fontsInitialized = true;
-    console.log('[PDF Fonts] ✓ VFS initialized with base fonts');
   } catch (error) {
     console.error('[PDF Fonts] ✗ Failed to initialize VFS:', error);
     throw error;
@@ -93,12 +92,10 @@ function initVFSWithBaseFont(): void {
 
 async function loadAndCacheFonts(family: FontFamily, fontName: string): Promise<boolean> {
   if (loadedFontFamilies.has(fontName)) {
-    console.log(`[PDF Fonts] ${fontName} fonts already loaded`);
     return true;
   }
 
   fontLoadingStatus = 'loading';
-  console.log(`[PDF Fonts] Loading ${fontName} fonts...`);
 
   try {
     const result: FontLoadResult = await loadFontsByFamily(family);
@@ -126,7 +123,6 @@ async function loadAndCacheFonts(family: FontFamily, fontName: string): Promise<
 
     fontsInitialized = true;
     fontLoadingStatus = 'loaded';
-    console.log(`[PDF Fonts] ✓ VFS initialized with ${fontName} fonts`);
     return true;
   } catch (error) {
     fontLoadingStatus = 'error';
@@ -171,7 +167,6 @@ export function getFontFamily(languageCode: LanguageCode | null): string {
 export async function initializePDFFonts(languageCode: LanguageCode | null = null): Promise<boolean> {
   if (!languageCode) {
     if (!loadedFontFamilies.has('Roboto')) {
-      console.log('[PDF Fonts] Loading Roboto as default font...');
       await loadAndCacheFonts('roboto', 'Roboto');
     }
     initVFSWithBaseFont();
@@ -182,7 +177,6 @@ export async function initializePDFFonts(languageCode: LanguageCode | null = nul
 
   if (!mapping) {
     if (!loadedFontFamilies.has('Roboto')) {
-      console.log('[PDF Fonts] Loading Roboto as fallback font...');
       await loadAndCacheFonts('roboto', 'Roboto');
     }
     initVFSWithBaseFont();
@@ -190,14 +184,13 @@ export async function initializePDFFonts(languageCode: LanguageCode | null = nul
   }
 
   if (loadedFontFamilies.has(mapping.fontName)) {
-    console.log(`[PDF Fonts] ${mapping.fontName} fonts already initialized`);
     return true;
   }
 
   try {
     const loaded = await loadAndCacheFonts(mapping.family, mapping.fontName);
     if (!loaded) {
-      console.warn(`[PDF Fonts] ${mapping.fontName} fonts unavailable, loading Roboto fallback`);
+      console.error(`[PDF Fonts] ${mapping.fontName} fonts unavailable, loading Roboto fallback`);
       if (!loadedFontFamilies.has('Roboto')) {
         await loadAndCacheFonts('roboto', 'Roboto');
       }
@@ -208,7 +201,6 @@ export async function initializePDFFonts(languageCode: LanguageCode | null = nul
     console.error('[PDF Fonts] Error initializing fonts:', error);
     try {
       if (!loadedFontFamilies.has('Roboto')) {
-        console.log('[PDF Fonts] Loading Roboto as fallback...');
         await loadAndCacheFonts('roboto', 'Roboto');
       }
       initVFSWithBaseFont();
@@ -273,7 +265,6 @@ export function areFontsLoaded(languageCode: LanguageCode | null): boolean {
 
 export async function preloadAllFonts(): Promise<void> {
   if (!loadedFontFamilies.has('Roboto')) {
-    console.log('[PDF Fonts] Preloading Roboto fonts...');
     await loadAndCacheFonts('roboto', 'Roboto');
   }
   initVFSWithBaseFont();
@@ -284,7 +275,6 @@ export function resetFontLoadingState(): void {
   loadedFontFamilies.clear();
   fontLoadingStatus = 'idle';
   cachedFonts = {};
-  console.log('[PDF Fonts] Font loading state reset');
 }
 
 export function ensurePDFMakeFontsReady(): void {

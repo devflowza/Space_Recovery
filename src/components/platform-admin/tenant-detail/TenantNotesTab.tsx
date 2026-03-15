@@ -3,11 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { StickyNote, Send } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { getTenantNotes, addTenantNote } from '../../../lib/platformAdminService';
-import { platformAdminKeys } from '../../../lib/queryKeys';
-import { usePlatformAdmin } from '../../../contexts/PlatformAdminContext';
+import { getTenantNotes, addTenantNote } from '@/lib/platformAdminService';
+import { platformAdminKeys } from '@/lib/queryKeys';
+import { usePlatformAdmin } from '@/contexts/PlatformAdminContext';
 import { formatDistanceToNow } from 'date-fns';
-import { useToast } from '../../../hooks/useToast';
+import { useToast } from '@/hooks/useToast';
 
 interface TenantNotesTabProps {
   tenantId: string;

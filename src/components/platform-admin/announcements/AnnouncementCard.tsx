@@ -4,10 +4,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { ConfirmDialog } from '../../ui/ConfirmDialog';
-import { duplicateAnnouncement, deleteAnnouncement, updateAnnouncement } from '../../../lib/platformAdminService';
-import { platformAdminKeys } from '../../../lib/queryKeys';
-import { useToast } from '../../../hooks/useToast';
-import type { Database } from '../../../types/database.types';
+import { duplicateAnnouncement, deleteAnnouncement, updateAnnouncement } from '@/lib/platformAdminService';
+import { platformAdminKeys } from '@/lib/queryKeys';
+import { useToast } from '@/hooks/useToast';
+import type { Database } from '@/types/database.types';
 
 type PlatformAnnouncement = Database['public']['Tables']['platform_announcements']['Row'];
 

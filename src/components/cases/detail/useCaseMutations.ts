@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../../lib/supabaseClient';
-import { createPayment } from '../../../lib/paymentsService';
-import { deleteCaseService } from '../../../lib/caseService';
-import { useAuth } from '../../../contexts/AuthContext';
-import { useToast } from '../../../hooks/useToast';
+import { supabase } from '@/lib/supabaseClient';
+import { createPayment } from '@/lib/paymentsService';
+import { deleteCaseService } from '@/lib/caseService';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/useToast';
 
 interface UseCaseMutationsParams {
   id: string | undefined;
@@ -49,7 +49,6 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
 
   const updateCaseStatusMutation = useMutation({
     mutationFn: async (newStatus: string) => {
-      console.log('Updating case status to:', newStatus);
       const { data, error } = await supabase
         .from('cases')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -60,7 +59,6 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         console.error('Error updating status:', error);
         throw error;
       }
-      console.log('Status update result:', data);
       return data;
     },
     onSuccess: () => {
@@ -76,7 +74,6 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
 
   const updateCasePriorityMutation = useMutation({
     mutationFn: async (newPriority: string) => {
-      console.log('Updating case priority to:', newPriority);
       const { data, error } = await supabase
         .from('cases')
         .update({ priority: newPriority, updated_at: new Date().toISOString() })
@@ -87,7 +84,6 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         console.error('Error updating priority:', error);
         throw error;
       }
-      console.log('Priority update result:', data);
       return data;
     },
     onSuccess: () => {
@@ -103,7 +99,6 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
 
   const updateAssignedEngineerMutation = useMutation({
     mutationFn: async (newEngineerId: string | null) => {
-      console.log('Updating assigned engineer to:', newEngineerId);
       const { data, error } = await supabase
         .from('cases')
         .update({ assigned_engineer_id: newEngineerId, updated_at: new Date().toISOString() })
@@ -114,7 +109,6 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         console.error('Error updating assigned engineer:', error);
         throw error;
       }
-      console.log('Assigned engineer update result:', data);
       return data;
     },
     onSuccess: () => {
@@ -133,7 +127,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
       paymentData,
       allocations,
     }: {
-      paymentData: Omit<import('../../../lib/paymentsService').Payment, 'id' | 'payment_number' | 'created_at' | 'updated_at'>;
+      paymentData: Omit<import('@/lib/paymentsService').Payment, 'id' | 'payment_number' | 'created_at' | 'updated_at'>;
       allocations: Array<{ invoice_id: string; amount: number }>;
     }) => {
       return createPayment(paymentData, allocations);

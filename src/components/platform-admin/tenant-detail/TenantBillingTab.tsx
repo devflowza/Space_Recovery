@@ -4,9 +4,9 @@ import { CreditCard, ExternalLink, FileText } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Table } from '../../ui/Table';
-import { getTenantBillingHistory } from '../../../lib/platformAdminService';
-import { platformAdminKeys } from '../../../lib/queryKeys';
-import type { Database } from '../../../types/database.types';
+import { getTenantBillingHistory } from '@/lib/platformAdminService';
+import { platformAdminKeys } from '@/lib/queryKeys';
+import type { Database } from '@/types/database.types';
 
 type TenantSubscription = Database['public']['Tables']['tenant_subscriptions']['Row'];
 

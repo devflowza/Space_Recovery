@@ -19,7 +19,7 @@ export async function logPDFGeneration(data: PDFGenerationLogData): Promise<void
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      console.warn('[PDF Logging] No authenticated user, skipping log');
+      console.error('[PDF Logging] No authenticated user, skipping log');
       return;
     }
 

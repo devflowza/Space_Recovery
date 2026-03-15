@@ -132,7 +132,7 @@ export const getNextTransactionNumber = async (prefix: string): Promise<string> 
     }
 
     if (!data) {
-      console.warn(`No number generated for ${prefix}, using timestamp fallback`);
+      console.error(`No number generated for ${prefix}, using timestamp fallback`);
       return `${prefix}-${Date.now()}`;
     }
 

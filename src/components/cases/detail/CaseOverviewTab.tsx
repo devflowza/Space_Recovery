@@ -8,7 +8,7 @@ import { SearchableSelect } from '../../ui/SearchableSelect';
 import { MultiSelectDropdown } from '../../ui/MultiSelectDropdown';
 import { EngineerSelector } from '../EngineerSelector';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 interface CaseOverviewTabProps {
   caseData: Record<string, unknown>;

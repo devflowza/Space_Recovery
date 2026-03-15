@@ -65,7 +65,7 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
           selectedColumns,
         });
       } catch (err) {
-        console.warn('Could not create job record:', err);
+        console.error('Could not create job record:', err);
       }
 
       return { url, recordCount: data?.length || 0 };
