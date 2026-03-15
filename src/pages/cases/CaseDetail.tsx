@@ -31,10 +31,8 @@ import { ReportTypeSelectionModal } from '../../components/cases/ReportTypeSelec
 import { StreamlinedReportEditor } from '../../components/cases/StreamlinedReportEditor';
 import ReportViewModal from '../../components/cases/ReportViewModal';
 import { reportsService } from '../../lib/reportsService';
-import { type ReportType, type ReportStatus } from '../../lib/reportTypes';
 import { PDFPreviewModal } from '../../components/cases/PDFPreviewModal';
 import { EmailDocumentModal } from '../../components/cases/EmailDocumentModal';
-import type { DocumentType } from '../../lib/pdf/types';
 import {
   CaseOverviewTab,
   CaseDevicesTab,
@@ -46,6 +44,7 @@ import {
   CaseNotesTab,
   CasePortalTab,
 } from '../../components/cases/detail';
+import { useCaseModals } from '../../components/cases/detail/useCaseModals';
 
 type TabType = 'overview' | 'client' | 'devices' | 'clones' | 'reports' | 'quotes' | 'files' | 'engineers' | 'notes' | 'portal' | 'history' | 'stock';
 
@@ -56,42 +55,7 @@ export const CaseDetail: React.FC = () => {
   const { profile } = useAuth();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showCloneDriveModal, setShowCloneDriveModal] = useState(false);
-  const [viewCloneModal, setViewCloneModal] = useState<any>(null);
-  const [showDeviceModal, setShowDeviceModal] = useState(false);
-  const [showMarkAsDeliveredModal, setShowMarkAsDeliveredModal] = useState(false);
-  const [showPreserveLongTermModal, setShowPreserveLongTermModal] = useState(false);
-  const [selectedClone, setSelectedClone] = useState<any>(null);
-  const [editingDevice, setEditingDevice] = useState<any>(null);
-  const [editingReport, setEditingReport] = useState<any>(null);
-  const [showReportTypeSelector, setShowReportTypeSelector] = useState(false);
-  const [selectedReportType, setSelectedReportType] = useState<ReportType | null>(null);
-  const [viewReportId, setViewReportId] = useState<string | null>(null);
-  const [reportVersioningId, setReportVersioningId] = useState<string | null>(null);
-  const [reportTypeFilter, setReportTypeFilter] = useState<ReportType | 'all'>('all');
-  const [reportStatusFilter, setReportStatusFilter] = useState<ReportStatus | 'all'>('all');
-  const [showLatestOnly, setShowLatestOnly] = useState(true);
-  const [expandedDevices, setExpandedDevices] = useState<Set<string>>(new Set());
-  const [newNote, setNewNote] = useState('');
-  const [showQuoteModal, setShowQuoteModal] = useState(false);
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [viewingQuote, setViewingQuote] = useState<any>(null);
-  const [viewingInvoice, setViewingInvoice] = useState<any>(null);
-  const [editingQuote, setEditingQuote] = useState<any>(null);
-  const [editingInvoice, setEditingInvoice] = useState<any>(null);
-  const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
-  const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<any>(null);
-  const [showConvertProformaModal, setShowConvertProformaModal] = useState(false);
-  const [convertingInvoice, setConvertingInvoice] = useState<any>(null);
-  const [showPDFPreviewModal, setShowPDFPreviewModal] = useState(false);
-  const [previewDocumentType, setPreviewDocumentType] = useState<DocumentType | null>(null);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [emailPdfBlob, setEmailPdfBlob] = useState<Blob | null>(null);
-  const [emailPdfFilename, setEmailPdfFilename] = useState<string>('');
+  const modals = useCaseModals();
 
   const { formatCurrency } = useCurrency();
 
@@ -971,17 +935,6 @@ export const CaseDetail: React.FC = () => {
     }
   };
 
-  const toggleDeviceDetails = (deviceId: string) => {
-    setExpandedDevices(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(deviceId)) {
-        newSet.delete(deviceId);
-      } else {
-        newSet.add(deviceId);
-      }
-      return newSet;
-    });
-  };
 
   const getStatusColor = (statusName: string) => {
     const status = caseStatuses.find(s => s.name === statusName);

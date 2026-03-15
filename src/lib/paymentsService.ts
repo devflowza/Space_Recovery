@@ -11,6 +11,7 @@ const logAuditTrail = async (actionType: string, tableName: string, recordId: st
     });
   } catch (e) {
     console.error('Audit trail logging failed:', e);
+    throw new Error(`Audit trail logging failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
   }
 };
 
@@ -226,46 +227,81 @@ export const allocatePaymentToInvoices = async (
 
   if (allocError) throw allocError;
 
-  for (const alloc of allocations) {
-    const { data: invoice, error: fetchError } = await supabase
-      .from('invoices')
-      .select('total_amount, amount_paid, amount_due')
-      .eq('id', alloc.invoice_id)
-      .maybeSingle();
+  // Track successfully updated invoices for rollback on failure
+  const updatedInvoices: Array<{ invoice_id: string; original: { amount_paid: number; amount_due: number; status: string } }> = [];
 
-    if (fetchError) throw fetchError;
+  try {
+    for (const alloc of allocations) {
+      const { data: invoice, error: fetchError } = await supabase
+        .from('invoices')
+        .select('total_amount, amount_paid, amount_due, status')
+        .eq('id', alloc.invoice_id)
+        .maybeSingle();
 
-    const newAmountPaid = Math.round(((invoice.amount_paid || 0) + alloc.amount) * 100) / 100;
-    const newAmountDue = Math.round(((invoice.total_amount || 0) - newAmountPaid) * 100) / 100;
+      if (fetchError) throw fetchError;
 
-    let newStatus = 'sent';
-    if (newAmountDue <= 0) {
-      newStatus = 'paid';
-    } else if (newAmountPaid > 0) {
-      newStatus = 'partial';
+      // Save original state for rollback
+      updatedInvoices.push({
+        invoice_id: alloc.invoice_id,
+        original: {
+          amount_paid: invoice.amount_paid || 0,
+          amount_due: invoice.amount_due || 0,
+          status: invoice.status || 'sent',
+        },
+      });
+
+      const newAmountPaid = Math.round(((invoice.amount_paid || 0) + alloc.amount) * 100) / 100;
+      const newAmountDue = Math.round(((invoice.total_amount || 0) - newAmountPaid) * 100) / 100;
+
+      let newStatus = 'sent';
+      if (newAmountDue <= 0) {
+        newStatus = 'paid';
+      } else if (newAmountPaid > 0) {
+        newStatus = 'partial';
+      }
+
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({
+          amount_paid: newAmountPaid,
+          amount_due: Math.max(0, newAmountDue),
+          status: newStatus,
+        })
+        .eq('id', alloc.invoice_id);
+
+      if (updateError) throw updateError;
     }
 
-    const { error: updateError } = await supabase
-      .from('invoices')
-      .update({
-        amount_paid: newAmountPaid,
-        amount_due: Math.max(0, newAmountDue),
-        status: newStatus,
-      })
-      .eq('id', alloc.invoice_id);
+    const totalAllocated = allocations.reduce((sum, a) => sum + a.amount, 0);
+    await createFinancialTransaction({
+      transaction_date: new Date().toISOString().split('T')[0],
+      amount: totalAllocated,
+      type: 'income',
+      description: `Payment received`,
+      related_payment_id: paymentId,
+      status: 'completed',
+    });
+  } catch (error) {
+    // Rollback: reverse allocation insert
+    await supabase
+      .from('payment_allocations')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('payment_id', paymentId);
 
-    if (updateError) throw updateError;
+    // Rollback: restore original invoice states
+    for (const updated of updatedInvoices) {
+      await supabase
+        .from('invoices')
+        .update({
+          amount_paid: updated.original.amount_paid,
+          amount_due: updated.original.amount_due,
+          status: updated.original.status,
+        })
+        .eq('id', updated.invoice_id);
+    }
+
+    throw error;
   }
-
-  const totalAllocated = allocations.reduce((sum, a) => sum + a.amount, 0);
-  await createFinancialTransaction({
-    transaction_date: new Date().toISOString().split('T')[0],
-    amount: totalAllocated,
-    type: 'income',
-    description: `Payment received`,
-    related_payment_id: paymentId,
-    status: 'completed',
-  });
 };
 
 export const updatePaymentStatus = async (
@@ -281,6 +317,9 @@ export const updatePaymentStatus = async (
     .maybeSingle();
 
   if (error) throw error;
+
+  await logAuditTrail('update', 'payments', id, {}, { status, notes });
+
   return data;
 };
 
@@ -336,6 +375,9 @@ export const voidPayment = async (paymentId: string) => {
     .maybeSingle();
 
   if (error) throw error;
+
+  await logAuditTrail('void', 'payments', paymentId, {}, { status: 'refunded' });
+
   return data;
 };
 

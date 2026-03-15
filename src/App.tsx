@@ -160,6 +160,14 @@ function App() {
               <Route path="/signup/tenant" element={<TenantSignup />} />
               <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
 
+              <Route path="/health" element={
+                <div style={{ padding: '20px', fontFamily: 'monospace' }}>
+                  <h1>OK</h1>
+                  <p>Status: healthy</p>
+                  <p>Timestamp: {new Date().toISOString()}</p>
+                </div>
+              } />
+
               <Route path="/portal/login" element={<PortalLogin />} />
 
               <Route path="/print/receipt/:caseId" element={<ProtectedRoute><PrintReceiptPage /></ProtectedRoute>} />

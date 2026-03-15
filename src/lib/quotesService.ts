@@ -1,5 +1,20 @@
 import { supabase } from './supabaseClient';
 
+const logAuditTrail = async (actionType: string, tableName: string, recordId: string, oldValues: object, newValues: object) => {
+  try {
+    await supabase.rpc('log_audit_trail', {
+      p_action_type: actionType,
+      p_table_name: tableName,
+      p_record_id: recordId,
+      p_old_values: oldValues,
+      p_new_values: newValues,
+    });
+  } catch (e) {
+    console.error('Audit trail logging failed:', e);
+    throw new Error(`Audit trail logging failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
+  }
+};
+
 const sanitizeUuidFields = (data: any): any => {
   const sanitized = { ...data };
   const uuidFields = ['customer_id', 'company_id', 'case_id', 'created_by', 'approved_by', 'converted_to_case_id', 'template_id', 'accounting_locale_id', 'bank_account_id'];
@@ -385,8 +400,10 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
       throw new Error(`Failed to add quote items: ${itemsError.message}`);
     }
 
+    await logAuditTrail('create', 'quotes', quoteData.id, {}, { quote_number: quoteData.quote_number, total_amount: quoteData.total_amount });
+
     return quoteData;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Quote creation failed:', error);
     throw error;
   }
@@ -442,6 +459,9 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
     .maybeSingle();
 
   if (error) throw error;
+
+  await logAuditTrail('update', 'quotes', id, {}, updateData);
+
   return data;
 };
 
@@ -531,6 +551,9 @@ export const updateQuoteStatus = async (
     .maybeSingle();
 
   if (error) throw error;
+
+  await logAuditTrail('update', 'quotes', id, {}, { status, ...additionalData });
+
   return data;
 };
 

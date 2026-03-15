@@ -545,8 +545,16 @@ export async function createStockSale(data: StockSaleCreateData): Promise<StockS
   const { error: itemsError } = await supabase.from('stock_sale_items').insert(saleItemsInsert);
   if (itemsError) throw itemsError;
 
+  const itemIds = data.items.map((item) => item.stock_item_id);
+  const { data: stockItemsData } = await supabase
+    .from('stock_items')
+    .select('*')
+    .in('id', itemIds)
+    .is('deleted_at', null);
+  const stockItemsMap = new Map((stockItemsData ?? []).map((si) => [si.id, si]));
+
   for (const item of data.items) {
-    const stockItem = await getStockItem(item.stock_item_id);
+    const stockItem = stockItemsMap.get(item.stock_item_id);
     if (!stockItem) continue;
 
     const newQty = stockItem.current_quantity - item.quantity;
@@ -602,8 +610,16 @@ export async function cancelStockSale(id: string): Promise<void> {
   if (!sale) throw new Error('Sale not found');
 
   if (sale.stock_sale_items) {
+    const cancelItemIds = sale.stock_sale_items.map((item: StockSaleItem) => item.stock_item_id);
+    const { data: cancelStockItemsData } = await supabase
+      .from('stock_items')
+      .select('*')
+      .in('id', cancelItemIds)
+      .is('deleted_at', null);
+    const cancelStockItemsMap = new Map((cancelStockItemsData ?? []).map((si) => [si.id, si]));
+
     for (const item of sale.stock_sale_items) {
-      const stockItem = await getStockItem(item.stock_item_id);
+      const stockItem = cancelStockItemsMap.get(item.stock_item_id);
       if (!stockItem) continue;
 
       const newQty = stockItem.current_quantity + item.quantity;

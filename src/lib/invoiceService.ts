@@ -11,6 +11,7 @@ const logAuditTrail = async (actionType: string, tableName: string, recordId: st
     });
   } catch (e) {
     console.error('Audit trail logging failed:', e);
+    throw new Error(`Audit trail logging failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
   }
 };
 
@@ -448,6 +449,9 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
     .maybeSingle();
 
   if (error) throw error;
+
+  await logAuditTrail('update', 'invoices', id, {}, updateData);
+
   return data;
 };
 
@@ -472,6 +476,9 @@ export const updateInvoiceStatus = async (
     .maybeSingle();
 
   if (error) throw error;
+
+  await logAuditTrail('update', 'invoices', id, {}, { status, ...additionalData });
+
   return data;
 };
 
