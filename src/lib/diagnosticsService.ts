@@ -51,7 +51,7 @@ export interface ComponentStatus {
 export const diagnosticsService = {
   async getComponentStatuses(): Promise<ComponentStatus[]> {
     const { data, error } = await supabase
-      .from('device_component_statuses')
+      .from('catalog_device_component_statuses')
       .select('*')
       .eq('is_active', true)
       .order('sort_order');

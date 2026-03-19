@@ -70,7 +70,7 @@ export const TemplateTypeDetail: React.FC = () => {
     setIsLoading(true);
     try {
       const { data: typeData } = await supabase
-        .from('template_types')
+        .from('master_template_types')
         .select('*')
         .eq('code', typeCode)
         .maybeSingle();

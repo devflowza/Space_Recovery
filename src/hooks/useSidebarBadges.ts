@@ -30,7 +30,7 @@ export const useSidebarBadges = (): SidebarBadgeCounts => {
 
         // First, get all case statuses to filter by type
         const { data: statuses, error: statusError } = await supabase
-          .from('case_statuses')
+          .from('master_case_statuses')
           .select('name, type')
           .eq('is_active', true);
 

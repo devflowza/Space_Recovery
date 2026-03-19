@@ -4,7 +4,7 @@ export interface CreateUserData {
   email: string;
   password: string;
   full_name: string;
-  role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr';
+  role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr';
   phone: string;
   is_active: boolean;
   case_access_level: 'restricted' | 'full';
@@ -12,7 +12,7 @@ export interface CreateUserData {
 
 export interface UpdateUserData {
   full_name: string;
-  role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr';
+  role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr';
   phone: string;
   is_active: boolean;
   case_access_level?: 'restricted' | 'full';

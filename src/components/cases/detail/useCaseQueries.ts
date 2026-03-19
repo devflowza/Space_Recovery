@@ -66,7 +66,7 @@ export function useCaseQueries(
           : Promise.resolve({ data: null }),
         caseRecord.service_type_id
           ? supabase
-              .from('service_types')
+              .from('catalog_service_types')
               .select('id, name')
               .eq('id', caseRecord.service_type_id)
               .maybeSingle()
@@ -135,7 +135,7 @@ export function useCaseQueries(
     queryKey: ['case_statuses'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('case_statuses')
+        .from('master_case_statuses')
         .select('id, name, type, color, is_active')
         .eq('is_active', true)
         .order('sort_order');

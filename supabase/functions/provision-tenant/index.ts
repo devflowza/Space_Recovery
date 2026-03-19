@@ -99,7 +99,7 @@ Deno.serve(async (req: Request) => {
       .eq('id', user.id)
       .maybeSingle();
 
-    if (!callerProfile || callerProfile.role !== 'admin') {
+    if (!callerProfile || !['owner', 'admin'].includes(callerProfile.role)) {
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -165,7 +165,7 @@ Deno.serve(async (req: Request) => {
       user_metadata: {
         full_name: adminFullName,
         tenant_id: tenant.id,
-        role: 'admin',
+        role: 'owner',
       },
     });
 
@@ -176,7 +176,7 @@ Deno.serve(async (req: Request) => {
       .from('profiles')
       .update({
         tenant_id: tenant.id,
-        role: 'admin',
+        role: 'owner',
         full_name: adminFullName,
         is_active: true,
       })

@@ -52,7 +52,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
     queryKey: ['brands'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('brands')
+        .from('catalog_device_brands')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -66,7 +66,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
     queryKey: ['capacities'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('capacities')
+        .from('catalog_device_capacities')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');

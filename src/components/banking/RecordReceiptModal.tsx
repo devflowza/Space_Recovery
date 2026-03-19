@@ -112,7 +112,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
     queryKey: ['payment_methods'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('payment_methods')
+        .from('master_payment_methods')
         .select('id, name')
         .eq('is_active', true)
         .order('name');

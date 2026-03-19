@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 interface Profile {
   id: string;
   full_name: string;
-  role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr' | null;
+  role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr' | null;
   phone: string | null;
   avatar_url: string | null;
   is_active: boolean;

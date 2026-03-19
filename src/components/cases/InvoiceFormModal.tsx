@@ -131,7 +131,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     queryKey: ['invoice_line_item_templates'],
     queryFn: async () => {
       const { data: typeData, error: typeError } = await supabase
-        .from('template_types')
+        .from('master_template_types')
         .select('id')
         .eq('code', 'invoice_line_items')
         .maybeSingle();
@@ -156,7 +156,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     queryKey: ['invoice_terms_templates'],
     queryFn: async () => {
       const { data: typeData, error: typeError } = await supabase
-        .from('template_types')
+        .from('master_template_types')
         .select('id')
         .eq('code', 'invoice_terms')
         .maybeSingle();

@@ -128,7 +128,7 @@ export const OfficeCheckInReceipt: React.FC<OfficeCheckInReceiptProps> = ({
             : Promise.resolve({ data: null }),
           caseInfo.service_type_id
             ? supabase
-                .from('service_types')
+                .from('catalog_service_types')
                 .select('id, name')
                 .eq('id', caseInfo.service_type_id)
                 .single()
@@ -167,13 +167,13 @@ export const OfficeCheckInReceipt: React.FC<OfficeCheckInReceiptProps> = ({
           (devicesResult.data || []).map(async (device) => {
             const [deviceTypeResult, brandResult, capacityResult] = await Promise.all([
               device.device_type_id
-                ? supabase.from('device_types').select('name').eq('id', device.device_type_id).single()
+                ? supabase.from('catalog_device_types').select('name').eq('id', device.device_type_id).single()
                 : Promise.resolve({ data: null }),
               device.brand_id
-                ? supabase.from('brands').select('name').eq('id', device.brand_id).single()
+                ? supabase.from('catalog_device_brands').select('name').eq('id', device.brand_id).single()
                 : Promise.resolve({ data: null }),
               device.capacity_id
-                ? supabase.from('capacities').select('name').eq('id', device.capacity_id).single()
+                ? supabase.from('catalog_device_capacities').select('name').eq('id', device.capacity_id).single()
                 : Promise.resolve({ data: null }),
             ]);
 

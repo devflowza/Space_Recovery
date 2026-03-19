@@ -60,7 +60,7 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
     queryKey: ['brands'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('brands')
+        .from('catalog_device_brands')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -73,7 +73,7 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
     queryKey: ['capacities'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('capacities')
+        .from('catalog_device_capacities')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -86,7 +86,7 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
     queryKey: ['device_types'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_types')
+        .from('catalog_device_types')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -99,7 +99,7 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
     queryKey: ['device_interfaces'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_interfaces')
+        .from('catalog_device_interfaces')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -112,7 +112,7 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
     queryKey: ['device_conditions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_conditions')
+        .from('catalog_device_conditions')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');

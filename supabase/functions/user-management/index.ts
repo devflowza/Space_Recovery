@@ -44,7 +44,7 @@ interface CreateUserRequest {
   email: string;
   password: string;
   full_name: string;
-  role: "admin" | "technician" | "sales" | "accounts" | "hr";
+  role: "owner" | "admin" | "technician" | "sales" | "accounts" | "hr";
   phone: string;
   is_active: boolean;
   case_access_level?: "restricted" | "full";
@@ -96,7 +96,7 @@ Deno.serve(async (req: Request) => {
       .eq("id", user.id)
       .maybeSingle();
 
-    if (!callerProfile || callerProfile.role !== "admin") {
+    if (!callerProfile || !["owner", "admin"].includes(callerProfile.role)) {
       return new Response(
         JSON.stringify({ error: "Forbidden: Admin access required" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }

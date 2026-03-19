@@ -397,7 +397,7 @@ export const getPaymentsByCase = async (caseId: string) => {
 
 export const getPaymentMethods = async () => {
   const { data, error } = await supabase
-    .from('payment_methods')
+    .from('master_payment_methods')
     .select('*')
     .eq('is_active', true)
     .order('name');

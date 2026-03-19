@@ -64,7 +64,7 @@ async function fetchCaseData(caseId: string): Promise<CaseData> {
       : Promise.resolve({ data: null, error: null }),
     caseData.service_type_id
       ? supabase
-          .from('service_types')
+          .from('catalog_service_types')
           .select('id, name')
           .eq('id', caseData.service_type_id)
           .maybeSingle()
@@ -116,16 +116,16 @@ async function fetchCaseDevices(caseId: string): Promise<DeviceData[]> {
 
   const [deviceTypes, brands, capacities, deviceRoles] = await Promise.all([
     deviceTypeIds.length > 0
-      ? supabase.from('device_types').select('id, name').in('id', deviceTypeIds)
+      ? supabase.from('catalog_device_types').select('id, name').in('id', deviceTypeIds)
       : { data: [], error: null },
     brandIds.length > 0
-      ? supabase.from('brands').select('id, name').in('id', brandIds)
+      ? supabase.from('catalog_device_brands').select('id, name').in('id', brandIds)
       : { data: [], error: null },
     capacityIds.length > 0
-      ? supabase.from('capacities').select('id, name').in('id', capacityIds)
+      ? supabase.from('catalog_device_capacities').select('id, name').in('id', capacityIds)
       : { data: [], error: null },
     deviceRoleIds.length > 0
-      ? supabase.from('device_roles').select('id, name').in('id', deviceRoleIds)
+      ? supabase.from('catalog_device_roles').select('id, name').in('id', deviceRoleIds)
       : { data: [], error: null },
   ]);
 
