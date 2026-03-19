@@ -125,14 +125,14 @@ export class BulkInventoryImporter {
     try {
       const [brands, deviceTypes, capacities, interfaces, locations, countries, statusTypes, conditionTypes] =
         await Promise.all([
-          supabase.from('brands').select('id, name, aliases').eq('is_active', true),
-          supabase.from('device_types').select('id, name').eq('is_active', true),
-          supabase.from('capacities').select('id, name, gb_value').eq('is_active', true),
-          supabase.from('interfaces').select('id, name').eq('is_active', true),
+          supabase.from('catalog_device_brands').select('id, name, aliases').eq('is_active', true),
+          supabase.from('catalog_device_types').select('id, name').eq('is_active', true),
+          supabase.from('catalog_device_capacities').select('id, name, gb_value').eq('is_active', true),
+          supabase.from('catalog_interfaces').select('id, name').eq('is_active', true),
           supabase.from('inventory_locations').select('id, name').eq('is_active', true),
-          supabase.from('countries').select('id, name, code').eq('is_active', true),
-          supabase.from('inventory_status_types').select('id, name').eq('is_active', true),
-          supabase.from('inventory_condition_types').select('id, name, rating').eq('is_active', true),
+          supabase.from('geo_countries').select('id, name, code').eq('is_active', true),
+          supabase.from('master_inventory_status_types').select('id, name').eq('is_active', true),
+          supabase.from('master_inventory_condition_types').select('id, name, rating').eq('is_active', true),
         ]);
 
       brands.data?.forEach((brand) => {

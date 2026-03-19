@@ -341,7 +341,7 @@ class ReportPDFService {
 
     // Get Patient device role ID
     const { data: patientRole } = await supabase
-      .from('device_roles')
+      .from('catalog_device_roles')
       .select('id')
       .eq('name', 'Patient')
       .maybeSingle();

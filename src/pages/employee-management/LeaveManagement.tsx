@@ -12,7 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
 import type { Database } from '../../types/database.types';
 
-type LeaveType = Database['public']['Tables']['leave_types']['Row'];
+type LeaveType = Database['public']['Tables']['master_leave_types']['Row'];
 type Employee = Database['public']['Tables']['employees']['Row'];
 
 const CURRENT_YEAR = new Date().getFullYear();

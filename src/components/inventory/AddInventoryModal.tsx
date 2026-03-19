@@ -198,16 +198,16 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
         locationsRes,
         conditionsRes,
       ] = await Promise.all([
-        supabase.from('inventory_categories').select('id, name').eq('is_active', true).order('sort_order'),
-        supabase.from('inventory_status_types').select('id, name').eq('is_active', true).order('sort_order'),
-        supabase.from('device_types').select('id, name').eq('is_active', true).order('name'),
-        supabase.from('brands').select('id, name').eq('is_active', true).order('name'),
-        supabase.from('capacities').select('id, name, gb_value').eq('is_active', true).order('gb_value'),
-        supabase.from('interfaces').select('id, name').eq('is_active', true).order('sort_order'),
-        supabase.from('countries').select('id, name').eq('is_active', true).order('name'),
+        supabase.from('master_inventory_categories').select('id, name').eq('is_active', true).order('sort_order'),
+        supabase.from('master_inventory_status_types').select('id, name').eq('is_active', true).order('sort_order'),
+        supabase.from('catalog_device_types').select('id, name').eq('is_active', true).order('name'),
+        supabase.from('catalog_device_brands').select('id, name').eq('is_active', true).order('name'),
+        supabase.from('catalog_device_capacities').select('id, name, gb_value').eq('is_active', true).order('gb_value'),
+        supabase.from('catalog_interfaces').select('id, name').eq('is_active', true).order('sort_order'),
+        supabase.from('geo_countries').select('id, name').eq('is_active', true).order('name'),
         supabase.from('inventory_locations').select('id, name').eq('is_active', true).order('name'),
         supabase
-          .from('inventory_condition_types')
+          .from('master_inventory_condition_types')
           .select('id, name, rating')
           .eq('is_active', true)
           .order('rating', { ascending: false }),

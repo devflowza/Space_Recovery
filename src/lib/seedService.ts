@@ -278,7 +278,7 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
       }));
 
       const { error: countriesError, data: insertedCountries } = await supabase
-        .from('countries')
+        .from('geo_countries')
         .insert(countryRecords)
         .select();
 
@@ -317,7 +317,7 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
     const citiesCount = await getTableCount('cities');
     if (citiesCount === 0) {
       const { data: omanCountry } = await supabase
-        .from('countries')
+        .from('geo_countries')
         .select('id')
         .eq('code', 'OM')
         .maybeSingle();
@@ -331,7 +331,7 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
         }));
 
         const { error: citiesError, count: insertedCitiesCount } = await supabase
-          .from('cities')
+          .from('geo_cities')
           .insert(cityRecords)
           .select();
 
@@ -456,7 +456,7 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
       }));
 
       const { error: quoteStatusError, count } = await supabase
-        .from('quote_statuses')
+        .from('master_quote_statuses')
         .insert(quoteStatusRecords)
         .select();
 
@@ -502,7 +502,7 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
       }));
 
       const { error: invoiceStatusError, count } = await supabase
-        .from('invoice_statuses')
+        .from('master_invoice_statuses')
         .insert(invoiceStatusRecords)
         .select();
 
@@ -600,7 +600,7 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
       }));
 
       const { error: serviceTypeError, count } = await supabase
-        .from('service_types')
+        .from('catalog_service_types')
         .insert(serviceTypeRecords)
         .select();
 
@@ -645,7 +645,7 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
       }));
 
       const { error: problemError, count } = await supabase
-        .from('service_problems')
+        .from('catalog_service_problems')
         .insert(serviceProblemRecords)
         .select();
 
@@ -692,7 +692,7 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
       }));
 
       const { error: priorityError, count } = await supabase
-        .from('case_priorities')
+        .from('master_case_priorities')
         .insert(casePriorityRecords)
         .select();
 
@@ -739,7 +739,7 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
       }));
 
       const { error: statusError, count } = await supabase
-        .from('case_statuses')
+        .from('master_case_statuses')
         .insert(caseStatusRecords)
         .select();
 
@@ -784,7 +784,7 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
       }));
 
       const { error: locationError, count } = await supabase
-        .from('service_locations')
+        .from('catalog_service_locations')
         .insert(serviceLocationRecords)
         .select();
 
@@ -829,7 +829,7 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
       }));
 
       const { error: conditionError, count } = await supabase
-        .from('device_conditions')
+        .from('catalog_device_conditions')
         .insert(deviceConditionRecords)
         .select();
 
@@ -874,7 +874,7 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
       }));
 
       const { error: roleError, count } = await supabase
-        .from('device_roles')
+        .from('catalog_device_roles')
         .insert(deviceRoleRecords)
         .select();
 
@@ -957,7 +957,7 @@ export async function seedTemplates(): Promise<SeedResult> {
     if (documentTemplatesCount === 0) {
       for (const template of TEMPLATE_SEED_DATA.sampleTemplates) {
         const { data: templateType } = await supabase
-          .from('template_types')
+          .from('master_template_types')
           .select('id')
           .eq('code', template.type_code)
           .maybeSingle();

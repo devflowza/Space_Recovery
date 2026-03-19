@@ -53,7 +53,7 @@ export const tenantService = {
         data: {
           full_name: params.adminFullName,
           tenant_id: tenant.id,
-          role: 'admin',
+          role: 'owner',
         },
       },
     });

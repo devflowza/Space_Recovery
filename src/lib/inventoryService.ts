@@ -117,7 +117,7 @@ export interface InventoryPhoto {
 // Master Data Functions
 export async function getInventoryCategories() {
   const { data, error } = await supabase
-    .from('inventory_categories')
+    .from('master_inventory_categories')
     .select('*')
     .eq('is_active', true)
     .order('sort_order', { ascending: true });
@@ -131,7 +131,7 @@ export async function getInventoryCategories() {
 
 export async function getInventoryStatusTypes() {
   const { data, error } = await supabase
-    .from('inventory_status_types')
+    .from('master_inventory_status_types')
     .select('*')
     .eq('is_active', true)
     .order('sort_order', { ascending: true });
@@ -145,7 +145,7 @@ export async function getInventoryStatusTypes() {
 
 export async function getInventoryConditionTypes() {
   const { data, error } = await supabase
-    .from('inventory_condition_types')
+    .from('master_inventory_condition_types')
     .select('*')
     .eq('is_active', true)
     .order('rating', { ascending: false });

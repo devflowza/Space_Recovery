@@ -347,7 +347,7 @@ export const deleteExpenseAttachment = async (attachmentId: string) => {
 
 export const getExpenseCategories = async () => {
   const { data, error } = await supabase
-    .from('expense_categories')
+    .from('master_expense_categories')
     .select('*')
     .eq('is_active', true)
     .order('name');

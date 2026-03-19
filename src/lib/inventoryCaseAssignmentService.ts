@@ -55,7 +55,7 @@ export interface CaseOption {
 export async function getCasesForAssignment(): Promise<CaseOption[]> {
   // First get the status IDs for cases that are in active states
   const { data: statusData, error: statusError } = await supabase
-    .from('case_statuses')
+    .from('master_case_statuses')
     .select('name')
     .in('type', ['received', 'diagnosis', 'waiting-approval', 'in-progress'])
     .eq('is_active', true);

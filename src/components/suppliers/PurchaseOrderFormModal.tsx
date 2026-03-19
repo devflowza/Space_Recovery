@@ -85,7 +85,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
     try {
       const [suppliersRes, statusesRes] = await Promise.all([
         supabase.from('suppliers').select('id, name, supplier_number').eq('is_active', true).order('name'),
-        supabase.from('purchase_order_statuses').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('master_purchase_order_statuses').select('*').eq('is_active', true).order('sort_order'),
       ]);
 
       if (suppliersRes.data) setSuppliers(suppliersRes.data);

@@ -17,6 +17,7 @@ xSuite is an AI-powered, multi-tenant SaaS platform for the **data recovery indu
 
 - **Project URL**: see `VITE_SUPABASE_URL` in `.env`
 - **Anon Key**: see `VITE_SUPABASE_ANON_KEY` in `.env`
+- **Project ID**: `ssmbegiyjivrcwgcqutu`
 - **MCP Transport**: HTTP (configured in project settings)
 
 ---
@@ -25,16 +26,15 @@ xSuite is an AI-powered, multi-tenant SaaS platform for the **data recovery indu
 
 1. **The live Supabase database is the single source of truth** for schema, types, and migrations.
 2. Never edit the database schema via the Supabase dashboard directly. All schema changes go through `mcp__supabase__apply_migration`.
-3. After every migration, regenerate `src/types/database.types.ts` by querying `information_schema.columns` via `mcp__supabase__execute_sql`.
+3. After every migration, regenerate `src/types/database.types.ts` using `mcp__supabase__generate_typescript_types`.
 4. Never hand-edit `src/types/database.types.ts`. It is a generated file.
-5. `supabase/migrations/` must contain exactly **one file**: `00000000000000_baseline.sql` (the reconstructed live schema baseline). All new changes go in new timestamped migration files.
 
 ---
 
 ## TypeScript Types
 
 - **Canonical types file**: `src/types/database.types.ts`
-- Import the `Database` type from this file. Never import from `src/types/database.ts` (legacy, kept for reference only during transition).
+- Import the `Database` type from this file. Never import from `src/types/database.ts` (legacy).
 - Usage pattern:
   ```typescript
   import type { Database } from '../types/database.types';
@@ -45,109 +45,161 @@ xSuite is an AI-powered, multi-tenant SaaS platform for the **data recovery indu
 
 ---
 
-## Database Architecture
+## Multi-Tenant Architecture
 
-### Schema Conventions
-- All tables: **snake_case, plural** (e.g., `case_devices`, `inventory_items`)
-- All columns: **snake_case** (e.g., `created_at`, `deleted_at`, `tenant_id`)
-- Enum types: **snake_case with `_type` or descriptive suffix** (e.g., `custody_status`, `custody_action_category`)
-- Functions: **verb-prefix** (e.g., `get_next_number`, `handle_new_user`, `is_admin`)
-- RLS policies: `"{table} {role} {action}"` pattern
+### Tenant Isolation Model
+- **Every tenant-scoped table** has a `tenant_id uuid NOT NULL` column with FK to `tenants(id)`
+- **RESTRICTIVE RLS policies** enforce tenant isolation on ALL tenant-scoped tables:
+  ```sql
+  CREATE POLICY "{table}_tenant_isolation" ON {table}
+    AS RESTRICTIVE FOR ALL TO authenticated
+    USING (tenant_id = get_current_tenant_id() OR is_platform_admin());
+  ```
+- The `RESTRICTIVE` keyword ensures this policy is always ANDed with any permissive policies
+- Platform admins (tenant_id IS NULL in profiles) can access all tenants
 
-### Soft Deletes
-All tables use `deleted_at timestamptz DEFAULT NULL`. **Never use hard deletes (`DELETE FROM`)**. Always set `deleted_at = now()` for deletions. Filter active records with `WHERE deleted_at IS NULL`.
+### Role Hierarchy
+```
+owner > admin > manager > technician = sales = accounts = hr > viewer
+```
 
-### RLS (Row Level Security)
-- RLS is **enabled on all 185 tables**. Every new table must have `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` immediately after creation.
-- Never create policies with `USING (true)` — this defeats RLS.
-- Always restrict policies to `authenticated` role minimum.
-- Key helper functions:
-  - `auth.uid()` — current user's UUID
-  - `is_admin()` — returns true if user has admin role
-  - `is_staff_user()` — returns true for any internal staff role
-  - `is_portal_user()` — returns true for portal (customer) users
-  - `get_my_role()` — returns the user's role string
+| Role | Scope | Description |
+|------|-------|-------------|
+| `owner` | Tenant | Tenant creator, full control |
+| `admin` | Tenant | Tenant administrator |
+| `manager` | Tenant | Team manager |
+| `technician` | Tenant | Technical staff |
+| `sales` | Tenant | Sales staff |
+| `accounts` | Tenant | Accounting staff |
+| `hr` | Tenant | HR staff |
+| `viewer` | Tenant | Read-only access |
 
-### Tenant Isolation
-- Multi-tenant via `profiles.role` and RLS policies scoped to `auth.uid()`
-- Portal customers are isolated via `portal_link_history` and `authenticate_portal_customer()` function
-- No `tenant_id` column — isolation is per-user via auth
+**Platform admins** are identified by `role IN ('owner', 'admin') AND tenant_id IS NULL` in `profiles`.
+
+### Security Functions
+
+| Function | Purpose |
+|---|---|
+| `get_current_tenant_id()` | Returns current user's tenant_id from profiles |
+| `is_platform_admin()` | True if user has admin role with NULL tenant_id |
+| `is_tenant_owner()` | True if user is tenant owner |
+| `is_tenant_admin()` | True if user is owner or admin |
+| `is_admin()` | True if user is owner or admin (any scope) |
+| `is_staff_user()` | True for any non-viewer role |
+| `has_role(required_role)` | Hierarchical role check |
+| `belongs_to_tenant(uuid)` | Check tenant membership |
+| `is_portal_user()` | True for portal customers (JWT claim) |
+| `get_my_role()` | Returns current role string |
 
 ---
 
-## Domain Model (185 Tables)
+## Database Architecture
 
-### Geography & Master Data
-`countries`, `cities`, `industries`, `currency_codes`, `branches`
+### Table Naming Conventions
+- All tables: **snake_case, plural**
+- All columns: **snake_case**
+- Enum types: **snake_case with descriptive suffix**
+- Functions: **verb-prefix** (e.g., `get_next_number`, `is_admin`)
 
-### Device Master Data
-`brands`, `capacities`, `device_types`, `device_encryption`, `device_form_factors`, `device_interfaces`, `device_made_in`, `device_head_no`, `device_platter_no`, `device_roles`, `device_conditions`, `device_component_statuses`, `interfaces`, `accessories`, `donor_compatibility_matrix`
+### Table Prefixes (Mandatory)
 
-### Service Configuration
-`service_types`, `service_locations`, `service_problems`, `service_catalog_categories`, `service_line_items_catalog`
+| Prefix | Scope | Description |
+|--------|-------|-------------|
+| `geo_*` | Global | Geography (countries, cities) |
+| `catalog_*` | Global | Product/service catalogs (devices, services) |
+| `master_*` | Global | Lookup/reference data (statuses, types, categories) |
+| `system_*` | Global | System configuration |
+| `platform_*` | Platform | Platform admin tables |
+| `tenant_*` | Platform | Tenant management |
+| `subscription_*` | Platform | Subscription plans |
+| `billing_*` | Platform | Platform billing |
+| `case_*` | Tenant | Case management |
+| `customer_*` | Tenant | Customer management |
+| `invoice_*` | Tenant | Invoices |
+| `quote_*` | Tenant | Quotes |
+| `purchase_*` | Tenant | Purchase orders |
+| `expense_*` | Tenant | Expenses |
+| `payment_*` | Tenant | Payments |
+| `inventory_*` | Tenant | Inventory |
+| `stock_*` | Tenant | Stock management |
+| `asset_*` | Tenant | Asset management |
+| `supplier_*` | Tenant | Suppliers |
+| `employee_*` | Tenant | HR/employees |
+| `payroll_*` | Tenant | Payroll |
+| `leave_*` | Tenant | Leave management |
+| `kb_*` | Tenant | Knowledge base |
 
-### Settings & Configuration
-`settings`, `company_settings`, `seed_status`, `accounting_locales`, `tax_rates`, `number_sequences`, `number_sequences_audit`
+### Soft Deletes
+All tables use `deleted_at timestamptz DEFAULT NULL`. **Never use hard deletes (`DELETE FROM`)**. Always set `deleted_at = now()`.
 
-### Templates & Documents
-`template_categories`, `template_types`, `template_variables`, `document_templates`, `template_versions`, `templates`
+### RLS Policy Patterns
 
-### Auth & Users
-`profiles` (extends `auth.users`), `user_activity_sessions`, `user_activity_logs`, `user_sessions`, `user_preferences`, `user_sidebar_preferences`
+**Tenant-scoped tables** (3 patterns applied to every table with `tenant_id`):
+1. RESTRICTIVE tenant isolation: `tenant_id = get_current_tenant_id() OR is_platform_admin()`
+2. PERMISSIVE operation policies for SELECT/INSERT/UPDATE/DELETE
+3. DELETE restricted to admin role via `has_role('admin')`
 
-### System
-`system_logs`, `audit_trails`, `database_backups`, `pdf_generation_logs`
+**Global master data** (`geo_*`, `catalog_*`, `master_*`, `system_*`):
+- SELECT: `USING (true)` for all authenticated users
+- INSERT/UPDATE/DELETE: `is_platform_admin()` only
 
-### Permissions
-`modules`, `role_module_permissions`
+**Platform tables** (`platform_*`):
+- All operations: `is_platform_admin()` only
 
-### Customers & Companies
-`customer_groups`, `customers_enhanced` (canonical; `customers` is a compatibility view), `portal_link_history`, `ndas`, `companies`, `company_documents`, `customer_company_relationships`, `customer_communications`
+---
 
-### Cases (Core Domain)
-`case_priorities`, `case_statuses`, `cases`, `case_devices`, `case_attachments`, `case_communications`, `case_diagnostics`, `case_engineers`, `case_follow_ups`, `case_internal_notes`, `case_job_history`, `case_milestones`, `case_portal_visibility`, `case_qa_checklists`, `case_recovery_attempts`
+## Domain Model (222 Tables)
 
-### Reports
-`case_report_templates`, `case_reports`, `case_report_sections`, `report_section_library`, `report_section_presets`, `report_template_section_mappings`
+### Geography (Global)
+`geo_countries`, `geo_cities`
 
-### Case Quotes (case-level, pre-financial)
-`case_quotes`, `case_quote_items`
+### Master Data (Global)
+`master_industries`, `master_currency_codes`, `master_case_priorities`, `master_case_statuses`, `master_case_report_templates`, `master_invoice_statuses`, `master_quote_statuses`, `master_purchase_order_statuses`, `master_leave_types`, `master_payment_methods`, `master_expense_categories`, `master_transaction_categories`, `master_template_categories`, `master_template_types`, `master_template_variables`, `master_modules`, `master_inventory_categories`, `master_inventory_condition_types`, `master_inventory_item_categories`, `master_inventory_status_types`, `master_supplier_categories`, `master_supplier_payment_terms`, `master_payroll_components`
 
-### Chain of Custody
+### Device & Service Catalogs (Global)
+`catalog_device_brands`, `catalog_device_types`, `catalog_device_capacities`, `catalog_device_encryption`, `catalog_device_form_factors`, `catalog_device_interfaces`, `catalog_device_made_in`, `catalog_device_head_counts`, `catalog_device_platter_counts`, `catalog_device_roles`, `catalog_device_conditions`, `catalog_device_component_statuses`, `catalog_interfaces`, `catalog_accessories`, `catalog_donor_compatibility_matrix`, `catalog_service_types`, `catalog_service_locations`, `catalog_service_problems`, `catalog_service_categories`, `catalog_service_line_items`
+
+### System (Global)
+`system_settings`, `system_seed_status`, `report_section_library`, `report_section_presets`, `report_template_section_mappings`
+
+### Platform & Subscription
+`tenants`, `profiles`, `platform_admins`, `platform_audit_logs`, `platform_announcements`, `platform_metrics`, `tenant_impersonation_sessions`, `subscription_plans`, `plan_features`, `tenant_subscriptions`, `tenant_payment_methods`, `tenant_activity_log`, `tenant_health_metrics`, `billing_invoices`, `billing_invoice_items`, `billing_events`, `billing_coupons`, `coupon_redemptions`, `usage_records`, `usage_snapshots`, `support_tickets`, `support_ticket_messages`, `announcement_dismissals`, `onboarding_progress`, `signup_otps`
+
+### Cases (Tenant-scoped)
+`cases`, `case_devices`, `case_attachments`, `case_communications`, `case_diagnostics`, `case_engineers`, `case_follow_ups`, `case_internal_notes`, `case_job_history`, `case_milestones`, `case_portal_visibility`, `case_qa_checklists`, `case_recovery_attempts`, `case_quotes`, `case_quote_items`, `case_reports`, `case_report_sections`
+
+### Chain of Custody (Tenant-scoped)
 `chain_of_custody`, `chain_of_custody_access_log`, `chain_of_custody_integrity_checks`, `chain_of_custody_transfers`
 - Uses enums: `custody_action_category`, `custody_status`, `custody_transfer_status`, `integrity_check_result`
 
-### Device Diagnostics
-`device_diagnostics`
+### Customers & Companies (Tenant-scoped)
+`customers_enhanced` (canonical; `customers` is a compatibility view), `customer_groups`, `customer_communications`, `customer_company_relationships`, `companies`, `company_documents`, `company_settings`, `ndas`, `portal_link_history`
 
-### Clone Drives / Resources
-`inventory_locations`, `resource_clone_drives`, `clone_drives`
+### Financial (Tenant-scoped)
+`invoices`, `invoice_line_items`, `quotes`, `quote_items`, `quote_history`, `payments`, `payment_allocations`, `payment_receipts`, `payment_disbursements`, `receipts`, `receipt_allocations`, `expenses`, `expense_attachments`, `financial_transactions`, `financial_audit_logs`, `bank_accounts`, `bank_transactions`, `bank_reconciliation_sessions`, `account_balance_snapshots`, `account_transfers`, `reconciliation_matches`, `accounting_locales`, `tax_rates`, `vat_records`, `vat_returns`, `vat_transactions`
 
-### Inventory
-`inventory_categories`, `inventory_condition_types`, `inventory_item_categories`, `inventory_status_types`, `inventory_items`, `inventory_assignments`, `inventory_case_assignments`, `inventory_photos`, `inventory_reservations`, `inventory_search_templates`, `inventory_status_history`, `inventory_transactions`, `inventory_parts_usage`
+### Inventory & Stock (Tenant-scoped)
+`inventory_items`, `inventory_locations`, `inventory_assignments`, `inventory_case_assignments`, `inventory_photos`, `inventory_reservations`, `inventory_search_templates`, `inventory_status_history`, `inventory_transactions`, `inventory_parts_usage`, `stock_items`, `stock_categories`, `stock_locations`, `stock_movements`, `stock_adjustments`, `stock_adjustment_sessions`, `stock_adjustment_session_items`, `stock_alerts`, `stock_price_history`, `stock_sales`, `stock_sale_items`, `stock_serial_numbers`, `stock_transactions`, `clone_drives`, `resource_clone_drives`, `device_diagnostics`
 
-### Banking
-`payment_methods`, `bank_accounts`, `bank_transactions`, `account_balance_snapshots`, `account_transfers`, `bank_reconciliation_sessions`
+### Suppliers (Tenant-scoped)
+`suppliers`, `supplier_contacts`, `supplier_communications`, `supplier_documents`, `supplier_audit_trail`, `supplier_performance_metrics`, `supplier_products`, `purchase_orders`, `purchase_order_items`
 
-### Financial
-`expense_categories`, `expenses`, `expense_attachments`, `transaction_categories`, `quotes`, `quote_statuses`, `quote_items`, `quote_history`, `invoice_statuses`, `invoices`, `invoice_line_items`, `payments`, `payment_allocations`, `payment_receipts`, `receipt_allocations`, `payment_disbursements`, `reconciliation_matches`, `receipts`, `financial_transactions`, `financial_audit_logs`, `vat_records`, `vat_returns`, `vat_transactions`
+### HR & Payroll (Tenant-scoped)
+`departments`, `positions`, `employees`, `employee_documents`, `employee_salary_config`, `employee_salary_components`, `employee_salary_structures`, `employee_loans`, `loan_repayments`, `attendance_records`, `timesheets`, `leave_balances`, `leave_requests`, `salary_components`, `payroll_settings`, `payroll_periods`, `payroll_records`, `payroll_record_items`, `payroll_adjustments`, `payroll_bank_files`, `performance_reviews`, `onboarding_checklists`, `onboarding_checklist_items`, `onboarding_tasks`, `recruitment_jobs`, `recruitment_candidates`
 
-### Suppliers
-`supplier_categories`, `supplier_payment_terms`, `suppliers`, `supplier_contacts`, `supplier_communications`, `supplier_documents`, `supplier_audit_trail`, `supplier_performance_metrics`, `supplier_products`, `purchase_order_statuses`, `purchase_orders`, `purchase_order_items`
-
-### HR & Payroll
-`departments`, `positions`, `employees`, `attendance_records`, `leave_types`, `leave_balances`, `leave_requests`, `timesheets`, `employee_documents`, `salary_components`, `employee_salary_config`, `employee_salary_components`, `payroll_components`, `payroll_records`, `payroll_record_items`, `performance_reviews`, `onboarding_checklists`, `onboarding_checklist_items`, `onboarding_tasks`, `recruitment_jobs`, `recruitment_candidates`
-
-### Assets
+### Assets (Tenant-scoped)
 `asset_categories`, `assets`, `asset_assignments`, `asset_depreciation`, `asset_maintenance`
 
-### Stock
-`stock_categories`, `stock_locations`, `stock_items`, `stock_movements`, `stock_adjustments`
+### Documents & Templates (Tenant-scoped)
+`document_templates`, `templates`, `template_versions`, `number_sequences`, `number_sequences_audit`, `role_module_permissions`
 
-### Knowledge Base
+### System & Logs (Tenant-scoped)
+`system_logs`, `audit_trails`, `database_backups`, `pdf_generation_logs`, `user_preferences`, `user_sidebar_preferences`, `user_activity_sessions`, `user_activity_logs`, `user_sessions`, `branches`
+
+### Knowledge Base (Tenant-scoped)
 `kb_categories`, `kb_articles`, `kb_tags`, `kb_article_tags`, `kb_article_versions`
 
-### Import / Export
+### Import/Export (Tenant-scoped)
 `import_export_templates`, `import_export_jobs`, `import_export_logs`, `import_field_mappings`
 
 ---
@@ -156,18 +208,20 @@ All tables use `deleted_at timestamptz DEFAULT NULL`. **Never use hard deletes (
 
 | Function | Purpose |
 |---|---|
-| `get_next_number(seq_name)` | Returns next formatted number (e.g., `CASE-0042`) |
-| `generate_next_number(seq_name)` | Increments and returns next sequence value |
+| `get_next_number(scope)` | Returns next formatted number (e.g., `CASE-0042`) |
 | `get_next_case_number()` | Case-specific number generator |
 | `handle_new_user()` | Auth trigger: creates `profiles` row on signup |
-| `is_admin()` | RLS helper: true if current user is admin |
+| `is_admin()` | RLS helper: true if user is owner or admin |
 | `is_staff_user()` | RLS helper: true for any staff role |
-| `is_portal_user()` | RLS helper: true for portal customers |
+| `is_platform_admin()` | RLS helper: true for platform-level admin |
+| `has_role(role)` | Hierarchical role check |
 | `get_my_role()` | Returns current user's role string |
-| `get_dashboard_stats_v2()` | Aggregated dashboard statistics |
 | `authenticate_portal_customer(email, password)` | Portal customer auth |
 | `convert_proforma_to_tax_invoice(quote_id)` | Converts quote to invoice |
 | `search_donor_drives(criteria)` | Inventory donor drive search |
+| `log_audit_trail(...)` | Creates audit trail entry |
+| `log_chain_of_custody(...)` | Creates chain of custody entry |
+| `log_case_history(...)` | Creates case history entry |
 
 ---
 
@@ -179,10 +233,14 @@ Located in `supabase/functions/`:
 |---|---|
 | `send-document-email` | Sends PDFs/documents via email (SMTP) |
 | `user-management` | Admin user creation/management |
+| `provision-tenant` | Creates new SaaS tenants |
+| `paypal-create-subscription` | PayPal subscription creation |
+| `paypal-cancel-subscription` | PayPal subscription cancellation |
+| `paypal-webhook` | PayPal webhook handler |
 
 - All edge functions use Deno runtime
 - All must handle CORS with headers: `Content-Type, Authorization, X-Client-Info, Apikey`
-- Import external packages with `npm:` prefix (e.g., `npm:@supabase/supabase-js`)
+- Import external packages with `npm:` prefix
 - Never share code between edge functions
 
 ---
@@ -191,14 +249,15 @@ Located in `supabase/functions/`:
 
 When making schema changes:
 
-1. **Introspect first**: Use `mcp__supabase__list_tables` or `mcp__supabase__execute_sql` to understand the current live schema before writing any SQL.
-2. **Write migration**: Use `mcp__supabase__apply_migration` with a timestamped filename (`YYYYMMDDHHMMSS_description`).
+1. **Introspect first**: Use `mcp__supabase__list_tables` or `mcp__supabase__execute_sql` to understand the current live schema.
+2. **Write migration**: Use `mcp__supabase__apply_migration` with a timestamped filename.
 3. **Include in every migration**:
-   - Detailed markdown comment header explaining what changed
-   - `IF NOT EXISTS` / `IF EXISTS` guards on all DDL
-   - `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` for any new table
-   - RLS policies for any new table
-4. **Regen types**: After migration, re-query `information_schema.columns` and regenerate `src/types/database.types.ts`.
+   - `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` + `FORCE ROW LEVEL SECURITY`
+   - RESTRICTIVE tenant isolation policy for tenant-scoped tables
+   - Appropriate RLS policies
+   - `tenant_id uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE` for tenant-scoped tables
+   - `CREATE INDEX idx_{table}_tenant_id ON {table}(tenant_id) WHERE deleted_at IS NULL`
+4. **Regen types**: Use `mcp__supabase__generate_typescript_types` and save to `src/types/database.types.ts`.
 5. **Never** use `DROP TABLE`, `DROP COLUMN`, or `DELETE FROM` on production data. Use soft deletes and additive migrations only.
 
 ---
@@ -212,27 +271,26 @@ src/
     AuthContext.tsx           # Supabase auth state
     PermissionsContext.tsx    # Role-based permission checks
     PortalAuthContext.tsx     # Customer portal auth
+    PlatformAdminContext.tsx  # Platform admin state
   lib/
     supabaseClient.ts         # Singleton Supabase client (typed with Database)
     *Service.ts               # Domain service files (one per domain)
     pdf/                      # PDF generation utilities
   components/
-    ui/                       # Base UI components (Button, Input, Modal, etc.)
+    ui/                       # Base UI components
     layout/                   # AppLayout, Sidebar, PortalLayout
-    cases/                    # Case-specific components
-    financial/                # Financial components
     ...                       # One subdirectory per domain
   pages/
-    auth/                     # Login, Signup
-    cases/                    # CasesList, CaseDetail
-    financial/                # Invoices, Quotes, Banking, etc.
-    portal/                   # Customer portal pages
-    settings/                 # Settings pages
+    auth/                     # Login, TenantSignup
+    cases/                    # Case management
+    financial/                # Invoices, Quotes, Banking
+    portal/                   # Customer portal
+    platform-admin/           # Platform administration
+    settings/                 # Settings
     ...                       # One subdirectory per domain
   types/
     database.types.ts         # GENERATED — do not hand-edit
     roles.ts                  # Role type definitions
-    accountingLocale.ts       # Locale types
 ```
 
 ### Service Layer Pattern
@@ -252,13 +310,13 @@ Use `PermissionsContext` for all feature-gating. Never hardcode role strings in 
 
 ## Customers vs customers_enhanced
 
-`customers` is a **compatibility view** over `customers_enhanced`. The canonical table is `customers_enhanced`. Always insert/update `customers_enhanced` directly. `customers` is read-only via the view.
+`customers` is a **compatibility view** over `customers_enhanced`. The canonical table is `customers_enhanced`. Always insert/update `customers_enhanced` directly.
 
 ---
 
 ## Number Sequences
 
-Case numbers, invoice numbers, quote numbers, etc. are generated via:
+Case numbers, invoice numbers, etc. are generated via:
 ```typescript
 const { data } = await supabase.rpc('get_next_number', { sequence_name: 'cases' });
 ```
@@ -293,7 +351,9 @@ type IntegrityCheckResult = 'passed' | 'failed' | 'warning' | 'not_applicable';
 - Do not use `single()` — use `maybeSingle()` instead
 - Do not import from `src/types/database.ts` (legacy) — use `src/types/database.types.ts`
 - Do not write to `supabase/migrations/` directly — use `mcp__supabase__apply_migration`
-- Do not install new npm packages without checking if the functionality exists in already-installed packages
+- Do not install new npm packages without checking existing packages first
 - Do not use purple/indigo/violet color schemes in UI
 - Do not add comments to code unless the logic is non-obvious
 - Do not create new files unless necessary; prefer editing existing files
+- Do not create `USING(true)` policies on tenant-scoped tables — use RESTRICTIVE tenant isolation
+- Do not use `is_admin()` for platform-level operations — use `is_platform_admin()`

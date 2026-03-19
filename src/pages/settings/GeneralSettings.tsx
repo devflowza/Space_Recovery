@@ -122,7 +122,7 @@ export const GeneralSettings: React.FC = () => {
     queryKey: ['countries'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('countries')
+        .from('geo_countries')
         .select('*')
         .eq('is_active', true)
         .order('name');

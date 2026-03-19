@@ -91,7 +91,7 @@ export default function SuppliersListPage() {
   const loadCategories = async () => {
     try {
       const { data, error } = await supabase
-        .from('supplier_categories')
+        .from('master_supplier_categories')
         .select('*')
         .eq('is_active', true)
         .order('name');

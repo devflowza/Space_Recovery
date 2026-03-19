@@ -51,7 +51,7 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const hasModuleAccess = (moduleKey: string): boolean => {
     if (!profile?.role) return false;
-    if (profile.role === 'admin') return true;
+    if (['owner', 'admin'].includes(profile.role)) return true;
     return permissions?.accessibleModules.has(moduleKey) || false;
   };
 
