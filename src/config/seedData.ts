@@ -1,5 +1,5 @@
 export const DEVICE_MEDIA_SEED_DATA = {
-  device_types: [
+  catalog_device_types: [
     '2.5" HDD',
     '3.5" HDD',
     '2.5" SSD',
@@ -20,7 +20,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     'Hybrid Drive',
   ],
 
-  brands: [
+  catalog_device_brands: [
     'Seagate',
     'Western Digital',
     'Toshiba',
@@ -47,7 +47,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     'Quantum',
   ],
 
-  capacities: [
+  catalog_device_capacities: [
     '1.44MB',
     '720KB',
     '100MB',
@@ -105,7 +105,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     '32TB',
   ],
 
-  accessories: [
+  catalog_accessories: [
     'Power Cable',
     'USB Cable',
     'USB-C Cable',
@@ -126,7 +126,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     'Thunderbolt Cable',
   ],
 
-  device_interfaces: [
+  catalog_device_interfaces: [
     'SATA I (1.5 Gb/s)',
     'SATA II (3 Gb/s)',
     'SATA III (6 Gb/s)',
@@ -159,7 +159,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     'Ethernet (RJ45)',
   ],
 
-  device_made_in: [
+  catalog_device_made_in: [
     'China',
     'Thailand',
     'Malaysia',
@@ -178,7 +178,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     'Unknown',
   ],
 
-  device_encryption: [
+  catalog_device_encryption: [
     'None',
     'AES 128-bit',
     'AES 256-bit',
@@ -199,7 +199,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     'Biometric Protected',
   ],
 
-  device_platter_no: [
+  catalog_device_platter_counts: [
     '0',
     '1',
     '2',
@@ -211,7 +211,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     '8',
   ],
 
-  device_head_no: [
+  catalog_device_head_counts: [
     '0',
     '1',
     '2',
@@ -247,7 +247,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     'Shipping & Receiving',
   ],
 
-  inventory_categories: [
+  master_inventory_categories: [
     'Hard Drives',
     'SSDs',
     'PCB',
@@ -277,7 +277,7 @@ export const CLIENT_FINANCIAL_SEED_DATA = {
     'Enterprise',
   ],
 
-  industries: [
+  master_industries: [
     'Data Recovery Services',
     'Information Technology',
     'Healthcare & Medical',
@@ -312,7 +312,7 @@ export const CLIENT_FINANCIAL_SEED_DATA = {
     'Sports & Recreation',
   ],
 
-  countries: [
+  geo_countries: [
     { name: 'United Arab Emirates', code: 'AE' },
     { name: 'Oman', code: 'OM' },
     { name: 'Saudi Arabia', code: 'SA' },
@@ -373,7 +373,7 @@ export const CLIENT_FINANCIAL_SEED_DATA = {
     { name: 'New Zealand', code: 'NZ' },
   ],
 
-  cities: [
+  geo_cities: [
     'Muscat',
     'Salalah',
     'Sohar',
@@ -484,7 +484,7 @@ export const CLIENT_FINANCIAL_SEED_DATA = {
     'Wellington',
   ],
 
-  expense_categories: [
+  master_expense_categories: [
     'Parts & Components',
     'Replacement Drives',
     'Clean Room Supplies',
@@ -512,7 +512,7 @@ export const CLIENT_FINANCIAL_SEED_DATA = {
     'Security Services',
   ],
 
-  payment_methods: [
+  master_payment_methods: [
     'Cash',
     'Credit Card',
     'Debit Card',
@@ -530,7 +530,7 @@ export const CLIENT_FINANCIAL_SEED_DATA = {
     'Direct Debit',
   ],
 
-  quote_statuses: [
+  master_quote_statuses: [
     { name: 'Draft', color: '#94a3b8' },
     { name: 'Pending Review', color: '#f59e0b' },
     { name: 'Sent to Client', color: '#3b82f6' },
@@ -543,7 +543,7 @@ export const CLIENT_FINANCIAL_SEED_DATA = {
     { name: 'Cancelled', color: '#dc2626' },
   ],
 
-  invoice_statuses: [
+  master_invoice_statuses: [
     { name: 'Draft', color: '#94a3b8' },
     { name: 'Pending Approval', color: '#f59e0b' },
     { name: 'Approved', color: '#3b82f6' },
@@ -560,14 +560,14 @@ export const CLIENT_FINANCIAL_SEED_DATA = {
 };
 
 export const CASE_SERVICE_SEED_DATA = {
-  service_types: [
+  catalog_service_types: [
     { name: 'Data Recovery', estimatedDays: 5 },
     { name: 'Data Destruction', estimatedDays: 1 },
     { name: 'Forensic Analysis', estimatedDays: 10 },
     { name: 'IT Services', estimatedDays: 3 },
   ],
 
-  service_problems: [
+  catalog_service_problems: [
     'Hard Drive Not Detected',
     'Clicking/Grinding Noise',
     'Drive Not Spinning',
@@ -620,13 +620,13 @@ export const CASE_SERVICE_SEED_DATA = {
     'Email Database Corruption',
   ],
 
-  case_priorities: [
+  master_case_priorities: [
     { name: 'Low', color: '#10b981', level: 1 },
     { name: 'Normal', color: '#3b82f6', level: 2 },
     { name: 'High', color: '#f59e0b', level: 3 },
   ],
 
-  case_statuses: [
+  master_case_statuses: [
     { name: 'Registered', type: 'received', color: '#60a5fa' },
     { name: 'Received', type: 'received', color: '#3b82f6' },
     { name: 'Initial Assessment', type: 'diagnosis', color: '#06b6d4' },
@@ -647,7 +647,7 @@ export const CASE_SERVICE_SEED_DATA = {
     { name: 'Cancelled-Currently No Solution', type: 'cancelled', color: '#78716c' },
   ],
 
-  service_locations: [
+  catalog_service_locations: [
     'On-Site - Client Location',
     'In-Lab - Standard Workstation',
     'In-Lab - Clean Room Class 100',
@@ -670,7 +670,7 @@ export const CASE_SERVICE_SEED_DATA = {
     'Third-Party Facility',
   ],
 
-  device_conditions: [
+  catalog_device_conditions: [
     'Good - No Visible Damage',
     'Fair - Minor Scratches',
     'Fair - Minor Dents',
@@ -693,7 +693,7 @@ export const CASE_SERVICE_SEED_DATA = {
     'Warranty Seal Broken',
   ],
 
-  device_roles: [
+  catalog_device_roles: [
     'Patient',
     'Backup',
     'Donor',

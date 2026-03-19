@@ -80,7 +80,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     queryKey: ['device_types'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_types')
+        .from('catalog_device_types')
         .select('*')
         .order('name');
       if (error) throw error;
@@ -92,7 +92,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     queryKey: ['brands'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('brands')
+        .from('catalog_device_brands')
         .select('*')
         .order('name');
       if (error) throw error;
@@ -104,7 +104,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     queryKey: ['capacities'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('capacities')
+        .from('catalog_device_capacities')
         .select('*')
         .order('sort_order');
       if (error) throw error;
@@ -116,7 +116,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     queryKey: ['device_conditions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_conditions')
+        .from('catalog_device_conditions')
         .select('*')
         .order('name');
       if (error) throw error;
@@ -128,7 +128,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     queryKey: ['device_roles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_roles')
+        .from('catalog_device_roles')
         .select('*')
         .order('name');
       if (error) throw error;
@@ -140,7 +140,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     queryKey: ['device_encryption'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_encryption')
+        .from('catalog_device_encryption')
         .select('*')
         .order('name');
       if (error) throw error;
@@ -152,7 +152,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     queryKey: ['accessories'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('accessories')
+        .from('catalog_accessories')
         .select('*')
         .order('name');
       if (error) throw error;

@@ -120,7 +120,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
     queryKey: ['case_statuses'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('case_statuses')
+        .from('master_case_statuses')
         .select('id, name, type, color')
         .eq('is_active', true);
 
@@ -133,7 +133,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
     queryKey: ['case_priorities'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('case_priorities')
+        .from('master_case_priorities')
         .select('id, name, color')
         .eq('is_active', true);
 

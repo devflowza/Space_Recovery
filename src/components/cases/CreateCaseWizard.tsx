@@ -104,7 +104,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['service_types'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('service_types')
+        .from('catalog_service_types')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -117,7 +117,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['case_priorities'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('case_priorities')
+        .from('master_case_priorities')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -130,7 +130,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['service_locations'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('service_locations')
+        .from('catalog_service_locations')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -143,7 +143,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['device_types'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_types')
+        .from('catalog_device_types')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -156,7 +156,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['brands'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('brands')
+        .from('catalog_device_brands')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -169,7 +169,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['capacities'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('capacities')
+        .from('catalog_device_capacities')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -182,7 +182,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['device_conditions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_conditions')
+        .from('catalog_device_conditions')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -195,7 +195,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['accessories'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('accessories')
+        .from('catalog_accessories')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -208,7 +208,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['device_encryption'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_encryption')
+        .from('catalog_device_encryption')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -221,7 +221,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['service_problems'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('service_problems')
+        .from('catalog_service_problems')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
@@ -234,7 +234,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     queryKey: ['device_roles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('device_roles')
+        .from('catalog_device_roles')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');

@@ -7,7 +7,7 @@ export const reportsService = {
    */
   async getReportTemplates(reportType?: ReportType): Promise<ReportTemplate[]> {
     let query = supabase
-      .from('case_report_templates')
+      .from('master_case_report_templates')
       .select('*')
       .eq('is_active', true)
       .order('report_type')
@@ -32,7 +32,7 @@ export const reportsService = {
    */
   async getDefaultTemplate(reportType: ReportType): Promise<ReportTemplate | null> {
     const { data, error } = await supabase
-      .from('case_report_templates')
+      .from('master_case_report_templates')
       .select('*')
       .eq('report_type', reportType)
       .eq('is_default', true)
@@ -52,7 +52,7 @@ export const reportsService = {
    */
   async getTemplatesForReportType(reportType: ReportType): Promise<ReportTemplate[]> {
     const { data, error } = await supabase
-      .from('case_report_templates')
+      .from('master_case_report_templates')
       .select('*')
       .eq('report_type', reportType)
       .eq('is_active', true)

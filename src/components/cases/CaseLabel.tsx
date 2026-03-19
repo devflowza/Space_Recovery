@@ -46,7 +46,7 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
         const [caseResult, settingsResult, prioritiesResult] = await Promise.all([
           supabase.from('cases').select('*').eq('id', caseId).single(),
           supabase.from('company_settings').select('*').eq('id', 1).single(),
-          supabase.from('case_priorities').select('name, color').eq('is_active', true).order('sort_order'),
+          supabase.from('master_case_priorities').select('name, color').eq('is_active', true).order('sort_order'),
         ]);
 
         if (caseResult.error) throw caseResult.error;
@@ -76,7 +76,7 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
             if (!device.device_type_id) return { ...device, device_type: null };
 
             const deviceTypeResult = await supabase
-              .from('device_types')
+              .from('catalog_device_types')
               .select('name')
               .eq('id', device.device_type_id)
               .single();

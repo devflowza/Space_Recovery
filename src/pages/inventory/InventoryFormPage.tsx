@@ -60,9 +60,9 @@ export default function InventoryFormPage() {
         getInventoryCategories(),
         getInventoryStatusTypes(),
         getInventoryConditionTypes(),
-        supabase.from('brands').select('*').eq('is_active', true).order('name'),
-        supabase.from('device_types').select('*').eq('is_active', true).order('name'),
-        supabase.from('capacities').select('*').eq('is_active', true).order('gb_value'),
+        supabase.from('catalog_device_brands').select('*').eq('is_active', true).order('name'),
+        supabase.from('catalog_device_types').select('*').eq('is_active', true).order('name'),
+        supabase.from('catalog_device_capacities').select('*').eq('is_active', true).order('gb_value'),
         supabase.from('inventory_locations').select('*').eq('is_active', true).order('name'),
       ]);
 

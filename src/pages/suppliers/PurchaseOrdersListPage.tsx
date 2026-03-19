@@ -66,7 +66,7 @@ export default function PurchaseOrdersListPage() {
   const loadStatuses = async () => {
     try {
       const { data, error } = await supabase
-        .from('purchase_order_statuses')
+        .from('master_purchase_order_statuses')
         .select('*')
         .eq('is_active', true)
         .order('sort_order');

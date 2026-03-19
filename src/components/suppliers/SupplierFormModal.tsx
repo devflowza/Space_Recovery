@@ -104,8 +104,8 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
   const loadMasterData = async () => {
     try {
       const [categoriesRes, paymentTermsRes] = await Promise.all([
-        supabase.from('supplier_categories').select('*').eq('is_active', true).order('name'),
-        supabase.from('supplier_payment_terms').select('*').eq('is_active', true).order('days'),
+        supabase.from('master_supplier_categories').select('*').eq('is_active', true).order('name'),
+        supabase.from('master_supplier_payment_terms').select('*').eq('is_active', true).order('days'),
       ]);
 
       if (categoriesRes.data) setCategories(categoriesRes.data);

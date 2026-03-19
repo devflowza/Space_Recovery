@@ -45,7 +45,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
     queryKey: ['currency_codes'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('currency_codes')
+        .from('master_currency_codes')
         .select('id, code, name, symbol')
         .eq('is_active', true)
         .order('sort_order');

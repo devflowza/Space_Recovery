@@ -94,7 +94,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     queryKey: ['countries'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('countries')
+        .from('geo_countries')
         .select('*')
         .eq('is_active', true)
         .order('name');
@@ -108,7 +108,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     queryKey: ['cities'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('cities')
+        .from('geo_cities')
         .select('*')
         .eq('is_active', true)
         .order('name');

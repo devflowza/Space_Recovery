@@ -54,7 +54,7 @@ export const PaymentsList: React.FC = () => {
     queryKey: ['payment_methods_active'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('payment_methods')
+        .from('master_payment_methods')
         .select('id, name')
         .eq('is_active', true)
         .order('name');

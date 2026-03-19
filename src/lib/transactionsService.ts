@@ -302,7 +302,7 @@ export const createTransactionFromInvoice = async (
 
 export const getTransactionCategories = async () => {
   const { data, error } = await supabase
-    .from('transaction_categories')
+    .from('master_transaction_categories')
     .select('*')
     .order('name');
 

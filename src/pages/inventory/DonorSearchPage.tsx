@@ -65,9 +65,9 @@ export default function DonorSearchPage() {
   const loadMasterData = async () => {
     try {
       const [brandsRes, capacitiesRes, interfacesRes] = await Promise.all([
-        supabase.from('brands').select('*').eq('is_active', true).order('name'),
-        supabase.from('capacities').select('*').eq('is_active', true).order('gb_value'),
-        supabase.from('interfaces').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('catalog_device_brands').select('*').eq('is_active', true).order('name'),
+        supabase.from('catalog_device_capacities').select('*').eq('is_active', true).order('gb_value'),
+        supabase.from('catalog_interfaces').select('*').eq('is_active', true).order('sort_order'),
       ]);
 
       if (brandsRes.data) setBrands(brandsRes.data);

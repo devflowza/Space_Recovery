@@ -1,9 +1,9 @@
 import { supabase } from './supabaseClient';
 import type { Database } from '../types/database.types';
 
-type LeaveType = Database['public']['Tables']['leave_types']['Row'];
-type LeaveTypeInsert = Database['public']['Tables']['leave_types']['Insert'];
-type LeaveTypeUpdate = Database['public']['Tables']['leave_types']['Update'];
+type LeaveType = Database['public']['Tables']['master_leave_types']['Row'];
+type LeaveTypeInsert = Database['public']['Tables']['master_leave_types']['Insert'];
+type LeaveTypeUpdate = Database['public']['Tables']['master_leave_types']['Update'];
 type LeaveRequest = Database['public']['Tables']['leave_requests']['Row'];
 type LeaveRequestInsert = Database['public']['Tables']['leave_requests']['Insert'];
 type LeaveRequestUpdate = Database['public']['Tables']['leave_requests']['Update'];
@@ -42,7 +42,7 @@ export interface LeaveStats {
 export const leaveService = {
   async getLeaveTypes(): Promise<LeaveType[]> {
     const { data, error } = await supabase
-      .from('leave_types')
+      .from('master_leave_types')
       .select('*')
       .order('name');
     if (error) throw error;
@@ -51,7 +51,7 @@ export const leaveService = {
 
   async getActiveLeaveTypes(): Promise<LeaveType[]> {
     const { data, error } = await supabase
-      .from('leave_types')
+      .from('master_leave_types')
       .select('*')
       .eq('is_active', true)
       .order('name');
@@ -61,7 +61,7 @@ export const leaveService = {
 
   async createLeaveType(payload: LeaveTypeInsert): Promise<LeaveType> {
     const { data, error } = await supabase
-      .from('leave_types')
+      .from('master_leave_types')
       .insert(payload)
       .select()
       .maybeSingle();
@@ -71,7 +71,7 @@ export const leaveService = {
 
   async updateLeaveType(id: string, payload: LeaveTypeUpdate): Promise<LeaveType> {
     const { data, error } = await supabase
-      .from('leave_types')
+      .from('master_leave_types')
       .update({ ...payload, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()

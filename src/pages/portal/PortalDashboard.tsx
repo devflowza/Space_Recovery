@@ -16,7 +16,7 @@ export const PortalDashboard: React.FC = () => {
     queryKey: ['case_priorities'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('case_priorities')
+        .from('master_case_priorities')
         .select('name, color')
         .eq('is_active', true)
         .order('sort_order');

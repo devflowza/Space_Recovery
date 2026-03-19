@@ -14,7 +14,7 @@ export interface Module {
 
 export interface RoleModulePermission {
   id: string;
-  role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr';
+  role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr';
   module_id: string;
   can_access: boolean;
   module?: Module;
@@ -25,7 +25,7 @@ export interface ModulesByCategory {
 }
 
 export interface RolePermissions {
-  role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr';
+  role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr';
   accessibleModules: Set<string>;
 }
 
@@ -41,7 +41,7 @@ class RolePermissionsService {
     }
 
     const { data, error } = await supabase
-      .from('modules')
+      .from('master_modules')
       .select('*')
       .eq('is_active', true)
       .order('category')
@@ -71,8 +71,8 @@ class RolePermissionsService {
     return grouped;
   }
 
-  async getAccessibleModules(role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr'): Promise<Module[]> {
-    if (role === 'admin') {
+  async getAccessibleModules(role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr'): Promise<Module[]> {
+    if (role === 'owner' || role === 'admin') {
       return this.getAllModules();
     }
 
@@ -87,7 +87,7 @@ class RolePermissionsService {
     return data || [];
   }
 
-  async getRolePermissions(role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr'): Promise<RolePermissions> {
+  async getRolePermissions(role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr'): Promise<RolePermissions> {
     const cacheKey = role;
     const cached = this.permissionsCache.get(cacheKey);
 
@@ -108,10 +108,10 @@ class RolePermissionsService {
   }
 
   async checkModuleAccess(
-    role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr',
+    role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr',
     moduleKey: string
   ): Promise<boolean> {
-    if (role === 'admin') {
+    if (role === 'owner' || role === 'admin') {
       return true;
     }
 
@@ -134,7 +134,7 @@ class RolePermissionsService {
       .from('role_module_permissions')
       .select(`
         *,
-        module:modules(*)
+        module:master_modules(*)
       `);
 
     if (error) {
@@ -146,9 +146,9 @@ class RolePermissionsService {
   }
 
   async getRolePermissionsWithModules(
-    role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr'
+    role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr'
   ): Promise<Map<string, boolean>> {
-    if (role === 'admin') {
+    if (role === 'owner' || role === 'admin') {
       const modules = await this.getAllModules();
       const permissionsMap = new Map<string, boolean>();
       modules.forEach(module => {
@@ -176,12 +176,12 @@ class RolePermissionsService {
   }
 
   async updateRolePermissions(
-    role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr',
+    role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr',
     permissions: { moduleId: string; canAccess: boolean }[]
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      if (role === 'admin') {
-        return { success: false, error: 'Admin permissions cannot be modified' };
+      if (role === 'owner' || role === 'admin') {
+        return { success: false, error: 'Owner and Admin permissions cannot be modified' };
       }
 
       const updates = permissions.map(({ moduleId, canAccess }) => ({
@@ -219,7 +219,7 @@ class RolePermissionsService {
   }
 
   async bulkUpdateRolePermissions(
-    role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr',
+    role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr',
     moduleIds: string[],
     canAccess: boolean
   ): Promise<{ success: boolean; error?: string }> {

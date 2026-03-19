@@ -143,7 +143,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
             // Auto-populate quote title from service type for new quotes
             if (!initialData && data.service_type_id) {
               const { data: serviceType } = await supabase
-                .from('service_types')
+                .from('catalog_service_types')
                 .select('name')
                 .eq('id', data.service_type_id)
                 .maybeSingle();
@@ -177,7 +177,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
     queryKey: ['quote_line_item_templates'],
     queryFn: async () => {
       const { data: typeData, error: typeError } = await supabase
-        .from('template_types')
+        .from('master_template_types')
         .select('id')
         .eq('code', 'quote_line_items')
         .maybeSingle();
@@ -202,7 +202,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
     queryKey: ['quote_terms_templates'],
     queryFn: async () => {
       const { data: typeData, error: typeError } = await supabase
-        .from('template_types')
+        .from('master_template_types')
         .select('id')
         .eq('code', 'quote_terms')
         .maybeSingle();

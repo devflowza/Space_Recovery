@@ -52,7 +52,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   const { data: caseStatuses = [] } = useQuery({
     queryKey: ['case_statuses'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('case_statuses').select('id, name, color, is_active').eq('is_active', true).order('sort_order');
+      const { data, error } = await supabase.from('master_case_statuses').select('id, name, color, is_active').eq('is_active', true).order('sort_order');
       if (error) throw error;
       return data || [];
     },
@@ -61,7 +61,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   const { data: casePriorities = [] } = useQuery({
     queryKey: ['case_priorities'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('case_priorities').select('id, name, color, is_active').eq('is_active', true).order('sort_order');
+      const { data, error } = await supabase.from('master_case_priorities').select('id, name, color, is_active').eq('is_active', true).order('sort_order');
       if (error) throw error;
       return data || [];
     },
@@ -70,7 +70,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   const { data: deviceTypes = [] } = useQuery({
     queryKey: ['device_types'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('device_types').select('id, name').order('sort_order');
+      const { data, error } = await supabase.from('catalog_device_types').select('id, name').order('sort_order');
       if (error) throw error;
       return data || [];
     },
@@ -79,7 +79,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   const { data: capacities = [] } = useQuery({
     queryKey: ['capacities'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('capacities').select('id, name').order('sort_order');
+      const { data, error } = await supabase.from('catalog_device_capacities').select('id, name').order('sort_order');
       if (error) throw error;
       return data || [];
     },
@@ -88,7 +88,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   const { data: serviceProblems = [] } = useQuery({
     queryKey: ['service_problems'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('service_problems').select('id, name').order('sort_order');
+      const { data, error } = await supabase.from('catalog_service_problems').select('id, name').order('sort_order');
       if (error) throw error;
       return data || [];
     },
@@ -97,7 +97,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   const { data: accessories = [] } = useQuery({
     queryKey: ['accessories'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('accessories').select('id, name').eq('is_active', true).order('sort_order');
+      const { data, error } = await supabase.from('catalog_accessories').select('id, name').eq('is_active', true).order('sort_order');
       if (error) throw error;
       return data || [];
     },
@@ -106,7 +106,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   const { data: serviceTypes = [] } = useQuery({
     queryKey: ['service_types'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('service_types').select('id, name').eq('is_active', true).order('sort_order');
+      const { data, error } = await supabase.from('catalog_service_types').select('id, name').eq('is_active', true).order('sort_order');
       if (error) throw error;
       return data || [];
     },

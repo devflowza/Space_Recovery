@@ -60,13 +60,13 @@ export const TemplatesDashboard: React.FC = () => {
     setIsLoading(true);
     try {
       const { data: categoriesData } = await supabase
-        .from('template_categories')
+        .from('master_template_categories')
         .select('*')
         .eq('is_active', true)
         .order('sort_order');
 
       const { data: typesData } = await supabase
-        .from('template_types')
+        .from('master_template_types')
         .select('*')
         .eq('is_active', true)
         .order('sort_order');
