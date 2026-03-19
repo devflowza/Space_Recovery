@@ -357,3 +357,27 @@ type IntegrityCheckResult = 'passed' | 'failed' | 'warning' | 'not_applicable';
 - Do not create new files unless necessary; prefer editing existing files
 - Do not create `USING(true)` policies on tenant-scoped tables — use RESTRICTIVE tenant isolation
 - Do not use `is_admin()` for platform-level operations — use `is_platform_admin()`
+
+---
+
+## Database Migration History
+
+### Version 1.0.0 — Complete SaaS Architecture Rebuild
+**Date**: 2026-03-19
+**Migrations**: 001–014
+
+- Dropped all 200 legacy tables, rebuilt 222 tables with proper naming conventions (`geo_*`, `catalog_*`, `master_*`, `system_*` prefixes)
+- 1,019 RLS policies: 861 permissive + 158 RESTRICTIVE tenant isolation
+- 92 database functions including 7 security helpers (all SECURITY DEFINER)
+- 59 frontend files updated with new table references
+- Regenerated `database.types.ts` (13,692 lines)
+- All tenant-scoped tables enforce RESTRICTIVE isolation via `get_current_tenant_id()` / `is_platform_admin()`
+- Role hierarchy: `owner > admin > manager > technician = sales = accounts = hr > viewer`
+- See `docs/TABLE_MAPPING.md` for complete old → new table name mapping
+
+### Future Migration Guidelines
+
+1. **New tenant-scoped table**: Add `tenant_id uuid NOT NULL REFERENCES tenants(id)`, apply RESTRICTIVE tenant isolation policy, apply `set_tenant_and_audit_fields` trigger
+2. **New global/master table**: No `tenant_id`. Read-only for authenticated, write for `is_platform_admin()`
+3. **New platform table**: No `tenant_id`. Platform admin only access
+4. **Naming**: Follow domain prefix conventions in Table Prefixes section. Audit tables: `{domain}_audit_logs`. Use plural table names
