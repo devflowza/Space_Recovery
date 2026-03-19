@@ -18,7 +18,43 @@ interface TenantWithPlan extends Tenant {
   plan?: SubscriptionPlan;
 }
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
 export const tenantService = {
+  async sendOtp(email: string, companyName?: string): Promise<void> {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-otp-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ action: 'send', email, company_name: companyName }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to send verification code');
+    }
+  },
+
+  async verifyOtp(email: string, otpCode: string): Promise<boolean> {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-otp-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ action: 'verify', email, otp_code: otpCode }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Verification failed');
+    }
+    return data.verified === true;
+  },
+
   async listPlans(): Promise<SubscriptionPlan[]> {
     const { data, error } = await supabase
       .from('subscription_plans')
