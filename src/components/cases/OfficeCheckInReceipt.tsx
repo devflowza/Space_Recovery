@@ -109,8 +109,8 @@ export const OfficeCheckInReceipt: React.FC<OfficeCheckInReceiptProps> = ({
           supabase
             .from('company_settings')
             .select('*')
-            .eq('id', 1)
-            .single(),
+            .limit(1)
+            .maybeSingle(),
         ]);
 
         if (caseResult.error) throw caseResult.error;

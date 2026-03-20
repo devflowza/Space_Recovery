@@ -46,7 +46,7 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
       try {
         const [caseResult, settingsResult, prioritiesResult] = await Promise.all([
           supabase.from('cases').select('*').eq('id', caseId).single(),
-          supabase.from('company_settings').select('*').eq('id', 1).single(),
+          supabase.from('company_settings').select('*').limit(1).maybeSingle(),
           supabase.from('master_case_priorities').select('name, color').eq('is_active', true).order('sort_order'),
         ]);
 
