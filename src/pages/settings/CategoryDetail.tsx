@@ -42,7 +42,7 @@ export const CategoryDetail: React.FC = () => {
 
   const category = SETTINGS_CATEGORIES.find((c) => c.id === categoryId);
   const [activeTable, setActiveTable] = useState<MasterDataTable>(
-    category?.tables[0] || 'device_types'
+    category?.tables[0] || 'catalog_device_types'
   );
 
   const handleTableChange = (table: MasterDataTable) => {
@@ -140,7 +140,7 @@ export const CategoryDetail: React.FC = () => {
       if (error) throw error;
       return data;
     },
-    enabled: activeTable === 'countries',
+    enabled: activeTable === 'geo_countries',
   });
 
   const items = allItems.filter((item) => {
@@ -341,7 +341,7 @@ export const CategoryDetail: React.FC = () => {
     }
   };
 
-  const hasEnabledToggle = activeTable === 'payment_methods';
+  const hasEnabledToggle = activeTable === 'master_payment_methods';
 
   const columns = [
     {
@@ -403,12 +403,12 @@ export const CategoryDetail: React.FC = () => {
     {
       key: 'actions',
       header: 'Actions',
-      width: activeTable === 'countries' ? '160px' : '120px',
+      width: activeTable === 'geo_countries' ? '160px' : '120px',
       render: (row: MasterDataItem) => {
-        const isDefaultCountry = activeTable === 'countries' && companySettings?.location?.default_country_id === row.id.toString();
+        const isDefaultCountry = activeTable === 'geo_countries' && companySettings?.location?.default_country_id === row.id.toString();
         return (
           <div className="flex gap-1.5">
-            {activeTable === 'countries' && (
+            {activeTable === 'geo_countries' && (
               <button
                 onClick={() => handleSetDefaultCountry(row.id.toString())}
                 className={`p-2 rounded-lg transition-all hover:scale-110 ${
@@ -540,7 +540,7 @@ export const CategoryDetail: React.FC = () => {
                 {TABLE_LABELS[activeTable]} ({searchQuery ? `${items.length} of ${allItems.length}` : items.length})
               </h2>
               <p className="text-slate-500 text-xs md:text-sm mt-1">Manage your {TABLE_LABELS[activeTable].toLowerCase()}</p>
-              {activeTable === 'countries' && companySettings?.location?.default_country_id && (
+              {activeTable === 'geo_countries' && companySettings?.location?.default_country_id && (
                 <div className="flex items-center gap-2 mt-2">
                   <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                   <span className="text-sm text-slate-600">

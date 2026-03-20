@@ -14,38 +14,38 @@ import {
 import { LucideIcon } from 'lucide-react';
 
 export type MasterDataTable =
-  | 'device_types'
-  | 'brands'
-  | 'capacities'
-  | 'accessories'
-  | 'device_interfaces'
-  | 'device_made_in'
-  | 'device_encryption'
-  | 'device_platter_no'
-  | 'device_head_no'
+  | 'catalog_device_types'
+  | 'catalog_device_brands'
+  | 'catalog_device_capacities'
+  | 'catalog_accessories'
+  | 'catalog_device_interfaces'
+  | 'catalog_device_made_in'
+  | 'catalog_device_encryption'
+  | 'catalog_device_platter_counts'
+  | 'catalog_device_head_counts'
   | 'inventory_locations'
-  | 'interfaces'
-  | 'service_types'
-  | 'service_problems'
-  | 'service_locations'
-  | 'case_priorities'
-  | 'case_statuses'
-  | 'device_conditions'
-  | 'device_roles'
+  | 'catalog_interfaces'
+  | 'catalog_service_types'
+  | 'catalog_service_problems'
+  | 'catalog_service_locations'
+  | 'master_case_priorities'
+  | 'master_case_statuses'
+  | 'catalog_device_conditions'
+  | 'catalog_device_roles'
   | 'customer_groups'
-  | 'industries'
-  | 'countries'
-  | 'cities'
-  | 'expense_categories'
-  | 'quote_statuses'
-  | 'invoice_statuses'
-  | 'payment_methods'
-  | 'inventory_categories'
-  | 'inventory_status_types'
-  | 'inventory_condition_types'
-  | 'supplier_categories'
-  | 'supplier_payment_terms'
-  | 'purchase_order_statuses';
+  | 'master_industries'
+  | 'geo_countries'
+  | 'geo_cities'
+  | 'master_expense_categories'
+  | 'master_quote_statuses'
+  | 'master_invoice_statuses'
+  | 'master_payment_methods'
+  | 'master_inventory_categories'
+  | 'master_inventory_status_types'
+  | 'master_inventory_condition_types'
+  | 'master_supplier_categories'
+  | 'master_supplier_payment_terms'
+  | 'master_purchase_order_statuses';
 
 export interface SettingsCategory {
   id: string;
@@ -66,20 +66,20 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     backgroundColor: '#3b82f6',
     borderColor: '#3b82f6',
     tables: [
-      'device_types',
-      'brands',
-      'capacities',
-      'accessories',
-      'device_interfaces',
-      'interfaces',
-      'device_made_in',
-      'device_encryption',
-      'device_platter_no',
-      'device_head_no',
+      'catalog_device_types',
+      'catalog_device_brands',
+      'catalog_device_capacities',
+      'catalog_accessories',
+      'catalog_device_interfaces',
+      'catalog_interfaces',
+      'catalog_device_made_in',
+      'catalog_device_encryption',
+      'catalog_device_platter_counts',
+      'catalog_device_head_counts',
       'inventory_locations',
-      'inventory_categories',
-      'inventory_status_types',
-      'inventory_condition_types',
+      'master_inventory_categories',
+      'master_inventory_status_types',
+      'master_inventory_condition_types',
     ],
     actionLabel: 'Manage Categories',
     description: 'Manage storage device specifications and inventory settings',
@@ -90,7 +90,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     icon: SettingsIcon,
     backgroundColor: '#10b981',
     borderColor: '#10b981',
-    tables: ['service_types', 'service_problems', 'case_priorities', 'case_statuses', 'service_locations', 'device_conditions', 'device_roles'],
+    tables: ['catalog_service_types', 'catalog_service_problems', 'master_case_priorities', 'master_case_statuses', 'catalog_service_locations', 'catalog_device_conditions', 'catalog_device_roles'],
     actionLabel: 'Manage Categories',
     description: 'Manage service types, case priorities, and status workflows',
   },
@@ -102,13 +102,13 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     borderColor: '#a855f7',
     tables: [
       'customer_groups',
-      'industries',
-      'countries',
-      'cities',
-      'expense_categories',
-      'quote_statuses',
-      'invoice_statuses',
-      'payment_methods',
+      'master_industries',
+      'geo_countries',
+      'geo_cities',
+      'master_expense_categories',
+      'master_quote_statuses',
+      'master_invoice_statuses',
+      'master_payment_methods',
     ],
     actionLabel: 'Manage Categories',
     description: 'Manage customer groups and financial configurations',
@@ -120,9 +120,9 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     backgroundColor: '#f97316',
     borderColor: '#f97316',
     tables: [
-      'supplier_categories',
-      'supplier_payment_terms',
-      'purchase_order_statuses',
+      'master_supplier_categories',
+      'master_supplier_payment_terms',
+      'master_purchase_order_statuses',
     ],
     actionLabel: 'Manage Categories',
     description: 'Manage supplier categories, payment terms, and purchase order statuses',
@@ -220,36 +220,36 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
 ];
 
 export const TABLE_LABELS: Record<MasterDataTable, string> = {
-  device_types: 'Device Types',
-  brands: 'Brands',
-  capacities: 'Capacities',
-  accessories: 'Accessories',
-  device_interfaces: 'Device Interface',
-  interfaces: 'Interfaces',
-  device_made_in: 'Device Made In',
-  device_encryption: 'Device Encryption',
-  device_platter_no: 'Device Platter No',
-  device_head_no: 'Device Head No',
+  catalog_device_types: 'Device Types',
+  catalog_device_brands: 'Brands',
+  catalog_device_capacities: 'Capacities',
+  catalog_accessories: 'Accessories',
+  catalog_device_interfaces: 'Device Interface',
+  catalog_interfaces: 'Interfaces',
+  catalog_device_made_in: 'Device Made In',
+  catalog_device_encryption: 'Device Encryption',
+  catalog_device_platter_counts: 'Device Platter No',
+  catalog_device_head_counts: 'Device Head No',
   inventory_locations: 'Inventory Locations',
-  service_types: 'Service Types',
-  service_problems: 'Device Problems',
-  case_priorities: 'Case Priorities',
-  case_statuses: 'Case Statuses',
-  service_locations: 'Service Locations',
-  device_conditions: 'Device Conditions',
-  device_roles: 'Device Roles',
+  catalog_service_types: 'Service Types',
+  catalog_service_problems: 'Device Problems',
+  master_case_priorities: 'Case Priorities',
+  master_case_statuses: 'Case Statuses',
+  catalog_service_locations: 'Service Locations',
+  catalog_device_conditions: 'Device Conditions',
+  catalog_device_roles: 'Device Roles',
   customer_groups: 'Customer Groups',
-  industries: 'Industries',
-  countries: 'Countries',
-  cities: 'Cities',
-  expense_categories: 'Expense Categories',
-  quote_statuses: 'Quote Statuses',
-  invoice_statuses: 'Invoice Statuses',
-  payment_methods: 'Client Payment Methods',
-  inventory_categories: 'Inventory Categories',
-  inventory_status_types: 'Inventory Status Types',
-  inventory_condition_types: 'Inventory Condition Types',
-  supplier_categories: 'Supplier Categories',
-  supplier_payment_terms: 'Supplier Payment Terms',
-  purchase_order_statuses: 'Purchase Order Statuses',
+  master_industries: 'Industries',
+  geo_countries: 'Countries',
+  geo_cities: 'Cities',
+  master_expense_categories: 'Expense Categories',
+  master_quote_statuses: 'Quote Statuses',
+  master_invoice_statuses: 'Invoice Statuses',
+  master_payment_methods: 'Client Payment Methods',
+  master_inventory_categories: 'Inventory Categories',
+  master_inventory_status_types: 'Inventory Status Types',
+  master_inventory_condition_types: 'Inventory Condition Types',
+  master_supplier_categories: 'Supplier Categories',
+  master_supplier_payment_terms: 'Supplier Payment Terms',
+  master_purchase_order_statuses: 'Purchase Order Statuses',
 };
