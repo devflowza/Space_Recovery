@@ -752,7 +752,7 @@ export const GeneralSettings: React.FC = () => {
               label="General Email"
               value={formData.contact_info?.email_general}
               onChange={(val: string) => updateField('contact_info', 'email_general', val)}
-              placeholder="info@xsuite.com"
+              placeholder="info@xsuite.space"
               type="email"
               helpText="Main contact email"
             />
@@ -760,21 +760,21 @@ export const GeneralSettings: React.FC = () => {
               label="Support Email"
               value={formData.contact_info?.email_support}
               onChange={(val: string) => updateField('contact_info', 'email_support', val)}
-              placeholder="support@xsuite.com"
+              placeholder="support@xsuite.space"
               type="email"
             />
             <FormField
               label="Sales Email"
               value={formData.contact_info?.email_sales}
               onChange={(val: string) => updateField('contact_info', 'email_sales', val)}
-              placeholder="sales@xsuite.com"
+              placeholder="sales@xsuite.space"
               type="email"
             />
             <FormField
               label="Technical Email"
               value={formData.contact_info?.email_technical}
               onChange={(val: string) => updateField('contact_info', 'email_technical', val)}
-              placeholder="technical@xsuite.com"
+              placeholder="technical@xsuite.space"
               type="email"
             />
           </div>
@@ -793,7 +793,7 @@ export const GeneralSettings: React.FC = () => {
               label="Website"
               value={formData.online_presence?.website}
               onChange={(val: string) => updateField('online_presence', 'website', val)}
-              placeholder="https://xsuite.com"
+              placeholder="https://xsuite.space"
               fullWidth
             />
             <FormField
@@ -842,7 +842,7 @@ export const GeneralSettings: React.FC = () => {
               label="Privacy Policy URL"
               value={formData.legal_compliance?.privacy_policy_url}
               onChange={(val: string) => updateField('legal_compliance', 'privacy_policy_url', val)}
-              placeholder="https://xsuite.com/privacy-policy"
+              placeholder="https://xsuite.space/privacy-policy"
               type="url"
               helpText="Link to your privacy policy document"
             />
@@ -850,7 +850,7 @@ export const GeneralSettings: React.FC = () => {
               label="Terms & Conditions URL"
               value={formData.legal_compliance?.terms_conditions_url}
               onChange={(val: string) => updateField('legal_compliance', 'terms_conditions_url', val)}
-              placeholder="https://xsuite.com/terms-and-conditions"
+              placeholder="https://xsuite.space/terms-and-conditions"
               type="url"
               helpText="Link to your terms and conditions"
             />
@@ -858,7 +858,7 @@ export const GeneralSettings: React.FC = () => {
               label="Data Protection Policy URL"
               value={formData.legal_compliance?.data_protection_policy_url}
               onChange={(val: string) => updateField('legal_compliance', 'data_protection_policy_url', val)}
-              placeholder="https://xsuite.com/data-protection"
+              placeholder="https://xsuite.space/data-protection"
               type="url"
               helpText="Link to your data protection policy"
             />
@@ -866,7 +866,7 @@ export const GeneralSettings: React.FC = () => {
               label="Refund Policy URL"
               value={formData.legal_compliance?.refund_policy_url}
               onChange={(val: string) => updateField('legal_compliance', 'refund_policy_url', val)}
-              placeholder="https://xsuite.com/refund-policy"
+              placeholder="https://xsuite.space/refund-policy"
               type="url"
               helpText="Link to your refund policy (optional)"
             />
@@ -874,7 +874,7 @@ export const GeneralSettings: React.FC = () => {
               label="SLA Document URL"
               value={formData.legal_compliance?.sla_document_url}
               onChange={(val: string) => updateField('legal_compliance', 'sla_document_url', val)}
-              placeholder="https://xsuite.com/sla"
+              placeholder="https://xsuite.space/sla"
               type="url"
               helpText="Link to your service level agreement (optional)"
             />

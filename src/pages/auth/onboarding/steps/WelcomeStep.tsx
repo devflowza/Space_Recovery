@@ -82,7 +82,7 @@ export const WelcomeStep = ({
             className="flex-1 bg-slate-800/50 border border-slate-700 rounded-l-xl px-4 py-3 text-white placeholder-slate-600 font-body text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all"
           />
           <div className="bg-slate-800 border border-l-0 border-slate-700 rounded-r-xl px-3 py-3 text-slate-500 text-sm font-body">
-            .xsuite.com
+            .xsuite.space
           </div>
         </div>
 

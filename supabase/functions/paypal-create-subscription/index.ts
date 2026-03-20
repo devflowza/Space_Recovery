@@ -1,7 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "https://app.xsuite.io";
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('ALLOWED_ORIGIN') || 'https://xsuite.space,https://space-recovery.pages.dev').split(',').map(o => o.trim());
+
+function getAllowedOrigin(req: Request): string {
+  const origin = req.headers.get('Origin') || '';
+  return ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+}
 
 async function checkRateLimit(
   supabase: ReturnType<typeof createClient>,
@@ -27,11 +32,13 @@ function rateLimitResponse(headers: Record<string, string>, retryAfter: number) 
   );
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+function makeCorsHeaders(req: Request) {
+  return {
+    "Access-Control-Allow-Origin": getAllowedOrigin(req),
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  };
+}
 
 interface PayPalAccessTokenResponse {
   access_token: string;
@@ -72,6 +79,8 @@ async function getPayPalAccessToken(
 }
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = makeCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
@@ -199,7 +208,7 @@ Deno.serve(async (req: Request) => {
           given_name: tenant.name.split(' ')[0] || tenant.name,
           surname: tenant.name.split(' ').slice(1).join(' ') || tenant.name,
         },
-        email_address: tenant.contact_email || "noreply@xsuite.app",
+        email_address: tenant.contact_email || "noreply@xsuite.space",
       },
       custom_id: tenantId,
       application_context: {

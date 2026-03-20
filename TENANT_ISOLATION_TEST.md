@@ -113,7 +113,7 @@ SELECT count(*) FROM cases;
    -- In Supabase SQL Editor
    UPDATE profiles
    SET role = 'platform_admin'
-   WHERE email = 'superadmin@xsuite.com';
+   WHERE email = 'superadmin@xsuite.space';
    ```
 
 2. **Login as platform admin**
