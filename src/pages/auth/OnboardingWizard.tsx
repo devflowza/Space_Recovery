@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { AnimatedBackground } from './onboarding/components/AnimatedBackground';
+import { AuthBackground as AnimatedBackground } from '../../components/auth/shared/AuthBackground';
 import { ProgressIndicator } from './onboarding/components/ProgressIndicator';
 import { StepContainer } from './onboarding/components/StepContainer';
 import { WelcomeStep } from './onboarding/steps/WelcomeStep';

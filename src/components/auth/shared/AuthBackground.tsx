@@ -9,11 +9,11 @@ const PARTICLES = Array.from({ length: 8 }, (_, i) => ({
   duration: 5 + (i % 4) * 2,
 }));
 
-export const AnimatedBackground = () => {
+export const AuthBackground = () => {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
+    <div className="absolute inset-0 -z-10 overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
       <svg
         className="absolute inset-0 w-full h-full opacity-[0.04]"
         xmlns="http://www.w3.org/2000/svg"
