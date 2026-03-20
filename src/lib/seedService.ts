@@ -6,6 +6,7 @@ import {
   CASE_SERVICE_SEED_DATA,
   TEMPLATE_SEED_DATA,
 } from '../config/seedData';
+import { isTenantScopedTable } from '../config/settingsCategories';
 
 interface SeedResult {
   success: boolean;
@@ -118,6 +119,14 @@ export async function seedDeviceMediaData(): Promise<SeedResult> {
       };
     }
 
+    const { data: dmProfile } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const dmTenantId = dmProfile?.tenant_id;
+
     const tableLabels: Record<string, string> = {
       catalog_device_types: 'Device Types',
       catalog_device_brands: 'Brands',
@@ -179,15 +188,18 @@ export async function seedDeviceMediaData(): Promise<SeedResult> {
         continue;
       }
 
+      const dmIsTenantTable = isTenantScopedTable(table as any);
+
       const records = seedData.map((item, index) => ({
         name: item,
-        sort_order: index + 1,
+        ...(dmIsTenantTable ? {} : { sort_order: index + 1 }),
         is_active: true,
+        ...(dmIsTenantTable && dmTenantId ? { tenant_id: dmTenantId } : {}),
       }));
 
       const { error, count } = await supabase
         .from(table)
-        .insert(records)
+        .insert(records as any)
         .select();
 
       if (error) {
@@ -254,6 +266,14 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
         message: 'User not authenticated',
       };
     }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const tenantId = profile?.tenant_id;
 
     const tableLabels: Record<string, string> = {
       customer_groups: 'Customer Groups',
@@ -410,15 +430,18 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
         continue;
       }
 
+      const isTenantTable = isTenantScopedTable(table as any);
+
       const records = seedData.map((item, index) => ({
         name: item,
-        sort_order: index + 1,
+        ...(isTenantTable ? {} : { sort_order: index + 1 }),
         is_active: true,
+        ...(isTenantTable && tenantId ? { tenant_id: tenantId } : {}),
       }));
 
       const { error, count } = await supabase
         .from(table)
-        .insert(records)
+        .insert(records as any)
         .select();
 
       if (error) {
