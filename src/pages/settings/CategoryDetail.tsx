@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Table } from '../../components/ui/Table';
 import { Plus, Edit2, Trash2, ChevronLeft, Sparkles, Search, X, Star, ToggleLeft, ToggleRight } from 'lucide-react';
-import { SETTINGS_CATEGORIES, MasterDataTable, TABLE_LABELS } from '../../config/settingsCategories';
+import { SETTINGS_CATEGORIES, MasterDataTable, TABLE_LABELS, isTenantScopedTable } from '../../config/settingsCategories';
+import { settingsKeys } from '../../lib/queryKeys';
 import {
   checkIfSeeded,
   seedDeviceMediaData,
@@ -39,6 +41,7 @@ export const CategoryDetail: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   const category = SETTINGS_CATEGORIES.find((c) => c.id === categoryId);
   const [activeTable, setActiveTable] = useState<MasterDataTable>(
@@ -116,16 +119,21 @@ export const CategoryDetail: React.FC = () => {
   }
 
   const { data: allItems = [], isLoading } = useQuery({
-    queryKey: ['master_data', activeTable],
+    queryKey: settingsKeys.masterData(activeTable),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from(activeTable)
-        .select('*')
-        .order('sort_order', { ascending: true });
+      let query = supabase.from(activeTable).select('*').is('deleted_at', null);
 
+      if (isTenantScopedTable(activeTable)) {
+        query = query.order('name', { ascending: true });
+      } else {
+        query = query.order('sort_order', { ascending: true });
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as MasterDataItem[];
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: companySettings } = useQuery({
@@ -151,7 +159,7 @@ export const CategoryDetail: React.FC = () => {
   });
 
   const { data: isSeeded = false } = useQuery({
-    queryKey: ['seed_status', category?.id],
+    queryKey: settingsKeys.seedStatus(category?.id || ''),
     queryFn: async () => {
       if (!category?.id) return true;
       const categoriesWithSeeding = ['device-media', 'client-financial', 'case-service'];
@@ -159,28 +167,35 @@ export const CategoryDetail: React.FC = () => {
       return await checkIfSeeded(category.id);
     },
     enabled: !!category,
+    staleTime: 10 * 60 * 1000,
   });
 
   const createMutation = useMutation({
     mutationFn: async (value: string) => {
-      const { data: maxOrderData } = await supabase
-        .from(activeTable)
-        .select('sort_order')
-        .order('sort_order', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (isTenantScopedTable(activeTable)) {
+        const { error } = await supabase
+          .from(activeTable)
+          .insert({ name: value, tenant_id: profile?.tenant_id } as any);
+        if (error) throw error;
+      } else {
+        const { data: maxOrderData } = await supabase
+          .from(activeTable)
+          .select('sort_order')
+          .order('sort_order', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      const nextSortOrder = (maxOrderData?.sort_order ?? 0) + 1;
+        const nextSortOrder = (maxOrderData?.sort_order ?? 0) + 1;
 
-      const { error } = await supabase
-        .from(activeTable)
-        .insert({ name: value, sort_order: nextSortOrder });
-
-      if (error) throw error;
+        const { error } = await supabase
+          .from(activeTable)
+          .insert({ name: value, sort_order: nextSortOrder } as any);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['master_data', activeTable] });
-      queryClient.invalidateQueries({ queryKey: ['settings_category_counts'] });
+      queryClient.invalidateQueries({ queryKey: settingsKeys.masterData(activeTable) });
+      queryClient.invalidateQueries({ queryKey: ['settings', 'category-count'] });
       setIsModalOpen(false);
       setFormValue('');
     },
@@ -195,7 +210,7 @@ export const CategoryDetail: React.FC = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['master_data', activeTable] });
+      queryClient.invalidateQueries({ queryKey: settingsKeys.masterData(activeTable) });
       setIsModalOpen(false);
       setEditingItem(null);
       setFormValue('');
@@ -204,12 +219,15 @@ export const CategoryDetail: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from(activeTable).delete().eq('id', id);
+      const { error } = await supabase
+        .from(activeTable)
+        .update({ deleted_at: new Date().toISOString() } as any)
+        .eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['master_data', activeTable] });
-      queryClient.invalidateQueries({ queryKey: ['settings_category_counts'] });
+      queryClient.invalidateQueries({ queryKey: settingsKeys.masterData(activeTable) });
+      queryClient.invalidateQueries({ queryKey: ['settings', 'category-count'] });
     },
   });
 
@@ -242,7 +260,7 @@ export const CategoryDetail: React.FC = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['master_data', activeTable] });
+      queryClient.invalidateQueries({ queryKey: settingsKeys.masterData(activeTable) });
       queryClient.invalidateQueries({ queryKey: ['payment_methods_active'] });
     },
   });
@@ -327,9 +345,9 @@ export const CategoryDetail: React.FC = () => {
         setSeedMessage(result.message);
         setSeedDetails(result.details || null);
         setShowSeedSuccess(true);
-        queryClient.invalidateQueries({ queryKey: ['master_data'] });
-        queryClient.invalidateQueries({ queryKey: ['seed_status'] });
-        queryClient.invalidateQueries({ queryKey: ['settings_category_counts'] });
+        queryClient.invalidateQueries({ queryKey: ['settings', 'master-data'] });
+        queryClient.invalidateQueries({ queryKey: ['settings', 'seed-status'] });
+        queryClient.invalidateQueries({ queryKey: ['settings', 'category-count'] });
       } else {
         alert(result.error || result.message);
       }

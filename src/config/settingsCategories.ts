@@ -219,6 +219,10 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
   },
 ];
 
+export const TENANT_SCOPED_TABLES: MasterDataTable[] = ['inventory_locations', 'customer_groups'];
+export const isTenantScopedTable = (table: MasterDataTable): boolean =>
+  TENANT_SCOPED_TABLES.includes(table);
+
 export const TABLE_LABELS: Record<MasterDataTable, string> = {
   catalog_device_types: 'Device Types',
   catalog_device_brands: 'Brands',
