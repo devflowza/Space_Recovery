@@ -32,19 +32,28 @@ async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
 
   const country = data.country as Record<string, unknown> | null;
 
+  // Fetch the default accounting locale for tenant-level overrides
+  const { data: defaultLocale } = await supabase
+    .from('accounting_locales')
+    .select('currency_code, currency_symbol, decimal_places, currency_position, decimal_separator, thousands_separator, date_format, locale_code')
+    .eq('tenant_id', tenantId)
+    .eq('is_default', true)
+    .is('deleted_at', null)
+    .maybeSingle();
+
   return {
     tenantId: data.id,
     tenantName: data.name,
     countryCode: (country?.code as string) || 'US',
     countryName: (country?.name as string) || 'United States',
     currency: {
-      code: data.currency_code || 'USD',
-      symbol: data.currency_symbol || '$',
+      code: defaultLocale?.currency_code || data.currency_code || 'USD',
+      symbol: defaultLocale?.currency_symbol || data.currency_symbol || '$',
       name: (country?.currency_name as string) || data.currency_code || 'USD',
-      decimalPlaces: data.decimal_places ?? 2,
-      decimalSeparator: (country?.decimal_separator as string) || '.',
-      thousandsSeparator: (country?.thousands_separator as string) || ',',
-      position: ((country?.currency_position as string) || 'before') as 'before' | 'after',
+      decimalPlaces: defaultLocale?.decimal_places ?? data.decimal_places ?? 2,
+      decimalSeparator: defaultLocale?.decimal_separator || (country?.decimal_separator as string) || '.',
+      thousandsSeparator: defaultLocale?.thousands_separator ?? (country?.thousands_separator as string) ?? ',',
+      position: ((defaultLocale?.currency_position || country?.currency_position as string) || 'before') as 'before' | 'after',
     },
     tax: {
       system: (data.tax_system || 'NONE') as TaxSystem,
@@ -56,14 +65,14 @@ async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
       invoiceRequired: (country?.tax_invoice_required as boolean) || false,
     },
     dateTime: {
-      dateFormat: data.date_format || 'MM/DD/YYYY',
+      dateFormat: defaultLocale?.date_format || data.date_format || 'MM/DD/YYYY',
       timeFormat: ((country?.time_format as string) || '12h') as '12h' | '24h',
       timezone: data.timezone || 'UTC',
       weekStartsOn: ((country?.week_starts_on as number) ?? 0) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
       fiscalYearStart: data.fiscal_year_start || '01-01',
     },
     locale: {
-      localeCode: data.locale_code || 'en-US',
+      localeCode: defaultLocale?.locale_code || data.locale_code || 'en-US',
       languageCode: (country?.language_code as string) || 'en',
       postalCodeLabel: (country?.postal_code_label as string) || 'Postal Code',
     },

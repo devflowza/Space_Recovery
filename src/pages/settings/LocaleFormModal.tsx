@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { AccountingLocale, AccountingLocaleFormData } from '../../types/accountingLocale';
+import type { AccountingLocale, AccountingLocaleFormData } from '../../types/accountingLocale';
 
 interface LocaleFormModalProps {
   isOpen: boolean;
@@ -12,6 +12,20 @@ interface LocaleFormModalProps {
   isSubmitting: boolean;
 }
 
+const DEFAULT_FORM: AccountingLocaleFormData = {
+  name: '',
+  locale_code: '',
+  currency_code: '',
+  currency_symbol: '',
+  decimal_places: 2,
+  currency_position: 'before',
+  decimal_separator: '.',
+  thousands_separator: ',',
+  date_format: 'DD/MM/YYYY',
+  number_format: '',
+  is_default: false,
+};
+
 export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
   isOpen,
   onClose,
@@ -19,61 +33,25 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
   editingLocale,
   isSubmitting,
 }) => {
-  const [formData, setFormData] = useState<AccountingLocaleFormData>({
-    country_name: '',
-    country_code: '',
-    currency_code: '',
-    currency_symbol: '',
-    currency_name: '',
-    currency_position: 'after',
-    decimal_places: 2,
-    tax_name: 'VAT',
-    tax_rate: 0.05,
-    tax_number_label: '',
-    exchange_rate_to_usd: 1.0,
-    date_format: 'dd/MM/yyyy',
-    is_active: true,
-    is_default: false,
-    notes: '',
-  });
+  const [formData, setFormData] = useState<AccountingLocaleFormData>(DEFAULT_FORM);
 
   useEffect(() => {
     if (editingLocale) {
       setFormData({
-        country_name: editingLocale.country_name,
-        country_code: editingLocale.country_code,
-        currency_code: editingLocale.currency_code,
-        currency_symbol: editingLocale.currency_symbol,
-        currency_name: editingLocale.currency_name,
-        currency_position: editingLocale.currency_position,
-        decimal_places: editingLocale.decimal_places,
-        tax_name: editingLocale.tax_name,
-        tax_rate: editingLocale.tax_rate,
-        tax_number_label: editingLocale.tax_number_label || '',
-        exchange_rate_to_usd: editingLocale.exchange_rate_to_usd,
-        date_format: editingLocale.date_format,
-        is_active: editingLocale.is_active,
-        is_default: editingLocale.is_default,
-        notes: editingLocale.notes || '',
+        name: editingLocale.name,
+        locale_code: editingLocale.locale_code,
+        currency_code: editingLocale.currency_code || '',
+        currency_symbol: editingLocale.currency_symbol || '',
+        decimal_places: editingLocale.decimal_places ?? 2,
+        currency_position: (editingLocale.currency_position as 'before' | 'after') || 'before',
+        decimal_separator: editingLocale.decimal_separator || '.',
+        thousands_separator: editingLocale.thousands_separator || ',',
+        date_format: editingLocale.date_format || 'DD/MM/YYYY',
+        number_format: editingLocale.number_format || '',
+        is_default: editingLocale.is_default ?? false,
       });
     } else {
-      setFormData({
-        country_name: '',
-        country_code: '',
-        currency_code: '',
-        currency_symbol: '',
-        currency_name: '',
-        currency_position: 'after',
-        decimal_places: 2,
-        tax_name: 'VAT',
-        tax_rate: 0.05,
-        tax_number_label: '',
-        exchange_rate_to_usd: 1.0,
-        date_format: 'dd/MM/yyyy',
-        is_active: true,
-        is_default: false,
-        notes: '',
-      });
+      setFormData(DEFAULT_FORM);
     }
   }, [editingLocale, isOpen]);
 
@@ -82,42 +60,44 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
     onSubmit(formData);
   };
 
-  const handleInputChange = (field: keyof AccountingLocaleFormData, value: string | number | boolean) => {
+  const handleChange = (field: keyof AccountingLocaleFormData, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const formatExample = () => {
-    const amount = formData.decimal_places === 3 ? '100.000' : '100.00';
-    if (formData.currency_position === 'before') {
-      return `${formData.currency_symbol} ${amount}`;
-    }
-    return `${amount} ${formData.currency_symbol}`;
+    const wholePart = `1${formData.thousands_separator}234`;
+    const decimals = '0'.repeat(formData.decimal_places);
+    const amount = formData.decimal_places > 0
+      ? `${wholePart}${formData.decimal_separator}${decimals}`
+      : wholePart;
+    const symbol = formData.currency_symbol || formData.currency_code || '?';
+    return formData.currency_position === 'before'
+      ? `${symbol} ${amount}`
+      : `${amount} ${symbol}`;
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={editingLocale ? 'Edit Accounting Locale' : 'Add New Accounting Locale'}
+      title={editingLocale ? 'Edit Accounting Locale' : 'Add Accounting Locale'}
       size="lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <Input
-            label="Country Name"
-            value={formData.country_name}
-            onChange={(e) => handleInputChange('country_name', e.target.value)}
-            placeholder="Country name"
+            label="Name"
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            placeholder="Oman - Default"
             required
           />
           <Input
-            label="Country Code"
-            value={formData.country_code}
-            onChange={(e) => handleInputChange('country_code', e.target.value.toUpperCase())}
-            placeholder="US"
-            maxLength={2}
+            label="Locale Code"
+            value={formData.locale_code}
+            onChange={(e) => handleChange('locale_code', e.target.value)}
+            placeholder="ar-OM"
             required
-            disabled={!!editingLocale}
           />
         </div>
 
@@ -125,161 +105,105 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
           <Input
             label="Currency Code"
             value={formData.currency_code}
-            onChange={(e) => handleInputChange('currency_code', e.target.value.toUpperCase())}
-            placeholder="USD"
+            onChange={(e) => handleChange('currency_code', e.target.value.toUpperCase())}
+            placeholder="OMR"
             maxLength={3}
             required
           />
           <Input
             label="Currency Symbol"
             value={formData.currency_symbol}
-            onChange={(e) => handleInputChange('currency_symbol', e.target.value)}
-            placeholder="$"
+            onChange={(e) => handleChange('currency_symbol', e.target.value)}
+            placeholder="OMR or ر.ع."
             required
           />
         </div>
 
-        <Input
-          label="Currency Name"
-          value={formData.currency_name}
-          onChange={(e) => handleInputChange('currency_name', e.target.value)}
-          placeholder="US Dollar"
-          required
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Tax Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.tax_name}
-              onChange={(e) => handleInputChange('tax_name', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="VAT"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Tax Rate <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              max="1"
-              value={formData.tax_rate}
-              onChange={(e) => handleInputChange('tax_rate', parseFloat(e.target.value))}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="0.05"
-              required
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              Enter as decimal (e.g., 0.05 for 5%)
-            </p>
-          </div>
-        </div>
-
-        <Input
-          label="Tax Number Label"
-          value={formData.tax_number_label}
-          onChange={(e) => handleInputChange('tax_number_label', e.target.value)}
-          placeholder="Tax ID Number"
-        />
-
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Decimal Places <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Decimal Places</label>
             <select
               value={formData.decimal_places}
-              onChange={(e) => handleInputChange('decimal_places', parseInt(e.target.value))}
+              onChange={(e) => handleChange('decimal_places', parseInt(e.target.value))}
               className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
             >
-              <option value={0}>0</option>
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-              <option value={3}>3</option>
-              <option value={4}>4</option>
-              <option value={5}>5</option>
+              {[0, 1, 2, 3, 4, 5].map(n => (
+                <option key={n} value={n}>{n}</option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Currency Position <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Currency Position</label>
             <select
               value={formData.currency_position}
-              onChange={(e) => handleInputChange('currency_position', e.target.value as 'before' | 'after')}
+              onChange={(e) => handleChange('currency_position', e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
             >
-              <option value="after">After (100.00...)</option>
-              <option value="before">Before ($ 100.00)</option>
+              <option value="before">Before ($ 100)</option>
+              <option value="after">After (100 OMR)</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Example
-            </label>
-            <div className="w-full px-3 py-2 border border-slate-200 rounded-md bg-slate-50 text-slate-700">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Preview</label>
+            <div className="w-full px-3 py-2 border border-slate-200 rounded-md bg-slate-50 text-slate-700 font-mono text-sm">
               {formatExample()}
             </div>
           </div>
         </div>
 
-        <Input
-          label="Exchange Rate to USD"
-          type="number"
-          step="0.000001"
-          min="0.000001"
-          value={formData.exchange_rate_to_usd}
-          onChange={(e) => handleInputChange('exchange_rate_to_usd', parseFloat(e.target.value))}
-          placeholder="2.6"
-          required
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Decimal Separator</label>
+            <select
+              value={formData.decimal_separator}
+              onChange={(e) => handleChange('decimal_separator', e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value=".">Period (.)</option>
+              <option value=",">Comma (,)</option>
+            </select>
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Active
-          </label>
-          <label className="flex items-center cursor-pointer">
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={formData.is_active}
-                onChange={(e) => handleInputChange('is_active', e.target.checked)}
-                className="sr-only"
-              />
-              <div className={`w-12 h-6 rounded-full shadow-inner transition-colors ${
-                formData.is_active ? 'bg-blue-600' : 'bg-slate-300'
-              }`}></div>
-              <div className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                formData.is_active ? 'transform translate-x-6' : ''
-              }`}></div>
-            </div>
-            <span className="ml-3 text-sm text-slate-700">
-              {formData.is_active ? 'Active' : 'Inactive'}
-            </span>
-          </label>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Thousands Separator</label>
+            <select
+              value={formData.thousands_separator}
+              onChange={(e) => handleChange('thousands_separator', e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value=",">Comma (,)</option>
+              <option value=".">Period (.)</option>
+              <option value=" ">Space ( )</option>
+              <option value="">None</option>
+            </select>
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Set as Default
-          </label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Date Format</label>
+          <select
+            value={formData.date_format}
+            onChange={(e) => handleChange('date_format', e.target.value)}
+            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2026)</option>
+            <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2026)</option>
+            <option value="YYYY-MM-DD">YYYY-MM-DD (2026-12-31)</option>
+            <option value="DD-MM-YYYY">DD-MM-YYYY (31-12-2026)</option>
+            <option value="DD.MM.YYYY">DD.MM.YYYY (31.12.2026)</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">Set as Default</label>
           <label className="flex items-center cursor-pointer">
             <div className="relative">
               <input
                 type="checkbox"
                 checked={formData.is_default}
-                onChange={(e) => handleInputChange('is_default', e.target.checked)}
+                onChange={(e) => handleChange('is_default', e.target.checked)}
                 className="sr-only"
               />
               <div className={`w-12 h-6 rounded-full shadow-inner transition-colors ${
@@ -290,31 +214,13 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
               }`}></div>
             </div>
             <span className="ml-3 text-sm text-slate-700">
-              {formData.is_default ? 'Default locale' : 'Not default'}
+              {formData.is_default ? 'Default locale — used across the application' : 'Not default'}
             </span>
           </label>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Notes
-          </label>
-          <textarea
-            value={formData.notes}
-            onChange={(e) => handleInputChange('notes', e.target.value)}
-            rows={3}
-            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Notes about this locale configuration"
-          />
-        </div>
-
         <div className="flex gap-3 justify-end pt-4 border-t">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
