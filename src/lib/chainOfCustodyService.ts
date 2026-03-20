@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 export type ActionCategory =
   | 'creation'
@@ -168,7 +169,7 @@ export async function getChainOfCustody(
   const { data, error } = await query;
 
   if (error) {
-    console.error('Error fetching Chain of Custody:', error);
+    logger.error('Error fetching Chain of Custody:', error);
     throw error;
   }
 
@@ -199,7 +200,7 @@ export async function logChainOfCustody(params: {
   });
 
   if (error) {
-    console.error('Error logging Chain of Custody:', error);
+    logger.error('Error logging Chain of Custody:', error);
     throw error;
   }
 
@@ -241,7 +242,7 @@ export async function initiateCustodyTransfer(params: {
     .maybeSingle();
 
   if (error) {
-    console.error('Error initiating custody transfer:', error);
+    logger.error('Error initiating custody transfer:', error);
     throw error;
   }
 
@@ -282,7 +283,7 @@ export async function acceptCustodyTransfer(params: {
     .maybeSingle();
 
   if (error) {
-    console.error('Error accepting custody transfer:', error);
+    logger.error('Error accepting custody transfer:', error);
     throw error;
   }
 
@@ -316,7 +317,7 @@ export async function rejectCustodyTransfer(params: {
     .maybeSingle();
 
   if (error) {
-    console.error('Error rejecting custody transfer:', error);
+    logger.error('Error rejecting custody transfer:', error);
     throw error;
   }
 
@@ -342,7 +343,7 @@ export async function getCustodyTransfers(caseId: string): Promise<CustodyTransf
     .order('initiated_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching custody transfers:', error);
+    logger.error('Error fetching custody transfers:', error);
     throw error;
   }
 
@@ -383,7 +384,7 @@ export async function logAccess(params: {
     .maybeSingle();
 
   if (error) {
-    console.error('Error logging access:', error);
+    logger.error('Error logging access:', error);
     throw error;
   }
 
@@ -417,7 +418,7 @@ export async function endAccess(params: {
     .maybeSingle();
 
   if (error) {
-    console.error('Error ending access:', error);
+    logger.error('Error ending access:', error);
     throw error;
   }
 
@@ -474,7 +475,7 @@ export async function performIntegrityCheck(params: {
     .maybeSingle();
 
   if (error) {
-    console.error('Error performing integrity check:', error);
+    logger.error('Error performing integrity check:', error);
     throw error;
   }
 
@@ -502,7 +503,7 @@ export async function getIntegrityChecks(caseId: string): Promise<IntegrityCheck
     .order('checked_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching integrity checks:', error);
+    logger.error('Error fetching integrity checks:', error);
     throw error;
   }
 
@@ -543,7 +544,7 @@ export async function searchChainOfCustody(params: {
   const { data, error } = await query;
 
   if (error) {
-    console.error('Error searching Chain of Custody:', error);
+    logger.error('Error searching Chain of Custody:', error);
     throw error;
   }
 

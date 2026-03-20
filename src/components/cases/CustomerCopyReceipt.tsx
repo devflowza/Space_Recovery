@@ -4,6 +4,7 @@ import { formatDate } from '../../lib/format';
 import { getPortalUrl } from '../../lib/portalUrlService';
 import { useDocumentTranslations } from '../../hooks/useDocumentTranslations';
 import { getDeviceIconComponent } from '../../lib/deviceIconMapper';
+import { logger } from '../../lib/logger';
 
 interface CustomerCopyReceiptProps {
   caseId: string;
@@ -201,7 +202,7 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
         const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(portalUrl)}`;
         setQrCodeUrl(qrApiUrl);
       } catch (error) {
-        console.error('Error fetching receipt data:', error);
+        logger.error('Error fetching receipt data:', error);
       } finally {
         setLoading(false);
       }

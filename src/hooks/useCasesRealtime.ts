@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
+import { logger } from '../lib/logger';
 
 export const useCasesRealtime = () => {
   const queryClient = useQueryClient();
@@ -60,7 +61,7 @@ export const useCasesRealtime = () => {
       )
       .subscribe((status) => {
         if (status === 'CHANNEL_ERROR') {
-          console.error('Real-time subscription error');
+          logger.error('Real-time subscription error');
         }
       });
 

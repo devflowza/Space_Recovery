@@ -4,6 +4,7 @@ import { OnboardingWizard } from '../../components/onboarding/OnboardingWizard';
 import { onboardingService } from '../../lib/onboardingService';
 import { tenantService } from '../../lib/tenantService';
 import { useAuth } from '../../contexts/AuthContext';
+import { logger } from '../../lib/logger';
 
 export const OnboardingPage = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export const OnboardingPage = () => {
           return;
         }
       } catch (error) {
-        console.error('Error checking onboarding status:', error);
+        logger.error('Error checking onboarding status:', error);
       } finally {
         setLoading(false);
       }

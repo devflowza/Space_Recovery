@@ -6,6 +6,7 @@ import { fetchPaymentById } from '../../lib/paymentsService';
 import { supabase } from '../../lib/supabaseClient';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useDocumentTranslations } from '../../hooks/useDocumentTranslations';
+import { logger } from '../../lib/logger';
 
 export const PrintPaymentReceiptPage: React.FC = () => {
   const { paymentId } = useParams<{ paymentId: string }>();
@@ -31,7 +32,7 @@ export const PrintPaymentReceiptPage: React.FC = () => {
         if (error) throw error;
         setCompanySettings(data);
       } catch (error) {
-        console.error('Error fetching company settings:', error);
+        logger.error('Error fetching company settings:', error);
       } finally {
         setSettingsLoading(false);
       }

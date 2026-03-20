@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Database } from '../../types/database.types';
+import { logger } from '../../lib/logger';
 
 type Employee = Database['public']['Tables']['employees']['Row'] & {
   profiles: Database['public']['Tables']['profiles']['Row'];
@@ -40,7 +41,7 @@ export const EmployeesList: React.FC = () => {
       if (error) throw error;
       setEmployees(data || []);
     } catch (error) {
-      console.error('Error loading employees:', error);
+      logger.error('Error loading employees:', error);
     } finally {
       setLoading(false);
     }

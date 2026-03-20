@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Search, Eye, Edit, Trash2, Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { logger } from '../../lib/logger';
 
 interface AuditTrail {
   id: string;
@@ -56,7 +57,7 @@ export const AuditTrails: React.FC = () => {
 
       setTrails(formattedData);
     } catch (error) {
-      console.error('Error fetching audit trails:', error);
+      logger.error('Error fetching audit trails:', error);
     } finally {
       setLoading(false);
     }

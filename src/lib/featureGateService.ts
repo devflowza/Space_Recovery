@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 // ============ TYPES ============
 
@@ -126,7 +127,7 @@ export async function loadPlanCache(): Promise<void> {
       expiry: Date.now() + CACHE_TTL,
     };
   } catch (error) {
-    console.error('Failed to load plan cache:', error);
+    logger.error('Failed to load plan cache:', error);
     planCache = null;
   }
 }

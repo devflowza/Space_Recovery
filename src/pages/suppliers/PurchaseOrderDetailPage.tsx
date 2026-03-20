@@ -9,6 +9,7 @@ import { ReceiveStockModal } from '../../components/suppliers/ReceiveStockModal'
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 import { format } from 'date-fns';
+import { logger } from '../../lib/logger';
 
 export default function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -54,7 +55,7 @@ export default function PurchaseOrderDetailPage() {
       setOrder(data);
       setPoLineItems(itemsData ?? []);
     } catch (error: unknown) {
-      console.error('Error loading purchase order:', error);
+      logger.error('Error loading purchase order:', error);
       showToast(error instanceof Error ? error.message : 'Failed to load purchase order', 'error');
       navigate('/purchase-orders');
     } finally {

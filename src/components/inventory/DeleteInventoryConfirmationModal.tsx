@@ -3,6 +3,7 @@ import { AlertTriangle, Trash2, RefreshCw, X } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { getInventoryStatusTypes, type InventoryStatusType } from '../../lib/inventoryService';
+import { logger } from '../../lib/logger';
 
 interface DeleteInventoryConfirmationModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ export default function DeleteInventoryConfirmationModal({
         setSelectedStatusId(types[0].id);
       }
     } catch (error) {
-      console.error('Error loading status types:', error);
+      logger.error('Error loading status types:', error);
     } finally {
       setLoadingStatusTypes(false);
     }
@@ -53,7 +54,7 @@ export default function DeleteInventoryConfirmationModal({
       await onChangeStatus(selectedStatusId);
       onClose();
     } catch (error) {
-      console.error('Error changing status:', error);
+      logger.error('Error changing status:', error);
     } finally {
       setLoading(false);
     }
@@ -65,7 +66,7 @@ export default function DeleteInventoryConfirmationModal({
       await onDelete();
       onClose();
     } catch (error) {
-      console.error('Error deleting item:', error);
+      logger.error('Error deleting item:', error);
     } finally {
       setLoading(false);
     }

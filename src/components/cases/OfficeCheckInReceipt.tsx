@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { formatDate } from '../../lib/format';
 import { useDocumentTranslations } from '../../hooks/useDocumentTranslations';
 import { getDeviceIconComponent } from '../../lib/deviceIconMapper';
+import { logger } from '../../lib/logger';
 
 interface OfficeCheckInReceiptProps {
   caseId: string;
@@ -195,7 +196,7 @@ export const OfficeCheckInReceipt: React.FC<OfficeCheckInReceiptProps> = ({
           created_by_profile: createdByResult.data,
         });
       } catch (error) {
-        console.error('Error fetching receipt data:', error);
+        logger.error('Error fetching receipt data:', error);
       } finally {
         setLoading(false);
       }

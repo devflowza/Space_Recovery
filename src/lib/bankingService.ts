@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { sanitizeFilterValue, isValidUuid } from './postgrestSanitizer';
 
 export interface BankAccount {
   id: string;
@@ -411,7 +412,9 @@ export const bankingService = {
       .order('transfer_date', { ascending: false });
 
     if (filters?.account_id) {
+      if (isValidUuid(filters.account_id)) {
       query = query.or(`from_account_id.eq.${filters.account_id},to_account_id.eq.${filters.account_id}`);
+    }
     }
 
     if (filters?.start_date) {
@@ -680,7 +683,8 @@ export const bankingService = {
     }
 
     if (filters?.search) {
-      query = query.or(`cases.case_number.ilike.%${filters.search}%,cases.title.ilike.%${filters.search}%`);
+      const s = sanitizeFilterValue(filters.search);
+    query = query.or(`cases.case_number.ilike.%${s}%,cases.title.ilike.%${s}%`);
     }
 
     const { data: invoices, error } = await query;

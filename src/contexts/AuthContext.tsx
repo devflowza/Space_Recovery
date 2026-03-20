@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
+import { logger } from '../lib/logger';
 
 interface Profile {
   id: string;
   full_name: string;
-  role: 'owner' | 'admin' | 'technician' | 'sales' | 'accounts' | 'hr' | null;
+  role: 'owner' | 'admin' | 'manager' | 'technician' | 'sales' | 'accounts' | 'hr' | 'viewer' | null;
   phone: string | null;
   avatar_url: string | null;
   is_active: boolean;
@@ -75,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfileStatus('approved');
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      logger.error('Error fetching profile:', error);
       setProfileStatus('error');
     } finally {
       setLoading(false);
@@ -116,6 +117,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const INACTIVITY_LIMIT = 30 * 60 * 1000;
+    const WARNING_BEFORE = 5 * 60 * 1000;
+    let lastActivity = Date.now();
+    let warningShown = false;
+
+    const resetTimer = () => {
+      lastActivity = Date.now();
+      warningShown = false;
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'] as const;
+    events.forEach(e => window.addEventListener(e, resetTimer));
+
+    const interval = setInterval(() => {
+      const idle = Date.now() - lastActivity;
+      if (idle >= INACTIVITY_LIMIT) {
+        clearInterval(interval);
+        events.forEach(e => window.removeEventListener(e, resetTimer));
+        signOut();
+      } else if (idle >= INACTIVITY_LIMIT - WARNING_BEFORE && !warningShown) {
+        warningShown = true;
+      }
+    }, 60_000);
+
+    return () => {
+      clearInterval(interval);
+      events.forEach(e => window.removeEventListener(e, resetTimer));
+    };
+  }, [user]);
 
   const refreshProfile = async () => {
     if (user) {
@@ -161,7 +195,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('tenant_id');
     try {
       await supabase.auth.signOut();
-    } catch {
+    } catch (e) {
+      logger.error('Sign out error:', e);
     }
   };
 

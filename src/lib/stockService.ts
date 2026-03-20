@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { Database } from '../types/database.types';
+import { sanitizeFilterValue, isValidUuid } from './postgrestSanitizer';
 
 type StockItem = Database['public']['Tables']['stock_items']['Row'];
 type StockItemInsert = Database['public']['Tables']['stock_items']['Insert'];
@@ -156,7 +157,8 @@ export async function getStockItems(filters?: StockFilters): Promise<StockItemWi
     .order('name', { ascending: true });
 
   if (filters?.type && filters.type !== 'both') {
-    query = query.or(`item_type.eq.${filters.type},item_type.eq.both`);
+    const t = sanitizeFilterValue(filters.type);
+    query = query.or(`item_type.eq.${t},item_type.eq.both`);
   }
   if (filters?.category_id) {
     query = query.eq('category_id', filters.category_id);
@@ -165,8 +167,9 @@ export async function getStockItems(filters?: StockFilters): Promise<StockItemWi
     query = query.eq('is_active', filters.is_active);
   }
   if (filters?.search) {
+    const s = sanitizeFilterValue(filters.search);
     query = query.or(
-      `name.ilike.%${filters.search}%,brand.ilike.%${filters.search}%,sku.ilike.%${filters.search}%,model.ilike.%${filters.search}%`
+      `name.ilike.%${s}%,brand.ilike.%${s}%,sku.ilike.%${s}%,model.ilike.%${s}%`
     );
   }
 
@@ -1811,7 +1814,9 @@ export async function getStockTransfers(filters?: { status?: string; location_id
 
   if (filters?.status) query = query.eq('status', filters.status);
   if (filters?.location_id) {
-    query = query.or(`from_location_id.eq.${filters.location_id},to_location_id.eq.${filters.location_id}`);
+    if (isValidUuid(filters.location_id)) {
+      query = query.or(`from_location_id.eq.${filters.location_id},to_location_id.eq.${filters.location_id}`);
+    }
   }
 
   const { data, error } = await query;

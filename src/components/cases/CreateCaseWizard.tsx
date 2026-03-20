@@ -22,6 +22,7 @@ import {
   Layers
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { logger } from '../../lib/logger';
 
 interface Device {
   id: string;
@@ -354,7 +355,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
         .rpc('get_next_number', { sequence_scope: 'case' });
 
       if (numberError) {
-        console.error('Error generating case number:', numberError);
+        logger.error('Error generating case number:', numberError);
         if (numberError.message?.includes('not found')) {
           throw new Error('Case numbering system is not configured. Please contact your system administrator to configure it in Settings > System & Numbers.');
         }
@@ -416,7 +417,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
         .single();
 
       if (caseError) {
-        console.error('Error creating case:', caseError);
+        logger.error('Error creating case:', caseError);
         throw new Error(`Failed to create case: ${caseError.message}`);
       }
 
@@ -455,7 +456,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
           .insert(devicesToInsert);
 
         if (devicesError) {
-          console.error('Error inserting devices:', devicesError);
+          logger.error('Error inserting devices:', devicesError);
           throw new Error(`Failed to insert devices: ${devicesError.message}`);
         }
       }
@@ -468,7 +469,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
       setShowSuccessModal(true);
     },
     onError: (error) => {
-      console.error('Case creation error:', error);
+      logger.error('Case creation error:', error);
       alert(`Failed to create case: ${error.message}`);
     },
   });

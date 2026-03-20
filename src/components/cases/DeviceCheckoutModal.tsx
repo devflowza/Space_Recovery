@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Package, User, Phone, CreditCard, Printer } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { logger } from '../../lib/logger';
 
 interface Device {
   id: string;
@@ -88,7 +89,7 @@ export const DeviceCheckoutModal: React.FC<DeviceCheckoutModalProps> = ({
         }
       }, 500);
     } catch (err) {
-      console.error('Error during checkout:', err);
+      logger.error('Error during checkout:', err);
       setError('Failed to complete checkout. Please try again.');
     } finally {
       setIsSubmitting(false);

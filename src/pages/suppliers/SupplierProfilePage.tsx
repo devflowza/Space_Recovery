@@ -13,6 +13,7 @@ import SupplierFormModal from '../../components/suppliers/SupplierFormModal';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 import { format } from 'date-fns';
+import { logger } from '../../lib/logger';
 
 type TabType = 'overview' | 'contacts' | 'communications' | 'documents' | 'performance' | 'orders' | 'audit';
 
@@ -61,7 +62,7 @@ export default function SupplierProfilePage() {
       if (error) throw error;
       setSupplier(data);
     } catch (error: unknown) {
-      console.error('Error loading supplier:', error);
+      logger.error('Error loading supplier:', error);
       showToast(error instanceof Error ? error.message : 'Failed to load supplier', 'error');
       navigate('/suppliers');
     } finally {
@@ -94,7 +95,7 @@ export default function SupplierProfilePage() {
           break;
       }
     } catch (error) {
-      console.error('Error loading tab data:', error);
+      logger.error('Error loading tab data:', error);
     }
   };
 

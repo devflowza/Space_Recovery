@@ -13,6 +13,7 @@ import {
 } from '../../lib/reportTypes';
 import { format } from 'date-fns';
 import { EmailDocumentModal } from './EmailDocumentModal';
+import { logger } from '../../lib/logger';
 
 interface ReportViewModalProps {
   isOpen: boolean;
@@ -76,7 +77,7 @@ export default function ReportViewModal({
       setReport(reportData);
       setSections(sectionsData);
     } catch (error) {
-      console.error('Error loading report:', error);
+      logger.error('Error loading report:', error);
       setPdfError('Failed to load report data');
     } finally {
       setLoading(false);
@@ -96,7 +97,7 @@ export default function ReportViewModal({
         setPdfError(result.error || 'Failed to generate PDF preview');
       }
     } catch (error) {
-      console.error('Error generating PDF preview:', error);
+      logger.error('Error generating PDF preview:', error);
       setPdfError('Failed to generate PDF preview');
     }
   };
@@ -108,7 +109,7 @@ export default function ReportViewModal({
       setDownloadingPDF(true);
       await reportPDFService.downloadReportPDF(reportId);
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      logger.error('Error downloading PDF:', error);
       alert('Failed to download PDF. Please try again.');
     } finally {
       setDownloadingPDF(false);
@@ -123,7 +124,7 @@ export default function ReportViewModal({
         await onApprove?.(report.id);
         await loadReport();
       } catch (error) {
-        console.error('Error approving report:', error);
+        logger.error('Error approving report:', error);
         alert('Failed to approve report');
       }
     }
@@ -142,7 +143,7 @@ export default function ReportViewModal({
         await onSend?.(report.id);
         await loadReport();
       } catch (error) {
-        console.error('Error sending report:', error);
+        logger.error('Error sending report:', error);
         alert('Failed to send report');
       }
     }

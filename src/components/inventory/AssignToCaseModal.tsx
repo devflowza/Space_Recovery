@@ -9,6 +9,7 @@ import {
   checkItemAvailability,
   type CaseOption,
 } from '../../lib/inventoryCaseAssignmentService';
+import { logger } from '../../lib/logger';
 
 interface AssignToCaseModalProps {
   isOpen: boolean;
@@ -66,7 +67,7 @@ export function AssignToCaseModal({
       const casesData = await getCasesForAssignment();
       setCases(casesData);
     } catch (err) {
-      console.error('Error loading cases:', err);
+      logger.error('Error loading cases:', err);
       setError('Failed to load cases. Please try again.');
     } finally {
       setLoadingCases(false);
@@ -78,7 +79,7 @@ export function AssignToCaseModal({
       const result = await checkItemAvailability(inventoryItemId);
       setAvailability(result);
     } catch (err) {
-      console.error('Error checking availability:', err);
+      logger.error('Error checking availability:', err);
     }
   };
 
@@ -100,7 +101,7 @@ export function AssignToCaseModal({
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      console.error('Error assigning to case:', err);
+      logger.error('Error assigning to case:', err);
       setError(err instanceof Error ? err.message : 'Failed to assign item to case. Please try again.');
     } finally {
       setLoading(false);

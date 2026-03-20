@@ -14,6 +14,7 @@ import {
   TrendingDown,
   Save,
 } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface TransactionFormModalProps {
   isOpen: boolean;
@@ -73,7 +74,7 @@ export const TransactionFormModal: React.FC<TransactionFormModalProps> = ({
       });
       handleClose();
     } catch (error) {
-      console.error('Error saving transaction:', error);
+      logger.error('Error saving transaction:', error);
     } finally {
       setIsSubmitting(false);
     }

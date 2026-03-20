@@ -15,6 +15,7 @@ import { reportsService } from '../../lib/reportsService';
 import { reportSectionService, type ReportSection, type SectionPreset, type TemplateSectionMapping } from '../../lib/reportSectionService';
 import { REPORT_TYPES, type ReportType } from '../../lib/reportTypes';
 import { getIconComponent } from '../../lib/iconMapper';
+import { logger } from '../../lib/logger';
 
 interface StreamlinedReportEditorProps {
   isOpen: boolean;
@@ -101,7 +102,7 @@ export function StreamlinedReportEditor({
       const templateSections = await reportSectionService.getTemplateSections(templateId);
 
       if (!templateSections || templateSections.length === 0) {
-        console.error('No sections found for template');
+        logger.error('No sections found for template');
         throw new Error('No sections configured for this report type');
       }
 
@@ -144,7 +145,7 @@ export function StreamlinedReportEditor({
             return { key: config.key, presets };
           }
         } catch (err) {
-          console.error(`Error loading presets for section ${config.key}:`, err);
+          logger.error(`Error loading presets for section ${config.key}:`, err);
         }
         return { key: config.key, presets: [] };
       });
@@ -158,7 +159,7 @@ export function StreamlinedReportEditor({
       });
       setSectionPresets(presetMap);
     } catch (error) {
-      console.error('Error loading sections from database:', error);
+      logger.error('Error loading sections from database:', error);
       throw error;
     }
   };
@@ -193,7 +194,7 @@ export function StreamlinedReportEditor({
         }
       }
     } catch (error) {
-      console.error('Error loading existing report:', error);
+      logger.error('Error loading existing report:', error);
       alert('Failed to load report. Please try again.');
       onClose();
     } finally {
@@ -217,7 +218,7 @@ export function StreamlinedReportEditor({
 
       await loadSectionsFromDatabase(template.id);
     } catch (error) {
-      console.error('Error initializing report:', error);
+      logger.error('Error initializing report:', error);
       alert('Failed to initialize report. Please try again.');
       onClose();
     } finally {
@@ -243,7 +244,7 @@ export function StreamlinedReportEditor({
     try {
       await reportSectionService.incrementPresetUsage(preset.id);
     } catch (err) {
-      console.error('Error incrementing preset usage:', err);
+      logger.error('Error incrementing preset usage:', err);
     }
   };
 
@@ -330,7 +331,7 @@ export function StreamlinedReportEditor({
       onSuccess();
       onClose();
     } catch (error) {
-      console.error(`Error ${reportId || existingReport ? 'updating' : 'creating'} report:`, error);
+      logger.error(`Error ${reportId || existingReport ? 'updating' : 'creating'} report:`, error);
       alert(`Failed to ${reportId || existingReport ? 'update' : 'create'} report. Please try again.`);
     } finally {
       setLoading(false);

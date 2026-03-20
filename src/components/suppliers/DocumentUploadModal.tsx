@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 
 interface DocumentUploadModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
       onSuccess();
       onClose();
     } catch (error: unknown) {
-      console.error('Error uploading document:', error);
+      logger.error('Error uploading document:', error);
       showToast(error instanceof Error ? error.message : 'Failed to upload document', 'error');
     } finally {
       setLoading(false);

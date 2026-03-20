@@ -20,6 +20,7 @@ import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { useTranslation } from 'react-i18next';
+import { logger } from '../../lib/logger';
 
 const CATEGORY_CONFIG = {
   general: { label: 'General', color: '#3b82f6', bgColor: '#eff6ff' },
@@ -59,7 +60,7 @@ export const ReportSectionsPage: React.FC = () => {
       const data = await reportSectionService.getSections();
       setSections(data);
     } catch (error) {
-      console.error('Error loading sections:', error);
+      logger.error('Error loading sections:', error);
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +93,7 @@ export const ReportSectionsPage: React.FC = () => {
       setPresets(data);
       setShowPresetsModal(true);
     } catch (error) {
-      console.error('Error loading presets:', error);
+      logger.error('Error loading presets:', error);
     }
   };
 
@@ -110,7 +111,7 @@ export const ReportSectionsPage: React.FC = () => {
       await reportSectionService.deleteSection(section.id);
       await loadSections();
     } catch (error) {
-      console.error('Error deleting section:', error);
+      logger.error('Error deleting section:', error);
       alert('Failed to delete section');
     }
   };

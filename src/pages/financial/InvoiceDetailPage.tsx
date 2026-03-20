@@ -13,6 +13,7 @@ import { usePDFDownload } from '../../hooks/usePDFDownload';
 import { FileText, ArrowLeft, CreditCard as Edit, DollarSign, AlertCircle, RefreshCw, CheckCircle, ArrowRight, ExternalLink, Lock, ShoppingBag } from 'lucide-react';
 import { RecordReceiptModal } from '../../components/banking/RecordReceiptModal';
 import { AddStockSaleToInvoiceModal } from '../../components/financial/AddStockSaleToInvoiceModal';
+import { logger } from '../../lib/logger';
 
 const statusConfig = {
   draft: { label: 'Draft', color: 'secondary', icon: FileText },
@@ -70,7 +71,7 @@ export const InvoiceDetailPage: React.FC = () => {
         toast.error(result.error || 'Failed to generate PDF');
       }
     } catch (error) {
-      console.error('Error generating invoice PDF:', error);
+      logger.error('Error generating invoice PDF:', error);
       toast.error('Failed to generate PDF');
     } finally {
       setIsGenerating(false);
@@ -90,7 +91,7 @@ export const InvoiceDetailPage: React.FC = () => {
         alert(`Failed to convert: ${result.error}`);
       }
     } catch (error) {
-      console.error('Error converting invoice:', error);
+      logger.error('Error converting invoice:', error);
       alert('Failed to convert invoice. Please try again.');
     }
   };
@@ -103,7 +104,7 @@ export const InvoiceDetailPage: React.FC = () => {
       setConversionHistory(history);
       setShowConversionHistoryModal(true);
     } catch (error) {
-      console.error('Error fetching conversion history:', error);
+      logger.error('Error fetching conversion history:', error);
       alert('Failed to load conversion history.');
     }
   };

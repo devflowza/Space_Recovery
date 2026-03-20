@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { AccountingLocale } from '../types/accountingLocale';
+import { logger } from './logger';
 
 export interface FinancialSummary {
   totalRevenue: number;
@@ -27,27 +28,27 @@ export const fetchDefaultLocale = async (): Promise<AccountingLocale | null> => 
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching default locale:', error);
+      logger.error('Error fetching default locale:', error);
       return null;
     }
 
     return data;
   } catch (error) {
-    console.error('Error fetching default locale:', error);
+    logger.error('Error fetching default locale:', error);
     return null;
   }
 };
 
 export const calculateVAT = (amount: number, taxRate: number): number => {
-  return amount * taxRate;
+  return Math.round(amount * taxRate * 100) / 100;
 };
 
 export const calculateAmountWithVAT = (amount: number, taxRate: number): number => {
-  return amount + calculateVAT(amount, taxRate);
+  return Math.round((amount + calculateVAT(amount, taxRate)) * 100) / 100;
 };
 
 export const calculateAmountWithoutVAT = (amountWithVAT: number, taxRate: number): number => {
-  return amountWithVAT / (1 + taxRate);
+  return Math.round((amountWithVAT / (1 + taxRate)) * 100) / 100;
 };
 
 export const fetchFinancialSummary = async (
@@ -57,11 +58,13 @@ export const fetchFinancialSummary = async (
   try {
     let invoiceQuery = supabase
       .from('invoices')
-      .select('total_amount, amount_paid, amount_due, status');
+      .select('total_amount, amount_paid, amount_due, status')
+      .is('deleted_at', null);
 
     let expenseQuery = supabase
       .from('expenses')
-      .select('amount, status');
+      .select('amount, status')
+      .is('deleted_at', null);
 
     if (startDate && endDate) {
       invoiceQuery = invoiceQuery
@@ -102,7 +105,7 @@ export const fetchFinancialSummary = async (
       profitMargin,
     };
   } catch (error) {
-    console.error('Error fetching financial summary:', error);
+    logger.error('Error fetching financial summary:', error);
     return {
       totalRevenue: 0,
       totalExpenses: 0,
@@ -118,31 +121,30 @@ export const fetchFinancialSummary = async (
 export const getNextTransactionNumber = async (prefix: string): Promise<string> => {
   try {
     const { data, error } = await supabase
-      .rpc('get_next_number', { sequence_scope: prefix.toLowerCase() });
+      .rpc('get_next_number', { p_scope: prefix.toLowerCase() });
 
     if (error) {
-      console.error('Error getting next number:', error);
+      logger.error('Error getting next number:', error);
       if (error.message?.includes('not found in the schema cache')) {
         throw new Error(`${prefix} numbering system is not configured. Please contact your system administrator.`);
       }
       if (error.message?.includes('Number sequence not found')) {
         throw new Error(`${prefix} number sequence not found. Please configure it in Settings > System & Numbers.`);
       }
-      return `${prefix}-${Date.now()}`;
+      throw new Error(`Failed to generate ${prefix} number. Please check your number sequence configuration.`);
     }
 
     if (!data) {
-      console.error(`No number generated for ${prefix}, using timestamp fallback`);
-      return `${prefix}-${Date.now()}`;
+      throw new Error(`No number generated for ${prefix}. Please configure it in Settings > System & Numbers.`);
     }
 
     return data;
-  } catch (error: any) {
-    console.error('Error getting next number:', error);
-    if (error.message?.includes('numbering system') || error.message?.includes('number sequence')) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes('numbering system') || msg.includes('number sequence') || msg.includes('Failed to generate') || msg.includes('No number generated')) {
       throw error;
     }
-    return `${prefix}-${Date.now()}`;
+    throw new Error(`Failed to generate ${prefix} number: ${msg}`);
   }
 };
 

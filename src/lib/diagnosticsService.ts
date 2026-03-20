@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 export interface DeviceDiagnostics {
   id?: string;
@@ -57,7 +58,7 @@ export const diagnosticsService = {
       .order('sort_order');
 
     if (error) {
-      console.error('Error fetching component statuses:', error);
+      logger.error('Error fetching component statuses:', error);
       throw error;
     }
 
@@ -72,7 +73,7 @@ export const diagnosticsService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching device diagnostics:', error);
+      logger.error('Error fetching device diagnostics:', error);
       throw error;
     }
 
@@ -95,7 +96,7 @@ export const diagnosticsService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error creating device diagnostics:', error);
+      logger.error('Error creating device diagnostics:', error);
       throw error;
     }
 
@@ -111,7 +112,7 @@ export const diagnosticsService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error updating device diagnostics:', error);
+      logger.error('Error updating device diagnostics:', error);
       throw error;
     }
 
@@ -135,7 +136,7 @@ export const diagnosticsService = {
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting device diagnostics:', error);
+      logger.error('Error deleting device diagnostics:', error);
       throw error;
     }
   },
@@ -158,7 +159,7 @@ export const diagnosticsService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching diagnostics with device:', error);
+      logger.error('Error fetching diagnostics with device:', error);
       throw error;
     }
 

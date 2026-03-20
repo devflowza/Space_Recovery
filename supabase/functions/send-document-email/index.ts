@@ -158,10 +158,17 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    const { data: userProfile } = await supabaseClient
+      .from("profiles")
+      .select("tenant_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
     const { data: companySettings } = await supabaseClient
       .from("company_settings")
       .select("basic_info, contact_info")
-      .single();
+      .eq("tenant_id", userProfile?.tenant_id)
+      .maybeSingle();
 
     const fromEmail = companySettings?.contact_info?.email_general || "noreply@example.com";
     const companyName = companySettings?.basic_info?.company_name || "Document Service";

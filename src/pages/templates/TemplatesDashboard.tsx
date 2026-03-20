@@ -21,6 +21,7 @@ import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { SeedingResultsDisplay } from '../../components/settings/SeedingResultsDisplay';
+import { logger } from '../../lib/logger';
 
 interface TemplateCategory {
   id: string;
@@ -102,7 +103,7 @@ export const TemplatesDashboard: React.FC = () => {
       setCategories(enrichedCategories);
       setTemplateTypes(enrichedTypes);
     } catch (error) {
-      console.error('Error loading templates:', error);
+      logger.error('Error loading templates:', error);
     } finally {
       setIsLoading(false);
     }
@@ -119,7 +120,7 @@ export const TemplatesDashboard: React.FC = () => {
         await loadData();
       }
     } catch (error) {
-      console.error('Error seeding templates:', error);
+      logger.error('Error seeding templates:', error);
     } finally {
       setIsSeeding(false);
     }

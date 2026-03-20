@@ -8,6 +8,7 @@ import { DataTable } from '../../components/shared/DataTable';
 import { tenantService } from '../../lib/tenantService';
 import { useToast } from '../../hooks/useToast';
 import type { Database } from '../../types/database.types';
+import { logger } from '../../lib/logger';
 
 type TenantWithPlan = Database['public']['Tables']['tenants']['Row'] & {
   plan?: Database['public']['Tables']['subscription_plans']['Row'];
@@ -37,7 +38,7 @@ export const TenantManagement = () => {
       setTenantStats(stats);
     } catch (error) {
       showToast('Failed to load tenants', 'error');
-      console.error(error);
+      logger.error(error);
     } finally {
       setLoading(false);
     }
@@ -58,7 +59,7 @@ export const TenantManagement = () => {
       loadTenants();
     } catch (error) {
       showToast('Failed to suspend tenant', 'error');
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -69,7 +70,7 @@ export const TenantManagement = () => {
       loadTenants();
     } catch (error) {
       showToast('Failed to reactivate tenant', 'error');
-      console.error(error);
+      logger.error(error);
     }
   };
 

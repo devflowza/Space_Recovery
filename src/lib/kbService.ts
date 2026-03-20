@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { Database } from '../types/database.types';
+import { sanitizeFilterValue } from './postgrestSanitizer';
 
 type KBArticle = Database['public']['Tables']['kb_articles']['Row'];
 type KBArticleInsert = Database['public']['Tables']['kb_articles']['Insert'];
@@ -141,7 +142,8 @@ export async function getKBArticles(filters?: KBFilters): Promise<KBArticleWithD
   }
 
   if (filters?.search) {
-    query = query.or(`title.ilike.%${filters.search}%,excerpt.ilike.%${filters.search}%,content.ilike.%${filters.search}%`);
+    const s = sanitizeFilterValue(filters.search);
+    query = query.or(`title.ilike.%${s}%,excerpt.ilike.%${s}%,content.ilike.%${s}%`);
   }
 
   const { data, error } = await query;

@@ -12,6 +12,7 @@ import { PaymentReceiptModal } from '../../components/financial/PaymentReceiptMo
 import { useCurrency } from '../../hooks/useCurrency';
 import { createPayment, getPaymentStats, voidPayment, fetchPaymentById } from '../../lib/paymentsService';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { logger } from '../../lib/logger';
 import {
   Plus,
   Search,
@@ -177,7 +178,7 @@ export const PaymentsList: React.FC = () => {
       setFullPaymentData(fullData);
       setShowViewModal(true);
     } catch (error) {
-      console.error('Error fetching payment details:', error);
+      logger.error('Error fetching payment details:', error);
       alert('Failed to load payment details');
     }
   };
@@ -188,7 +189,7 @@ export const PaymentsList: React.FC = () => {
       setFullPaymentData(fullData);
       setShowReceiptModal(true);
     } catch (error) {
-      console.error('Error fetching payment details:', error);
+      logger.error('Error fetching payment details:', error);
       alert('Failed to load payment receipt');
     }
   };

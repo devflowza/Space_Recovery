@@ -68,13 +68,15 @@ export function sanitizeHtml(html: string): string {
     return null;
   }
 
+  const BLOCKED_VALUE_PATTERNS = /url\s*\(|expression\s*\(|javascript:|@import|import\s*\(/i;
+
   function sanitizeStyles(styleString: string): string {
     const styles = styleString.split(';').filter((s) => s.trim());
     const sanitizedStyles: string[] = [];
 
     styles.forEach((style) => {
       const [property, value] = style.split(':').map((s) => s.trim());
-      if (property && value && ALLOWED_STYLES.includes(property.toLowerCase())) {
+      if (property && value && ALLOWED_STYLES.includes(property.toLowerCase()) && !BLOCKED_VALUE_PATTERNS.test(value)) {
         sanitizedStyles.push(`${property}: ${value}`);
       }
     });

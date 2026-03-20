@@ -1,4 +1,6 @@
 import { supabase } from './supabaseClient';
+import { sanitizeFilterValue } from './postgrestSanitizer';
+import { logger } from './logger';
 
 export interface Expense {
   id?: string;
@@ -61,7 +63,7 @@ export const getNextExpenseNumber = async (): Promise<string> => {
   });
 
   if (error) {
-    console.error('Error getting next expense number:', error);
+    logger.error('Error getting next expense number:', error);
     return `EXP-${Date.now()}`;
   }
 
@@ -111,7 +113,8 @@ export const fetchExpenses = async (filters?: {
   }
 
   if (filters?.search) {
-    query = query.or(`expense_number.ilike.%${filters.search}%,description.ilike.%${filters.search}%,vendor_name.ilike.%${filters.search}%`);
+    const s = sanitizeFilterValue(filters.search);
+    query = query.or(`expense_number.ilike.%${s}%,description.ilike.%${s}%,vendor_name.ilike.%${s}%`);
   }
 
   if (filters?.submittedBy) {
@@ -461,7 +464,7 @@ const createFinancialTransaction = async (transaction: {
     .insert([transaction]);
 
   if (error) {
-    console.error('Error creating financial transaction:', error);
+    logger.error('Error creating financial transaction:', error);
   }
 };
 
@@ -480,7 +483,7 @@ const createVATRecord = async (record: {
     .insert([record]);
 
   if (error) {
-    console.error('Error creating VAT record:', error);
+    logger.error('Error creating VAT record:', error);
   }
 };
 

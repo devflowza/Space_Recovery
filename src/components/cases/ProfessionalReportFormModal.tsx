@@ -23,6 +23,7 @@ import { Badge } from '../ui/Badge';
 import { reportsService } from '../../lib/reportsService';
 import { reportSectionService, type ReportSection, type SectionPreset } from '../../lib/reportSectionService';
 import { REPORT_TYPES, type ReportType } from '../../lib/reportTypes';
+import { logger } from '../../lib/logger';
 
 interface ProfessionalReportFormModalProps {
   isOpen: boolean;
@@ -155,7 +156,7 @@ export function ProfessionalReportFormModal({
         setPresets(presetsData);
       }
     } catch (error) {
-      console.error('Error loading sections:', error);
+      logger.error('Error loading sections:', error);
     } finally {
       setLoadingSections(false);
     }
@@ -204,7 +205,7 @@ DOM: ${deviceData.dom || 'N/A'}`;
     try {
       await reportSectionService.incrementPresetUsage(preset.id);
     } catch (error) {
-      console.error('Error incrementing preset usage:', error);
+      logger.error('Error incrementing preset usage:', error);
     }
   };
 
@@ -262,7 +263,7 @@ DOM: ${deviceData.dom || 'N/A'}`;
       onClose();
       resetForm();
     } catch (error) {
-      console.error('Error creating report:', error);
+      logger.error('Error creating report:', error);
       alert('Failed to create report. Please try again.');
     } finally {
       setLoading(false);

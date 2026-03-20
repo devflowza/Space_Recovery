@@ -21,6 +21,7 @@ import {
   Briefcase,
   User,
 } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface RecordPaymentModalProps {
   isOpen: boolean;
@@ -215,7 +216,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
       );
       handleClose();
     } catch (error) {
-      console.error('Error recording payment:', error);
+      logger.error('Error recording payment:', error);
     } finally {
       setIsSubmitting(false);
     }

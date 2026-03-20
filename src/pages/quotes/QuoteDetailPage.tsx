@@ -25,6 +25,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { convertQuoteToInvoice } from '../../lib/invoiceService';
 import { ArrowLeft, CreditCard as Edit, Trash2, Send, CheckCircle, XCircle, FileText, Copy, Clock, FileCheck, AlertCircle, Receipt } from 'lucide-react';
 import { BackupDeviceRecommendation } from '../../components/quotes/BackupDeviceRecommendation';
+import { logger } from '../../lib/logger';
 
 const statusConfig = {
   draft: { label: 'Draft', color: 'secondary', icon: FileText },
@@ -119,7 +120,7 @@ export const QuoteDetailPage: React.FC = () => {
         toast.error(result.error || 'Failed to generate PDF');
       }
     } catch (error) {
-      console.error('Error generating quote PDF:', error);
+      logger.error('Error generating quote PDF:', error);
       toast.error('Failed to generate PDF');
     } finally {
       setIsGenerating(false);

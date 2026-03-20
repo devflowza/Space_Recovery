@@ -1,3 +1,4 @@
+import { logger } from './logger';
 /**
  * WhatsApp Integration Utilities
  * Professional WhatsApp messaging functions for customer communication
@@ -84,7 +85,7 @@ export const openWhatsAppChat = (options: WhatsAppMessageOptions): void => {
 
     window.open(whatsappUrl, '_blank');
   } catch (error) {
-    console.error('Error opening WhatsApp:', error);
+    logger.error('Error opening WhatsApp:', error);
     throw new Error('Failed to open WhatsApp. Please check the phone number format.');
   }
 };
@@ -164,6 +165,6 @@ export const logWhatsAppCommunication = async (
 
     if (error) throw error;
   } catch (error) {
-    console.error('Error logging WhatsApp communication:', error);
+    logger.error('Error logging WhatsApp communication:', error);
   }
 };

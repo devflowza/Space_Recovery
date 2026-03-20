@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2, Check, AlertCircle } from 'lucide-react';
 import { Button } from './Button';
 import { ImageCropModal } from './ImageCropModal';
+import { logger } from '../../lib/logger';
 
 interface ImageUploadProps {
   value?: string;
@@ -122,7 +123,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         }
       } catch (err) {
         setError('Failed to process image');
-        console.error('Image processing error:', err);
+        logger.error('Image processing error:', err);
       }
     },
     [validateFile, onChange, enableCrop]
@@ -151,7 +152,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         }
       } catch (err) {
         setError('Failed to process cropped image');
-        console.error('Crop processing error:', err);
+        logger.error('Crop processing error:', err);
       }
     },
     [onChange, originalFileName, tempImageUrl]

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
+import { logger } from '../lib/logger';
 
 interface SidebarBadgeCounts {
   casesTodayCount: number;
@@ -57,7 +58,7 @@ export const useSidebarBadges = (): SidebarBadgeCounts => {
         if (error) throw error;
         return count || 0;
       } catch (error) {
-        console.error('Error fetching cases today count:', error);
+        logger.error('Error fetching cases today count:', error);
         return 0;
       }
     },
@@ -79,7 +80,7 @@ export const useSidebarBadges = (): SidebarBadgeCounts => {
         if (error) throw error;
         return count || 0;
       } catch (error) {
-        console.error('Error fetching invoices attention count:', error);
+        logger.error('Error fetching invoices attention count:', error);
         return 0;
       }
     },
@@ -101,7 +102,7 @@ export const useSidebarBadges = (): SidebarBadgeCounts => {
         if (error) throw error;
         return count || 0;
       } catch (error) {
-        console.error('Error fetching pending quotes count:', error);
+        logger.error('Error fetching pending quotes count:', error);
         return 0;
       }
     },

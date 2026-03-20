@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 export interface CreateUserData {
   email: string;
@@ -45,7 +46,7 @@ export const userManagementService = {
 
       return { success: true };
     } catch (error: any) {
-      console.error('Error creating user:', error);
+      logger.error('Error creating user:', error);
       return { success: false, error: error.message };
     }
   },
@@ -105,7 +106,7 @@ export const userManagementService = {
 
       return { success: true };
     } catch (error: any) {
-      console.error('Error updating user:', error);
+      logger.error('Error updating user:', error);
       return { success: false, error: error.message };
     }
   },
@@ -140,7 +141,7 @@ export const userManagementService = {
 
       return { success: true };
     } catch (error: any) {
-      console.error('Error resetting password:', error);
+      logger.error('Error resetting password:', error);
       return { success: false, error: error.message };
     }
   },
@@ -168,7 +169,7 @@ export const userManagementService = {
 
       return { success: true };
     } catch (error: any) {
-      console.error('Error changing password:', error);
+      logger.error('Error changing password:', error);
       return { success: false, error: error.message };
     }
   },

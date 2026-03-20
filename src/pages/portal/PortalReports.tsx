@@ -10,6 +10,7 @@ import { getReportTypeConfig, getReportStatusConfig, type ReportType } from '../
 import { reportPDFService } from '../../lib/reportPDFService';
 import { format } from 'date-fns';
 import { sanitizeHtml } from '../../lib/sanitizeHtml';
+import { logger } from '../../lib/logger';
 
 interface PortalReport {
   id: string;
@@ -90,7 +91,7 @@ export default function PortalReports() {
       await reportPDFService.downloadReportPDF(report.id, `${report.report_number}.pdf`);
       await refetch();
     } catch (error) {
-      console.error('Error downloading report:', error);
+      logger.error('Error downloading report:', error);
       alert('Failed to download report. Please try again.');
     } finally {
       setDownloadingReportId(null);
@@ -270,7 +271,7 @@ function PortalReportViewModal({ reportId, onClose }: PortalReportViewModalProps
       if (reportRes.data) setReport(reportRes.data);
       if (sectionsRes.data) setSections(sectionsRes.data);
     } catch (error) {
-      console.error('Error loading report:', error);
+      logger.error('Error loading report:', error);
     } finally {
       setLoading(false);
     }

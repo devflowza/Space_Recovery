@@ -14,6 +14,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { logger } from '../../lib/logger';
 
 interface SystemStats {
   totalUsers: number;
@@ -68,7 +69,7 @@ export const AdminPanel: React.FC = () => {
         recentErrors: recentErrors || 0,
       });
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      logger.error('Error fetching stats:', error);
     } finally {
       setLoading(false);
     }
@@ -106,7 +107,7 @@ export const AdminPanel: React.FC = () => {
         setRecentActivity([]);
       }
     } catch (error) {
-      console.error('Error fetching recent activity:', error);
+      logger.error('Error fetching recent activity:', error);
     }
   };
 

@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 
 interface ContactData {
   id?: string;
@@ -96,7 +97,7 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
       onSuccess();
       onClose();
     } catch (error: unknown) {
-      console.error('Error saving contact:', error);
+      logger.error('Error saving contact:', error);
       showToast(error instanceof Error ? error.message : 'Failed to save contact', 'error');
     } finally {
       setLoading(false);

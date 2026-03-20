@@ -8,6 +8,7 @@ import {
 import { tenantService } from '../../lib/tenantService';
 import { useToast } from '../../hooks/useToast';
 import type { Database } from '../../types/database.types';
+import { logger } from '../../lib/logger';
 
 type SubscriptionPlan = Database['public']['Tables']['subscription_plans']['Row'];
 
@@ -71,6 +72,7 @@ export const TenantSignup = () => {
         }
       } catch {
         showToast('Failed to load subscription plans', 'error');
+        logger.error(error);
       }
     };
     loadPlans();
@@ -211,8 +213,9 @@ export const TenantSignup = () => {
 
       showToast('Your lab is ready! Please sign in to get started.', 'success');
       navigate('/login');
-    } catch (err: unknown) {
-      setOtpError(err instanceof Error ? err.message : 'Failed to create account');
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : 'Failed to create account', 'error');
+      logger.error(error);
     } finally {
       setOtpVerifying(false);
       setLoading(false);

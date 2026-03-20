@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 // TypeScript Interfaces
 export interface InventoryItemCategory {
@@ -123,7 +124,7 @@ export async function getInventoryCategories() {
     .order('sort_order', { ascending: true });
 
   if (error) {
-    console.error('Error fetching inventory categories:', error);
+    logger.error('Error fetching inventory categories:', error);
     throw error;
   }
   return data as InventoryItemCategory[];
@@ -137,7 +138,7 @@ export async function getInventoryStatusTypes() {
     .order('sort_order', { ascending: true });
 
   if (error) {
-    console.error('Error fetching inventory status types:', error);
+    logger.error('Error fetching inventory status types:', error);
     throw error;
   }
   return data as InventoryStatusType[];
@@ -206,7 +207,7 @@ export async function getInventoryItems(filters?: {
   const { data, error } = await query;
 
   if (error) {
-    console.error('Error fetching inventory items:', error);
+    logger.error('Error fetching inventory items:', error);
     throw error;
   }
 
@@ -232,7 +233,7 @@ export async function enrichItemsWithStockCount(items: any[]) {
     .in('model', modelNumbers);
 
   if (error) {
-    console.error('Error fetching available stock counts:', error);
+    logger.error('Error fetching available stock counts:', error);
     return items.map(item => ({ ...item, similarCount: 0 }));
   }
 
@@ -273,7 +274,7 @@ export async function getInventoryItemById(id: string) {
     .maybeSingle();
 
   if (error) {
-    console.error('Error fetching inventory item by ID:', error);
+    logger.error('Error fetching inventory item by ID:', error);
     throw error;
   }
   return data;
@@ -325,7 +326,7 @@ export async function getInventoryStatusHistory(itemId: string) {
     .order('changed_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching inventory status history:', error);
+    logger.error('Error fetching inventory status history:', error);
     return [];
   }
   return data || [];
@@ -345,7 +346,7 @@ export async function getInventoryTransactions(itemId: string) {
     .order('transaction_date', { ascending: false });
 
   if (error) {
-    console.error('Error fetching inventory transactions:', error);
+    logger.error('Error fetching inventory transactions:', error);
     return [];
   }
   return data || [];
@@ -467,7 +468,7 @@ export async function getInventoryStatistics() {
     .eq('is_active', true);
 
   if (error) {
-    console.error('Error fetching inventory statistics:', error);
+    logger.error('Error fetching inventory statistics:', error);
     throw error;
   }
 
@@ -517,7 +518,7 @@ export async function getInventoryInsights(): Promise<InventoryInsights> {
     .eq('is_active', true);
 
   if (error) {
-    console.error('Error fetching inventory insights:', error);
+    logger.error('Error fetching inventory insights:', error);
     throw error;
   }
 
