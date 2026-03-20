@@ -20,7 +20,7 @@ export const OnboardingWizard = () => {
   const currentStepMeta = STEPS[flow.step];
 
   return (
-    <div className="min-h-screen flex flex-col font-body">
+    <div className="min-h-screen flex flex-col font-body relative">
       <AnimatedBackground />
 
       <header className="relative z-10 flex items-center justify-between px-6 py-5">
