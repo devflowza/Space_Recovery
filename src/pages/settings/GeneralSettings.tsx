@@ -134,16 +134,21 @@ export const GeneralSettings: React.FC = () => {
   });
 
   useEffect(() => {
-    if (settings) {
-      // Ensure clone_defaults and localization have default values if not present
-      const settingsWithDefaults = {
-        ...settings,
-        clone_defaults: settings.clone_defaults || {
+    if (!isLoading) {
+      const defaults: Partial<CompanySettings> = {
+        basic_info: {},
+        location: {},
+        contact_info: {},
+        branding: {},
+        online_presence: {},
+        legal_compliance: {},
+        banking_info: {},
+        clone_defaults: {
           default_retention_days: 180,
           min_retention_days: 1,
           max_retention_days: 3650,
         },
-        localization: settings.localization || {
+        localization: {
           document_language_settings: {
             mode: 'english_only',
             secondary_language: null,
@@ -151,10 +156,21 @@ export const GeneralSettings: React.FC = () => {
           },
         },
       };
-      setFormData(settingsWithDefaults);
+
+      if (settings) {
+        const settingsWithDefaults = {
+          ...defaults,
+          ...settings,
+          clone_defaults: settings.clone_defaults || defaults.clone_defaults,
+          localization: settings.localization || defaults.localization,
+        };
+        setFormData(settingsWithDefaults);
+      } else {
+        setFormData(defaults);
+      }
       setHasUnsavedChanges(false);
     }
-  }, [settings]);
+  }, [settings, isLoading]);
 
   // Warn user before leaving page with unsaved changes
   useEffect(() => {
@@ -247,24 +263,41 @@ export const GeneralSettings: React.FC = () => {
         throw new Error('Your account is inactive. Please contact your administrator.');
       }
 
-      const { data, error } = await supabase
+      // Try update first
+      const { data: updateData, error: updateError } = await supabase
         .from('company_settings')
         .update(updates)
         .not('id', 'is', null)
         .select();
 
-      if (error) {
-        logger.error('Supabase update error:', error);
-        throw error;
+      if (updateError) {
+        logger.error('Supabase update error:', updateError);
+        throw updateError;
       }
 
-      // Check if update actually affected any rows
-      if (!data || data.length === 0) {
-        logger.error('Update returned empty array - RLS policy may have blocked the update');
-        throw new Error('Failed to save: Permission denied or record not found. Please refresh and try again.');
+      // If update affected rows, we're done
+      if (updateData && updateData.length > 0) {
+        return updateData;
       }
 
-      return data;
+      // No row exists yet — insert a new one with tenant_id
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      const { data: insertData, error: insertError } = await supabase
+        .from('company_settings')
+        .insert({ ...updates, tenant_id: profile?.tenant_id } as any)
+        .select();
+
+      if (insertError) {
+        logger.error('Supabase insert error:', insertError);
+        throw insertError;
+      }
+
+      return insertData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['company_settings'] });
