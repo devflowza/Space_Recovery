@@ -279,4 +279,17 @@ export const platformAdminKeys = {
   announcementsList: (includeInactive: boolean) => [...platformAdminKeys.announcements(), 'list', includeInactive] as const,
   announcementDismissals: (id: string) => [...platformAdminKeys.announcements(), 'dismissals', id] as const,
   activeAnnouncements: (userId: string, planCode: string) => [...platformAdminKeys.announcements(), 'active', userId, planCode] as const,
+
+  settings: () => [...platformAdminKeys.all, 'settings'] as const,
+  settingsCounts: () => [...platformAdminKeys.settings(), 'counts'] as const,
+
+  plans: () => [...platformAdminKeys.all, 'plans'] as const,
+  plansList: () => [...platformAdminKeys.plans(), 'list'] as const,
+  planDetail: (id: string) => [...platformAdminKeys.plans(), 'detail', id] as const,
+  planFeatures: (planId: string) => [...platformAdminKeys.plans(), 'features', planId] as const,
+  planSubscribers: (planId: string) => [...platformAdminKeys.plans(), 'subscribers', planId] as const,
+
+  coupons: () => [...platformAdminKeys.all, 'coupons'] as const,
+  couponsList: () => [...platformAdminKeys.coupons(), 'list'] as const,
+  couponRedemptions: (couponId: string) => [...platformAdminKeys.coupons(), 'redemptions', couponId] as const,
 };

@@ -125,6 +125,10 @@ const TicketDetailPage = lazy(() => import('./pages/platform-admin/TicketDetailP
 const AnnouncementsPage = lazy(() => import('./pages/platform-admin/AnnouncementsPage').then(m => ({ default: m.AnnouncementsPage })));
 const TenantIsolationTestPage = lazy(() => import('./pages/platform-admin/TenantIsolationTestPage').then(m => ({ default: m.TenantIsolationTestPage })));
 const RateLimitDashboardPage = lazy(() => import('./pages/platform-admin/RateLimitDashboardPage').then(m => ({ default: m.RateLimitDashboardPage })));
+const PlatformSettingsPage = lazy(() => import('./pages/platform-admin/PlatformSettingsPage').then(m => ({ default: m.PlatformSettingsPage })));
+const PlansManagementPage = lazy(() => import('./pages/platform-admin/PlansManagementPage').then(m => ({ default: m.PlansManagementPage })));
+const PlanDetailPage = lazy(() => import('./pages/platform-admin/PlanDetailPage').then(m => ({ default: m.PlanDetailPage })));
+const CouponsManagementPage = lazy(() => import('./pages/platform-admin/CouponsManagementPage').then(m => ({ default: m.CouponsManagementPage })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -692,6 +696,10 @@ function App() {
             <Route path="tickets" element={<SupportTicketsPage />} />
             <Route path="tickets/:id" element={<TicketDetailPage />} />
             <Route path="announcements" element={<AnnouncementsPage />} />
+            <Route path="settings" element={<PlatformSettingsPage />} />
+            <Route path="plans" element={<PlansManagementPage />} />
+            <Route path="plans/:id" element={<PlanDetailPage />} />
+            <Route path="coupons" element={<CouponsManagementPage />} />
             <Route path="isolation-tests" element={<TenantIsolationTestPage />} />
             <Route path="rate-limits" element={<RateLimitDashboardPage />} />
           </Route>
