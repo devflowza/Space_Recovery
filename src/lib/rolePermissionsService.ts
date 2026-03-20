@@ -3,13 +3,13 @@ import { logger } from './logger';
 
 export interface Module {
   id: string;
-  key: string;
+  slug: string;
   name: string;
   description: string | null;
-  category: 'core' | 'financial' | 'business' | 'resources' | 'hr' | 'payroll' | 'employee' | 'system';
+  category: string | null;
   icon: string | null;
-  route: string | null;
-  order_index: number;
+  sort_order: number | null;
+  order_index: number | null;
   is_active: boolean;
 }
 
@@ -97,7 +97,7 @@ class RolePermissionsService {
     }
 
     const accessibleModules = await this.getAccessibleModules(role);
-    const moduleKeys = new Set(accessibleModules.map(m => m.key));
+    const moduleKeys = new Set(accessibleModules.map(m => m.slug));
 
     const permissions: RolePermissions = {
       role,
