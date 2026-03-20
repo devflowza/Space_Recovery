@@ -8,7 +8,7 @@ import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Table } from '../../components/ui/Table';
 import { Plus, Edit2, Trash2, ChevronLeft, Sparkles, Search, X, Star, ToggleLeft, ToggleRight } from 'lucide-react';
-import { SETTINGS_CATEGORIES, MasterDataTable, TABLE_LABELS, isTenantScopedTable } from '../../config/settingsCategories';
+import { SETTINGS_CATEGORIES, MasterDataTable, TABLE_LABELS, isTenantScopedTable, hasDeletedAt } from '../../config/settingsCategories';
 import { settingsKeys } from '../../lib/queryKeys';
 import {
   checkIfSeeded,
@@ -121,7 +121,10 @@ export const CategoryDetail: React.FC = () => {
   const { data: allItems = [], isLoading } = useQuery({
     queryKey: settingsKeys.masterData(activeTable),
     queryFn: async () => {
-      let query = supabase.from(activeTable).select('*').is('deleted_at', null);
+      let query = supabase.from(activeTable).select('*');
+      if (hasDeletedAt(activeTable)) {
+        query = query.is('deleted_at', null);
+      }
 
       if (isTenantScopedTable(activeTable)) {
         query = query.order('name', { ascending: true });
@@ -219,10 +222,18 @@ export const CategoryDetail: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase
-        .from(activeTable)
-        .update({ deleted_at: new Date().toISOString() } as any)
-        .eq('id', id);
+      let error;
+      if (hasDeletedAt(activeTable)) {
+        ({ error } = await supabase
+          .from(activeTable)
+          .update({ deleted_at: new Date().toISOString() } as any)
+          .eq('id', id));
+      } else {
+        ({ error } = await supabase
+          .from(activeTable)
+          .delete()
+          .eq('id', id));
+      }
       if (error) throw error;
     },
     onSuccess: () => {
