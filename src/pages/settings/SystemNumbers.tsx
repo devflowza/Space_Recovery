@@ -43,8 +43,8 @@ interface NumberSequence {
   scope: SequenceScope;
   prefix: string;
   padding: number;
-  last_number: number;
-  annual_reset: boolean;
+  current_value: number;
+  reset_annually: boolean;
   created_at: string;
 }
 
@@ -82,7 +82,7 @@ export const SystemNumbers: React.FC = () => {
   const toast = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSequence, setEditingSequence] = useState<NumberSequence | null>(null);
-  const [formData, setFormData] = useState({ prefix: '', last_number: 0 });
+  const [formData, setFormData] = useState({ prefix: '', padding: 4, reset_annually: false });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
@@ -100,26 +100,25 @@ export const SystemNumbers: React.FC = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, prefix, last_number }: { id: string; prefix: string; last_number: number }) => {
-      const { data, error } = await supabase
+    mutationFn: async ({ scope, prefix, padding, reset_annually }: { scope: string; prefix: string; padding: number; reset_annually: boolean }) => {
+      const { error } = await supabase
         .rpc('update_number_sequence', {
-          p_id: id,
+          p_scope: scope,
           p_prefix: prefix,
-          p_last_number: last_number
+          p_padding: padding,
+          p_reset: reset_annually,
         });
 
       if (error) {
         logger.error('Error updating number sequence:', error);
         throw error;
       }
-
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['number_sequences'] });
       setIsModalOpen(false);
       setEditingSequence(null);
-      setFormData({ prefix: '', last_number: 0 });
+      setFormData({ prefix: '', padding: 4, reset_annually: false });
 
       toast.success('Number sequence updated successfully');
     },
@@ -131,7 +130,7 @@ export const SystemNumbers: React.FC = () => {
 
   const handleEdit = (sequence: NumberSequence) => {
     setEditingSequence(sequence);
-    setFormData({ prefix: sequence.prefix, last_number: sequence.last_number });
+    setFormData({ prefix: sequence.prefix, padding: sequence.padding, reset_annually: sequence.reset_annually });
     setIsModalOpen(true);
   };
 
@@ -140,26 +139,27 @@ export const SystemNumbers: React.FC = () => {
     if (!editingSequence) return;
 
     updateMutation.mutate({
-      id: editingSequence.id,
+      scope: editingSequence.scope,
       prefix: formData.prefix,
-      last_number: formData.last_number,
+      padding: formData.padding,
+      reset_annually: formData.reset_annually,
     });
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingSequence(null);
-    setFormData({ prefix: '', last_number: 0 });
+    setFormData({ prefix: '', padding: 4, reset_annually: false });
   };
 
   const formatNumber = (seq: NumberSequence) => {
-    const nextNum = seq.last_number + 1;
-    return seq.prefix + nextNum.toString().padStart(seq.padding, '0');
+    const nextNum = seq.current_value + 1;
+    return seq.prefix + '-' + nextNum.toString().padStart(seq.padding, '0');
   };
 
   const formatCurrentNumber = (seq: NumberSequence) => {
-    if (seq.last_number === 0) return 'Not assigned';
-    return seq.prefix + seq.last_number.toString().padStart(seq.padding, '0');
+    if (seq.current_value === 0) return 'Not assigned';
+    return seq.prefix + '-' + seq.current_value.toString().padStart(seq.padding, '0');
   };
 
   const categories = ['All', ...Array.from(new Set(SEQUENCE_CONFIG.map(s => s.category)))];
@@ -244,7 +244,15 @@ export const SystemNumbers: React.FC = () => {
               <div className="space-y-3">
                 {filteredSequenceTypes.map((type) => {
                   const sequence = sequences.find(s => s.scope === type.key);
-                  if (!sequence) return null;
+                  const displaySeq: NumberSequence = sequence || {
+                    id: '',
+                    scope: type.key as SequenceScope,
+                    prefix: type.key.replace(/_/g, '').toUpperCase().slice(0, 4),
+                    padding: 4,
+                    current_value: 0,
+                    reset_annually: false,
+                    created_at: '',
+                  };
 
                   return (
                     <div
@@ -277,7 +285,7 @@ export const SystemNumbers: React.FC = () => {
                             size="md"
                             className="font-mono"
                           >
-                            {formatCurrentNumber(sequence)}
+                            {formatCurrentNumber(displaySeq)}
                           </Badge>
                         </div>
 
@@ -290,12 +298,12 @@ export const SystemNumbers: React.FC = () => {
                             size="md"
                             className="font-mono"
                           >
-                            {formatNumber(sequence)}
+                            {formatNumber(displaySeq)}
                           </Badge>
                         </div>
 
                         <button
-                          onClick={() => handleEdit(sequence)}
+                          onClick={() => handleEdit(displaySeq)}
                           className="p-2.5 hover:bg-blue-50 rounded-lg transition-all hover:scale-110"
                           style={{ color: type.color }}
                           title="Edit Sequence"
@@ -335,18 +343,32 @@ export const SystemNumbers: React.FC = () => {
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Last Assigned Number
+              Number Padding
             </label>
             <Input
               type="number"
-              value={formData.last_number}
-              onChange={(e) => setFormData({ ...formData, last_number: parseInt(e.target.value) || 0 })}
-              min="0"
+              value={formData.padding}
+              onChange={(e) => setFormData({ ...formData, padding: Math.max(1, Math.min(10, parseInt(e.target.value) || 4)) })}
+              min="1"
+              max="10"
               className="font-mono"
             />
             <p className="text-xs text-slate-500 mt-2">
-              Next assignment will be: <span className="font-semibold">{formData.prefix}{(formData.last_number + 1).toString().padStart(editingSequence?.padding || 4, '0')}</span>
+              Preview: <span className="font-semibold">{formData.prefix}-{(( editingSequence?.current_value ?? 0) + 1).toString().padStart(formData.padding, '0')}</span>
             </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="reset_annually"
+              checked={formData.reset_annually}
+              onChange={(e) => setFormData({ ...formData, reset_annually: e.target.checked })}
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="reset_annually" className="text-sm font-semibold text-slate-700">
+              Reset numbering annually
+            </label>
           </div>
 
           <div className="flex gap-3 justify-end pt-4 border-t">
