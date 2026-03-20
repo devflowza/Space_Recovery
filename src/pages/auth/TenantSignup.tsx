@@ -258,7 +258,7 @@ export const TenantSignup = () => {
           <FormField
             label="Company Slug"
             required
-            helpText="Used for your unique URL: acme.xsuite.com"
+            helpText="Used for your unique URL: acme.xsuite.space"
           >
             <Input
               value={formData.slug}

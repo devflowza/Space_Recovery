@@ -209,7 +209,7 @@ export default function PlansPage() {
                     className="w-full"
                     variant={isProfessional ? 'default' : 'outline'}
                     onClick={() =>
-                      (window.location.href = 'mailto:sales@xsuite.app?subject=Enterprise Plan Inquiry')
+                      (window.location.href = 'mailto:sales@xsuite.space?subject=Enterprise Plan Inquiry')
                     }
                   >
                     Contact Sales
@@ -266,10 +266,10 @@ export default function PlansPage() {
             <p className="text-sm text-gray-600">
               Contact our team at{' '}
               <a
-                href="mailto:support@xsuite.app"
+                href="mailto:support@xsuite.space"
                 className="text-blue-600 hover:text-blue-700"
               >
-                support@xsuite.app
+                support@xsuite.space
               </a>{' '}
               and we'll help you select the right plan.
             </p>
