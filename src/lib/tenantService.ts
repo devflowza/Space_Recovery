@@ -12,6 +12,7 @@ interface CreateTenantParams {
   adminPassword: string;
   adminFullName: string;
   planId: string;
+  countryId: string;
 }
 
 interface TenantWithPlan extends Tenant {
@@ -74,6 +75,7 @@ export const tenantService = {
         name: params.name,
         slug: params.slug,
         plan_id: params.planId,
+        country_id: params.countryId,
         status: 'trial',
         trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
       })

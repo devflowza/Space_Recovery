@@ -5224,40 +5224,115 @@ export type Database = {
       }
       geo_countries: {
         Row: {
+          address_format: Json
           code: string
           code3: string | null
           created_at: string
           currency_code: string | null
+          currency_name: string
+          currency_position: string
+          currency_symbol: string
+          date_format: string
+          decimal_places: number
+          decimal_separator: string
+          default_tax_rate: number
+          fiscal_year_start: string
           id: string
+          invoice_prefix_required: boolean
           is_active: boolean
+          language_code: string
+          locale_code: string
           name: string
           phone_code: string | null
+          phone_format: string | null
+          postal_code_format: string | null
+          postal_code_label: string
           sort_order: number | null
+          tax_invoice_required: boolean
+          tax_label: string
+          tax_number_format: string | null
+          tax_number_label: string
+          tax_number_placeholder: string | null
+          tax_system: string
+          thousands_separator: string
+          time_format: string
+          timezone: string
           updated_at: string
+          week_starts_on: number
         }
         Insert: {
+          address_format?: Json
           code: string
           code3?: string | null
           created_at?: string
           currency_code?: string | null
+          currency_name?: string
+          currency_position?: string
+          currency_symbol?: string
+          date_format?: string
+          decimal_places?: number
+          decimal_separator?: string
+          default_tax_rate?: number
+          fiscal_year_start?: string
           id?: string
+          invoice_prefix_required?: boolean
           is_active?: boolean
+          language_code?: string
+          locale_code?: string
           name: string
           phone_code?: string | null
+          phone_format?: string | null
+          postal_code_format?: string | null
+          postal_code_label?: string
           sort_order?: number | null
+          tax_invoice_required?: boolean
+          tax_label?: string
+          tax_number_format?: string | null
+          tax_number_label?: string
+          tax_number_placeholder?: string | null
+          tax_system?: string
+          thousands_separator?: string
+          time_format?: string
+          timezone?: string
           updated_at?: string
+          week_starts_on?: number
         }
         Update: {
+          address_format?: Json
           code?: string
           code3?: string | null
           created_at?: string
           currency_code?: string | null
+          currency_name?: string
+          currency_position?: string
+          currency_symbol?: string
+          date_format?: string
+          decimal_places?: number
+          decimal_separator?: string
+          default_tax_rate?: number
+          fiscal_year_start?: string
           id?: string
+          invoice_prefix_required?: boolean
           is_active?: boolean
+          language_code?: string
+          locale_code?: string
           name?: string
           phone_code?: string | null
+          phone_format?: string | null
+          postal_code_format?: string | null
+          postal_code_label?: string
           sort_order?: number | null
+          tax_invoice_required?: boolean
+          tax_label?: string
+          tax_number_format?: string | null
+          tax_number_label?: string
+          tax_number_placeholder?: string | null
+          tax_system?: string
+          thousands_separator?: string
+          time_format?: string
+          timezone?: string
           updated_at?: string
+          week_starts_on?: number
         }
         Relationships: []
       }
@@ -12414,14 +12489,22 @@ export type Database = {
       }
       tenants: {
         Row: {
+          country_id: string | null
           created_at: string
+          currency_code: string
+          currency_symbol: string
           current_period_end: string | null
           current_period_start: string | null
+          date_format: string
+          decimal_places: number
+          default_tax_rate: number
           deleted_at: string | null
           domain: string | null
           features: Json
+          fiscal_year_start: string
           id: string
           limits: Json
+          locale_code: string
           metadata: Json
           name: string
           paypal_customer_id: string | null
@@ -12431,18 +12514,31 @@ export type Database = {
           slug: string
           status: string
           subscription_status: string | null
+          tax_label: string
+          tax_number: string | null
+          tax_number_label: string
+          tax_system: string
+          timezone: string
           trial_ends_at: string | null
           updated_at: string
         }
         Insert: {
+          country_id?: string | null
           created_at?: string
+          currency_code?: string
+          currency_symbol?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          date_format?: string
+          decimal_places?: number
+          default_tax_rate?: number
           deleted_at?: string | null
           domain?: string | null
           features?: Json
+          fiscal_year_start?: string
           id?: string
           limits?: Json
+          locale_code?: string
           metadata?: Json
           name: string
           paypal_customer_id?: string | null
@@ -12452,18 +12548,31 @@ export type Database = {
           slug: string
           status?: string
           subscription_status?: string | null
+          tax_label?: string
+          tax_number?: string | null
+          tax_number_label?: string
+          tax_system?: string
+          timezone?: string
           trial_ends_at?: string | null
           updated_at?: string
         }
         Update: {
+          country_id?: string | null
           created_at?: string
+          currency_code?: string
+          currency_symbol?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          date_format?: string
+          decimal_places?: number
+          default_tax_rate?: number
           deleted_at?: string | null
           domain?: string | null
           features?: Json
+          fiscal_year_start?: string
           id?: string
           limits?: Json
+          locale_code?: string
           metadata?: Json
           name?: string
           paypal_customer_id?: string | null
@@ -12473,10 +12582,22 @@ export type Database = {
           slug?: string
           status?: string
           subscription_status?: string | null
+          tax_label?: string
+          tax_number?: string | null
+          tax_number_label?: string
+          tax_system?: string
+          timezone?: string
           trial_ends_at?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tenants_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tenants_plan_id_fkey"
             columns: ["plan_id"]

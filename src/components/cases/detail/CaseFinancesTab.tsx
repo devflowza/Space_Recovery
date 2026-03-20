@@ -158,9 +158,9 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                           <p className="text-sm font-medium text-slate-900">
                             Total: {formatCurrencyAmount(
                               quote.total_amount || 0,
-                              quote.currency_symbol || 'OMR',
+                              quote.currency_symbol || 'USD',
                               quote.currency_position || 'after',
-                              quote.decimal_places || 3
+                              quote.decimal_places || 2
                             )}
                           </p>
                           <p className="text-xs text-slate-400 mt-1">
@@ -271,26 +271,26 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                           <p className="text-sm font-medium text-slate-900 mb-1">
                             Total: {formatCurrencyAmount(
                               invoice.total_amount || 0,
-                              invoice.currency_symbol || 'OMR',
+                              invoice.currency_symbol || 'USD',
                               invoice.currency_position || 'after',
-                              invoice.decimal_places || 3
+                              invoice.decimal_places || 2
                             )}
                           </p>
                           {invoice.amount_paid > 0 && (
                             <p className="text-sm text-green-600">
                               Paid: {formatCurrencyAmount(
                                 invoice.amount_paid,
-                                invoice.currency_symbol || 'OMR',
+                                invoice.currency_symbol || 'USD',
                                 invoice.currency_position || 'after',
-                                invoice.decimal_places || 3
+                                invoice.decimal_places || 2
                               )}
                               {invoice.amount_due > 0 && (
                                 <span className="text-orange-600 ml-2">
                                   • Balance: {formatCurrencyAmount(
                                     invoice.amount_due,
-                                    invoice.currency_symbol || 'OMR',
+                                    invoice.currency_symbol || 'USD',
                                     invoice.currency_position || 'after',
-                                    invoice.decimal_places || 3
+                                    invoice.decimal_places || 2
                                   )}
                                 </span>
                               )}
@@ -428,7 +428,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-amber-700">{expense.amount?.toFixed(3)}</p>
+                    <p className="text-sm font-bold text-amber-700">{expense.amount?.toFixed(2)}</p>
                     <Badge
                       variant="custom"
                       color={expense.status === 'paid' ? '#10b981' : expense.status === 'approved' ? '#3b82f6' : '#64748b'}

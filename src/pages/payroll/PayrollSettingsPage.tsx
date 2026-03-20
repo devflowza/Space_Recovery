@@ -23,9 +23,9 @@ export const PayrollSettingsPage: React.FC = () => {
     overtime_regular: settings?.overtime_rate_multiplier?.regular || 1.25,
     overtime_weekend: settings?.overtime_rate_multiplier?.weekend || 1.5,
     overtime_holiday: settings?.overtime_rate_multiplier?.holiday || 2.0,
-    currency_code: settings?.currency?.code || 'OMR',
-    currency_symbol: settings?.currency?.symbol || 'ر.ع.',
-    currency_decimals: settings?.currency?.decimals || 3,
+    currency_code: settings?.currency?.code || 'USD',
+    currency_symbol: settings?.currency?.symbol || '$',
+    currency_decimals: settings?.currency?.decimals || 2,
     payment_day: settings?.payment_day || 28,
   });
 
@@ -260,12 +260,16 @@ export const PayrollSettingsPage: React.FC = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
-                  <option value="OMR">Omani Rial (OMR)</option>
                   <option value="USD">US Dollar (USD)</option>
                   <option value="EUR">Euro (EUR)</option>
                   <option value="GBP">British Pound (GBP)</option>
                   <option value="AED">UAE Dirham (AED)</option>
                   <option value="SAR">Saudi Riyal (SAR)</option>
+                  <option value="OMR">Omani Rial (OMR)</option>
+                  <option value="INR">Indian Rupee (INR)</option>
+                  <option value="QAR">Qatari Riyal (QAR)</option>
+                  <option value="KWD">Kuwaiti Dinar (KWD)</option>
+                  <option value="BHD">Bahraini Dinar (BHD)</option>
                 </select>
               </div>
               <div>

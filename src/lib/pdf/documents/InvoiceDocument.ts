@@ -170,8 +170,8 @@ export function buildInvoiceDocument(
 
   const lineItemsHeader: Content = createBilingualSectionHeader(lineItemsTitle, null) as Content;
 
-  const currencySymbol = invoiceData.accounting_locales?.currency_symbol || 'OMR';
-  const decimalPlaces = invoiceData.accounting_locales?.decimal_places || 3;
+  const currencySymbol = invoiceData.accounting_locales?.currency_symbol || 'USD';
+  const decimalPlaces = invoiceData.accounting_locales?.decimal_places || 2;
   const currencyPosition = invoiceData.accounting_locales?.currency_position || 'after';
 
   const formatCurrency = (amount: number): string => {

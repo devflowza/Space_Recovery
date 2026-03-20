@@ -167,8 +167,8 @@ export function buildQuoteDocument(
 
   const lineItemsHeader: Content = createBilingualSectionHeader(lineItemsTitle, null) as Content;
 
-  const currencySymbol = quoteData.accounting_locales?.currency_symbol || 'OMR';
-  const decimalPlaces = quoteData.accounting_locales?.decimal_places || 3;
+  const currencySymbol = quoteData.accounting_locales?.currency_symbol || 'USD';
+  const decimalPlaces = quoteData.accounting_locales?.decimal_places || 2;
   const currencyPosition = quoteData.accounting_locales?.currency_position || 'after';
 
   const formatCurrency = (amount: number): string => {

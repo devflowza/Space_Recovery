@@ -653,9 +653,9 @@ export const getQuotesByCaseId = async (caseId: string) => {
     .eq('is_active', true)
     .maybeSingle();
 
-  const defaultCurrencySymbol = defaultLocale?.currency_symbol || 'OMR';
-  const defaultCurrencyPosition = defaultLocale?.currency_position || 'after';
-  const defaultDecimalPlaces = defaultLocale?.decimal_places || 3;
+  const defaultCurrencySymbol = defaultLocale?.currency_symbol || 'USD';
+  const defaultCurrencyPosition = defaultLocale?.currency_position || 'before';
+  const defaultDecimalPlaces = defaultLocale?.decimal_places || 2;
 
   return data.map(quote => ({
     ...quote,
