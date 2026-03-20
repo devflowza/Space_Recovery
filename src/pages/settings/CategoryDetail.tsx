@@ -145,7 +145,7 @@ export const CategoryDetail: React.FC = () => {
       const { data, error } = await supabase
         .from('company_settings')
         .select('location')
-        .eq('id', 1)
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
@@ -252,7 +252,7 @@ export const CategoryDetail: React.FC = () => {
             default_country_id: countryId,
           },
         })
-        .eq('id', 1);
+        .not('id', 'is', null);
 
       if (error) throw error;
     },

@@ -59,7 +59,7 @@ export function useDocumentTranslations(): UseDocumentTranslationsReturn {
         const fetchPromise = supabase
           .from('company_settings')
           .select('localization')
-          .eq('id', 1)
+          .limit(1)
           .maybeSingle();
 
         const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);

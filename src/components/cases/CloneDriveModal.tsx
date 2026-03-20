@@ -59,7 +59,7 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
       const { data, error } = await supabase
         .from('company_settings')
         .select('clone_defaults')
-        .eq('id', 1)
+        .limit(1)
         .maybeSingle();
       if (error) throw error;
       return data;

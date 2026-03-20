@@ -26,7 +26,7 @@ export async function getPortalSettings(): Promise<PortalSettings | null> {
     const { data, error } = await supabase
       .from('company_settings')
       .select('portal_settings')
-      .eq('id', 1)
+      .limit(1)
       .maybeSingle();
 
     if (error) {
@@ -130,7 +130,7 @@ export async function updatePortalSettings(
     const { data: currentData, error: fetchError } = await supabase
       .from('company_settings')
       .select('portal_settings')
-      .eq('id', 1)
+      .limit(1)
       .maybeSingle();
 
     if (fetchError) {
@@ -145,7 +145,7 @@ export async function updatePortalSettings(
     const { error: updateError } = await supabase
       .from('company_settings')
       .update({ portal_settings: updatedSettings })
-      .eq('id', 1);
+      .not('id', 'is', null);
 
     if (updateError) {
       return { success: false, error: updateError.message };
