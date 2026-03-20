@@ -260,7 +260,7 @@ Deno.serve(async (req: Request) => {
     // Fetch country details for pre-populating company settings
     const { data: countryData } = await supabase
       .from('geo_countries')
-      .select('name, currency_code, timezone, date_format, fiscal_year_start')
+      .select('name, currency_code, currency_symbol, decimal_places, currency_position, decimal_separator, thousands_separator, timezone, date_format, fiscal_year_start, locale_code')
       .eq('id', countryId)
       .maybeSingle();
 
@@ -292,6 +292,27 @@ Deno.serve(async (req: Request) => {
 
     if (settingsError) {
       console.error('Company settings creation failed:', settingsError);
+    }
+
+    // Create default accounting locale pre-populated from country config
+    const { error: localeError } = await supabase
+      .from('accounting_locales')
+      .insert({
+        tenant_id: tenant.id,
+        name: `${countryData?.name || name} - Default`,
+        locale_code: countryData?.locale_code || 'en-US',
+        currency_code: countryData?.currency_code || 'USD',
+        currency_symbol: countryData?.currency_symbol || '$',
+        decimal_places: countryData?.decimal_places ?? 2,
+        currency_position: countryData?.currency_position || 'before',
+        decimal_separator: countryData?.decimal_separator || '.',
+        thousands_separator: countryData?.thousands_separator || ',',
+        date_format: countryData?.date_format || 'DD/MM/YYYY',
+        is_default: true,
+      });
+
+    if (localeError) {
+      console.error('Default accounting locale creation failed:', localeError);
     }
 
     // Create onboarding progress
