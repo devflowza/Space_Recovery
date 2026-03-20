@@ -89,6 +89,9 @@ export const settingsKeys = {
   locales: () => ['settings', 'locales'] as const,
   portal: () => ['settings', 'portal'] as const,
   reportSections: () => ['settings', 'report-sections'] as const,
+  categoryCount: (categoryId: string) => ['settings', 'category-count', categoryId] as const,
+  masterData: (table: string) => ['settings', 'master-data', table] as const,
+  seedStatus: (categoryId: string) => ['settings', 'seed-status', categoryId] as const,
 };
 
 export const stockKeys = {
