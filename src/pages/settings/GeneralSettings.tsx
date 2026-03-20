@@ -133,6 +133,39 @@ export const GeneralSettings: React.FC = () => {
     },
   });
 
+  // Fallback: load tenant data for pre-populating when no company_settings row exists
+  const { data: tenantFallback } = useQuery({
+    queryKey: ['tenant_fallback_for_settings'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id, email')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!profile?.tenant_id) return null;
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('name, country_id, currency_code, timezone, date_format, fiscal_year_start')
+        .eq('id', profile.tenant_id)
+        .maybeSingle();
+      if (!tenant) return null;
+      // Look up country name
+      let countryName: string | null = null;
+      if (tenant.country_id) {
+        const { data: country } = await supabase
+          .from('geo_countries')
+          .select('name')
+          .eq('id', tenant.country_id)
+          .maybeSingle();
+        countryName = country?.name || null;
+      }
+      return { ...tenant, country_name: countryName, admin_email: profile.email };
+    },
+    enabled: !settings && !isLoading,
+  });
+
   useEffect(() => {
     if (!isLoading) {
       const defaults: Partial<CompanySettings> = {
@@ -165,12 +198,28 @@ export const GeneralSettings: React.FC = () => {
           localization: settings.localization || defaults.localization,
         };
         setFormData(settingsWithDefaults);
+      } else if (tenantFallback) {
+        // Pre-populate from tenant signup data
+        setFormData({
+          ...defaults,
+          basic_info: {
+            company_name: tenantFallback.name || '',
+            industry: 'Data Recovery & IT Services',
+          },
+          contact_info: {
+            email_general: tenantFallback.admin_email || '',
+          },
+          location: {
+            default_country_id: tenantFallback.country_id || '',
+            country: tenantFallback.country_name || '',
+          },
+        });
       } else {
         setFormData(defaults);
       }
       setHasUnsavedChanges(false);
     }
-  }, [settings, isLoading]);
+  }, [settings, isLoading, tenantFallback]);
 
   // Warn user before leaving page with unsaved changes
   useEffect(() => {
