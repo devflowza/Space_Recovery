@@ -143,6 +143,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Check for duplicate slug
     const { data: existingTenant } = await supabase
       .from('tenants')
       .select('id')
@@ -160,6 +161,22 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Check for duplicate email before creating anything
+    const { data: existingUsers } = await supabase.auth.admin.listUsers();
+    const emailExists = existingUsers?.users?.some(
+      (u: { email?: string }) => u.email?.toLowerCase() === adminEmail.toLowerCase()
+    );
+    if (emailExists) {
+      return new Response(
+        JSON.stringify({ error: 'An account with this email already exists. Please use a different email or sign in.' }),
+        {
+          status: 409,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Create tenant
     const { data: tenant, error: tenantError } = await supabase
       .from('tenants')
       .insert({
@@ -175,6 +192,7 @@ Deno.serve(async (req: Request) => {
 
     if (tenantError) throw tenantError;
 
+    // Create auth user — rollback tenant on failure
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: adminEmail,
       password: adminPassword,
@@ -186,9 +204,25 @@ Deno.serve(async (req: Request) => {
       },
     });
 
-    if (authError) throw authError;
-    if (!authData.user) throw new Error('User creation failed');
+    if (authError || !authData.user) {
+      // Rollback: delete the orphaned tenant
+      await supabase.from('tenants').delete().eq('id', tenant.id);
+      const msg = authError?.message || 'User creation failed';
+      const isDuplicate = msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists');
+      return new Response(
+        JSON.stringify({
+          error: isDuplicate
+            ? 'An account with this email already exists. Please use a different email or sign in.'
+            : `Account creation failed: ${msg}`,
+        }),
+        {
+          status: isDuplicate ? 409 : 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
+    // Update profile with tenant info
     const { error: profileError } = await supabase
       .from('profiles')
       .update({
@@ -199,8 +233,12 @@ Deno.serve(async (req: Request) => {
       })
       .eq('id', authData.user.id);
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error('Profile update failed:', profileError);
+      // Don't rollback here — user exists, just log and continue
+    }
 
+    // Create onboarding progress
     const { error: onboardingError } = await supabase
       .from('onboarding_progress')
       .insert({
@@ -210,7 +248,10 @@ Deno.serve(async (req: Request) => {
         current_step: 'company_info',
       });
 
-    if (onboardingError) throw onboardingError;
+    if (onboardingError) {
+      console.error('Onboarding progress creation failed:', onboardingError);
+      // Non-critical, don't fail the whole flow
+    }
 
     return new Response(
       JSON.stringify({
@@ -226,9 +267,12 @@ Deno.serve(async (req: Request) => {
     );
   } catch (error) {
     console.error('Tenant provisioning error:', error);
+    const message = error instanceof Error ? error.message : 'An internal error occurred';
     return new Response(
       JSON.stringify({
-        error: 'An internal error occurred. Please try again later.',
+        error: message.includes('already') || message.includes('exists')
+          ? message
+          : 'An internal error occurred. Please try again later.',
       }),
       {
         status: 500,
