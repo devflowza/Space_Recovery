@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('ALLOWED_ORIGIN') || 'https://app.xsuite.io,https://xsuite.space').split(',').map(o => o.trim());
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('ALLOWED_ORIGIN') || 'https://xsuite.space,https://space-recovery.pages.dev').split(',').map(o => o.trim());
 
 function getAllowedOrigin(req: Request): string {
   const origin = req.headers.get('Origin') || '';
@@ -208,7 +208,7 @@ Deno.serve(async (req: Request) => {
           given_name: tenant.name.split(' ')[0] || tenant.name,
           surname: tenant.name.split(' ').slice(1).join(' ') || tenant.name,
         },
-        email_address: tenant.contact_email || "noreply@xsuite.app",
+        email_address: tenant.contact_email || "noreply@xsuite.space",
       },
       custom_id: tenantId,
       application_context: {

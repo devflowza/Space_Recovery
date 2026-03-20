@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('ALLOWED_ORIGIN') || 'https://app.xsuite.io,https://xsuite.space').split(',').map(o => o.trim());
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('ALLOWED_ORIGIN') || 'https://xsuite.space,https://space-recovery.pages.dev').split(',').map(o => o.trim());
 
 function getAllowedOrigin(req: Request): string {
   const origin = req.headers.get('Origin') || '';

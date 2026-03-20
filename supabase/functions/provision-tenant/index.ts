@@ -1,6 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 
-const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('ALLOWED_ORIGIN') || 'https://app.xsuite.io,https://xsuite.space').split(',').map(o => o.trim());
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') || Deno.env.get('ALLOWED_ORIGIN') || 'https://xsuite.space,https://space-recovery.pages.dev').split(',').map(o => o.trim());
 
 function getAllowedOrigin(req: Request): string {
   const origin = req.headers.get('Origin') || '';
