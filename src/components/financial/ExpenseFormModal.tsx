@@ -16,6 +16,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface ExpenseFormModalProps {
   isOpen: boolean;
@@ -118,7 +119,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
       });
       handleClose();
     } catch (error) {
-      console.error('Error saving expense:', error);
+      logger.error('Error saving expense:', error);
     } finally {
       setIsSubmitting(false);
     }

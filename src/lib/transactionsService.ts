@@ -1,4 +1,6 @@
 import { supabase } from './supabaseClient';
+import { sanitizeFilterValue } from './postgrestSanitizer';
+import { logger } from './logger';
 
 export interface Transaction {
   id?: string;
@@ -98,7 +100,8 @@ export const fetchTransactions = async (filters?: {
   }
 
   if (filters?.search) {
-    query = query.or(`description.ilike.%${filters.search}%,reference_number.ilike.%${filters.search}%`);
+    const s = sanitizeFilterValue(filters.search);
+    query = query.or(`description.ilike.%${s}%,reference_number.ilike.%${s}%`);
   }
 
   const pageSize = filters?.pageSize || DEFAULT_PAGE_SIZE;
@@ -421,7 +424,7 @@ const updateBankAccountBalance = async (
     .maybeSingle();
 
   if (fetchError) {
-    console.error('Error fetching bank account:', fetchError);
+    logger.error('Error fetching bank account:', fetchError);
     return;
   }
 
@@ -436,7 +439,7 @@ const updateBankAccountBalance = async (
     .eq('id', accountId);
 
   if (error) {
-    console.error('Error updating bank account balance:', error);
+    logger.error('Error updating bank account balance:', error);
   }
 };
 

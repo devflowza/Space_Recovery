@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { Database } from '../types/database.types';
+import { sanitizeFilterValue } from './postgrestSanitizer';
 
 type Tenant = Database['public']['Tables']['tenants']['Row'];
 type TenantSubscription = Database['public']['Tables']['tenant_subscriptions']['Row'];
@@ -156,7 +157,8 @@ export async function getTenantsList(filters?: {
   }
 
   if (filters?.search) {
-    query = query.or(`company_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
+    const s = sanitizeFilterValue(filters.search);
+    query = query.or(`company_name.ilike.%${s}%,email.ilike.%${s}%`);
   }
 
   const { data: tenants } = await query;
@@ -369,7 +371,8 @@ export async function getSupportTickets(filters?: {
     query = query.eq('assigned_to', filters.assignedTo);
   }
   if (filters?.search) {
-    query = query.or(`ticket_number.ilike.%${filters.search}%,subject.ilike.%${filters.search}%`);
+    const ts = sanitizeFilterValue(filters.search);
+    query = query.or(`ticket_number.ilike.%${ts}%,subject.ilike.%${ts}%`);
   }
 
   const { data } = await query;
@@ -777,7 +780,7 @@ export async function getActiveAnnouncementsForUser(
     .eq('show_in_app', true)
     .eq('show_as_banner', true)
     .lte('start_date', now)
-    .or(`end_date.is.null,end_date.gte.${now}`)
+    .or(`end_date.is.null,end_date.gte.${sanitizeFilterValue(now)}`)
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
 

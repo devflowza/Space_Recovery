@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 export interface CompanySettings {
   id: number;
@@ -198,7 +199,7 @@ export async function getOrCreateCompanySettings(): Promise<CompanySettings> {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching company settings:', error);
+      logger.error('Error fetching company settings:', error);
       return { id: 1, ...DEFAULT_COMPANY_SETTINGS };
     }
 
@@ -228,7 +229,7 @@ export async function getOrCreateCompanySettings(): Promise<CompanySettings> {
           return cachedSettings;
         }
       }
-      console.error('Error creating company settings:', insertError);
+      logger.error('Error creating company settings:', insertError);
       return { id: 1, ...DEFAULT_COMPANY_SETTINGS };
     }
 
@@ -236,7 +237,7 @@ export async function getOrCreateCompanySettings(): Promise<CompanySettings> {
     cacheTimestamp = now;
     return cachedSettings;
   } catch (err) {
-    console.error('Unexpected error in getOrCreateCompanySettings:', err);
+    logger.error('Unexpected error in getOrCreateCompanySettings:', err);
     return { id: 1, ...DEFAULT_COMPANY_SETTINGS };
   }
 }
@@ -252,7 +253,7 @@ export async function updateCompanySettings(updates: Partial<CompanySettings>): 
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
     if (sessionError) {
-      console.error('Session error:', sessionError);
+      logger.error('Session error:', sessionError);
       throw new Error('Authentication session error. Please log in again.');
     }
 
@@ -268,7 +269,7 @@ export async function updateCompanySettings(updates: Partial<CompanySettings>): 
       .maybeSingle();
 
     if (profileError) {
-      console.error('Profile fetch error:', profileError);
+      logger.error('Profile fetch error:', profileError);
       throw new Error('Failed to verify user permissions');
     }
 
@@ -292,13 +293,13 @@ export async function updateCompanySettings(updates: Partial<CompanySettings>): 
       .select();
 
     if (error) {
-      console.error('Update error:', error);
+      logger.error('Update error:', error);
       throw new Error(`Database error: ${error.message}`);
     }
 
     // Check if update actually affected any rows
     if (!data || data.length === 0) {
-      console.error('Update returned empty array - RLS policy blocked the update');
+      logger.error('Update returned empty array - RLS policy blocked the update');
       throw new Error('Failed to save: Permission denied or record not found. Please refresh the page and try again.');
     }
 
@@ -307,7 +308,7 @@ export async function updateCompanySettings(updates: Partial<CompanySettings>): 
 
     return data[0] as CompanySettings;
   } catch (error) {
-    console.error('Error in updateCompanySettings:', error);
+    logger.error('Error in updateCompanySettings:', error);
     throw error;
   }
 }

@@ -1,6 +1,8 @@
 import { supabase } from './supabaseClient';
 import { logAuditTrail } from './auditTrailService';
 import { sanitizeUuidFields as sanitizeUuids } from './dataValidation';
+import { sanitizeFilterValue } from './postgrestSanitizer';
+import { logger } from './logger';
 
 const QUOTE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'approved_by', 'converted_to_case_id', 'template_id', 'accounting_locale_id', 'bank_account_id'];
 const sanitizeUuidFields = (data: any) => sanitizeUuids(data, QUOTE_UUID_FIELDS);
@@ -127,7 +129,8 @@ export const fetchQuotes = async (filters?: {
     }
 
     if (filters?.search) {
-      query = query.or(`quote_number.ilike.%${filters.search}%,title.ilike.%${filters.search}%`);
+      const s = sanitizeFilterValue(filters.search);
+    query = query.or(`quote_number.ilike.%${s}%,title.ilike.%${s}%`);
     }
 
     if (filters?.customerId) {
@@ -149,13 +152,13 @@ export const fetchQuotes = async (filters?: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching quotes:', error);
+      logger.error('Error fetching quotes:', error);
       throw new Error(`Failed to fetch quotes: ${error.message}`);
     }
 
     return (data || []) as QuoteWithDetails[];
   } catch (error: any) {
-    console.error('Fetch quotes failed:', error);
+    logger.error('Fetch quotes failed:', error);
     throw error;
   }
 };
@@ -252,7 +255,7 @@ export const getNextQuoteNumber = async () => {
   });
 
   if (error) {
-    console.error('Error generating quote number:', error);
+    logger.error('Error generating quote number:', error);
     if (error.message?.includes('not found in the schema cache')) {
       throw new Error('Quote numbering system is not configured. Please contact your system administrator.');
     }
@@ -342,7 +345,7 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
       .maybeSingle();
 
     if (quoteError) {
-      console.error('Error creating quote:', quoteError);
+      logger.error('Error creating quote:', quoteError);
       if (quoteError.message.includes('duplicate')) {
         throw new Error('A quote with this number already exists. Please try again.');
       }
@@ -372,7 +375,7 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
       .insert(itemsWithQuoteId);
 
     if (itemsError) {
-      console.error('Error creating quote items:', itemsError);
+      logger.error('Error creating quote items:', itemsError);
       await supabase.from('quotes').update({ deleted_at: new Date().toISOString() }).eq('id', quoteData.id);
       throw new Error(`Failed to add quote items: ${itemsError.message}`);
     }
@@ -381,7 +384,7 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
 
     return quoteData;
   } catch (error: unknown) {
-    console.error('Quote creation failed:', error);
+    logger.error('Quote creation failed:', error);
     throw error;
   }
 };
@@ -541,7 +544,7 @@ export const getQuoteStats = async () => {
       .select('status, total_amount');
 
     if (error) {
-      console.error('Error fetching quote stats:', error);
+      logger.error('Error fetching quote stats:', error);
       throw new Error(`Failed to fetch quote statistics: ${error.message}`);
     }
 
@@ -566,7 +569,7 @@ export const getQuoteStats = async () => {
 
     return stats;
   } catch (error: any) {
-    console.error('Get quote stats failed:', error);
+    logger.error('Get quote stats failed:', error);
     return {
       total: 0,
       draft: 0,

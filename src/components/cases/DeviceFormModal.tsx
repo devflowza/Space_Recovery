@@ -10,6 +10,7 @@ import { SearchableSelect } from '../ui/SearchableSelect';
 import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
 import { HardDrive, Eye, EyeOff, Trash2, ChevronDown, ChevronUp, Cpu, CheckCircle2, XCircle, AlertTriangle, Wrench, HelpCircle } from 'lucide-react';
 import { diagnosticsService } from '../../lib/diagnosticsService';
+import { logger } from '../../lib/logger';
 
 interface DeviceFormModalProps {
   isOpen: boolean;
@@ -322,7 +323,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         setShowDiagnosticsSection(true);
       }
     } catch (error) {
-      console.error('Error loading diagnostics:', error);
+      logger.error('Error loading diagnostics:', error);
     }
   };
 
@@ -437,7 +438,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
             }]);
 
           if (assignmentError) {
-            console.error('Error creating inventory assignment:', assignmentError);
+            logger.error('Error creating inventory assignment:', assignmentError);
           }
         }
       }
@@ -468,7 +469,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
             technical_notes: diagnosticsFormData.technical_notes || null,
           });
         } catch (error) {
-          console.error('Error saving diagnostics:', error);
+          logger.error('Error saving diagnostics:', error);
           // Don't fail the entire operation if diagnostics save fails
         }
       }
@@ -476,7 +477,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       onSuccess();
       onClose();
     } catch (error: unknown) {
-      console.error('Error saving device:', error);
+      logger.error('Error saving device:', error);
       toast.error(`Failed to save device: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
@@ -496,7 +497,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       onSuccess();
       onClose();
     } catch (error: unknown) {
-      console.error('Error deleting device:', error);
+      logger.error('Error deleting device:', error);
       toast.error(`Failed to delete device: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);

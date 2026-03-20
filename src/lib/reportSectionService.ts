@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 export interface ReportSection {
   id: string;
@@ -61,7 +62,7 @@ export const reportSectionService = {
       .order('display_order');
 
     if (error) {
-      console.error('Error fetching sections:', error);
+      logger.error('Error fetching sections:', error);
       throw error;
     }
 
@@ -80,7 +81,7 @@ export const reportSectionService = {
       .order('display_order');
 
     if (error) {
-      console.error('Error fetching sections by category:', error);
+      logger.error('Error fetching sections by category:', error);
       throw error;
     }
 
@@ -98,7 +99,7 @@ export const reportSectionService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching section:', error);
+      logger.error('Error fetching section:', error);
       throw error;
     }
 
@@ -116,7 +117,7 @@ export const reportSectionService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error creating section:', error);
+      logger.error('Error creating section:', error);
       throw error;
     }
 
@@ -135,7 +136,7 @@ export const reportSectionService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error updating section:', error);
+      logger.error('Error updating section:', error);
       throw error;
     }
 
@@ -153,7 +154,7 @@ export const reportSectionService = {
       .eq('is_system', false);
 
     if (error) {
-      console.error('Error deleting section:', error);
+      logger.error('Error deleting section:', error);
       throw error;
     }
   },
@@ -170,7 +171,7 @@ export const reportSectionService = {
       .order('display_order');
 
     if (error) {
-      console.error('Error fetching presets:', error);
+      logger.error('Error fetching presets:', error);
       throw error;
     }
 
@@ -188,7 +189,7 @@ export const reportSectionService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error creating preset:', error);
+      logger.error('Error creating preset:', error);
       throw error;
     }
 
@@ -207,7 +208,7 @@ export const reportSectionService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error updating preset:', error);
+      logger.error('Error updating preset:', error);
       throw error;
     }
 
@@ -224,7 +225,7 @@ export const reportSectionService = {
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting preset:', error);
+      logger.error('Error deleting preset:', error);
       throw error;
     }
   },
@@ -269,7 +270,7 @@ export const reportSectionService = {
       .order('section_order');
 
     if (error) {
-      console.error('Error fetching template sections:', error);
+      logger.error('Error fetching template sections:', error);
       throw error;
     }
 
@@ -302,7 +303,7 @@ export const reportSectionService = {
       .insert(mappings);
 
     if (error) {
-      console.error('Error updating template sections:', error);
+      logger.error('Error updating template sections:', error);
       throw error;
     }
   },

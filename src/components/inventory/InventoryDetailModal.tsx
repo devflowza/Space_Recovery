@@ -33,6 +33,7 @@ import { CompleteAssignmentModal } from './CompleteAssignmentModal';
 import { supabase } from '../../lib/supabaseClient';
 import { format } from 'date-fns';
 import { useCurrency } from '../../hooks/useCurrency';
+import { logger } from '../../lib/logger';
 
 interface InventoryDetailModalProps {
   isOpen: boolean;
@@ -97,7 +98,7 @@ export default function InventoryDetailModal({
       ]);
 
       if (!itemData) {
-        console.error('Item not found');
+        logger.error('Item not found');
         setLoading(false);
         return;
       }
@@ -110,7 +111,7 @@ export default function InventoryDetailModal({
       setCases(casesData || []);
       setAvailability(availabilityData);
     } catch (error) {
-      console.error('Error loading inventory data:', error);
+      logger.error('Error loading inventory data:', error);
       setItem(null);
     } finally {
       setLoading(false);
@@ -166,7 +167,7 @@ export default function InventoryDetailModal({
         onUpdate();
       }
     } catch (err: unknown) {
-      console.error('Error assigning to case:', err);
+      logger.error('Error assigning to case:', err);
       setAssignmentError(err instanceof Error ? err.message : 'Failed to assign item to case');
     } finally {
       setAssignmentLoading(false);

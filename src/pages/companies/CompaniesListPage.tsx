@@ -10,6 +10,7 @@ import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { Plus, Search, Filter, Mail, Phone, Globe, Building2, MapPin, Eye, Users, Pencil, UserCheck, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 import { useAuth } from '../../contexts/AuthContext';
+import { logger } from '../../lib/logger';
 
 interface Company {
   id: string;
@@ -102,7 +103,7 @@ export const CompaniesListPage: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching companies:', error);
+        logger.error('Error fetching companies:', error);
         throw error;
       }
 

@@ -8,6 +8,7 @@ import { Badge } from '../../components/ui/Badge';
 import { User, Mail, Phone, Shield, Calendar, Save, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 
 export const UserProfile: React.FC = () => {
   const { profile, user } = useAuth();
@@ -46,7 +47,7 @@ export const UserProfile: React.FC = () => {
       setEditing(false);
       window.location.reload();
     } catch (error) {
-      console.error('Error updating profile:', error);
+      logger.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     } finally {
       setSaving(false);
@@ -79,7 +80,7 @@ export const UserProfile: React.FC = () => {
         confirmPassword: '',
       });
     } catch (error) {
-      console.error('Error changing password:', error);
+      logger.error('Error changing password:', error);
       toast.error('Failed to change password');
     } finally {
       setChangingPassword(false);

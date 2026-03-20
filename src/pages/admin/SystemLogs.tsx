@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Search, Download, AlertCircle, AlertTriangle, Info, Bug } from 'lucide-react';
 import { format } from 'date-fns';
+import { logger } from '../../lib/logger';
 
 interface SystemLog {
   id: string;
@@ -46,7 +47,7 @@ export const SystemLogs: React.FC = () => {
       if (error) throw error;
       setLogs(data || []);
     } catch (error) {
-      console.error('Error fetching logs:', error);
+      logger.error('Error fetching logs:', error);
     } finally {
       setLoading(false);
     }

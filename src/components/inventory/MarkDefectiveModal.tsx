@@ -8,6 +8,7 @@ import {
   markAssignmentAsDefective,
   type AssignmentWithDetails,
 } from '../../lib/inventoryCaseAssignmentService';
+import { logger } from '../../lib/logger';
 
 interface MarkDefectiveModalProps {
   isOpen: boolean;
@@ -47,7 +48,7 @@ export function MarkDefectiveModal({
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      console.error('Error marking as defective:', err);
+      logger.error('Error marking as defective:', err);
       setError(err instanceof Error ? err.message : 'Failed to mark item as defective. Please try again.');
     } finally {
       setLoading(false);

@@ -13,6 +13,7 @@ import { useUsageLimit } from '../../hooks/useFeatureGate';
 import { canPerformAction } from '../../lib/featureGateService';
 import { UserPlus, Search, CreditCard as Edit, Trash2, Lock, Unlock, Mail, Phone, Calendar, Shield, AlertCircle, CheckCircle, XCircle, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
+import { logger } from '../../lib/logger';
 
 interface UserProfile {
   id: string;
@@ -79,7 +80,7 @@ export const UserManagement: React.FC = () => {
 
       setUsers(filteredData);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      logger.error('Error fetching users:', error);
       toast.error('Failed to fetch users. Please try again.');
     } finally {
       setLoading(false);
@@ -115,7 +116,7 @@ export const UserManagement: React.FC = () => {
       fetchUsers();
       setShowDeactivateModal(false);
     } catch (error) {
-      console.error('Error toggling user status:', error);
+      logger.error('Error toggling user status:', error);
     }
   };
 
@@ -207,7 +208,7 @@ export const UserManagement: React.FC = () => {
       toast.success('User approved successfully');
       fetchUsers();
     } catch (error) {
-      console.error('Error approving user:', error);
+      logger.error('Error approving user:', error);
       toast.error('Failed to approve user. Please try again.');
     }
   };

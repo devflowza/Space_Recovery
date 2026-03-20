@@ -92,7 +92,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: callerProfile } = await supabaseClient
       .from("profiles")
-      .select("role")
+      .select("role, tenant_id")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -129,8 +129,12 @@ Deno.serve(async (req: Request) => {
         throw new Error("A user with this email already exists");
       }
 
-      const { data: existingAuthUsers } = await supabaseClient.auth.admin.listUsers();
-      const existingAuthUser = existingAuthUsers?.users.find(
+      const { data: existingAuthUsers } = await supabaseClient.auth.admin.listUsers({
+        page: 1,
+        perPage: 1,
+      });
+      const allUsers = existingAuthUsers?.users || [];
+      const existingAuthUser = allUsers.find(
         (u) => u.email?.toLowerCase() === body.email.toLowerCase()
       );
 
@@ -180,6 +184,7 @@ Deno.serve(async (req: Request) => {
           phone: body.phone || null,
           is_active: body.is_active,
           case_access_level: body.case_access_level || "restricted",
+          tenant_id: callerProfile.tenant_id,
           _admin_created: true,
         },
       });

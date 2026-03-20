@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
 import { parseCSV, csvToObjects } from './importExportService';
 import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
+import { logger } from './logger';
 
 export interface ImportProgress {
   total: number;
@@ -190,7 +191,7 @@ export class BulkInventoryImporter {
         this.cache.conditionTypes.set(condition.name.toLowerCase().trim(), condition.id);
       });
     } catch (error) {
-      console.error('Failed to preload reference lookups:', error);
+      logger.error('Failed to preload reference lookups:', error);
       throw new Error('Failed to load reference data. Please try again.');
     }
   }
@@ -520,7 +521,7 @@ export class BulkInventoryImporter {
         .select('id');
 
       if (error) {
-        console.error('Batch insert error:', error);
+        logger.error('Batch insert error:', error);
         this.progress.failed += records.length;
 
         for (let i = 0; i < records.length; i++) {
@@ -536,7 +537,7 @@ export class BulkInventoryImporter {
         this.progress.processed += records.length;
       }
     } catch (error) {
-      console.error('Batch insert exception:', error);
+      logger.error('Batch insert exception:', error);
       this.progress.failed += records.length;
 
       for (let i = 0; i < records.length; i++) {

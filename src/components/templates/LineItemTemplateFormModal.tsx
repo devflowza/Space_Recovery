@@ -5,6 +5,7 @@ import { Input } from '../ui/Input';
 import { RichTextEditor } from '../ui/RichTextEditor';
 import { DollarSign } from 'lucide-react';
 import { useAccountingLocale } from '../../hooks/useAccountingLocale';
+import { logger } from '../../lib/logger';
 
 interface LineItemTemplateFormModalProps {
   isOpen: boolean;
@@ -83,7 +84,7 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
       });
       onClose();
     } catch (error: unknown) {
-      console.error('Error saving template:', error);
+      logger.error('Error saving template:', error);
       alert(error instanceof Error ? error.message : 'Failed to save template. Please try again.');
     } finally {
       setIsSubmitting(false);

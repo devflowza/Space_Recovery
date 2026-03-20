@@ -1,3 +1,4 @@
+import { logger } from './logger';
 export const generateSecurePassword = (length: number = 12): string => {
   const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const lowercase = 'abcdefghijklmnopqrstuvwxyz';
@@ -28,7 +29,7 @@ export const copyToClipboard = async (text: string): Promise<boolean> => {
     await navigator.clipboard.writeText(text);
     return true;
   } catch (err) {
-    console.error('Failed to copy to clipboard:', err);
+    logger.error('Failed to copy to clipboard:', err);
     return false;
   }
 };

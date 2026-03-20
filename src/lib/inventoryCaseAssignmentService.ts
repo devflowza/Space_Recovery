@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 export interface InventoryCaseAssignment {
   id: string;
@@ -61,7 +62,7 @@ export async function getCasesForAssignment(): Promise<CaseOption[]> {
     .eq('is_active', true);
 
   if (statusError) {
-    console.error('Error fetching active case statuses:', statusError);
+    logger.error('Error fetching active case statuses:', statusError);
     throw statusError;
   }
 
@@ -84,7 +85,7 @@ export async function getCasesForAssignment(): Promise<CaseOption[]> {
     .limit(100);
 
   if (error) {
-    console.error('Error fetching cases for assignment:', error);
+    logger.error('Error fetching cases for assignment:', error);
     throw error;
   }
 
@@ -114,7 +115,7 @@ export async function checkItemAvailability(itemId: string): Promise<{
     .maybeSingle();
 
   if (assignmentError) {
-    console.error('Error checking item availability:', assignmentError);
+    logger.error('Error checking item availability:', assignmentError);
     throw assignmentError;
   }
 
@@ -133,7 +134,7 @@ export async function checkItemAvailability(itemId: string): Promise<{
     .maybeSingle();
 
   if (itemError) {
-    console.error('Error fetching item details:', itemError);
+    logger.error('Error fetching item details:', itemError);
     throw itemError;
   }
 
@@ -182,7 +183,7 @@ export async function assignInventoryToCase(
     .maybeSingle();
 
   if (error) {
-    console.error('Error assigning inventory to case:', error);
+    logger.error('Error assigning inventory to case:', error);
     throw error;
   }
 
@@ -220,7 +221,7 @@ export async function markAssignmentAsDefective(
     .maybeSingle();
 
   if (error) {
-    console.error('Error marking assignment as defective:', error);
+    logger.error('Error marking assignment as defective:', error);
     throw error;
   }
 
@@ -256,7 +257,7 @@ export async function markAssignmentAsWorking(
     .maybeSingle();
 
   if (error) {
-    console.error('Error marking assignment as working:', error);
+    logger.error('Error marking assignment as working:', error);
     throw error;
   }
 
@@ -278,7 +279,7 @@ export async function getInventoryItemAssignments(
     .order('assigned_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching inventory item assignments:', error);
+    logger.error('Error fetching inventory item assignments:', error);
     throw error;
   }
 
@@ -303,7 +304,7 @@ export async function getCaseAssignments(caseId: string): Promise<AssignmentWith
     .order('assigned_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching case assignments:', error);
+    logger.error('Error fetching case assignments:', error);
     throw error;
   }
 
@@ -329,7 +330,7 @@ export async function getActiveAssignment(
     .maybeSingle();
 
   if (error) {
-    console.error('Error fetching active assignment:', error);
+    logger.error('Error fetching active assignment:', error);
     throw error;
   }
 
@@ -353,7 +354,7 @@ export async function unassignInventoryItem(
     .eq('id', assignmentId);
 
   if (error) {
-    console.error('Error unassigning inventory item:', error);
+    logger.error('Error unassigning inventory item:', error);
     throw error;
   }
 }

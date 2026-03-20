@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { formatDate } from '../../lib/format';
 import { useDocumentTranslations } from '../../hooks/useDocumentTranslations';
 import { getDeviceIconComponent } from '../../lib/deviceIconMapper';
+import { logger } from '../../lib/logger';
 
 interface DeviceCheckoutFormProps {
   caseId: string;
@@ -167,7 +168,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
           created_by_profile: createdByResult.data,
         });
       } catch (error) {
-        console.error('Error fetching checkout form data:', error);
+        logger.error('Error fetching checkout form data:', error);
       } finally {
         setLoading(false);
       }

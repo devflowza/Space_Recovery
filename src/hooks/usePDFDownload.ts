@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useDocumentTranslations } from './useDocumentTranslations';
+import { logger } from '../lib/logger';
 
 interface CompanySettings {
   basic_info?: {
@@ -77,7 +78,7 @@ export function usePDFDownload() {
         const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
         if (error) {
-          console.error('Error fetching company settings:', error);
+          logger.error('Error fetching company settings:', error);
           setSettingsError(true);
           setResourceError('Failed to load company settings');
           setSettingsReady(false);
@@ -87,7 +88,7 @@ export function usePDFDownload() {
           setSettingsError(false);
         }
       } catch (error) {
-        console.error('Error in fetchCompanySettings:', error);
+        logger.error('Error in fetchCompanySettings:', error);
         setSettingsError(true);
         setResourceError(error instanceof Error ? error.message : 'Unknown error loading settings');
         setSettingsReady(false);

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchCurrencyFormat, formatCurrencyWithSettings, CurrencyFormat } from '../lib/format';
+import { logger } from '../lib/logger';
 
 export const useCurrency = () => {
   const [currencyFormat, setCurrencyFormat] = useState<CurrencyFormat>({
@@ -16,7 +17,7 @@ export const useCurrency = () => {
         const format = await fetchCurrencyFormat();
         setCurrencyFormat(format);
       } catch (error) {
-        console.error('Error loading currency format:', error);
+        logger.error('Error loading currency format:', error);
       } finally {
         setLoading(false);
       }

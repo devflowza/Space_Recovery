@@ -19,6 +19,7 @@ import {
 } from '../../lib/expensesService';
 import { useAuth } from '../../contexts/AuthContext';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { logger } from '../../lib/logger';
 import {
   Plus,
   Search,
@@ -94,7 +95,7 @@ export const ExpensesList: React.FC = () => {
         if (error) throw error;
         return data || [];
       } catch (err) {
-        console.error('Error loading expenses:', err);
+        logger.error('Error loading expenses:', err);
         return [];
       }
     },

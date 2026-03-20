@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Users, Briefcase, UserPlus, TrendingUp, Calendar, CheckCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
+import { logger } from '../../lib/logger';
 
 export const HRDashboard: React.FC = () => {
   const [stats, setStats] = useState({
@@ -33,7 +34,7 @@ export const HRDashboard: React.FC = () => {
         pendingReviews: reviewsResult.count || 0,
       });
     } catch (error) {
-      console.error('Error loading stats:', error);
+      logger.error('Error loading stats:', error);
     } finally {
       setLoading(false);
     }

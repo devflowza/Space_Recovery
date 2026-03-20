@@ -5,6 +5,7 @@ import { PaymentReceiptDocument } from '../documents/PaymentReceiptDocument';
 import { useCurrency } from '../../hooks/useCurrency';
 import { usePDFDownload } from '../../hooks/usePDFDownload';
 import { generatePaymentReceipt } from '../../lib/pdf/pdfService';
+import { logger } from '../../lib/logger';
 
 interface PaymentData {
   id?: string;
@@ -48,7 +49,7 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
         alert(result.error || 'Failed to generate PDF');
       }
     } catch (error) {
-      console.error('Error generating payment receipt PDF:', error);
+      logger.error('Error generating payment receipt PDF:', error);
       alert('Failed to generate PDF. Please try again.');
     } finally {
       setIsGenerating(false);

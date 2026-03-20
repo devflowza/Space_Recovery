@@ -11,6 +11,7 @@ import {
   type ReportTemplate,
   type ReportSection,
 } from '../../lib/reportTypes';
+import { logger } from '../../lib/logger';
 
 interface ReportFormModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export default function ReportFormModal({
         }
       }
     } catch (error) {
-      console.error('Error loading existing report:', error);
+      logger.error('Error loading existing report:', error);
     } finally {
       setLoading(false);
     }
@@ -123,7 +124,7 @@ export default function ReportFormModal({
         setSectionData(initialSections);
       }
     } catch (error) {
-      console.error('Error loading templates:', error);
+      logger.error('Error loading templates:', error);
       alert('Failed to load templates. Please try again.');
     } finally {
       setLoadingTemplateList(false);
@@ -169,7 +170,7 @@ export default function ReportFormModal({
 
       setSectionData(populatedSections);
     } catch (error) {
-      console.error('Error applying template:', error);
+      logger.error('Error applying template:', error);
       alert('Failed to apply template. Please try again.');
     } finally {
       setLoadingTemplate(false);
@@ -271,7 +272,7 @@ export default function ReportFormModal({
       onSuccess();
       handleClose();
     } catch (error) {
-      console.error('Error creating report:', error);
+      logger.error('Error creating report:', error);
       alert('Failed to create report. Please try again.');
     } finally {
       setLoading(false);

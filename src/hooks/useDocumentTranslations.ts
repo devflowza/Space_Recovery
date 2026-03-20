@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { logger } from '../lib/logger';
 import {
   getTranslation,
   isRTLLanguage,
@@ -66,7 +67,7 @@ export function useDocumentTranslations(): UseDocumentTranslationsReturn {
         clearTimeout(timeoutId);
 
         if (error) {
-          console.error('Error fetching language settings:', error);
+          logger.error('Error fetching language settings:', error);
           setHasError(true);
           setErrorMessage('Failed to load translation settings from database');
           setIsReady(false);
@@ -79,7 +80,7 @@ export function useDocumentTranslations(): UseDocumentTranslationsReturn {
           setHasError(false);
         }
       } catch (error) {
-        console.error('Error fetching language settings:', error);
+        logger.error('Error fetching language settings:', error);
         setHasError(true);
         setErrorMessage(error instanceof Error ? error.message : 'Failed to load translations');
         setIsReady(false);

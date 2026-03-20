@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { checkRateLimit, RATE_LIMITS } from '../lib/rateLimiter';
+import { logger } from '../lib/logger';
 
 interface PortalCustomer {
   id: string;
@@ -60,12 +61,12 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (isValidPortalCustomer(parsed)) {
           setCustomer(parsed);
         } else {
-          console.error('Invalid portal customer data in session, clearing');
+          logger.error('Invalid portal customer data in session, clearing');
           sessionStorage.removeItem('portal_customer');
         }
       }
     } catch (err) {
-      console.error('Session check error:', err);
+      logger.error('Session check error:', err);
       sessionStorage.removeItem('portal_customer');
     } finally {
       setLoading(false);
@@ -105,7 +106,7 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
 
       if (error || !data) {
-        console.error('Authentication error:', error);
+        logger.error('Authentication error:', error);
         // Track failed attempts
         const failKey = `portal_fails_${email}`;
         const fails = parseInt(sessionStorage.getItem(failKey) || '0') + 1;
@@ -132,7 +133,7 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setError(null);
       return true;
     } catch (err) {
-      console.error('Login error:', err);
+      logger.error('Login error:', err);
       setError('Failed to login. Please try again.');
       return false;
     } finally {
@@ -154,7 +155,7 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
 
       if (error) {
-        console.error('Password change error:', error);
+        logger.error('Password change error:', error);
         setError('Failed to change password');
         return false;
       }
@@ -166,7 +167,7 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       return true;
     } catch (err) {
-      console.error('Password change error:', err);
+      logger.error('Password change error:', err);
       setError('Failed to change password');
       return false;
     }

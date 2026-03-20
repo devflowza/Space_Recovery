@@ -5,7 +5,7 @@ import { PendingApprovalScreen } from './PendingApprovalScreen';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: Array<'admin' | 'technician' | 'sales' | 'accounts' | 'hr'>;
+  allowedRoles?: Array<'owner' | 'admin' | 'manager' | 'technician' | 'sales' | 'accounts' | 'hr' | 'viewer'>;
 }
 
 const AuthLoadingSkeleton = () => (

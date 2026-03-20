@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 export interface Module {
   id: string;
@@ -48,7 +49,7 @@ class RolePermissionsService {
       .order('order_index');
 
     if (error) {
-      console.error('Error fetching modules:', error);
+      logger.error('Error fetching modules:', error);
       throw new Error('Failed to fetch modules');
     }
 
@@ -80,7 +81,7 @@ class RolePermissionsService {
       .rpc('get_accessible_modules', { p_role: role });
 
     if (error) {
-      console.error('Error fetching accessible modules:', error);
+      logger.error('Error fetching accessible modules:', error);
       throw new Error('Failed to fetch accessible modules');
     }
 
@@ -122,7 +123,7 @@ class RolePermissionsService {
       });
 
     if (error) {
-      console.error('Error checking module access:', error);
+      logger.error('Error checking module access:', error);
       return false;
     }
 
@@ -138,7 +139,7 @@ class RolePermissionsService {
       `);
 
     if (error) {
-      console.error('Error fetching role permissions:', error);
+      logger.error('Error fetching role permissions:', error);
       throw new Error('Failed to fetch role permissions');
     }
 
@@ -163,7 +164,7 @@ class RolePermissionsService {
       .eq('role', role);
 
     if (error) {
-      console.error('Error fetching role permissions:', error);
+      logger.error('Error fetching role permissions:', error);
       throw new Error('Failed to fetch role permissions');
     }
 
@@ -197,7 +198,7 @@ class RolePermissionsService {
         });
 
       if (upsertError) {
-        console.error('Error updating permissions:', upsertError);
+        logger.error('Error updating permissions:', upsertError);
         return { success: false, error: upsertError.message };
       }
 
@@ -213,7 +214,7 @@ class RolePermissionsService {
 
       return { success: true };
     } catch (error: any) {
-      console.error('Error in updateRolePermissions:', error);
+      logger.error('Error in updateRolePermissions:', error);
       return { success: false, error: error.message };
     }
   }

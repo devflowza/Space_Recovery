@@ -11,6 +11,7 @@ import {
   exportToCSV,
 } from '../../lib/importExportService';
 import { supabase } from '../../lib/supabaseClient';
+import { logger } from '../../lib/logger';
 
 interface ExportWizardProps {
   entityType: EntityType;
@@ -45,7 +46,7 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
 
       const { data, error } = await query;
       if (error) {
-        console.error('Export error:', error);
+        logger.error('Export error:', error);
         throw new Error(`Failed to export ${config.label}: ${error.message}`);
       }
 
@@ -65,7 +66,7 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
           selectedColumns,
         });
       } catch (err) {
-        console.error('Could not create job record:', err);
+        logger.error('Could not create job record:', err);
       }
 
       return { url, recordCount: data?.length || 0 };
@@ -76,7 +77,7 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
       queryClient.invalidateQueries({ queryKey: ['import_export_jobs_recent'] });
     },
     onError: (error: unknown) => {
-      console.error('Export failed:', error);
+      logger.error('Export failed:', error);
       alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     },
   });

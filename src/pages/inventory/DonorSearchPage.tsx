@@ -6,6 +6,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { supabase } from '../../lib/supabaseClient';
+import { logger } from '../../lib/logger';
 
 interface DonorSearchCriteria {
   brand_id: string;
@@ -74,7 +75,7 @@ export default function DonorSearchPage() {
       if (capacitiesRes.data) setCapacities(capacitiesRes.data);
       if (interfacesRes.data) setInterfaces(interfacesRes.data);
     } catch (error) {
-      console.error('Error loading master data:', error);
+      logger.error('Error loading master data:', error);
     }
   };
 
@@ -87,7 +88,7 @@ export default function DonorSearchPage() {
 
       if (data) setSearchTemplates(data);
     } catch (error) {
-      console.error('Error loading search templates:', error);
+      logger.error('Error loading search templates:', error);
     }
   };
 
@@ -108,7 +109,7 @@ export default function DonorSearchPage() {
       if (error) throw error;
       setResults(data || []);
     } catch (error) {
-      console.error('Error searching donor drives:', error);
+      logger.error('Error searching donor drives:', error);
       setResults([]);
     } finally {
       setLoading(false);
@@ -145,7 +146,7 @@ export default function DonorSearchPage() {
       setTemplateDescription('');
       loadSearchTemplates();
     } catch (error) {
-      console.error('Error saving template:', error);
+      logger.error('Error saving template:', error);
     }
   };
 

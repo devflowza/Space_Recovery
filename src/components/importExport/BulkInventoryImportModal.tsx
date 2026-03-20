@@ -4,6 +4,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { BulkInventoryImporter, ImportProgress, downloadErrorReport } from '../../lib/bulkImportService';
 import { parseCSV, csvToObjects, suggestFieldMapping, ENTITY_CONFIGS } from '../../lib/importExportService';
+import { logger } from '../../lib/logger';
 
 interface BulkInventoryImportModalProps {
   isOpen: boolean;
@@ -88,7 +89,7 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
         onSuccess();
       }
     } catch (error) {
-      console.error('Import error:', error);
+      logger.error('Import error:', error);
       setIsImporting(false);
     }
   };

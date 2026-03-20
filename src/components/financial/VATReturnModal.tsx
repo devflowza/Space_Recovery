@@ -14,6 +14,7 @@ import {
   Save,
   Send,
 } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface VATReturnModalProps {
   isOpen: boolean;
@@ -64,7 +65,7 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
       const result = await calculateVATForPeriod(periodStart, periodEnd);
       setSummary(result);
     } catch (error) {
-      console.error('Error calculating VAT:', error);
+      logger.error('Error calculating VAT:', error);
     } finally {
       setIsCalculating(false);
     }
@@ -94,7 +95,7 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
       });
       handleClose();
     } catch (error) {
-      console.error('Error saving VAT return:', error);
+      logger.error('Error saving VAT return:', error);
     } finally {
       setIsSubmitting(false);
     }

@@ -7,6 +7,7 @@ import {
   markAssignmentAsWorking,
   type AssignmentWithDetails,
 } from '../../lib/inventoryCaseAssignmentService';
+import { logger } from '../../lib/logger';
 
 interface CompleteAssignmentModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ export function CompleteAssignmentModal({
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      console.error('Error completing assignment:', err);
+      logger.error('Error completing assignment:', err);
       setError(err instanceof Error ? err.message : 'Failed to complete assignment. Please try again.');
     } finally {
       setLoading(false);

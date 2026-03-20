@@ -15,6 +15,7 @@ import {
   type InventoryConditionType,
 } from '../../lib/inventoryService';
 import { supabase } from '../../lib/supabaseClient';
+import { logger } from '../../lib/logger';
 
 export default function InventoryFormPage() {
   const navigate = useNavigate();
@@ -74,7 +75,7 @@ export default function InventoryFormPage() {
       setCapacities(capacitiesData.data || []);
       setLocations(locationsData.data || []);
     } catch (error) {
-      console.error('Error loading master data:', error);
+      logger.error('Error loading master data:', error);
     }
   };
 
@@ -94,7 +95,7 @@ export default function InventoryFormPage() {
       toast.success('Item saved successfully');
       navigate('/inventory');
     } catch (error) {
-      console.error('Error saving item:', error);
+      logger.error('Error saving item:', error);
       toast.error('Failed to save item. Please try again.');
     } finally {
       setSaving(false);

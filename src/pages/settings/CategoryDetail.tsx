@@ -15,6 +15,7 @@ import {
   seedCaseServiceData,
 } from '../../lib/seedService';
 import { SeedingResultsDisplay } from '../../components/settings/SeedingResultsDisplay';
+import { logger } from '../../lib/logger';
 
 interface MasterDataItem {
   id: number;
@@ -333,7 +334,7 @@ export const CategoryDetail: React.FC = () => {
         alert(result.error || result.message);
       }
     } catch (error) {
-      console.error('Seeding error:', error);
+      logger.error('Seeding error:', error);
       alert('An unexpected error occurred during seeding');
     } finally {
       setIsSeeding(false);

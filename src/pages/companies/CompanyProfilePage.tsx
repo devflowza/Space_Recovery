@@ -13,6 +13,7 @@ import {
   Calendar, FileText, DollarSign, MessageSquare, Eye, User, TrendingUp, Briefcase
 } from 'lucide-react';
 import { formatDate } from '../../lib/format';
+import { logger } from '../../lib/logger';
 
 interface Company {
   id: string;
@@ -120,7 +121,7 @@ export const CompanyProfilePage: React.FC = () => {
         .order('is_primary_contact', { ascending: false });
 
       if (error) {
-        console.error('Error fetching contacts:', error);
+        logger.error('Error fetching contacts:', error);
         return [];
       }
       return (data as Contact[]) || [];
@@ -141,7 +142,7 @@ export const CompanyProfilePage: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching communications:', error);
+        logger.error('Error fetching communications:', error);
         return [];
       }
       return (data as Communication[]) || [];
@@ -181,7 +182,7 @@ export const CompanyProfilePage: React.FC = () => {
           .in('customer_id', customerIds);
 
         if (casesError) {
-          console.error('Error fetching cases:', casesError);
+          logger.error('Error fetching cases:', casesError);
           return {
             totalCases: 0,
             completedCases: 0,
@@ -227,7 +228,7 @@ export const CompanyProfilePage: React.FC = () => {
           lastInteraction: cases && cases.length > 0 ? cases[0].created_at : null,
         };
       } catch (error) {
-        console.error('Exception fetching cases:', error);
+        logger.error('Exception fetching cases:', error);
         return {
           totalCases: 0,
           completedCases: 0,

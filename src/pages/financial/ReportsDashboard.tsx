@@ -17,6 +17,7 @@ import {
   CashFlowData,
   InvoiceSummaryData,
 } from '../../lib/financialReportsService';
+import { logger } from '../../lib/logger';
 import {
   BarChart3,
   TrendingUp,
@@ -82,7 +83,7 @@ export const ReportsDashboard: React.FC = () => {
           break;
       }
     } catch (error) {
-      console.error('Error generating report:', error);
+      logger.error('Error generating report:', error);
     } finally {
       setReportLoading(false);
     }

@@ -27,6 +27,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { formatDate } from '../../lib/format';
+import { logger } from '../../lib/logger';
 
 export const QuotesListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -464,7 +465,7 @@ export const QuotesListPage: React.FC = () => {
 
                                   alert(`Quote ${quote.quote_number} has been sent successfully!`);
                                 } catch (error) {
-                                  console.error('Error sending quote:', error);
+                                  logger.error('Error sending quote:', error);
                                   alert('Failed to send quote. Please try again.');
                                 } finally {
                                   setSendingQuoteId(null);

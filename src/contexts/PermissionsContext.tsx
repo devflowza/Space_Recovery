@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { rolePermissionsService, Module, RolePermissions } from '../lib/rolePermissionsService';
+import { logger } from '../lib/logger';
 
 interface PermissionsContextType {
   permissions: RolePermissions | null;
@@ -37,7 +38,7 @@ export const PermissionsProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setPermissions(userPermissions);
       setAccessibleModules(modules);
     } catch (error) {
-      console.error('Error loading permissions:', error);
+      logger.error('Error loading permissions:', error);
       setPermissions(null);
       setAccessibleModules([]);
     } finally {

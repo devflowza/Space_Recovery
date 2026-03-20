@@ -10,6 +10,7 @@ import { ImageUpload } from '../../components/ui/ImageUpload';
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 import {
   Building2,
   MapPin,
@@ -210,7 +211,7 @@ export const GeneralSettings: React.FC = () => {
       const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
 
       if (refreshError) {
-        console.error('Session refresh error:', refreshError);
+        logger.error('Session refresh error:', refreshError);
         // Try to get existing session as fallback
         const { data: { session: existingSession } } = await supabase.auth.getSession();
         if (!existingSession) {
@@ -230,7 +231,7 @@ export const GeneralSettings: React.FC = () => {
         .maybeSingle();
 
       if (profileError) {
-        console.error('Profile fetch error:', profileError);
+        logger.error('Profile fetch error:', profileError);
         throw new Error('Failed to verify user permissions');
       }
 
@@ -253,13 +254,13 @@ export const GeneralSettings: React.FC = () => {
         .select();
 
       if (error) {
-        console.error('Supabase update error:', error);
+        logger.error('Supabase update error:', error);
         throw error;
       }
 
       // Check if update actually affected any rows
       if (!data || data.length === 0) {
-        console.error('Update returned empty array - RLS policy may have blocked the update');
+        logger.error('Update returned empty array - RLS policy may have blocked the update');
         throw new Error('Failed to save: Permission denied or record not found. Please refresh and try again.');
       }
 
@@ -273,7 +274,7 @@ export const GeneralSettings: React.FC = () => {
       toast.success('Settings saved successfully');
     },
     onError: (error) => {
-      console.error('Update mutation error:', error);
+      logger.error('Update mutation error:', error);
       setIsSaving(false);
       toast.error(`Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
     },
@@ -374,7 +375,7 @@ export const GeneralSettings: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: ['company_settings'] });
       }
     } catch (error) {
-      console.error('Logo upload error:', error);
+      logger.error('Logo upload error:', error);
     } finally {
       setUploadingFiles(prev => {
         const newSet = new Set(prev);
@@ -430,7 +431,7 @@ export const GeneralSettings: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: ['company_settings'] });
       }
     } catch (error) {
-      console.error('QR code upload error:', error);
+      logger.error('QR code upload error:', error);
     } finally {
       setUploadingFiles(prev => {
         const newSet = new Set(prev);

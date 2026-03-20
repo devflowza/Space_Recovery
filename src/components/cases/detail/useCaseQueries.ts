@@ -4,6 +4,7 @@ import { quotesService } from '@/lib/quotesService';
 import { invoiceService } from '@/lib/invoiceService';
 import { getCaseFinancialSummary } from '@/lib/caseFinanceService';
 import { type ReportType, type ReportStatus } from '@/lib/reportTypes';
+import { logger } from '../../../lib/logger';
 
 export function useCaseQueries(
   id: string | undefined,
@@ -45,7 +46,7 @@ export function useCaseQueries(
         .single();
 
       if (error) {
-        console.error('Error fetching case:', error);
+        logger.error('Error fetching case:', error);
         throw error;
       }
 
