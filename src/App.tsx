@@ -14,7 +14,7 @@ import { PortalLayout } from './components/layout/PortalLayout';
 import { PlatformAdminLayout } from './components/layout/PlatformAdminLayout';
 
 const Login = lazy(() => import('./pages/auth/Login').then(m => ({ default: m.Login })));
-const TenantSignup = lazy(() => import('./pages/auth/TenantSignup').then(m => ({ default: m.TenantSignup })));
+const OnboardingWizard = lazy(() => import('./pages/auth/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const Dashboard = lazy(() => import('./pages/dashboard/Dashboard').then(m => ({ default: m.Dashboard })));
 const SettingsDashboard = lazy(() => import('./pages/settings/SettingsDashboard').then(m => ({ default: m.SettingsDashboard })));
@@ -164,7 +164,7 @@ function App() {
             <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/signup/tenant" element={<TenantSignup />} />
+              <Route path="/signup/tenant" element={<OnboardingWizard />} />
               <Route path="/signup" element={<Navigate to="/signup/tenant" replace />} />
               <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
 

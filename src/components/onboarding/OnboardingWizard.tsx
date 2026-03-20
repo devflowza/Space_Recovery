@@ -16,7 +16,7 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const toast = useToast();
 
   const currentStep = ONBOARDING_STEPS[currentStepIndex];
   const totalSteps = ONBOARDING_STEPS.length - 1;
@@ -31,11 +31,11 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
         setCurrentStepIndex(currentStepIndex + 1);
       } else {
         await onboardingService.completeOnboarding(tenantId);
-        showToast('Onboarding completed successfully!', 'success');
+        toast.success('Onboarding completed successfully!');
         onComplete();
       }
     } catch (error) {
-      showToast('Failed to save progress', 'error');
+      toast.error('Failed to save progress');
       logger.error(error);
     } finally {
       setLoading(false);
@@ -148,17 +148,17 @@ interface StepContentProps {
 
 const StepContent = ({ stepId, tenantId, onNext, onSkip, loading }: StepContentProps) => {
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const toast = useToast();
   const [loadingSampleData, setLoadingSampleData] = useState(false);
 
   const handleLoadSampleData = async () => {
     setLoadingSampleData(true);
     try {
       await onboardingService.seedDemoData(tenantId);
-      showToast('Sample data loaded successfully!', 'success');
+      toast.success('Sample data loaded successfully!');
       onNext();
     } catch (error) {
-      showToast('Failed to load sample data', 'error');
+      toast.error('Failed to load sample data');
       logger.error(error);
     } finally {
       setLoadingSampleData(false);
