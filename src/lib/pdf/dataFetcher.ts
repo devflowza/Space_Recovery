@@ -291,9 +291,9 @@ async function fetchQuoteDetails(quoteId: string): Promise<QuoteData> {
     quote_items: items || [],
     customer_associated_company: customerAssociatedCompany,
     accounting_locales: quoteData.accounting_locales || defaultLocale || {
-      currency_symbol: 'OMR',
-      currency_position: 'after',
-      decimal_places: 3,
+      currency_symbol: 'USD',
+      currency_position: 'before',
+      decimal_places: 2,
     },
   } as QuoteData;
 }
@@ -418,9 +418,9 @@ async function fetchInvoiceDetails(invoiceId: string): Promise<InvoiceData> {
     invoice_line_items: items || [],
     customer_associated_company: customerAssociatedCompany,
     accounting_locales: invoiceData.accounting_locales || defaultLocale || {
-      currency_symbol: 'OMR',
-      currency_position: 'after',
-      decimal_places: 3,
+      currency_symbol: 'USD',
+      currency_position: 'before',
+      decimal_places: 2,
     },
   } as InvoiceData;
 }
@@ -514,9 +514,9 @@ async function fetchPaymentDetails(paymentId: string): Promise<PaymentReceiptDat
     customer: paymentData.customers,
     cases: caseInfo,
     accounting_locales: paymentData.accounting_locales || defaultLocale || {
-      currency_symbol: 'OMR',
-      currency_position: 'after',
-      decimal_places: 3,
+      currency_symbol: 'USD',
+      currency_position: 'before',
+      decimal_places: 2,
     },
   } as PaymentReceiptData;
 }
@@ -578,9 +578,9 @@ async function fetchPayslipDetails(recordId: string): Promise<PayslipData> {
     ...recordData,
     items: items || [],
     accounting_locales: defaultLocale || {
-      currency_symbol: 'OMR',
-      currency_position: 'after',
-      decimal_places: 3,
+      currency_symbol: 'USD',
+      currency_position: 'before',
+      decimal_places: 2,
     },
   } as PayslipData;
 }

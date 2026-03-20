@@ -1,6 +1,8 @@
 import { format as dateFnsFormat, parseISO } from 'date-fns';
 import { supabase } from './supabaseClient';
 import { logger } from './logger';
+import type { CurrencyConfig } from '../types/tenantConfig';
+import { DEFAULT_TENANT_CONFIG } from '../types/tenantConfig';
 
 export interface CurrencyFormat {
   currencySymbol: string;
@@ -19,43 +21,35 @@ export const fetchCurrencyFormat = async (): Promise<CurrencyFormat> => {
   try {
     const { data, error } = await supabase
       .from('accounting_locales')
-      .select('currency_symbol, currency_position, decimal_places, currency_code')
+      .select('currency_code, date_format, number_format, is_default')
       .eq('is_default', true)
       .maybeSingle();
 
-    if (error) {
-      logger.error('Error fetching currency format:', error);
+    if (error || !data) {
+      const def = DEFAULT_TENANT_CONFIG.currency;
       return {
-        currencySymbol: 'OMR',
-        currencyPosition: 'after',
-        decimalPlaces: 3,
-        currencyCode: 'OMR',
+        currencySymbol: def.symbol,
+        currencyPosition: def.position,
+        decimalPlaces: def.decimalPlaces,
+        currencyCode: def.code,
       };
     }
 
-    if (data) {
-      cachedCurrencyFormat = {
-        currencySymbol: data.currency_symbol || 'OMR',
-        currencyPosition: data.currency_position || 'after',
-        decimalPlaces: data.decimal_places || 3,
-        currencyCode: data.currency_code || 'OMR',
-      };
-      return cachedCurrencyFormat;
-    }
-
-    return {
-      currencySymbol: 'OMR',
-      currencyPosition: 'after',
-      decimalPlaces: 3,
-      currencyCode: 'OMR',
+    cachedCurrencyFormat = {
+      currencySymbol: data.currency_code || DEFAULT_TENANT_CONFIG.currency.code,
+      currencyPosition: 'before',
+      decimalPlaces: 2,
+      currencyCode: data.currency_code || DEFAULT_TENANT_CONFIG.currency.code,
     };
+    return cachedCurrencyFormat;
   } catch (error) {
     logger.error('Error fetching currency format:', error);
+    const def = DEFAULT_TENANT_CONFIG.currency;
     return {
-      currencySymbol: 'OMR',
-      currencyPosition: 'after',
-      decimalPlaces: 3,
-      currencyCode: 'OMR',
+      currencySymbol: def.symbol,
+      currencyPosition: def.position,
+      decimalPlaces: def.decimalPlaces,
+      currencyCode: def.code,
     };
   }
 };
@@ -80,13 +74,33 @@ export const formatCurrencyWithSettings = (
   }
 };
 
-export const formatCurrency = (amount: number, currency = 'OMR'): string => {
-  return new Intl.NumberFormat('en-OM', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
-  }).format(amount);
+export const formatCurrencyWithConfig = (
+  amount: number,
+  config: CurrencyConfig
+): string => {
+  const parts = amount.toFixed(config.decimalPlaces).split('.');
+  const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, config.thousandsSeparator);
+  const decimalPart = parts[1];
+  const formattedNumber = config.decimalPlaces > 0
+    ? `${integerPart}${config.decimalSeparator}${decimalPart}`
+    : integerPart;
+
+  return config.position === 'before'
+    ? `${config.symbol}${formattedNumber}`
+    : `${formattedNumber} ${config.symbol}`;
+};
+
+export const formatCurrency = (amount: number, currency = 'USD'): string => {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toFixed(2)}`;
+  }
 };
 
 export const formatDate = (date: string | Date, formatStr = 'MMM dd, yyyy'): string => {

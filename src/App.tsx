@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
+import { TenantConfigProvider } from './contexts/TenantConfigContext';
 import { PortalAuthProvider } from './contexts/PortalAuthContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -149,6 +150,7 @@ function App() {
         }}
       />
       <AuthProvider>
+        <TenantConfigProvider>
         <PermissionsProvider>
           <PortalAuthProvider>
             <Suspense fallback={<LoadingFallback />}>
@@ -683,6 +685,7 @@ function App() {
           </Suspense>
           </PortalAuthProvider>
         </PermissionsProvider>
+        </TenantConfigProvider>
       </AuthProvider>
     </BrowserRouter>
   );

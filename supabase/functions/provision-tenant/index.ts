@@ -49,6 +49,7 @@ interface ProvisionTenantRequest {
   adminPassword: string;
   adminFullName: string;
   planId: string;
+  countryId: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -116,9 +117,9 @@ Deno.serve(async (req: Request) => {
 
     const requestData: ProvisionTenantRequest = await req.json();
 
-    const { name, slug, adminEmail, adminPassword, adminFullName, planId } = requestData;
+    const { name, slug, adminEmail, adminPassword, adminFullName, planId, countryId } = requestData;
 
-    if (!name || !slug || !adminEmail || !adminPassword || !adminFullName || !planId) {
+    if (!name || !slug || !adminEmail || !adminPassword || !adminFullName || !planId || !countryId) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         {
@@ -150,6 +151,7 @@ Deno.serve(async (req: Request) => {
         name,
         slug,
         plan_id: planId,
+        country_id: countryId,
         status: 'trial',
         trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
       })

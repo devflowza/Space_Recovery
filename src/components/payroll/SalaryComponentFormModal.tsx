@@ -170,7 +170,7 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
                 placeholder="0"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">
-                {formData.calculation_type === 'percentage' ? '%' : 'OMR'}
+                {formData.calculation_type === 'percentage' ? '%' : ''}
               </div>
             </div>
           </div>

@@ -1,38 +1,24 @@
-import { useState, useEffect } from 'react';
-import { fetchCurrencyFormat, formatCurrencyWithSettings, CurrencyFormat } from '../lib/format';
-import { logger } from '../lib/logger';
+import { useCurrencyConfig } from '../contexts/TenantConfigContext';
+import { formatCurrencyWithConfig } from '../lib/format';
+import type { CurrencyFormat } from '../lib/format';
 
 export const useCurrency = () => {
-  const [currencyFormat, setCurrencyFormat] = useState<CurrencyFormat>({
-    currencySymbol: 'OMR',
-    currencyPosition: 'after',
-    decimalPlaces: 3,
-    currencyCode: 'OMR',
-  });
-  const [loading, setLoading] = useState(true);
+  const currencyConfig = useCurrencyConfig();
 
-  useEffect(() => {
-    const loadCurrencyFormat = async () => {
-      try {
-        const format = await fetchCurrencyFormat();
-        setCurrencyFormat(format);
-      } catch (error) {
-        logger.error('Error loading currency format:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCurrencyFormat();
-  }, []);
+  const currencyFormat: CurrencyFormat = {
+    currencySymbol: currencyConfig.symbol,
+    currencyPosition: currencyConfig.position,
+    decimalPlaces: currencyConfig.decimalPlaces,
+    currencyCode: currencyConfig.code,
+  };
 
   const formatCurrency = (amount: number): string => {
-    return formatCurrencyWithSettings(amount, currencyFormat);
+    return formatCurrencyWithConfig(amount, currencyConfig);
   };
 
   return {
     currencyFormat,
     formatCurrency,
-    loading,
+    loading: false,
   };
 };
