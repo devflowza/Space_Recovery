@@ -1,0 +1,215 @@
+import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { X } from 'lucide-react';
+import { Button } from '../../ui/Button';
+import { createSubscriptionPlan } from '../../../lib/billingService';
+import { platformAdminKeys } from '../../../lib/queryKeys';
+import toast from 'react-hot-toast';
+import type { Database } from '../../../types/database.types';
+
+type PlanInsert = Database['public']['Tables']['subscription_plans']['Insert'];
+
+interface PlanFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const generateSlug = (name: string): string =>
+  name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose }) => {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState<Partial<PlanInsert>>({
+    name: '',
+    code: '',
+    slug: '',
+    description: '',
+    price_monthly: 0,
+    price_yearly: 0,
+    currency: 'USD',
+    trial_days: null,
+    is_active: true,
+    is_public: true,
+    sort_order: 0,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createSubscriptionPlan({
+        ...formData,
+        name: formData.name || 'New Plan',
+        slug: formData.slug || generateSlug(formData.name || 'new-plan'),
+        price_monthly: formData.price_monthly || 0,
+        price_yearly: formData.price_yearly || 0,
+        currency: formData.currency || 'USD',
+        sort_order: formData.sort_order || 0,
+      } as PlanInsert),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformAdminKeys.plans() });
+      toast.success('Plan created successfully');
+      onClose();
+    },
+    onError: (err: Error) => toast.error(err.message || 'Failed to create plan'),
+  });
+
+  const updateField = (field: keyof PlanInsert, value: unknown) => {
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+      if (field === 'name' && typeof value === 'string') {
+        updated.slug = generateSlug(value);
+        updated.code = value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+      }
+      return updated;
+    });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900">Create Subscription Plan</h2>
+          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600 rounded">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            createMutation.mutate();
+          }}
+          className="p-6 space-y-4"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Plan Name *</label>
+              <input
+                type="text"
+                value={formData.name || ''}
+                onChange={(e) => updateField('name', e.target.value)}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Code</label>
+              <input
+                type="text"
+                value={formData.code || ''}
+                onChange={(e) => updateField('code', e.target.value)}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Slug</label>
+              <input
+                type="text"
+                value={formData.slug || ''}
+                onChange={(e) => updateField('slug', e.target.value)}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Sort Order</label>
+              <input
+                type="number"
+                value={formData.sort_order ?? 0}
+                onChange={(e) => updateField('sort_order', parseInt(e.target.value) || 0)}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+            <textarea
+              value={formData.description || ''}
+              onChange={(e) => updateField('description', e.target.value)}
+              rows={2}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Monthly Price</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.price_monthly ?? 0}
+                onChange={(e) => updateField('price_monthly', parseFloat(e.target.value) || 0)}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Yearly Price</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.price_yearly ?? 0}
+                onChange={(e) => updateField('price_yearly', parseFloat(e.target.value) || 0)}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+              <input
+                type="text"
+                value={formData.currency || 'USD'}
+                onChange={(e) => updateField('currency', e.target.value)}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Trial Days</label>
+            <input
+              type="number"
+              value={formData.trial_days ?? ''}
+              onChange={(e) => updateField('trial_days', e.target.value ? parseInt(e.target.value) : null)}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="No trial"
+            />
+          </div>
+
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.is_active ?? true}
+                onChange={(e) => updateField('is_active', e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-blue-600"
+              />
+              <span className="text-sm text-slate-700">Active</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.is_public ?? true}
+                onChange={(e) => updateField('is_public', e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-blue-600"
+              />
+              <span className="text-sm text-slate-700">Public</span>
+            </label>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createMutation.isPending}>
+              {createMutation.isPending ? 'Creating...' : 'Create Plan'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};

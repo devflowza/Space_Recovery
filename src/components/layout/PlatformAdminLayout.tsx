@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Ticket, Megaphone, LogOut, Settings, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, Ticket, Megaphone, LogOut, Settings, ChevronRight, CreditCard, Tag } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { PlatformAdminProvider } from '../../contexts/PlatformAdminContext';
 
@@ -13,8 +13,11 @@ interface NavItem {
 const navItems: NavItem[] = [
   { path: '/platform-admin', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/platform-admin/tenants', label: 'Tenants', icon: Users },
+  { path: '/platform-admin/plans', label: 'Plans & Billing', icon: CreditCard },
+  { path: '/platform-admin/coupons', label: 'Coupons', icon: Tag },
   { path: '/platform-admin/tickets', label: 'Support Tickets', icon: Ticket },
   { path: '/platform-admin/announcements', label: 'Announcements', icon: Megaphone },
+  { path: '/platform-admin/settings', label: 'Settings', icon: Settings },
 ];
 
 export const PlatformAdminLayout: React.FC = () => {
@@ -72,14 +75,6 @@ export const PlatformAdminLayout: React.FC = () => {
                 <p className="text-xs text-slate-400 truncate">{profile?.email}</p>
               </div>
             </div>
-
-            <button
-              onClick={() => navigate('/settings')}
-              className="w-full flex items-center gap-3 px-4 py-2 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors mb-1"
-            >
-              <Settings className="w-5 h-5" />
-              <span className="text-sm">Tenant Settings</span>
-            </button>
 
             <button
               onClick={handleSignOut}
@@ -142,6 +137,15 @@ function getBreadcrumbs(pathname: string): Array<{ label: string; path?: string 
     }
   } else if (parts[1] === 'announcements') {
     breadcrumbs.push({ label: 'Announcements' });
+  } else if (parts[1] === 'plans') {
+    breadcrumbs.push({ label: 'Subscription Plans', path: parts.length === 2 ? undefined : '/platform-admin/plans' });
+    if (parts.length > 2) {
+      breadcrumbs.push({ label: 'Plan Details' });
+    }
+  } else if (parts[1] === 'coupons') {
+    breadcrumbs.push({ label: 'Coupons' });
+  } else if (parts[1] === 'settings') {
+    breadcrumbs.push({ label: 'Platform Settings' });
   }
 
   return breadcrumbs;
