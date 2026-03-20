@@ -44,8 +44,10 @@ export const Login: React.FC = () => {
   useEffect(() => {
     if (profile && !passwordResetRequired && !mfaPending && !hasRedirected.current && profileStatus === 'approved') {
       hasRedirected.current = true;
-      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/';
-      navigate(from, { replace: true });
+      const isPlatformAdmin = !profile.tenant_id && (profile.role === 'owner' || profile.role === 'admin');
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname;
+      const defaultPath = isPlatformAdmin ? '/platform-admin' : '/';
+      navigate(from || defaultPath, { replace: true });
     }
   }, [profile, passwordResetRequired, mfaPending, navigate, location, profileStatus]);
 
