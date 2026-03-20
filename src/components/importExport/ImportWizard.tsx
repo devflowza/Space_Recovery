@@ -25,6 +25,7 @@ import {
   resolveNamesToUUIDs,
   BulkLookupResults,
 } from '../../lib/importExportService';
+import { logger } from '../../lib/logger';
 
 interface ImportWizardProps {
   entityType: EntityType;
@@ -137,7 +138,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
         // Resolve names to UUIDs for validation
         dataToValidate = parsedData.map((row) => resolveNamesToUUIDs(row, lookups));
       } catch (error) {
-        console.error('Name lookup error:', error);
+        logger.error('Name lookup error:', error);
         errors.push({
           rowNumber: 0,
           field: 'general',
@@ -228,7 +229,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
                 record[targetField] = typeof value === 'string' ? JSON.parse(value) : value;
               } catch (error) {
                 // If parsing fails, skip this field
-                console.error(`Failed to parse usable_donor_parts for row:`, value);
+                logger.error(`Failed to parse usable_donor_parts for row:`, value);
               }
             } else if (value && value.toString().trim()) {
               // Only add non-empty string values
@@ -246,9 +247,9 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
           .select();
 
         if (error) {
-          console.error('Batch insert error:', error);
-          console.error('Failed records sample:', recordsToInsert[0]);
-          console.error('Error details:', {
+          logger.error('Batch insert error:', error);
+          logger.error('Failed records sample:', recordsToInsert[0]);
+          logger.error('Error details:', {
             message: error.message,
             details: error.details,
             hint: error.hint,
@@ -270,7 +271,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
       queryClient.invalidateQueries({ queryKey: ['inventory_items'] });
 
     } catch (error) {
-      console.error('Import error:', error);
+      logger.error('Import error:', error);
       setImportResult({ success: 0, errors: parsedData.length });
     } finally {
       setIsImporting(false);

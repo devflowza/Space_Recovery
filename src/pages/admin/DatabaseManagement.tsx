@@ -6,6 +6,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Database, Download, Upload, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import { logger } from '../../lib/logger';
 
 interface Backup {
   id: string;
@@ -41,7 +42,7 @@ export const DatabaseManagement: React.FC = () => {
       if (error) throw error;
       setBackups(data || []);
     } catch (error) {
-      console.error('Error fetching backups:', error);
+      logger.error('Error fetching backups:', error);
     } finally {
       setLoading(false);
     }
@@ -63,7 +64,7 @@ export const DatabaseManagement: React.FC = () => {
       alert('Backup initiated. This is a demo - in production, this would trigger an actual backup process.');
       fetchBackups();
     } catch (error) {
-      console.error('Error creating backup:', error);
+      logger.error('Error creating backup:', error);
     } finally {
       setCreating(false);
     }

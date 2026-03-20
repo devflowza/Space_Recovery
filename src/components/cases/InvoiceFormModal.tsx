@@ -7,6 +7,7 @@ import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 
 interface LineItemTemplate {
   id: string;
@@ -229,7 +230,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
               setInvoiceNumber('INV-000001');
             }
           } catch (error) {
-            console.error('Error fetching next invoice number:', error);
+            logger.error('Error fetching next invoice number:', error);
             setInvoiceNumber('INV-000001');
           }
         }
@@ -287,7 +288,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
       .single();
 
     if (error) {
-      console.error('Error fetching quote:', error);
+      logger.error('Error fetching quote:', error);
       return;
     }
 
@@ -384,7 +385,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
           .eq('id', template.id);
       }
     } catch (error) {
-      console.error('Error updating template usage:', error);
+      logger.error('Error updating template usage:', error);
     }
   };
 
@@ -441,7 +442,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
       await onSave(invoicePayload, lineItems);
       onClose();
     } catch (error: unknown) {
-      console.error('Error saving invoice:', error);
+      logger.error('Error saving invoice:', error);
       toast.error('Invoice couldn\'t be saved. Check your connection and try again.');
     } finally {
       setIsSubmitting(false);

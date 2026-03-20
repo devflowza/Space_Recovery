@@ -1,5 +1,6 @@
 import { format as dateFnsFormat, parseISO } from 'date-fns';
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 export interface CurrencyFormat {
   currencySymbol: string;
@@ -23,7 +24,7 @@ export const fetchCurrencyFormat = async (): Promise<CurrencyFormat> => {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching currency format:', error);
+      logger.error('Error fetching currency format:', error);
       return {
         currencySymbol: 'OMR',
         currencyPosition: 'after',
@@ -49,7 +50,7 @@ export const fetchCurrencyFormat = async (): Promise<CurrencyFormat> => {
       currencyCode: 'OMR',
     };
   } catch (error) {
-    console.error('Error fetching currency format:', error);
+    logger.error('Error fetching currency format:', error);
     return {
       currencySymbol: 'OMR',
       currencyPosition: 'after',

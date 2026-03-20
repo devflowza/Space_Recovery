@@ -5,6 +5,7 @@ import { createPayment } from '@/lib/paymentsService';
 import { deleteCaseService } from '@/lib/caseService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
+import { logger } from '../../../lib/logger';
 
 interface UseCaseMutationsParams {
   id: string | undefined;
@@ -56,7 +57,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         .select();
 
       if (error) {
-        console.error('Error updating status:', error);
+        logger.error('Error updating status:', error);
         throw error;
       }
       return data;
@@ -67,7 +68,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
       queryClient.invalidateQueries({ queryKey: ['case_history', id] });
     },
     onError: (error) => {
-      console.error('Status update failed:', error);
+      logger.error('Status update failed:', error);
       toast.error('Failed to update status. Please try again.');
     },
   });
@@ -81,7 +82,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         .select();
 
       if (error) {
-        console.error('Error updating priority:', error);
+        logger.error('Error updating priority:', error);
         throw error;
       }
       return data;
@@ -92,7 +93,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
       queryClient.invalidateQueries({ queryKey: ['case_history', id] });
     },
     onError: (error) => {
-      console.error('Priority update failed:', error);
+      logger.error('Priority update failed:', error);
       toast.error('Failed to update priority. Please try again.');
     },
   });
@@ -106,7 +107,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         .select();
 
       if (error) {
-        console.error('Error updating assigned engineer:', error);
+        logger.error('Error updating assigned engineer:', error);
         throw error;
       }
       return data;
@@ -117,7 +118,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
       queryClient.invalidateQueries({ queryKey: ['case_history', id] });
     },
     onError: (error) => {
-      console.error('Assigned engineer update failed:', error);
+      logger.error('Assigned engineer update failed:', error);
       toast.error('Failed to update assigned engineer. Please try again.');
     },
   });
@@ -164,7 +165,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         .eq('id', deviceId);
 
       if (error) {
-        console.error('Error updating device:', error);
+        logger.error('Error updating device:', error);
         throw error;
       }
     },
@@ -252,7 +253,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         .rpc('get_next_case_number');
 
       if (numberError) {
-        console.error('Error getting next case number:', numberError);
+        logger.error('Error getting next case number:', numberError);
         throw new Error('Failed to get next case number');
       }
 
@@ -287,7 +288,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         .single();
 
       if (caseError) {
-        console.error('Error creating duplicate case:', caseError);
+        logger.error('Error creating duplicate case:', caseError);
         throw new Error(`Failed to duplicate case: ${caseError.message}`);
       }
 
@@ -317,7 +318,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
           .select('id');
 
         if (devicesError) {
-          console.error('Error duplicating devices:', devicesError);
+          logger.error('Error duplicating devices:', devicesError);
           throw new Error(`Failed to duplicate devices: ${devicesError.message}`);
         }
 
@@ -343,7 +344,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
                   .eq('id', newDeviceId);
 
                 if (updateError) {
-                  console.error('Error updating parent_device_id:', updateError);
+                  logger.error('Error updating parent_device_id:', updateError);
                 }
               }
             }
@@ -359,7 +360,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
       navigate(`/cases/${newCase.id}`);
     },
     onError: (error) => {
-      console.error('Case duplication error:', error);
+      logger.error('Case duplication error:', error);
       toast.error(`Failed to duplicate case: ${(error as Error).message}`);
     },
   });
@@ -375,7 +376,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
       navigate('/cases');
     },
     onError: (error: Error) => {
-      console.error('Failed to delete case:', error);
+      logger.error('Failed to delete case:', error);
       toast.error(`Failed to delete case: ${error.message}`);
     },
   });

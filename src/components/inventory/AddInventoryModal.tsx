@@ -6,6 +6,7 @@ import { Button } from '../ui/Button';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { supabase } from '../../lib/supabaseClient';
 import { useCurrency } from '../../hooks/useCurrency';
+import { logger } from '../../lib/logger';
 
 interface AddInventoryModalProps {
   isOpen: boolean;
@@ -159,7 +160,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
         setNextInventoryNumber(item.inventory_code || '');
       }
     } catch (error) {
-      console.error('Error loading item:', error);
+      logger.error('Error loading item:', error);
       setErrors({ submit: 'Failed to load item data' });
     } finally {
       setLoading(false);
@@ -180,7 +181,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
         setNextInventoryNumber(`${sequence.prefix}${paddedNumber}`);
       }
     } catch (error) {
-      console.error('Error fetching next inventory number:', error);
+      logger.error('Error fetching next inventory number:', error);
     }
   };
 
@@ -239,7 +240,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
         setSuppliers(uniqueSuppliers.map(name => ({ id: name, name })));
       }
     } catch (error) {
-      console.error('Error fetching dropdown data:', error);
+      logger.error('Error fetching dropdown data:', error);
     } finally {
       setLoading(false);
     }
@@ -340,7 +341,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
       }
       onClose();
     } catch (error: unknown) {
-      console.error(`Error ${itemId ? 'updating' : 'creating'} inventory item:`, error);
+      logger.error(`Error ${itemId ? 'updating' : 'creating'} inventory item:`, error);
       setErrors({ submit: error instanceof Error ? error.message : `Failed to ${itemId ? 'update' : 'create'} inventory item` });
     } finally {
       setSubmitting(false);

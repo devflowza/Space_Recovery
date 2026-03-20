@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient';
 import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
 import { logAuditTrail } from './auditTrailService';
 import { sanitizeUuidFields as sanitizeUuids } from './dataValidation';
+import { sanitizeFilterValue } from './postgrestSanitizer';
 
 const INVOICE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'template_id', 'accounting_locale_id', 'quote_id', 'currency_id'];
 const sanitizeUuidFields = (data: any) => sanitizeUuids(data, INVOICE_UUID_FIELDS);
@@ -148,7 +149,8 @@ export const fetchInvoices = async (filters?: {
   }
 
   if (filters?.search) {
-    query = query.or(`invoice_number.ilike.%${filters.search}%,notes.ilike.%${filters.search}%`);
+    const s = sanitizeFilterValue(filters.search);
+    query = query.or(`invoice_number.ilike.%${s}%,notes.ilike.%${s}%`);
   }
 
   if (filters?.caseId) {

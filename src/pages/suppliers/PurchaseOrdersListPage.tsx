@@ -11,6 +11,7 @@ import PurchaseOrderFormModal from '../../components/suppliers/PurchaseOrderForm
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 import { format } from 'date-fns';
+import { logger } from '../../lib/logger';
 
 export default function PurchaseOrdersListPage() {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ export default function PurchaseOrdersListPage() {
       setOrders(data || []);
       calculateStats(data || []);
     } catch (error: unknown) {
-      console.error('Error loading purchase orders:', error);
+      logger.error('Error loading purchase orders:', error);
       showToast(error instanceof Error ? error.message : 'Failed to load purchase orders', 'error');
     } finally {
       setLoading(false);
@@ -74,7 +75,7 @@ export default function PurchaseOrdersListPage() {
       if (error) throw error;
       setStatuses(data || []);
     } catch (error) {
-      console.error('Error loading statuses:', error);
+      logger.error('Error loading statuses:', error);
     }
   };
 
@@ -132,7 +133,7 @@ export default function PurchaseOrdersListPage() {
       showToast('Purchase order deleted successfully', 'success');
       loadOrders();
     } catch (error: unknown) {
-      console.error('Error deleting purchase order:', error);
+      logger.error('Error deleting purchase order:', error);
       showToast(error instanceof Error ? error.message : 'Failed to delete purchase order', 'error');
     }
   };

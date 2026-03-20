@@ -55,7 +55,7 @@ export const payrollService = {
     return data;
   },
 
-  async createSalaryComponent(component: any) {
+  async createSalaryComponent(component: Database['public']['Tables']['salary_components']['Insert']) {
     const { data, error } = await supabase
       .from('salary_components')
       .insert(component)
@@ -66,7 +66,7 @@ export const payrollService = {
     return data;
   },
 
-  async updateSalaryComponent(id: string, updates: any) {
+  async updateSalaryComponent(id: string, updates: Partial<Database['public']['Tables']['salary_components']['Update']>) {
     const { data, error } = await supabase
       .from('salary_components')
       .update({ ...updates, updated_at: new Date().toISOString() })

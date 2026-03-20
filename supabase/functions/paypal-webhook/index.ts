@@ -100,7 +100,15 @@ Deno.serve(async (req: Request) => {
     const bodyText = await req.text();
     const event: PayPalWebhookEvent = JSON.parse(bodyText);
 
-    if (paypalMode === "live" && paypalWebhookId && paypalClientId && paypalClientSecret) {
+    if (paypalMode === "live") {
+      if (!paypalWebhookId || !paypalClientId || !paypalClientSecret) {
+        console.error("PayPal credentials missing in live mode — rejecting webhook");
+        return new Response(
+          JSON.stringify({ error: "Webhook verification not configured" }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
       const accessToken = await getPayPalAccessToken(
         paypalClientId,
         paypalClientSecret,
@@ -123,7 +131,7 @@ Deno.serve(async (req: Request) => {
         );
       }
     } else {
-      console.log("Skipping signature verification (sandbox mode or missing config)");
+      console.log("Sandbox mode: skipping webhook signature verification");
     }
 
     const { error: insertError } = await supabase

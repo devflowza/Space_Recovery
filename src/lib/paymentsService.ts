@@ -1,5 +1,7 @@
 import { supabase } from './supabaseClient';
 import { logAuditTrail } from './auditTrailService';
+import { sanitizeFilterValue } from './postgrestSanitizer';
+import { logger } from './logger';
 
 export interface Payment {
   id?: string;
@@ -72,7 +74,7 @@ export const getNextPaymentNumber = async (): Promise<string> => {
   });
 
   if (error) {
-    console.error('Error getting next payment number:', error);
+    logger.error('Error getting next payment number:', error);
     return `PAY-${Date.now()}`;
   }
 
@@ -130,7 +132,8 @@ export const fetchPayments = async (filters?: {
   }
 
   if (filters?.search) {
-    query = query.or(`payment_number.ilike.%${filters.search}%,reference_number.ilike.%${filters.search}%`);
+    const s = sanitizeFilterValue(filters.search);
+    query = query.or(`payment_number.ilike.%${s}%,reference_number.ilike.%${s}%`);
   }
 
   const pageSize = filters?.pageSize || DEFAULT_PAGE_SIZE;
@@ -536,7 +539,7 @@ const createFinancialTransaction = async (transaction: {
     .insert([transaction]);
 
   if (error) {
-    console.error('Error creating financial transaction:', error);
+    logger.error('Error creating financial transaction:', error);
     throw new Error(`Failed to create financial audit record: ${error.message}`);
   }
 };

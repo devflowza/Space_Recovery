@@ -14,6 +14,7 @@ import {
 import { generatePDFAsBlob, type PDFBlobResult } from '../../lib/pdf/pdfService';
 import type { DocumentType } from '../../lib/pdf/types';
 import { preloadAllFonts } from '../../lib/pdf/fonts';
+import { logger } from '../../lib/logger';
 
 interface PDFPreviewModalProps {
   isOpen: boolean;
@@ -100,7 +101,7 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
         setErrorCode(code);
       }
     } catch (err) {
-      console.error('[PDF Preview] Error loading PDF:', err);
+      logger.error('[PDF Preview] Error loading PDF:', err);
       const errorMsg = err instanceof Error ? err.message : 'Failed to load PDF';
       const friendlyError = errorMsg.includes('timeout')
         ? 'PDF generation timed out. Please try again.'

@@ -24,6 +24,7 @@ import {
 } from '../../lib/inventoryService';
 import { supabase } from '../../lib/supabaseClient';
 import { format } from 'date-fns';
+import { logger } from '../../lib/logger';
 
 export default function InventoryListPage() {
   const navigate = useNavigate();
@@ -135,7 +136,7 @@ export default function InventoryListPage() {
       });
     } catch (error: unknown) {
       setIsRefreshing(false);
-      console.error('Error loading inventory data:', error);
+      logger.error('Error loading inventory data:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to load inventory data. Please try again.';
       setError(errorMessage);
 
@@ -208,7 +209,7 @@ export default function InventoryListPage() {
       setEditingStatusId(null);
       await loadData();
     } catch (error) {
-      console.error('Error updating status:', error);
+      logger.error('Error updating status:', error);
     } finally {
       setUpdatingStatus(false);
     }
@@ -237,7 +238,7 @@ export default function InventoryListPage() {
       await loadData();
       toast.success('Item deleted successfully');
     } catch (error) {
-      console.error('Error deleting inventory item:', error);
+      logger.error('Error deleting inventory item:', error);
       toast.error('Failed to delete item. Please try again.');
     }
   };
@@ -251,7 +252,7 @@ export default function InventoryListPage() {
       await loadData();
       toast.success('Item status changed successfully');
     } catch (error) {
-      console.error('Error changing item status:', error);
+      logger.error('Error changing item status:', error);
       toast.error('Failed to change status. Please try again.');
     }
   };

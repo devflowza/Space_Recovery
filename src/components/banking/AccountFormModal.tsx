@@ -6,6 +6,7 @@ import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { BankAccount } from '../../lib/bankingService';
 import { Building, Wallet, Smartphone, AlertCircle } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface AccountFormModalProps {
   isOpen: boolean;
@@ -187,7 +188,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
       await onSave(accountData);
       onClose();
     } catch (err: unknown) {
-      console.error('Account save error:', err);
+      logger.error('Account save error:', err);
       setError(err instanceof Error ? err.message : 'Failed to save account. Please try again.');
     } finally {
       setIsSubmitting(false);

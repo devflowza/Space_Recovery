@@ -1,5 +1,7 @@
 import { supabase } from './supabaseClient';
 import type { Report, ReportType, ReportStatus, ReportTemplate, ReportSectionData } from './reportTypes';
+import { isValidUuid } from './postgrestSanitizer';
+import { logger } from './logger';
 
 export const reportsService = {
   /**
@@ -20,7 +22,7 @@ export const reportsService = {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching report templates:', error);
+      logger.error('Error fetching report templates:', error);
       throw error;
     }
 
@@ -40,7 +42,7 @@ export const reportsService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching default template:', error);
+      logger.error('Error fetching default template:', error);
       throw error;
     }
 
@@ -60,7 +62,7 @@ export const reportsService = {
       .order('template_name');
 
     if (error) {
-      console.error('Error fetching templates:', error);
+      logger.error('Error fetching templates:', error);
       throw error;
     }
 
@@ -78,7 +80,7 @@ export const reportsService = {
     });
 
     if (error) {
-      console.error('Error generating report number:', error);
+      logger.error('Error generating report number:', error);
       throw error;
     }
 
@@ -125,7 +127,7 @@ export const reportsService = {
       .maybeSingle();
 
     if (reportError) {
-      console.error('Error creating report:', reportError);
+      logger.error('Error creating report:', reportError);
       throw reportError;
     }
 
@@ -145,7 +147,7 @@ export const reportsService = {
         .insert(sectionsData);
 
       if (sectionsError) {
-        console.error('Error creating report sections:', sectionsError);
+        logger.error('Error creating report sections:', sectionsError);
         throw sectionsError;
       }
     }
@@ -182,7 +184,7 @@ export const reportsService = {
       .eq('id', originalReportId);
 
     if (updateError) {
-      console.error('Error updating previous version:', updateError);
+      logger.error('Error updating previous version:', updateError);
       throw updateError;
     }
 
@@ -207,7 +209,7 @@ export const reportsService = {
       .maybeSingle();
 
     if (createError) {
-      console.error('Error creating report version:', createError);
+      logger.error('Error creating report version:', createError);
       throw createError;
     }
 
@@ -227,7 +229,7 @@ export const reportsService = {
         .insert(sectionsData);
 
       if (sectionsError) {
-        console.error('Error creating version sections:', sectionsError);
+        logger.error('Error creating version sections:', sectionsError);
         throw sectionsError;
       }
     }
@@ -251,7 +253,7 @@ export const reportsService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching report:', error);
+      logger.error('Error fetching report:', error);
       throw error;
     }
 
@@ -269,7 +271,7 @@ export const reportsService = {
       .order('section_order');
 
     if (error) {
-      console.error('Error fetching report sections:', error);
+      logger.error('Error fetching report sections:', error);
       throw error;
     }
 
@@ -308,7 +310,7 @@ export const reportsService = {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching reports:', error);
+      logger.error('Error fetching reports:', error);
       throw error;
     }
 
@@ -334,11 +336,11 @@ export const reportsService = {
         *,
         created_by_profile:profiles!created_by(full_name)
       `)
-      .or(`id.eq.${parentId},parent_report_id.eq.${parentId}`)
+      .or(isValidUuid(parentId) ? `id.eq.${parentId},parent_report_id.eq.${parentId}` : 'id.eq.00000000-0000-0000-0000-000000000000')
       .order('version_number', { ascending: false });
 
     if (error) {
-      console.error('Error fetching version history:', error);
+      logger.error('Error fetching version history:', error);
       throw error;
     }
 
@@ -359,7 +361,7 @@ export const reportsService = {
       .eq('report_id', reportId);
 
     if (deleteError) {
-      console.error('Error deleting old sections:', deleteError);
+      logger.error('Error deleting old sections:', deleteError);
       throw deleteError;
     }
 
@@ -378,7 +380,7 @@ export const reportsService = {
       .insert(sectionsData);
 
     if (insertError) {
-      console.error('Error updating sections:', insertError);
+      logger.error('Error updating sections:', insertError);
       throw insertError;
     }
   },
@@ -404,7 +406,7 @@ export const reportsService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error updating report:', error);
+      logger.error('Error updating report:', error);
       throw error;
     }
 
@@ -427,7 +429,7 @@ export const reportsService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error approving report:', error);
+      logger.error('Error approving report:', error);
       throw error;
     }
 
@@ -450,7 +452,7 @@ export const reportsService = {
       .maybeSingle();
 
     if (error) {
-      console.error('Error sending report to customer:', error);
+      logger.error('Error sending report to customer:', error);
       throw error;
     }
 
@@ -467,7 +469,7 @@ export const reportsService = {
       .eq('id', reportId);
 
     if (error) {
-      console.error('Error deleting report:', error);
+      logger.error('Error deleting report:', error);
       throw error;
     }
   },
@@ -487,7 +489,7 @@ export const reportsService = {
       .order('event_timestamp', { ascending: true });
 
     if (error) {
-      console.error('Error fetching chain of custody:', error);
+      logger.error('Error fetching chain of custody:', error);
       throw error;
     }
 

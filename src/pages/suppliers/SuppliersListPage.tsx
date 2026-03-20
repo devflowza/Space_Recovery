@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 import { useCurrency } from '../../hooks/useCurrency';
 import { formatDate } from '../../lib/format';
+import { logger } from '../../lib/logger';
 
 interface Supplier {
   id: string;
@@ -81,7 +82,7 @@ export default function SuppliersListPage() {
       setSuppliers(data || []);
       calculateStats(data || []);
     } catch (error: unknown) {
-      console.error('Error loading suppliers:', error);
+      logger.error('Error loading suppliers:', error);
       showToast(error instanceof Error ? error.message : 'Failed to load suppliers', 'error');
     } finally {
       setLoading(false);
@@ -99,7 +100,7 @@ export default function SuppliersListPage() {
       if (error) throw error;
       setCategories(data || []);
     } catch (error) {
-      console.error('Error loading categories:', error);
+      logger.error('Error loading categories:', error);
     }
   };
 
@@ -121,7 +122,7 @@ export default function SuppliersListPage() {
         totalSpend,
       });
     } catch (error) {
-      console.error('Error calculating stats:', error);
+      logger.error('Error calculating stats:', error);
       setStats({
         total: supplierData.length,
         active: activeSuppliers.length,

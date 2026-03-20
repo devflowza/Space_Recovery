@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 
 interface LineItem {
   id?: string;
@@ -96,7 +97,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
         }
       }
     } catch (error) {
-      console.error('Error loading master data:', error);
+      logger.error('Error loading master data:', error);
     }
   };
 
@@ -108,7 +109,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
         setFormData(prev => ({ ...prev, po_number: data }));
       }
     } catch (error) {
-      console.error('Error loading next PO number:', error);
+      logger.error('Error loading next PO number:', error);
     }
   };
 
@@ -188,7 +189,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
       onSuccess();
       onClose();
     } catch (error: unknown) {
-      console.error('Error saving purchase order:', error);
+      logger.error('Error saving purchase order:', error);
       showToast(error instanceof Error ? error.message : 'Failed to save purchase order', 'error');
     } finally {
       setLoading(false);

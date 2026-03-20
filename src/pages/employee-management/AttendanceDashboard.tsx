@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { format } from 'date-fns';
+import { logger } from '../../lib/logger';
 
 export const AttendanceDashboard: React.FC = () => {
   const [stats, setStats] = useState({
@@ -36,7 +37,7 @@ export const AttendanceDashboard: React.FC = () => {
 
       setStats({ present, absent, late, onLeave });
     } catch (error) {
-      console.error('Error loading stats:', error);
+      logger.error('Error loading stats:', error);
     } finally {
       setLoading(false);
     }

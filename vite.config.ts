@@ -14,6 +14,9 @@ export default defineConfig({
           res.setHeader('X-XSS-Protection', '1; mode=block');
           res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
           res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+          res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+          // Production CSP must be configured at the hosting/CDN layer
+          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com;");
           next();
         });
       },
@@ -25,6 +28,7 @@ export default defineConfig({
           res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
           res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
           res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com;");
           next();
         });
       },

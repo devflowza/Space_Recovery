@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
+import { logger } from './logger';
 
 export interface SendDocumentEmailParams {
   to: string;
@@ -34,17 +35,17 @@ async function blobToBase64(blob: Blob): Promise<string> {
 
 function validatePDFBlob(blob: Blob): boolean {
   if (!blob || blob.size === 0) {
-    console.error('[Email Service] Invalid blob: empty or null');
+    logger.error('[Email Service] Invalid blob: empty or null');
     return false;
   }
 
   if (blob.type !== 'application/pdf' && blob.type !== '') {
-    console.error('[Email Service] Invalid blob type:', blob.type);
+    logger.error('[Email Service] Invalid blob type:', blob.type);
     return false;
   }
 
   if (blob.size < 100) {
-    console.error('[Email Service] Blob too small, likely corrupted:', blob.size, 'bytes');
+    logger.error('[Email Service] Blob too small, likely corrupted:', blob.size, 'bytes');
     return false;
   }
 
@@ -104,7 +105,7 @@ export async function sendDocumentEmail(params: SendDocumentEmailParams): Promis
 
     return { success: true, messageId: result.messageId };
   } catch (error) {
-    console.error('Error sending document email:', error);
+    logger.error('Error sending document email:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send email',

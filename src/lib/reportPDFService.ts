@@ -4,6 +4,7 @@ import { buildReportDocument, type ReportData } from './pdf/documents/ReportDocu
 import { loadImageAsBase64 } from './pdf/utils';
 import { logPDFGeneration } from './pdf/loggingService';
 import type { TranslationContext } from './pdf/types';
+import { logger } from './logger';
 import {
   getTranslation,
   isRTLLanguage,
@@ -103,7 +104,7 @@ class ReportPDFService {
       );
 
       if (!fontsLoaded && languageCode) {
-        console.error(`[Report PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
+        logger.error(`[Report PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
         languageCode = null;
         mode = 'english_only';
         fontSource = 'fallback';
@@ -158,7 +159,7 @@ class ReportPDFService {
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate report';
       const errorCode = error instanceof Error && error.message.includes('timeout') ? 'TIMEOUT' : 'GENERATION_FAILED';
 
-      console.error('[Report PDF Service] Error generating report:', error);
+      logger.error('[Report PDF Service] Error generating report:', error);
 
       await logPDFGeneration({
         caseId: reportId,
@@ -205,7 +206,7 @@ class ReportPDFService {
       );
 
       if (!fontsLoaded && languageCode) {
-        console.error(`[Report PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
+        logger.error(`[Report PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
         languageCode = null;
         mode = 'english_only';
         fontSource = 'fallback';
@@ -243,11 +244,11 @@ class ReportPDFService {
             const blobUrl = URL.createObjectURL(blob);
             resolve({ blobUrl, blob });
           }, undefined, (err: any) => {
-            console.error('[Report PDF Service] Error in getBlob callback:', err);
+            logger.error('[Report PDF Service] Error in getBlob callback:', err);
             reject(err);
           });
         } catch (error) {
-          console.error('[Report PDF Service] Error creating PDF:', error);
+          logger.error('[Report PDF Service] Error creating PDF:', error);
           reject(error);
         }
       });
@@ -276,7 +277,7 @@ class ReportPDFService {
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate report';
       const errorCode = error instanceof Error && error.message.includes('timeout') ? 'TIMEOUT' : 'GENERATION_FAILED';
 
-      console.error('[Report PDF Service] Error generating report blob:', error);
+      logger.error('[Report PDF Service] Error generating report blob:', error);
 
       await logPDFGeneration({
         caseId: reportId,
@@ -336,7 +337,7 @@ class ReportPDFService {
       .maybeSingle();
 
     if (caseError) {
-      console.error('[Report PDF Service] Error fetching case data:', caseError);
+      logger.error('[Report PDF Service] Error fetching case data:', caseError);
     }
 
     // Get Patient device role ID
@@ -371,7 +372,7 @@ class ReportPDFService {
       .limit(1);
 
     if (deviceError) {
-      console.error('[Report PDF Service] Error fetching device data:', deviceError);
+      logger.error('[Report PDF Service] Error fetching device data:', deviceError);
     }
 
     let deviceData = null;
@@ -471,7 +472,7 @@ class ReportPDFService {
     try {
       await this.generateReportPDF(reportId, true);
     } catch (error) {
-      console.error('Error downloading report PDF:', error);
+      logger.error('Error downloading report PDF:', error);
       throw error;
     }
   }

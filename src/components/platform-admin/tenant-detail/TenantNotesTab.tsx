@@ -8,6 +8,7 @@ import { platformAdminKeys } from '@/lib/queryKeys';
 import { usePlatformAdmin } from '@/contexts/PlatformAdminContext';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/useToast';
+import { logger } from '../../../lib/logger';
 
 interface TenantNotesTabProps {
   tenantId: string;
@@ -37,7 +38,7 @@ export const TenantNotesTab: React.FC<TenantNotesTabProps> = ({ tenantId }) => {
     },
     onError: (error) => {
       showError('Failed to add note');
-      console.error(error);
+      logger.error(error);
     },
   });
 

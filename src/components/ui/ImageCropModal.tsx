@@ -4,6 +4,7 @@ import { Point, Area } from 'react-easy-crop/types';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface ImageCropModalProps {
   isOpen: boolean;
@@ -109,7 +110,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
       onCropComplete(blob, url);
       onClose();
     } catch (error) {
-      console.error('Error cropping image:', error);
+      logger.error('Error cropping image:', error);
     } finally {
       setIsCropping(false);
     }

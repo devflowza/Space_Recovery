@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { formatDate } from '../../lib/format';
+import { logger } from '../../lib/logger';
 
 interface CaseLabelProps {
   caseId: string;
@@ -94,7 +95,7 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
           devices: devicesWithTypes,
         });
       } catch (error) {
-        console.error('Error fetching label data:', error);
+        logger.error('Error fetching label data:', error);
       } finally {
         setLoading(false);
       }

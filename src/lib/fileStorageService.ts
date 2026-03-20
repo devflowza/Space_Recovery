@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
+import { logger } from './logger';
 
 export interface UploadResult {
   success: boolean;
@@ -77,7 +78,7 @@ export const uploadCompanyAsset = async (
       });
 
     if (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       return {
         success: false,
         error: error.message || 'Failed to upload file',
@@ -99,7 +100,7 @@ export const uploadCompanyAsset = async (
       },
     };
   } catch (error) {
-    console.error('Upload exception:', error);
+    logger.error('Upload exception:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -119,7 +120,7 @@ export const deleteCompanyAsset = async (
     const { error } = await supabase.storage.from(bucketName).remove([filePath]);
 
     if (error) {
-      console.error('Delete error:', error);
+      logger.error('Delete error:', error);
       return {
         success: false,
         error: error.message || 'Failed to delete file',
@@ -128,7 +129,7 @@ export const deleteCompanyAsset = async (
 
     return { success: true };
   } catch (error) {
-    console.error('Delete exception:', error);
+    logger.error('Delete exception:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -200,7 +201,7 @@ export const updateCompanyBranding = async (
       .eq('id', 1);
 
     if (error) {
-      console.error('Update branding error:', error);
+      logger.error('Update branding error:', error);
       return {
         success: false,
         error: error.message || 'Failed to update branding',
@@ -209,7 +210,7 @@ export const updateCompanyBranding = async (
 
     return { success: true };
   } catch (error) {
-    console.error('Update branding exception:', error);
+    logger.error('Update branding exception:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -232,7 +233,7 @@ export const getCompanyLogo = async (
     const fieldName = type === 'primary' ? 'logo_url' : 'logo_light_url';
     return data.branding[fieldName] || null;
   } catch (error) {
-    console.error('Get logo error:', error);
+    logger.error('Get logo error:', error);
     return null;
   }
 };
@@ -252,7 +253,7 @@ export const getCompanyQRCode = async (
     const fieldName = `qr_code_${type}_url`;
     return data.branding[fieldName] || null;
   } catch (error) {
-    console.error('Get QR code error:', error);
+    logger.error('Get QR code error:', error);
     return null;
   }
 };

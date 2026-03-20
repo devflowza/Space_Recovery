@@ -8,6 +8,7 @@ import {
   ModulesByCategory,
 } from '../../lib/rolePermissionsService';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 import {
   Shield,
   CheckCircle,
@@ -78,7 +79,7 @@ export const RolePermissions: React.FC = () => {
       const grouped = await rolePermissionsService.getModulesByCategory();
       setModulesByCategory(grouped);
     } catch (error) {
-      console.error('Error loading modules:', error);
+      logger.error('Error loading modules:', error);
       toast.error('Failed to load modules');
     } finally {
       setLoading(false);
@@ -92,7 +93,7 @@ export const RolePermissions: React.FC = () => {
       setOriginalPermissions(new Map(perms));
       setHasChanges(false);
     } catch (error) {
-      console.error('Error loading permissions:', error);
+      logger.error('Error loading permissions:', error);
       toast.error('Failed to load permissions');
     }
   };
@@ -168,7 +169,7 @@ export const RolePermissions: React.FC = () => {
         toast.error(result.error || 'Failed to update permissions');
       }
     } catch (error) {
-      console.error('Error saving permissions:', error);
+      logger.error('Error saving permissions:', error);
       toast.error('Failed to save permissions');
     } finally {
       setSaving(false);

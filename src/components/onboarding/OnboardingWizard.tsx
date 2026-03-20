@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { onboardingService, ONBOARDING_STEPS, type OnboardingStep } from '../../lib/onboardingService';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 
 interface OnboardingWizardProps {
   tenantId: string;
@@ -35,7 +36,7 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
       }
     } catch (error) {
       showToast('Failed to save progress', 'error');
-      console.error(error);
+      logger.error(error);
     } finally {
       setLoading(false);
     }
@@ -158,7 +159,7 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip, loading }: StepContentP
       onNext();
     } catch (error) {
       showToast('Failed to load sample data', 'error');
-      console.error(error);
+      logger.error(error);
     } finally {
       setLoadingSampleData(false);
     }

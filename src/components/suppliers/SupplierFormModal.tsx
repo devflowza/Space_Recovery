@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 
 interface SupplierData {
   id?: string;
@@ -111,7 +112,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
       if (categoriesRes.data) setCategories(categoriesRes.data);
       if (paymentTermsRes.data) setPaymentTerms(paymentTermsRes.data);
     } catch (error) {
-      console.error('Error loading master data:', error);
+      logger.error('Error loading master data:', error);
     }
   };
 
@@ -123,7 +124,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
         setFormData(prev => ({ ...prev, supplier_number: data }));
       }
     } catch (error) {
-      console.error('Error loading next supplier number:', error);
+      logger.error('Error loading next supplier number:', error);
     }
   };
 
@@ -163,7 +164,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
       onSuccess();
       onClose();
     } catch (error: unknown) {
-      console.error('Error saving supplier:', error);
+      logger.error('Error saving supplier:', error);
       showToast(error instanceof Error ? error.message : 'Failed to save supplier', 'error');
     } finally {
       setLoading(false);

@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
+import { logger } from './logger';
 
 interface DeleteCaseResult {
   success: boolean;
@@ -41,7 +42,7 @@ export async function deleteCaseService(caseId: string): Promise<DeleteCaseResul
 
     return data as DeleteCaseResult;
   } catch (error: any) {
-    console.error('Error deleting case:', error);
+    logger.error('Error deleting case:', error);
     throw new Error(error.message || 'Failed to delete case');
   }
 }

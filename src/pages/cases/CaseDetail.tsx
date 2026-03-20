@@ -41,6 +41,7 @@ import {
 import { useCaseModals } from '../../components/cases/detail/useCaseModals';
 import { useCaseQueries } from '../../components/cases/detail/useCaseQueries';
 import { useCaseMutations } from '../../components/cases/detail/useCaseMutations';
+import { logger } from '../../lib/logger';
 
 type TabType = 'overview' | 'client' | 'devices' | 'clones' | 'reports' | 'quotes' | 'files' | 'engineers' | 'notes' | 'portal' | 'history' | 'stock';
 
@@ -105,7 +106,7 @@ export const CaseDetail: React.FC = () => {
 
       await logWhatsAppCommunication(supabase, id!, phoneNumber, `Case ${caseData.case_no} update`);
     } catch (error) {
-      console.error('Error opening WhatsApp:', error);
+      logger.error('Error opening WhatsApp:', error);
       toast.error('Failed to open WhatsApp. Please check the phone number.');
     }
   };
@@ -163,7 +164,7 @@ export const CaseDetail: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['case-financial-summary', id] });
       toast.success('Proforma invoice successfully converted to Tax Invoice');
     } catch (error: unknown) {
-      console.error('Error converting invoice:', error);
+      logger.error('Error converting invoice:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to convert invoice');
     }
   };

@@ -8,6 +8,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
 import { ChevronLeft, Hash, Search } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 
 type SequenceScope =
   | 'case'
@@ -108,7 +109,7 @@ export const SystemNumbers: React.FC = () => {
         });
 
       if (error) {
-        console.error('Error updating number sequence:', error);
+        logger.error('Error updating number sequence:', error);
         throw error;
       }
 
@@ -123,7 +124,7 @@ export const SystemNumbers: React.FC = () => {
       toast.success('Number sequence updated successfully');
     },
     onError: (error: Error) => {
-      console.error('Failed to update number sequence:', error);
+      logger.error('Failed to update number sequence:', error);
       toast.error(`Failed to update: ${error.message || 'Unknown error occurred'}`);
     },
   });

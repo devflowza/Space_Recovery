@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 
 interface PortalSettings {
   portal_enabled: boolean;
@@ -29,7 +30,7 @@ export async function getPortalSettings(): Promise<PortalSettings | null> {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching portal settings:', error);
+      logger.error('Error fetching portal settings:', error);
       return null;
     }
 
@@ -41,7 +42,7 @@ export async function getPortalSettings(): Promise<PortalSettings | null> {
 
     return null;
   } catch (error) {
-    console.error('Error in getPortalSettings:', error);
+    logger.error('Error in getPortalSettings:', error);
     return null;
   }
 }

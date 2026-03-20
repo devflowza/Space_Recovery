@@ -8,6 +8,7 @@ import { FormField } from '../../components/ui/FormField';
 import { tenantService } from '../../lib/tenantService';
 import { useToast } from '../../hooks/useToast';
 import type { Database } from '../../types/database.types';
+import { logger } from '../../lib/logger';
 
 type SubscriptionPlan = Database['public']['Tables']['subscription_plans']['Row'];
 
@@ -38,7 +39,7 @@ export const TenantSignup = () => {
         }
       } catch (error) {
         showToast('Failed to load subscription plans', 'error');
-        console.error(error);
+        logger.error(error);
       }
     };
     loadPlans();
@@ -80,7 +81,7 @@ export const TenantSignup = () => {
       navigate('/login');
     } catch (error: unknown) {
       showToast(error instanceof Error ? error.message : 'Failed to create account', 'error');
-      console.error(error);
+      logger.error(error);
     } finally {
       setLoading(false);
     }

@@ -17,6 +17,7 @@ import { Card } from '../../components/ui/Card';
 import { ENTITY_CONFIGS, EntityType, getJobs, getEntityCount } from '../../lib/importExportService';
 import { ExportWizard } from '../../components/importExport/ExportWizard';
 import { ImportWizard } from '../../components/importExport/ImportWizard';
+import { logger } from '../../lib/logger';
 
 export const ImportExport: React.FC = () => {
   const [selectedEntity, setSelectedEntity] = useState<EntityType | null>(null);
@@ -30,7 +31,7 @@ export const ImportExport: React.FC = () => {
       const { data, error } = await getJobs();
       if (error) {
         // Table might not exist yet - return empty array
-        console.error('Import/Export tables not found. Please apply migrations.');
+        logger.error('Import/Export tables not found. Please apply migrations.');
         return [];
       }
       return data?.slice(0, 10) || [];

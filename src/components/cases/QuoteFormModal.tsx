@@ -7,6 +7,7 @@ import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 
 interface LineItemTemplate {
   id: string;
@@ -125,7 +126,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
               setQuoteNumber('QT-000001');
             }
           } catch (error) {
-            console.error('Error fetching next quote number:', error);
+            logger.error('Error fetching next quote number:', error);
             setQuoteNumber('QT-000001');
           }
         }
@@ -325,7 +326,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
           .eq('id', template.id);
       }
     } catch (error) {
-      console.error('Error updating template usage:', error);
+      logger.error('Error updating template usage:', error);
     }
   };
 
@@ -386,7 +387,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
       );
       onClose();
     } catch (error: unknown) {
-      console.error('Error saving quote:', error);
+      logger.error('Error saving quote:', error);
       const errorMessage = error instanceof Error ? error.message : 'Quote couldn\'t be saved. Check your connection and try again.';
       toast.error(errorMessage);
     } finally {

@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
+import { logger } from '../../lib/logger';
 
 interface CommunicationData {
   id?: string;
@@ -93,7 +94,7 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
       onSuccess();
       onClose();
     } catch (error: unknown) {
-      console.error('Error saving communication:', error);
+      logger.error('Error saving communication:', error);
       showToast(error instanceof Error ? error.message : 'Failed to save communication', 'error');
     } finally {
       setLoading(false);

@@ -21,6 +21,7 @@ import { formatDate } from '../../lib/format';
 import { sanitizeHtml } from '../../lib/sanitizeHtml';
 import { LineItemTemplateFormModal } from '../../components/templates/LineItemTemplateFormModal';
 import { useCurrency } from '../../hooks/useCurrency';
+import { logger } from '../../lib/logger';
 
 interface Template {
   id: string;
@@ -89,7 +90,7 @@ export const TemplateTypeDetail: React.FC = () => {
         setTemplates(templatesData || []);
       }
     } catch (error) {
-      console.error('Error loading templates:', error);
+      logger.error('Error loading templates:', error);
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +111,7 @@ export const TemplateTypeDetail: React.FC = () => {
         await loadData();
       }
     } catch (error) {
-      console.error('Error deleting template:', error);
+      logger.error('Error deleting template:', error);
     }
   };
 
@@ -135,7 +136,7 @@ export const TemplateTypeDetail: React.FC = () => {
         await loadData();
       }
     } catch (error) {
-      console.error('Error duplicating template:', error);
+      logger.error('Error duplicating template:', error);
     }
   };
 

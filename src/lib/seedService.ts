@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logger } from './logger';
 import {
   DEVICE_MEDIA_SEED_DATA,
   CLIENT_FINANCIAL_SEED_DATA,
@@ -29,13 +30,13 @@ async function getTableCount(tableName: string): Promise<number> {
       .select('*', { count: 'exact', head: true });
 
     if (error) {
-      console.error(`Error counting ${tableName}:`, error);
+      logger.error(`Error counting ${tableName}:`, error);
       return 0;
     }
 
     return count || 0;
   } catch (error) {
-    console.error(`Error counting ${tableName}:`, error);
+    logger.error(`Error counting ${tableName}:`, error);
     return 0;
   }
 }
@@ -50,7 +51,7 @@ async function checkAllTablesPopulated(tables: readonly string[]): Promise<boole
     }
     return true;
   } catch (error) {
-    console.error('Error checking tables:', error);
+    logger.error('Error checking tables:', error);
     return false;
   }
 }
@@ -102,7 +103,7 @@ export async function checkIfSeeded(category: string): Promise<boolean> {
 
     return await checkAllTablesPopulated(categoryTables);
   } catch (error) {
-    console.error('Error checking seed status:', error);
+    logger.error('Error checking seed status:', error);
     return false;
   }
 }
@@ -166,7 +167,7 @@ export async function seedDeviceMediaData(): Promise<SeedResult> {
       const seedData = DEVICE_MEDIA_SEED_DATA[table];
 
       if (!seedData || seedData.length === 0) {
-        console.error(`No seed data found for table: ${table}`);
+        logger.error(`No seed data found for table: ${table}`);
         details.push({
           tableName: table,
           tableLabel: tableLabels[table],
@@ -190,7 +191,7 @@ export async function seedDeviceMediaData(): Promise<SeedResult> {
         .select();
 
       if (error) {
-        console.error(`Error seeding ${table}:`, error);
+        logger.error(`Error seeding ${table}:`, error);
         details.push({
           tableName: table,
           tableLabel: tableLabels[table],
@@ -235,7 +236,7 @@ export async function seedDeviceMediaData(): Promise<SeedResult> {
       details,
     };
   } catch (error) {
-    console.error('Seeding error:', error);
+    logger.error('Seeding error:', error);
     return {
       success: false,
       message: 'Failed to seed data',
@@ -397,7 +398,7 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
       const seedData = CLIENT_FINANCIAL_SEED_DATA[table];
 
       if (!seedData || seedData.length === 0) {
-        console.error(`No seed data found for table: ${table}`);
+        logger.error(`No seed data found for table: ${table}`);
         details.push({
           tableName: table,
           tableLabel: tableLabels[table],
@@ -421,7 +422,7 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
         .select();
 
       if (error) {
-        console.error(`Error seeding ${table}:`, error);
+        logger.error(`Error seeding ${table}:`, error);
         details.push({
           tableName: table,
           tableLabel: tableLabels[table],
@@ -558,7 +559,7 @@ export async function seedClientFinancialData(): Promise<SeedResult> {
       details,
     };
   } catch (error) {
-    console.error('Seeding error:', error);
+    logger.error('Seeding error:', error);
     return {
       success: false,
       message: 'Failed to seed data',
@@ -930,7 +931,7 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
       details,
     };
   } catch (error) {
-    console.error('Seeding error:', error);
+    logger.error('Seeding error:', error);
     return {
       success: false,
       message: 'Failed to seed data',
@@ -976,7 +977,7 @@ export async function seedTemplates(): Promise<SeedResult> {
             });
 
           if (error) {
-            console.error(`Error seeding template ${template.name}:`, error);
+            logger.error(`Error seeding template ${template.name}:`, error);
           } else {
             totalInserted++;
           }
@@ -1012,7 +1013,7 @@ export async function seedTemplates(): Promise<SeedResult> {
       details,
     };
   } catch (error) {
-    console.error('Template seeding error:', error);
+    logger.error('Template seeding error:', error);
     return {
       success: false,
       message: 'Failed to seed templates',
@@ -1026,7 +1027,7 @@ export async function checkIfSeededTemplates(): Promise<boolean> {
     const count = await getTableCount('document_templates');
     return count > 0;
   } catch (error) {
-    console.error('Error checking template seed status:', error);
+    logger.error('Error checking template seed status:', error);
     return false;
   }
 }
@@ -1060,7 +1061,7 @@ export async function getSeedStatistics() {
 
     return counts;
   } catch (error) {
-    console.error('Error getting seed statistics:', error);
+    logger.error('Error getting seed statistics:', error);
     return {};
   }
 }

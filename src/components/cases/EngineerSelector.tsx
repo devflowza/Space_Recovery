@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { ChevronDown, User, X } from 'lucide-react';
+import { logger } from '../../lib/logger';
 
 interface Engineer {
   id: string;
@@ -40,7 +41,7 @@ export const EngineerSelector: React.FC<EngineerSelectorProps> = ({
         .order('full_name');
 
       if (error) {
-        console.error('Error fetching engineers:', error);
+        logger.error('Error fetching engineers:', error);
         throw error;
       }
       return data as Engineer[];
