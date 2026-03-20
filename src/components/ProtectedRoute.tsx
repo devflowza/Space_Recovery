@@ -93,6 +93,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     );
   }
 
+  const isPlatformAdmin = !profile.tenant_id && (profile.role === 'owner' || profile.role === 'admin');
+  if (isPlatformAdmin && location.pathname === '/') {
+    return <Navigate to="/platform-admin" replace />;
+  }
+
   if (allowedRoles && profile && profile.role && !allowedRoles.includes(profile.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
