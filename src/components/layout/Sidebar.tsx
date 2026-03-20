@@ -111,7 +111,7 @@ export const Sidebar: React.FC = () => {
     setIsCollapsed(!isCollapsed);
   };
 
-  const isAdmin = profile?.role === 'admin';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'owner';
   const canViewFinance = hasModuleAccess('invoices') || hasModuleAccess('payments');
   const canViewClients = hasModuleAccess('customers') || hasModuleAccess('companies');
   const canViewLab = hasModuleAccess('inventory') || hasModuleAccess('stock') || hasModuleAccess('clone-drives');

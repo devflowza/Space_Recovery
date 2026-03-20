@@ -225,7 +225,7 @@ function App() {
             <Route
               path="suppliers"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <SuppliersListPage />
                 </ProtectedRoute>
               }
@@ -233,7 +233,7 @@ function App() {
             <Route
               path="suppliers/:id"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <SupplierProfilePage />
                 </ProtectedRoute>
               }
@@ -241,7 +241,7 @@ function App() {
             <Route
               path="purchase-orders"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <PurchaseOrdersListPage />
                 </ProtectedRoute>
               }
@@ -249,7 +249,7 @@ function App() {
             <Route
               path="purchase-orders/:id"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <PurchaseOrderDetailPage />
                 </ProtectedRoute>
               }
@@ -279,7 +279,7 @@ function App() {
             <Route
               path="finance"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <RevenueDashboard />
                 </ProtectedRoute>
               }
@@ -287,7 +287,7 @@ function App() {
             <Route
               path="invoices"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <InvoicesListPage />
                 </ProtectedRoute>
               }
@@ -295,7 +295,7 @@ function App() {
             <Route
               path="invoices/:id"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <InvoiceDetailPage />
                 </ProtectedRoute>
               }
@@ -303,7 +303,7 @@ function App() {
             <Route
               path="payments"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <PaymentsList />
                 </ProtectedRoute>
               }
@@ -311,7 +311,7 @@ function App() {
             <Route
               path="expenses"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <ExpensesList />
                 </ProtectedRoute>
               }
@@ -319,7 +319,7 @@ function App() {
             <Route
               path="transactions"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <TransactionsList />
                 </ProtectedRoute>
               }
@@ -327,7 +327,7 @@ function App() {
             <Route
               path="banking"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <BankingPage />
                 </ProtectedRoute>
               }
@@ -335,7 +335,7 @@ function App() {
             <Route
               path="vat-audit"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <VATAuditPage />
                 </ProtectedRoute>
               }
@@ -343,7 +343,7 @@ function App() {
             <Route
               path="reports"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                   <ReportsDashboard />
                 </ProtectedRoute>
               }
@@ -351,7 +351,7 @@ function App() {
             <Route
               path="users"
               element={
-                <ProtectedRoute allowedRoles={['admin']}>
+                <ProtectedRoute allowedRoles={['owner', 'admin']}>
                   <UserManagement />
                 </ProtectedRoute>
               }
@@ -363,7 +363,7 @@ function App() {
               <Route
                 index
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <HRDashboard />
                   </ProtectedRoute>
                 }
@@ -371,7 +371,7 @@ function App() {
               <Route
                 path="employees"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <EmployeesList />
                   </ProtectedRoute>
                 }
@@ -379,7 +379,7 @@ function App() {
               <Route
                 path="employees/:id"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <EmployeeProfilePage />
                   </ProtectedRoute>
                 }
@@ -387,7 +387,7 @@ function App() {
               <Route
                 path="recruitment"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <RecruitmentPage />
                   </ProtectedRoute>
                 }
@@ -395,7 +395,7 @@ function App() {
               <Route
                 path="onboarding"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <EmployeeOnboardingPage />
                   </ProtectedRoute>
                 }
@@ -403,7 +403,7 @@ function App() {
               <Route
                 path="performance"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <PerformanceReviewsPage />
                   </ProtectedRoute>
                 }
@@ -414,7 +414,7 @@ function App() {
               <Route
                 index
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <PayrollDashboard />
                   </ProtectedRoute>
                 }
@@ -422,7 +422,7 @@ function App() {
               <Route
                 path="process"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <ProcessPayrollPage />
                   </ProtectedRoute>
                 }
@@ -430,7 +430,7 @@ function App() {
               <Route
                 path="components"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <SalaryComponentsPage />
                   </ProtectedRoute>
                 }
@@ -438,7 +438,7 @@ function App() {
               <Route
                 path="history"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <PayrollHistoryPage />
                   </ProtectedRoute>
                 }
@@ -446,7 +446,7 @@ function App() {
               <Route
                 path="periods/:id"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <PayrollPeriodDetailPage />
                   </ProtectedRoute>
                 }
@@ -454,7 +454,7 @@ function App() {
               <Route
                 path="adjustments"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <PayrollAdjustmentsPage />
                   </ProtectedRoute>
                 }
@@ -462,7 +462,7 @@ function App() {
               <Route
                 path="loans"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <EmployeeLoansPage />
                   </ProtectedRoute>
                 }
@@ -470,7 +470,7 @@ function App() {
               <Route
                 path="settings"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <PayrollSettingsPage />
                   </ProtectedRoute>
                 }
@@ -481,7 +481,7 @@ function App() {
               <Route
                 index
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <AttendanceDashboard />
                   </ProtectedRoute>
                 }
@@ -492,7 +492,7 @@ function App() {
               <Route
                 index
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <LeaveManagement />
                   </ProtectedRoute>
                 }
@@ -503,7 +503,7 @@ function App() {
               <Route
                 index
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'hr']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'hr']}>
                     <TimesheetManagement />
                   </ProtectedRoute>
                 }
@@ -514,7 +514,7 @@ function App() {
               <Route
                 index
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <TemplatesDashboard />
                   </ProtectedRoute>
                 }
@@ -522,7 +522,7 @@ function App() {
               <Route
                 path="type/:typeCode"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <TemplateTypeDetail />
                   </ProtectedRoute>
                 }
@@ -533,7 +533,7 @@ function App() {
               <Route
                 index
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <SettingsDashboard />
                   </ProtectedRoute>
                 }
@@ -541,7 +541,7 @@ function App() {
               <Route
                 path="general-settings"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <GeneralSettings />
                   </ProtectedRoute>
                 }
@@ -549,7 +549,7 @@ function App() {
               <Route
                 path="system-numbers"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <SystemNumbers />
                   </ProtectedRoute>
                 }
@@ -557,7 +557,7 @@ function App() {
               <Route
                 path="localization"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <AccountingLocales />
                   </ProtectedRoute>
                 }
@@ -565,7 +565,7 @@ function App() {
               <Route
                 path="client-portal"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <ClientPortalSettings />
                   </ProtectedRoute>
                 }
@@ -573,7 +573,7 @@ function App() {
               <Route
                 path="import-export"
                 element={
-                  <ProtectedRoute allowedRoles={['admin', 'accounts']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
                     <ImportExport />
                   </ProtectedRoute>
                 }
@@ -581,7 +581,7 @@ function App() {
               <Route
                 path="billing"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <BillingPage />
                   </ProtectedRoute>
                 }
@@ -589,7 +589,7 @@ function App() {
               <Route
                 path="plans"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <PlansPage />
                   </ProtectedRoute>
                 }
@@ -597,7 +597,7 @@ function App() {
               <Route
                 path="report-sections"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <ReportSectionsPage />
                   </ProtectedRoute>
                 }
@@ -605,7 +605,7 @@ function App() {
               <Route
                 path="security"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <SecuritySettingsPage />
                   </ProtectedRoute>
                 }
@@ -613,7 +613,7 @@ function App() {
               <Route
                 path="gdpr"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <GDPRCompliancePage />
                   </ProtectedRoute>
                 }
@@ -621,7 +621,7 @@ function App() {
               <Route
                 path=":categoryId"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <CategoryDetail />
                   </ProtectedRoute>
                 }
@@ -631,7 +631,7 @@ function App() {
               <Route
                 index
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <AdminPanel />
                   </ProtectedRoute>
                 }
@@ -639,7 +639,7 @@ function App() {
               <Route
                 path="logs"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <SystemLogs />
                   </ProtectedRoute>
                 }
@@ -647,7 +647,7 @@ function App() {
               <Route
                 path="audit"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <AuditTrails />
                   </ProtectedRoute>
                 }
@@ -655,7 +655,7 @@ function App() {
               <Route
                 path="database"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <DatabaseManagement />
                   </ProtectedRoute>
                 }
@@ -663,7 +663,7 @@ function App() {
               <Route
                 path="role-permissions"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <RolePermissions />
                   </ProtectedRoute>
                 }
@@ -671,7 +671,7 @@ function App() {
               <Route
                 path="tenants"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <TenantManagement />
                   </ProtectedRoute>
                 }
