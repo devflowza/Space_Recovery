@@ -31,6 +31,7 @@ export const TenantSignup = () => {
   const [countries, setCountries] = useState<GeoCountry[]>([]);
   const [selectedCountryId, setSelectedCountryId] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [plansLoading, setPlansLoading] = useState(true);
   const [step, setStep] = useState<'plan' | 'details'>('plan');
 
   const [formData, setFormData] = useState({
@@ -45,6 +46,7 @@ export const TenantSignup = () => {
   useEffect(() => {
     const loadPlans = async () => {
       try {
+        setPlansLoading(true);
         const data = await tenantService.listPlans();
         setPlans(data);
         if (data.length > 0) {
@@ -53,6 +55,8 @@ export const TenantSignup = () => {
       } catch (error) {
         showToast('Failed to load subscription plans', 'error');
         logger.error(error);
+      } finally {
+        setPlansLoading(false);
       }
     };
     loadPlans();
@@ -64,7 +68,7 @@ export const TenantSignup = () => {
         const { data, error } = await supabase
           .from('geo_countries')
           .select('id, code, name, currency_code, currency_symbol, tax_system, tax_label')
-          .is('deleted_at', null)
+          .eq('is_active', true)
           .order('name');
 
         if (error) throw error;
@@ -131,7 +135,20 @@ export const TenantSignup = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 mb-8">
-            {plans.map((plan) => {
+            {plansLoading && [1, 2, 3].map((i) => (
+              <Card key={i} className="p-6 border border-gray-200 animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-1/2 mb-4" />
+                <div className="h-10 bg-gray-200 rounded w-2/3 mb-4" />
+                <div className="h-4 bg-gray-200 rounded w-full mb-2" />
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4" />
+                <div className="border-t pt-4 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-1/2" />
+                  <div className="h-3 bg-gray-200 rounded w-2/3" />
+                  <div className="h-3 bg-gray-200 rounded w-2/3" />
+                </div>
+              </Card>
+            ))}
+            {!plansLoading && plans.map((plan) => {
               const features = plan.features as Record<string, any> || {};
               const limits = plan.limits as Record<string, any> || {};
               const isSelected = selectedPlanId === plan.id;
@@ -196,7 +213,7 @@ export const TenantSignup = () => {
                   )}
                 </Card>
               );
-            })}
+            }))}
           </div>
 
           <div className="text-center">
@@ -205,7 +222,7 @@ export const TenantSignup = () => {
               disabled={!selectedPlanId}
               size="lg"
             >
-              Continue with {plans.find(p => p.id === selectedPlanId)?.name}
+              {plans.length === 0 ? 'Loading plans...' : `Continue with ${plans.find(p => p.id === selectedPlanId)?.name || 'Selected Plan'}`}
             </Button>
             <p className="text-sm text-gray-500 mt-4">
               Already have an account?{' '}
