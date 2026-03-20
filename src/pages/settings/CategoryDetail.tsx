@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Table } from '../../components/ui/Table';
 import { Plus, Edit2, Trash2, ChevronLeft, Sparkles, Search, X, Star, ToggleLeft, ToggleRight } from 'lucide-react';
 import { SETTINGS_CATEGORIES, MasterDataTable, TABLE_LABELS } from '../../config/settingsCategories';
+
+const TENANT_SCOPED_TABLES: MasterDataTable[] = ['inventory_locations', 'customer_groups'];
 import {
   checkIfSeeded,
   seedDeviceMediaData,
@@ -39,6 +42,8 @@ export const CategoryDetail: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const isTenantScoped = (table: MasterDataTable) => TENANT_SCOPED_TABLES.includes(table);
 
   const category = SETTINGS_CATEGORIES.find((c) => c.id === categoryId);
   const [activeTable, setActiveTable] = useState<MasterDataTable>(
@@ -118,11 +123,15 @@ export const CategoryDetail: React.FC = () => {
   const { data: allItems = [], isLoading } = useQuery({
     queryKey: ['master_data', activeTable],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from(activeTable)
-        .select('*')
-        .order('sort_order', { ascending: true });
+      let query = supabase.from(activeTable).select('*');
 
+      if (isTenantScoped(activeTable)) {
+        query = query.order('name', { ascending: true });
+      } else {
+        query = query.order('sort_order', { ascending: true });
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as MasterDataItem[];
     },
@@ -163,20 +172,26 @@ export const CategoryDetail: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (value: string) => {
-      const { data: maxOrderData } = await supabase
-        .from(activeTable)
-        .select('sort_order')
-        .order('sort_order', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (isTenantScoped(activeTable)) {
+        const { error } = await supabase
+          .from(activeTable)
+          .insert({ name: value, tenant_id: profile?.tenant_id } as any);
+        if (error) throw error;
+      } else {
+        const { data: maxOrderData } = await supabase
+          .from(activeTable)
+          .select('sort_order')
+          .order('sort_order', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      const nextSortOrder = (maxOrderData?.sort_order ?? 0) + 1;
+        const nextSortOrder = (maxOrderData?.sort_order ?? 0) + 1;
 
-      const { error } = await supabase
-        .from(activeTable)
-        .insert({ name: value, sort_order: nextSortOrder });
-
-      if (error) throw error;
+        const { error } = await supabase
+          .from(activeTable)
+          .insert({ name: value, sort_order: nextSortOrder } as any);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['master_data', activeTable] });
