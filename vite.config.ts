@@ -8,29 +8,32 @@ export default defineConfig({
     {
       name: 'security-headers',
       configureServer(server) {
-        server.middlewares.use((_req, res, next) => {
+        const securityHeaders = (_req: unknown, res: { setHeader: (k: string, v: string) => void }, next: () => void) => {
           res.setHeader('X-Content-Type-Options', 'nosniff');
           res.setHeader('X-Frame-Options', 'DENY');
           res.setHeader('X-XSS-Protection', '1; mode=block');
           res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
           res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
           res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-          // Production CSP must be configured at the hosting/CDN layer
-          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com;");
+          // Dev CSP: unsafe-inline/unsafe-eval required for Vite HMR
+          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ws: wss: https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';");
           next();
-        });
+        };
+        server.middlewares.use(securityHeaders);
       },
       configurePreviewServer(server) {
-        server.middlewares.use((_req, res, next) => {
+        const securityHeaders = (_req: unknown, res: { setHeader: (k: string, v: string) => void }, next: () => void) => {
           res.setHeader('X-Content-Type-Options', 'nosniff');
           res.setHeader('X-Frame-Options', 'DENY');
           res.setHeader('X-XSS-Protection', '1; mode=block');
           res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
           res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
           res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com;");
+          // Preview CSP: production-like, no unsafe-eval
+          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';");
           next();
-        });
+        };
+        server.middlewares.use(securityHeaders);
       },
     },
   ],

@@ -53,6 +53,8 @@ const ImportExport = lazy(() => import('./pages/settings/ImportExport').then(m =
 const ReportSectionsPage = lazy(() => import('./pages/settings/ReportSectionsPage').then(m => ({ default: m.ReportSectionsPage })));
 const BillingPage = lazy(() => import('./pages/settings/BillingPage'));
 const PlansPage = lazy(() => import('./pages/settings/PlansPage'));
+const SecuritySettingsPage = lazy(() => import('./pages/settings/SecuritySettingsPage').then(m => ({ default: m.SecuritySettingsPage })));
+const GDPRCompliancePage = lazy(() => import('./pages/settings/GDPRCompliancePage').then(m => ({ default: m.GDPRCompliancePage })));
 
 const PortalLogin = lazy(() => import('./pages/portal/PortalLogin').then(m => ({ default: m.PortalLogin })));
 const PortalDashboard = lazy(() => import('./pages/portal/PortalDashboard').then(m => ({ default: m.PortalDashboard })));
@@ -121,6 +123,8 @@ const TenantDetailPage = lazy(() => import('./pages/platform-admin/TenantDetailP
 const SupportTicketsPage = lazy(() => import('./pages/platform-admin/SupportTicketsPage').then(m => ({ default: m.SupportTicketsPage })));
 const TicketDetailPage = lazy(() => import('./pages/platform-admin/TicketDetailPage').then(m => ({ default: m.TicketDetailPage })));
 const AnnouncementsPage = lazy(() => import('./pages/platform-admin/AnnouncementsPage').then(m => ({ default: m.AnnouncementsPage })));
+const TenantIsolationTestPage = lazy(() => import('./pages/platform-admin/TenantIsolationTestPage').then(m => ({ default: m.TenantIsolationTestPage })));
+const RateLimitDashboardPage = lazy(() => import('./pages/platform-admin/RateLimitDashboardPage').then(m => ({ default: m.RateLimitDashboardPage })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -595,6 +599,22 @@ function App() {
                 }
               />
               <Route
+                path="security"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <SecuritySettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="gdpr"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <GDPRCompliancePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path=":categoryId"
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
@@ -672,6 +692,8 @@ function App() {
             <Route path="tickets" element={<SupportTicketsPage />} />
             <Route path="tickets/:id" element={<TicketDetailPage />} />
             <Route path="announcements" element={<AnnouncementsPage />} />
+            <Route path="isolation-tests" element={<TenantIsolationTestPage />} />
+            <Route path="rate-limits" element={<RateLimitDashboardPage />} />
           </Route>
 
               <Route path="*" element={
