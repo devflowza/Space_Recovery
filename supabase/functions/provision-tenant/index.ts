@@ -257,6 +257,43 @@ Deno.serve(async (req: Request) => {
       console.error('Profile update failed:', profileError);
     }
 
+    // Fetch country details for pre-populating company settings
+    const { data: countryData } = await supabase
+      .from('geo_countries')
+      .select('name, currency_code, timezone, date_format, fiscal_year_start')
+      .eq('id', countryId)
+      .maybeSingle();
+
+    // Create company_settings pre-populated with signup data
+    const { error: settingsError } = await supabase
+      .from('company_settings')
+      .insert({
+        tenant_id: tenant.id,
+        company_name: name,
+        company_email: adminEmail,
+        default_currency: countryData?.currency_code || null,
+        time_zone: countryData?.timezone || null,
+        date_format: countryData?.date_format || null,
+        fiscal_year_start: countryData?.fiscal_year_start
+          ? parseInt(countryData.fiscal_year_start)
+          : null,
+        basic_info: {
+          company_name: name,
+          industry: 'Data Recovery & IT Services',
+        },
+        contact_info: {
+          email_general: adminEmail,
+        },
+        location: {
+          default_country_id: countryId,
+          country: countryData?.name || null,
+        },
+      });
+
+    if (settingsError) {
+      console.error('Company settings creation failed:', settingsError);
+    }
+
     // Create onboarding progress
     const { error: onboardingError } = await supabase
       .from('onboarding_progress')
