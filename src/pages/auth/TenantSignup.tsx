@@ -25,7 +25,7 @@ interface GeoCountry {
 
 export const TenantSignup = () => {
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const toast = useToast();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [countries, setCountries] = useState<GeoCountry[]>([]);
@@ -53,7 +53,7 @@ export const TenantSignup = () => {
           setSelectedPlanId(data[1]?.id || data[0].id);
         }
       } catch (error) {
-        showToast('Failed to load subscription plans', 'error');
+        toast.error('Failed to load subscription plans');
         logger.error(error);
       } finally {
         setPlansLoading(false);
@@ -74,7 +74,7 @@ export const TenantSignup = () => {
         if (error) throw error;
         setCountries(data || []);
       } catch (error) {
-        showToast('Failed to load countries', 'error');
+        toast.error('Failed to load countries');
         logger.error(error);
       }
     };
@@ -93,12 +93,12 @@ export const TenantSignup = () => {
     e.preventDefault();
 
     if (formData.adminPassword !== formData.confirmPassword) {
-      showToast('Passwords do not match', 'error');
+      toast.error('Passwords do not match');
       return;
     }
 
     if (formData.adminPassword.length < 6) {
-      showToast('Password must be at least 6 characters', 'error');
+      toast.error('Password must be at least 6 characters');
       return;
     }
 
@@ -114,10 +114,10 @@ export const TenantSignup = () => {
         countryId: selectedCountryId,
       });
 
-      showToast('Account created successfully! Please log in.', 'success');
+      toast.success('Account created successfully! Please log in.');
       navigate('/login');
     } catch (error: unknown) {
-      showToast(error instanceof Error ? error.message : 'Failed to create account', 'error');
+      toast.error(error instanceof Error ? error.message : 'Failed to create account');
       logger.error(error);
     } finally {
       setLoading(false);
@@ -265,7 +265,7 @@ export const TenantSignup = () => {
               onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
               placeholder="acme-data-recovery"
               required
-              pattern="[a-z0-9-]+"
+              pattern="[a-z0-9\-]+"
             />
           </FormField>
 

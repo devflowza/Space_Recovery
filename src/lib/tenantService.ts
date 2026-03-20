@@ -68,64 +68,29 @@ export const tenantService = {
     return data || [];
   },
 
-  async createTenant(params: CreateTenantParams): Promise<{ tenant: Tenant; userId: string }> {
-    const { data: tenant, error: tenantError } = await supabase
-      .from('tenants')
-      .insert({
+  async createTenant(params: CreateTenantParams): Promise<{ tenant_id: string; user_id: string }> {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/provision-tenant`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
         name: params.name,
         slug: params.slug,
-        plan_id: params.planId,
-        country_id: params.countryId,
-        status: 'trial',
-        trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-      })
-      .select()
-      .maybeSingle();
-
-    if (tenantError) throw tenantError;
-
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: params.adminEmail,
-      password: params.adminPassword,
-      options: {
-        data: {
-          full_name: params.adminFullName,
-          tenant_id: tenant.id,
-          role: 'owner',
-        },
-      },
+        adminEmail: params.adminEmail,
+        adminPassword: params.adminPassword,
+        adminFullName: params.adminFullName,
+        planId: params.planId,
+        countryId: params.countryId,
+      }),
     });
 
-    if (authError) throw authError;
-    if (!authData.user) throw new Error('User creation failed');
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        tenant_id: tenant.id,
-        role: 'admin',
-        full_name: params.adminFullName,
-      })
-      .eq('id', authData.user.id);
-
-    if (profileError) throw profileError;
-
-    await this.seedTenantDefaults(tenant.id, authData.user.id);
-
-    return { tenant, userId: authData.user.id };
-  },
-
-  async seedTenantDefaults(tenantId: string, userId: string): Promise<void> {
-    const { error: onboardingError } = await supabase
-      .from('onboarding_progress')
-      .insert({
-        tenant_id: tenantId,
-        user_id: userId,
-        steps_completed: [],
-        current_step: 'company_info',
-      });
-
-    if (onboardingError) throw onboardingError;
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to create account');
+    }
+    return { tenant_id: data.tenant_id, user_id: data.user_id };
   },
 
   async getTenant(tenantId: string): Promise<TenantWithPlan | null> {
