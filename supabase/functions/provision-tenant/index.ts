@@ -161,19 +161,29 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Check for duplicate email before creating anything
+    // Check if user already exists
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const emailExists = existingUsers?.users?.some(
+    const existingUser = existingUsers?.users?.find(
       (u: { email?: string }) => u.email?.toLowerCase() === adminEmail.toLowerCase()
     );
-    if (emailExists) {
-      return new Response(
-        JSON.stringify({ error: 'An account with this email already exists. Please use a different email or sign in.' }),
-        {
-          status: 409,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+
+    // If user exists, check they don't already own a tenant
+    if (existingUser) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', existingUser.id)
+        .maybeSingle();
+
+      if (existingProfile?.tenant_id) {
+        return new Response(
+          JSON.stringify({ error: 'This email is already associated with an active account. Please sign in instead.' }),
+          {
+            status: 409,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
     }
 
     // Create tenant
@@ -192,34 +202,43 @@ Deno.serve(async (req: Request) => {
 
     if (tenantError) throw tenantError;
 
-    // Create auth user — rollback tenant on failure
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: adminEmail,
-      password: adminPassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name: adminFullName,
-        tenant_id: tenant.id,
-        role: 'owner',
-      },
-    });
+    let userId: string;
 
-    if (authError || !authData.user) {
-      // Rollback: delete the orphaned tenant
-      await supabase.from('tenants').delete().eq('id', tenant.id);
-      const msg = authError?.message || 'User creation failed';
-      const isDuplicate = msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists');
-      return new Response(
-        JSON.stringify({
-          error: isDuplicate
-            ? 'An account with this email already exists. Please use a different email or sign in.'
-            : `Account creation failed: ${msg}`,
-        }),
-        {
-          status: isDuplicate ? 409 : 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+    if (existingUser) {
+      // Existing user without a tenant — update their password, metadata, and confirm email
+      userId = existingUser.id;
+      const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
+        password: adminPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: adminFullName,
+          tenant_id: tenant.id,
+          role: 'owner',
+        },
+      });
+
+      if (updateError) {
+        await supabase.from('tenants').delete().eq('id', tenant.id);
+        throw updateError;
+      }
+    } else {
+      // New user — create auth account
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: adminEmail,
+        password: adminPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: adminFullName,
+          tenant_id: tenant.id,
+          role: 'owner',
+        },
+      });
+
+      if (authError || !authData.user) {
+        await supabase.from('tenants').delete().eq('id', tenant.id);
+        throw authError || new Error('User creation failed');
+      }
+      userId = authData.user.id;
     }
 
     // Update profile with tenant info
@@ -231,11 +250,10 @@ Deno.serve(async (req: Request) => {
         full_name: adminFullName,
         is_active: true,
       })
-      .eq('id', authData.user.id);
+      .eq('id', userId);
 
     if (profileError) {
       console.error('Profile update failed:', profileError);
-      // Don't rollback here — user exists, just log and continue
     }
 
     // Create onboarding progress
@@ -243,7 +261,7 @@ Deno.serve(async (req: Request) => {
       .from('onboarding_progress')
       .insert({
         tenant_id: tenant.id,
-        user_id: authData.user.id,
+        user_id: userId,
         steps_completed: [],
         current_step: 'company_info',
       });
@@ -257,7 +275,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         tenant_id: tenant.id,
-        user_id: authData.user.id,
+        user_id: userId,
         message: 'Tenant provisioned successfully',
       }),
       {
