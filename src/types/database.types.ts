@@ -2348,10 +2348,14 @@ export type Database = {
       cases: {
         Row: {
           actual_completion: string | null
+          assigned_engineer_id: string | null
           assigned_to: string | null
           branch_id: string | null
+          case_no: string | null
           case_number: string | null
+          client_reference: string | null
           company_id: string | null
+          contact_id: string | null
           created_at: string
           created_by: string | null
           customer_id: string | null
@@ -2365,15 +2369,18 @@ export type Database = {
           is_urgent: boolean | null
           is_warranty: boolean | null
           net_amount: number | null
+          priority: string | null
           priority_id: string | null
           referred_by: string | null
           resolution: string | null
           service_location_id: string | null
           service_type_id: string | null
+          status: string | null
           status_id: string | null
           subject: string | null
           tax_amount: number | null
           tenant_id: string
+          title: string | null
           total_amount: number | null
           updated_at: string
           updated_by: string | null
@@ -2381,10 +2388,14 @@ export type Database = {
         }
         Insert: {
           actual_completion?: string | null
+          assigned_engineer_id?: string | null
           assigned_to?: string | null
           branch_id?: string | null
+          case_no?: string | null
           case_number?: string | null
+          client_reference?: string | null
           company_id?: string | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
@@ -2398,15 +2409,18 @@ export type Database = {
           is_urgent?: boolean | null
           is_warranty?: boolean | null
           net_amount?: number | null
+          priority?: string | null
           priority_id?: string | null
           referred_by?: string | null
           resolution?: string | null
           service_location_id?: string | null
           service_type_id?: string | null
+          status?: string | null
           status_id?: string | null
           subject?: string | null
           tax_amount?: number | null
           tenant_id: string
+          title?: string | null
           total_amount?: number | null
           updated_at?: string
           updated_by?: string | null
@@ -2414,10 +2428,14 @@ export type Database = {
         }
         Update: {
           actual_completion?: string | null
+          assigned_engineer_id?: string | null
           assigned_to?: string | null
           branch_id?: string | null
+          case_no?: string | null
           case_number?: string | null
+          client_reference?: string | null
           company_id?: string | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
@@ -2431,15 +2449,18 @@ export type Database = {
           is_urgent?: boolean | null
           is_warranty?: boolean | null
           net_amount?: number | null
+          priority?: string | null
           priority_id?: string | null
           referred_by?: string | null
           resolution?: string | null
           service_location_id?: string | null
           service_type_id?: string | null
+          status?: string | null
           status_id?: string | null
           subject?: string | null
           tax_amount?: number | null
           tenant_id?: string
+          title?: string | null
           total_amount?: number | null
           updated_at?: string
           updated_by?: string | null
@@ -3533,6 +3554,7 @@ export type Database = {
         Row: {
           address: string | null
           city_id: string | null
+          company_name: string | null
           company_number: string | null
           contact_email: string | null
           contact_person: string | null
@@ -3559,6 +3581,7 @@ export type Database = {
         Insert: {
           address?: string | null
           city_id?: string | null
+          company_name?: string | null
           company_number?: string | null
           contact_email?: string | null
           contact_person?: string | null
@@ -3585,6 +3608,7 @@ export type Database = {
         Update: {
           address?: string | null
           city_id?: string | null
+          company_name?: string | null
           company_number?: string | null
           contact_email?: string | null
           contact_person?: string | null
@@ -3711,6 +3735,7 @@ export type Database = {
           fiscal_year_start: number | null
           id: string
           invoice_prefix: string | null
+          location: string | null
           metadata: Json | null
           portal_custom_css: string | null
           portal_enabled: boolean | null
@@ -3742,6 +3767,7 @@ export type Database = {
           fiscal_year_start?: number | null
           id?: string
           invoice_prefix?: string | null
+          location?: string | null
           metadata?: Json | null
           portal_custom_css?: string | null
           portal_enabled?: boolean | null
@@ -3773,6 +3799,7 @@ export type Database = {
           fiscal_year_start?: number | null
           id?: string
           invoice_prefix?: string | null
+          location?: string | null
           metadata?: Json | null
           portal_custom_css?: string | null
           portal_enabled?: boolean | null
@@ -6442,6 +6469,7 @@ export type Database = {
           notes: string | null
           paid_at: string | null
           sent_at: string | null
+          status: string | null
           status_id: string | null
           subtotal: number | null
           tax_amount: number | null
@@ -6476,6 +6504,7 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           sent_at?: string | null
+          status?: string | null
           status_id?: string | null
           subtotal?: number | null
           tax_amount?: number | null
@@ -6510,6 +6539,7 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           sent_at?: string | null
+          status?: string | null
           status_id?: string | null
           subtotal?: number | null
           tax_amount?: number | null
@@ -7100,6 +7130,7 @@ export type Database = {
           is_default: boolean | null
           name: string
           sort_order: number | null
+          type: string | null
           updated_at: string
         }
         Insert: {
@@ -7110,6 +7141,7 @@ export type Database = {
           is_default?: boolean | null
           name: string
           sort_order?: number | null
+          type?: string | null
           updated_at?: string
         }
         Update: {
@@ -7120,6 +7152,7 @@ export type Database = {
           is_default?: boolean | null
           name?: string
           sort_order?: number | null
+          type?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -7381,36 +7414,42 @@ export type Database = {
       }
       master_modules: {
         Row: {
+          category: string | null
           created_at: string
           description: string | null
           icon: string | null
           id: string
           is_active: boolean
           name: string
+          order_index: number | null
           parent_id: string | null
           slug: string
           sort_order: number | null
           updated_at: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
           id?: string
           is_active?: boolean
           name: string
+          order_index?: number | null
           parent_id?: string | null
           slug: string
           sort_order?: number | null
           updated_at?: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
           id?: string
           is_active?: boolean
           name?: string
+          order_index?: number | null
           parent_id?: string | null
           slug?: string
           sort_order?: number | null
@@ -9716,6 +9755,7 @@ export type Database = {
           quote_type: string | null
           rejected_at: string | null
           rejection_reason: string | null
+          status: string | null
           status_id: string | null
           subtotal: number | null
           tax_amount: number | null
@@ -9746,6 +9786,7 @@ export type Database = {
           quote_type?: string | null
           rejected_at?: string | null
           rejection_reason?: string | null
+          status?: string | null
           status_id?: string | null
           subtotal?: number | null
           tax_amount?: number | null
@@ -9776,6 +9817,7 @@ export type Database = {
           quote_type?: string | null
           rejected_at?: string | null
           rejection_reason?: string | null
+          status?: string | null
           status_id?: string | null
           subtotal?: number | null
           tax_amount?: number | null
@@ -9838,6 +9880,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
       }
       receipt_allocations: {
         Row: {
@@ -10695,6 +10761,7 @@ export type Database = {
           alert_type: string
           created_at: string
           id: string
+          is_dismissed: boolean | null
           is_read: boolean | null
           is_resolved: boolean | null
           item_id: string
@@ -10707,6 +10774,7 @@ export type Database = {
           alert_type: string
           created_at?: string
           id?: string
+          is_dismissed?: boolean | null
           is_read?: boolean | null
           is_resolved?: boolean | null
           item_id: string
@@ -10719,6 +10787,7 @@ export type Database = {
           alert_type?: string
           created_at?: string
           id?: string
+          is_dismissed?: boolean | null
           is_read?: boolean | null
           is_resolved?: boolean | null
           item_id?: string
@@ -10801,17 +10870,21 @@ export type Database = {
       stock_items: {
         Row: {
           barcode: string | null
+          brand: string | null
           category_id: string | null
           cost_price: number | null
           created_at: string
           created_by: string | null
+          current_quantity: number | null
           deleted_at: string | null
           description: string | null
           dimensions: string | null
           id: string
           is_active: boolean | null
           is_saleable: boolean | null
+          item_type: string | null
           location_id: string | null
+          minimum_quantity: number | null
           name: string
           notes: string | null
           photos: string[] | null
@@ -10832,17 +10905,21 @@ export type Database = {
         }
         Insert: {
           barcode?: string | null
+          brand?: string | null
           category_id?: string | null
           cost_price?: number | null
           created_at?: string
           created_by?: string | null
+          current_quantity?: number | null
           deleted_at?: string | null
           description?: string | null
           dimensions?: string | null
           id?: string
           is_active?: boolean | null
           is_saleable?: boolean | null
+          item_type?: string | null
           location_id?: string | null
+          minimum_quantity?: number | null
           name: string
           notes?: string | null
           photos?: string[] | null
@@ -10863,17 +10940,21 @@ export type Database = {
         }
         Update: {
           barcode?: string | null
+          brand?: string | null
           category_id?: string | null
           cost_price?: number | null
           created_at?: string
           created_by?: string | null
+          current_quantity?: number | null
           deleted_at?: string | null
           description?: string | null
           dimensions?: string | null
           id?: string
           is_active?: boolean | null
           is_saleable?: boolean | null
+          item_type?: string | null
           location_id?: string | null
+          minimum_quantity?: number | null
           name?: string
           notes?: string | null
           photos?: string[] | null
@@ -13611,6 +13692,14 @@ export type Database = {
         Returns: undefined
       }
       check_module_access: { Args: { p_module_slug: string }; Returns: boolean }
+      check_rate_limit: {
+        Args: {
+          p_key: string
+          p_max_requests: number
+          p_window_seconds: number
+        }
+        Returns: boolean
+      }
       check_tenant_rate_limit: {
         Args: { p_resource: string; p_tenant_id: string }
         Returns: boolean
@@ -13995,3 +14084,4 @@ export const Constants = {
     },
   },
 } as const
+

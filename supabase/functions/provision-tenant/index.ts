@@ -241,16 +241,17 @@ Deno.serve(async (req: Request) => {
       userId = authData.user.id;
     }
 
-    // Update profile with tenant info
+    // Upsert profile with tenant info (profile may not exist for pre-existing users)
     const { error: profileError } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: userId,
+        email: adminEmail,
         tenant_id: tenant.id,
         role: 'owner',
         full_name: adminFullName,
         is_active: true,
-      })
-      .eq('id', userId);
+      }, { onConflict: 'id' });
 
     if (profileError) {
       console.error('Profile update failed:', profileError);
