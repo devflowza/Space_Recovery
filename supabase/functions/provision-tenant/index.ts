@@ -70,49 +70,50 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Authenticate the caller
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const userClient = createClient(
-      supabaseUrl,
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verify caller is a platform admin
-    const { data: callerProfile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (!callerProfile || !['owner', 'admin'].includes(callerProfile.role)) {
-      return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Rate limit: 1 request per 60 seconds per IP + user
     const ip = getClientIP(req);
-    const rateLimitKey = `provision-tenant:${ip}:${user.id}`;
-    const allowed = await checkRateLimit(supabase, rateLimitKey, 1, 60);
-    if (!allowed) {
-      return rateLimitResponse(corsHeaders, 60);
+    const authHeader = req.headers.get('Authorization');
+
+    if (authHeader) {
+      // Admin-provisioned flow: validate platform admin
+      const userClient = createClient(
+        supabaseUrl,
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const { data: { user }, error: authError } = await userClient.auth.getUser();
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: callerProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!callerProfile || !['owner', 'admin'].includes(callerProfile.role)) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: Admin access required' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const rateLimitKey = `provision-tenant:${ip}:${user.id}`;
+      const allowed = await checkRateLimit(supabase, rateLimitKey, 1, 60);
+      if (!allowed) {
+        return rateLimitResponse(corsHeaders, 60);
+      }
+    } else {
+      // Self-service signup flow: stricter rate limiting by IP only
+      const rateLimitKey = `provision-tenant-signup:${ip}`;
+      const allowed = await checkRateLimit(supabase, rateLimitKey, 3, 3600);
+      if (!allowed) {
+        return rateLimitResponse(corsHeaders, 3600);
+      }
     }
 
     const requestData: ProvisionTenantRequest = await req.json();
