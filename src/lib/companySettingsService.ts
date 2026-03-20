@@ -2,7 +2,7 @@ import { supabase } from './supabaseClient';
 import { logger } from './logger';
 
 export interface CompanySettings {
-  id: number;
+  id: string;
   basic_info: {
     company_name?: string;
     legal_name?: string;
@@ -195,7 +195,7 @@ export async function getOrCreateCompanySettings(): Promise<CompanySettings> {
     const { data, error } = await supabase
       .from('company_settings')
       .select('*')
-      .eq('id', 1)
+      .limit(1)
       .maybeSingle();
 
     if (error) {
@@ -211,7 +211,7 @@ export async function getOrCreateCompanySettings(): Promise<CompanySettings> {
 
     const { data: newData, error: insertError } = await supabase
       .from('company_settings')
-      .insert({ id: 1, ...DEFAULT_COMPANY_SETTINGS })
+      .insert(DEFAULT_COMPANY_SETTINGS as any)
       .select()
       .maybeSingle();
 
@@ -220,7 +220,7 @@ export async function getOrCreateCompanySettings(): Promise<CompanySettings> {
         const { data: existingData } = await supabase
           .from('company_settings')
           .select('*')
-          .eq('id', 1)
+          .limit(1)
           .maybeSingle();
 
         if (existingData) {
@@ -289,7 +289,7 @@ export async function updateCompanySettings(updates: Partial<CompanySettings>): 
     const { data, error } = await supabase
       .from('company_settings')
       .update(updates)
-      .eq('id', 1)
+      .not('id', 'is', null)
       .select();
 
     if (error) {

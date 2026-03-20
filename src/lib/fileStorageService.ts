@@ -184,7 +184,7 @@ export const updateCompanyBranding = async (
     const { data: currentSettings } = await supabase
       .from('company_settings')
       .select('branding')
-      .eq('id', 1)
+      .limit(1)
       .maybeSingle();
 
     const currentBranding = currentSettings?.branding || {};
@@ -198,7 +198,7 @@ export const updateCompanyBranding = async (
     const { error } = await supabase
       .from('company_settings')
       .update({ branding: updatedBranding })
-      .eq('id', 1);
+      .not('id', 'is', null);
 
     if (error) {
       logger.error('Update branding error:', error);
@@ -225,7 +225,7 @@ export const getCompanyLogo = async (
     const { data } = await supabase
       .from('company_settings')
       .select('branding')
-      .eq('id', 1)
+      .limit(1)
       .maybeSingle();
 
     if (!data?.branding) return null;
@@ -245,7 +245,7 @@ export const getCompanyQRCode = async (
     const { data } = await supabase
       .from('company_settings')
       .select('branding')
-      .eq('id', 1)
+      .limit(1)
       .maybeSingle();
 
     if (!data?.branding) return null;

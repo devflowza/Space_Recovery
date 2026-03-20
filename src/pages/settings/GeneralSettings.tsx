@@ -111,7 +111,7 @@ export const GeneralSettings: React.FC = () => {
       const { data, error } = await supabase
         .from('company_settings')
         .select('*')
-        .eq('id', 1)
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
@@ -250,7 +250,7 @@ export const GeneralSettings: React.FC = () => {
       const { data, error } = await supabase
         .from('company_settings')
         .update(updates)
-        .eq('id', 1)
+        .not('id', 'is', null)
         .select();
 
       if (error) {
@@ -370,7 +370,7 @@ export const GeneralSettings: React.FC = () => {
         await supabase
           .from('company_settings')
           .update({ branding: updatedBranding })
-          .eq('id', 1);
+          .not('id', 'is', null);
 
         queryClient.invalidateQueries({ queryKey: ['company_settings'] });
       }
@@ -426,7 +426,7 @@ export const GeneralSettings: React.FC = () => {
         await supabase
           .from('company_settings')
           .update({ branding: updatedBranding })
-          .eq('id', 1);
+          .not('id', 'is', null);
 
         queryClient.invalidateQueries({ queryKey: ['company_settings'] });
       }

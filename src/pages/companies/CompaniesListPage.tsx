@@ -190,8 +190,8 @@ export const CompaniesListPage: React.FC = () => {
       const { data, error } = await supabase
         .from('company_settings')
         .select('location')
-        .eq('id', 1)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
       return data;
