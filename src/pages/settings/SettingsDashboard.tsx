@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
-import { SETTINGS_CATEGORIES, SettingsCategory } from '../../config/settingsCategories';
+import { SETTINGS_CATEGORIES, SettingsCategory, hasDeletedAt } from '../../config/settingsCategories';
 import { settingsKeys } from '../../lib/queryKeys';
 import { Settings as SettingsIcon, ChevronRight } from 'lucide-react';
 
@@ -15,10 +15,13 @@ const SettingsCategoryCard: React.FC<{
     queryFn: async () => {
       const promises = category.tables.map(async (table) => {
         try {
-          const { count, error } = await supabase
+          let query = supabase
             .from(table)
-            .select('id', { count: 'exact', head: true })
-            .is('deleted_at', null);
+            .select('id', { count: 'exact', head: true });
+          if (hasDeletedAt(table)) {
+            query = query.is('deleted_at', null);
+          }
+          const { count, error } = await query;
           if (error) return 0;
           return count ?? 0;
         } catch {
