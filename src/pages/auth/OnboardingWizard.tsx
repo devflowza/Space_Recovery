@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { AnimatedBackground } from './onboarding/components/AnimatedBackground';
+import { AuthBackground as AnimatedBackground } from '../../components/auth/shared/AuthBackground';
 import { ProgressIndicator } from './onboarding/components/ProgressIndicator';
 import { StepContainer } from './onboarding/components/StepContainer';
 import { WelcomeStep } from './onboarding/steps/WelcomeStep';
@@ -20,7 +20,7 @@ export const OnboardingWizard = () => {
   const currentStepMeta = STEPS[flow.step];
 
   return (
-    <div className="min-h-screen flex flex-col font-body">
+    <div className="min-h-screen flex flex-col font-body relative">
       <AnimatedBackground />
 
       <header className="relative z-10 flex items-center justify-between px-6 py-5">
