@@ -213,7 +213,7 @@ export const TenantSignup = () => {
                   )}
                 </Card>
               );
-            }))}
+            })}
           </div>
 
           <div className="text-center">
