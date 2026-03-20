@@ -163,8 +163,8 @@ export function buildPaymentReceiptDocument(
     margin: [0, 0, 0, 8],
   };
 
-  const currencySymbol = paymentData.accounting_locales?.currency_symbol || 'OMR';
-  const decimalPlaces = paymentData.accounting_locales?.decimal_places || 3;
+  const currencySymbol = paymentData.accounting_locales?.currency_symbol || 'USD';
+  const decimalPlaces = paymentData.accounting_locales?.decimal_places || 2;
   const currencyPosition = paymentData.accounting_locales?.currency_position || 'after';
 
   const formatCurrencyValue = (amount: number): string => {

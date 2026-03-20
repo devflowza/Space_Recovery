@@ -17,19 +17,19 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 
 export function formatCurrency(
   amount: number | null | undefined,
-  currencyCode: string = 'OMR',
-  locale: string = 'en-OM'
+  currencyCode: string = 'USD',
+  locale: string = 'en-US'
 ): string {
   if (amount === null || amount === undefined) return '-';
   try {
     return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: currencyCode,
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   } catch {
-    return `${currencyCode} ${amount.toFixed(3)}`;
+    return `${currencyCode} ${amount.toFixed(2)}`;
   }
 }
 

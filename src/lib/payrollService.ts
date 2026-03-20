@@ -707,7 +707,7 @@ export const payrollService = {
         weekend: 1.5,
         holiday: 2.0,
       },
-      currency: settings.currency || { code: 'OMR', symbol: 'ر.ع.', decimals: 3 },
+      currency: settings.currency || { code: 'USD', symbol: '$', decimals: 2 },
       payment_day: settings.payment_day?.value || 28,
     };
   },
@@ -854,8 +854,8 @@ export const payrollService = {
         record.employee_number || '',
         record.employee_name || '',
         record.iban || record.bank_account_number || '',
-        record.net_salary?.toFixed(3) || '0.000',
-        'OMR',
+        record.net_salary?.toFixed(2) || '0.00',
+        record.currency_code || 'USD',
         record.bank_name || 'Bank Muscat',
       ].join('|');
     });

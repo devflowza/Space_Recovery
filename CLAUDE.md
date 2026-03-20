@@ -357,6 +357,42 @@ type IntegrityCheckResult = 'passed' | 'failed' | 'warning' | 'not_applicable';
 - Do not create new files unless necessary; prefer editing existing files
 - Do not create `USING(true)` policies on tenant-scoped tables — use RESTRICTIVE tenant isolation
 - Do not use `is_admin()` for platform-level operations — use `is_platform_admin()`
+- Do not hardcode currency symbols, tax labels, or date formats — use `TenantConfigContext`
+
+---
+
+## Country-Based Tenant Configuration
+
+### Architecture
+- **`geo_countries`** table stores regional config: currency, tax system, date format, timezone, locale, compliance
+- **`tenants`** table has denormalized config columns auto-synced from `geo_countries` via `sync_tenant_config_from_country()` trigger
+- **`TenantConfigContext`** (`src/contexts/TenantConfigContext.tsx`) provides config to all components
+- Config loaded once per session, cached 5 minutes in service layer
+
+### Usage Pattern
+```typescript
+import { useTenantConfig, useCurrencyConfig, useTaxConfig } from '../contexts/TenantConfigContext';
+import { formatCurrencyWithConfig } from '../lib/format';
+
+// In components:
+const { config } = useTenantConfig();
+const currency = useCurrencyConfig();
+const tax = useTaxConfig();
+const formatted = formatCurrencyWithConfig(amount, currency);
+```
+
+### Key Types
+- `TenantConfig` — full tenant configuration (currency, tax, dateTime, locale)
+- `CurrencyConfig` — code, symbol, decimalPlaces, separators, position
+- `TaxConfig` — system (VAT/GST/SALES_TAX/NONE), label, rate, numberFormat
+- `DateTimeConfig` — dateFormat, timeFormat, timezone, fiscalYearStart
+
+### Rules
+- Never hardcode currency symbols, tax labels, or date formats
+- Use `useCurrency()` hook or `useCurrencyConfig()` for formatting
+- Use `useTaxConfig()` for tax labels and rates
+- Country selection during signup determines all config automatically
+- `accounting_locales` type matches DB schema (7 columns, not 20+)
 
 ---
 

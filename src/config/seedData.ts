@@ -722,7 +722,7 @@ export const TEMPLATE_SEED_DATA = {
       name: 'Non-Refundable Advance',
       content: `<div class="terms-content">
 <h3>Terms & Conditions</h3>
-<p><strong style="color: #dc2626;">Non-refundable 150 OMR advance due to case complexity and costly donor.</strong></p>
+<p><strong style="color: #dc2626;">Non-refundable advance due to case complexity and costly donor.</strong></p>
 <p><strong>Payment:</strong> 50% advance (security deposit) & 50% after verification.</p>
 <p>Payable to: <strong>{{company.name}}</strong></p>
 <p><strong>Refund:</strong> If recovery fails, deposit refunded <strong>minus non-refundable amount</strong>.</p>
@@ -909,7 +909,7 @@ Reply YES to approve or call us with any questions.
     { category: 'company', key: 'company.phone', name: 'Company Phone', sample: '+968 1234 5678' },
     { category: 'company', key: 'company.address', name: 'Company Address', sample: 'Muscat, Oman' },
     { category: 'company', key: 'company.website', name: 'Company Website', sample: 'www.futurespace.om' },
-    { category: 'company', key: 'company.currency', name: 'Currency', sample: 'OMR' },
+    { category: 'company', key: 'company.currency', name: 'Currency', sample: 'USD' },
 
     { category: 'customer', key: 'customer.name', name: 'Customer Name', sample: 'Ahmed Al-Balushi' },
     { category: 'customer', key: 'customer.email', name: 'Customer Email', sample: 'ahmed@example.com' },

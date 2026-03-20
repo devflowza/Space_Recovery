@@ -107,14 +107,14 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
             label="Country Name"
             value={formData.country_name}
             onChange={(e) => handleInputChange('country_name', e.target.value)}
-            placeholder="Oman"
+            placeholder="Country name"
             required
           />
           <Input
             label="Country Code"
             value={formData.country_code}
             onChange={(e) => handleInputChange('country_code', e.target.value.toUpperCase())}
-            placeholder="OM"
+            placeholder="US"
             maxLength={2}
             required
             disabled={!!editingLocale}
@@ -126,7 +126,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
             label="Currency Code"
             value={formData.currency_code}
             onChange={(e) => handleInputChange('currency_code', e.target.value.toUpperCase())}
-            placeholder="OMR"
+            placeholder="USD"
             maxLength={3}
             required
           />
@@ -134,7 +134,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
             label="Currency Symbol"
             value={formData.currency_symbol}
             onChange={(e) => handleInputChange('currency_symbol', e.target.value)}
-            placeholder="OMR"
+            placeholder="$"
             required
           />
         </div>
@@ -143,7 +143,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
           label="Currency Name"
           value={formData.currency_name}
           onChange={(e) => handleInputChange('currency_name', e.target.value)}
-          placeholder="Omani Rial"
+          placeholder="US Dollar"
           required
         />
 
@@ -186,7 +186,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
           label="Tax Number Label"
           value={formData.tax_number_label}
           onChange={(e) => handleInputChange('tax_number_label', e.target.value)}
-          placeholder="OM1100376252"
+          placeholder="Tax ID Number"
         />
 
         <div className="grid grid-cols-3 gap-4">
@@ -304,7 +304,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
             onChange={(e) => handleInputChange('notes', e.target.value)}
             rows={3}
             className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Default Oman locale with 5% VAT and 3 decimal places for OMR"
+            placeholder="Notes about this locale configuration"
           />
         </div>
 
