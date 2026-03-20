@@ -1,4 +1,4 @@
-const POSTGREST_CONTROL_CHARS = /[,.()"'\\]/g;
+const POSTGREST_CONTROL_CHARS = /[,()"'\\]/g;
 
 export function sanitizeFilterValue(value: string): string {
   return value.replace(POSTGREST_CONTROL_CHARS, '');

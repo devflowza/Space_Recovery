@@ -205,7 +205,7 @@ export const Sidebar: React.FC = () => {
         {/* Navigation */}
         <nav
           className={`flex-1 overflow-y-auto ${isCollapsed ? 'px-2' : 'px-3'} py-2`}
-          style={{ scrollbarWidth: 'none' }}
+          style={{ scrollbarWidth: 'thin', scrollbarColor: '#CBD5E1 transparent' }}
         >
           <SidebarSection
             title="Core Operations"
