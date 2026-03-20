@@ -147,6 +147,7 @@ Deno.serve(async (req: Request) => {
       .from('tenants')
       .select('id')
       .eq('slug', slug)
+      .is('deleted_at', null)
       .maybeSingle();
 
     if (existingTenant) {
