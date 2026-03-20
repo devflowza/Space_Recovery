@@ -236,6 +236,19 @@ export const performanceKeys = {
   employees: () => [...performanceKeys.all, 'employees'] as const,
 };
 
+export const mfaKeys = {
+  all: ['mfa'] as const,
+  factors: () => [...mfaKeys.all, 'factors'] as const,
+  assuranceLevel: () => [...mfaKeys.all, 'assurance-level'] as const,
+};
+
+export const gdprKeys = {
+  all: ['gdpr'] as const,
+  requests: (filters?: Record<string, unknown>) => [...gdprKeys.all, 'requests', filters] as const,
+  request: (id: string) => [...gdprKeys.all, 'request', id] as const,
+  retentionPolicies: () => [...gdprKeys.all, 'retention-policies'] as const,
+};
+
 export const platformAdminKeys = {
   all: ['platform-admin'] as const,
   dashboard: () => [...platformAdminKeys.all, 'dashboard'] as const,

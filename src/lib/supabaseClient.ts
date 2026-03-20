@@ -8,11 +8,24 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
+// Connection pooling is managed by Supabase infrastructure (PgBouncer in transaction mode).
+// The REST API (PostgREST) and Realtime connections are automatically pooled.
+// Edge functions use per-request clients with persistSession: false (stateless, no pool leaks).
+// For direct Postgres connections (e.g., migrations), use the pooler connection string
+// from Supabase Dashboard > Settings > Database > Connection Pooling.
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+  },
+  db: {
+    schema: 'public',
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'xsuite-web',
+    },
   },
 });
 
