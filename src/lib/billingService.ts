@@ -80,6 +80,185 @@ export async function getTenantSubscription(
   return data;
 }
 
+export async function getAllSubscriptionPlans(): Promise<PlanWithFeatures[]> {
+  const { data, error } = await supabase
+    .from('subscription_plans')
+    .select(`
+      *,
+      plan_features (*)
+    `)
+    .is('deleted_at', null)
+    .order('sort_order', { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getSubscriptionPlanById(id: string): Promise<PlanWithFeatures | null> {
+  const { data, error } = await supabase
+    .from('subscription_plans')
+    .select(`
+      *,
+      plan_features (*)
+    `)
+    .eq('id', id)
+    .is('deleted_at', null)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function createSubscriptionPlan(
+  plan: Database['public']['Tables']['subscription_plans']['Insert']
+): Promise<SubscriptionPlan> {
+  const { data, error } = await supabase
+    .from('subscription_plans')
+    .insert(plan)
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Failed to create plan');
+  return data;
+}
+
+export async function updateSubscriptionPlan(
+  id: string,
+  updates: Database['public']['Tables']['subscription_plans']['Update']
+): Promise<SubscriptionPlan> {
+  const { data, error } = await supabase
+    .from('subscription_plans')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Failed to update plan');
+  return data;
+}
+
+export async function softDeleteSubscriptionPlan(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('subscription_plans')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function createPlanFeature(
+  feature: Database['public']['Tables']['plan_features']['Insert']
+): Promise<PlanFeature> {
+  const { data, error } = await supabase
+    .from('plan_features')
+    .insert(feature)
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Failed to create feature');
+  return data;
+}
+
+export async function updatePlanFeature(
+  id: string,
+  updates: Database['public']['Tables']['plan_features']['Update']
+): Promise<PlanFeature> {
+  const { data, error } = await supabase
+    .from('plan_features')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Failed to update feature');
+  return data;
+}
+
+export async function softDeletePlanFeature(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('plan_features')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function getPlanSubscriberCount(planId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('tenant_subscriptions')
+    .select('id', { count: 'exact', head: true })
+    .eq('plan_id', planId)
+    .eq('status', 'active');
+
+  if (error) throw error;
+  return count || 0;
+}
+
+export async function getAllCoupons(): Promise<BillingCoupon[]> {
+  const { data, error } = await supabase
+    .from('billing_coupons')
+    .select('*')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createCoupon(
+  coupon: Database['public']['Tables']['billing_coupons']['Insert']
+): Promise<BillingCoupon> {
+  const { data, error } = await supabase
+    .from('billing_coupons')
+    .insert(coupon)
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Failed to create coupon');
+  return data;
+}
+
+export async function updateCoupon(
+  id: string,
+  updates: Database['public']['Tables']['billing_coupons']['Update']
+): Promise<BillingCoupon> {
+  const { data, error } = await supabase
+    .from('billing_coupons')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Failed to update coupon');
+  return data;
+}
+
+export async function softDeleteCoupon(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('billing_coupons')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function getCouponRedemptions(couponId: string): Promise<CouponRedemption[]> {
+  const { data, error } = await supabase
+    .from('coupon_redemptions')
+    .select('*')
+    .eq('coupon_id', couponId)
+    .order('redeemed_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
 export async function getSubscriptionPlans(): Promise<PlanWithFeatures[]> {
   const { data, error } = await supabase
     .from('subscription_plans')
