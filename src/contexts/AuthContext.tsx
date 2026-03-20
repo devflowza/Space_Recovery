@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
+import { mfaService } from '../lib/mfaService';
 import { logger } from '../lib/logger';
 
 interface Profile {
@@ -28,11 +29,13 @@ interface AuthContextType {
   loading: boolean;
   profileStatus: ProfileStatus;
   passwordResetRequired: boolean;
+  mfaPending: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  completeMFAChallenge: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [profileStatus, setProfileStatus] = useState<ProfileStatus>('loading');
   const [passwordResetRequired, setPasswordResetRequired] = useState(false);
+  const [mfaPending, setMfaPending] = useState(false);
   const profileCache = useRef<Profile | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
@@ -157,12 +161,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const checkMFAStatus = useCallback(async () => {
+    try {
+      const needsMFA = await mfaService.needsMFAVerification();
+      setMfaPending(needsMFA);
+    } catch {
+      setMfaPending(false);
+    }
+  }, []);
+
+  const completeMFAChallenge = useCallback(() => {
+    setMfaPending(false);
+  }, []);
+
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     if (error) throw error;
+    await checkMFAStatus();
   };
 
   const signInWithGoogle = async () => {
@@ -201,7 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, profileStatus, passwordResetRequired, signIn, signInWithGoogle, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, profileStatus, passwordResetRequired, mfaPending, signIn, signInWithGoogle, signUp, signOut, refreshProfile, completeMFAChallenge }}>
       {children}
     </AuthContext.Provider>
   );

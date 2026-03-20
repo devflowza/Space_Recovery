@@ -9,6 +9,7 @@ import {
   Building2,
   Database,
   ShoppingCart,
+  ShieldCheck,
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
@@ -195,6 +196,26 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     tables: [],
     actionLabel: 'Go to Page',
     description: 'Migrate data from legacy ERP systems or export current data',
+  },
+  {
+    id: 'gdpr',
+    title: 'GDPR & Compliance',
+    icon: Shield,
+    backgroundColor: '#059669',
+    borderColor: '#059669',
+    tables: [],
+    actionLabel: 'Go to Page',
+    description: 'Data subject requests, exports, retention policies, and compliance tools',
+  },
+  {
+    id: 'security',
+    title: 'Security',
+    icon: ShieldCheck,
+    backgroundColor: '#0d9488',
+    borderColor: '#0d9488',
+    tables: [],
+    actionLabel: 'Manage Security',
+    description: 'Two-factor authentication, session management, and security policies',
   },
 ];
 

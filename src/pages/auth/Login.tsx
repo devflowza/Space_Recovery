@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { PasswordChangeModal } from '../../components/users/PasswordChangeModal';
+import { MFAChallenge } from '../../components/auth/MFAChallenge';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, passwordResetRequired, profile, profileStatus } = useAuth();
+  const { signIn, passwordResetRequired, profile, profileStatus, mfaPending, completeMFAChallenge, signOut } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -41,12 +42,21 @@ export const Login: React.FC = () => {
   };
 
   useEffect(() => {
-    if (profile && !passwordResetRequired && !hasRedirected.current && profileStatus === 'approved') {
+    if (profile && !passwordResetRequired && !mfaPending && !hasRedirected.current && profileStatus === 'approved') {
       hasRedirected.current = true;
       const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/';
       navigate(from, { replace: true });
     }
-  }, [profile, passwordResetRequired, navigate, location, profileStatus]);
+  }, [profile, passwordResetRequired, mfaPending, navigate, location, profileStatus]);
+
+  if (mfaPending) {
+    return (
+      <MFAChallenge
+        onVerified={completeMFAChallenge}
+        onCancel={() => signOut()}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">

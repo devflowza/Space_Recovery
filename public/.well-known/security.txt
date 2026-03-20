@@ -1,0 +1,13 @@
+# xSuite Security Policy
+# https://securitytxt.org/
+
+Contact: mailto:security@xsuite.app
+Expires: 2027-03-20T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://xsuite.app/.well-known/security.txt
+Policy: https://xsuite.app/security-policy
+
+# Responsible Disclosure
+# We appreciate security researchers who report vulnerabilities responsibly.
+# Please allow up to 90 days for remediation before public disclosure.
+# We do not pursue legal action against researchers acting in good faith.

@@ -4175,6 +4175,109 @@ export type Database = {
           },
         ]
       }
+      data_retention_policies: {
+        Row: {
+          auto_purge: boolean | null
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          is_active: boolean | null
+          retention_days: number
+          table_name: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_purge?: boolean | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          retention_days?: number
+          table_name: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_purge?: boolean | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          retention_days?: number
+          table_name?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_retention_policies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_subject_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          deleted_at: string | null
+          export_file_path: string | null
+          id: string
+          notes: string | null
+          processed_by: string | null
+          request_type: string
+          requested_by: string
+          status: string
+          subject_email: string
+          subject_name: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          export_file_path?: string | null
+          id?: string
+          notes?: string | null
+          processed_by?: string | null
+          request_type: string
+          requested_by: string
+          status?: string
+          subject_email: string
+          subject_name?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          export_file_path?: string | null
+          id?: string
+          notes?: string | null
+          processed_by?: string | null
+          request_type?: string
+          requested_by?: string
+          status?: string
+          subject_email?: string
+          subject_name?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_subject_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       database_backups: {
         Row: {
           backup_type: string | null
@@ -9231,6 +9334,8 @@ export type Database = {
           id: string
           is_active: boolean
           last_login_at: string | null
+          mfa_enabled: boolean | null
+          mfa_enrolled_at: string | null
           password_reset_required: boolean | null
           permissions: Json
           phone: string | null
@@ -9249,6 +9354,8 @@ export type Database = {
           id: string
           is_active?: boolean
           last_login_at?: string | null
+          mfa_enabled?: boolean | null
+          mfa_enrolled_at?: string | null
           password_reset_required?: boolean | null
           permissions?: Json
           phone?: string | null
@@ -9267,6 +9374,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_login_at?: string | null
+          mfa_enabled?: boolean | null
+          mfa_enrolled_at?: string | null
           password_reset_required?: boolean | null
           permissions?: Json
           phone?: string | null
@@ -11255,11 +11364,13 @@ export type Database = {
       }
       subscription_plans: {
         Row: {
+          api_calls_per_hour: number | null
           code: string | null
           created_at: string
           currency: string
           deleted_at: string | null
           description: string | null
+          email_sends_per_day: number | null
           features: Json
           id: string
           is_active: boolean
@@ -11269,19 +11380,23 @@ export type Database = {
           paypal_plan_monthly_id: string | null
           paypal_plan_yearly_id: string | null
           paypal_product_id: string | null
+          pdf_generations_per_hour: number | null
           price_monthly: number
           price_yearly: number
           slug: string
           sort_order: number
+          storage_limit_mb: number | null
           trial_days: number | null
           updated_at: string
         }
         Insert: {
+          api_calls_per_hour?: number | null
           code?: string | null
           created_at?: string
           currency?: string
           deleted_at?: string | null
           description?: string | null
+          email_sends_per_day?: number | null
           features?: Json
           id?: string
           is_active?: boolean
@@ -11291,19 +11406,23 @@ export type Database = {
           paypal_plan_monthly_id?: string | null
           paypal_plan_yearly_id?: string | null
           paypal_product_id?: string | null
+          pdf_generations_per_hour?: number | null
           price_monthly?: number
           price_yearly?: number
           slug: string
           sort_order?: number
+          storage_limit_mb?: number | null
           trial_days?: number | null
           updated_at?: string
         }
         Update: {
+          api_calls_per_hour?: number | null
           code?: string | null
           created_at?: string
           currency?: string
           deleted_at?: string | null
           description?: string | null
+          email_sends_per_day?: number | null
           features?: Json
           id?: string
           is_active?: boolean
@@ -11313,10 +11432,12 @@ export type Database = {
           paypal_plan_monthly_id?: string | null
           paypal_plan_yearly_id?: string | null
           paypal_product_id?: string | null
+          pdf_generations_per_hour?: number | null
           price_monthly?: number
           price_yearly?: number
           slug?: string
           sort_order?: number
+          storage_limit_mb?: number | null
           trial_days?: number | null
           updated_at?: string
         }
@@ -12382,6 +12503,53 @@ export type Database = {
           },
         ]
       }
+      tenant_rate_limits: {
+        Row: {
+          created_at: string | null
+          current_count: number | null
+          deleted_at: string | null
+          id: string
+          max_requests: number
+          resource_type: string
+          tenant_id: string
+          updated_at: string | null
+          window_seconds: number
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_count?: number | null
+          deleted_at?: string | null
+          id?: string
+          max_requests: number
+          resource_type: string
+          tenant_id: string
+          updated_at?: string | null
+          window_seconds?: number
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_count?: number | null
+          deleted_at?: string | null
+          id?: string
+          max_requests?: number
+          resource_type?: string
+          tenant_id?: string
+          updated_at?: string | null
+          window_seconds?: number
+          window_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_rate_limits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_subscriptions: {
         Row: {
           billing_address: Json | null
@@ -13428,6 +13596,10 @@ export type Database = {
     }
     Functions: {
       admin_validate_user_creation: { Args: { p_email: string }; Returns: Json }
+      anonymize_customer_data: {
+        Args: { p_customer_id: string }
+        Returns: undefined
+      }
       approve_quote: { Args: { p_quote_id: string }; Returns: undefined }
       authenticate_portal_customer: {
         Args: { p_email: string; p_password: string }
@@ -13439,6 +13611,10 @@ export type Database = {
         Returns: undefined
       }
       check_module_access: { Args: { p_module_slug: string }; Returns: boolean }
+      check_tenant_rate_limit: {
+        Args: { p_resource: string; p_tenant_id: string }
+        Returns: boolean
+      }
       convert_proforma_to_tax_invoice: {
         Args: { p_quote_id: string }
         Returns: string
@@ -13451,6 +13627,7 @@ export type Database = {
         Args: { p_customer_id: string }
         Returns: undefined
       }
+      export_customer_data: { Args: { p_customer_id: string }; Returns: Json }
       generate_next_number: { Args: { p_scope: string }; Returns: string }
       get_accessible_modules: {
         Args: never
@@ -13620,6 +13797,14 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      test_tenant_isolation: {
+        Args: never
+        Returns: {
+          details: string
+          passed: boolean
+          test_name: string
+        }[]
+      }
       update_number_sequence: {
         Args: {
           p_padding: number
@@ -13810,4 +13995,3 @@ export const Constants = {
     },
   },
 } as const
-
