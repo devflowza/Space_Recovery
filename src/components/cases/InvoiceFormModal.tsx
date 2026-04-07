@@ -183,7 +183,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bank_accounts')
-        .select('id, account_name, bank_name, account_number, is_active')
+        .select('id, account_name:name, bank_name, account_number, is_active')
         .eq('is_active', true)
         .order('created_at', { ascending: true });
 

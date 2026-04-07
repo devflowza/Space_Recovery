@@ -74,15 +74,13 @@ export const PaymentsList: React.FC = () => {
           payment_number,
           payment_date,
           amount,
-          reference_number,
+          reference,
           status,
           notes,
-          case_id,
           payment_method_id,
-          case:cases(id, case_no, title),
           customer:customers_enhanced(id, customer_name, email),
-          payment_method:payment_methods(id, name),
-          bank_account:bank_accounts(account_name),
+          payment_method:master_payment_methods(id, name),
+          bank_account:bank_accounts(account_name:name),
           allocations:payment_allocations(
             amount,
             invoice:invoices(invoice_number, case_id)
@@ -91,7 +89,7 @@ export const PaymentsList: React.FC = () => {
         .order('payment_date', { ascending: false });
 
       if (searchTerm) {
-        query = query.or(`payment_number.ilike.%${searchTerm}%,reference_number.ilike.%${searchTerm}%`);
+        query = query.or(`payment_number.ilike.%${searchTerm}%,reference.ilike.%${searchTerm}%`);
       }
 
       if (statusFilter !== 'all') {
@@ -207,7 +205,7 @@ export const PaymentsList: React.FC = () => {
       p.customer?.customer_name || 'N/A',
       p.amount,
       p.payment_method?.name || 'N/A',
-      p.reference_number || '',
+      p.reference || '',
       p.status,
     ]);
 
@@ -476,7 +474,7 @@ export const PaymentsList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {payments.map((payment: { id: string; payment_number: string; payment_date: string; amount: number; status: string; customer?: { customer_name?: string }; payment_method?: { name?: string }; bank_account?: { account_name?: string }; reference_number?: string }) => (
+                {payments.map((payment: { id: string; payment_number: string; payment_date: string; amount: number; status: string; customer?: { customer_name?: string }; payment_method?: { name?: string }; bank_account?: { account_name?: string }; reference?: string }) => (
                   <tr
                     key={payment.id}
                     className="hover:bg-slate-50 transition-colors"
@@ -523,7 +521,7 @@ export const PaymentsList: React.FC = () => {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                      {payment.reference_number || '-'}
+                      {payment.reference || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge

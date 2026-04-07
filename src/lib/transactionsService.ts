@@ -67,7 +67,7 @@ export const fetchTransactions = async (filters?: {
     .select(`
       *,
       category:transaction_categories(id, name),
-      bank_account:bank_accounts(id, account_name, bank_name),
+      bank_account:bank_accounts(id, account_name:name, bank_name),
       related_invoice:invoices(id, invoice_number),
       related_payment:payments(id, payment_number),
       related_expense:expenses(id, expense_number)
@@ -119,7 +119,7 @@ export const fetchTransactionById = async (id: string) => {
     .select(`
       *,
       category:transaction_categories(id, name),
-      bank_account:bank_accounts(id, account_name, bank_name, account_number),
+      bank_account:bank_accounts(id, account_name:name, bank_name, account_number),
       related_invoice:invoices(id, invoice_number, total_amount, case_id),
       related_payment:payments(id, payment_number, amount),
       related_expense:expenses(id, expense_number, amount)
@@ -364,7 +364,7 @@ export const getTransactionsByDateRange = async (
     .select(`
       *,
       category:transaction_categories(id, name),
-      bank_account:bank_accounts(id, account_name)
+      bank_account:bank_accounts(id, account_name:name)
     `)
     .gte('transaction_date', dateFrom)
     .lte('transaction_date', dateTo)

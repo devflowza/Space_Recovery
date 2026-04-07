@@ -424,9 +424,9 @@ export const InvoicesListPage: React.FC = () => {
                         <p className="text-sm font-medium text-slate-900">
                           {formatCurrency(invoice.total_amount || 0)}
                         </p>
-                        {invoice.amount_due && invoice.amount_due > 0 && (
+                        {invoice.balance_due && invoice.balance_due > 0 && (
                           <p className="text-xs text-orange-600">
-                            Due: {formatCurrency(invoice.amount_due)}
+                            Due: {formatCurrency(invoice.balance_due)}
                           </p>
                         )}
                       </div>
@@ -589,7 +589,7 @@ export const InvoicesListPage: React.FC = () => {
                     .from('invoices')
                     .update({
                       amount_paid: newAmountPaid,
-                      amount_due: newAmountDue,
+                      balance_due: newAmountDue,
                       status: newStatus,
                     })
                     .eq('id', alloc.invoice_id);
@@ -619,7 +619,7 @@ export const InvoicesListPage: React.FC = () => {
             customer_id: paymentInvoice.customer_id,
             company_id: paymentInvoice.company_id,
             case_id: paymentInvoice.case_id,
-            amount: paymentInvoice.amount_due || paymentInvoice.total_amount,
+            amount: paymentInvoice.balance_due || paymentInvoice.total_amount,
           }}
         />
       )}

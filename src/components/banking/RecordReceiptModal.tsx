@@ -99,10 +99,10 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bank_accounts')
-        .select('id, account_name, account_type, current_balance')
+        .select('id, account_name:name, account_type, current_balance')
         .eq('is_active', true)
         .is('deleted_at', null)
-        .order('account_name');
+        .order('name');
       if (error) throw error;
       return data || [];
     },
@@ -190,7 +190,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
     const selectedInvoicesList = invoices.filter(inv => selectedInvoices.has(inv.id));
 
     for (const invoice of selectedInvoicesList) {
-      const outstanding = invoice.amount_due || 0;
+      const outstanding = invoice.balance_due || 0;
       if (remainingAmount <= 0) {
         newAllocations.set(invoice.id, 0);
       } else if (remainingAmount >= outstanding) {
@@ -232,7 +232,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
 
       for (const [invoiceId, amount] of allocations.entries()) {
         const invoice = invoices.find(inv => inv.id === invoiceId);
-        if (invoice && amount > (invoice.amount_due || 0)) {
+        if (invoice && amount > (invoice.balance_due || 0)) {
           throw new Error(`Allocation for invoice ${invoice.invoice_number} exceeds outstanding balance`);
         }
       }
@@ -367,8 +367,8 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
             <div className="grid grid-cols-1 gap-3 max-h-80 overflow-y-auto">
               {invoices
                 .filter((invoice: { id: string }) => singleInvoiceMode ? invoice.id === invoiceId : true)
-                .map((invoice: { id: string; invoice_number?: string; total_amount?: number; amount_paid?: number; amount_due?: number; status?: string }) => {
-                const outstanding = invoice.amount_due || 0;
+                .map((invoice: { id: string; invoice_number?: string; total_amount?: number; amount_paid?: number; balance_due?: number; status?: string }) => {
+                const outstanding = invoice.balance_due || 0;
                 const isSelected = selectedInvoices.has(invoice.id);
                 const allocation = allocations.get(invoice.id) || 0;
 

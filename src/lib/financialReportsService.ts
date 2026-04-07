@@ -73,7 +73,7 @@ export const generateProfitLossReport = async (
       .select(`
         amount,
         status,
-        category:expense_categories(name)
+        category:master_expense_categories(name)
       `)
       .gte('expense_date', dateFrom)
       .lte('expense_date', dateTo)
@@ -129,10 +129,10 @@ export const generateAgedReceivablesReport = async (): Promise<AgedReceivablesDa
       id,
       invoice_date,
       due_date,
-      amount_due,
+      balance_due,
       customer:customers_enhanced(id, customer_name)
     `)
-    .gt('amount_due', 0)
+    .gt('balance_due', 0)
     .in('status', ['sent', 'partial', 'overdue']);
 
   if (error) throw error;
@@ -171,7 +171,7 @@ export const generateAgedReceivablesReport = async (): Promise<AgedReceivablesDa
     if (!customerTotals[customerName][bucket]) {
       customerTotals[customerName][bucket] = { amount: 0, invoices: 0 };
     }
-    customerTotals[customerName][bucket].amount += inv.amount_due || 0;
+    customerTotals[customerName][bucket].amount += inv.balance_due || 0;
     customerTotals[customerName][bucket].invoices += 1;
   });
 
@@ -254,7 +254,7 @@ export const generateInvoiceSummaryReport = async (
   const [invoicesResult, quotesResult] = await Promise.all([
     supabase
       .from('invoices')
-      .select('status, invoice_type, total_amount, amount_paid, amount_due')
+      .select('status, invoice_type, total_amount, amount_paid, balance_due')
       .gte('invoice_date', dateFrom)
       .lte('invoice_date', dateTo),
     supabase
@@ -287,10 +287,10 @@ export const generateInvoiceSummaryReport = async (
 
   const totalInvoiced = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
   const totalPaid = invoices.reduce((sum, inv) => sum + (inv.amount_paid || 0), 0);
-  const totalOutstanding = invoices.reduce((sum, inv) => sum + (inv.amount_due || 0), 0);
+  const totalOutstanding = invoices.reduce((sum, inv) => sum + (inv.balance_due || 0), 0);
   const totalOverdue = invoices
     .filter(inv => inv.status === 'overdue')
-    .reduce((sum, inv) => sum + (inv.amount_due || 0), 0);
+    .reduce((sum, inv) => sum + (inv.balance_due || 0), 0);
 
   const convertedQuotes = quotes.filter(q => q.status === 'converted').length;
   const conversionRate = quotes.length > 0 ? (convertedQuotes / quotes.length) * 100 : 0;

@@ -126,7 +126,7 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityInfo> = {
     requiredFields: ['invoice_number', 'invoice_date', 'due_date'],
     uniqueFields: ['invoice_number'],
     dateFields: ['invoice_date', 'due_date', 'sent_at'],
-    numberFields: ['subtotal', 'tax_amount', 'discount_amount', 'total_amount', 'amount_paid', 'amount_due'],
+    numberFields: ['subtotal', 'tax_amount', 'discount_amount', 'total_amount', 'amount_paid', 'balance_due'],
     booleanFields: [],
     referenceFields: {
       customer_id: { table: 'customers_enhanced', field: 'id' },

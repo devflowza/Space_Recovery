@@ -34,7 +34,7 @@ interface RecordPaymentModalProps {
       customer_id?: string | null;
       payment_method_id?: string | null;
       bank_account_id?: string | null;
-      reference_number?: string;
+      reference?: string;
       status: 'pending' | 'completed';
       notes?: string;
     },
@@ -48,7 +48,7 @@ interface InvoiceAllocation {
   invoice_id: string;
   invoice_number: string;
   total_amount: number;
-  amount_due: number;
+  balance_due: number;
   allocation_amount: number;
   status: string;
 }
@@ -98,9 +98,9 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bank_accounts')
-        .select('id, account_name, bank_name, account_type')
+        .select('id, account_name:name, bank_name, account_type')
         .eq('is_active', true)
-        .order('account_name');
+        .order('name');
       if (error) throw error;
       return data || [];
     },
@@ -138,11 +138,11 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
           invoice_id: invoice.id,
           invoice_number: invoice.invoice_number,
           total_amount: invoice.total_amount,
-          amount_due: invoice.amount_due,
-          allocation_amount: invoice.amount_due,
+          balance_due: invoice.balance_due,
+          allocation_amount: invoice.balance_due,
           status: invoice.status,
         }]);
-        setTotalAmount(invoice.amount_due);
+        setTotalAmount(invoice.balance_due);
       }
     }
   }, [preselectedInvoiceId, unpaidInvoices]);
@@ -161,8 +161,8 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
       invoice_id: invoice.id,
       invoice_number: invoice.invoice_number,
       total_amount: invoice.total_amount,
-      amount_due: invoice.amount_due,
-      allocation_amount: invoice.amount_due,
+      balance_due: invoice.balance_due,
+      allocation_amount: invoice.balance_due,
       status: invoice.status,
     };
 
@@ -179,7 +179,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   const handleAllocationAmountChange = (invoiceId: string, amount: number) => {
     const updated = allocations.map(a =>
       a.invoice_id === invoiceId
-        ? { ...a, allocation_amount: Math.min(amount, a.amount_due) }
+        ? { ...a, allocation_amount: Math.min(amount, a.balance_due) }
         : a
     );
     setAllocations(updated);
@@ -201,11 +201,10 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
         {
           payment_date: paymentDate,
           amount: totalAmount,
-          case_id: selectedCaseId,
           customer_id: selectedCase?.customer?.id || null,
           payment_method_id: paymentMethodId || null,
           bank_account_id: bankAccountId || null,
-          reference_number: referenceNumber || undefined,
+          reference: referenceNumber || undefined,
           status: 'completed',
           notes: notes || undefined,
         },
@@ -399,7 +398,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 <option value="">+ Add Invoice</option>
                 {availableInvoices.map((inv) => (
                   <option key={inv.id} value={inv.id}>
-                    {inv.invoice_number} - {formatCurrency(inv.amount_due)} due
+                    {inv.invoice_number} - {formatCurrency(inv.balance_due)} due
                   </option>
                 ))}
               </select>
@@ -436,14 +435,14 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                         </div>
                       </td>
                       <td className="py-2 px-3 text-right text-sm text-slate-600">
-                        {formatCurrency(alloc.amount_due)}
+                        {formatCurrency(alloc.balance_due)}
                       </td>
                       <td className="py-2 px-3">
                         <Input
                           type="number"
                           step="0.01"
                           min="0"
-                          max={alloc.amount_due}
+                          max={alloc.balance_due}
                           value={alloc.allocation_amount}
                           onChange={(e) =>
                             handleAllocationAmountChange(

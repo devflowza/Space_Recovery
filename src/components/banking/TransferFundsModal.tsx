@@ -37,10 +37,10 @@ export const TransferFundsModal: React.FC<TransferFundsModalProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bank_accounts')
-        .select('id, account_name, account_type, current_balance')
+        .select('id, account_name:name, account_type, current_balance')
         .eq('is_active', true)
         .is('deleted_at', null)
-        .order('account_name');
+        .order('name');
       if (error) throw error;
       return data || [];
     },

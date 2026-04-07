@@ -8,11 +8,10 @@ export interface Payment {
   payment_number?: string;
   payment_date: string;
   amount: number;
-  case_id?: string | null;
   customer_id?: string | null;
   payment_method_id?: string | null;
   bank_account_id?: string | null;
-  reference_number?: string;
+  reference?: string;
   status: 'pending' | 'completed' | 'failed' | 'refunded';
   notes?: string;
   created_by?: string;
@@ -86,7 +85,6 @@ const DEFAULT_PAGE_SIZE = 100;
 export const fetchPayments = async (filters?: {
   status?: string;
   customerId?: string;
-  caseId?: string;
   dateFrom?: string;
   dateTo?: string;
   search?: string;
@@ -97,16 +95,14 @@ export const fetchPayments = async (filters?: {
     .from('payments')
     .select(`
       *,
-      case:cases(id, case_no, title),
       customer:customers_enhanced(id, customer_name, email),
-      payment_method:payment_methods(id, name),
-      bank_account:bank_accounts(id, account_name, bank_name),
+      payment_method:master_payment_methods(id, name),
+      bank_account:bank_accounts(id, account_name:name, bank_name),
       allocations:payment_allocations(
         id,
         amount,
         invoice:invoices(id, invoice_number, total_amount, case_id)
-      ),
-      created_by_profile:profiles!payments_created_by_fkey(id, full_name)
+      )
     `)
     .is('deleted_at', null)
     .order('payment_date', { ascending: false });
@@ -119,10 +115,6 @@ export const fetchPayments = async (filters?: {
     query = query.eq('customer_id', filters.customerId);
   }
 
-  if (filters?.caseId) {
-    query = query.eq('case_id', filters.caseId);
-  }
-
   if (filters?.dateFrom) {
     query = query.gte('payment_date', filters.dateFrom);
   }
@@ -133,7 +125,7 @@ export const fetchPayments = async (filters?: {
 
   if (filters?.search) {
     const s = sanitizeFilterValue(filters.search);
-    query = query.or(`payment_number.ilike.%${s}%,reference_number.ilike.%${s}%`);
+    query = query.or(`payment_number.ilike.%${s}%,reference.ilike.%${s}%`);
   }
 
   const pageSize = filters?.pageSize || DEFAULT_PAGE_SIZE;
@@ -150,10 +142,9 @@ export const fetchPaymentById = async (id: string) => {
     .from('payments')
     .select(`
       *,
-      case:cases(id, case_no, title),
       customer:customers_enhanced(id, customer_name, email, mobile_number, address_line1, city),
-      payment_method:payment_methods(id, name),
-      bank_account:bank_accounts(id, account_name, bank_name, account_number),
+      payment_method:master_payment_methods(id, name),
+      bank_account:bank_accounts(id, account_name:name, bank_name, account_number),
       allocations:payment_allocations(
         id,
         amount,
@@ -161,11 +152,10 @@ export const fetchPaymentById = async (id: string) => {
           id,
           invoice_number,
           total_amount,
-          amount_due,
+          balance_due,
           case:cases(id, case_no, title)
         )
-      ),
-      created_by_profile:profiles!payments_created_by_fkey(id, full_name)
+      )
     `)
     .eq('id', id)
     .maybeSingle();
@@ -217,13 +207,13 @@ export const allocatePaymentToInvoices = async (
   if (allocError) throw allocError;
 
   // Track successfully updated invoices for rollback on failure
-  const updatedInvoices: Array<{ invoice_id: string; original: { amount_paid: number; amount_due: number; status: string } }> = [];
+  const updatedInvoices: Array<{ invoice_id: string; original: { amount_paid: number; balance_due: number; status: string } }> = [];
 
   try {
     for (const alloc of allocations) {
       const { data: invoice, error: fetchError } = await supabase
         .from('invoices')
-        .select('total_amount, amount_paid, amount_due, status')
+        .select('total_amount, amount_paid, balance_due, status')
         .eq('id', alloc.invoice_id)
         .maybeSingle();
 
@@ -234,7 +224,7 @@ export const allocatePaymentToInvoices = async (
         invoice_id: alloc.invoice_id,
         original: {
           amount_paid: invoice.amount_paid || 0,
-          amount_due: invoice.amount_due || 0,
+          balance_due: invoice.balance_due || 0,
           status: invoice.status || 'sent',
         },
       });
@@ -253,7 +243,7 @@ export const allocatePaymentToInvoices = async (
         .from('invoices')
         .update({
           amount_paid: newAmountPaid,
-          amount_due: Math.max(0, newAmountDue),
+          balance_due: Math.max(0, newAmountDue),
           status: newStatus,
         })
         .eq('id', alloc.invoice_id);
@@ -283,7 +273,7 @@ export const allocatePaymentToInvoices = async (
         .from('invoices')
         .update({
           amount_paid: updated.original.amount_paid,
-          amount_due: updated.original.amount_due,
+          balance_due: updated.original.balance_due,
           status: updated.original.status,
         })
         .eq('id', updated.invoice_id);
@@ -343,7 +333,7 @@ export const voidPayment = async (paymentId: string) => {
       .from('invoices')
       .update({
         amount_paid: newAmountPaid,
-        amount_due: newAmountDue,
+        balance_due: newAmountDue,
         status: newStatus,
       })
       .eq('id', alloc.invoice_id);
@@ -388,7 +378,7 @@ export const getPaymentsByCase = async (caseId: string) => {
       payment:payments(
         *,
         customer:customers_enhanced(id, customer_name),
-        payment_method:payment_methods(name)
+        payment_method:master_payment_methods(name)
       ),
       invoice:invoices(id, invoice_number)
     `)
@@ -418,7 +408,7 @@ export const getUnpaidInvoices = async (customerId?: string) => {
       invoice_date,
       total_amount,
       amount_paid,
-      amount_due,
+      balance_due,
       status,
       case_id,
       cases!invoices_case_id_fkey(id, case_no, title),
@@ -426,7 +416,7 @@ export const getUnpaidInvoices = async (customerId?: string) => {
     `)
     .eq('invoice_type', 'tax_invoice')
     .in('status', ['draft', 'sent', 'partial', 'overdue'])
-    .gt('amount_due', 0)
+    .gt('balance_due', 0)
     .order('invoice_date', { ascending: false });
 
   if (customerId) {
@@ -487,7 +477,7 @@ export const getCasesWithUnpaidInvoices = async () => {
     `)
     .eq('invoice_type', 'tax_invoice')
     .in('status', ['draft', 'sent', 'partial', 'overdue'])
-    .gt('amount_due', 0);
+    .gt('balance_due', 0);
 
   if (error) throw error;
 
@@ -510,7 +500,7 @@ export const getUnpaidInvoicesByCase = async (caseId: string) => {
       invoice_date,
       total_amount,
       amount_paid,
-      amount_due,
+      balance_due,
       status,
       case_id,
       cases!invoices_case_id_fkey(id, case_no, title),
@@ -519,7 +509,7 @@ export const getUnpaidInvoicesByCase = async (caseId: string) => {
     .eq('case_id', caseId)
     .eq('invoice_type', 'tax_invoice')
     .in('status', ['draft', 'sent', 'partial', 'overdue'])
-    .gt('amount_due', 0)
+    .gt('balance_due', 0)
     .order('invoice_date', { ascending: false });
 
   if (error) throw error;

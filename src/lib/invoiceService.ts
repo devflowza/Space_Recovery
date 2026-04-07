@@ -4,7 +4,7 @@ import { logAuditTrail } from './auditTrailService';
 import { sanitizeUuidFields as sanitizeUuids } from './dataValidation';
 import { sanitizeFilterValue } from './postgrestSanitizer';
 
-const INVOICE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'template_id', 'accounting_locale_id', 'quote_id', 'currency_id'];
+const INVOICE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'template_id', 'accounting_locale_id', 'converted_from_quote_id', 'currency_id'];
 const sanitizeUuidFields = (data: any) => sanitizeUuids(data, INVOICE_UUID_FIELDS);
 
 export interface InvoiceItem {
@@ -37,7 +37,7 @@ export interface Invoice {
   discount_amount?: number;
   total_amount?: number;
   amount_paid?: number;
-  amount_due?: number;
+  balance_due?: number;
   currency_id?: string | null;
   terms_and_conditions?: string;
   notes?: string;
@@ -128,14 +128,6 @@ export const fetchInvoices = async (filters?: {
         email,
         phone_number
       ),
-      created_by_profile:profiles!invoices_created_by_fkey (
-        id,
-        full_name
-      ),
-      quote:quotes!invoices_quote_id_fkey (
-        id,
-        quote_number
-      )
     `)
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
@@ -210,18 +202,9 @@ export const fetchInvoiceById = async (id: string) => {
         postal_code,
         country
       ),
-      created_by_profile:profiles!invoices_created_by_fkey (
-        id,
-        full_name
-      ),
-      quote:quotes!invoices_quote_id_fkey (
-        id,
-        quote_number,
-        title
-      ),
       bank_accounts (
         id,
-        account_name,
+        account_name:name,
         bank_name,
         account_number,
         iban,
@@ -306,7 +289,7 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
     case_id: invoice.case_id,
     customer_id: invoice.customer_id || null,
     company_id: invoice.company_id || null,
-    quote_id: invoice.quote_id || null,
+    converted_from_quote_id: invoice.quote_id || null,
     invoice_date: invoice.invoice_date,
     due_date: invoice.due_date,
     status: invoice.status || 'draft',
@@ -318,7 +301,7 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
     discount_amount: invoice.discount_amount || 0,
     total_amount: totalAmount,
     amount_paid: invoice.amount_paid || 0,
-    amount_due: amountDue,
+    balance_due: amountDue,
     terms_and_conditions: invoice.terms_and_conditions || null,
     notes: invoice.notes || null,
     bank_account_id: invoice.bank_account_id || null,
@@ -390,7 +373,7 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
       subtotal,
       tax_amount: taxAmount,
       total_amount: totalAmount,
-      amount_due: amountDue,
+      balance_due: amountDue,
     };
 
     await supabase.from('invoice_line_items').update({ deleted_at: new Date().toISOString() }).eq('invoice_id', id);
@@ -463,7 +446,7 @@ export const updateInvoiceStatus = async (
 };
 
 export const getInvoiceStats = async (filters?: { caseId?: string }) => {
-  let query = supabase.from('invoices').select('status, total_amount, amount_paid, amount_due, invoice_type');
+  let query = supabase.from('invoices').select('status, total_amount, amount_paid, balance_due, invoice_type');
 
   if (filters?.caseId) {
     query = query.eq('case_id', filters.caseId);
@@ -484,7 +467,7 @@ export const getInvoiceStats = async (filters?: { caseId?: string }) => {
     taxInvoice: invoices.filter((i) => i.invoice_type === 'tax_invoice').length,
     totalValue: invoices.reduce((sum, i) => sum + (i.total_amount || 0), 0),
     totalPaid: invoices.reduce((sum, i) => sum + (i.amount_paid || 0), 0),
-    totalOutstanding: invoices.reduce((sum, i) => sum + (i.amount_due || 0), 0),
+    totalOutstanding: invoices.reduce((sum, i) => sum + (i.balance_due || 0), 0),
   };
 
   return stats;
@@ -524,7 +507,7 @@ export const convertQuoteToInvoice = async (
     discount_amount: quote.discount_amount || 0,
     terms_and_conditions: quote.terms_and_conditions || '',
     notes: quote.notes || '',
-    quote_id: quote.id,
+    converted_from_quote_id: quote.id,
     template_id: quote.template_id,
     accounting_locale_id: quote.accounting_locale_id,
     ...additionalData,
@@ -645,7 +628,7 @@ export const recordPayment = async (
     .from('invoices')
     .update({
       amount_paid: newAmountPaid,
-      amount_due: newBalanceDue,
+      balance_due: newBalanceDue,
       status: newStatus,
     })
     .eq('id', invoiceId);
