@@ -38,7 +38,7 @@ interface PaymentViewData {
   payment_date?: string;
   amount?: number;
   status?: string;
-  reference_number?: string;
+  reference?: string;
   notes?: string;
   created_at?: string;
   updated_at?: string;
@@ -197,13 +197,13 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
                 <p className="text-sm font-medium text-slate-900">{bankAccountName}</p>
               </div>
             </div>
-            {payment.reference_number && (
+            {payment.reference && (
               <div>
                 <p className="text-xs text-slate-500 mb-1">Reference Number</p>
                 <div className="flex items-center gap-2">
                   <Hash className="w-4 h-4 text-slate-400" />
                   <p className="text-sm font-medium text-slate-900">
-                    {payment.reference_number}
+                    {payment.reference}
                   </p>
                 </div>
               </div>

@@ -58,7 +58,7 @@ export const fetchFinancialSummary = async (
   try {
     let invoiceQuery = supabase
       .from('invoices')
-      .select('total_amount, amount_paid, amount_due, status')
+      .select('total_amount, amount_paid, balance_due, status')
       .is('deleted_at', null);
 
     let expenseQuery = supabase
@@ -85,7 +85,7 @@ export const fetchFinancialSummary = async (
 
     const totalInvoiced = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
     const totalPaid = invoices.reduce((sum, inv) => sum + (inv.amount_paid || 0), 0);
-    const totalOutstanding = invoices.reduce((sum, inv) => sum + (inv.amount_due || 0), 0);
+    const totalOutstanding = invoices.reduce((sum, inv) => sum + (inv.balance_due || 0), 0);
 
     const totalExpenses = expenses
       .filter(exp => exp.status === 'approved' || exp.status === 'paid')

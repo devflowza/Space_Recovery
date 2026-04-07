@@ -79,7 +79,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
       setExpenseDate(initialData.expense_date || new Date().toISOString().split('T')[0]);
       setAmount(initialData.amount || 0);
       setDescription(initialData.description || '');
-      setVendorName(initialData.vendor_name || '');
+      setVendorName(initialData.vendor || '');
       setCategoryId(initialData.category_id || '');
       setCaseId(initialData.case_id || preselectedCaseId || '');
       setPaymentMethodId(initialData.payment_method_id || '');
@@ -110,10 +110,9 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
         expense_date: expenseDate,
         amount,
         description: description.trim(),
-        vendor_name: vendorName.trim() || undefined,
+        vendor: vendorName.trim() || undefined,
         category_id: categoryId || null,
         case_id: caseId || null,
-        payment_method_id: paymentMethodId || null,
         status: submitForApproval ? 'pending' : 'draft',
         notes: notes.trim() || undefined,
       });

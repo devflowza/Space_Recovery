@@ -109,12 +109,12 @@ export const bankingService = {
     let query = supabase
       .from('bank_accounts')
       .select(`
-        *,
+        *, account_name:name,
         currency:currency_codes(code, symbol, name),
         employee:profiles!bank_accounts_employee_id_fkey(id, full_name)
       `)
       .is('deleted_at', null)
-      .order('account_name');
+      .order('name');
 
     if (filters?.account_type) {
       query = query.eq('account_type', filters.account_type);
@@ -133,7 +133,7 @@ export const bankingService = {
     const { data, error } = await supabase
       .from('bank_accounts')
       .select(`
-        *,
+        *, account_name:name,
         currency:currency_codes(code, symbol, name),
         employee:profiles!bank_accounts_employee_id_fkey(id, full_name)
       `)
@@ -245,8 +245,8 @@ export const bankingService = {
       .from('payment_receipts')
       .select(`
         *,
-        account:bank_accounts(id, account_name, account_type),
-        payment_method:payment_methods(id, name),
+        account:bank_accounts(id, account_name:name, account_type),
+        payment_method:master_payment_methods(id, name),
         customer:customers_enhanced(id, customer_name, email),
         company:companies(id, company_name),
         case:cases(id, case_number)
@@ -314,9 +314,9 @@ export const bankingService = {
       .from('payment_disbursements')
       .select(`
         *,
-        account:bank_accounts(id, account_name, account_type),
-        payment_method:payment_methods(id, name),
-        expense_category:expense_categories(id, name),
+        account:bank_accounts(id, account_name:name, account_type),
+        payment_method:master_payment_methods(id, name),
+        expense_category:master_expense_categories(id, name),
         expense:expenses(id, expense_number)
       `)
       .is('deleted_at', null)
@@ -405,8 +405,8 @@ export const bankingService = {
       .from('account_transfers')
       .select(`
         *,
-        from_account:bank_accounts!account_transfers_from_account_id_fkey(id, account_name, account_type),
-        to_account:bank_accounts!account_transfers_to_account_id_fkey(id, account_name, account_type)
+        from_account:bank_accounts!account_transfers_from_account_id_fkey(id, account_name:name, account_type),
+        to_account:bank_accounts!account_transfers_to_account_id_fkey(id, account_name:name, account_type)
       `)
       .is('deleted_at', null)
       .order('transfer_date', { ascending: false });
@@ -531,19 +531,19 @@ export const bankingService = {
 
     const { data: invoice } = await supabase
       .from('invoices')
-      .select('amount_paid, amount_due')
+      .select('amount_paid, balance_due')
       .eq('id', invoiceId)
       .maybeSingle();
 
     if (invoice) {
       const newAmountPaid = (invoice.amount_paid || 0) + amount;
-      const newAmountDue = (invoice.amount_due || 0) - amount;
+      const newAmountDue = (invoice.balance_due || 0) - amount;
 
       await supabase
         .from('invoices')
         .update({
           amount_paid: newAmountPaid,
-          amount_due: newAmountDue,
+          balance_due: newAmountDue,
           status: newAmountDue <= 0 ? 'paid' : 'partially-paid',
         })
         .eq('id', invoiceId);
@@ -655,7 +655,7 @@ export const bankingService = {
         invoice_number,
         total_amount,
         amount_paid,
-        amount_due,
+        balance_due,
         status,
         case_id,
         cases!invoices_case_id_fkey (
@@ -679,7 +679,7 @@ export const bankingService = {
       .not('case_id', 'is', null);
 
     if (filters?.hasOutstandingInvoices) {
-      query = query.gt('amount_due', 0);
+      query = query.gt('balance_due', 0);
     }
 
     if (filters?.search) {
@@ -712,7 +712,7 @@ export const bankingService = {
           invoice_number: invoice.invoice_number,
           total_amount: invoice.total_amount,
           amount_paid: invoice.amount_paid,
-          amount_due: invoice.amount_due,
+          balance_due: invoice.balance_due,
           status: invoice.status,
         });
       }
@@ -746,7 +746,7 @@ export const bankingService = {
         status,
         total_amount,
         amount_paid,
-        amount_due,
+        balance_due,
         currency_id,
         accounting_locale_id,
         accounting_locales (
@@ -804,13 +804,13 @@ export const bankingService = {
       for (const allocation of allocations) {
         const { data: invoice } = await supabase
           .from('invoices')
-          .select('amount_paid, amount_due, total_amount')
+          .select('amount_paid, balance_due, total_amount')
           .eq('id', allocation.invoice_id)
           .maybeSingle();
 
         if (invoice) {
           const newAmountPaid = (invoice.amount_paid || 0) + allocation.allocated_amount;
-          const newAmountDue = (invoice.amount_due || 0) - allocation.allocated_amount;
+          const newAmountDue = (invoice.balance_due || 0) - allocation.allocated_amount;
 
           let newStatus = invoice.status;
           if (newAmountDue <= 0) {
@@ -823,7 +823,7 @@ export const bankingService = {
             .from('invoices')
             .update({
               amount_paid: newAmountPaid,
-              amount_due: newAmountDue,
+              balance_due: newAmountDue,
               status: newStatus,
             })
             .eq('id', allocation.invoice_id);

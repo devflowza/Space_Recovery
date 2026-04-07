@@ -20,7 +20,7 @@ export interface CaseExpense {
   expense_date: string;
   amount: number;
   description: string;
-  vendor_name: string | null;
+  vendor: string | null;
   status: string;
   category: { name: string } | null;
   submitter: { full_name: string } | null;
@@ -92,10 +92,9 @@ export async function getCaseExpenses(caseId: string): Promise<CaseExpense[]> {
       expense_date,
       amount,
       description,
-      vendor_name,
+      vendor,
       status,
-      category:expense_categories(name),
-      submitter:profiles!expenses_submitted_by_fkey(full_name)
+      category:master_expense_categories(name)
     `)
     .eq('case_id', caseId)
     .order('expense_date', { ascending: false });
@@ -112,7 +111,7 @@ export async function getCasePayments(caseId: string): Promise<CasePayment[]> {
       payment_number,
       payment_date,
       amount,
-      payment_method:payment_methods(name),
+      payment_method:master_payment_methods(name),
       invoice:invoices!inner(invoice_number, case_id),
       customer:customers_enhanced(customer_name)
     `)
@@ -127,7 +126,7 @@ export async function getCasePayments(caseId: string): Promise<CasePayment[]> {
         payment_number,
         payment_date,
         amount,
-        payment_method:payment_methods(name),
+        payment_method:master_payment_methods(name),
         customer:customers_enhanced(customer_name)
       `)
       .eq('case_id', caseId)

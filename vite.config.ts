@@ -16,7 +16,7 @@ export default defineConfig({
           res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
           res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
           // Dev CSP: unsafe-inline/unsafe-eval required for Vite HMR
-          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ws: wss: https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';");
+          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ws: wss: https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';");
           next();
         };
         server.middlewares.use(securityHeaders);
@@ -30,7 +30,7 @@ export default defineConfig({
           res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
           res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
           // Preview CSP: production-like, no unsafe-eval
-          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';");
+          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';");
           next();
         };
         server.middlewares.use(securityHeaders);

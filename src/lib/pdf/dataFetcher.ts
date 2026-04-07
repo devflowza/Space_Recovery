@@ -230,7 +230,7 @@ async function fetchQuoteDetails(quoteId: string): Promise<QuoteData> {
       ),
       bank_accounts (
         id,
-        account_name,
+        account_name:name,
         bank_name,
         account_number,
         iban,
@@ -346,18 +346,9 @@ async function fetchInvoiceDetails(invoiceId: string): Promise<InvoiceData> {
         postal_code,
         country
       ),
-      created_by_profile:profiles!invoices_created_by_fkey (
-        id,
-        full_name
-      ),
-      quote:quotes!invoices_quote_id_fkey (
-        id,
-        quote_number,
-        title
-      ),
       bank_accounts (
         id,
-        account_name,
+        account_name:name,
         bank_name,
         account_number,
         iban,
@@ -459,13 +450,9 @@ async function fetchPaymentDetails(paymentId: string): Promise<PaymentReceiptDat
         id,
         company_name
       ),
-      created_by_profile:profiles!payments_created_by_fkey (
-        id,
-        full_name
-      ),
       bank_accounts (
         id,
-        account_name,
+        account_name:name,
         bank_name,
         account_number,
         iban,

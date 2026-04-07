@@ -284,10 +284,10 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                                 invoice.currency_position || 'after',
                                 invoice.decimal_places || 2
                               )}
-                              {invoice.amount_due > 0 && (
+                              {invoice.balance_due > 0 && (
                                 <span className="text-orange-600 ml-2">
                                   • Balance: {formatCurrencyAmount(
-                                    invoice.amount_due,
+                                    invoice.balance_due,
                                     invoice.currency_symbol || 'USD',
                                     invoice.currency_position || 'after',
                                     invoice.decimal_places || 2
@@ -327,7 +327,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                               <Edit className="w-4 h-4" />
                             </Button>
                           )}
-                          {invoice.invoice_type === 'tax_invoice' && invoice.amount_due > 0 && invoice.status !== 'paid' && invoice.status !== 'void' && (
+                          {invoice.invoice_type === 'tax_invoice' && invoice.balance_due > 0 && invoice.status !== 'paid' && invoice.status !== 'void' && (
                             <Button
                               variant="secondary"
                               size="sm"
@@ -422,7 +422,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                       <p className="text-xs text-slate-500">
                         {formatDate(expense.expense_date)}
                         {expense.category?.name && ` • ${expense.category.name}`}
-                        {expense.vendor_name && ` • ${expense.vendor_name}`}
+                        {expense.vendor && ` • ${expense.vendor}`}
                         {expense.submitter?.full_name && ` • By ${expense.submitter.full_name}`}
                       </p>
                     </div>
