@@ -130,7 +130,7 @@ export const fetchInvoices = async (filters?: {
         company_name,
         email,
         phone
-      ),
+      )
     `)
     .is('deleted_at', null)
     .order('created_at', { ascending: false });

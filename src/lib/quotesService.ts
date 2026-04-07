@@ -118,10 +118,6 @@ export const fetchQuotes = async (filters?: {
           company_name,
           email,
           phone
-        ),
-        created_by_profile:profiles!quotes_created_by_fkey (
-          id,
-          full_name
         )
       `)
       .is('deleted_at', null)
@@ -197,14 +193,6 @@ export const fetchQuoteById = async (id: string) => {
         email,
         phone,
         address
-      ),
-      created_by_profile:profiles!quotes_created_by_fkey (
-        id,
-        full_name
-      ),
-      approved_by_profile:profiles!quotes_approved_by_fkey (
-        id,
-        full_name
       ),
       bank_accounts (
         id,
@@ -457,7 +445,6 @@ export const deleteQuote = async (id: string) => {
     .from('quotes')
     .update({
       deleted_at: new Date().toISOString(),
-      deleted_by: user.id,
     })
     .eq('id', id);
 
@@ -469,7 +456,6 @@ export const restoreQuote = async (id: string) => {
     .from('quotes')
     .update({
       deleted_at: null,
-      deleted_by: null,
     })
     .eq('id', id);
 
@@ -501,15 +487,7 @@ export const fetchDeletedQuotes = async () => {
         id,
         company_name,
         email,
-        phone_number
-      ),
-      created_by_profile:profiles!quotes_created_by_fkey (
-        id,
-        full_name
-      ),
-      deleted_by_profile:profiles!quotes_deleted_by_fkey (
-        id,
-        full_name
+        phone
       )
     `)
     .not('deleted_at', 'is', null)

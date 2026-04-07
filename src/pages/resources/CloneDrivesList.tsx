@@ -40,46 +40,33 @@ export const CloneDrivesList: React.FC = () => {
         .from('resource_clone_drives')
         .select(`
           *,
-          inventory_locations(name),
-          brands(name),
-          capacities(name, gb_value),
-          device_types(name),
-          device_interfaces(name),
-          device_conditions(name)
+          brand:catalog_device_brands(name),
+          capacity_ref:catalog_device_capacities(name, gb_value),
+          interface_ref:catalog_interfaces(name)
         `)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      return data.map((item: Record<string, unknown> & { capacity_gb?: string; capacities?: { gb_value?: string }; current_used_gb?: string; available_space_gb?: string }) => {
+      return (data || []).map((item: any) => {
         const capacityGb =
-          (item.capacity_gb && parseFloat(item.capacity_gb) > 0)
-            ? parseFloat(item.capacity_gb)
-            : (item.capacities?.gb_value && parseFloat(item.capacities.gb_value) > 0)
-              ? parseFloat(item.capacities.gb_value)
-              : 0;
-
-        const currentUsedGb =
-          (item.current_used_gb && parseFloat(item.current_used_gb) >= 0)
-            ? parseFloat(item.current_used_gb)
+          (item.capacity_ref?.gb_value && parseFloat(item.capacity_ref.gb_value) > 0)
+            ? parseFloat(item.capacity_ref.gb_value)
             : 0;
-
-        const availableSpaceGb =
-          (item.available_space_gb && parseFloat(item.available_space_gb) >= 0)
-            ? parseFloat(item.available_space_gb)
-            : Math.max(capacityGb - currentUsedGb, 0);
 
         return {
           ...item,
-          location_name: item.inventory_locations?.name,
-          brand_name: item.brands?.name || item.brand,
-          capacity_name: item.capacities?.name || item.capacity,
+          clone_id: item.label,
+          location_name: item.location,
+          brand_name: item.brand?.name,
+          capacity_name: item.capacity_ref?.name,
           capacity_gb: capacityGb,
-          current_used_gb: currentUsedGb,
-          available_space_gb: availableSpaceGb,
-          device_type_name: item.device_types?.name || item.drive_type,
-          interface_name: item.device_interfaces?.name || item.interface_type,
-          condition_name: item.device_conditions?.name,
+          current_used_gb: 0,
+          available_space_gb: capacityGb,
+          device_type_name: null,
+          interface_name: item.interface_ref?.name,
+          condition_name: item.condition,
         };
       });
     },
@@ -93,16 +80,17 @@ export const CloneDrivesList: React.FC = () => {
         .select(`
           id,
           case_id,
-          resource_clone_drive_id,
-          image_size_gb,
+          drive_label,
+          serial_number,
+          capacity,
           status,
-          clone_date,
-          extracted_date,
+          assigned_to,
+          notes,
+          created_at,
           cases!clone_drives_case_id_fkey(case_no)
         `)
-        .in('status', ['active', 'extracted'])
-        .not('resource_clone_drive_id', 'is', null)
-        .order('clone_date', { ascending: false });
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -128,17 +116,9 @@ export const CloneDrivesList: React.FC = () => {
         .from('clone_drives')
         .select(`
           *,
-          resource_clone_drives!clone_drives_resource_clone_drive_id_fkey(
-            clone_id,
-            serial_number,
-            brand,
-            model,
-            capacity,
-            storage_location_id,
-            inventory_locations(name)
-          ),
           cases!clone_drives_case_id_fkey(case_no)
         `)
+        .is('deleted_at', null)
         .in('case_id', caseIds);
 
       if (assignError) throw assignError;
@@ -479,24 +459,15 @@ export const CloneDrivesList: React.FC = () => {
                 Case Assignment Results ({caseAssignments.length})
               </h3>
               <div className="space-y-2">
-                {caseAssignments.map((assignment: Record<string, unknown> & { id: string; status?: string; resource_clone_drive?: { drive_label?: string; serial_number?: string }; cases?: { case_no?: string } }) => {
-                  const getStatusColor = (status: string) => {
-                    switch (status) {
-                      case 'active':
-                        return '#10b981';
-                      case 'extracted':
-                        return '#3b82f6';
-                      case 'archived':
-                        return '#6b7280';
-                      case 'deleted':
-                        return '#ef4444';
-                      default:
-                        return '#64748b';
+                {caseAssignments.map((assignment: any) => {
+                  const assignStatusColor = (s: string) => {
+                    switch (s) {
+                      case 'active': return '#10b981';
+                      case 'extracted': return '#3b82f6';
+                      case 'archived': return '#6b7280';
+                      case 'deleted': return '#ef4444';
+                      default: return '#64748b';
                     }
-                  };
-
-                  const getStatusLabel = (status: string) => {
-                    return status.charAt(0).toUpperCase() + status.slice(1);
                   };
 
                   return (
@@ -509,35 +480,26 @@ export const CloneDrivesList: React.FC = () => {
                             </span>
                             <span className="text-slate-600">→</span>
                             <span className="font-semibold text-blue-600 font-mono">
-                              {assignment.resource_clone_drives?.clone_id || 'N/A'}
+                              {assignment.drive_label || 'N/A'}
                             </span>
                             <Badge
                               variant="custom"
-                              color={getStatusColor(assignment.status)}
+                              color={assignStatusColor(assignment.status || '')}
                               size="sm"
                             >
-                              {getStatusLabel(assignment.status)}
+                              {(assignment.status || '').charAt(0).toUpperCase() + (assignment.status || '').slice(1)}
                             </Badge>
                           </div>
                           <div className="flex items-center gap-4 text-sm text-slate-600">
-                            <span className="flex items-center gap-1">
-                              <HardDrive className="w-3 h-3" />
-                              {assignment.resource_clone_drives?.brand} {assignment.resource_clone_drives?.model}
-                            </span>
-                            {assignment.resource_clone_drives?.inventory_locations && (
+                            {assignment.capacity && (
                               <span className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {assignment.resource_clone_drives.inventory_locations.name}
+                                <HardDrive className="w-3 h-3" />
+                                {assignment.capacity}
                               </span>
                             )}
-                            {assignment.resource_clone_drives?.serial_number && (
+                            {assignment.serial_number && (
                               <span className="text-xs font-mono">
-                                S/N: {assignment.resource_clone_drives.serial_number}
-                              </span>
-                            )}
-                            {assignment.extracted_date && (
-                              <span className="text-xs text-green-600 font-medium">
-                                Extracted: {new Date(assignment.extracted_date).toLocaleDateString()}
+                                S/N: {assignment.serial_number}
                               </span>
                             )}
                           </div>
@@ -755,14 +717,9 @@ export const CloneDrivesList: React.FC = () => {
                         )}
                       </td>
                       <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-slate-900">
-                            {cloneAssignments.filter(a => a.resource_clone_drive_id === drive.id && a.status === 'active').length}
-                          </span>
-                          <span className="text-xs text-slate-500">
-                            / {drive.total_assignments || 0}
-                          </span>
-                        </div>
+                        <span className="text-sm font-semibold text-slate-900">
+                          {drive.total_assignments || 0}
+                        </span>
                       </td>
                       <td className="p-4">
                         {drive.last_used_date ? (
@@ -871,15 +828,15 @@ export const CloneDrivesList: React.FC = () => {
                                 <p className="text-sm text-slate-700">{drive.notes}</p>
                               </div>
                             )}
-                            {cloneAssignments.filter(a => a.resource_clone_drive_id === drive.id).length > 0 && (
+                            {cloneAssignments.length > 0 && (
                               <div className="col-span-4">
                                 <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">
-                                  Assigned Cases ({cloneAssignments.filter(a => a.resource_clone_drive_id === drive.id).length})
+                                  Recent Clone Assignments ({cloneAssignments.length})
                                 </p>
                                 <div className="grid grid-cols-2 gap-2">
                                   {cloneAssignments
-                                    .filter(a => a.resource_clone_drive_id === drive.id)
-                                    .map((assignment: Record<string, unknown> & { id: string; status?: string; cases?: { case_no?: string } }) => (
+                                    .slice(0, 6)
+                                    .map((assignment: any) => (
                                       <div key={assignment.id} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded">
                                         <div className="flex items-center gap-2">
                                           <FileText className="w-3 h-3 text-slate-400" />
@@ -888,9 +845,9 @@ export const CloneDrivesList: React.FC = () => {
                                           </span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                          {assignment.image_size_gb > 0 && (
+                                          {assignment.capacity && (
                                             <span className="text-xs text-slate-600">
-                                              {assignment.image_size_gb} GB
+                                              {assignment.capacity}
                                             </span>
                                           )}
                                           <Badge

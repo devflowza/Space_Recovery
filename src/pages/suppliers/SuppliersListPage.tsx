@@ -72,8 +72,8 @@ export default function SuppliersListPage() {
         .from('suppliers')
         .select(`
           *,
-          category:supplier_categories(name),
-          payment_terms:supplier_payment_terms(name, days)
+          category:master_supplier_categories(name),
+          payment_terms:master_supplier_payment_terms(name, days)
         `)
         .order('created_at', { ascending: false });
 
