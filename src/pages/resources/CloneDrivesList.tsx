@@ -6,21 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ResourceCloneDriveModal } from '../../components/resources/ResourceCloneDriveModal';
-import {
-  HardDrive,
-  Search,
-  Filter,
-  Plus,
-  Database,
-  AlertCircle,
-  CheckCircle,
-  Edit2,
-  MapPin,
-  Calendar,
-  ArrowUpDown,
-  FileText,
-  X,
-} from 'lucide-react';
+import { HardDrive, Search, Filter, Plus, Database, AlertCircle, CheckCircle, CreditCard as Edit2, MapPin, Calendar, ArrowUpDown, FileText, X } from 'lucide-react';
 
 export const CloneDrivesList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
