@@ -68,23 +68,19 @@ export const ExpensesList: React.FC = () => {
             expense_date,
             amount,
             description,
-            vendor_name,
+            vendor,
             status,
             case_id,
-            submitted_by,
+            created_by,
             approved_by,
             approved_at,
-            rejection_reason,
-            category:expense_categories(id, name),
-            payment_method:payment_methods(name),
-            submitter:profiles!expenses_submitted_by_fkey(full_name),
-            approver:profiles!expenses_approved_by_fkey(full_name),
+            category:master_expense_categories(id, name),
             case:cases(case_no, title)
           `)
           .order('expense_date', { ascending: false });
 
         if (searchTerm) {
-          query = query.or(`expense_number.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,vendor_name.ilike.%${searchTerm}%`);
+          query = query.or(`expense_number.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,vendor.ilike.%${searchTerm}%`);
         }
 
         if (statusFilter !== 'all') {
@@ -108,7 +104,7 @@ export const ExpensesList: React.FC = () => {
 
   const createExpenseMutation = useMutation({
     mutationFn: (expense: Omit<Expense, 'id' | 'expense_number' | 'created_at' | 'updated_at'>) =>
-      createExpense({ ...expense, submitted_by: profile?.id }),
+      createExpense({ ...expense, created_by: profile?.id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['expense_stats'] });
@@ -402,7 +398,7 @@ export const ExpensesList: React.FC = () => {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                      {expense.vendor_name || '-'}
+                      {expense.vendor || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <span className="text-sm font-bold text-slate-900">
@@ -419,9 +415,9 @@ export const ExpensesList: React.FC = () => {
                         {getStatusIcon(expense.status)}
                         {expense.status}
                       </Badge>
-                      {expense.status === 'rejected' && expense.rejection_reason && (
-                        <p className="text-xs text-red-500 mt-1 max-w-[150px] truncate" title={expense.rejection_reason}>
-                          {expense.rejection_reason}
+                      {expense.status === 'rejected' && expense.notes && (
+                        <p className="text-xs text-red-500 mt-1 max-w-[150px] truncate" title={expense.notes}>
+                          {expense.notes}
                         </p>
                       )}
                     </td>

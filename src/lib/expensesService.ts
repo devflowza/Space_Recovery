@@ -8,15 +8,13 @@ export interface Expense {
   expense_date: string;
   amount: number;
   description: string;
-  vendor_name?: string;
+  vendor?: string;
   category_id?: string | null;
   case_id?: string | null;
-  payment_method_id?: string | null;
   status: 'draft' | 'pending' | 'approved' | 'rejected' | 'paid';
-  submitted_by?: string;
+  created_by?: string;
   approved_by?: string | null;
   approved_at?: string | null;
-  rejection_reason?: string | null;
   notes?: string;
   created_at?: string;
   updated_at?: string;
@@ -31,10 +29,6 @@ export interface ExpenseWithDetails extends Expense {
     id: string;
     case_no: string;
     title: string;
-  };
-  payment_method?: {
-    id: string;
-    name: string;
   };
   submitter?: {
     id: string;
@@ -83,11 +77,8 @@ export const fetchExpenses = async (filters?: {
     .from('expenses')
     .select(`
       *,
-      category:expense_categories(id, name),
-      case:cases(id, case_no, title),
-      payment_method:payment_methods(id, name),
-      submitter:profiles!expenses_submitted_by_fkey(id, full_name),
-      approver:profiles!expenses_approved_by_fkey(id, full_name)
+      category:master_expense_categories(id, name),
+      case:cases(id, case_no, title)
     `)
     .is('deleted_at', null)
     .order('expense_date', { ascending: false });
@@ -114,11 +105,11 @@ export const fetchExpenses = async (filters?: {
 
   if (filters?.search) {
     const s = sanitizeFilterValue(filters.search);
-    query = query.or(`expense_number.ilike.%${s}%,description.ilike.%${s}%,vendor_name.ilike.%${s}%`);
+    query = query.or(`expense_number.ilike.%${s}%,description.ilike.%${s}%,vendor.ilike.%${s}%`);
   }
 
   if (filters?.submittedBy) {
-    query = query.eq('submitted_by', filters.submittedBy);
+    query = query.eq('created_by', filters.submittedBy);
   }
 
   const { data, error } = await query;
@@ -131,11 +122,8 @@ export const fetchExpenseById = async (id: string) => {
     .from('expenses')
     .select(`
       *,
-      category:expense_categories(id, name),
-      case:cases(id, case_no, title),
-      payment_method:payment_methods(id, name),
-      submitter:profiles!expenses_submitted_by_fkey(id, full_name),
-      approver:profiles!expenses_approved_by_fkey(id, full_name)
+      category:master_expense_categories(id, name),
+      case:cases(id, case_no, title)
     `)
     .eq('id', id)
     .maybeSingle();
@@ -206,7 +194,7 @@ export const submitExpense = async (id: string, submittedBy: string) => {
     .from('expenses')
     .update({
       status: 'pending',
-      submitted_by: submittedBy,
+      created_by: submittedBy,
     })
     .eq('id', id)
     .select()
@@ -231,7 +219,6 @@ export const approveExpense = async (id: string, approvedBy: string) => {
       status: 'approved',
       approved_by: approvedBy,
       approved_at: new Date().toISOString(),
-      rejection_reason: null,
     })
     .eq('id', id)
     .select()
@@ -275,7 +262,7 @@ export const rejectExpense = async (
       status: 'rejected',
       approved_by: rejectedBy,
       approved_at: new Date().toISOString(),
-      rejection_reason: reason,
+      notes: reason,
     })
     .eq('id', id)
     .select()
@@ -364,8 +351,7 @@ export const getExpensesByCase = async (caseId: string) => {
     .from('expenses')
     .select(`
       *,
-      category:expense_categories(id, name),
-      submitter:profiles!expenses_submitted_by_fkey(id, full_name)
+      category:master_expense_categories(id, name)
     `)
     .eq('case_id', caseId)
     .order('expense_date', { ascending: false });
@@ -419,7 +405,7 @@ export const getExpensesByCategory = async (filters?: {
     .from('expenses')
     .select(`
       amount,
-      category:expense_categories(id, name)
+      category:master_expense_categories(id, name)
     `)
     .in('status', ['approved', 'paid']);
 

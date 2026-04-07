@@ -211,7 +211,7 @@ export const ReportsDashboard: React.FC = () => {
       const { start, end } = selectedDateRange;
       const { data, error } = await supabase
         .from('expenses')
-        .select('amount, category:expense_categories(name)')
+        .select('amount, category:master_expense_categories(name)')
         .gte('expense_date', start)
         .lte('expense_date', end)
         .in('status', ['approved', 'paid']);

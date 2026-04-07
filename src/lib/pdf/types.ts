@@ -238,7 +238,7 @@ export interface InvoiceData {
   discount_amount: number;
   total_amount: number;
   amount_paid: number;
-  amount_due: number;
+  balance_due: number;
   payment_terms?: string;
   notes?: string;
   internal_notes?: string;

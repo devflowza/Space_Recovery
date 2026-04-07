@@ -204,7 +204,7 @@ export const fetchQuoteById = async (id: string) => {
       ),
       bank_accounts (
         id,
-        account_name,
+        account_name:name,
         bank_name,
         account_number,
         iban,
@@ -633,7 +633,7 @@ export const getQuotesByCaseId = async (caseId: string) => {
       ),
       bank_accounts (
         id,
-        account_name,
+        account_name:name,
         bank_name,
         account_number,
         iban,

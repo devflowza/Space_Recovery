@@ -283,7 +283,7 @@ export const getVATRecordsByReturn = async (
     .select(`
       *,
       invoice:invoices(id, invoice_number, customer:customers_enhanced(customer_name)),
-      expense:expenses(id, expense_number, vendor_name)
+      expense:expenses(id, expense_number, vendor)
     `)
     .gte('record_date', periodStart)
     .lte('record_date', periodEnd)

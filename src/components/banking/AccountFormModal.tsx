@@ -154,7 +154,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
       }
 
       const accountData: Partial<BankAccount> = {
-        account_name: formData.account_name.trim(),
+        name: formData.account_name.trim(),
         account_type: formData.account_type,
         bank_name: formData.account_type === 'bank' ? formData.bank_name.trim() : formData.account_type,
         branch_code: formData.branch_code?.trim() || undefined,

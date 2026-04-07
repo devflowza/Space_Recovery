@@ -47,9 +47,9 @@ export const TransactionFormModal: React.FC<TransactionFormModalProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bank_accounts')
-        .select('id, account_name, bank_name, account_type')
+        .select('id, account_name:name, bank_name, account_type')
         .eq('is_active', true)
-        .order('account_name');
+        .order('name');
       if (error) throw error;
       return data || [];
     },
