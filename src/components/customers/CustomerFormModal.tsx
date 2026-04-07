@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
+import { PhoneInput } from '../ui/PhoneInput';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -27,6 +28,8 @@ interface Company {
 interface Country {
   id: string;
   name: string;
+  code: string;
+  phone_code: string | null;
   is_active: boolean;
 }
 
@@ -287,18 +290,21 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="customer@email.com"
             />
-            <Input
+            <PhoneInput
               label="Mobile Number"
               value={formData.mobile_number}
-              onChange={(e) => setFormData({ ...formData, mobile_number: e.target.value })}
-              placeholder="+1234567890"
+              onChange={(val) => setFormData({ ...formData, mobile_number: val })}
+              countries={countries}
+              selectedCountryId={formData.country_id}
             />
           </div>
 
-          <Input
+          <PhoneInput
             label="Phone Number (Alternative)"
             value={formData.phone_number}
-            onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+            onChange={(val) => setFormData({ ...formData, phone_number: val })}
+            countries={countries}
+            selectedCountryId={formData.country_id}
           />
 
           <div className="grid grid-cols-2 gap-2.5">

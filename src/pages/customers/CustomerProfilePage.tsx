@@ -7,6 +7,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
+import { PhoneInput } from '../../components/ui/PhoneInput';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { CustomerAvatar } from '../../components/ui/CustomerAvatar';
 import { ImageUpload } from '../../components/ui/ImageUpload';
@@ -985,17 +986,21 @@ export const CustomerProfilePage: React.FC = () => {
               value={editFormData.email}
               onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
             />
-            <Input
+            <PhoneInput
               label="Mobile Number"
               value={editFormData.mobile_number}
-              onChange={(e) => setEditFormData({ ...editFormData, mobile_number: e.target.value })}
+              onChange={(val) => setEditFormData({ ...editFormData, mobile_number: val })}
+              countries={countries as Array<{ id: string; name: string; code: string; phone_code: string | null }>}
+              selectedCountryId={editFormData.country_id}
             />
           </div>
 
-          <Input
+          <PhoneInput
             label="Phone Number (Alternative)"
             value={editFormData.phone_number}
-            onChange={(e) => setEditFormData({ ...editFormData, phone_number: e.target.value })}
+            onChange={(val) => setEditFormData({ ...editFormData, phone_number: val })}
+            countries={countries as Array<{ id: string; name: string; code: string; phone_code: string | null }>}
+            selectedCountryId={editFormData.country_id}
           />
 
           <SearchableSelect
