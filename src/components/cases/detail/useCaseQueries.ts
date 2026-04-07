@@ -54,14 +54,14 @@ export function useCaseQueries(
         caseRecord.customer_id
           ? supabase
               .from('customers_enhanced')
-              .select('id, customer_number, customer_name, email, mobile_number, phone_number, city, country, address_line1, address_line2, postal_code')
+              .select('id, customer_number, customer_name, email, mobile_number, phone, address, country_id, city_id, geo_countries(name), geo_cities(name)')
               .eq('id', caseRecord.customer_id)
               .maybeSingle()
           : Promise.resolve({ data: null }),
         caseRecord.contact_id
           ? supabase
               .from('customers_enhanced')
-              .select('id, customer_name, email, mobile_number, phone_number')
+              .select('id, customer_name, email, mobile_number, phone')
               .eq('id', caseRecord.contact_id)
               .maybeSingle()
           : Promise.resolve({ data: null }),
@@ -90,7 +90,7 @@ export function useCaseQueries(
           if (caseRecord.company_id) {
             return supabase
               .from('companies')
-              .select('id, company_number, company_name, email, phone_number, city, country, vat_number')
+              .select('id, company_number, name, company_name, email, phone, tax_number, geo_countries(name), geo_cities(name)')
               .eq('id', caseRecord.company_id)
               .maybeSingle();
           } else if (caseRecord.customer_id) {
@@ -99,7 +99,7 @@ export function useCaseQueries(
               .select(`
                 company_id,
                 companies (
-                  id, company_number, company_name, email, phone_number, city, country, vat_number
+                  id, company_number, name, company_name, email, phone, tax_number, geo_countries(name), geo_cities(name)
                 )
               `)
               .eq('customer_id', caseRecord.customer_id)
@@ -167,12 +167,12 @@ export function useCaseQueries(
           role_notes,
           created_at,
           created_by,
-          device_type:device_types(id, name),
-          brand:brands(name),
-          capacity:capacities(id, name),
-          condition:device_conditions(name),
-          encryption_type:device_encryption(name),
-          device_role:device_roles(id, name),
+          device_type:catalog_device_types(id, name),
+          brand:catalog_device_brands(name),
+          capacity:catalog_device_capacities(id, name),
+          condition:catalog_device_conditions(name),
+          encryption_type:catalog_device_encryption(name),
+          device_role:catalog_device_roles(id, name),
           created_by_profile:profiles!created_by(full_name)
         `)
         .eq('case_id', id)

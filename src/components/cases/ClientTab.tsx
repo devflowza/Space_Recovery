@@ -7,27 +7,7 @@ import { Badge } from '../ui/Badge';
 import { ChangeClientModal } from './ChangeClientModal';
 import { ChangeCompanyModal } from './ChangeCompanyModal';
 import { formatDate } from '../../lib/format';
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Hash,
-  Globe,
-  Edit,
-  Save,
-  X,
-  ArrowLeftRight,
-  Building2,
-  FileText,
-  Clock,
-  Activity,
-  Briefcase,
-  CheckCircle,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { User, Mail, Phone, MapPin, Hash, Globe, CreditCard as Edit, Save, X, ArrowLeftRight, Building2, FileText, Clock, Activity, Briefcase, CheckCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ClientTabProps {
   caseId: string;
@@ -57,7 +37,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
       if (caseData?.company_id) {
         const { data, error } = await supabase
           .from('companies')
-          .select('*')
+          .select('*, geo_countries(name), geo_cities(name)')
           .eq('id', caseData.company_id)
           .maybeSingle();
 
@@ -71,7 +51,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
           .from('customer_company_relationships')
           .select(`
             company_id,
-            companies (*)
+            companies (*, geo_countries(name), geo_cities(name))
           `)
           .eq('customer_id', caseData.customer_id)
           .order('is_primary_contact', { ascending: false })
@@ -102,7 +82,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
           status,
           priority,
           created_at,
-          service_type:service_types(name)
+          service_type:catalog_service_types(name)
         `)
         .eq('customer_id', caseData.customer_id)
         .neq('id', caseId)
@@ -240,7 +220,11 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
 
   const handleSaveCompany = () => {
     if (Object.keys(editedCompanyData).length > 0) {
-      updateCompanyMutation.mutate(editedCompanyData);
+      const updates = { ...editedCompanyData };
+      if (updates.name) {
+        updates.company_name = updates.name;
+      }
+      updateCompanyMutation.mutate(updates);
     } else {
       setEditingCompany(false);
     }
@@ -492,7 +476,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                   Company Name
                 </label>
                 <p className="text-sm font-semibold text-slate-900 text-right">
-                  {companyData.company_name}
+                  {companyData.name || companyData.company_name}
                 </p>
               </div>
 
@@ -528,16 +512,16 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                 {editingCompany ? (
                   <input
                     type="tel"
-                    value={editedCompanyData.phone_number ?? companyData.phone_number ?? ''}
-                    onChange={(e) => setEditedCompanyData({ ...editedCompanyData, phone_number: e.target.value })}
+                    value={editedCompanyData.phone ?? companyData.phone ?? ''}
+                    onChange={(e) => setEditedCompanyData({ ...editedCompanyData, phone: e.target.value })}
                     className="text-sm px-2 py-1 border border-green-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-green-500 max-w-[200px]"
                   />
-                ) : companyData.phone_number ? (
+                ) : companyData.phone ? (
                   <a
-                    href={`tel:${companyData.phone_number}`}
+                    href={`tel:${companyData.phone}`}
                     className="text-sm text-green-600 hover:text-green-700 text-right"
                   >
-                    {companyData.phone_number}
+                    {companyData.phone}
                   </a>
                 ) : (
                   <p className="text-sm text-slate-400 text-right">-</p>
@@ -550,9 +534,9 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                   Location
                 </label>
                 <p className="text-sm text-slate-900 font-medium text-right">
-                  {companyData.city && companyData.country
-                    ? `${companyData.city}, ${companyData.country}`
-                    : companyData.city || companyData.country || '-'}
+                  {companyData.geo_cities?.name && companyData.geo_countries?.name
+                    ? `${companyData.geo_cities.name}, ${companyData.geo_countries.name}`
+                    : companyData.geo_cities?.name || companyData.geo_countries?.name || '-'}
                 </p>
               </div>
             </div>

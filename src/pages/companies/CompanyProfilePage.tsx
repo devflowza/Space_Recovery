@@ -18,22 +18,22 @@ import { logger } from '../../lib/logger';
 interface Company {
   id: string;
   company_number: string;
-  company_name: string;
-  vat_number: string | null;
+  name: string;
+  company_name: string | null;
+  tax_number: string | null;
   industry_id: string | null;
   email: string | null;
-  phone_number: string | null;
+  phone: string | null;
   website: string | null;
-  country: string | null;
-  city: string | null;
-  address_line1: string | null;
-  address_line2: string | null;
-  postal_code: string | null;
-  primary_contact_id: string | null;
+  country_id: string | null;
+  city_id: string | null;
+  address: string | null;
   notes: string | null;
   is_active: boolean;
   created_at: string;
-  industries: { id: string; name: string } | null;
+  master_industries: { id: string; name: string } | null;
+  geo_countries: { name: string } | null;
+  geo_cities: { name: string } | null;
 }
 
 interface Contact {
@@ -72,14 +72,14 @@ export const CompanyProfilePage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     company_name: '',
-    vat_number: '',
+    tax_number: '',
     industry_id: '',
     email: '',
-    phone_number: '',
+    phone: '',
     website: '',
     country_id: '',
     city_id: '',
-    address_line1: '',
+    address: '',
     notes: '',
   });
 
@@ -90,7 +90,9 @@ export const CompanyProfilePage: React.FC = () => {
         .from('companies')
         .select(`
           *,
-          industries (id, name)
+          master_industries (id, name),
+          geo_countries (name),
+          geo_cities (name)
         `)
         .eq('id', id)
         .maybeSingle();
@@ -291,21 +293,19 @@ export const CompanyProfilePage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async (updatedData: typeof editFormData) => {
-      const selectedCountry = countries.find((c: { id: string; name: string }) => c.id === updatedData.country_id);
-      const selectedCity = cities.find((c: { id: string; name: string }) => c.id === updatedData.city_id);
-
       const { data, error } = await supabase
         .from('companies')
         .update({
+          name: updatedData.company_name,
           company_name: updatedData.company_name,
-          vat_number: updatedData.vat_number || null,
+          tax_number: updatedData.tax_number || null,
           industry_id: updatedData.industry_id || null,
           email: updatedData.email || null,
-          phone_number: updatedData.phone_number || null,
+          phone: updatedData.phone || null,
           website: updatedData.website || null,
-          country: selectedCountry?.name || null,
-          city: selectedCity?.name || null,
-          address_line1: updatedData.address_line1 || null,
+          country_id: updatedData.country_id || null,
+          city_id: updatedData.city_id || null,
+          address: updatedData.address || null,
           notes: updatedData.notes || null,
         })
         .eq('id', id)
@@ -324,19 +324,16 @@ export const CompanyProfilePage: React.FC = () => {
   const handleOpenEditModal = () => {
     if (!company) return;
 
-    const companyCountry = countries.find((c: { id: string; name: string }) => c.name === company.country);
-    const companyCity = cities.find((c: { id: string; name: string }) => c.name === company.city);
-
     setEditFormData({
-      company_name: company.company_name,
-      vat_number: company.vat_number || '',
+      company_name: company.name || company.company_name || '',
+      tax_number: company.tax_number || '',
       industry_id: company.industry_id || '',
       email: company.email || '',
-      phone_number: company.phone_number || '',
+      phone: company.phone || '',
       website: company.website || '',
-      country_id: companyCountry?.id || '',
-      city_id: companyCity?.id || '',
-      address_line1: company.address_line1 || '',
+      country_id: company.country_id || '',
+      city_id: company.city_id || '',
+      address: company.address || '',
       notes: company.notes || '',
     });
     setIsEditModalOpen(true);
@@ -415,11 +412,11 @@ export const CompanyProfilePage: React.FC = () => {
       <Card className="p-6 mb-4">
         <div className="flex items-start gap-6">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
-            {company.company_name.substring(0, 2).toUpperCase()}
+            {(company.name || company.company_name || '??').substring(0, 2).toUpperCase()}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-bold text-slate-900">{company.company_name}</h1>
+              <h1 className="text-2xl font-bold text-slate-900">{company.name || company.company_name}</h1>
               <Badge variant="custom" color="#0ea5e9">
                 {company.company_number}
               </Badge>
@@ -427,14 +424,14 @@ export const CompanyProfilePage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 mb-4">
-              {company.industries && (
+              {company.master_industries && (
                 <Badge variant="custom" color="#8b5cf6">
-                  {company.industries.name}
+                  {company.master_industries.name}
                 </Badge>
               )}
-              {company.vat_number && (
+              {company.tax_number && (
                 <span className="text-sm text-slate-600">
-                  <span className="font-medium">VAT:</span> {company.vat_number}
+                  <span className="font-medium">Tax:</span> {company.tax_number}
                 </span>
               )}
             </div>
@@ -448,11 +445,11 @@ export const CompanyProfilePage: React.FC = () => {
                   </a>
                 </div>
               )}
-              {company.phone_number && (
+              {company.phone && (
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <Phone className="w-4 h-4 text-slate-400" />
-                  <a href={`tel:${company.phone_number}`} className="hover:text-sky-600">
-                    {company.phone_number}
+                  <a href={`tel:${company.phone}`} className="hover:text-sky-600">
+                    {company.phone}
                   </a>
                 </div>
               )}
@@ -464,10 +461,10 @@ export const CompanyProfilePage: React.FC = () => {
                   </a>
                 </div>
               )}
-              {(company.city || company.country) && (
+              {(company.geo_cities?.name || company.geo_countries?.name) && (
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <MapPin className="w-4 h-4 text-slate-400" />
-                  <span>{[company.city, company.country].filter(Boolean).join(', ')}</span>
+                  <span>{[company.geo_cities?.name, company.geo_countries?.name].filter(Boolean).join(', ')}</span>
                 </div>
               )}
               {primaryContact && primaryContact.customers_enhanced && (
@@ -484,11 +481,9 @@ export const CompanyProfilePage: React.FC = () => {
               </div>
             </div>
 
-            {company.address_line1 && (
+            {company.address && (
               <div className="mt-3 text-sm text-slate-600">
-                <p>{company.address_line1}</p>
-                {company.address_line2 && <p>{company.address_line2}</p>}
-                {company.postal_code && <p>{company.postal_code}</p>}
+                <p>{company.address}</p>
               </div>
             )}
           </div>
@@ -858,8 +853,8 @@ export const CompanyProfilePage: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             <Input
               label="VAT/Tax Number"
-              value={editFormData.vat_number}
-              onChange={(e) => setEditFormData({ ...editFormData, vat_number: e.target.value })}
+              value={editFormData.tax_number}
+              onChange={(e) => setEditFormData({ ...editFormData, tax_number: e.target.value })}
             />
             <SearchableSelect
               label="Industry"
@@ -879,8 +874,8 @@ export const CompanyProfilePage: React.FC = () => {
             />
             <Input
               label="Phone Number"
-              value={editFormData.phone_number}
-              onChange={(e) => setEditFormData({ ...editFormData, phone_number: e.target.value })}
+              value={editFormData.phone}
+              onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
             />
           </div>
 
@@ -913,8 +908,8 @@ export const CompanyProfilePage: React.FC = () => {
 
           <Input
             label="Address"
-            value={editFormData.address_line1}
-            onChange={(e) => setEditFormData({ ...editFormData, address_line1: e.target.value })}
+            value={editFormData.address}
+            onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
           />
 
           <div>

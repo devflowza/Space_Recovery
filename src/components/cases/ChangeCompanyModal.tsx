@@ -11,12 +11,14 @@ interface ChangeCompanyModalProps {
   onClose: () => void;
   currentCompany: {
     id: string;
-    company_name: string;
+    name?: string;
+    company_name?: string;
     company_number: string;
     email?: string;
-    phone_number?: string;
-    city?: string;
-    country?: string;
+    phone?: string;
+    tax_number?: string;
+    geo_cities?: { name: string } | null;
+    geo_countries?: { name: string } | null;
   } | null;
   onConfirm: (newCompanyId: string | null) => void;
   isLoading?: boolean;
@@ -36,9 +38,9 @@ export const ChangeCompanyModal: React.FC<ChangeCompanyModalProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('companies')
-        .select('id, company_number, company_name, email, phone_number, city, country, vat_number')
+        .select('id, company_number, name, company_name, email, phone, tax_number, geo_countries(name), geo_cities(name)')
         .eq('is_active', true)
-        .order('company_name');
+        .order('name');
 
       if (error) throw error;
       return data;
@@ -61,7 +63,7 @@ export const ChangeCompanyModal: React.FC<ChangeCompanyModalProps> = ({
     },
     ...companies.map((company) => ({
       id: company.id,
-      name: `${company.company_name} - ${company.company_number}`,
+      name: `${company.name || company.company_name} - ${company.company_number}`,
     })),
   ];
 
@@ -92,7 +94,7 @@ export const ChangeCompanyModal: React.FC<ChangeCompanyModalProps> = ({
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Building2 className="w-3 h-3 text-green-600" />
-                <span className="text-green-900 font-semibold">{currentCompany.company_name}</span>
+                <span className="text-green-900 font-semibold">{currentCompany.name || currentCompany.company_name}</span>
               </div>
               {currentCompany.email && (
                 <div className="flex items-center gap-2 text-sm">
@@ -100,17 +102,17 @@ export const ChangeCompanyModal: React.FC<ChangeCompanyModalProps> = ({
                   <span className="text-green-700">{currentCompany.email}</span>
                 </div>
               )}
-              {currentCompany.phone_number && (
+              {currentCompany.phone && (
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="w-3 h-3 text-green-600" />
-                  <span className="text-green-700">{currentCompany.phone_number}</span>
+                  <span className="text-green-700">{currentCompany.phone}</span>
                 </div>
               )}
-              {(currentCompany.city || currentCompany.country) && (
+              {(currentCompany.geo_cities?.name || currentCompany.geo_countries?.name) && (
                 <div className="flex items-center gap-2 text-sm">
                   <Globe className="w-3 h-3 text-green-600" />
                   <span className="text-green-700">
-                    {[currentCompany.city, currentCompany.country].filter(Boolean).join(', ')}
+                    {[currentCompany.geo_cities?.name, currentCompany.geo_countries?.name].filter(Boolean).join(', ')}
                   </span>
                 </div>
               )}

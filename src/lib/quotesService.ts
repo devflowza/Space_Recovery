@@ -59,13 +59,15 @@ export interface QuoteWithDetails extends Quote {
   };
   companies?: {
     id: string;
-    company_name: string;
+    name: string;
+    company_name: string | null;
     email: string;
-    phone_number: string;
+    phone: string;
   };
   customer_associated_company?: {
     id: string;
-    company_name: string;
+    name: string;
+    company_name: string | null;
   } | null;
   created_by_profile?: {
     id: string;
@@ -112,9 +114,10 @@ export const fetchQuotes = async (filters?: {
         ),
         companies:companies (
           id,
+          name,
           company_name,
           email,
-          phone_number
+          phone
         ),
         created_by_profile:profiles!quotes_created_by_fkey (
           id,
@@ -180,19 +183,20 @@ export const fetchQuoteById = async (id: string) => {
         customer_name,
         email,
         mobile_number,
-        phone_number,
-        address_line1,
-        address_line2,
-        city,
-        postal_code,
-        country
+        phone,
+        address,
+        country_id,
+        city_id,
+        geo_countries(name),
+        geo_cities(name)
       ),
       companies (
         id,
+        name,
         company_name,
         email,
-        phone_number,
-        address_line1
+        phone,
+        address
       ),
       created_by_profile:profiles!quotes_created_by_fkey (
         id,
@@ -223,7 +227,7 @@ export const fetchQuoteById = async (id: string) => {
     const { data: relationshipData } = await supabase
       .from('customer_company_relationships')
       .select(`
-        companies (id, company_name)
+        companies (id, name, company_name)
       `)
       .eq('customer_id', data.customer_id)
       .eq('is_primary_contact', true)

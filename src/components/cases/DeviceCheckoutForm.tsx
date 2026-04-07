@@ -26,7 +26,8 @@ interface CaseData {
     company_id: string | null;
   };
   company?: {
-    company_name: string;
+    name?: string;
+    company_name?: string;
   };
   service_type?: {
     name: string;
@@ -112,7 +113,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
           caseInfo.company_id
             ? supabase
                 .from('companies')
-                .select('company_name')
+                .select('name, company_name')
                 .eq('id', caseInfo.company_id)
                 .single()
             : Promise.resolve({ data: null }),
@@ -268,7 +269,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
           <div className="space-y-1 text-xs">
             <div className="flex"><span className="text-slate-500 w-32">Case ID:</span><span className="text-slate-800 font-medium">{caseData.case_no}</span></div>
             <div className="flex"><span className="text-slate-500 w-32">Customer Name:</span><span className="text-slate-800">{caseData.customer?.customer_name || '-'}</span></div>
-            <div className="flex"><span className="text-slate-500 w-32">Company:</span><span className="text-slate-800">{caseData.company?.company_name || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-32">Company:</span><span className="text-slate-800">{caseData.company?.name || caseData.company?.company_name || '-'}</span></div>
             <div className="flex"><span className="text-slate-500 w-32">Service:</span><span className="text-slate-800">{caseData.service_type?.name || '-'}</span></div>
             <div className="flex"><span className="text-slate-500 w-32">Customer Phone:</span><span className="text-slate-800">{caseData.customer?.mobile_number || '-'}</span></div>
           </div>

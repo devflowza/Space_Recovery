@@ -51,14 +51,14 @@ async function fetchCaseData(caseId: string): Promise<CaseData> {
     caseData.customer_id
       ? supabase
           .from('customers_enhanced')
-          .select('id, customer_name, email, mobile_number, phone_number')
+          .select('id, customer_name, email, mobile_number, phone')
           .eq('id', caseData.customer_id)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
     caseData.company_id
       ? supabase
           .from('companies')
-          .select('id, company_name')
+          .select('id, name, company_name')
           .eq('id', caseData.company_id)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
@@ -210,19 +210,20 @@ async function fetchQuoteDetails(quoteId: string): Promise<QuoteData> {
         customer_name,
         email,
         mobile_number,
-        phone_number,
-        address_line1,
-        address_line2,
-        city,
-        postal_code,
-        country
+        phone,
+        address,
+        country_id,
+        city_id,
+        geo_countries(name),
+        geo_cities(name)
       ),
       companies (
         id,
+        name,
         company_name,
         email,
-        phone_number,
-        address_line1
+        phone,
+        address
       ),
       created_by_profile:profiles!quotes_created_by_fkey (
         id,
@@ -259,7 +260,7 @@ async function fetchQuoteDetails(quoteId: string): Promise<QuoteData> {
   if (quoteData.customer_id) {
     const { data: relationshipData } = await supabase
       .from('customer_company_relationships')
-      .select(`companies (id, company_name)`)
+      .select(`companies (id, name, company_name)`)
       .eq('customer_id', quoteData.customer_id)
       .eq('is_primary_contact', true)
       .maybeSingle();
@@ -328,23 +329,24 @@ async function fetchInvoiceDetails(invoiceId: string): Promise<InvoiceData> {
         customer_name,
         email,
         mobile_number,
-        phone_number,
-        address_line1,
-        address_line2,
-        city,
-        postal_code,
-        country
+        phone,
+        address,
+        country_id,
+        city_id,
+        geo_countries(name),
+        geo_cities(name)
       ),
       companies (
         id,
+        name,
         company_name,
         email,
-        phone_number,
-        address_line1,
-        address_line2,
-        city,
-        postal_code,
-        country
+        phone,
+        address,
+        country_id,
+        city_id,
+        geo_countries(name),
+        geo_cities(name)
       ),
       bank_accounts (
         id,
@@ -377,7 +379,7 @@ async function fetchInvoiceDetails(invoiceId: string): Promise<InvoiceData> {
   if (invoiceData.customer_id) {
     const { data: relationshipData } = await supabase
       .from('customer_company_relationships')
-      .select(`companies (id, company_name)`)
+      .select(`companies (id, name, company_name)`)
       .eq('customer_id', invoiceData.customer_id)
       .eq('is_primary_contact', true)
       .maybeSingle();
@@ -444,10 +446,11 @@ async function fetchPaymentDetails(paymentId: string): Promise<PaymentReceiptDat
         customer_name,
         email,
         mobile_number,
-        phone_number
+        phone
       ),
       companies (
         id,
+        name,
         company_name
       ),
       bank_accounts (
