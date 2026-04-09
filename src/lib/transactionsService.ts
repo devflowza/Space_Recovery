@@ -6,19 +6,17 @@ export interface Transaction {
   id?: string;
   transaction_date: string;
   amount: number;
-  type: 'income' | 'expense' | 'asset' | 'equity';
-  description: string;
-  reference_number?: string;
+  transaction_type: 'income' | 'expense' | 'asset' | 'equity';
+  description?: string;
   category_id?: string | null;
   bank_account_id?: string | null;
-  related_invoice_id?: string | null;
-  related_payment_id?: string | null;
-  related_expense_id?: string | null;
-  status: 'pending' | 'completed' | 'reconciled' | 'void';
-  notes?: string;
+  reference_type?: string | null;
+  reference_id?: string | null;
+  currency?: string | null;
   created_by?: string;
   created_at?: string;
   updated_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface TransactionWithDetails extends Transaction {
@@ -28,24 +26,8 @@ export interface TransactionWithDetails extends Transaction {
   };
   bank_account?: {
     id: string;
-    account_name: string;
+    name: string;
     bank_name: string;
-  };
-  related_invoice?: {
-    id: string;
-    invoice_number: string;
-  };
-  related_payment?: {
-    id: string;
-    payment_number: string;
-  };
-  related_expense?: {
-    id: string;
-    expense_number: string;
-  };
-  created_by_profile?: {
-    id: string;
-    full_name: string;
   };
 }
 
@@ -66,21 +48,15 @@ export const fetchTransactions = async (filters?: {
     .from('financial_transactions')
     .select(`
       *,
-      category:transaction_categories(id, name),
-      bank_account:bank_accounts(id, account_name:name, bank_name),
-      related_invoice:invoices(id, invoice_number),
-      related_payment:payments(id, payment_number),
-      related_expense:expenses(id, expense_number)
+      category:master_transaction_categories(id, name),
+      bank_account:bank_accounts(id, name, bank_name)
     `)
+    .is('deleted_at', null)
     .order('transaction_date', { ascending: false })
     .order('created_at', { ascending: false });
 
   if (filters?.type && filters.type !== 'all') {
-    query = query.eq('type', filters.type);
-  }
-
-  if (filters?.status && filters.status !== 'all') {
-    query = query.eq('status', filters.status);
+    query = query.eq('transaction_type', filters.type);
   }
 
   if (filters?.categoryId) {
@@ -101,7 +77,7 @@ export const fetchTransactions = async (filters?: {
 
   if (filters?.search) {
     const s = sanitizeFilterValue(filters.search);
-    query = query.or(`description.ilike.%${s}%,reference_number.ilike.%${s}%`);
+    query = query.or(`description.ilike.%${s}%`);
   }
 
   const pageSize = filters?.pageSize || DEFAULT_PAGE_SIZE;
@@ -118,11 +94,8 @@ export const fetchTransactionById = async (id: string) => {
     .from('financial_transactions')
     .select(`
       *,
-      category:transaction_categories(id, name),
-      bank_account:bank_accounts(id, account_name:name, bank_name, account_number),
-      related_invoice:invoices(id, invoice_number, total_amount, case_id),
-      related_payment:payments(id, payment_number, amount),
-      related_expense:expenses(id, expense_number, amount)
+      category:master_transaction_categories(id, name),
+      bank_account:bank_accounts(id, name, bank_name, account_number)
     `)
     .eq('id', id)
     .maybeSingle();
@@ -134,7 +107,7 @@ export const fetchTransactionById = async (id: string) => {
 export const createTransaction = async (
   transaction: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>
 ) => {
-  if (transaction.bank_account_id && transaction.type === 'expense' && transaction.status === 'completed') {
+  if (transaction.bank_account_id && transaction.transaction_type === 'expense') {
     const { data: account } = await supabase
       .from('bank_accounts')
       .select('current_balance')
@@ -154,11 +127,11 @@ export const createTransaction = async (
 
   if (error) throw error;
 
-  if (transaction.bank_account_id && transaction.status === 'completed') {
+  if (transaction.bank_account_id) {
     await updateBankAccountBalance(
       transaction.bank_account_id,
       transaction.amount,
-      transaction.type === 'income' ? 'credit' : 'debit'
+      transaction.transaction_type === 'income' ? 'credit' : 'debit'
     );
   }
 
@@ -190,54 +163,38 @@ export const deleteTransaction = async (id: string) => {
 };
 
 export const reconcileTransaction = async (id: string) => {
-  const { data, error } = await supabase
-    .from('financial_transactions')
-    .update({ status: 'reconciled' })
-    .eq('id', id)
-    .select()
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
+  return fetchTransactionById(id);
 };
 
 export const bulkReconcileTransactions = async (ids: string[]) => {
-  const { data, error } = await supabase
-    .from('financial_transactions')
-    .update({ status: 'reconciled' })
-    .in('id', ids)
-    .select();
-
-  if (error) throw error;
-  return data;
+  const results = await Promise.all(ids.map(id => fetchTransactionById(id)));
+  return results;
 };
 
 export const voidTransaction = async (id: string) => {
   const { data: transaction, error: fetchError } = await supabase
     .from('financial_transactions')
-    .select('bank_account_id, amount, type, status')
+    .select('bank_account_id, amount, transaction_type')
     .eq('id', id)
     .maybeSingle();
 
   if (fetchError) throw fetchError;
 
-  if (transaction.bank_account_id && transaction.status === 'completed') {
+  if (transaction?.bank_account_id) {
     await updateBankAccountBalance(
       transaction.bank_account_id,
       transaction.amount,
-      transaction.type === 'income' ? 'debit' : 'credit'
+      transaction.transaction_type === 'income' ? 'debit' : 'credit'
     );
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('financial_transactions')
-    .update({ status: 'void' })
-    .eq('id', id)
-    .select()
-    .maybeSingle();
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id);
 
   if (error) throw error;
-  return data;
+  return transaction;
 };
 
 export const createTransactionFromPayment = async (
@@ -253,11 +210,11 @@ export const createTransactionFromPayment = async (
   return createTransaction({
     transaction_date: paymentData.payment_date,
     amount: paymentData.amount,
-    type: 'income',
+    transaction_type: 'income',
     description: `Payment received: ${paymentData.payment_number}${paymentData.customer_name ? ` from ${paymentData.customer_name}` : ''}`,
-    related_payment_id: paymentId,
+    reference_type: 'payment',
+    reference_id: paymentId,
     bank_account_id: paymentData.bank_account_id || null,
-    status: 'completed',
   });
 };
 
@@ -275,12 +232,12 @@ export const createTransactionFromExpense = async (
   return createTransaction({
     transaction_date: expenseData.expense_date,
     amount: expenseData.amount,
-    type: 'expense',
+    transaction_type: 'expense',
     description: `Expense: ${expenseData.description}`,
-    related_expense_id: expenseId,
+    reference_type: 'expense',
+    reference_id: expenseId,
     bank_account_id: expenseData.bank_account_id || null,
     category_id: expenseData.category_id || null,
-    status: 'completed',
   });
 };
 
@@ -296,10 +253,10 @@ export const createTransactionFromInvoice = async (
   return createTransaction({
     transaction_date: invoiceData.invoice_date,
     amount: invoiceData.total_amount,
-    type: 'income',
+    transaction_type: 'income',
     description: `Invoice: ${invoiceData.invoice_number}${invoiceData.customer_name ? ` to ${invoiceData.customer_name}` : ''}`,
-    related_invoice_id: invoiceId,
-    status: 'pending',
+    reference_type: 'invoice',
+    reference_id: invoiceId,
   });
 };
 
@@ -319,7 +276,8 @@ export const getTransactionStats = async (filters?: {
 }) => {
   let query = supabase
     .from('financial_transactions')
-    .select('amount, type, status, transaction_date');
+    .select('amount, transaction_type, transaction_date')
+    .is('deleted_at', null);
 
   if (filters?.dateFrom) {
     query = query.gte('transaction_date', filters.dateFrom);
@@ -332,25 +290,25 @@ export const getTransactionStats = async (filters?: {
   const { data: transactions, error } = await query;
   if (error) throw error;
 
-  const completedTransactions = transactions?.filter(t => t.status === 'completed' || t.status === 'reconciled') || [];
+  const allTransactions = transactions || [];
 
-  const income = completedTransactions
-    .filter(t => t.type === 'income')
+  const income = allTransactions
+    .filter(t => t.transaction_type === 'income')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  const expenses = completedTransactions
-    .filter(t => t.type === 'expense')
+  const expenseTotal = allTransactions
+    .filter(t => t.transaction_type === 'expense')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
   return {
-    total: transactions?.length || 0,
-    income: transactions?.filter(t => t.type === 'income').length || 0,
-    expense: transactions?.filter(t => t.type === 'expense').length || 0,
-    pending: transactions?.filter(t => t.status === 'pending').length || 0,
-    reconciled: transactions?.filter(t => t.status === 'reconciled').length || 0,
+    total: allTransactions.length,
+    income: allTransactions.filter(t => t.transaction_type === 'income').length,
+    expense: allTransactions.filter(t => t.transaction_type === 'expense').length,
+    pending: 0,
+    reconciled: 0,
     totalIncome: income,
-    totalExpenses: expenses,
-    netCashFlow: income - expenses,
+    totalExpenses: expenseTotal,
+    netCashFlow: income - expenseTotal,
   };
 };
 
@@ -363,15 +321,16 @@ export const getTransactionsByDateRange = async (
     .from('financial_transactions')
     .select(`
       *,
-      category:transaction_categories(id, name),
-      bank_account:bank_accounts(id, account_name:name)
+      category:master_transaction_categories(id, name),
+      bank_account:bank_accounts(id, name)
     `)
+    .is('deleted_at', null)
     .gte('transaction_date', dateFrom)
     .lte('transaction_date', dateTo)
     .order('transaction_date', { ascending: true });
 
   if (type) {
-    query = query.eq('type', type);
+    query = query.eq('transaction_type', type);
   }
 
   const { data, error } = await query;
@@ -388,16 +347,15 @@ export const getCashFlowSummary = async (filters?: {
   const grouped: Record<string, { income: number; expense: number }> = {};
 
   transactions.forEach(t => {
-    if (t.status === 'void') return;
-
-    const month = t.transaction_date.substring(0, 7);
+    const month = t.transaction_date?.substring(0, 7);
+    if (!month) return;
     if (!grouped[month]) {
       grouped[month] = { income: 0, expense: 0 };
     }
 
-    if (t.type === 'income') {
+    if (t.transaction_type === 'income') {
       grouped[month].income += t.amount;
-    } else if (t.type === 'expense') {
+    } else if (t.transaction_type === 'expense') {
       grouped[month].expense += t.amount;
     }
   });

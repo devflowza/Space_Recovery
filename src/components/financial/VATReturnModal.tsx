@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -23,13 +22,10 @@ interface VATReturnModalProps {
     data: {
       period_start: string;
       period_end: string;
-      total_sales: number;
-      total_vat_on_sales: number;
-      total_purchases: number;
-      total_vat_on_purchases: number;
-      net_vat_due: number;
+      output_vat: number;
+      input_vat: number;
+      net_vat: number;
       status: 'draft' | 'review';
-      notes?: string;
     }
   ) => Promise<void>;
 }
@@ -43,7 +39,6 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [periodStart, setPeriodStart] = useState('');
   const [periodEnd, setPeriodEnd] = useState('');
-  const [notes, setNotes] = useState('');
   const [summary, setSummary] = useState<VATSummary | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -85,13 +80,10 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
       await onSave({
         period_start: periodStart,
         period_end: periodEnd,
-        total_sales: summary.totalSales,
-        total_vat_on_sales: summary.totalVATOnSales,
-        total_purchases: summary.totalPurchases,
-        total_vat_on_purchases: summary.totalVATOnPurchases,
-        net_vat_due: summary.netVATDue,
+        output_vat: summary.totalOutputVAT,
+        input_vat: summary.totalInputVAT,
+        net_vat: summary.netVAT,
         status: submitForReview ? 'review' : 'draft',
-        notes: notes.trim() || undefined,
       });
       handleClose();
     } catch (error) {
@@ -103,7 +95,6 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
 
   const handleClose = () => {
     setSummary(null);
-    setNotes('');
     onClose();
   };
 
@@ -207,48 +198,42 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
               <div className="bg-white rounded-lg p-4 border border-green-200">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-700">Sales (Output VAT)</span>
+                  <span className="text-sm font-medium text-green-700">Output VAT (Sales)</span>
                 </div>
-                <p className="text-lg font-bold text-slate-900">
-                  {formatCurrency(summary.totalSales)}
-                </p>
-                <p className="text-sm text-green-600 font-semibold mt-1">
-                  VAT: {formatCurrency(summary.totalVATOnSales)}
+                <p className="text-lg font-bold text-green-700">
+                  {formatCurrency(summary.totalOutputVAT)}
                 </p>
               </div>
 
               <div className="bg-white rounded-lg p-4 border border-red-200">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingDown className="w-4 h-4 text-red-600" />
-                  <span className="text-sm font-medium text-red-700">Purchases (Input VAT)</span>
+                  <span className="text-sm font-medium text-red-700">Input VAT (Purchases)</span>
                 </div>
-                <p className="text-lg font-bold text-slate-900">
-                  {formatCurrency(summary.totalPurchases)}
-                </p>
-                <p className="text-sm text-red-600 font-semibold mt-1">
-                  VAT: {formatCurrency(summary.totalVATOnPurchases)}
+                <p className="text-lg font-bold text-red-700">
+                  {formatCurrency(summary.totalInputVAT)}
                 </p>
               </div>
             </div>
 
             <div className={`rounded-lg p-4 border ${
-              summary.netVATDue >= 0
+              summary.netVAT >= 0
                 ? 'bg-blue-50 border-blue-200'
                 : 'bg-orange-50 border-orange-200'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileCheck className={`w-5 h-5 ${
-                    summary.netVATDue >= 0 ? 'text-blue-600' : 'text-orange-600'
+                    summary.netVAT >= 0 ? 'text-blue-600' : 'text-orange-600'
                   }`} />
                   <span className="font-medium text-slate-900">
-                    Net VAT {summary.netVATDue >= 0 ? 'Payable' : 'Reclaimable'}
+                    Net VAT {summary.netVAT >= 0 ? 'Payable' : 'Reclaimable'}
                   </span>
                 </div>
                 <p className={`text-2xl font-bold ${
-                  summary.netVATDue >= 0 ? 'text-blue-700' : 'text-orange-700'
+                  summary.netVAT >= 0 ? 'text-blue-700' : 'text-orange-700'
                 }`}>
-                  {formatCurrency(Math.abs(summary.netVATDue))}
+                  {formatCurrency(Math.abs(summary.netVAT))}
                 </p>
               </div>
             </div>
@@ -259,19 +244,6 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
             <p className="text-slate-500">Select a period to calculate VAT</p>
           </div>
         )}
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Notes (Optional)
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={2}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Additional notes about this VAT return..."
-          />
-        </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
           <Button type="button" variant="secondary" onClick={handleClose}>

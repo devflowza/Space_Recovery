@@ -32,40 +32,34 @@ import {
 
 interface VATRecord {
   id: string;
-  record_date: string;
-  record_type: 'sale' | 'purchase';
-  net_amount: number;
+  record_type: string;
+  record_id: string;
   vat_amount: number;
-  gross_amount: number;
   vat_rate: number;
-  description: string;
-  invoice?: { invoice_number: string };
-  expense?: { expense_number: string };
+  tax_period?: string | null;
+  created_at: string;
 }
 
 interface VATReturn {
   id: string;
   period_start: string;
   period_end: string;
-  total_sales: number;
-  total_vat_on_sales: number;
-  total_purchases: number;
-  total_vat_on_purchases: number;
-  net_vat_due: number;
+  output_vat: number;
+  input_vat: number;
+  net_vat: number;
   status: string;
   submitted_at?: string;
 }
 
 interface AuditLog {
   id: string;
-  table_name: string;
+  record_type: string;
   record_id: string;
   action: string;
   old_values?: Record<string, unknown> | null;
   new_values?: Record<string, unknown> | null;
-  changed_by?: string;
-  changed_at: string;
-  profile?: { full_name: string };
+  performed_by?: string;
+  performed_at: string;
 }
 
 export const VATAuditPage: React.FC = () => {
@@ -125,13 +119,10 @@ export const VATAuditPage: React.FC = () => {
     mutationFn: (data: {
       period_start: string;
       period_end: string;
-      total_sales: number;
-      total_vat_on_sales: number;
-      total_purchases: number;
-      total_vat_on_purchases: number;
-      net_vat_due: number;
+      output_vat: number;
+      input_vat: number;
+      net_vat: number;
       status: 'draft' | 'review';
-      notes?: string;
     }) => createVATReturn(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vat_returns'] });
@@ -175,19 +166,18 @@ export const VATAuditPage: React.FC = () => {
         .from('financial_audit_logs')
         .select(`
           id,
-          table_name,
+          record_type,
           record_id,
           action,
           old_values,
           new_values,
-          changed_by,
-          changed_at,
-          profile:profiles(full_name)
+          performed_by,
+          performed_at
         `)
-        .order('changed_at', { ascending: false})
+        .order('performed_at', { ascending: false })
         .limit(100);
 
-      const { data, error} = await query;
+      const { data, error } = await query;
       if (error) throw error;
       return (data || []) as AuditLog[];
     },
@@ -371,10 +361,8 @@ export const VATAuditPage: React.FC = () => {
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
                         <th className="text-left py-4 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">Period</th>
-                        <th className="text-right py-4 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">Sales</th>
-                        <th className="text-right py-4 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">VAT on Sales</th>
-                        <th className="text-right py-4 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">Purchases</th>
-                        <th className="text-right py-4 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">VAT on Purchases</th>
+                        <th className="text-right py-4 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">Output VAT</th>
+                        <th className="text-right py-4 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">Input VAT</th>
                         <th className="text-right py-4 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">Net VAT</th>
                         <th className="text-left py-4 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
                         <th className="text-right py-4 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
@@ -383,7 +371,7 @@ export const VATAuditPage: React.FC = () => {
                     <tbody className="divide-y divide-slate-200">
                       {vatReturns.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-12 text-center">
+                          <td colSpan={6} className="py-12 text-center">
                             <FileCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                             <p className="text-slate-500 text-lg">No VAT returns filed</p>
                             <p className="text-slate-400 text-sm mt-1">Create your first VAT return to get started</p>
@@ -398,20 +386,14 @@ export const VATAuditPage: React.FC = () => {
                                 {formatDate(vatReturn.period_start)} - {formatDate(vatReturn.period_end)}
                               </div>
                             </td>
-                            <td className="py-4 px-6 text-right text-sm text-slate-900">
-                              {formatCurrency(vatReturn.total_sales)}
-                            </td>
                             <td className="py-4 px-6 text-right text-sm font-semibold text-green-600">
-                              {formatCurrency(vatReturn.total_vat_on_sales)}
-                            </td>
-                            <td className="py-4 px-6 text-right text-sm text-slate-900">
-                              {formatCurrency(vatReturn.total_purchases)}
+                              {formatCurrency(vatReturn.output_vat)}
                             </td>
                             <td className="py-4 px-6 text-right text-sm font-semibold text-red-600">
-                              {formatCurrency(vatReturn.total_vat_on_purchases)}
+                              {formatCurrency(vatReturn.input_vat)}
                             </td>
                             <td className="py-4 px-6 text-right text-sm font-bold text-blue-600">
-                              {formatCurrency(vatReturn.net_vat_due)}
+                              {formatCurrency(vatReturn.net_vat)}
                             </td>
                             <td className="py-4 px-6">
                               <Badge
@@ -497,23 +479,22 @@ export const VATAuditPage: React.FC = () => {
                       <tr>
                         <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Date</th>
                         <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Type</th>
-                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Description</th>
-                        <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">Net Amount</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Record ID</th>
                         <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">VAT Amount</th>
-                        <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">Gross Amount</th>
                         <th className="text-center py-3 px-4 text-sm font-semibold text-slate-700">VAT Rate</th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Tax Period</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                       {vatLoading ? (
                         <tr>
-                          <td colSpan={7} className="py-12 text-center">
+                          <td colSpan={6} className="py-12 text-center">
                             <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
                           </td>
                         </tr>
                       ) : vatRecords.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="py-12 text-center">
+                          <td colSpan={6} className="py-12 text-center">
                             <Calculator className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                             <p className="text-slate-500 text-lg">No VAT records found</p>
                           </td>
@@ -522,7 +503,7 @@ export const VATAuditPage: React.FC = () => {
                         vatRecords.map((record) => (
                           <tr key={record.id} className="hover:bg-slate-50 transition-colors">
                             <td className="py-3 px-4 text-sm text-slate-600">
-                              {formatDate(record.record_date)}
+                              {formatDate(record.created_at)}
                             </td>
                             <td className="py-3 px-4">
                               <Badge
@@ -534,24 +515,16 @@ export const VATAuditPage: React.FC = () => {
                               </Badge>
                             </td>
                             <td className="py-3 px-4">
-                              <p className="text-sm font-medium text-slate-900">{record.description}</p>
-                              {(record.invoice || record.expense) && (
-                                <p className="text-xs text-slate-500">
-                                  {record.invoice?.invoice_number || record.expense?.expense_number}
-                                </p>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 text-right text-sm text-slate-900">
-                              {formatCurrency(record.net_amount)}
+                              <p className="text-sm font-mono text-slate-600">{record.record_id?.substring(0, 8)}...</p>
                             </td>
                             <td className="py-3 px-4 text-right text-sm font-semibold text-blue-600">
                               {formatCurrency(record.vat_amount)}
                             </td>
-                            <td className="py-3 px-4 text-right text-sm font-bold text-slate-900">
-                              {formatCurrency(record.gross_amount)}
-                            </td>
                             <td className="py-3 px-4 text-center text-sm text-slate-600">
                               {(record.vat_rate * 100).toFixed(2)}%
+                            </td>
+                            <td className="py-3 px-4 text-sm text-slate-600">
+                              {record.tax_period || '-'}
                             </td>
                           </tr>
                         ))
@@ -610,16 +583,16 @@ export const VATAuditPage: React.FC = () => {
                     ) : (
                       auditLogs
                         .filter(log =>
-                          log.table_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          log.record_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           log.action.toLowerCase().includes(searchTerm.toLowerCase())
                         )
                         .map((log) => (
                           <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                             <td className="py-4 px-6 text-sm text-slate-600">
-                              {formatDate(log.changed_at, 'MMM dd, yyyy HH:mm')}
+                              {formatDate(log.performed_at, 'MMM dd, yyyy HH:mm')}
                             </td>
-                            <td className="py-4 px-6 text-sm text-slate-900">
-                              {log.profile?.full_name || 'Unknown'}
+                            <td className="py-4 px-6 text-sm text-slate-900 font-mono">
+                              {log.performed_by?.substring(0, 8) || 'System'}...
                             </td>
                             <td className="py-4 px-6">
                               <Badge
@@ -632,7 +605,7 @@ export const VATAuditPage: React.FC = () => {
                               </Badge>
                             </td>
                             <td className="py-4 px-6 text-sm text-slate-900 font-mono">
-                              {log.table_name}
+                              {log.record_type}
                             </td>
                             <td className="py-4 px-6 text-sm text-slate-600 font-mono">
                               {log.record_id.substring(0, 8)}...

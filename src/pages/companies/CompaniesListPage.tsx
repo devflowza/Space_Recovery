@@ -15,22 +15,22 @@ import { logger } from '../../lib/logger';
 interface Company {
   id: string;
   company_number: string;
-  company_name: string;
-  vat_number: string | null;
+  name: string;
+  company_name: string | null;
+  tax_number: string | null;
   industry_id: string | null;
   email: string | null;
-  phone_number: string | null;
+  phone: string | null;
   website: string | null;
-  country: string | null;
-  city: string | null;
-  address_line1: string | null;
-  address_line2: string | null;
-  postal_code: string | null;
-  primary_contact_id: string | null;
+  country_id: string | null;
+  city_id: string | null;
+  address: string | null;
   notes: string | null;
   is_active: boolean;
   created_at: string;
-  industries: { id: string; name: string } | null;
+  master_industries: { id: string; name: string } | null;
+  geo_countries: { name: string } | null;
+  geo_cities: { name: string } | null;
   primary_contact: { id: string; customer_name: string } | null;
 }
 
@@ -79,15 +79,14 @@ export const CompaniesListPage: React.FC = () => {
 
   const [formData, setFormData] = useState({
     company_name: '',
-    vat_number: '',
+    tax_number: '',
     industry_id: '',
     email: '',
-    phone_number: '',
+    phone: '',
     website: '',
     country_id: '',
     city_id: '',
     address: '',
-    primary_contact_id: '',
     notes: '',
   });
 
@@ -98,7 +97,9 @@ export const CompaniesListPage: React.FC = () => {
         .from('companies')
         .select(`
           *,
-          industries (id, name)
+          master_industries (id, name),
+          geo_countries (name),
+          geo_cities (name)
         `)
         .order('created_at', { ascending: false });
 
@@ -109,16 +110,14 @@ export const CompaniesListPage: React.FC = () => {
 
       const companiesWithContacts = await Promise.all(
         (data || []).map(async (company) => {
-          if (company.primary_contact_id) {
-            const { data: contact } = await supabase
-              .from('customers_enhanced')
-              .select('id, customer_name')
-              .eq('id', company.primary_contact_id)
-              .maybeSingle();
+          const { data: relationship } = await supabase
+            .from('customer_company_relationships')
+            .select('customers_enhanced (id, customer_name)')
+            .eq('company_id', company.id)
+            .eq('is_primary_contact', true)
+            .maybeSingle();
 
-            return { ...company, primary_contact: contact };
-          }
-          return { ...company, primary_contact: null };
+          return { ...company, primary_contact: relationship?.customers_enhanced || null };
         })
       );
 
@@ -208,25 +207,20 @@ export const CompaniesListPage: React.FC = () => {
 
       if (numberError) throw numberError;
 
-      const selectedCountry = countries.find((c) => c.id === company.country_id);
-      const selectedCity = cities.find((c) => c.id === company.city_id);
-
       const { data: newCompany, error: createError } = await supabase
         .from('companies')
         .insert({
           company_number: companyNumber,
+          name: company.company_name,
           company_name: company.company_name,
-          vat_number: company.vat_number || null,
+          tax_number: company.tax_number || null,
           industry_id: company.industry_id || null,
           email: company.email || null,
-          phone_number: company.phone_number || null,
+          phone: company.phone || null,
           website: company.website || null,
-          country: selectedCountry?.name || null,
-          city: selectedCity?.name || null,
-          address_line1: company.address || null,
-          address_line2: null,
-          postal_code: null,
-          primary_contact_id: company.primary_contact_id || null,
+          country_id: company.country_id || null,
+          city_id: company.city_id || null,
+          address: company.address || null,
           notes: company.notes || null,
           created_by: profile?.id,
         })
@@ -234,18 +228,6 @@ export const CompaniesListPage: React.FC = () => {
         .single();
 
       if (createError) throw createError;
-
-      if (company.primary_contact_id && newCompany) {
-        const { error: relError } = await supabase
-          .from('customer_company_relationships')
-          .insert({
-            customer_id: company.primary_contact_id,
-            company_id: newCompany.id,
-            is_primary_contact: true,
-          });
-
-        if (relError) throw relError;
-      }
 
       return newCompany;
     },
@@ -258,21 +240,19 @@ export const CompaniesListPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const selectedCountry = countries.find((c) => c.id === data.country_id);
-      const selectedCity = cities.find((c) => c.id === data.city_id);
-
       const { data: updatedCompany, error } = await supabase
         .from('companies')
         .update({
+          name: data.company_name,
           company_name: data.company_name,
-          vat_number: data.vat_number || null,
+          tax_number: data.tax_number || null,
           industry_id: data.industry_id || null,
           email: data.email || null,
-          phone_number: data.phone_number || null,
+          phone: data.phone || null,
           website: data.website || null,
-          country: selectedCountry?.name || null,
-          city: selectedCity?.name || null,
-          address_line1: data.address || null,
+          country_id: data.country_id || null,
+          city_id: data.city_id || null,
+          address: data.address || null,
           notes: data.notes || null,
         })
         .eq('id', id)
@@ -294,15 +274,14 @@ export const CompaniesListPage: React.FC = () => {
     const defaultCountryId = companySettings?.location?.default_country_id || '';
     setFormData({
       company_name: '',
-      vat_number: '',
+      tax_number: '',
       industry_id: '',
       email: '',
-      phone_number: '',
+      phone: '',
       website: '',
       country_id: defaultCountryId,
       city_id: '',
       address: '',
-      primary_contact_id: '',
       notes: '',
     });
   };
@@ -326,31 +305,28 @@ export const CompaniesListPage: React.FC = () => {
   };
 
   const handleOpenEditModal = (company: Company) => {
-    const companyCountry = countries.find((c) => c.name === company.country);
-    const companyCity = cities.find((c) => c.name === company.city);
-
     setEditingCompanyId(company.id);
     setFormData({
-      company_name: company.company_name,
-      vat_number: company.vat_number || '',
+      company_name: company.name || company.company_name || '',
+      tax_number: company.tax_number || '',
       industry_id: company.industry_id || '',
       email: company.email || '',
-      phone_number: company.phone_number || '',
+      phone: company.phone || '',
       website: company.website || '',
-      country_id: companyCountry?.id || '',
-      city_id: companyCity?.id || '',
-      address: company.address_line1 || '',
-      primary_contact_id: company.primary_contact_id || '',
+      country_id: company.country_id || '',
+      city_id: company.city_id || '',
+      address: company.address || '',
       notes: company.notes || '',
     });
     setIsEditModalOpen(true);
   };
 
   const filteredCompanies = companies.filter((company) => {
+    const displayName = company.name || company.company_name || '';
     const matchesSearch =
-      company.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.company_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.vat_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      company.tax_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesIndustry =
@@ -625,15 +601,15 @@ export const CompaniesListPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
-                            {company.company_name.substring(0, 2).toUpperCase()}
+                            {(company.name || company.company_name || '??').substring(0, 2).toUpperCase()}
                           </div>
                           <div>
                             <div className="font-medium text-slate-900">
-                              {company.company_name}
+                              {company.name || company.company_name}
                             </div>
-                            {company.vat_number && (
+                            {company.tax_number && (
                               <div className="text-xs text-slate-500">
-                                VAT: {company.vat_number}
+                                Tax: {company.tax_number}
                               </div>
                             )}
                           </div>
@@ -650,29 +626,29 @@ export const CompaniesListPage: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {company.phone_number ? (
+                        {company.phone ? (
                           <div className="text-sm text-slate-700 flex items-center gap-1">
                             <Phone className="w-3.5 h-3.5 text-slate-400" />
-                            {company.phone_number}
+                            {company.phone}
                           </div>
                         ) : (
                           <span className="text-slate-400">-</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {(company.city || company.country) ? (
+                        {(company.geo_cities?.name || company.geo_countries?.name) ? (
                           <div className="text-sm text-slate-700 flex items-center gap-1">
                             <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{[company.city, company.country].filter(Boolean).join(', ')}</span>
+                            <span>{[company.geo_cities?.name, company.geo_countries?.name].filter(Boolean).join(', ')}</span>
                           </div>
                         ) : (
                           <span className="text-slate-400">-</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {company.industries ? (
+                        {company.master_industries ? (
                           <Badge variant="custom" color="#8b5cf6" size="sm">
-                            {company.industries.name}
+                            {company.master_industries.name}
                           </Badge>
                         ) : (
                           <span className="text-slate-400">-</span>
@@ -772,8 +748,8 @@ export const CompaniesListPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             <Input
               label="VAT/Tax Number"
-              value={formData.vat_number}
-              onChange={(e) => setFormData({ ...formData, vat_number: e.target.value })}
+              value={formData.tax_number}
+              onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
             />
             <SearchableSelect
               label="Industry"
@@ -793,8 +769,8 @@ export const CompaniesListPage: React.FC = () => {
             />
             <Input
               label="Phone Number"
-              value={formData.phone_number}
-              onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             />
           </div>
 
@@ -893,8 +869,8 @@ export const CompaniesListPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             <Input
               label="VAT/Tax Number"
-              value={formData.vat_number}
-              onChange={(e) => setFormData({ ...formData, vat_number: e.target.value })}
+              value={formData.tax_number}
+              onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
             />
             <SearchableSelect
               label="Industry"
@@ -914,8 +890,8 @@ export const CompaniesListPage: React.FC = () => {
             />
             <Input
               label="Phone Number"
-              value={formData.phone_number}
-              onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             />
           </div>
 

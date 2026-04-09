@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
+import { PhoneInput } from '../../components/ui/PhoneInput';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { CustomerAvatar } from '../../components/ui/CustomerAvatar';
 import { Plus, Search, Filter, Mail, Phone, Building2, User, MapPin, Eye, Pencil, Users, UserCheck, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -55,6 +56,8 @@ interface Company {
 interface Country {
   id: string;
   name: string;
+  code: string;
+  phone_code: string | null;
   is_active: boolean;
 }
 
@@ -804,17 +807,21 @@ export const CustomersListPage: React.FC = () => {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
-            <Input
+            <PhoneInput
               label="Mobile Number"
               value={formData.mobile_number}
-              onChange={(e) => setFormData({ ...formData, mobile_number: e.target.value })}
+              onChange={(val) => setFormData({ ...formData, mobile_number: val })}
+              countries={countries}
+              selectedCountryId={formData.country_id}
             />
           </div>
 
-          <Input
+          <PhoneInput
             label="Phone Number (Alternative)"
             value={formData.phone_number}
-            onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+            onChange={(val) => setFormData({ ...formData, phone_number: val })}
+            countries={countries}
+            selectedCountryId={formData.country_id}
           />
 
           <div className="grid grid-cols-2 gap-3">
@@ -967,17 +974,21 @@ export const CustomersListPage: React.FC = () => {
               value={editFormData.email}
               onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
             />
-            <Input
+            <PhoneInput
               label="Mobile Number"
               value={editFormData.mobile_number}
-              onChange={(e) => setEditFormData({ ...editFormData, mobile_number: e.target.value })}
+              onChange={(val) => setEditFormData({ ...editFormData, mobile_number: val })}
+              countries={countries}
+              selectedCountryId={editFormData.country_id}
             />
           </div>
 
-          <Input
+          <PhoneInput
             label="Phone Number (Alternative)"
             value={editFormData.phone_number}
-            onChange={(e) => setEditFormData({ ...editFormData, phone_number: e.target.value })}
+            onChange={(val) => setEditFormData({ ...editFormData, phone_number: val })}
+            countries={countries}
+            selectedCountryId={editFormData.country_id}
           />
 
           <SearchableSelect

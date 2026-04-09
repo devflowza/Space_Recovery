@@ -67,13 +67,15 @@ export interface InvoiceWithDetails extends Invoice {
   };
   companies?: {
     id: string;
-    company_name: string;
+    name: string;
+    company_name: string | null;
     email: string;
-    phone_number: string;
+    phone: string;
   };
   customer_associated_company?: {
     id: string;
-    company_name: string;
+    name: string;
+    company_name: string | null;
   } | null;
   created_by_profile?: {
     id: string;
@@ -124,10 +126,11 @@ export const fetchInvoices = async (filters?: {
       ),
       companies (
         id,
+        name,
         company_name,
         email,
-        phone_number
-      ),
+        phone
+      )
     `)
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
@@ -184,23 +187,24 @@ export const fetchInvoiceById = async (id: string) => {
         customer_name,
         email,
         mobile_number,
-        phone_number,
-        address_line1,
-        address_line2,
-        city,
-        postal_code,
-        country
+        phone,
+        address,
+        country_id,
+        city_id,
+        geo_countries(name),
+        geo_cities(name)
       ),
       companies (
         id,
+        name,
         company_name,
         email,
-        phone_number,
-        address_line1,
-        address_line2,
-        city,
-        postal_code,
-        country
+        phone,
+        address,
+        country_id,
+        city_id,
+        geo_countries(name),
+        geo_cities(name)
       ),
       bank_accounts (
         id,
@@ -223,7 +227,7 @@ export const fetchInvoiceById = async (id: string) => {
     const { data: relationshipData } = await supabase
       .from('customer_company_relationships')
       .select(`
-        companies (id, company_name)
+        companies (id, name, company_name)
       `)
       .eq('customer_id', data.customer_id)
       .eq('is_primary_contact', true)

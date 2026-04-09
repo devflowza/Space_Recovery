@@ -2,41 +2,34 @@ import { supabase } from './supabaseClient';
 
 export interface VATRecord {
   id?: string;
-  record_date: string;
-  record_type: 'sale' | 'purchase';
-  net_amount: number;
+  record_type: string;
+  record_id: string;
   vat_amount: number;
-  gross_amount: number;
   vat_rate: number;
-  description: string;
-  invoice_id?: string | null;
-  expense_id?: string | null;
+  tax_period?: string | null;
   created_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface VATReturn {
   id?: string;
   period_start: string;
   period_end: string;
-  total_sales: number;
-  total_vat_on_sales: number;
-  total_purchases: number;
-  total_vat_on_purchases: number;
-  net_vat_due: number;
+  output_vat: number;
+  input_vat: number;
+  net_vat: number;
   status: 'draft' | 'review' | 'submitted' | 'paid';
   submitted_at?: string | null;
   submitted_by?: string | null;
-  notes?: string;
   created_at?: string;
   updated_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface VATSummary {
-  totalSales: number;
-  totalVATOnSales: number;
-  totalPurchases: number;
-  totalVATOnPurchases: number;
-  netVATDue: number;
+  totalOutputVAT: number;
+  totalInputVAT: number;
+  netVAT: number;
   recordCount: number;
 }
 
@@ -47,23 +40,20 @@ export const fetchVATRecords = async (filters?: {
 }) => {
   let query = supabase
     .from('vat_records')
-    .select(`
-      *,
-      invoice:invoices(id, invoice_number),
-      expense:expenses(id, expense_number)
-    `)
-    .order('record_date', { ascending: false });
+    .select('*')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
 
   if (filters?.recordType && filters.recordType !== 'all') {
     query = query.eq('record_type', filters.recordType);
   }
 
   if (filters?.dateFrom) {
-    query = query.gte('record_date', filters.dateFrom);
+    query = query.gte('created_at', filters.dateFrom);
   }
 
   if (filters?.dateTo) {
-    query = query.lte('record_date', filters.dateTo);
+    query = query.lte('created_at', filters.dateTo);
   }
 
   const { data, error } = await query;
@@ -77,10 +67,8 @@ export const fetchVATReturns = async (filters?: {
 }) => {
   let query = supabase
     .from('vat_returns')
-    .select(`
-      *,
-      submitted_by_profile:profiles!vat_returns_submitted_by_fkey(id, full_name)
-    `)
+    .select('*')
+    .is('deleted_at', null)
     .order('period_end', { ascending: false });
 
   if (filters?.status && filters.status !== 'all') {
@@ -101,10 +89,7 @@ export const fetchVATReturns = async (filters?: {
 export const fetchVATReturnById = async (id: string) => {
   const { data, error } = await supabase
     .from('vat_returns')
-    .select(`
-      *,
-      submitted_by_profile:profiles!vat_returns_submitted_by_fkey(id, full_name)
-    `)
+    .select('*')
     .eq('id', id)
     .maybeSingle();
 
@@ -118,33 +103,30 @@ export const calculateVATForPeriod = async (
 ): Promise<VATSummary> => {
   const { data: records, error } = await supabase
     .from('vat_records')
-    .select('record_type, net_amount, vat_amount, gross_amount')
-    .gte('record_date', periodStart)
-    .lte('record_date', periodEnd);
+    .select('record_type, vat_amount')
+    .is('deleted_at', null)
+    .gte('created_at', periodStart)
+    .lte('created_at', periodEnd);
 
   if (error) throw error;
 
   const sales = records?.filter(r => r.record_type === 'sale') || [];
   const purchases = records?.filter(r => r.record_type === 'purchase') || [];
 
-  const totalSales = sales.reduce((sum, r) => sum + (r.net_amount || 0), 0);
-  const totalVATOnSales = sales.reduce((sum, r) => sum + (r.vat_amount || 0), 0);
-  const totalPurchases = purchases.reduce((sum, r) => sum + (r.net_amount || 0), 0);
-  const totalVATOnPurchases = purchases.reduce((sum, r) => sum + (r.vat_amount || 0), 0);
-  const netVATDue = totalVATOnSales - totalVATOnPurchases;
+  const totalOutputVAT = sales.reduce((sum, r) => sum + (r.vat_amount || 0), 0);
+  const totalInputVAT = purchases.reduce((sum, r) => sum + (r.vat_amount || 0), 0);
+  const netVAT = totalOutputVAT - totalInputVAT;
 
   return {
-    totalSales,
-    totalVATOnSales,
-    totalPurchases,
-    totalVATOnPurchases,
-    netVATDue,
+    totalOutputVAT,
+    totalInputVAT,
+    netVAT,
     recordCount: records?.length || 0,
   };
 };
 
 export const createVATReturn = async (
-  vatReturn: Omit<VATReturn, 'id' | 'created_at' | 'updated_at'>
+  vatReturn: Omit<VATReturn, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>
 ) => {
   const { data, error } = await supabase
     .from('vat_returns')
@@ -158,21 +140,17 @@ export const createVATReturn = async (
 
 export const createVATReturnFromPeriod = async (
   periodStart: string,
-  periodEnd: string,
-  notes?: string
+  periodEnd: string
 ) => {
   const summary = await calculateVATForPeriod(periodStart, periodEnd);
 
   return createVATReturn({
     period_start: periodStart,
     period_end: periodEnd,
-    total_sales: summary.totalSales,
-    total_vat_on_sales: summary.totalVATOnSales,
-    total_purchases: summary.totalPurchases,
-    total_vat_on_purchases: summary.totalVATOnPurchases,
-    net_vat_due: summary.netVATDue,
+    output_vat: summary.totalOutputVAT,
+    input_vat: summary.totalInputVAT,
+    net_vat: summary.netVAT,
     status: 'draft',
-    notes,
   });
 };
 
@@ -216,7 +194,7 @@ export const deleteVATReturn = async (id: string) => {
 };
 
 export const createVATRecord = async (
-  record: Omit<VATRecord, 'id' | 'created_at'>
+  record: Omit<VATRecord, 'id' | 'created_at' | 'deleted_at'>
 ) => {
   const { data, error } = await supabase
     .from('vat_records')
@@ -231,23 +209,15 @@ export const createVATRecord = async (
 export const createVATRecordFromInvoice = async (
   invoiceId: string,
   invoiceData: {
-    invoice_date: string;
-    subtotal: number;
     tax_amount: number;
-    total_amount: number;
     tax_rate: number;
-    invoice_number: string;
   }
 ) => {
   return createVATRecord({
-    record_date: invoiceData.invoice_date,
     record_type: 'sale',
-    net_amount: invoiceData.subtotal,
+    record_id: invoiceId,
     vat_amount: invoiceData.tax_amount,
-    gross_amount: invoiceData.total_amount,
     vat_rate: invoiceData.tax_rate,
-    description: `Invoice: ${invoiceData.invoice_number}`,
-    invoice_id: invoiceId,
   });
 };
 
@@ -263,6 +233,7 @@ export const getVATStats = async (filters?: {
   const { data: returns } = await supabase
     .from('vat_returns')
     .select('status')
+    .is('deleted_at', null)
     .gte('period_start', dateFrom)
     .lte('period_end', dateTo);
 
@@ -280,14 +251,11 @@ export const getVATRecordsByReturn = async (
 ) => {
   const { data, error } = await supabase
     .from('vat_records')
-    .select(`
-      *,
-      invoice:invoices(id, invoice_number, customer:customers_enhanced(customer_name)),
-      expense:expenses(id, expense_number, vendor)
-    `)
-    .gte('record_date', periodStart)
-    .lte('record_date', periodEnd)
-    .order('record_date', { ascending: true });
+    .select('*')
+    .is('deleted_at', null)
+    .gte('created_at', periodStart)
+    .lte('created_at', periodEnd)
+    .order('created_at', { ascending: true });
 
   if (error) throw error;
   return data || [];

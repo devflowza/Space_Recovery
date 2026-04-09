@@ -59,13 +59,15 @@ export interface QuoteWithDetails extends Quote {
   };
   companies?: {
     id: string;
-    company_name: string;
+    name: string;
+    company_name: string | null;
     email: string;
-    phone_number: string;
+    phone: string;
   };
   customer_associated_company?: {
     id: string;
-    company_name: string;
+    name: string;
+    company_name: string | null;
   } | null;
   created_by_profile?: {
     id: string;
@@ -112,13 +114,10 @@ export const fetchQuotes = async (filters?: {
         ),
         companies:companies (
           id,
+          name,
           company_name,
           email,
-          phone_number
-        ),
-        created_by_profile:profiles!quotes_created_by_fkey (
-          id,
-          full_name
+          phone
         )
       `)
       .is('deleted_at', null)
@@ -180,27 +179,20 @@ export const fetchQuoteById = async (id: string) => {
         customer_name,
         email,
         mobile_number,
-        phone_number,
-        address_line1,
-        address_line2,
-        city,
-        postal_code,
-        country
+        phone,
+        address,
+        country_id,
+        city_id,
+        geo_countries(name),
+        geo_cities(name)
       ),
       companies (
         id,
+        name,
         company_name,
         email,
-        phone_number,
-        address_line1
-      ),
-      created_by_profile:profiles!quotes_created_by_fkey (
-        id,
-        full_name
-      ),
-      approved_by_profile:profiles!quotes_approved_by_fkey (
-        id,
-        full_name
+        phone,
+        address
       ),
       bank_accounts (
         id,
@@ -223,7 +215,7 @@ export const fetchQuoteById = async (id: string) => {
     const { data: relationshipData } = await supabase
       .from('customer_company_relationships')
       .select(`
-        companies (id, company_name)
+        companies (id, name, company_name)
       `)
       .eq('customer_id', data.customer_id)
       .eq('is_primary_contact', true)
@@ -453,7 +445,6 @@ export const deleteQuote = async (id: string) => {
     .from('quotes')
     .update({
       deleted_at: new Date().toISOString(),
-      deleted_by: user.id,
     })
     .eq('id', id);
 
@@ -465,7 +456,6 @@ export const restoreQuote = async (id: string) => {
     .from('quotes')
     .update({
       deleted_at: null,
-      deleted_by: null,
     })
     .eq('id', id);
 
@@ -497,15 +487,7 @@ export const fetchDeletedQuotes = async () => {
         id,
         company_name,
         email,
-        phone_number
-      ),
-      created_by_profile:profiles!quotes_created_by_fkey (
-        id,
-        full_name
-      ),
-      deleted_by_profile:profiles!quotes_deleted_by_fkey (
-        id,
-        full_name
+        phone
       )
     `)
     .not('deleted_at', 'is', null)
