@@ -86,7 +86,7 @@ export const leaveService = {
       .select(`
         *,
         employee:employees!leave_requests_employee_id_fkey(id, first_name, last_name, employee_number),
-        leave_type:leave_types!leave_requests_leave_type_id_fkey(id, name, is_paid),
+        leave_type:master_leave_types!leave_requests_leave_type_id_fkey(id, name, is_paid),
         approver:profiles!leave_requests_reviewed_by_fkey(full_name)
       `)
       .order('created_at', { ascending: false });
@@ -117,7 +117,7 @@ export const leaveService = {
       .select(`
         *,
         employee:employees!leave_requests_employee_id_fkey(id, first_name, last_name, employee_number),
-        leave_type:leave_types!leave_requests_leave_type_id_fkey(id, name, is_paid),
+        leave_type:master_leave_types!leave_requests_leave_type_id_fkey(id, name, is_paid),
         approver:profiles!leave_requests_reviewed_by_fkey(full_name)
       `)
       .eq('id', id)
@@ -195,7 +195,7 @@ export const leaveService = {
       .select(`
         *,
         employee:employees!leave_balances_employee_id_fkey(id, first_name, last_name, employee_number),
-        leave_type:leave_types!leave_balances_leave_type_id_fkey(id, name, is_paid)
+        leave_type:master_leave_types!leave_balances_leave_type_id_fkey(id, name, is_paid)
       `)
       .order('employee_id');
 

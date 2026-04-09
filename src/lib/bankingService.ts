@@ -110,7 +110,7 @@ export const bankingService = {
       .from('bank_accounts')
       .select(`
         *, account_name:name,
-        currency:currency_codes(code, symbol, name),
+        currency:master_currency_codes(code, symbol, name),
         employee:profiles!bank_accounts_employee_id_fkey(id, full_name)
       `)
       .is('deleted_at', null)
@@ -134,7 +134,7 @@ export const bankingService = {
       .from('bank_accounts')
       .select(`
         *, account_name:name,
-        currency:currency_codes(code, symbol, name),
+        currency:master_currency_codes(code, symbol, name),
         employee:profiles!bank_accounts_employee_id_fkey(id, full_name)
       `)
       .eq('id', id)
@@ -167,7 +167,7 @@ export const bankingService = {
       .insert(dataToInsert)
       .select(`
         *,
-        currency:currency_codes(code, symbol, name),
+        currency:master_currency_codes(code, symbol, name),
         employee:profiles!bank_accounts_employee_id_fkey(id, full_name)
       `)
       .maybeSingle();
@@ -199,7 +199,7 @@ export const bankingService = {
       .eq('id', id)
       .select(`
         *,
-        currency:currency_codes(code, symbol, name),
+        currency:master_currency_codes(code, symbol, name),
         employee:profiles!bank_accounts_employee_id_fkey(id, full_name)
       `)
       .maybeSingle();

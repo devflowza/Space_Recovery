@@ -126,7 +126,7 @@ export async function getCandidates(jobId?: string) {
   let query = supabase
     .from('recruitment_candidates')
     .select(`*, recruitment_jobs (title, department_id)`)
-    .order('applied_date', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (jobId) {
     query = query.eq('job_id', jobId);

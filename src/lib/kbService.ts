@@ -54,7 +54,7 @@ export async function getKBCategories(): Promise<KBCategoryWithCount[]> {
     .from('kb_categories')
     .select('*')
     .eq('is_active', true)
-    .order('ordering', { ascending: true });
+    .order('sort_order', { ascending: true });
 
   if (error) throw error;
 
@@ -82,21 +82,21 @@ export async function getAllKBCategories(): Promise<KBCategory[]> {
   const { data, error } = await supabase
     .from('kb_categories')
     .select('*')
-    .order('ordering', { ascending: true });
+    .order('sort_order', { ascending: true });
   if (error) throw error;
   return data || [];
 }
 
-export async function createKBCategory(input: { name: string; description?: string; parent_category_id?: string | null; color?: string; icon?: string; ordering?: number }): Promise<KBCategory> {
+export async function createKBCategory(input: { name: string; description?: string; parent_id?: string | null; color?: string; icon?: string; sort_order?: number }): Promise<KBCategory> {
   const slug = generateSlug(input.name);
   const payload: KBCategoryInsert = {
     name: input.name,
     slug,
     description: input.description || null,
-    parent_category_id: input.parent_category_id || null,
+    parent_id: input.parent_id || null,
     color: input.color || null,
     icon: input.icon || null,
-    ordering: input.ordering ?? 0,
+    sort_order: input.sort_order ?? 0,
     is_active: true,
   };
   const { data, error } = await supabase.from('kb_categories').insert(payload).select().maybeSingle();
@@ -105,7 +105,7 @@ export async function createKBCategory(input: { name: string; description?: stri
   return data;
 }
 
-export async function updateKBCategory(id: string, input: Partial<{ name: string; description: string; parent_category_id: string | null; color: string; icon: string; ordering: number; is_active: boolean }>): Promise<KBCategory> {
+export async function updateKBCategory(id: string, input: Partial<{ name: string; description: string; parent_id: string | null; color: string; icon: string; sort_order: number; is_active: boolean }>): Promise<KBCategory> {
   const update: KBCategoryUpdate = { ...input, updated_at: new Date().toISOString() };
   if (input.name) update.slug = generateSlug(input.name);
   const { data, error } = await supabase.from('kb_categories').update(update).eq('id', id).select().maybeSingle();

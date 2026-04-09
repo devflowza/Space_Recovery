@@ -35,17 +35,17 @@ const COLOR_OPTIONS = [
 interface CategoryFormState {
   name: string;
   description: string;
-  parent_category_id: string;
+  parent_id: string;
   color: string;
-  ordering: string;
+  sort_order: string;
 }
 
 const defaultForm = (): CategoryFormState => ({
   name: '',
   description: '',
-  parent_category_id: '',
+  parent_id: '',
   color: '#3b82f6',
-  ordering: '0',
+  sort_order: '0',
 });
 
 export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOpen, onClose }) => {
@@ -66,9 +66,9 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
       createKBCategory({
         name: form.name,
         description: form.description || undefined,
-        parent_category_id: form.parent_category_id || null,
+        parent_id: form.parent_id || null,
         color: form.color,
-        ordering: parseInt(form.ordering) || 0,
+        sort_order: parseInt(form.sort_order) || 0,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: kbKeys.all });
@@ -84,9 +84,9 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
       updateKBCategory(editingId!, {
         name: form.name,
         description: form.description || undefined,
-        parent_category_id: form.parent_category_id || null,
+        parent_id: form.parent_id || null,
         color: form.color,
-        ordering: parseInt(form.ordering) || 0,
+        sort_order: parseInt(form.sort_order) || 0,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: kbKeys.all });
@@ -120,9 +120,9 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
     setForm({
       name: cat.name,
       description: cat.description || '',
-      parent_category_id: cat.parent_category_id || '',
+      parent_id: cat.parent_id || '',
       color: cat.color || '#3b82f6',
-      ordering: String(cat.ordering ?? 0),
+      sort_order: String(cat.sort_order ?? 0),
     });
     setShowForm(true);
   };
@@ -186,8 +186,8 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
                 <FormField label="Display Order">
                   <Input
                     type="number"
-                    value={form.ordering}
-                    onChange={(e) => setForm({ ...form, ordering: e.target.value })}
+                    value={form.sort_order}
+                    onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
                     placeholder="0"
                   />
                 </FormField>
@@ -202,8 +202,8 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
               <div className="grid grid-cols-2 gap-3">
                 <FormField label="Parent Category">
                   <select
-                    value={form.parent_category_id}
-                    onChange={(e) => setForm({ ...form, parent_category_id: e.target.value })}
+                    value={form.parent_id}
+                    onChange={(e) => setForm({ ...form, parent_id: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="">None (top-level)</option>
@@ -255,7 +255,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-gray-900 truncate">{cat.name}</span>
-                      {cat.parent_category_id && (
+                      {cat.parent_id && (
                         <ChevronDown className="w-3 h-3 text-gray-400 rotate-[-90deg]" />
                       )}
                       {!cat.is_active && (
