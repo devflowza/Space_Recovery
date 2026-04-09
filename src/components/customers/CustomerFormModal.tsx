@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../ui/Button';
@@ -7,6 +7,21 @@ import { Modal } from '../ui/Modal';
 import { PhoneInput } from '../ui/PhoneInput';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+  User,
+  Mail,
+  Phone,
+  Building2,
+  MapPin,
+  Settings,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Loader2,
+  Globe,
+  StickyNote,
+  Shield,
+} from 'lucide-react';
 
 interface CustomerFormModalProps {
   isOpen: boolean;
@@ -40,6 +55,36 @@ interface City {
   is_active: boolean;
 }
 
+interface FormErrors {
+  customer_name?: string;
+  email?: string;
+}
+
+const SectionHeader: React.FC<{
+  icon: React.ElementType;
+  title: string;
+  collapsible?: boolean;
+  collapsed?: boolean;
+  onToggle?: () => void;
+}> = ({ icon: Icon, title, collapsible, collapsed, onToggle }) => (
+  <div
+    className={`flex items-center justify-between py-2 ${collapsible ? 'cursor-pointer select-none' : ''}`}
+    onClick={collapsible ? onToggle : undefined}
+  >
+    <div className="flex items-center gap-2">
+      <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center">
+        <Icon className="w-3.5 h-3.5 text-blue-600" />
+      </div>
+      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{title}</span>
+    </div>
+    {collapsible && (
+      <div className="text-slate-400 hover:text-slate-600 transition-colors">
+        {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+      </div>
+    )}
+  </div>
+);
+
 export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   isOpen,
   onClose,
@@ -48,6 +93,10 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const queryClient = useQueryClient();
   const { profile } = useAuth();
   const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false);
+  const [showAltPhone, setShowAltPhone] = useState(false);
+  const [settingsCollapsed, setSettingsCollapsed] = useState(true);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -74,7 +123,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         .from('customer_groups')
         .select('*')
         .order('name');
-
       if (error) throw error;
       return data as CustomerGroup[];
     },
@@ -87,7 +135,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         .from('companies')
         .select('id, company_number, company_name')
         .order('company_name');
-
       if (error) throw error;
       return data as Company[];
     },
@@ -101,7 +148,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         .select('*')
         .eq('is_active', true)
         .order('name');
-
       if (error) throw error;
       return data as Country[];
     },
@@ -115,7 +161,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         .select('*')
         .eq('is_active', true)
         .order('name');
-
       if (error) throw error;
       return data as City[];
     },
@@ -129,7 +174,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         .select('location')
         .limit(1)
         .maybeSingle();
-
       if (error) throw error;
       return data;
     },
@@ -139,10 +183,33 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     (city) => !formData.country_id || city.country_id === formData.country_id
   );
 
+  const validate = useCallback((data: typeof formData): FormErrors => {
+    const errs: FormErrors = {};
+    if (!data.customer_name.trim()) {
+      errs.customer_name = 'Customer name is required';
+    }
+    if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      errs.email = 'Please enter a valid email address';
+    }
+    return errs;
+  }, []);
+
+  const handleFieldChange = (field: string, value: string | boolean) => {
+    const updated = { ...formData, [field]: value };
+    setFormData(updated);
+    if (touched[field]) {
+      setErrors(validate(updated));
+    }
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    setErrors(validate(formData));
+  };
+
   const createMutation = useMutation({
     mutationFn: async (customer: typeof formData) => {
       const { data: customerNumber, error: numberError } = await supabase.rpc('get_next_customer_number');
-
       if (numberError) throw numberError;
 
       const selectedCountry = countries.find((c) => c.id === customer.country_id);
@@ -179,7 +246,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             company_id: customer.company_id,
             is_primary_contact: false,
           });
-
         if (relError) throw relError;
       }
 
@@ -189,9 +255,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       queryClient.invalidateQueries({ queryKey: ['customers_enhanced'] });
       queryClient.invalidateQueries({ queryKey: ['customers_for_cases'] });
       resetForm();
-      if (onSuccess) {
-        onSuccess(newCustomer);
-      }
+      if (onSuccess) onSuccess(newCustomer);
       onClose();
     },
   });
@@ -199,7 +263,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const createCompanyMutation = useMutation({
     mutationFn: async (companyData: typeof newCompanyData) => {
       const { data: companyNumber, error: numberError } = await supabase.rpc('get_next_company_number');
-
       if (numberError) throw numberError;
 
       const { data: newCompany, error: createError } = await supabase
@@ -213,7 +276,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         .single();
 
       if (createError) throw createError;
-
       return newCompany;
     },
     onSuccess: async (newCompany) => {
@@ -240,25 +302,29 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       notes: '',
       company_id: '',
     });
-  };
-
-  const handleAddNewCompany = () => {
-    setIsAddCompanyModalOpen(true);
-  };
-
-  const handleCreateCompany = (e: React.FormEvent) => {
-    e.preventDefault();
-    createCompanyMutation.mutate(newCompanyData);
+    setErrors({});
+    setTouched({});
+    setShowAltPhone(false);
+    setSettingsCollapsed(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const validationErrors = validate(formData);
+    setErrors(validationErrors);
+    setTouched({ customer_name: true, email: true });
+    if (Object.keys(validationErrors).length > 0) return;
     createMutation.mutate(formData);
   };
 
   const handleClose = () => {
     resetForm();
     onClose();
+  };
+
+  const handleCreateCompany = (e: React.FormEvent) => {
+    e.preventDefault();
+    createCompanyMutation.mutate(newCompanyData);
   };
 
   React.useEffect(() => {
@@ -272,131 +338,229 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleClose} title="Add New Customer">
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <Input
-            label="Customer Name"
-            value={formData.customer_name}
-            onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-            required
-            placeholder="Full name or business name"
-          />
+      <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title="Add New Customer"
+        icon={User}
+      >
+        <form onSubmit={handleSubmit} className="space-y-1">
 
-          <div className="grid grid-cols-2 gap-2.5">
-            <Input
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="customer@email.com"
-            />
-            <PhoneInput
-              label="Mobile Number"
-              value={formData.mobile_number}
-              onChange={(val) => setFormData({ ...formData, mobile_number: val })}
-              countries={countries}
-              selectedCountryId={formData.country_id}
-            />
-          </div>
+          {/* ── Contact Details ── */}
+          <div className="rounded-lg bg-slate-50/60 border border-slate-100 p-3.5">
+            <SectionHeader icon={User} title="Contact Details" />
 
-          <PhoneInput
-            label="Phone Number (Alternative)"
-            value={formData.phone_number}
-            onChange={(val) => setFormData({ ...formData, phone_number: val })}
-            countries={countries}
-            selectedCountryId={formData.country_id}
-          />
-
-          <div className="grid grid-cols-2 gap-2.5">
-            <SearchableSelect
-              label="Customer Group"
-              value={formData.customer_group_id}
-              onChange={(value) => setFormData({ ...formData, customer_group_id: value })}
-              options={customerGroups.map((g) => ({ id: g.id, name: g.name }))}
-              placeholder="Choose customer type (Individual, Corporate, VIP)"
-              clearable={false}
-            />
-
-            <SearchableSelect
-              label="Company (Optional)"
-              value={formData.company_id}
-              onChange={(value) => setFormData({ ...formData, company_id: value })}
-              options={companies.map((c) => ({ id: c.id, name: `${c.company_name} (${c.company_number})` }))}
-              placeholder="No Company"
-              onAddNew={handleAddNewCompany}
-              addNewLabel="Add New Company"
-              clearable={false}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2.5">
-            <SearchableSelect
-              label="Country"
-              value={formData.country_id}
-              onChange={(value) => {
-                setFormData({ ...formData, country_id: value, city_id: '' });
-              }}
-              options={countries.map((c) => ({ id: c.id, name: c.name }))}
-              placeholder="Select Country"
-              clearable={false}
-            />
-            <SearchableSelect
-              label="City"
-              value={formData.city_id}
-              onChange={(value) => setFormData({ ...formData, city_id: value })}
-              options={filteredCities.map((c) => ({ id: c.id, name: c.name }))}
-              placeholder="Select City"
-              disabled={!formData.country_id}
-              clearable={false}
-            />
-          </div>
-
-          <Input
-            label="Address"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          />
-
-          <div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.portal_enabled}
-                onChange={(e) =>
-                  setFormData({ ...formData, portal_enabled: e.target.checked })
-                }
-                className="w-4 h-4 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500"
+            <div className="mt-2.5 space-y-3">
+              <Input
+                label="Customer Name"
+                value={formData.customer_name}
+                onChange={(e) => handleFieldChange('customer_name', e.target.value)}
+                onBlur={() => handleBlur('customer_name')}
+                error={touched.customer_name ? errors.customer_name : undefined}
+                required
+                placeholder="Full name or business name"
+                leftIcon={<User className="w-4 h-4" />}
               />
-              <span className="text-sm font-medium text-slate-700">
-                Allow this customer to view their cases online
-              </span>
-            </label>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Input
+                  label="Email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleFieldChange('email', e.target.value)}
+                  onBlur={() => handleBlur('email')}
+                  error={touched.email ? errors.email : undefined}
+                  placeholder="customer@email.com"
+                  leftIcon={<Mail className="w-4 h-4" />}
+                />
+                <PhoneInput
+                  label="Mobile Number"
+                  value={formData.mobile_number}
+                  onChange={(val) => handleFieldChange('mobile_number', val)}
+                  countries={countries}
+                  selectedCountryId={formData.country_id}
+                />
+              </div>
+
+              {showAltPhone ? (
+                <PhoneInput
+                  label="Alternative Phone"
+                  value={formData.phone_number}
+                  onChange={(val) => handleFieldChange('phone_number', val)}
+                  countries={countries}
+                  selectedCountryId={formData.country_id}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowAltPhone(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors py-0.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add alternative phone
+                </button>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Internal Notes
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={1}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm"
-              placeholder="Private notes (customers won't see these)"
+          {/* ── Organization ── */}
+          <div className="rounded-lg bg-slate-50/60 border border-slate-100 p-3.5">
+            <SectionHeader icon={Building2} title="Organization" />
+
+            <div className="mt-2.5 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <SearchableSelect
+                label="Customer Group"
+                value={formData.customer_group_id}
+                onChange={(value) => handleFieldChange('customer_group_id', value)}
+                options={customerGroups.map((g) => ({ id: g.id, name: g.name }))}
+                placeholder="Select type"
+                clearable={false}
+              />
+              <SearchableSelect
+                label="Company"
+                value={formData.company_id}
+                onChange={(value) => handleFieldChange('company_id', value)}
+                options={companies.map((c) => ({
+                  id: c.id,
+                  name: `${c.company_name} (${c.company_number})`,
+                }))}
+                placeholder="No company"
+                onAddNew={() => setIsAddCompanyModalOpen(true)}
+                addNewLabel="Add New Company"
+                clearable={false}
+              />
+            </div>
+          </div>
+
+          {/* ── Location ── */}
+          <div className="rounded-lg bg-slate-50/60 border border-slate-100 p-3.5">
+            <SectionHeader icon={MapPin} title="Location" />
+
+            <div className="mt-2.5 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <SearchableSelect
+                  label="Country"
+                  value={formData.country_id}
+                  onChange={(value) => {
+                    setFormData({ ...formData, country_id: value, city_id: '' });
+                  }}
+                  options={countries.map((c) => ({ id: c.id, name: c.name }))}
+                  placeholder="Select country"
+                  clearable={false}
+                />
+                <SearchableSelect
+                  label="City"
+                  value={formData.city_id}
+                  onChange={(value) => handleFieldChange('city_id', value)}
+                  options={filteredCities.map((c) => ({ id: c.id, name: c.name }))}
+                  placeholder="Select city"
+                  disabled={!formData.country_id}
+                  clearable={false}
+                />
+              </div>
+
+              <Input
+                label="Address"
+                value={formData.address}
+                onChange={(e) => handleFieldChange('address', e.target.value)}
+                placeholder="Street address"
+                leftIcon={<Globe className="w-4 h-4" />}
+              />
+            </div>
+          </div>
+
+          {/* ── Settings (Collapsible) ── */}
+          <div className="rounded-lg bg-slate-50/60 border border-slate-100 p-3.5">
+            <SectionHeader
+              icon={Settings}
+              title="Settings"
+              collapsible
+              collapsed={settingsCollapsed}
+              onToggle={() => setSettingsCollapsed(!settingsCollapsed)}
             />
+
+            {!settingsCollapsed && (
+              <div className="mt-2.5 space-y-3 animate-fadeIn">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-white border border-slate-200">
+                  <div className="mt-0.5">
+                    <Shield className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <div>
+                        <span className="text-sm font-medium text-slate-800 block">Portal Access</span>
+                        <span className="text-xs text-slate-500">Allow customer to view their cases online</span>
+                      </div>
+                      <div
+                        className={`relative w-10 h-5 rounded-full transition-colors ${
+                          formData.portal_enabled ? 'bg-blue-600' : 'bg-slate-300'
+                        }`}
+                        onClick={() => handleFieldChange('portal_enabled', !formData.portal_enabled)}
+                      >
+                        <div
+                          className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                            formData.portal_enabled ? 'translate-x-5' : 'translate-x-0.5'
+                          }`}
+                        />
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1">
+                    <StickyNote className="w-3.5 h-3.5 text-slate-400" />
+                    Internal Notes
+                  </label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => handleFieldChange('notes', e.target.value)}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none transition-shadow bg-white"
+                    placeholder="Private notes visible only to staff"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="flex gap-3 justify-end pt-2 border-t">
-            <Button type="button" variant="secondary" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button type="submit" style={{ backgroundColor: '#06b6d4' }}>
-              Create Customer
-            </Button>
+          {/* ── Footer ── */}
+          {createMutation.isError && (
+            <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {createMutation.error instanceof Error
+                ? createMutation.error.message
+                : 'Failed to create customer. Please try again.'}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+            <p className="text-xs text-slate-400">
+              <span className="text-red-400">*</span> Required fields
+            </p>
+            <div className="flex gap-2.5">
+              <Button type="button" variant="secondary" size="sm" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Customer'
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </Modal>
 
+      {/* ── Add Company Sub-Modal ── */}
       <Modal
         isOpen={isAddCompanyModalOpen}
         onClose={() => {
@@ -404,6 +568,8 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           setNewCompanyData({ company_name: '' });
         }}
         title="Add New Company"
+        icon={Building2}
+        size="sm"
       >
         <form onSubmit={handleCreateCompany} className="space-y-4">
           <Input
@@ -411,12 +577,23 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             value={newCompanyData.company_name}
             onChange={(e) => setNewCompanyData({ ...newCompanyData, company_name: e.target.value })}
             required
+            placeholder="Enter company name"
+            leftIcon={<Building2 className="w-4 h-4" />}
           />
 
-          <div className="flex gap-3 justify-end pt-2 border-t">
+          {createCompanyMutation.isError && (
+            <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {createCompanyMutation.error instanceof Error
+                ? createCompanyMutation.error.message
+                : 'Failed to create company.'}
+            </div>
+          )}
+
+          <div className="flex gap-2.5 justify-end pt-3 border-t border-slate-200">
             <Button
               type="button"
               variant="secondary"
+              size="sm"
               onClick={() => {
                 setIsAddCompanyModalOpen(false);
                 setNewCompanyData({ company_name: '' });
@@ -424,8 +601,15 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             >
               Cancel
             </Button>
-            <Button type="submit" style={{ backgroundColor: '#0ea5e9' }}>
-              Create Company
+            <Button type="submit" size="sm" disabled={createCompanyMutation.isPending}>
+              {createCompanyMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Company'
+              )}
             </Button>
           </div>
         </form>
