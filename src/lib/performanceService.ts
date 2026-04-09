@@ -29,7 +29,7 @@ export async function getReviews(filters?: {
         departments (name),
         positions (title)
       ),
-      reviewer:profiles!performance_reviews_reviewer_id_fkey (id, full_name, avatar_url)
+      reviewer:profiles!performance_reviews_reviewer_profile_fkey (id, full_name, avatar_url)
     `)
     .order('created_at', { ascending: false });
 
@@ -53,7 +53,7 @@ export async function getReview(id: string) {
         departments (name),
         positions (title)
       ),
-      reviewer:profiles!performance_reviews_reviewer_id_fkey (id, full_name, avatar_url)
+      reviewer:profiles!performance_reviews_reviewer_profile_fkey (id, full_name, avatar_url)
     `)
     .eq('id', id)
     .maybeSingle();

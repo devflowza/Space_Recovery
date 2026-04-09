@@ -32,7 +32,7 @@ export const EmployeesList: React.FC = () => {
         .from('employees')
         .select(`
           *,
-          profiles!employees_user_id_fkey (*),
+          profiles!employees_user_profile_fkey (*),
           departments (*),
           positions (*)
         `)

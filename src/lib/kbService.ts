@@ -125,7 +125,7 @@ export async function getKBArticles(filters?: KBFilters): Promise<KBArticleWithD
     .select(`
       *,
       kb_categories ( id, name, slug, color, icon ),
-      profiles ( id, full_name )
+      profiles!kb_articles_author_profile_fkey ( id, full_name )
     `)
     .order('updated_at', { ascending: false });
 
@@ -185,7 +185,7 @@ export async function getKBArticleById(id: string): Promise<KBArticleWithDetails
     .select(`
       *,
       kb_categories ( id, name, slug, color, icon ),
-      profiles ( id, full_name )
+      profiles!kb_articles_author_profile_fkey ( id, full_name )
     `)
     .eq('id', id)
     .maybeSingle();
