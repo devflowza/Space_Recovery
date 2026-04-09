@@ -212,7 +212,6 @@ export const CompaniesListPage: React.FC = () => {
         .insert({
           company_number: companyNumber,
           name: company.company_name,
-          company_name: company.company_name,
           tax_number: company.tax_number || null,
           industry_id: company.industry_id || null,
           email: company.email || null,
@@ -244,7 +243,6 @@ export const CompaniesListPage: React.FC = () => {
         .from('companies')
         .update({
           name: data.company_name,
-          company_name: data.company_name,
           tax_number: data.tax_number || null,
           industry_id: data.industry_id || null,
           email: data.email || null,

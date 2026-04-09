@@ -258,13 +258,13 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
       }
 
       const newCaseData: Record<string, unknown> = {
-        case_no: nextCaseNumber,
+        case_number: nextCaseNumber,
         customer_id: caseData!.customer_id,
         service_type_id: caseData!.service_type_id,
         priority: caseData!.priority,
         status: 'Received',
         client_reference: caseData!.case_no,
-        title: caseData!.title,
+        subject: caseData!.title,
         summary: caseData!.summary,
         important_data: caseData!.important_data,
         accessories: caseData!.accessories,
@@ -275,7 +275,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         newCaseData.contact_id = caseData!.contact_id;
       }
       if (caseData!.assigned_engineer_id) {
-        newCaseData.assigned_engineer_id = caseData!.assigned_engineer_id;
+        newCaseData.assigned_to = caseData!.assigned_engineer_id;
       }
       if (caseData!.company_id) {
         newCaseData.company_id = caseData!.company_id;
