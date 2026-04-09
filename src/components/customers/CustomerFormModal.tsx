@@ -269,7 +269,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         .from('companies')
         .insert({
           company_number: companyNumber,
-          company_name: companyData.company_name,
+          name: companyData.company_name,
           created_by: profile?.id,
         })
         .select()
