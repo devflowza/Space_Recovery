@@ -10,7 +10,14 @@
       "Bash(xargs rm:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Skill(hookify:list)",
+      "Bash(where.exe python:*)",
+      "Bash(where.exe python3:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }
