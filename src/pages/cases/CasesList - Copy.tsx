@@ -1,0 +1,699 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabaseClient';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Plus, Search, Filter, Briefcase, AlertCircle, CheckCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { EmptyState } from '../../components/shared/EmptyState';
+import { formatDate } from '../../lib/format';
+import { CreateCaseWizard } from '../../components/cases/CreateCaseWizard';
+import { useCasesRealtime } from '../../hooks/useCasesRealtime';
+import { useAuth } from '../../contexts/AuthContext';
+import { useUsageLimit } from '../../hooks/useFeatureGate';
+import { canPerformAction } from '../../lib/featureGateService';
+import toast from 'react-hot-toast';
+
+interface Case {
+  id: string;
+  case_no: string;
+  title: string;
+  priority: string;
+  status: string;
+  client_reference: string | null;
+  created_at: string;
+  created_by: string;
+  assigned_engineer_id: string | null;
+  customer: {
+    id: string;
+    customer_number: string;
+    customer_name: string;
+    mobile_number: string | null;
+  } | null;
+  created_by_profile: {
+    id: string;
+    full_name: string;
+  } | null;
+  devices: {
+    id: string;
+    serial_no: string | null;
+    device_type: {
+      id: string;
+      name: string;
+    } | null;
+  }[];
+}
+
+export const CasesList: React.FC = () => {
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { usage: caseUsage } = useUsageLimit('max_cases_per_month');
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const CASES_PER_PAGE = 7;
+
+  useCasesRealtime();
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, filterPriority]);
+
+  const buildFiltersQuery = () => {
+    let query = supabase
+      .from('cases')
+      .select('id, case_no, priority, status, customer_id', { count: 'exact', head: false });
+
+    if (searchTerm) {
+      query = query.or(
+        `case_no.ilike.%${searchTerm}%,client_reference.ilike.%${searchTerm}%`
+      );
+    }
+
+    if (filterStatus !== 'all') {
+      query = query.eq('status', filterStatus);
+    }
+
+    if (filterPriority !== 'all') {
+      query = query.eq('priority', filterPriority);
+    }
+
+    return query;
+  };
+
+  const { data: totalCountData } = useQuery({
+    queryKey: ['cases_count', searchTerm, filterStatus, filterPriority],
+    queryFn: async () => {
+      const query = buildFiltersQuery();
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: cases = [], isLoading, refetch, isFetching } = useQuery({
+    queryKey: ['cases', currentPage, searchTerm, filterStatus, filterPriority],
+    queryFn: async () => {
+      const from = (currentPage - 1) * CASES_PER_PAGE;
+      const to = from + CASES_PER_PAGE - 1;
+
+      let query = supabase
+        .from('cases')
+        .select(`
+          id,
+          case_no,
+          title,
+          priority,
+          status,
+          client_reference,
+          created_at,
+          customer_id,
+          contact_id,
+          created_by,
+          assigned_engineer_id
+        `);
+
+      if (searchTerm) {
+        query = query.or(
+          `case_no.ilike.%${searchTerm}%,client_reference.ilike.%${searchTerm}%`
+        );
+      }
+
+      if (filterStatus !== 'all') {
+        query = query.eq('status', filterStatus);
+      }
+
+      if (filterPriority !== 'all') {
+        query = query.eq('priority', filterPriority);
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+
+      const casesWithRelations = await Promise.all(
+        (data || []).map(async (caseItem) => {
+          let customer = null;
+          let created_by_profile = null;
+          let devices: { id: string; serial_no: string | null; device_type: { id: string; name: string } | null }[] = [];
+
+          if (caseItem.customer_id) {
+            const { data: customerData } = await supabase
+              .from('customers_enhanced')
+              .select('id, customer_number, customer_name, mobile_number')
+              .eq('id', caseItem.customer_id)
+              .maybeSingle();
+            customer = customerData;
+          }
+
+          if (caseItem.created_by) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .eq('id', caseItem.created_by)
+              .maybeSingle();
+            created_by_profile = profileData;
+          }
+
+          const { data: devicesData } = await supabase
+            .from('case_devices')
+            .select(`
+              id,
+              serial_no,
+              device_type_id,
+              device_types (id, name)
+            `)
+            .eq('case_id', caseItem.id)
+            .order('created_at');
+
+          if (devicesData) {
+            devices = devicesData.map(device => ({
+              id: device.id,
+              serial_no: device.serial_no,
+              device_type: device.device_types
+            }));
+          }
+
+          return {
+            ...caseItem,
+            customer,
+            created_by_profile,
+            devices,
+          };
+        })
+      );
+
+      return casesWithRelations as Case[];
+    },
+  });
+
+  const { data: allCasesForStats = [] } = useQuery({
+    queryKey: ['cases_stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cases')
+        .select('id, status, priority')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: caseStatuses = [] } = useQuery({
+    queryKey: ['case_statuses'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('master_case_statuses')
+        .select('id, name, type, color')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: casePriorities = [] } = useQuery({
+    queryKey: ['case_priorities'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('master_case_priorities')
+        .select('id, name, color')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleWizardSuccess = () => {
+    setIsWizardOpen(false);
+    refetch();
+  };
+
+  const totalPages = Math.ceil((totalCountData || 0) / CASES_PER_PAGE);
+  const startIndex = (currentPage - 1) * CASES_PER_PAGE + 1;
+  const endIndex = Math.min(currentPage * CASES_PER_PAGE, totalCountData || 0);
+
+  const getPriorityColor = (priority: string) => {
+    const priorityItem = casePriorities.find(
+      p => p.name.toLowerCase() === priority.toLowerCase()
+    );
+    return priorityItem?.color || '#6b7280';
+  };
+
+  const getStatusColor = (status: string) => {
+    const statusItem = caseStatuses.find(
+      s => s.name === status
+    );
+    return statusItem?.color || '#6b7280';
+  };
+
+  const getStatusName = (status: string) => {
+    const statusItem = caseStatuses.find(
+      s => s.name === status
+    );
+    return statusItem?.name || status;
+  };
+
+  const getStatusesByType = (type: string) => {
+    return caseStatuses.filter(s => s.type === type).map(s => s.name);
+  };
+
+  const handleCreateCase = async () => {
+    const check = await canPerformAction('max_cases_per_month');
+    if (!check.allowed) {
+      toast.error(check.message || 'Case limit reached');
+      return;
+    }
+    if (check.message) {
+      toast(check.message, { icon: '⚠️' });
+    }
+    setIsWizardOpen(true);
+  };
+
+  return (
+    <div className="p-6 max-w-[1800px] mx-auto">
+      <div className="mb-6 flex items-start justify-between">
+        <div className="flex items-start gap-4">
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
+            style={{
+              backgroundColor: '#3b82f6',
+              boxShadow: '0 10px 40px -10px #3b82f680',
+            }}
+          >
+            <Briefcase className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 mb-1">Cases</h1>
+            <p className="text-slate-600 text-base">
+              Data recovery case management
+              {caseUsage && caseUsage.limit && (
+                <span className="ml-2 text-slate-500">
+                  ({caseUsage.current}/{caseUsage.limit} this month)
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => refetch()}
+            variant="secondary"
+            disabled={isFetching}
+            title="Refresh cases list"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
+          <Button onClick={handleCreateCase} style={{ backgroundColor: '#3b82f6' }}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Case
+          </Button>
+        </div>
+      </div>
+
+      {caseUsage && caseUsage.percentage >= 80 && caseUsage.percentage < 100 && (
+        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+          <span className="text-amber-800">
+            You've used {caseUsage.current} of {caseUsage.limit} cases this month ({caseUsage.percentage}%).
+            Consider upgrading your plan for more capacity.
+          </span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Active Cases</p>
+              <p className="text-2xl font-bold text-blue-900 mt-1">{allCasesForStats.filter(c => !getStatusesByType('completed').includes(c.status) && !getStatusesByType('delivered').includes(c.status) && !getStatusesByType('cancelled').includes(c.status)).length}</p>
+            </div>
+            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+              <Briefcase className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-orange-600 uppercase tracking-wide">Urgent</p>
+              <p className="text-2xl font-bold text-orange-900 mt-1">{allCasesForStats.filter(c => c.priority === 'urgent').length}</p>
+            </div>
+            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">In Diagnosis</p>
+              <p className="text-2xl font-bold text-amber-900 mt-1">{allCasesForStats.filter(c => getStatusesByType('diagnosis').includes(c.status)).length}</p>
+            </div>
+            <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
+              <Search className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Ready</p>
+              <p className="text-2xl font-bold text-green-900 mt-1">{allCasesForStats.filter(c => getStatusesByType('ready').includes(c.status)).length}</p>
+            </div>
+            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 mb-6">
+        <div className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            <div className="w-full lg:w-80 relative flex-shrink-0">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search cases..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div className="flex-1 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setFilterStatus(filterStatus === 'Received' ? 'all' : 'Received')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  filterStatus === 'Received'
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Received
+              </button>
+              <button
+                onClick={() => setFilterStatus(filterStatus === 'Approved - In Queue' ? 'all' : 'Approved - In Queue')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  filterStatus === 'Approved - In Queue'
+                    ? 'bg-violet-500 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Approved - In Queue
+              </button>
+              <button
+                onClick={() => setFilterStatus(filterStatus === 'Recovery in Progress' ? 'all' : 'Recovery in Progress')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  filterStatus === 'Recovery in Progress'
+                    ? 'bg-violet-600 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Recovery in Progress
+              </button>
+              <button
+                onClick={() => setFilterStatus(filterStatus === 'Cancelled-Currently No Solution' ? 'all' : 'Cancelled-Currently No Solution')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  filterStatus === 'Cancelled-Currently No Solution'
+                    ? 'bg-slate-500 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Cancelled - No Solution
+              </button>
+              {(filterStatus !== 'all' || filterPriority !== 'all') && (
+                <button
+                  onClick={() => {
+                    setFilterStatus('all');
+                    setFilterPriority('all');
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 transition-all"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+
+            <Button
+              variant="secondary"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 flex-shrink-0"
+            >
+              <Filter className="w-4 h-4" />
+              More Filters
+              {(filterStatus !== 'all' || filterPriority !== 'all') && (
+                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500"></span>
+              )}
+            </Button>
+          </div>
+
+          {showFilters && (
+            <div className="mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Status
+                </label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">All Statuses</option>
+                  {caseStatuses.map((status) => (
+                    <option key={status.id} value={status.name.toLowerCase()}>
+                      {status.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Priority
+                </label>
+                <select
+                  value={filterPriority}
+                  onChange={(e) => setFilterPriority(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">All Priorities</option>
+                  {casePriorities.map((priority) => (
+                    <option key={priority.id} value={priority.name.toLowerCase()}>
+                      {priority.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-500 mt-4">Loading cases...</p>
+        </div>
+      ) : cases.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200">
+          <EmptyState
+            icon={Briefcase}
+            title="No cases found"
+            description={
+              searchTerm || filterStatus !== 'all' || filterPriority !== 'all'
+                ? 'No cases found matching your criteria.'
+                : 'No cases yet. Create your first case to get started.'
+            }
+            action={{ label: 'Create Case', onClick: handleCreateCase }}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Case ID
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Priority
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Customer
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Contact Number
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Client Ref
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Device Type
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Serial Number
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Created At
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {cases.map((caseItem) => (
+                  <tr
+                    key={caseItem.id}
+                    onClick={() => navigate(`/cases/${caseItem.id}`)}
+                    className="hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="font-semibold text-blue-600">
+                        {caseItem.case_no}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge
+                        variant="custom"
+                        color={getPriorityColor(caseItem.priority)}
+                        size="sm"
+                      >
+                        {caseItem.priority}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {caseItem.customer ? (
+                        <div className="font-medium text-slate-900">
+                          {caseItem.customer.customer_name}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {caseItem.customer?.mobile_number ? (
+                        <div className="text-sm text-slate-700 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                          {caseItem.customer.mobile_number}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {caseItem.client_reference ? (
+                        <span className="text-sm text-slate-700">
+                          {caseItem.client_reference}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge
+                        variant="custom"
+                        color={getStatusColor(caseItem.status)}
+                        size="sm"
+                      >
+                        {getStatusName(caseItem.status)}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {caseItem.devices && caseItem.devices.length > 0 && caseItem.devices[0].device_type ? (
+                        <span className="text-sm text-slate-700">
+                          {caseItem.devices[0].device_type.name}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {caseItem.devices && caseItem.devices.length > 0 ? (
+                        <div className="text-sm text-slate-700">
+                          {caseItem.devices
+                            .filter(d => d.serial_no)
+                            .map(d => d.serial_no)
+                            .join(', ') || <span className="text-slate-400">-</span>}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                      {formatDate(caseItem.created_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 mt-4 p-2.5">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-slate-600">
+                  Showing <span className="font-medium text-slate-900">{startIndex}</span> to{' '}
+                  <span className="font-medium text-slate-900">{endIndex}</span> of{' '}
+                  <span className="font-medium text-slate-900">{totalCountData}</span> cases
+                </div>
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-slate-600">
+                    Page <span className="font-medium text-slate-900">{currentPage}</span> of{' '}
+                    <span className="font-medium text-slate-900">{totalPages}</span>
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1 || isFetching}
+                      className="flex items-center gap-1"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages || isFetching}
+                      className="flex items-center gap-1"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {isWizardOpen && (
+        <CreateCaseWizard
+          onClose={() => setIsWizardOpen(false)}
+          onSuccess={handleWizardSuccess}
+        />
+      )}
+    </div>
+  );
+};

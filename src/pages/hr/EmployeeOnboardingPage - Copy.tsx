@@ -1,0 +1,475 @@
+import React, { useState } from 'react';
+import { UserCheck, ClipboardList, AlertTriangle, CheckCircle2, Plus, ChevronDown, ChevronRight, Clock, User, CreditCard as Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { employeeOnboardingKeys } from '../../lib/queryKeys';
+import {
+  getChecklists,
+  getEmployeesWithTasks,
+  getOnboardingStats,
+  completeTask,
+  updateTask,
+  deleteChecklist,
+  updateChecklist,
+  type ChecklistWithItems,
+  type EmployeeWithTasks,
+  type TaskWithDetails,
+} from '../../lib/employeeOnboardingService';
+import { ChecklistFormModal } from '../../components/onboarding/ChecklistFormModal';
+import { AssignChecklistModal } from '../../components/onboarding/AssignChecklistModal';
+import toast from 'react-hot-toast';
+
+const taskStatusColor: Record<string, string> = {
+  pending: 'text-slate-500',
+  in_progress: 'text-blue-600',
+  completed: 'text-green-600',
+  skipped: 'text-slate-400',
+};
+
+const taskStatusBg: Record<string, string> = {
+  pending: 'bg-slate-100 border-slate-200',
+  in_progress: 'bg-blue-50 border-blue-200',
+  completed: 'bg-green-50 border-green-200',
+  skipped: 'bg-slate-50 border-slate-200',
+};
+
+function ProgressBar({ value }: { value: number }) {
+  return (
+    <div className="w-full bg-slate-200 rounded-full h-2">
+      <div
+        className="bg-blue-500 h-2 rounded-full transition-all"
+        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+      />
+    </div>
+  );
+}
+
+function TaskRow({
+  task,
+  onToggle,
+}: {
+  task: TaskWithDetails;
+  onToggle: (id: string, status: string) => void;
+}) {
+  const today = new Date().toISOString().split('T')[0];
+  const isOverdue =
+    task.status !== 'completed' &&
+    task.due_date &&
+    task.due_date < today;
+
+  return (
+    <div
+      className={`flex items-start gap-3 p-3 rounded-lg border ${taskStatusBg[task.status || 'pending']}`}
+    >
+      <button
+        onClick={() =>
+          onToggle(task.id, task.status === 'completed' ? 'pending' : 'completed')
+        }
+        className="mt-0.5 flex-shrink-0"
+      >
+        {task.status === 'completed' ? (
+          <CheckCircle2 className="w-5 h-5 text-green-500" />
+        ) : (
+          <div className="w-5 h-5 rounded-full border-2 border-slate-300 hover:border-blue-500 transition-colors" />
+        )}
+      </button>
+      <div className="flex-1 min-w-0">
+        <p
+          className={`text-sm font-medium ${
+            task.status === 'completed' ? 'line-through text-slate-400' : 'text-slate-800'
+          }`}
+        >
+          {task.task_name}
+        </p>
+        {task.task_description && (
+          <p className="text-xs text-slate-500 mt-0.5">{task.task_description}</p>
+        )}
+        <div className="flex items-center gap-3 mt-1">
+          {task.due_date && (
+            <span
+              className={`flex items-center gap-1 text-xs ${
+                isOverdue ? 'text-red-500 font-medium' : 'text-slate-500'
+              }`}
+            >
+              {isOverdue && <AlertTriangle className="w-3 h-3" />}
+              <Clock className="w-3 h-3" />
+              Due {new Date(task.due_date).toLocaleDateString()}
+            </span>
+          )}
+          {task.onboarding_checklist_items?.assigned_to_role && (
+            <span className="flex items-center gap-1 text-xs text-slate-400">
+              <User className="w-3 h-3" />
+              {task.onboarding_checklist_items.assigned_to_role}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className={`text-xs font-medium px-2 py-0.5 rounded-full ${taskStatusColor[task.status || 'pending']}`}>
+        {(task.status || 'pending').replace('_', ' ')}
+      </div>
+    </div>
+  );
+}
+
+function EmployeeOnboardingCard({
+  employee,
+  onAssign,
+  onToggleTask,
+}: {
+  employee: EmployeeWithTasks;
+  onAssign: (id: string) => void;
+  onToggleTask: (taskId: string, status: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const completionPct =
+    employee.task_count > 0
+      ? Math.round((employee.completed_count / employee.task_count) * 100)
+      : 0;
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+              {(employee.first_name?.[0] || '?').toUpperCase()}
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-900 text-sm">
+                {employee.first_name} {employee.last_name}
+              </h3>
+              {employee.employee_number && (
+                <p className="text-xs text-slate-500">{employee.employee_number}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {employee.overdue_count > 0 && (
+              <span className="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+                <AlertTriangle className="w-3 h-3" />
+                {employee.overdue_count} overdue
+              </span>
+            )}
+            <button
+              onClick={() => onAssign(employee.id)}
+              className="text-xs font-medium text-blue-600 hover:text-blue-700 px-2.5 py-1 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              + Assign
+            </button>
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              {expanded ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+            <span>
+              {employee.completed_count} of {employee.task_count} tasks
+            </span>
+            <span className="font-medium text-slate-700">{completionPct}%</span>
+          </div>
+          <ProgressBar value={completionPct} />
+        </div>
+      </div>
+
+      {expanded && employee.tasks.length > 0 && (
+        <div className="border-t border-slate-100 p-4 space-y-2 bg-slate-50">
+          {employee.tasks.map(task => (
+            <TaskRow key={task.id} task={task} onToggle={onToggleTask} />
+          ))}
+        </div>
+      )}
+
+      {expanded && employee.tasks.length === 0 && (
+        <div className="border-t border-slate-100 p-4 text-center text-sm text-slate-400 bg-slate-50">
+          No tasks assigned yet.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChecklistCard({
+  checklist,
+  onEdit,
+  onDelete,
+  onToggleActive,
+}: {
+  checklist: ChecklistWithItems;
+  onEdit: (c: ChecklistWithItems) => void;
+  onDelete: (id: string) => void;
+  onToggleActive: (id: string, active: boolean) => void;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-slate-900 text-sm truncate">{checklist.name}</h3>
+          {checklist.positions && (
+            <p className="text-xs text-slate-500 mt-0.5">For: {checklist.positions.title}</p>
+          )}
+          {checklist.description && (
+            <p className="text-xs text-slate-500 mt-1 line-clamp-2">{checklist.description}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-1 ml-3">
+          {checklist.is_default && (
+            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+              Default
+            </span>
+          )}
+          <Badge color={checklist.is_active ? 'green' : 'gray'}>
+            {checklist.is_active ? 'Active' : 'Inactive'}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+        <div className="flex items-center gap-1.5 text-sm text-slate-500">
+          <ClipboardList className="w-4 h-4" />
+          <span>{checklist.item_count || 0} tasks</span>
+        </div>
+        <div className="flex gap-1">
+          <button
+            onClick={() => onToggleActive(checklist.id, !checklist.is_active)}
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+            title={checklist.is_active ? 'Deactivate' : 'Activate'}
+          >
+            {checklist.is_active ? (
+              <ToggleRight className="w-4 h-4 text-green-500" />
+            ) : (
+              <ToggleLeft className="w-4 h-4" />
+            )}
+          </button>
+          <button
+            onClick={() => onEdit(checklist)}
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(checklist.id)}
+            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export const EmployeeOnboardingPage: React.FC = () => {
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'active' | 'templates'>('active');
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [editingChecklist, setEditingChecklist] = useState<ChecklistWithItems | null>(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignEmployeeId, setAssignEmployeeId] = useState<string | undefined>();
+
+  const { data: stats } = useQuery({
+    queryKey: employeeOnboardingKeys.stats(),
+    queryFn: getOnboardingStats,
+  });
+
+  const { data: employeesWithTasks = [], isLoading: loadingEmployees } = useQuery({
+    queryKey: employeeOnboardingKeys.tasks(),
+    queryFn: getEmployeesWithTasks,
+    enabled: activeTab === 'active',
+  });
+
+  const { data: checklists = [], isLoading: loadingChecklists } = useQuery({
+    queryKey: employeeOnboardingKeys.checklists(),
+    queryFn: getChecklists,
+    enabled: activeTab === 'templates',
+  });
+
+  const toggleTaskMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => {
+      if (status === 'completed') {
+        return completeTask(id);
+      }
+      return updateTask(id, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: employeeOnboardingKeys.all });
+    },
+  });
+
+  const deleteChecklistMutation = useMutation({
+    mutationFn: deleteChecklist,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: employeeOnboardingKeys.all });
+      toast.success('Checklist deleted');
+    },
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      updateChecklist(id, { is_active: active }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: employeeOnboardingKeys.all });
+    },
+  });
+
+  const handleAssign = (employeeId?: string) => {
+    setAssignEmployeeId(employeeId);
+    setShowAssignModal(true);
+  };
+
+  return (
+    <div className="p-8 max-w-[1800px] mx-auto">
+      <div className="mb-8 flex items-start justify-between">
+        <div className="flex items-start gap-6">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
+            style={{ backgroundColor: '#10b981', boxShadow: '0 10px 40px -10px #10b98180' }}
+          >
+            <UserCheck className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 mb-1">Employee Onboarding</h1>
+            <p className="text-slate-500 text-sm">
+              Track onboarding progress and manage checklists for new team members
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => handleAssign(undefined)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Assign Checklist
+          </Button>
+          {activeTab === 'templates' && (
+            <Button onClick={() => { setEditingChecklist(null); setShowChecklistModal(true); }}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Checklist
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {[
+          { label: 'Active Onboardees', value: stats?.activeOnboardees ?? '–', icon: UserCheck, bg: 'from-blue-50 to-blue-100', border: 'border-blue-200', icon_bg: 'bg-blue-500', text: 'text-blue-600', num: 'text-blue-900' },
+          { label: 'Overdue Tasks', value: stats?.overdueTasksCount ?? '–', icon: AlertTriangle, bg: 'from-red-50 to-red-100', border: 'border-red-200', icon_bg: 'bg-red-500', text: 'text-red-600', num: 'text-red-900' },
+          { label: 'Completion Rate', value: stats?.completionRate != null ? `${stats.completionRate}%` : '–', icon: CheckCircle2, bg: 'from-green-50 to-green-100', border: 'border-green-200', icon_bg: 'bg-green-500', text: 'text-green-600', num: 'text-green-900' },
+          { label: 'Templates', value: checklists.length || '–', icon: ClipboardList, bg: 'from-slate-50 to-slate-100', border: 'border-slate-200', icon_bg: 'bg-slate-500', text: 'text-slate-600', num: 'text-slate-900' },
+        ].map(card => (
+          <div key={card.label} className={`bg-gradient-to-br ${card.bg} rounded-xl p-4 border ${card.border}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-xs font-medium ${card.text} uppercase tracking-wide`}>{card.label}</p>
+                <p className={`text-2xl font-bold ${card.num} mt-1`}>{card.value}</p>
+              </div>
+              <div className={`w-10 h-10 ${card.icon_bg} rounded-lg flex items-center justify-center`}>
+                <card.icon className="w-5 h-5 text-white" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-1 mb-6 bg-slate-100 rounded-xl p-1 w-fit">
+        {(['active', 'templates'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === tab
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {tab === 'active' ? 'Active Onboarding' : 'Checklist Templates'}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'active' && (
+        <>
+          {loadingEmployees ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : employeesWithTasks.length === 0 ? (
+            <div className="text-center py-16">
+              <UserCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 mb-3">No active onboarding in progress.</p>
+              <Button onClick={() => handleAssign(undefined)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Assign First Checklist
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {employeesWithTasks.map(employee => (
+                <EmployeeOnboardingCard
+                  key={employee.id}
+                  employee={employee}
+                  onAssign={id => handleAssign(id)}
+                  onToggleTask={(id, status) => toggleTaskMutation.mutate({ id, status })}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'templates' && (
+        <>
+          {loadingChecklists ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : checklists.length === 0 ? (
+            <div className="text-center py-16">
+              <ClipboardList className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 mb-3">No checklists yet. Create your first onboarding template.</p>
+              <Button onClick={() => { setEditingChecklist(null); setShowChecklistModal(true); }}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Checklist
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {checklists.map(checklist => (
+                <ChecklistCard
+                  key={checklist.id}
+                  checklist={checklist}
+                  onEdit={c => { setEditingChecklist(c); setShowChecklistModal(true); }}
+                  onDelete={id => {
+                    if (confirm('Delete this checklist?')) {
+                      deleteChecklistMutation.mutate(id);
+                    }
+                  }}
+                  onToggleActive={(id, active) => toggleActiveMutation.mutate({ id, active })}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      <ChecklistFormModal
+        isOpen={showChecklistModal}
+        onClose={() => { setShowChecklistModal(false); setEditingChecklist(null); }}
+        checklist={editingChecklist}
+      />
+
+      <AssignChecklistModal
+        isOpen={showAssignModal}
+        onClose={() => { setShowAssignModal(false); setAssignEmployeeId(undefined); }}
+        preselectedEmployeeId={assignEmployeeId}
+      />
+    </div>
+  );
+};
