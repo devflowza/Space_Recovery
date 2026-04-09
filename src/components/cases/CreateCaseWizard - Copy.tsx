@@ -1,0 +1,1081 @@
+import React, { useState, useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabaseClient';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { SearchableSelect } from '../ui/SearchableSelect';
+import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
+import { CustomerFormModal } from '../customers/CustomerFormModal';
+import { CaseSuccessModal } from './CaseSuccessModal';
+import { ServerBulkDrivesModal } from './ServerBulkDrivesModal';
+import { printReceipt, printLabel } from '../../lib/printUtils';
+import {
+  Users,
+  HardDrive,
+  AlertCircle,
+  CheckCircle,
+  X,
+  Plus,
+  Trash2,
+  Eye,
+  EyeOff,
+  Layers
+} from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { logger } from '../../lib/logger';
+
+interface Device {
+  id: string;
+  device_type_id: string;
+  brand_id: string;
+  model: string;
+  serial_no: string;
+  capacity_id: string;
+  condition_id: string;
+  accessories: string[];
+  device_problem_id: string;
+  recovery_requirements: string;
+  device_password: string;
+  encryption_type_id: string;
+  device_role_id: number | null;
+  is_primary: boolean;
+  parent_device_id: string;
+}
+
+interface CreateCaseWizardProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onSuccess }) => {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdCase, setCreatedCase] = useState<{ id: string; case_no: string } | null>(null);
+  const [isBulkDrivesModalOpen, setIsBulkDrivesModalOpen] = useState(false);
+  const [bulkServerDrives, setBulkServerDrives] = useState<{ id: string; brand_id: string; serial_no: string; model: string; capacity_id: string; isValid: boolean }[]>([]);
+
+  const [formData, setFormData] = useState({
+    customer_id: '',
+    contact_id: '',
+    client_reference: '',
+    service_type_id: '',
+    priority: '',
+    service_location_id: '',
+    welcome_email: true,
+    welcome_sms: false,
+  });
+
+  const [devices, setDevices] = useState<Device[]>([
+    {
+      id: '1',
+      device_type_id: '',
+      brand_id: '',
+      model: '',
+      serial_no: '',
+      capacity_id: '',
+      condition_id: '',
+      accessories: [],
+      device_problem_id: '',
+      recovery_requirements: '',
+      device_password: '',
+      encryption_type_id: '',
+      device_role_id: null,
+      is_primary: true,
+      parent_device_id: '',
+    },
+  ]);
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers_for_cases'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customers_enhanced')
+        .select('id, customer_number, customer_name, email')
+        .eq('is_active', true)
+        .order('customer_name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: serviceTypes = [] } = useQuery({
+    queryKey: ['service_types'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalog_service_types')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: casePriorities = [] } = useQuery({
+    queryKey: ['case_priorities'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('master_case_priorities')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: serviceLocations = [] } = useQuery({
+    queryKey: ['service_locations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalog_service_locations')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: deviceTypes = [] } = useQuery({
+    queryKey: ['device_types'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalog_device_types')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: brands = [] } = useQuery({
+    queryKey: ['brands'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalog_device_brands')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: capacities = [] } = useQuery({
+    queryKey: ['capacities'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalog_device_capacities')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: deviceConditions = [] } = useQuery({
+    queryKey: ['device_conditions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalog_device_conditions')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: accessories = [] } = useQuery({
+    queryKey: ['accessories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalog_accessories')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: deviceEncryption = [] } = useQuery({
+    queryKey: ['device_encryption'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalog_device_encryption')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: serviceProblems = [] } = useQuery({
+    queryKey: ['service_problems'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalog_service_problems')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: deviceRoles = [] } = useQuery({
+    queryKey: ['device_roles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('catalog_device_roles')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: customerGroups = [] } = useQuery({
+    queryKey: ['customer_groups_for_cases'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customer_groups')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (serviceTypes.length > 0 && !formData.service_type_id) {
+      const dataRecovery = serviceTypes.find(st => st.name.toLowerCase() === 'data recovery');
+      if (dataRecovery) {
+        setFormData(prev => ({ ...prev, service_type_id: dataRecovery.id }));
+      }
+    }
+  }, [serviceTypes]);
+
+  useEffect(() => {
+    if (casePriorities.length > 0 && !formData.priority) {
+      const normalPriority = casePriorities.find(p => p.name.toLowerCase() === 'normal');
+      if (normalPriority) {
+        setFormData(prev => ({ ...prev, priority: normalPriority.name.toLowerCase() }));
+      } else if (casePriorities.length > 0) {
+        setFormData(prev => ({ ...prev, priority: casePriorities[0].name.toLowerCase() }));
+      }
+    }
+  }, [casePriorities]);
+
+  useEffect(() => {
+    if (serviceLocations.length > 0 && !formData.service_location_id) {
+      setFormData(prev => ({ ...prev, service_location_id: serviceLocations[0].id }));
+    }
+  }, [serviceLocations]);
+
+  useEffect(() => {
+    if (deviceConditions.length > 0 && !devices[0].condition_id) {
+      setDevices(prev => [
+        { ...prev[0], condition_id: deviceConditions[0].id.toString() },
+        ...prev.slice(1)
+      ]);
+    }
+  }, [deviceConditions]);
+
+  useEffect(() => {
+    if (deviceEncryption.length > 0 && !devices[0].encryption_type_id) {
+      setDevices(prev => [
+        { ...prev[0], encryption_type_id: deviceEncryption[0].id },
+        ...prev.slice(1)
+      ]);
+    }
+  }, [deviceEncryption]);
+
+  useEffect(() => {
+    if (deviceRoles.length > 0 && devices[0].device_role_id === null) {
+      const patientRole = deviceRoles.find(r => r.name.toLowerCase() === 'patient');
+      if (patientRole) {
+        setDevices(prev => [
+          { ...prev[0], device_role_id: patientRole.id, is_primary: true },
+          ...prev.slice(1)
+        ]);
+      } else if (deviceRoles.length > 0) {
+        setDevices(prev => [
+          { ...prev[0], device_role_id: deviceRoles[0].id, is_primary: true },
+          ...prev.slice(1)
+        ]);
+      }
+    }
+  }, [deviceRoles]);
+
+  const handleCustomerCreated = (newCustomer: { id: string }) => {
+    queryClient.invalidateQueries({ queryKey: ['customers_for_cases'] });
+    setFormData({ ...formData, customer_id: newCustomer.id });
+  };
+
+  const handleBulkDrivesSave = (bulkDrives: { id: string; brand_id: string; serial_no: string; model: string; capacity_id: string; isValid: boolean }[]) => {
+    const primaryDevice = devices[0];
+    const patientRole = deviceRoles.find(r => r.name.toLowerCase() === 'patient');
+    const defaultCondition = deviceConditions.length > 0 ? deviceConditions[0].id.toString() : '';
+    const defaultEncryption = deviceEncryption.length > 0 ? deviceEncryption[0].id : '';
+
+    const mappedBulkDrives = bulkDrives.map((drive, index) => ({
+      id: `bulk-${Date.now()}-${index}`,
+      device_type_id: primaryDevice.device_type_id,
+      brand_id: drive.brand_id,
+      model: drive.model,
+      serial_no: drive.serial_no,
+      capacity_id: drive.capacity_id,
+      condition_id: defaultCondition,
+      accessories: [],
+      device_problem_id: '',
+      recovery_requirements: '',
+      device_password: '',
+      encryption_type_id: defaultEncryption,
+      device_role_id: patientRole?.id || null,
+      is_primary: primaryDevice.serial_no ? (index === 0 && devices.length === 1) : false,
+      parent_device_id: '',
+    }));
+
+    setBulkServerDrives(mappedBulkDrives);
+  };
+
+  const createCaseMutation = useMutation({
+    mutationFn: async () => {
+      const { data: caseNumber, error: numberError } = await supabase
+        .rpc('get_next_number', { sequence_scope: 'case' });
+
+      if (numberError) {
+        logger.error('Error generating case number:', numberError);
+        if (numberError.message?.includes('not found')) {
+          throw new Error('Case numbering system is not configured. Please contact your system administrator to configure it in Settings > System & Numbers.');
+        }
+        throw new Error(`Failed to generate case number: ${numberError.message}`);
+      }
+
+      if (!caseNumber) {
+        throw new Error('Failed to generate case number. Please try again or contact support.');
+      }
+
+      const primaryDevice = devices[0];
+      const customerName = customers.find(c => c.id === formData.customer_id)?.customer_name || 'Customer';
+
+      const caseData = {
+        case_no: caseNumber,
+        customer_id: formData.customer_id,
+        title: `Case for ${customerName}`,
+        priority: formData.priority,
+        status: 'Received',
+      };
+
+      if (formData.contact_id) {
+        caseData.contact_id = formData.contact_id;
+      }
+      if (formData.client_reference) {
+        caseData.client_reference = formData.client_reference;
+      }
+      if (formData.service_type_id) {
+        caseData.service_type_id = formData.service_type_id;
+      }
+      if (profile?.id) {
+        caseData.created_by = profile.id;
+
+        // Auto-assign technicians to cases they create
+        if (profile.role === 'technician') {
+          caseData.assigned_engineer_id = profile.id;
+        }
+      }
+
+      // Auto-populate company_id from customer's company relationship
+      if (formData.customer_id) {
+        const { data: customerCompany } = await supabase
+          .from('customer_company_relationships')
+          .select('company_id')
+          .eq('customer_id', formData.customer_id)
+          .order('is_primary_contact', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (customerCompany?.company_id) {
+          caseData.company_id = customerCompany.company_id;
+        }
+      }
+
+      const { data: newCase, error: caseError } = await supabase
+        .from('cases')
+        .insert(caseData)
+        .select()
+        .single();
+
+      if (caseError) {
+        logger.error('Error creating case:', caseError);
+        throw new Error(`Failed to create case: ${caseError.message}`);
+      }
+
+      const allDevices = [...devices, ...bulkServerDrives];
+
+      const devicesToInsert = allDevices
+        .filter(d => d.device_type_id || d.serial_no)
+        .map(device => {
+          const problemName = device.device_problem_id
+            ? serviceProblems.find(sp => sp.id === device.device_problem_id)?.name || null
+            : null;
+
+          return {
+            case_id: newCase.id,
+            device_type_id: device.device_type_id || null,
+            brand_id: device.brand_id || null,
+            model: device.model || null,
+            serial_no: device.serial_no || null,
+            capacity_id: device.capacity_id || null,
+            condition_id: device.condition_id ? parseInt(device.condition_id) : null,
+            accessories: device.accessories.length > 0 ? device.accessories : null,
+            device_problem: problemName,
+            recovery_requirements: device.recovery_requirements || null,
+            device_password: device.device_password || null,
+            encryption_type_id: device.encryption_type_id || null,
+            device_role_id: device.device_role_id || null,
+            is_primary: device.is_primary || false,
+            parent_device_id: device.parent_device_id || null,
+            created_by: profile?.id || null,
+          };
+        });
+
+      if (devicesToInsert.length > 0) {
+        const { error: devicesError } = await supabase
+          .from('case_devices')
+          .insert(devicesToInsert);
+
+        if (devicesError) {
+          logger.error('Error inserting devices:', devicesError);
+          throw new Error(`Failed to insert devices: ${devicesError.message}`);
+        }
+      }
+
+      return newCase;
+    },
+    onSuccess: (newCase) => {
+      queryClient.invalidateQueries({ queryKey: ['cases'] });
+      setCreatedCase({ id: newCase.id, case_no: newCase.case_no });
+      setShowSuccessModal(true);
+    },
+    onError: (error) => {
+      logger.error('Case creation error:', error);
+      alert(`Failed to create case: ${error.message}`);
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!isFormValid) return;
+    createCaseMutation.mutate();
+  };
+
+
+  const addDevice = () => {
+    setDevices([
+      ...devices,
+      {
+        id: Date.now().toString(),
+        device_type_id: '',
+        brand_id: '',
+        model: '',
+        serial_no: '',
+        capacity_id: '',
+        condition_id: '',
+        accessories: [],
+        device_problem_id: '',
+        recovery_requirements: '',
+        device_password: '',
+        encryption_type_id: '',
+        device_role_id: deviceRoles.find(r => r.name.toLowerCase() === 'patient')?.id || (deviceRoles.length > 0 ? deviceRoles[0].id : null),
+        is_primary: false,
+        parent_device_id: '',
+      },
+    ]);
+  };
+
+  const removeDevice = (id: string) => {
+    if (devices.length > 1) {
+      setDevices(devices.filter(d => d.id !== id));
+    }
+  };
+
+  const updateDevice = (id: string, field: keyof Device, value: string | number | boolean | string[] | null) => {
+    setDevices(devices.map(d => (d.id === id ? { ...d, [field]: value } : d)));
+  };
+
+  const primaryDevice = devices[0];
+  const primaryDeviceType = deviceTypes.find(dt => dt.id === primaryDevice.device_type_id);
+  const isServerDevice = primaryDeviceType?.name.toLowerCase().includes('server') || false;
+
+  const isStep1Valid = formData.customer_id && formData.service_type_id;
+  const isStep2Valid = devices.some(d => d.device_type_id || d.serial_no) || bulkServerDrives.length > 0;
+
+  const isPrimaryDeviceValid = isServerDevice
+    ? (primaryDevice.serial_no
+        ? (primaryDevice.serial_no && primaryDevice.device_problem_id)
+        : (primaryDevice.device_problem_id && bulkServerDrives.length > 0))
+    : (primaryDevice.serial_no && primaryDevice.device_problem_id);
+
+  const isFormValid = isStep1Valid && isStep2Valid && isPrimaryDeviceValid;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-[95vw] max-w-[1600px] max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Create New Case</h2>
+            <p className="text-sm text-slate-600 mt-1">Complete all sections to create a case</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col">
+              <div
+                className="rounded-xl p-5 mb-4"
+                style={{
+                  backgroundColor: '#eff6ff',
+                  borderLeft: '4px solid #3b82f6',
+                }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <Users className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-base font-bold text-slate-900">Client & Service</h3>
+                </div>
+
+                <div className="space-y-3">
+                    <div>
+                      <SearchableSelect
+                        label="Client"
+                        value={formData.customer_id}
+                        onChange={(value) =>
+                          setFormData({ ...formData, customer_id: value, contact_id: '' })
+                        }
+                        options={customers.map(c => ({
+                          id: c.id,
+                          name: `${c.customer_name} (${c.customer_number})`,
+                        }))}
+                        placeholder="Search by name or customer number"
+                        required
+                        clearable={false}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomerModalOpen(true)}
+                        className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Create New Customer
+                      </button>
+                    </div>
+
+                    <Input
+                      label="Client Reference"
+                      placeholder="Client's PO or reference number (optional)"
+                      value={formData.client_reference}
+                      onChange={(e) =>
+                        setFormData({ ...formData, client_reference: e.target.value })
+                      }
+                    />
+                    <SearchableSelect
+                      label="Service Type"
+                      value={formData.service_type_id}
+                      onChange={(value) =>
+                        setFormData({ ...formData, service_type_id: value })
+                      }
+                      options={serviceTypes.map(st => ({ id: st.id, name: st.name }))}
+                      placeholder="Select service type..."
+                      required
+                      clearable={false}
+                    />
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <SearchableSelect
+                        label="Priority"
+                        value={formData.priority}
+                        onChange={(value) => setFormData({ ...formData, priority: value })}
+                        options={casePriorities.map(p => ({ id: p.name.toLowerCase(), name: p.name }))}
+                        placeholder="Priority..."
+                        clearable={false}
+                      />
+
+                      <SearchableSelect
+                        label="Location"
+                        value={formData.service_location_id}
+                        onChange={(value) =>
+                          setFormData({ ...formData, service_location_id: value })
+                        }
+                        options={serviceLocations.map(sl => ({ id: sl.id, name: sl.name }))}
+                        placeholder="Location..."
+                        clearable={false}
+                      />
+                    </div>
+
+                    <div className="space-y-2 pt-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.welcome_email}
+                          onChange={(e) =>
+                            setFormData({ ...formData, welcome_email: e.target.checked })
+                          }
+                          className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-slate-700">
+                          Welcome Email
+                        </span>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.welcome_sms}
+                          onChange={(e) =>
+                            setFormData({ ...formData, welcome_sms: e.target.checked })
+                          }
+                          className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-slate-700">
+                          Welcome SMS
+                        </span>
+                      </label>
+                    </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              <div
+                className="rounded-xl p-5 mb-4"
+                style={{
+                  backgroundColor: '#f0fdf4',
+                  borderLeft: '4px solid #10b981',
+                }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <HardDrive className="w-5 h-5 text-green-600" />
+                    <h3 className="text-base font-bold text-slate-900">
+                      Device Information ({devices.length}{bulkServerDrives.length > 0 ? ` + ${bulkServerDrives.length} bulk` : ''})
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isServerDevice && (
+                      <Button
+                        onClick={() => setIsBulkDrivesModalOpen(true)}
+                        variant="secondary"
+                        size="sm"
+                        className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                      >
+                        <Layers className="w-4 h-4 mr-1" />
+                        {bulkServerDrives.length > 0 ? `Edit ${bulkServerDrives.length} Drives` : 'Add Multiple Drives'}
+                      </Button>
+                    )}
+                    <Button
+                      onClick={addDevice}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Device
+                    </Button>
+                  </div>
+                </div>
+
+                {bulkServerDrives.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-semibold text-blue-900">
+                          {bulkServerDrives.length} Server Drive{bulkServerDrives.length !== 1 ? 's' : ''} (Bulk Entry)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setIsBulkDrivesModalOpen(true)}
+                          className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          View/Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            const confirmed = window.confirm(`Remove all ${bulkServerDrives.length} bulk drives?`);
+                            if (confirmed) setBulkServerDrives([]);
+                          }}
+                          className="text-xs text-red-600 hover:text-red-700 font-medium"
+                        >
+                          Remove All
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-700 mt-1">
+                      {primaryDevice.serial_no
+                        ? 'These drives will be automatically added as components of the server with Patient role and default settings'
+                        : 'These drives will be added as a RAID array with equal status (no primary drive designation)'}
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                  {devices.map((device, index) => (
+                    <div
+                      key={device.id}
+                      className="bg-white rounded-lg p-3 border border-slate-200"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-semibold text-slate-900">
+                            Device {index + 1}
+                          </h4>
+                          {device.is_primary && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">
+                              Primary
+                            </span>
+                          )}
+                        </div>
+                        {devices.length > 1 && (
+                          <button
+                            onClick={() => removeDevice(device.id)}
+                            className="text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <SearchableSelect
+                            label="Device Role"
+                            value={device.device_role_id?.toString() || ''}
+                            onChange={(value) => {
+                              const numericValue = value ? parseInt(value) : null;
+                              updateDevice(device.id, 'device_role_id', numericValue);
+                              if (index === 0 && numericValue) {
+                                const patientRole = deviceRoles.find(r => r.name.toLowerCase() === 'patient');
+                                if (patientRole && numericValue === patientRole.id) {
+                                  updateDevice(device.id, 'is_primary', true);
+                                }
+                              }
+                            }}
+                            options={deviceRoles.map(dr => ({ id: dr.id.toString(), name: dr.name }))}
+                            placeholder="Select role..."
+                            required
+                            clearable={false}
+                          />
+
+                          <SearchableSelect
+                            label="Media Type"
+                            value={device.device_type_id}
+                            onChange={(value) =>
+                              updateDevice(device.id, 'device_type_id', value)
+                            }
+                            options={deviceTypes.map(dt => ({ id: dt.id, name: dt.name }))}
+                            placeholder="Device type..."
+                            required={index === 0}
+                            clearable={false}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <SearchableSelect
+                            label="Brand"
+                            value={device.brand_id}
+                            onChange={(value) => updateDevice(device.id, 'brand_id', value)}
+                            options={brands.map(b => ({ id: b.id, name: b.name }))}
+                            placeholder="Brand..."
+                            clearable={false}
+                          />
+
+                          <div>
+                            <Input
+                              label="Serial Number"
+                              value={device.serial_no}
+                              onChange={(e) =>
+                                updateDevice(device.id, 'serial_no', e.target.value)
+                              }
+                              placeholder={isServerDevice && index === 0 ? "Server S/N (optional if only loose drives)" : "Serial number (e.g., WXY123456789)"}
+                              required={index === 0 && !isServerDevice}
+                            />
+                            {index === 0 && isServerDevice && (
+                              <p className="text-xs text-slate-500 mt-1">
+                                Enter server chassis serial number if submitting full server, or leave blank for loose drives only
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {device.device_role_id && (() => {
+                          const role = deviceRoles.find(r => r.id === device.device_role_id);
+                          const isLinkedRole = role && ['backup', 'clone', 'donor'].includes(role.name.toLowerCase());
+                          const patientDevices = devices.filter((d, idx) => {
+                            const deviceRole = deviceRoles.find(r => r.id === d.device_role_id);
+                            return deviceRole && deviceRole.name.toLowerCase() === 'patient' && idx !== index;
+                          });
+
+                          if (isLinkedRole && patientDevices.length > 0) {
+                            return (
+                              <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                  Link to Patient Device
+                                </label>
+                                <select
+                                  value={device.parent_device_id}
+                                  onChange={(e) => updateDevice(device.id, 'parent_device_id', e.target.value)}
+                                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  <option value="">No link (optional)</option>
+                                  {patientDevices.map((pd, pdIdx) => (
+                                    <option key={pd.id} value={pd.id}>
+                                      Device {devices.indexOf(pd) + 1} - {deviceTypes.find(dt => dt.id === pd.device_type_id)?.name || 'Unknown'}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            label="Model"
+                            value={device.model}
+                            onChange={(e) =>
+                              updateDevice(device.id, 'model', e.target.value)
+                            }
+                            placeholder="Model..."
+                          />
+
+                          <SearchableSelect
+                            label="Capacity"
+                            value={device.capacity_id}
+                            onChange={(value) =>
+                              updateDevice(device.id, 'capacity_id', value)
+                            }
+                            options={capacities.map(c => ({ id: c.id, name: c.name }))}
+                            placeholder="Capacity..."
+                            clearable={false}
+                            usePortal={true}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <SearchableSelect
+                            label="Condition"
+                            value={device.condition_id}
+                            onChange={(value) =>
+                              updateDevice(device.id, 'condition_id', value)
+                            }
+                            options={deviceConditions.map(dc => ({
+                              id: dc.id.toString(),
+                              name: dc.name,
+                            }))}
+                            placeholder="Condition..."
+                            clearable={false}
+                            usePortal={true}
+                          />
+
+                          <MultiSelectDropdown
+                            label="Accessories"
+                            value={device.accessories}
+                            onChange={(value) =>
+                              updateDevice(device.id, 'accessories', value)
+                            }
+                            options={accessories.map(a => ({ id: a.id, name: a.name }))}
+                            placeholder="Select accessories (optional)..."
+                            usePortal={true}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              <div
+                className="rounded-xl p-5 mb-4"
+                style={{
+                  backgroundColor: '#fff7ed',
+                  borderLeft: '4px solid #f97316',
+                }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <AlertCircle className="w-5 h-5 text-orange-600" />
+                  <h3 className="text-base font-bold text-slate-900">
+                    Problem & Requirements
+                  </h3>
+                </div>
+
+                <div className="space-y-3">
+                  <SearchableSelect
+                    label={isServerDevice ? "Server/Array Problem" : "Device Problem"}
+                    value={devices[0].device_problem_id}
+                    onChange={(value) =>
+                      updateDevice('1', 'device_problem_id', value)
+                    }
+                    options={serviceProblems.map(sp => ({ id: sp.id, name: sp.name }))}
+                    placeholder={isServerDevice ? "e.g., RAID array failure, cannot boot..." : "Select device problem..."}
+                    required
+                    clearable={false}
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Recovery Requirements
+                    </label>
+                    <textarea
+                      value={devices[0].recovery_requirements}
+                      onChange={(e) =>
+                        updateDevice('1', 'recovery_requirements', e.target.value)
+                      }
+                      rows={2}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                      placeholder="Describe what files or data the customer needs recovered (e.g., Family photos, Financial reports, Database files)"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Device Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={devices[0].device_password}
+                        onChange={(e) =>
+                          updateDevice('1', 'device_password', e.target.value)
+                        }
+                        className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                        placeholder="Password needed to access encrypted data (if applicable)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <SearchableSelect
+                    label="Encryption Type"
+                    value={devices[0].encryption_type_id}
+                    onChange={(value) =>
+                      updateDevice('1', 'encryption_type_id', value)
+                    }
+                    options={deviceEncryption.map(de => ({ id: de.id, name: de.name }))}
+                    placeholder="Select encryption type..."
+                    clearable={false}
+                  />
+
+                  {isFormValid ? (
+                    <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2 text-green-800">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="text-sm font-semibold">Ready to Create Case</span>
+                      </div>
+                      <p className="text-xs text-green-700 mt-1">
+                        All required information has been provided. Click "Create Case" to proceed.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <div className="flex items-center gap-2 text-amber-800">
+                        <AlertCircle className="w-5 h-5" />
+                        <span className="text-sm font-semibold">Required Information Missing</span>
+                      </div>
+                      <p className="text-xs text-amber-700 mt-1">
+                        {isServerDevice && !primaryDevice.serial_no
+                          ? 'Complete these required fields: Client, Service Type, Device Problem. Then add server drives using "Add Multiple Drives".'
+                          : 'Complete these required fields: Client, Service Type, Serial Number, and Device Problem.'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-slate-200 bg-slate-50">
+          <Button variant="secondary" onClick={onClose}>
+            <X className="w-4 h-4 mr-1" />
+            Cancel
+          </Button>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={!isFormValid || createCaseMutation.isPending}
+            style={{ backgroundColor: '#10b981' }}
+          >
+            {createCaseMutation.isPending ? 'Creating Case...' : 'Create Case'}
+          </Button>
+        </div>
+      </div>
+
+      <CustomerFormModal
+        isOpen={isCustomerModalOpen}
+        onClose={() => setIsCustomerModalOpen(false)}
+        onSuccess={handleCustomerCreated}
+      />
+
+      <ServerBulkDrivesModal
+        isOpen={isBulkDrivesModalOpen}
+        onClose={() => setIsBulkDrivesModalOpen(false)}
+        onSaveDrives={handleBulkDrivesSave}
+        existingDrives={bulkServerDrives.map(d => ({
+          id: d.id,
+          brand_id: d.brand_id,
+          serial_no: d.serial_no,
+          model: d.model,
+          capacity_id: d.capacity_id,
+          isValid: !!(d.brand_id && d.serial_no && d.capacity_id),
+        }))}
+        defaultDeviceTypeId={primaryDevice.device_type_id}
+      />
+
+      {showSuccessModal && createdCase && (
+        <CaseSuccessModal
+          caseNumber={createdCase.case_no}
+          caseId={createdCase.id}
+          onClose={() => {
+            setShowSuccessModal(false);
+            onClose();
+            onSuccess();
+          }}
+          onPrintReceipt={() => {
+            printReceipt(createdCase.id, createdCase.case_no);
+          }}
+          onPrintLabel={() => {
+            printLabel(createdCase.id, createdCase.case_no);
+          }}
+        />
+      )}
+    </div>
+  );
+};

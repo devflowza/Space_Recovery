@@ -1,0 +1,324 @@
+import React from 'react';
+import { formatDate } from '../../lib/format';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import {
+  Copy,
+  HardDrive,
+  MapPin,
+  Calendar,
+  User,
+  Server,
+  FolderOpen,
+  CheckCircle2,
+  Archive,
+  Trash2,
+  Eye,
+  Clock,
+} from 'lucide-react';
+
+interface CloneDrive {
+  id: string;
+  case_id: string;
+  patient_device_id: string;
+  resource_clone_drive_id?: string;
+  physical_drive_serial?: string;
+  physical_drive_brand?: string;
+  physical_drive_model?: string;
+  physical_drive_capacity?: string;
+  storage_path: string;
+  storage_server?: string;
+  storage_type?: string;
+  physical_location_id?: string;
+  physical_location_name?: string;
+  image_format?: string;
+  image_size_gb?: number;
+  clone_date: string;
+  cloned_by_name?: string;
+  status: string;
+  delivered_date?: string;
+  delivered_by_name?: string;
+  retention_deadline?: string;
+  retention_days?: number;
+  preserve_reason?: string;
+  notes?: string;
+  resource_clone_drive?: {
+    clone_id: string;
+    brand: string;
+    model: string;
+    capacity: string;
+    serial_number: string;
+    drive_type: string;
+    interface_type: string;
+  };
+}
+
+interface CloneDriveCardProps {
+  clone: CloneDrive;
+  caseNo?: string;
+  patientDeviceName?: string;
+  onView?: (clone: CloneDrive) => void;
+  onMarkAsDelivered?: (clone: CloneDrive) => void;
+  onPreserve?: (clone: CloneDrive) => void;
+  onDelete?: (clone: CloneDrive) => void;
+}
+
+const statusConfig: Record<string, { label: string; color: string }> = {
+  active: { label: 'Active', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  delivered: { label: 'Delivered', color: 'bg-green-100 text-green-700 border-green-200' },
+  preserved: { label: 'Preserved', color: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+  archived: { label: 'Archived', color: 'bg-slate-100 text-slate-700 border-slate-200' },
+  overwritten: { label: 'Overwritten', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  deleted: { label: 'Deleted', color: 'bg-red-100 text-red-700 border-red-200' },
+};
+
+export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
+  clone,
+  caseNo,
+  patientDeviceName,
+  onView,
+  onMarkAsDelivered,
+  onPreserve,
+  onDelete,
+}) => {
+  const statusInfo = statusConfig[clone.status] || statusConfig.active;
+
+  const calculateAge = () => {
+    const now = new Date();
+    const cloneDate = new Date(clone.clone_date);
+    const diffTime = Math.abs(now.getTime() - cloneDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const calculateRetentionStatus = () => {
+    if (!clone.retention_deadline || clone.status !== 'delivered') return null;
+
+    const now = new Date();
+    const deadline = new Date(clone.retention_deadline);
+    const diffTime = deadline.getTime() - now.getTime();
+    const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return {
+      daysRemaining,
+      isOverdue: daysRemaining < 0,
+      isWarning: daysRemaining >= 0 && daysRemaining <= 3,
+      isSafe: daysRemaining > 3
+    };
+  };
+
+  const ageDays = calculateAge();
+  const retentionStatus = calculateRetentionStatus();
+  const isOld = ageDays > 180;
+
+  const displayBrand = clone.resource_clone_drive?.brand || clone.physical_drive_brand || 'Unknown';
+  const displayModel = clone.resource_clone_drive?.model || clone.physical_drive_model || '';
+  const displayCapacity = clone.resource_clone_drive?.capacity || clone.physical_drive_capacity || '';
+  const displaySerial = clone.resource_clone_drive?.serial_number || clone.physical_drive_serial || '';
+  const cloneId = clone.resource_clone_drive?.clone_id;
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+            <Copy className="w-5 h-5 text-purple-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900">
+              Clone #{caseNo || clone.id.slice(0, 8)}
+            </h3>
+            {patientDeviceName && (
+              <p className="text-sm text-slate-600">{patientDeviceName}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <Badge variant={statusInfo.color}>{statusInfo.label}</Badge>
+          {isOld && clone.status === 'active' && (
+            <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Old Clone
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2 mb-3">
+        {/* Clone Disk ID - Prominently displayed */}
+        {cloneId && (
+          <div className="flex items-start gap-2 text-sm bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <HardDrive className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <span className="text-blue-700 font-medium">Clone Disk ID:</span>
+              <div className="text-blue-900 font-bold font-mono text-base mt-0.5">
+                {cloneId}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Physical Drive Info */}
+        {(displaySerial || displayBrand !== 'Unknown') && (
+          <div className="flex items-start gap-2 text-sm">
+            <HardDrive className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <span className="text-slate-600">Physical Drive:</span>
+              <div className="text-slate-900 font-medium">
+                {displayBrand} {displayModel}
+                {displayCapacity && ` (${displayCapacity})`}
+              </div>
+              {displaySerial && (
+                <div className="text-slate-500 text-xs">SN: {displaySerial}</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Storage Path */}
+        <div className="flex items-start gap-2 text-sm">
+          <FolderOpen className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <span className="text-slate-600">Storage Path:</span>
+            <div className="text-slate-900 font-mono text-xs break-all bg-slate-50 p-1.5 rounded mt-1">
+              {clone.storage_server && (
+                <span className="text-blue-600 font-semibold">{clone.storage_server}:</span>
+              )}
+              {clone.storage_path}
+            </div>
+          </div>
+        </div>
+
+        {/* Physical Location */}
+        {clone.physical_location_name && (
+          <div className="flex items-center gap-2 text-sm">
+            <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <div>
+              <span className="text-slate-600">Physical Location:</span>
+              <span className="text-slate-900 ml-1">{clone.physical_location_name}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Image Info */}
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-1">
+            <span className="text-slate-600">Format:</span>
+            <span className="text-slate-900 font-medium uppercase">
+              {clone.image_format || 'dd'}
+            </span>
+          </div>
+          {clone.image_size_gb && clone.image_size_gb > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-slate-600">Size:</span>
+              <span className="text-slate-900 font-medium">
+                {clone.image_size_gb} GB
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Clone Date and Technician */}
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-1">
+            <Calendar className="w-4 h-4 text-slate-400" />
+            <span className="text-slate-600">{formatDate(clone.clone_date)}</span>
+            <span className="text-slate-400">({ageDays}d ago)</span>
+          </div>
+          {clone.cloned_by_name && (
+            <div className="flex items-center gap-1">
+              <User className="w-4 h-4 text-slate-400" />
+              <span className="text-slate-600">{clone.cloned_by_name}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Delivered Date */}
+        {clone.delivered_date && (
+          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+            <CheckCircle2 className="w-4 h-4" />
+            <div className="flex-1">
+              <div>Delivered on {formatDate(clone.delivered_date)}</div>
+              {clone.delivered_by_name && (
+                <div className="text-xs text-green-700">by {clone.delivered_by_name}</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Retention Status */}
+        {retentionStatus && clone.status === 'delivered' && (
+          <div className={`flex items-center gap-2 text-sm p-2 rounded ${
+            retentionStatus.isOverdue
+              ? 'bg-red-50 text-red-700'
+              : retentionStatus.isWarning
+              ? 'bg-amber-50 text-amber-700'
+              : 'bg-blue-50 text-blue-700'
+          }`}>
+            <Clock className="w-4 h-4" />
+            <span>
+              {retentionStatus.isOverdue
+                ? `Overdue by ${Math.abs(retentionStatus.daysRemaining)} day${Math.abs(retentionStatus.daysRemaining) !== 1 ? 's' : ''}`
+                : retentionStatus.daysRemaining === 0
+                ? 'Eligible for deletion today'
+                : `Eligible for deletion in ${retentionStatus.daysRemaining} day${retentionStatus.daysRemaining !== 1 ? 's' : ''}`
+              }
+            </span>
+          </div>
+        )}
+
+        {/* Preservation Reason */}
+        {clone.preserve_reason && clone.status === 'preserved' && (
+          <div className="text-sm text-cyan-700 bg-cyan-50 p-2 rounded border border-cyan-200">
+            <span className="font-medium">Preserved:</span> {clone.preserve_reason}
+          </div>
+        )}
+
+        {/* Notes */}
+        {clone.notes && (
+          <div className="text-sm text-slate-600 bg-slate-50 p-2 rounded">
+            <span className="font-medium">Notes:</span> {clone.notes}
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+        {onView && (
+          <Button size="sm" variant="secondary" onClick={() => onView(clone)}>
+            <Eye className="w-4 h-4" />
+            View
+          </Button>
+        )}
+        {onMarkAsDelivered && clone.status === 'active' && (
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => onMarkAsDelivered(clone)}
+            style={{ backgroundColor: '#10b981' }}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            Mark as Delivered
+          </Button>
+        )}
+        {onPreserve && (clone.status === 'active' || clone.status === 'delivered') && (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => onPreserve(clone)}
+            style={{ color: '#0891b2', borderColor: '#0891b2' }}
+          >
+            <Archive className="w-4 h-4" />
+            Preserve
+          </Button>
+        )}
+        {onDelete && (
+          <Button size="sm" variant="danger" onClick={() => onDelete(clone)}>
+            <Trash2 className="w-4 h-4" />
+            Delete
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};

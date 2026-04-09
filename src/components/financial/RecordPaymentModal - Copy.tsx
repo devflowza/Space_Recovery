@@ -1,0 +1,523 @@
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Badge } from '../ui/Badge';
+import { supabase } from '../../lib/supabaseClient';
+import {
+  getPaymentMethods,
+  getCasesWithUnpaidInvoices,
+  getUnpaidInvoicesByCase,
+} from '../../lib/paymentsService';
+import { useCurrency } from '../../hooks/useCurrency';
+import {
+  DollarSign,
+  Calendar,
+  CreditCard,
+  FileText,
+  Trash2,
+  CheckCircle,
+  Briefcase,
+  User,
+} from 'lucide-react';
+import { logger } from '../../lib/logger';
+
+interface RecordPaymentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (
+    paymentData: {
+      payment_date: string;
+      amount: number;
+      case_id?: string | null;
+      customer_id?: string | null;
+      payment_method_id?: string | null;
+      bank_account_id?: string | null;
+      reference?: string;
+      status: 'pending' | 'completed';
+      notes?: string;
+    },
+    allocations: Array<{ invoice_id: string; amount: number }>
+  ) => Promise<void>;
+  preselectedCaseId?: string;
+  preselectedInvoiceId?: string;
+}
+
+interface InvoiceAllocation {
+  invoice_id: string;
+  invoice_number: string;
+  total_amount: number;
+  balance_due: number;
+  allocation_amount: number;
+  status: string;
+}
+
+interface CaseWithCustomer {
+  id: string;
+  case_no: string;
+  title: string;
+  customer?: {
+    id: string;
+    customer_name: string;
+    email: string;
+  };
+}
+
+export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  preselectedCaseId,
+  preselectedInvoiceId,
+}) => {
+  const { formatCurrency } = useCurrency();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [selectedCaseId, setSelectedCaseId] = useState<string>(preselectedCaseId || '');
+  const [paymentMethodId, setPaymentMethodId] = useState<string>('');
+  const [bankAccountId, setBankAccountId] = useState<string>('');
+  const [referenceNumber, setReferenceNumber] = useState('');
+  const [notes, setNotes] = useState('');
+  const [allocations, setAllocations] = useState<InvoiceAllocation[]>([]);
+
+  const { data: casesWithInvoices = [] } = useQuery({
+    queryKey: ['cases_with_unpaid_invoices'],
+    queryFn: getCasesWithUnpaidInvoices,
+    enabled: isOpen,
+  });
+
+  const { data: paymentMethods = [] } = useQuery({
+    queryKey: ['payment_methods_active'],
+    queryFn: getPaymentMethods,
+  });
+
+  const { data: bankAccounts = [] } = useQuery({
+    queryKey: ['bank_accounts_active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .select('id, account_name:name, bank_name, account_type')
+        .eq('is_active', true)
+        .order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: unpaidInvoices = [], refetch: refetchInvoices } = useQuery({
+    queryKey: ['unpaid_invoices_by_case', selectedCaseId],
+    queryFn: () => getUnpaidInvoicesByCase(selectedCaseId),
+    enabled: !!selectedCaseId,
+  });
+
+  const selectedCase = casesWithInvoices.find(
+    (c: CaseWithCustomer) => c.id === selectedCaseId
+  ) as CaseWithCustomer | undefined;
+
+  useEffect(() => {
+    if (preselectedCaseId) {
+      setSelectedCaseId(preselectedCaseId);
+    }
+  }, [preselectedCaseId]);
+
+  useEffect(() => {
+    if (selectedCaseId) {
+      refetchInvoices();
+      setAllocations([]);
+      setTotalAmount(0);
+    }
+  }, [selectedCaseId, refetchInvoices]);
+
+  useEffect(() => {
+    if (preselectedInvoiceId && unpaidInvoices.length > 0) {
+      const invoice = unpaidInvoices.find((inv) => inv.id === preselectedInvoiceId);
+      if (invoice && !allocations.find(a => a.invoice_id === invoice.id)) {
+        setAllocations([{
+          invoice_id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          total_amount: invoice.total_amount,
+          balance_due: invoice.balance_due,
+          allocation_amount: invoice.balance_due,
+          status: invoice.status,
+        }]);
+        setTotalAmount(invoice.balance_due);
+      }
+    }
+  }, [preselectedInvoiceId, unpaidInvoices]);
+
+  const handleCaseChange = (caseId: string) => {
+    setSelectedCaseId(caseId);
+    setAllocations([]);
+    setTotalAmount(0);
+  };
+
+  const handleAddInvoice = (invoiceId: string) => {
+    const invoice = unpaidInvoices.find((inv) => inv.id === invoiceId);
+    if (!invoice || allocations.find(a => a.invoice_id === invoiceId)) return;
+
+    const newAllocation: InvoiceAllocation = {
+      invoice_id: invoice.id,
+      invoice_number: invoice.invoice_number,
+      total_amount: invoice.total_amount,
+      balance_due: invoice.balance_due,
+      allocation_amount: invoice.balance_due,
+      status: invoice.status,
+    };
+
+    setAllocations([...allocations, newAllocation]);
+    updateTotalFromAllocations([...allocations, newAllocation]);
+  };
+
+  const handleRemoveAllocation = (invoiceId: string) => {
+    const updated = allocations.filter(a => a.invoice_id !== invoiceId);
+    setAllocations(updated);
+    updateTotalFromAllocations(updated);
+  };
+
+  const handleAllocationAmountChange = (invoiceId: string, amount: number) => {
+    const updated = allocations.map(a =>
+      a.invoice_id === invoiceId
+        ? { ...a, allocation_amount: Math.min(amount, a.balance_due) }
+        : a
+    );
+    setAllocations(updated);
+    updateTotalFromAllocations(updated);
+  };
+
+  const updateTotalFromAllocations = (allocs: InvoiceAllocation[]) => {
+    const total = allocs.reduce((sum, a) => sum + a.allocation_amount, 0);
+    setTotalAmount(total);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (totalAmount <= 0 || !selectedCaseId) return;
+
+    setIsSubmitting(true);
+    try {
+      await onSave(
+        {
+          payment_date: paymentDate,
+          amount: totalAmount,
+          customer_id: selectedCase?.customer?.id || null,
+          payment_method_id: paymentMethodId || null,
+          bank_account_id: bankAccountId || null,
+          reference: referenceNumber || undefined,
+          status: 'completed',
+          notes: notes || undefined,
+        },
+        allocations.map(a => ({
+          invoice_id: a.invoice_id,
+          amount: a.allocation_amount,
+        }))
+      );
+      handleClose();
+    } catch (error) {
+      logger.error('Error recording payment:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    setPaymentDate(new Date().toISOString().split('T')[0]);
+    setTotalAmount(0);
+    setSelectedCaseId(preselectedCaseId || '');
+    setPaymentMethodId('');
+    setBankAccountId('');
+    setReferenceNumber('');
+    setNotes('');
+    setAllocations([]);
+    onClose();
+  };
+
+  const availableInvoices = unpaidInvoices.filter(
+    (inv) => !allocations.find(a => a.invoice_id === inv.id)
+  );
+
+  const totalAllocated = allocations.reduce((sum, a) => sum + a.allocation_amount, 0);
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title="Record Payment" size="lg">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Case <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+            <select
+              value={selectedCaseId}
+              onChange={(e) => handleCaseChange(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="">Select Case</option>
+              {casesWithInvoices.map((c: CaseWithCustomer) => (
+                <option key={c.id} value={c.id}>
+                  {c.case_no} - {c.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          {casesWithInvoices.length === 0 && (
+            <p className="mt-1 text-xs text-amber-600">
+              No cases with unpaid invoices found.
+            </p>
+          )}
+        </div>
+
+        {selectedCase?.customer && (
+          <div className="bg-slate-50 rounded-lg p-3 flex items-center gap-3">
+            <User className="w-5 h-5 text-slate-400" />
+            <div>
+              <p className="text-xs text-slate-500">Customer</p>
+              <p className="text-sm font-medium text-slate-900">
+                {selectedCase.customer.customer_name}
+                {selectedCase.customer.email && (
+                  <span className="text-slate-500 font-normal ml-2">
+                    ({selectedCase.customer.email})
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Payment Date
+            </label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Input
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Total Amount
+            </label>
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={totalAmount}
+                onChange={(e) => setTotalAmount(parseFloat(e.target.value) || 0)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Payment Method
+            </label>
+            <div className="relative">
+              <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+              <select
+                value={paymentMethodId}
+                onChange={(e) => setPaymentMethodId(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Method</option>
+                {paymentMethods.map((method) => (
+                  <option key={method.id} value={method.id}>
+                    {method.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {paymentMethods.length === 0 && (
+              <p className="mt-1 text-xs text-amber-600">
+                No payment methods enabled. Enable them in Settings.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Bank Account
+            </label>
+            <select
+              value={bankAccountId}
+              onChange={(e) => setBankAccountId(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Select Account</option>
+              {bankAccounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.account_name} ({account.account_type})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Reference Number
+          </label>
+          <Input
+            type="text"
+            value={referenceNumber}
+            onChange={(e) => setReferenceNumber(e.target.value)}
+            placeholder="e.g., Check #, Transaction ID"
+          />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-slate-700">
+              Invoice Allocation
+            </label>
+            {selectedCaseId && availableInvoices.length > 0 && (
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleAddInvoice(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                className="text-sm px-2 py-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">+ Add Invoice</option>
+                {availableInvoices.map((inv) => (
+                  <option key={inv.id} value={inv.id}>
+                    {inv.invoice_number} - {formatCurrency(inv.balance_due)} due
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {allocations.length > 0 ? (
+            <div className="border border-slate-200 rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="text-left py-2 px-3 text-xs font-semibold text-slate-600">Invoice</th>
+                    <th className="text-right py-2 px-3 text-xs font-semibold text-slate-600">Due</th>
+                    <th className="text-right py-2 px-3 text-xs font-semibold text-slate-600">Allocate</th>
+                    <th className="w-10"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {allocations.map((alloc) => (
+                    <tr key={alloc.invoice_id}>
+                      <td className="py-2 px-3">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-slate-400" />
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-slate-900">
+                              {alloc.invoice_number}
+                            </p>
+                            {alloc.status === 'draft' && (
+                              <Badge variant="warning" size="sm">
+                                Draft
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-2 px-3 text-right text-sm text-slate-600">
+                        {formatCurrency(alloc.balance_due)}
+                      </td>
+                      <td className="py-2 px-3">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max={alloc.balance_due}
+                          value={alloc.allocation_amount}
+                          onChange={(e) =>
+                            handleAllocationAmountChange(
+                              alloc.invoice_id,
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          className="w-28 text-right text-sm"
+                        />
+                      </td>
+                      <td className="py-2 px-3">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAllocation(alloc.invoice_id)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-slate-50">
+                  <tr>
+                    <td colSpan={2} className="py-2 px-3 text-right text-sm font-semibold text-slate-700">
+                      Total Allocated:
+                    </td>
+                    <td className="py-2 px-3 text-right text-sm font-bold text-blue-600">
+                      {formatCurrency(totalAllocated)}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          ) : (
+            <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
+              <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-500">
+                {selectedCaseId
+                  ? 'No invoices selected. Add invoices to allocate this payment.'
+                  : 'Select a case first to see available invoices.'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Notes
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Optional payment notes..."
+          />
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <Button type="button" variant="secondary" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || totalAmount <= 0 || !selectedCaseId}
+            className="flex items-center gap-2"
+            style={{ backgroundColor: '#10b981' }}
+          >
+            <CheckCircle className="w-4 h-4" />
+            {isSubmitting ? 'Recording...' : 'Record Payment'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+};

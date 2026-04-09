@@ -13,7 +13,17 @@
       "Bash(git push:*)",
       "Skill(hookify:list)",
       "Bash(where.exe python:*)",
-      "Bash(where.exe python3:*)"
+      "Bash(where.exe python3:*)",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__generate_typescript_types",
+      "Bash(python -c ':*)",
+      "Bash(npx -p typescript tsc --noEmit)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(ls node_modules/.bin/ts*)",
+      "Bash(npm ls:*)",
+      "Bash(npx vite:*)",
+      "Bash(xargs grep:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
