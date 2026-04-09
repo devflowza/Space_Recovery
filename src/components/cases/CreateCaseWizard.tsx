@@ -401,7 +401,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
           .from('customer_company_relationships')
           .select('company_id')
           .eq('customer_id', formData.customer_id)
-          .order('is_primary_contact', { ascending: false })
+          .order('is_primary', { ascending: false })
           .limit(1)
           .maybeSingle();
 

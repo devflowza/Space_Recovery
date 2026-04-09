@@ -262,7 +262,7 @@ async function fetchQuoteDetails(quoteId: string): Promise<QuoteData> {
       .from('customer_company_relationships')
       .select(`companies (id, name, company_name)`)
       .eq('customer_id', quoteData.customer_id)
-      .eq('is_primary_contact', true)
+      .eq('is_primary', true)
       .maybeSingle();
 
     if (relationshipData && relationshipData.companies) {
@@ -381,7 +381,7 @@ async function fetchInvoiceDetails(invoiceId: string): Promise<InvoiceData> {
       .from('customer_company_relationships')
       .select(`companies (id, name, company_name)`)
       .eq('customer_id', invoiceData.customer_id)
-      .eq('is_primary_contact', true)
+      .eq('is_primary', true)
       .maybeSingle();
 
     if (relationshipData && relationshipData.companies) {

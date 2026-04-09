@@ -103,7 +103,7 @@ export function useCaseQueries(
                 )
               `)
               .eq('customer_id', caseRecord.customer_id)
-              .order('is_primary_contact', { ascending: false })
+              .order('is_primary', { ascending: false })
               .limit(1)
               .maybeSingle();
 
