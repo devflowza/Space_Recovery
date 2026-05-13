@@ -370,7 +370,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
       const customerName = customers.find(c => c.id === formData.customer_id)?.customer_name || 'Customer';
 
       const caseData = {
-        case_no: caseNumber,
+        case_number: caseNumber,
         customer_id: formData.customer_id,
         title: `Case for ${customerName}`,
         priority: formData.priority,
@@ -401,7 +401,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
           .from('customer_company_relationships')
           .select('company_id')
           .eq('customer_id', formData.customer_id)
-          .order('is_primary_contact', { ascending: false })
+          .order('is_primary', { ascending: false })
           .limit(1)
           .maybeSingle();
 

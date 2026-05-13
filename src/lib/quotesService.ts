@@ -218,7 +218,7 @@ export const fetchQuoteById = async (id: string) => {
         companies (id, name, company_name)
       `)
       .eq('customer_id', data.customer_id)
-      .eq('is_primary_contact', true)
+      .eq('is_primary', true)
       .maybeSingle();
 
     if (relationshipData && relationshipData.companies) {

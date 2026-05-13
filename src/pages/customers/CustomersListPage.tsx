@@ -244,7 +244,7 @@ export const CustomersListPage: React.FC = () => {
           .insert({
             customer_id: newCustomer.id,
             company_id: customer.company_id,
-            is_primary_contact: false,
+            is_primary: false,
           });
 
         if (relError) throw relError;

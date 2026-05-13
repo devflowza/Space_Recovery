@@ -38,7 +38,7 @@ interface Company {
 
 interface Contact {
   id: string;
-  is_primary_contact: boolean;
+  is_primary: boolean;
   job_title: string | null;
   department: string | null;
   customers_enhanced: {
@@ -120,7 +120,7 @@ export const CompanyProfilePage: React.FC = () => {
           )
         `)
         .eq('company_id', id)
-        .order('is_primary_contact', { ascending: false });
+        .order('is_primary', { ascending: false });
 
       if (error) {
         logger.error('Error fetching contacts:', error);
@@ -397,7 +397,7 @@ export const CompanyProfilePage: React.FC = () => {
     }
   };
 
-  const primaryContact = contacts.find(c => c.is_primary_contact);
+  const primaryContact = contacts.find(c => c.is_primary);
 
   return (
     <div className="p-6 max-w-[1600px] mx-auto">
@@ -712,7 +712,7 @@ export const CompanyProfilePage: React.FC = () => {
                               <p className="font-medium text-slate-900">
                                 {customer.customer_name}
                               </p>
-                              {contact.is_primary_contact && (
+                              {contact.is_primary && (
                                 <Badge variant="success" size="sm">
                                   Primary
                                 </Badge>

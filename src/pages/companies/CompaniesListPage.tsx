@@ -114,7 +114,7 @@ export const CompaniesListPage: React.FC = () => {
             .from('customer_company_relationships')
             .select('customers_enhanced (id, customer_name)')
             .eq('company_id', company.id)
-            .eq('is_primary_contact', true)
+            .eq('is_primary', true)
             .maybeSingle();
 
           return { ...company, primary_contact: relationship?.customers_enhanced || null };

@@ -49,7 +49,7 @@ interface Customer {
 
 interface CompanyRelationship {
   id: string;
-  is_primary_contact: boolean;
+  is_primary: boolean;
   job_title: string | null;
   department: string | null;
   companies: {
@@ -517,7 +517,7 @@ export const CustomerProfilePage: React.FC = () => {
                         <p className="font-medium text-slate-900 text-sm truncate">{rel.companies.company_name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs text-slate-500">{rel.companies.company_number}</span>
-                          {rel.is_primary_contact && (
+                          {rel.is_primary && (
                             <Badge variant="success" size="sm">
                               Primary
                             </Badge>

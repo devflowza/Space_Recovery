@@ -54,7 +54,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
             companies (*, geo_countries(name), geo_cities(name))
           `)
           .eq('customer_id', caseData.customer_id)
-          .order('is_primary_contact', { ascending: false })
+          .order('is_primary', { ascending: false })
           .limit(1)
           .maybeSingle();
 
