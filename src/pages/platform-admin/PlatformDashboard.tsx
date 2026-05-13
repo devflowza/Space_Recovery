@@ -7,6 +7,7 @@ import { getDashboardStats, getMRRTrend, getPlanDistribution, getAtRiskTenants }
 import { platformAdminKeys } from '../../lib/queryKeys';
 import { StatsCard } from '../../components/ui/StatsCard';
 import { Badge } from '../../components/ui/Badge';
+import { chartAxis, chartCategorical, chartGrid } from '../../lib/chartTheme';
 
 export const PlatformDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -129,19 +130,19 @@ export const PlatformDashboard: React.FC = () => {
           {mrrTrend && mrrTrend.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={mrrTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
                 <XAxis
                   dataKey="date"
-                  stroke="#64748b"
+                  stroke={chartAxis}
                   fontSize={12}
                   tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 />
-                <YAxis stroke="#64748b" fontSize={12} tickFormatter={(value) => `$${value / 1000}k`} />
+                <YAxis stroke={chartAxis} fontSize={12} tickFormatter={(value) => `$${value / 1000}k`} />
                 <Tooltip
                   formatter={(value: number) => formatCurrency(value)}
                   labelFormatter={(label) => new Date(label).toLocaleDateString()}
                 />
-                <Line type="monotone" dataKey="mrr" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="mrr" stroke={chartCategorical[0]} strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           ) : (
@@ -156,11 +157,11 @@ export const PlatformDashboard: React.FC = () => {
           {planDistribution && planDistribution.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={planDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="plan" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+                <XAxis dataKey="plan" stroke={chartAxis} fontSize={12} />
+                <YAxis stroke={chartAxis} fontSize={12} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="count" fill={chartCategorical[0]} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

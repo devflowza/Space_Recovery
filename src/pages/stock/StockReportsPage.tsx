@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 import { PageHeader } from '../../components/shared/PageHeader';
 import { useCurrency } from '../../hooks/useCurrency';
+import { chartAxis, chartCategorical, chartTooltipBorder } from '../../lib/chartTheme';
 import {
   getStockValuation,
   getSalesReport,
@@ -513,7 +514,7 @@ export const StockReportsPage: React.FC = () => {
                     type="category"
                     dataKey="name"
                     width={120}
-                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    tick={{ fontSize: 12, fill: chartAxis }}
                     tickLine={false}
                     axisLine={false}
                   />
@@ -522,14 +523,14 @@ export const StockReportsPage: React.FC = () => {
                     contentStyle={{
                       fontSize: 12,
                       borderRadius: 8,
-                      border: '1px solid #e2e8f0',
+                      border: `1px solid ${chartTooltipBorder}`,
                     }}
                   />
                   <Bar dataKey="totalRevenue" radius={[0, 4, 4, 0]}>
                     {topItems.map((_, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={index === 0 ? '#2563eb' : index === 1 ? '#3b82f6' : '#93c5fd'}
+                        fill={chartCategorical[index % chartCategorical.length]}
                       />
                     ))}
                   </Bar>
