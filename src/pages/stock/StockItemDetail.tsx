@@ -283,7 +283,7 @@ export const StockItemDetail: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -368,7 +368,7 @@ export const StockItemDetail: React.FC = () => {
                     </Badge>
                     {item.is_featured && (
                       <Badge variant="warning" size="sm">
-                        <Star className="w-3 h-3 mr-1 fill-amber-500" />
+                        <Star className="w-3 h-3 mr-1 fill-warning" />
                         Featured
                       </Badge>
                     )}
@@ -510,16 +510,16 @@ export const StockItemDetail: React.FC = () => {
               <div
                 className={`rounded-lg p-4 text-center ${
                   margin > 30
-                    ? 'bg-green-50'
+                    ? 'bg-success-muted'
                     : margin > 10
-                    ? 'bg-amber-50'
+                    ? 'bg-warning-muted'
                     : 'bg-slate-50'
                 }`}
               >
                 <p className="text-xs text-slate-500 font-medium mb-1">Margin</p>
                 <p
                   className={`text-xl font-bold ${
-                    margin > 30 ? 'text-green-700' : margin > 10 ? 'text-amber-700' : 'text-slate-600'
+                    margin > 30 ? 'text-success' : margin > 10 ? 'text-warning' : 'text-slate-600'
                   }`}
                 >
                   {margin > 0 ? `${margin.toFixed(1)}%` : '—'}
@@ -528,7 +528,7 @@ export const StockItemDetail: React.FC = () => {
             </div>
             {item.tax_inclusive && (
               <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
                 Prices are tax inclusive
               </p>
             )}
@@ -549,13 +549,13 @@ export const StockItemDetail: React.FC = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">Reserved</span>
-                <span className="font-semibold text-amber-600">{item.reserved_quantity}</span>
+                <span className="font-semibold text-warning">{item.reserved_quantity}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 font-medium">Available</span>
                 <span
                   className={`text-lg font-bold ${
-                    availableQty <= 0 ? 'text-red-600' : 'text-green-600'
+                    availableQty <= 0 ? 'text-danger' : 'text-success'
                   }`}
                 >
                   {availableQty}
@@ -571,10 +571,10 @@ export const StockItemDetail: React.FC = () => {
                   <div
                     className={`h-full rounded-full transition-all ${
                       availablePct > 50
-                        ? 'bg-green-500'
+                        ? 'bg-success'
                         : availablePct > 20
-                        ? 'bg-amber-500'
-                        : 'bg-red-500'
+                        ? 'bg-warning'
+                        : 'bg-danger'
                     }`}
                     style={{ width: `${Math.max(0, Math.min(100, availablePct))}%` }}
                   />
@@ -602,7 +602,7 @@ export const StockItemDetail: React.FC = () => {
             {(isLowStock || isOutOfStock) && (
               <div
                 className={`mt-4 flex items-start gap-2 p-3 rounded-lg text-xs ${
-                  isOutOfStock ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
+                  isOutOfStock ? 'bg-danger-muted text-danger' : 'bg-warning-muted text-warning'
                 }`}
               >
                 <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -674,7 +674,7 @@ export const StockItemDetail: React.FC = () => {
               onClick={() => setActiveTab(key)}
               className={`px-5 py-3.5 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === key
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -737,7 +737,7 @@ export const StockItemDetail: React.FC = () => {
                         <td className="py-2.5 text-center font-mono font-semibold">
                           <span
                             className={
-                              tx.quantity > 0 ? 'text-green-600' : 'text-red-600'
+                              tx.quantity > 0 ? 'text-success' : 'text-danger'
                             }
                           >
                             {tx.quantity > 0 ? '+' : ''}
@@ -757,7 +757,7 @@ export const StockItemDetail: React.FC = () => {
                           {tx.case_id ? (
                             <Link
                               to={`/cases/${tx.case_id}`}
-                              className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-medium"
+                              className="inline-flex items-center gap-1 text-primary hover:text-primary/80 text-xs font-medium"
                             >
                               View Case
                               <ExternalLink className="w-3 h-3" />
@@ -842,7 +842,7 @@ export const StockItemDetail: React.FC = () => {
                         <td className="py-2.5 pr-4">
                           <span className="capitalize text-slate-600">{r.reference_type ?? '—'}</span>
                         </td>
-                        <td className="py-2.5 pr-4 text-center font-semibold text-amber-700">{r.quantity}</td>
+                        <td className="py-2.5 pr-4 text-center font-semibold text-warning">{r.quantity}</td>
                         <td className="py-2.5 pr-4 text-slate-500">{r.expires_at ? formatDate(r.expires_at) : 'No expiry'}</td>
                         <td className="py-2.5 pr-4 text-slate-500">{formatDate(r.created_at)}</td>
                         <td className="py-2.5 text-center">
@@ -891,7 +891,7 @@ export const StockItemDetail: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
             <textarea
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm resize-none"
               rows={2}
               value={receiveForm.notes}
               onChange={(e) => setReceiveForm((f) => ({ ...f, notes: e.target.value }))}
@@ -946,7 +946,7 @@ export const StockItemDetail: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
             <textarea
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm resize-none"
               rows={2}
               value={usageForm.notes}
               onChange={(e) => setUsageForm((f) => ({ ...f, notes: e.target.value }))}
@@ -990,7 +990,7 @@ export const StockItemDetail: React.FC = () => {
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
               <textarea
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm resize-none"
                 rows={2}
                 value={editForm.description}
                 onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
@@ -1038,7 +1038,7 @@ export const StockItemDetail: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
             <textarea
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm resize-none"
               rows={2}
               value={editForm.notes}
               onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}

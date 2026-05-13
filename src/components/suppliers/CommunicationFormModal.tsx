@@ -126,7 +126,7 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
                   className={`
                     flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
                     ${formData.type === type.value
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      ? 'border-primary bg-primary/10 text-primary'
                       : 'border-gray-200 hover:border-gray-300'
                     }
                   `}
@@ -171,7 +171,7 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
           <textarea
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             rows={4}
             required
             placeholder="Detailed notes about the communication..."
@@ -184,7 +184,7 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
               type="checkbox"
               checked={formData.follow_up_required}
               onChange={(e) => setFormData({ ...formData, follow_up_required: e.target.checked })}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
             />
             <span className="text-sm font-medium text-gray-700">Follow-up required</span>
           </label>

@@ -130,8 +130,8 @@ export const StockSalesPage: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
-          <div className="p-2.5 rounded-lg bg-blue-50">
-            <ShoppingCart className="w-5 h-5 text-blue-600" />
+          <div className="p-2.5 rounded-lg bg-info-muted">
+            <ShoppingCart className="w-5 h-5 text-info" />
           </div>
           <div>
             <p className="text-sm text-slate-500 font-medium">Today&apos;s Sales</p>
@@ -143,8 +143,8 @@ export const StockSalesPage: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
-          <div className="p-2.5 rounded-lg bg-green-50">
-            <DollarSign className="w-5 h-5 text-green-600" />
+          <div className="p-2.5 rounded-lg bg-success-muted">
+            <DollarSign className="w-5 h-5 text-success" />
           </div>
           <div>
             <p className="text-sm text-slate-500 font-medium">Today&apos;s Revenue</p>
@@ -176,7 +176,7 @@ export const StockSalesPage: React.FC = () => {
               value={customerSearch}
               onChange={(e) => setCustomerSearch(e.target.value)}
               placeholder="Search customer..."
-              className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
 
@@ -186,21 +186,21 @@ export const StockSalesPage: React.FC = () => {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+              className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-slate-700"
             />
             <span className="text-slate-400 text-sm">to</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+              className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-slate-700"
             />
           </div>
 
           <select
             value={paymentStatus}
             onChange={(e) => setPaymentStatus(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+            className="px-3 py-2 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-slate-700"
           >
             <option value="">All Statuses</option>
             <option value="paid">Paid</option>

@@ -52,7 +52,7 @@ export const SerialNumberInput: React.FC<SerialNumberInputProps> = ({
 
   return (
     <div
-      className="min-h-[42px] px-3 py-2 border border-slate-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 bg-white cursor-text"
+      className="min-h-[42px] px-3 py-2 border border-slate-300 rounded-md focus-within:ring-2 focus-within:ring-primary focus-within:border-primary bg-white cursor-text"
       onClick={() => inputRef.current?.focus()}
     >
       <div className="flex flex-wrap gap-1.5 items-center">

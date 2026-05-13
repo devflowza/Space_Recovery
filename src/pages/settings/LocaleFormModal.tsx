@@ -125,7 +125,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
             <select
               value={formData.decimal_places}
               onChange={(e) => handleChange('decimal_places', parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {[0, 1, 2, 3, 4, 5].map(n => (
                 <option key={n} value={n}>{n}</option>
@@ -138,7 +138,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
             <select
               value={formData.currency_position}
               onChange={(e) => handleChange('currency_position', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="before">Before ($ 100)</option>
               <option value="after">After (100 OMR)</option>
@@ -159,7 +159,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
             <select
               value={formData.decimal_separator}
               onChange={(e) => handleChange('decimal_separator', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value=".">Period (.)</option>
               <option value=",">Comma (,)</option>
@@ -171,7 +171,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
             <select
               value={formData.thousands_separator}
               onChange={(e) => handleChange('thousands_separator', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value=",">Comma (,)</option>
               <option value=".">Period (.)</option>
@@ -186,7 +186,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
           <select
             value={formData.date_format}
             onChange={(e) => handleChange('date_format', e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2026)</option>
             <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2026)</option>
@@ -207,7 +207,7 @@ export const LocaleFormModal: React.FC<LocaleFormModalProps> = ({
                 className="sr-only"
               />
               <div className={`w-12 h-6 rounded-full shadow-inner transition-colors ${
-                formData.is_default ? 'bg-blue-600' : 'bg-slate-300'
+                formData.is_default ? 'bg-primary' : 'bg-slate-300'
               }`}></div>
               <div className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
                 formData.is_default ? 'transform translate-x-6' : ''

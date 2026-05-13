@@ -223,7 +223,7 @@ export const ClientPortalSettings: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading portal settings...</p>
         </div>
       </div>
@@ -277,11 +277,11 @@ export const ClientPortalSettings: React.FC = () => {
             </div>
             <div
               className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                formData.portal_enabled ? 'bg-green-100' : 'bg-slate-100'
+                formData.portal_enabled ? 'bg-success-muted' : 'bg-slate-100'
               }`}
             >
               <Shield
-                className={`w-6 h-6 ${formData.portal_enabled ? 'text-green-600' : 'text-slate-400'}`}
+                className={`w-6 h-6 ${formData.portal_enabled ? 'text-success' : 'text-slate-400'}`}
               />
             </div>
           </div>
@@ -295,8 +295,8 @@ export const ClientPortalSettings: React.FC = () => {
                 {activeCustomersCount || 0}
               </p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-info-muted rounded-lg flex items-center justify-center">
+              <Users className="w-6 h-6 text-info" />
             </div>
           </div>
         </Card>
@@ -309,32 +309,32 @@ export const ClientPortalSettings: React.FC = () => {
                 {Math.floor(formData.portal_session_timeout / 60)}h
               </p>
             </div>
-            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Clock className="w-6 h-6 text-amber-600" />
+            <div className="w-12 h-12 bg-warning-muted rounded-lg flex items-center justify-center">
+              <Clock className="w-6 h-6 text-warning" />
             </div>
           </div>
         </Card>
       </div>
 
       {urlError && (
-        <Card className="p-4 bg-red-50 border-red-200">
+        <Card className="p-4 bg-danger-muted border-danger/30">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-red-900">Error</h3>
-              <p className="text-sm text-red-700 mt-1">{urlError}</p>
+              <h3 className="font-semibold text-danger">Error</h3>
+              <p className="text-sm text-danger mt-1">{urlError}</p>
             </div>
           </div>
         </Card>
       )}
 
       {saveSuccess && (
-        <Card className="p-4 bg-green-50 border-green-200">
+        <Card className="p-4 bg-success-muted border-success/30">
           <div className="flex items-start gap-3">
-            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-green-900">Settings Saved</h3>
-              <p className="text-sm text-green-700 mt-1">
+              <h3 className="font-semibold text-success">Settings Saved</h3>
+              <p className="text-sm text-success mt-1">
                 Portal settings have been updated successfully
               </p>
             </div>
@@ -350,12 +350,12 @@ export const ClientPortalSettings: React.FC = () => {
           onToggle={() => toggleSection('base_config')}
         >
           <div className="space-y-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-info-muted border border-info/30 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-blue-900 mb-1">Multi-Tenant Configuration</h4>
-                  <p className="text-sm text-blue-700">
+                  <h4 className="font-semibold text-info mb-1">Multi-Tenant Configuration</h4>
+                  <p className="text-sm text-info">
                     When reselling this system to another company, they should configure their own portal
                     base URL here. If left empty, the system will use the current domain automatically.
                   </p>
@@ -369,7 +369,7 @@ export const ClientPortalSettings: React.FC = () => {
                   type="checkbox"
                   checked={formData.portal_enabled}
                   onChange={(e) => updateField('portal_enabled', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm font-semibold text-slate-700">Enable Client Portal</span>
               </label>
@@ -428,13 +428,13 @@ export const ClientPortalSettings: React.FC = () => {
               <div
                 className={`p-4 rounded-lg border ${
                   testUrlResult.success
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-red-50 border-red-200'
+                    ? 'bg-success-muted border-success/30'
+                    : 'bg-danger-muted border-danger/30'
                 }`}
               >
                 <p
                   className={`text-sm ${
-                    testUrlResult.success ? 'text-green-700' : 'text-red-700'
+                    testUrlResult.success ? 'text-success' : 'text-danger'
                   }`}
                 >
                   {testUrlResult.message}
@@ -471,7 +471,7 @@ export const ClientPortalSettings: React.FC = () => {
                   type="checkbox"
                   checked={formData.portal_maintenance_mode}
                   onChange={(e) => updateField('portal_maintenance_mode', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm font-semibold text-slate-700">Maintenance Mode</span>
               </label>
@@ -484,7 +484,7 @@ export const ClientPortalSettings: React.FC = () => {
                     value={formData.portal_maintenance_message}
                     onChange={(e) => updateField('portal_maintenance_message', e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               )}
@@ -522,7 +522,7 @@ export const ClientPortalSettings: React.FC = () => {
                   type="checkbox"
                   checked={formData.portal_require_email_verification}
                   onChange={(e) => updateField('portal_require_email_verification', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm font-semibold text-slate-700">
                   Require Email Verification
@@ -539,7 +539,7 @@ export const ClientPortalSettings: React.FC = () => {
                   type="checkbox"
                   checked={formData.portal_allow_self_registration}
                   onChange={(e) => updateField('portal_allow_self_registration', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm font-semibold text-slate-700">
                   Allow Self Registration
@@ -565,7 +565,7 @@ export const ClientPortalSettings: React.FC = () => {
                   type="checkbox"
                   checked={formData.portal_show_company_info}
                   onChange={(e) => updateField('portal_show_company_info', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm font-semibold text-slate-700">Show Company Information</span>
               </label>
@@ -577,7 +577,7 @@ export const ClientPortalSettings: React.FC = () => {
                   type="checkbox"
                   checked={formData.portal_allow_case_creation}
                   onChange={(e) => updateField('portal_allow_case_creation', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm font-semibold text-slate-700">Allow Case Creation</span>
               </label>
@@ -589,7 +589,7 @@ export const ClientPortalSettings: React.FC = () => {
                   type="checkbox"
                   checked={formData.portal_allow_quote_requests}
                   onChange={(e) => updateField('portal_allow_quote_requests', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm font-semibold text-slate-700">Allow Quote Requests</span>
               </label>
@@ -601,7 +601,7 @@ export const ClientPortalSettings: React.FC = () => {
                   type="checkbox"
                   checked={formData.portal_allow_file_uploads}
                   onChange={(e) => updateField('portal_allow_file_uploads', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm font-semibold text-slate-700">Allow File Uploads</span>
               </label>

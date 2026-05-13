@@ -48,11 +48,11 @@ export const SecuritySettingsPage: React.FC = () => {
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <div className="p-6 border-b border-slate-200">
           <div className="flex items-start gap-4">
-            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${mfaEnabled ? 'bg-green-50' : 'bg-amber-50'}`}>
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${mfaEnabled ? 'bg-success-muted' : 'bg-warning-muted'}`}>
               {mfaEnabled ? (
-                <ShieldCheck className="w-6 h-6 text-green-600" />
+                <ShieldCheck className="w-6 h-6 text-success" />
               ) : (
-                <ShieldOff className="w-6 h-6 text-amber-600" />
+                <ShieldOff className="w-6 h-6 text-warning" />
               )}
             </div>
             <div className="flex-1">
@@ -72,23 +72,23 @@ export const SecuritySettingsPage: React.FC = () => {
             </div>
           ) : mfaEnabled ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <ShieldCheck className="w-5 h-5 text-green-600" />
+              <div className="flex items-center gap-2 p-3 bg-success-muted border border-success/30 rounded-lg">
+                <ShieldCheck className="w-5 h-5 text-success" />
                 <div>
-                  <p className="text-sm font-medium text-green-800">2FA is enabled</p>
-                  <p className="text-xs text-green-600">
+                  <p className="text-sm font-medium text-success">2FA is enabled</p>
+                  <p className="text-xs text-success">
                     Enrolled: {verifiedFactor?.created_at ? new Date(verifiedFactor.created_at).toLocaleDateString() : 'Unknown'}
                   </p>
                 </div>
               </div>
 
               {showDisableConfirm ? (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg space-y-3">
+                <div className="p-4 bg-danger-muted border border-danger/30 rounded-lg space-y-3">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
+                    <AlertTriangle className="w-5 h-5 text-danger mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-red-800">Disable Two-Factor Authentication?</p>
-                      <p className="text-xs text-red-600 mt-1">
+                      <p className="text-sm font-medium text-danger">Disable Two-Factor Authentication?</p>
+                      <p className="text-xs text-danger mt-1">
                         This will remove the extra security layer from your account. You can re-enable it at any time.
                       </p>
                     </div>
@@ -103,7 +103,7 @@ export const SecuritySettingsPage: React.FC = () => {
                     <button
                       onClick={handleDisableMFA}
                       disabled={disabling}
-                      className="px-3 py-1.5 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                      className="px-3 py-1.5 text-sm text-danger-foreground bg-danger rounded-md hover:bg-danger/90 disabled:opacity-50 flex items-center gap-1"
                     >
                       {disabling && <Loader2 className="w-3 h-3 animate-spin" />}
                       Disable 2FA
@@ -113,7 +113,7 @@ export const SecuritySettingsPage: React.FC = () => {
               ) : (
                 <button
                   onClick={() => setShowDisableConfirm(true)}
-                  className="px-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                  className="px-4 py-2 text-sm text-danger border border-danger/30 rounded-lg hover:bg-danger-muted transition-colors"
                 >
                   Disable Two-Factor Authentication
                 </button>
@@ -121,16 +121,16 @@ export const SecuritySettingsPage: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-amber-600" />
-                <p className="text-sm text-amber-800">
+              <div className="flex items-center gap-2 p-3 bg-warning-muted border border-warning/30 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-warning" />
+                <p className="text-sm text-warning">
                   2FA is not enabled. We strongly recommend enabling it for admin accounts.
                 </p>
               </div>
 
               <button
                 onClick={() => setShowEnrollment(true)}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
               >
                 <KeyRound className="w-4 h-4" />
                 Enable Two-Factor Authentication

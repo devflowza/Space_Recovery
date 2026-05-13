@@ -122,7 +122,7 @@ export default function InventoryDetailModal({
     return (
       <Modal isOpen={isOpen} onClose={onClose} title="Loading..." size="xl">
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       </Modal>
     );
@@ -196,7 +196,7 @@ export default function InventoryDetailModal({
             <Card className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
-                  <Briefcase className="w-5 h-5 text-blue-600 mr-2" />
+                  <Briefcase className="w-5 h-5 text-primary mr-2" />
                   <h3 className="text-sm font-semibold text-slate-900">Case Assignment</h3>
                 </div>
                 {activeAssignment && (
@@ -246,7 +246,7 @@ export default function InventoryDetailModal({
                       onClick={() => setShowDefectiveModal(true)}
                       variant="outline"
                       size="sm"
-                      className="flex-1 border-red-300 text-red-700 hover:bg-red-50 text-xs"
+                      className="flex-1 border-danger/30 text-danger hover:bg-danger-muted text-xs"
                     >
                       <XCircle className="w-3 h-3 mr-1" />
                       Defective
@@ -254,7 +254,7 @@ export default function InventoryDetailModal({
                     <Button
                       onClick={() => setShowCompleteModal(true)}
                       size="sm"
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs"
+                      className="flex-1 bg-success hover:bg-success/90 text-success-foreground text-xs"
                     >
                       <CheckCircle2 className="w-3 h-3 mr-1" />
                       Working & Reuse
@@ -264,8 +264,8 @@ export default function InventoryDetailModal({
               ) : (
                 <div className="space-y-3">
                   {availability && !availability.available && (
-                    <div className="bg-red-50 border border-red-200 rounded p-2">
-                      <p className="text-xs text-red-700">{availability.reason}</p>
+                    <div className="bg-danger-muted border border-danger/30 rounded p-2">
+                      <p className="text-xs text-danger">{availability.reason}</p>
                     </div>
                   )}
 
@@ -289,7 +289,7 @@ export default function InventoryDetailModal({
                     <button
                       type="button"
                       onClick={() => setShowAssignmentNotes(!showAssignmentNotes)}
-                      className="flex items-center text-xs text-blue-600 hover:text-blue-700"
+                      className="flex items-center text-xs text-primary hover:text-primary/90"
                     >
                       {showAssignmentNotes ? (
                         <ChevronUp className="w-3 h-3 mr-1" />
@@ -304,7 +304,7 @@ export default function InventoryDetailModal({
                         value={assignmentNotes}
                         onChange={(e) => setAssignmentNotes(e.target.value)}
                         rows={2}
-                        className="w-full mt-2 px-2 py-1 border border-slate-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full mt-2 px-2 py-1 border border-slate-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                         placeholder="Assignment notes..."
                         disabled={assignmentLoading}
                       />
@@ -312,8 +312,8 @@ export default function InventoryDetailModal({
                   </div>
 
                   {assignmentError && (
-                    <div className="bg-red-50 border border-red-200 rounded p-2">
-                      <p className="text-xs text-red-700">{assignmentError}</p>
+                    <div className="bg-danger-muted border border-danger/30 rounded p-2">
+                      <p className="text-xs text-danger">{assignmentError}</p>
                     </div>
                   )}
 
@@ -333,7 +333,7 @@ export default function InventoryDetailModal({
           <div className="grid grid-cols-2 gap-3">
             <Card className="p-3">
               <div className="flex items-center space-x-2">
-                <Package className="w-6 h-6 text-blue-500" />
+                <Package className="w-6 h-6 text-primary" />
                 <div>
                   <p className="text-xs text-slate-500">Available</p>
                   <p className="text-lg font-bold text-slate-900">{item.quantity_available || 0}</p>
@@ -342,7 +342,7 @@ export default function InventoryDetailModal({
             </Card>
             <Card className="p-3">
               <div className="flex items-center space-x-2">
-                <TrendingUp className="w-6 h-6 text-green-500" />
+                <TrendingUp className="w-6 h-6 text-success" />
                 <div>
                   <p className="text-xs text-slate-500">In Use</p>
                   <p className="text-lg font-bold text-slate-900">{item.quantity_in_use || 0}</p>
@@ -354,7 +354,7 @@ export default function InventoryDetailModal({
           {/* Location */}
           <Card className="p-3">
             <div className="flex items-center space-x-2">
-              <MapPin className="w-5 h-5 text-purple-500" />
+              <MapPin className="w-5 h-5 text-accent" />
               <div>
                 <p className="text-xs text-slate-500">Storage Location</p>
                 <p className="text-sm font-semibold text-slate-900">
@@ -489,9 +489,9 @@ export default function InventoryDetailModal({
 
                 <dl className="space-y-3">
                   {item.inventory_code && (
-                    <div className="col-span-2 bg-blue-50 border-2 border-blue-200 rounded-lg p-3">
-                      <dt className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1.5">Inventory ID</dt>
-                      <dd className="text-lg font-bold text-blue-700 font-mono tracking-wide">{item.inventory_code}</dd>
+                    <div className="col-span-2 bg-info-muted border-2 border-info/30 rounded-lg p-3">
+                      <dt className="text-xs font-semibold text-info uppercase tracking-wider mb-1.5">Inventory ID</dt>
+                      <dd className="text-lg font-bold text-info font-mono tracking-wide">{item.inventory_code}</dd>
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-x-4 gap-y-3">

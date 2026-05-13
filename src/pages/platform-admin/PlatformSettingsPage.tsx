@@ -84,12 +84,12 @@ export const PlatformSettingsPage: React.FC = () => {
               className={`text-left p-6 bg-white rounded-xl border transition-all ${
                 isDisabled
                   ? 'border-slate-100 opacity-50 cursor-not-allowed'
-                  : 'border-slate-200 hover:border-blue-300 hover:shadow-md cursor-pointer'
+                  : 'border-slate-200 hover:border-primary/40 hover:shadow-md cursor-pointer'
               }`}
             >
               <div className="flex items-start justify-between mb-4">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 rounded-lg bg-info-muted flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-primary" />
                 </div>
                 {count !== null && count > 0 && (
                   <span className="text-sm font-medium text-slate-500">{count} items</span>

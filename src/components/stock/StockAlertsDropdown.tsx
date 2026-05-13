@@ -11,9 +11,9 @@ import { stockKeys } from '../../lib/queryKeys';
 import { useNavigate } from 'react-router-dom';
 
 const SEVERITY_CONFIG = {
-  critical: { icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50' },
-  warning: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50' },
-  info: { icon: Info, color: 'text-blue-500', bg: 'bg-blue-50' },
+  critical: { icon: AlertCircle, color: 'text-danger', bg: 'bg-danger-muted' },
+  warning: { icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning-muted' },
+  info: { icon: Info, color: 'text-info', bg: 'bg-info-muted' },
 };
 
 export const StockAlertsDropdown: React.FC = () => {
@@ -79,7 +79,7 @@ export const StockAlertsDropdown: React.FC = () => {
       >
         <Bell className="w-5 h-5" />
         {count > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-danger text-danger-foreground text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
             {count > 9 ? '9+' : count}
           </span>
         )}
@@ -92,7 +92,7 @@ export const StockAlertsDropdown: React.FC = () => {
               <Bell className="w-4 h-4 text-slate-600" />
               <h3 className="text-sm font-semibold text-slate-900">Stock Alerts</h3>
               {count > 0 && (
-                <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full">
+                <span className="px-1.5 py-0.5 bg-danger-muted text-danger text-xs font-bold rounded-full">
                   {count}
                 </span>
               )}
@@ -100,7 +100,7 @@ export const StockAlertsDropdown: React.FC = () => {
             {alerts.length > 0 && (
               <button
                 onClick={markAllRead}
-                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                className="flex items-center gap-1 text-xs text-primary hover:text-primary/90 font-medium"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
                 Mark all read
@@ -121,7 +121,7 @@ export const StockAlertsDropdown: React.FC = () => {
                 return (
                   <div
                     key={alert.id}
-                    className={`flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors ${!alert.is_read ? 'bg-blue-50/30' : ''}`}
+                    className={`flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors ${!alert.is_read ? 'bg-info-muted/30' : ''}`}
                   >
                     <div className={`mt-0.5 p-1.5 rounded-lg ${cfg.bg} flex-shrink-0`}>
                       <Icon className={`w-3.5 h-3.5 ${cfg.color}`} />
@@ -144,7 +144,7 @@ export const StockAlertsDropdown: React.FC = () => {
                       )}
                       <button
                         onClick={() => dismissMutation.mutate(alert.id)}
-                        className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-red-500 transition-colors"
+                        className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-danger transition-colors"
                         title="Dismiss"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -159,7 +159,7 @@ export const StockAlertsDropdown: React.FC = () => {
           <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/60">
             <button
               onClick={() => { navigate('/stock/reports?tab=alerts'); setOpen(false); }}
-              className="w-full text-center text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="w-full text-center text-xs text-primary hover:text-primary/90 font-medium"
             >
               View all alerts
             </button>

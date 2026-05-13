@@ -50,7 +50,7 @@ interface NumberSequence {
 
 const SEQUENCE_CONFIG = [
   { key: 'case', label: 'Case ID', description: 'Data recovery case tracking', category: 'Operations', color: '#10b981' },
-  { key: 'invoice', label: 'Invoice Number', description: 'Customer invoicing', category: 'Financial', color: '#8b5cf6' },
+  { key: 'invoice', label: 'Invoice Number', description: 'Customer invoicing', category: 'Financial', color: 'rgb(var(--color-accent))' },
   { key: 'quote', label: 'Quote Number', description: 'Price quotations', category: 'Financial', color: '#3b82f6' },
   { key: 'proforma_invoice', label: 'Proforma Invoice Number', description: 'Advance payment invoices', category: 'Financial', color: '#ec4899' },
   { key: 'expense', label: 'Expense Number', description: 'Business expense tracking', category: 'Financial', color: '#ef4444' },
@@ -59,19 +59,19 @@ const SEQUENCE_CONFIG = [
   { key: 'customer', label: 'Customer Number', description: 'Individual client IDs', category: 'Business Partners', color: '#06b6d4' },
   { key: 'company', label: 'Company Number', description: 'Corporate client IDs', category: 'Business Partners', color: '#0ea5e9' },
   { key: 'supplier', label: 'Supplier Number', description: 'Vendor/supplier IDs', category: 'Business Partners', color: '#14b8a6' },
-  { key: 'asset', label: 'Asset Number', description: 'Company asset tracking', category: 'Inventory', color: '#6366f1' },
-  { key: 'inventory', label: 'Inventory Number', description: 'Inventory item tracking', category: 'Inventory', color: '#8b5cf6' },
+  { key: 'asset', label: 'Asset Number', description: 'Company asset tracking', category: 'Inventory', color: 'rgb(var(--color-accent))' },
+  { key: 'inventory', label: 'Inventory Number', description: 'Inventory item tracking', category: 'Inventory', color: 'rgb(var(--color-accent))' },
   { key: 'clone_drive', label: 'Clone ID', description: 'Physical clone drive resources', category: 'Inventory', color: '#3b82f6' },
-  { key: 'stock', label: 'Stock Number', description: 'Stock item management', category: 'Inventory', color: '#a855f7' },
+  { key: 'stock', label: 'Stock Number', description: 'Stock item management', category: 'Inventory', color: 'rgb(var(--color-accent))' },
   { key: 'purchase_order', label: 'Purchase Order Number', description: 'Supplier purchase orders', category: 'Operations', color: '#d946ef' },
   { key: 'document', label: 'Document Number', description: 'General document tracking', category: 'Operations', color: '#64748b' },
   { key: 'employee', label: 'Employee Number', description: 'Employee ID numbers', category: 'HR', color: '#22c55e' },
   { key: 'user', label: 'User Number', description: 'System user IDs', category: 'HR', color: '#84cc16' },
   { key: 'report_evaluation', label: 'Evaluation Report Number', description: 'Assessment and recovery feasibility reports', category: 'Reports', color: '#3b82f6' },
   { key: 'report_service', label: 'Service Report Number', description: 'Service work documentation reports', category: 'Reports', color: '#10b981' },
-  { key: 'report_server', label: 'Server Report Number', description: 'Server recovery and RAID reports', category: 'Reports', color: '#8b5cf6' },
+  { key: 'report_server', label: 'Server Report Number', description: 'Server recovery and RAID reports', category: 'Reports', color: 'rgb(var(--color-accent))' },
   { key: 'report_malware', label: 'Malware Report Number', description: 'Malware analysis and remediation reports', category: 'Reports', color: '#ef4444' },
-  { key: 'report_forensic', label: 'Forensic Report Number', description: 'Legal forensic investigation reports', category: 'Reports', color: '#6366f1' },
+  { key: 'report_forensic', label: 'Forensic Report Number', description: 'Legal forensic investigation reports', category: 'Reports', color: 'rgb(var(--color-accent))' },
   { key: 'report_data_destruction', label: 'Data Destruction Report Number', description: 'Certified data destruction reports', category: 'Reports', color: '#dc2626' },
   { key: 'report_prevention', label: 'Prevention Report Number', description: 'Preventative recommendations reports', category: 'Reports', color: '#f59e0b' },
 ];
@@ -184,10 +184,9 @@ export const SystemNumbers: React.FC = () => {
       <div className="mb-8 flex items-start justify-between">
         <div className="flex items-start gap-6">
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
+            className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg bg-accent"
             style={{
-              backgroundColor: '#6366f1',
-              boxShadow: '0 10px 40px -10px #6366f180'
+              boxShadow: '0 10px 40px -10px rgb(var(--color-accent) / 0.5)'
             }}
           >
             <Hash className="w-8 h-8 text-white" />
@@ -207,7 +206,7 @@ export const SystemNumbers: React.FC = () => {
                 placeholder="Search sequences..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -217,8 +216,8 @@ export const SystemNumbers: React.FC = () => {
                   onClick={() => setSelectedCategory(category)}
                   className={`px-4 py-2.5 rounded-xl font-medium transition-all ${
                     selectedCategory === category
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-white text-slate-700 border border-slate-300 hover:border-blue-400 hover:bg-blue-50'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-white text-slate-700 border border-slate-300 hover:border-primary/60 hover:bg-info-muted'
                   }`}
                 >
                   {category}
@@ -237,7 +236,7 @@ export const SystemNumbers: React.FC = () => {
 
             {isLoading ? (
               <div className="text-center py-16">
-                <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+                <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
                 <p className="text-slate-500 mt-4">Loading sequences...</p>
               </div>
             ) : (
@@ -304,7 +303,7 @@ export const SystemNumbers: React.FC = () => {
 
                         <button
                           onClick={() => handleEdit(displaySeq)}
-                          className="p-2.5 hover:bg-blue-50 rounded-lg transition-all hover:scale-110"
+                          className="p-2.5 hover:bg-info-muted rounded-lg transition-all hover:scale-110"
                           style={{ color: type.color }}
                           title="Edit Sequence"
                         >
@@ -364,7 +363,7 @@ export const SystemNumbers: React.FC = () => {
               id="reset_annually"
               checked={formData.reset_annually}
               onChange={(e) => setFormData({ ...formData, reset_annually: e.target.checked })}
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
             />
             <label htmlFor="reset_annually" className="text-sm font-semibold text-slate-700">
               Reset numbering annually
@@ -375,7 +374,7 @@ export const SystemNumbers: React.FC = () => {
             <Button type="button" variant="secondary" onClick={handleCloseModal} disabled={updateMutation.isPending}>
               Cancel
             </Button>
-            <Button type="submit" style={{ backgroundColor: '#6366f1' }} disabled={updateMutation.isPending}>
+            <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? 'Updating...' : 'Update Sequence'}
             </Button>
           </div>

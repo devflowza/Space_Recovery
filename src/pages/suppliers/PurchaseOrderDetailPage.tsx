@@ -123,7 +123,7 @@ export default function PurchaseOrderDetailPage() {
                 <div>
                   <button
                     onClick={() => navigate(`/suppliers/${order.supplier.id}`)}
-                    className="text-blue-600 hover:text-blue-800 font-semibold text-lg"
+                    className="text-primary hover:text-primary/80 font-semibold text-lg"
                   >
                     {order.supplier.name}
                   </button>
@@ -212,7 +212,7 @@ export default function PurchaseOrderDetailPage() {
                       <td colSpan={3} className="px-4 py-3 text-right text-base font-bold text-gray-900">
                         Total:
                       </td>
-                      <td className="px-4 py-3 text-right text-lg font-bold text-blue-600">
+                      <td className="px-4 py-3 text-right text-lg font-bold text-primary">
                         ${order.total_amount?.toFixed(2) || '0.00'}
                       </td>
                     </tr>
@@ -243,7 +243,7 @@ export default function PurchaseOrderDetailPage() {
                       <label className="text-sm font-medium text-gray-700 block mb-1">
                         Internal Notes
                       </label>
-                      <p className="text-gray-600 bg-yellow-50 p-3 rounded border border-yellow-200">
+                      <p className="text-gray-600 bg-warning-muted p-3 rounded border border-warning/30">
                         {order.internal_notes}
                       </p>
                     </div>
@@ -312,7 +312,7 @@ export default function PurchaseOrderDetailPage() {
               <div className="space-y-3">
                 {order.approved_at && (
                   <div className="flex items-start gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                    <CheckCircle className="w-5 h-5 text-success mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">Approved</p>
                       <p className="text-xs text-gray-500">
@@ -326,7 +326,7 @@ export default function PurchaseOrderDetailPage() {
                 )}
                 {order.received_at && (
                   <div className="flex items-start gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                    <CheckCircle className="w-5 h-5 text-success mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">Received</p>
                       <p className="text-xs text-gray-500">

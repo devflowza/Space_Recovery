@@ -94,7 +94,7 @@ export const SupportTicketsPage: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="all">All</option>
                 <option value="open">Open</option>
@@ -110,7 +110,7 @@ export const SupportTicketsPage: React.FC = () => {
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="all">All</option>
                 <option value="low">Low</option>
@@ -125,7 +125,7 @@ export const SupportTicketsPage: React.FC = () => {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="all">All</option>
                 <option value="general">General</option>
@@ -141,7 +141,7 @@ export const SupportTicketsPage: React.FC = () => {
               <select
                 value={assignedToFilter}
                 onChange={(e) => setAssignedToFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="all">All</option>
                 <option value="unassigned">Unassigned</option>
@@ -166,7 +166,7 @@ export const SupportTicketsPage: React.FC = () => {
           {(statusFilter !== 'all' || priorityFilter !== 'all' || categoryFilter !== 'all' || assignedToFilter !== 'all' || searchQuery) && (
             <button
               onClick={handleResetFilters}
-              className="text-sm text-blue-600 hover:text-blue-700"
+              className="text-sm text-primary hover:text-primary/90"
             >
               Reset Filters
             </button>
@@ -177,7 +177,7 @@ export const SupportTicketsPage: React.FC = () => {
       <Card>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         ) : tickets.length === 0 ? (
           <div className="p-12 text-center">
@@ -186,7 +186,7 @@ export const SupportTicketsPage: React.FC = () => {
             {(statusFilter !== 'all' || priorityFilter !== 'all' || categoryFilter !== 'all' || searchQuery) && (
               <button
                 onClick={handleResetFilters}
-                className="text-sm text-blue-600 hover:text-blue-700 mt-2"
+                className="text-sm text-primary hover:text-primary/90 mt-2"
               >
                 Reset Filters
               </button>
@@ -222,7 +222,7 @@ export const SupportTicketsPage: React.FC = () => {
                         e.stopPropagation();
                         navigate(`/platform-admin/tenants/${ticket.tenant_id}`);
                       }}
-                      className="text-blue-600 hover:text-blue-700 text-sm"
+                      className="text-primary hover:text-primary/90 text-sm"
                     >
                       {ticket.tenant?.company_name || 'Unknown'}
                     </button>

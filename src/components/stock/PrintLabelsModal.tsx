@@ -93,7 +93,7 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({ items, onClo
               type="text"
               value={config.companyName}
               onChange={(e) => set('companyName', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Your company name (optional)"
             />
           </div>
@@ -104,7 +104,7 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({ items, onClo
               type="text"
               value={config.locationName}
               onChange={(e) => set('locationName', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Storage location (optional)"
             />
           </div>
@@ -115,7 +115,7 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({ items, onClo
                 type="checkbox"
                 checked={config.showPrice}
                 onChange={(e) => set('showPrice', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                className="w-4 h-4 rounded border-slate-300 text-primary"
               />
               Show Price
             </label>
@@ -124,7 +124,7 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({ items, onClo
                 type="checkbox"
                 checked={config.showBarcode}
                 onChange={(e) => set('showBarcode', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                className="w-4 h-4 rounded border-slate-300 text-primary"
               />
               Show Barcode/SKU
             </label>

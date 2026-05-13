@@ -63,9 +63,9 @@ export const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({
   const storagePercentage = storageLimit > 0 ? (storageUsed / storageLimit) * 100 : 0;
 
   const getProgressColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 75) return 'bg-amber-500';
-    return 'bg-blue-500';
+    if (percentage >= 90) return 'bg-danger';
+    if (percentage >= 75) return 'bg-warning';
+    return 'bg-primary';
   };
 
   return (
@@ -246,7 +246,7 @@ export const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({
                     return (
                       <div
                         key={i}
-                        className="flex-1 bg-blue-500 rounded-t"
+                        className="flex-1 bg-primary rounded-t"
                         style={{ height: `${height}%` }}
                         title={`${metric.health_score} on ${new Date(metric.recorded_at).toLocaleDateString()}`}
                       />

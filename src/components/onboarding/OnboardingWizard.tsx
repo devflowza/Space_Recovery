@@ -80,9 +80,9 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         isCompleted
-                          ? 'bg-green-500 text-white'
+                          ? 'bg-success text-success-foreground'
                           : isActive
-                          ? 'bg-blue-500 text-white'
+                          ? 'bg-primary text-primary-foreground'
                           : 'bg-gray-200 text-gray-400'
                       }`}
                     >
@@ -103,7 +103,7 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
                   {index < totalSteps - 1 && (
                     <div
                       className={`h-1 flex-1 mx-2 ${
-                        isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                        isCompleted ? 'bg-success' : 'bg-gray-200'
                       }`}
                     />
                   )}
@@ -114,7 +114,7 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
 
           <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
             <div
-              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -173,8 +173,8 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip, loading }: StepContentP
           <p className="text-gray-600 mb-6">
             Set up your company profile to personalize invoices, quotes, and reports.
           </p>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-800">
+          <div className="bg-info-muted border border-info/30 rounded-lg p-4 mb-6">
+            <p className="text-sm text-info">
               You can configure your company details in Settings → General Settings at any time.
             </p>
           </div>
@@ -199,8 +199,8 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip, loading }: StepContentP
           <p className="text-gray-600 mb-6">
             Configure your preferred currency, timezone, and date format for the entire system.
           </p>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-800">
+          <div className="bg-info-muted border border-info/30 rounded-lg p-4 mb-6">
+            <p className="text-sm text-info">
               These settings can be changed later in Settings → General Settings.
             </p>
           </div>
@@ -225,8 +225,8 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip, loading }: StepContentP
           <p className="text-gray-600 mb-6">
             Would you like to load sample data to explore xSuite features? This includes a demo customer and case.
           </p>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-yellow-800">
+          <div className="bg-warning-muted border border-warning/30 rounded-lg p-4 mb-6">
+            <p className="text-sm text-warning">
               Sample data is clearly marked and can be deleted at any time.
             </p>
           </div>
@@ -252,8 +252,8 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip, loading }: StepContentP
           <p className="text-gray-600 mb-6">
             Collaborate with your team by inviting technicians, sales staff, and accountants.
           </p>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-800">
+          <div className="bg-info-muted border border-info/30 rounded-lg p-4 mb-6">
+            <p className="text-sm text-info">
               You can invite team members anytime from Settings → User Management.
             </p>
           </div>
@@ -274,7 +274,7 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip, loading }: StepContentP
     case 'complete':
       return (
         <div className="text-center">
-          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-4">You're All Set!</h2>
           <p className="text-gray-600 mb-8">
             Your xSuite account is ready. Start managing your data recovery cases, customers, and operations.

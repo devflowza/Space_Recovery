@@ -118,7 +118,7 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="Brief description of the service..."
             />
           </div>
@@ -127,7 +127,7 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
             <>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Default Price <span className="text-red-500 ml-1">*</span>
+                  Default Price <span className="text-danger ml-1">*</span>
                 </label>
                 <div className="relative">
                   {locale?.currency_position === 'before' && (
@@ -145,7 +145,7 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
                     }
                     required
                     placeholder={locale ? `0.${'0'.repeat(locale.decimal_places)}` : "0.00"}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
                       locale?.currency_position === 'before' ? 'pl-12' : locale?.currency_position === 'after' ? 'pr-16' : ''
                     }`}
                   />
@@ -192,7 +192,7 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   rows={12}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary font-mono text-sm"
                   placeholder="Enter your terms and conditions here. Line breaks will be preserved exactly as you type them."
                   style={{ whiteSpace: 'pre-wrap' }}
                 />
@@ -209,7 +209,7 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
                 type="checkbox"
                 checked={formData.is_default}
                 onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
-                className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                className="mr-2 h-4 w-4 text-primary focus:ring-primary border-slate-300 rounded"
               />
               <span className="text-sm font-medium text-slate-700">Set as default template</span>
             </label>
@@ -219,7 +219,7 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
                 type="checkbox"
                 checked={formData.is_active}
                 onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                className="mr-2 h-4 w-4 text-primary focus:ring-primary border-slate-300 rounded"
               />
               <span className="text-sm font-medium text-slate-700">Active</span>
             </label>

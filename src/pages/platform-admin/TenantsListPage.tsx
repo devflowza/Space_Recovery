@@ -93,7 +93,7 @@ export const TenantsListPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           >
             <option value="">All Statuses</option>
             <option value="active">Active</option>
@@ -104,7 +104,7 @@ export const TenantsListPage: React.FC = () => {
           <select
             value={planFilter}
             onChange={(e) => setPlanFilter(e.target.value)}
-            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           >
             <option value="">All Plans</option>
             <option value="trial">Trial</option>
@@ -116,7 +116,7 @@ export const TenantsListPage: React.FC = () => {
           <select
             value={riskFilter}
             onChange={(e) => setRiskFilter(e.target.value)}
-            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           >
             <option value="">All Risk Levels</option>
             <option value="low">Low Risk</option>
@@ -128,7 +128,7 @@ export const TenantsListPage: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={handleSearch}
-              className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
             >
               <Filter className="w-5 h-5" />
             </button>
@@ -146,7 +146,7 @@ export const TenantsListPage: React.FC = () => {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : tenants && tenants.length > 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -214,10 +214,10 @@ export const TenantsListPage: React.FC = () => {
                             <div
                               className={`h-full ${
                                 tenant.health.health_score >= 70
-                                  ? 'bg-green-500'
+                                  ? 'bg-success'
                                   : tenant.health.health_score >= 50
-                                  ? 'bg-yellow-500'
-                                  : 'bg-red-500'
+                                  ? 'bg-warning'
+                                  : 'bg-danger'
                               }`}
                               style={{ width: `${tenant.health.health_score}%` }}
                             />
@@ -251,7 +251,7 @@ export const TenantsListPage: React.FC = () => {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => navigate(`/platform-admin/tenants/${tenant.id}`)}
-                          className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                          className="text-sm font-medium text-primary hover:text-primary/90"
                         >
                           View
                         </button>
@@ -259,7 +259,7 @@ export const TenantsListPage: React.FC = () => {
                           <button
                             onClick={() => suspendMutation.mutate(tenant.id)}
                             disabled={suspendMutation.isPending}
-                            className="text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+                            className="text-sm font-medium text-danger hover:text-danger/90 disabled:opacity-50"
                           >
                             Suspend
                           </button>
@@ -267,7 +267,7 @@ export const TenantsListPage: React.FC = () => {
                           <button
                             onClick={() => reactivateMutation.mutate(tenant.id)}
                             disabled={reactivateMutation.isPending}
-                            className="text-sm font-medium text-green-600 hover:text-green-700 disabled:opacity-50"
+                            className="text-sm font-medium text-success hover:text-success/90 disabled:opacity-50"
                           >
                             Reactivate
                           </button>

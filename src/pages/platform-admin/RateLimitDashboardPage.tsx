@@ -39,16 +39,16 @@ export const RateLimitDashboardPage: React.FC = () => {
   };
 
   const getUsageColor = (percent: number) => {
-    if (percent >= 90) return 'text-red-600 bg-red-50';
-    if (percent >= 70) return 'text-amber-600 bg-amber-50';
-    return 'text-green-600 bg-green-50';
+    if (percent >= 90) return 'text-danger bg-danger-muted';
+    if (percent >= 70) return 'text-warning bg-warning-muted';
+    return 'text-success bg-success-muted';
   };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <Gauge className="w-6 h-6 text-blue-600" />
+          <Gauge className="w-6 h-6 text-primary" />
           Rate Limit Dashboard
         </h1>
         <p className="text-sm text-slate-600 mt-1">
@@ -58,11 +58,11 @@ export const RateLimitDashboardPage: React.FC = () => {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : limits.length === 0 ? (
         <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-          <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-400" />
+          <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-success/60" />
           <p className="text-slate-500">No rate limit activity recorded</p>
         </div>
       ) : (
@@ -89,7 +89,7 @@ export const RateLimitDashboardPage: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${percent >= 90 ? 'bg-red-500' : percent >= 70 ? 'bg-amber-500' : 'bg-green-500'}`}
+                            className={`h-full rounded-full transition-all ${percent >= 90 ? 'bg-danger' : percent >= 70 ? 'bg-warning' : 'bg-success'}`}
                             style={{ width: `${percent}%` }}
                           />
                         </div>

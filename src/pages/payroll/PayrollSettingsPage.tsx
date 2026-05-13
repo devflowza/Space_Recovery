@@ -257,7 +257,7 @@ export const PayrollSettingsPage: React.FC = () => {
                     handleChange('currency_symbol', currency.symbol);
                     handleChange('currency_decimals', currency.decimals);
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 >
                   <option value="USD">US Dollar (USD)</option>

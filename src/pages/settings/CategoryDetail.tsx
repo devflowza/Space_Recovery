@@ -411,7 +411,7 @@ export const CategoryDetail: React.FC = () => {
                 onClick={() => handleToggleActive(row)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${
                   row.is_active !== false
-                    ? 'bg-green-50 text-green-700 hover:bg-green-100'
+                    ? 'bg-success-muted text-success hover:bg-success-muted/80'
                     : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                 }`}
                 title={row.is_active !== false ? 'Click to disable' : 'Click to enable'}
@@ -452,14 +452,14 @@ export const CategoryDetail: React.FC = () => {
             )}
             <button
               onClick={() => handleEdit(row)}
-              className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all hover:scale-110"
+              className="p-2 hover:bg-info-muted rounded-lg text-primary transition-all hover:scale-110"
               title="Edit"
             >
               <Edit2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleDelete(row.id)}
-              className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-all hover:scale-110"
+              className="p-2 hover:bg-danger-muted rounded-lg text-danger transition-all hover:scale-110"
               title="Delete"
             >
               <Trash2 className="w-4 h-4" />
@@ -615,7 +615,7 @@ export const CategoryDetail: React.FC = () => {
 
           {isLoading ? (
             <div className="text-center py-16">
-              <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
               <p className="text-slate-500 mt-4">Loading...</p>
             </div>
           ) : items.length === 0 && searchQuery ? (

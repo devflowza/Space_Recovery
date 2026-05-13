@@ -118,7 +118,7 @@ const StockLocationsPage: React.FC = () => {
       />
 
       {showForm && (
-        <div className="bg-white rounded-xl border border-blue-200 shadow-sm p-5">
+        <div className="bg-white rounded-xl border border-primary/30 shadow-sm p-5">
           <h3 className="text-sm font-semibold text-slate-800 mb-4">New Location</h3>
           <LocationForm
             form={form}
@@ -132,7 +132,7 @@ const StockLocationsPage: React.FC = () => {
 
       {isLoading ? (
         <div className="py-12 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -165,7 +165,7 @@ const StockLocationsPage: React.FC = () => {
                           </div>
                           <span className="font-medium text-slate-900">{loc.name}</span>
                           {loc.is_default && (
-                            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-semibold rounded uppercase tracking-wider">
+                            <span className="px-1.5 py-0.5 bg-info-muted text-info text-[10px] font-semibold rounded uppercase tracking-wider">
                               Default
                             </span>
                           )}
@@ -198,7 +198,7 @@ const StockLocationsPage: React.FC = () => {
                     </tr>
                     {editingId === loc.id && (
                       <tr>
-                        <td colSpan={6} className="px-4 py-4 bg-blue-50/40 border-b border-blue-100">
+                        <td colSpan={6} className="px-4 py-4 bg-info-muted/40 border-b border-info/20">
                           <LocationForm
                             form={form}
                             onChange={setForm}
@@ -240,7 +240,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ form, onChange, onSave, onC
           type="text"
           value={form.name}
           onChange={(e) => set('name', e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           placeholder="e.g. Main Warehouse"
         />
       </div>
@@ -250,7 +250,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ form, onChange, onSave, onC
           type="text"
           value={form.code}
           onChange={(e) => set('code', e.target.value.toUpperCase())}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary uppercase"
           placeholder="e.g. MAIN"
           maxLength={20}
         />
@@ -261,7 +261,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ form, onChange, onSave, onC
           type="text"
           value={form.description}
           onChange={(e) => set('description', e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           placeholder="Optional description..."
         />
       </div>
@@ -271,7 +271,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ form, onChange, onSave, onC
             type="checkbox"
             checked={form.is_active}
             onChange={(e) => set('is_active', e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 text-blue-600"
+            className="w-4 h-4 rounded border-slate-300 text-primary"
           />
           Active
         </label>
@@ -280,7 +280,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ form, onChange, onSave, onC
             type="checkbox"
             checked={form.is_default}
             onChange={(e) => set('is_default', e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 text-blue-600"
+            className="w-4 h-4 rounded border-slate-300 text-primary"
           />
           Default Location
         </label>

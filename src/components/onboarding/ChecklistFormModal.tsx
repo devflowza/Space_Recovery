@@ -175,13 +175,13 @@ export const ChecklistFormModal: React.FC<Props> = ({ isOpen, onClose, checklist
       <form onSubmit={handleSubmit(data => mutation.mutate(data))} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Checklist Name <span className="text-red-500">*</span>
+            Checklist Name <span className="text-danger">*</span>
           </label>
           <Input
             {...register('name', { required: 'Name is required' })}
             placeholder="e.g. Engineering Onboarding"
           />
-          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+          {errors.name && <p className="text-danger text-xs mt-1">{errors.name.message}</p>}
         </div>
 
         <div>
@@ -190,7 +190,7 @@ export const ChecklistFormModal: React.FC<Props> = ({ isOpen, onClose, checklist
             {...register('description')}
             rows={2}
             placeholder="What this checklist covers..."
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 
@@ -199,7 +199,7 @@ export const ChecklistFormModal: React.FC<Props> = ({ isOpen, onClose, checklist
             <label className="block text-sm font-medium text-slate-700 mb-1">For Position</label>
             <select
               {...register('for_position_id')}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Any position</option>
               {positions.map(p => (
@@ -212,7 +212,7 @@ export const ChecklistFormModal: React.FC<Props> = ({ isOpen, onClose, checklist
               <input
                 type="checkbox"
                 {...register('is_default')}
-                className="rounded border-slate-300 text-blue-600"
+                className="rounded border-slate-300 text-primary"
               />
               Default checklist
             </label>
@@ -220,7 +220,7 @@ export const ChecklistFormModal: React.FC<Props> = ({ isOpen, onClose, checklist
               <input
                 type="checkbox"
                 {...register('is_active')}
-                className="rounded border-slate-300 text-blue-600"
+                className="rounded border-slate-300 text-primary"
               />
               Active
             </label>
@@ -233,7 +233,7 @@ export const ChecklistFormModal: React.FC<Props> = ({ isOpen, onClose, checklist
             <button
               type="button"
               onClick={addItem}
-              className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 px-2.5 py-1.5 hover:bg-blue-50 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/90 px-2.5 py-1.5 hover:bg-primary/10 rounded-lg transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Item
@@ -266,7 +266,7 @@ export const ChecklistFormModal: React.FC<Props> = ({ isOpen, onClose, checklist
                           value={item.assigned_to_role}
                           onChange={e => updateItem(index, 'assigned_to_role', e.target.value)}
                           placeholder="Assigned role (optional)"
-                          className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         />
                         <div className="flex items-center gap-2">
                           <input
@@ -275,7 +275,7 @@ export const ChecklistFormModal: React.FC<Props> = ({ isOpen, onClose, checklist
                             onChange={e => updateItem(index, 'due_days_from_start', e.target.value)}
                             placeholder="Days"
                             min="0"
-                            className="w-20 border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-20 border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                           />
                           <span className="text-xs text-slate-500">days from start</span>
                         </div>
@@ -284,7 +284,7 @@ export const ChecklistFormModal: React.FC<Props> = ({ isOpen, onClose, checklist
                     <button
                       type="button"
                       onClick={() => removeItem(index)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-0.5"
+                      className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors mt-0.5"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

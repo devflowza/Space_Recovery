@@ -84,7 +84,7 @@ export default function PlansPage() {
           className={cn(
             'px-6 py-2 rounded-lg font-medium transition-colors',
             billingInterval === 'month'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-primary text-primary-foreground'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           )}
         >
@@ -95,13 +95,13 @@ export default function PlansPage() {
           className={cn(
             'px-6 py-2 rounded-lg font-medium transition-colors relative',
             billingInterval === 'year'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-primary text-primary-foreground'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           )}
         >
           Yearly
           {savingsPercentage > 0 && (
-            <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+            <span className="absolute -top-2 -right-2 bg-success text-success-foreground text-xs px-2 py-0.5 rounded-full">
               Save {savingsPercentage}%
             </span>
           )}
@@ -124,12 +124,12 @@ export default function PlansPage() {
               key={plan.id}
               className={cn(
                 'relative',
-                isProfessional && 'border-blue-500 shadow-lg scale-105 border-2'
+                isProfessional && 'border-primary shadow-lg scale-105 border-2'
               )}
             >
               {isProfessional && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-blue-600 text-white px-4 py-1">
+                  <Badge className="bg-primary text-primary-foreground px-4 py-1">
                     <Sparkles className="w-3 h-3 mr-1" />
                     Most Popular
                   </Badge>
@@ -168,7 +168,7 @@ export default function PlansPage() {
                   <div className="text-sm font-medium text-gray-700">Key Features:</div>
                   {plan.max_users && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span>
                         {plan.max_users === 999999 ? 'Unlimited' : plan.max_users} team members
                       </span>
@@ -176,7 +176,7 @@ export default function PlansPage() {
                   )}
                   {plan.max_cases_per_month && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span>
                         {plan.max_cases_per_month === 999999
                           ? 'Unlimited'
@@ -187,7 +187,7 @@ export default function PlansPage() {
                   )}
                   {plan.max_storage_gb && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span>
                         {plan.max_storage_gb === 999999 ? 'Unlimited' : `${plan.max_storage_gb}GB`}{' '}
                         storage
@@ -196,7 +196,7 @@ export default function PlansPage() {
                   )}
                   {displayFeatures.map((feature) => (
                     <div key={feature.id} className="flex items-center gap-2 text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span className={feature.is_highlighted ? 'font-medium' : ''}>
                         {feature.display_name}
                       </span>
@@ -267,7 +267,7 @@ export default function PlansPage() {
               Contact our team at{' '}
               <a
                 href="mailto:support@xsuite.space"
-                className="text-blue-600 hover:text-blue-700"
+                className="text-primary hover:text-primary/90"
               >
                 support@xsuite.space
               </a>{' '}

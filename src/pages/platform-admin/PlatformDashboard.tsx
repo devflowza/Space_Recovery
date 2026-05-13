@@ -36,7 +36,7 @@ export const PlatformDashboard: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-slate-600">Loading dashboard...</p>
         </div>
       </div>
@@ -64,30 +64,30 @@ export const PlatformDashboard: React.FC = () => {
           label="Total Tenants"
           value={stats?.totalTenants || 0}
           icon={Users}
-          color="text-blue-600"
-          bgColor="bg-blue-50"
+          color="text-primary"
+          bgColor="bg-info-muted"
           onClick={() => navigate('/platform-admin/tenants')}
         />
         <StatsCard
           label="Active Tenants"
           value={stats?.activeTenants || 0}
           icon={Users}
-          color="text-green-600"
-          bgColor="bg-green-50"
+          color="text-success"
+          bgColor="bg-success-muted"
         />
         <StatsCard
           label="Monthly Recurring Revenue"
           value={formatCurrency(stats?.mrr || 0)}
           icon={DollarSign}
-          color="text-emerald-600"
-          bgColor="bg-emerald-50"
+          color="text-success"
+          bgColor="bg-success-muted"
         />
         <StatsCard
           label="Annual Recurring Revenue"
           value={formatCurrency(stats?.arr || 0)}
           icon={TrendingUp}
-          color="text-blue-600"
-          bgColor="bg-blue-50"
+          color="text-primary"
+          bgColor="bg-info-muted"
         />
       </div>
 
@@ -103,22 +103,22 @@ export const PlatformDashboard: React.FC = () => {
           label="Active Users Today"
           value={stats?.activeUsersToday || 0}
           icon={Users}
-          color="text-green-600"
-          bgColor="bg-green-50"
+          color="text-success"
+          bgColor="bg-success-muted"
         />
         <StatsCard
           label="Trial Tenants"
           value={stats?.trialTenants || 0}
           icon={Users}
-          color="text-orange-600"
-          bgColor="bg-orange-50"
+          color="text-warning"
+          bgColor="bg-warning-muted"
         />
         <StatsCard
           label="Open Support Tickets"
           value={stats?.openTickets || 0}
           icon={Ticket}
-          color="text-purple-600"
-          bgColor="bg-purple-50"
+          color="text-accent-foreground"
+          bgColor="bg-accent/20"
           onClick={() => navigate('/platform-admin/tickets')}
         />
       </div>
@@ -180,7 +180,7 @@ export const PlatformDashboard: React.FC = () => {
             </div>
             <button
               onClick={() => navigate('/platform-admin/tenants?risk=high')}
-              className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-primary hover:bg-info-muted rounded-lg transition-colors"
             >
               View All
             </button>
@@ -227,10 +227,10 @@ export const PlatformDashboard: React.FC = () => {
                           <div
                             className={`h-full ${
                               (tenant.health?.health_score || 0) >= 70
-                                ? 'bg-green-500'
+                                ? 'bg-success'
                                 : (tenant.health?.health_score || 0) >= 50
-                                ? 'bg-yellow-500'
-                                : 'bg-red-500'
+                                ? 'bg-warning'
+                                : 'bg-danger'
                             }`}
                             style={{ width: `${tenant.health?.health_score || 0}%` }}
                           />
@@ -266,7 +266,7 @@ export const PlatformDashboard: React.FC = () => {
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => navigate(`/platform-admin/tenants/${tenant.id}`)}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                        className="text-sm font-medium text-primary hover:text-primary/90"
                       >
                         View Details
                       </button>

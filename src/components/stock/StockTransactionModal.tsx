@@ -192,7 +192,7 @@ export function StockTransactionModal({
                   setForm((p) => ({ ...p, serialNumbers: e.target.value }))
                 }
                 placeholder="SN001, SN002, SN003"
-                className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               />
             </div>
           </>
@@ -214,7 +214,7 @@ export function StockTransactionModal({
                 ? 'Purchase order, supplier info, etc.'
                 : 'Reason for usage, job details, etc.'
             }
-            className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 

@@ -16,10 +16,10 @@ import {
 import { ReviewFormModal } from '../../components/performance/ReviewFormModal';
 import toast from 'react-hot-toast';
 
-const statusBadgeColor: Record<string, 'gray' | 'blue' | 'green' | 'orange'> = {
-  draft: 'gray',
-  submitted: 'blue',
-  completed: 'green',
+const statusBadgeVariant: Record<string, 'default' | 'info' | 'success' | 'warning'> = {
+  draft: 'default',
+  submitted: 'info',
+  completed: 'success',
 };
 
 const statusLabel: Record<string, string> = {
@@ -31,7 +31,7 @@ const statusLabel: Record<string, string> = {
 function StarDisplay({ rating }: { rating: number | null }) {
   if (!rating) return <span className="text-xs text-slate-400">No rating</span>;
   const color =
-    rating <= 2 ? 'text-red-400 fill-red-400' : rating === 3 ? 'text-amber-400 fill-amber-400' : 'text-green-500 fill-green-500';
+    rating <= 2 ? 'text-danger fill-danger' : rating === 3 ? 'text-warning fill-warning' : 'text-success fill-success';
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map(n => (
@@ -84,7 +84,7 @@ function ReviewCard({
             )}
           </div>
         </div>
-        <Badge color={statusBadgeColor[review.status || 'draft']}>
+        <Badge variant={statusBadgeVariant[review.status || 'draft']}>
           {statusLabel[review.status || 'draft']}
         </Badge>
       </div>
@@ -123,7 +123,7 @@ function ReviewCard({
           {review.status === 'draft' && (
             <button
               onClick={() => onSubmit(review.id)}
-              className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors"
+              className="flex items-center gap-1 text-xs font-medium text-info hover:bg-info-muted px-2 py-1 rounded-lg transition-colors"
             >
               <Send className="w-3 h-3" />
               Submit
@@ -132,7 +132,7 @@ function ReviewCard({
           {review.status === 'submitted' && (
             <button
               onClick={() => onComplete(review.id)}
-              className="flex items-center gap-1 text-xs font-medium text-green-600 hover:bg-green-50 px-2 py-1 rounded-lg transition-colors"
+              className="flex items-center gap-1 text-xs font-medium text-success hover:bg-success-muted px-2 py-1 rounded-lg transition-colors"
             >
               <CheckCheck className="w-3 h-3" />
               Complete
@@ -148,7 +148,7 @@ function ReviewCard({
           </button>
           <button
             onClick={() => onDelete(review.id)}
-            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -216,11 +216,8 @@ export const PerformanceReviewsPage: React.FC = () => {
     <div className="p-8 max-w-[1800px] mx-auto">
       <div className="mb-8 flex items-start justify-between">
         <div className="flex items-start gap-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{ backgroundColor: '#f59e0b', boxShadow: '0 10px 40px -10px #f59e0b80' }}
-          >
-            <TrendingUp className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-warning shadow-warning/40">
+            <TrendingUp className="w-7 h-7 text-warning-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-1">Performance Reviews</h1>
@@ -239,11 +236,11 @@ export const PerformanceReviewsPage: React.FC = () => {
         {[
           { label: 'Total Reviews', value: stats?.total ?? '–', icon: TrendingUp, bg: 'from-slate-50 to-slate-100', border: 'border-slate-200', icon_bg: 'bg-slate-500', text: 'text-slate-600', num: 'text-slate-900' },
           { label: 'Draft', value: stats?.draft ?? '–', icon: Clock, bg: 'from-gray-50 to-gray-100', border: 'border-gray-200', icon_bg: 'bg-gray-400', text: 'text-gray-600', num: 'text-gray-900' },
-          { label: 'Submitted', value: stats?.submitted ?? '–', icon: Send, bg: 'from-blue-50 to-blue-100', border: 'border-blue-200', icon_bg: 'bg-blue-500', text: 'text-blue-600', num: 'text-blue-900' },
-          { label: 'Completed', value: stats?.completed ?? '–', icon: CheckCircle, bg: 'from-green-50 to-green-100', border: 'border-green-200', icon_bg: 'bg-green-500', text: 'text-green-600', num: 'text-green-900' },
-          { label: 'Avg. Rating', value: avgRating ? `${avgRating}/5` : '–', icon: Star, bg: 'from-amber-50 to-amber-100', border: 'border-amber-200', icon_bg: 'bg-amber-500', text: 'text-amber-600', num: 'text-amber-900' },
+          { label: 'Submitted', value: stats?.submitted ?? '–', icon: Send, bg: 'bg-info-muted', border: 'border-info/30', icon_bg: 'bg-info', text: 'text-info', num: 'text-info' },
+          { label: 'Completed', value: stats?.completed ?? '–', icon: CheckCircle, bg: 'bg-success-muted', border: 'border-success/30', icon_bg: 'bg-success', text: 'text-success', num: 'text-success' },
+          { label: 'Avg. Rating', value: avgRating ? `${avgRating}/5` : '–', icon: Star, bg: 'bg-warning-muted', border: 'border-warning/30', icon_bg: 'bg-warning', text: 'text-warning', num: 'text-warning' },
         ].map(card => (
-          <div key={card.label} className={`bg-gradient-to-br ${card.bg} rounded-xl p-4 border ${card.border}`}>
+          <div key={card.label} className={`${card.bg} rounded-xl p-4 border ${card.border}`}>
             <div className="flex items-center justify-between">
               <div>
                 <p className={`text-xs font-medium ${card.text} uppercase tracking-wide`}>{card.label}</p>
@@ -265,7 +262,7 @@ export const PerformanceReviewsPage: React.FC = () => {
             placeholder="Search by employee name..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -273,7 +270,7 @@ export const PerformanceReviewsPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">All statuses</option>
             {REVIEW_STATUSES.map(s => (
@@ -287,7 +284,7 @@ export const PerformanceReviewsPage: React.FC = () => {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredReviews.length === 0 ? (
         <div className="text-center py-16">

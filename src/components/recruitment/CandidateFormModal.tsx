@@ -123,37 +123,37 @@ export const CandidateFormModal: React.FC<Props> = ({ isOpen, onClose, candidate
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              First Name <span className="text-red-500">*</span>
+              First Name <span className="text-danger">*</span>
             </label>
             <Input
               {...register('first_name', { required: 'Required' })}
               placeholder="First name"
             />
-            {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name.message}</p>}
+            {errors.first_name && <p className="text-danger text-xs mt-1">{errors.first_name.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Last Name <span className="text-red-500">*</span>
+              Last Name <span className="text-danger">*</span>
             </label>
             <Input
               {...register('last_name', { required: 'Required' })}
               placeholder="Last name"
             />
-            {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name.message}</p>}
+            {errors.last_name && <p className="text-danger text-xs mt-1">{errors.last_name.message}</p>}
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Email <span className="text-red-500">*</span>
+              Email <span className="text-danger">*</span>
             </label>
             <Input
               {...register('email', { required: 'Required' })}
               type="email"
               placeholder="email@example.com"
             />
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+            {errors.email && <p className="text-danger text-xs mt-1">{errors.email.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
@@ -166,7 +166,7 @@ export const CandidateFormModal: React.FC<Props> = ({ isOpen, onClose, candidate
             <label className="block text-sm font-medium text-slate-700 mb-1">Stage</label>
             <select
               {...register('current_stage')}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {CANDIDATE_STAGES.map(s => (
                 <option key={s} value={s}>{stageLabels[s]}</option>
@@ -177,7 +177,7 @@ export const CandidateFormModal: React.FC<Props> = ({ isOpen, onClose, candidate
             <label className="block text-sm font-medium text-slate-700 mb-1">Rating (1-5)</label>
             <select
               {...register('rating')}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">No rating</option>
               {[1, 2, 3, 4, 5].map(n => (
@@ -193,7 +193,7 @@ export const CandidateFormModal: React.FC<Props> = ({ isOpen, onClose, candidate
             {...register('cover_letter')}
             rows={3}
             placeholder="Candidate's cover letter or summary..."
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 
@@ -203,7 +203,7 @@ export const CandidateFormModal: React.FC<Props> = ({ isOpen, onClose, candidate
             {...register('notes')}
             rows={3}
             placeholder="Internal recruiter notes..."
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 

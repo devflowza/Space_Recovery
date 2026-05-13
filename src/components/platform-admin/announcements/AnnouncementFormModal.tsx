@@ -175,7 +175,7 @@ export const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Title (English) <span className="text-red-500">*</span>
+                  Title (English) <span className="text-danger">*</span>
                 </label>
                 <Input
                   value={titleEn}
@@ -197,7 +197,7 @@ export const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Content (English) <span className="text-red-500">*</span>
+                  Content (English) <span className="text-danger">*</span>
                 </label>
                 <textarea
                   value={contentEn}
@@ -205,7 +205,7 @@ export const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({
                   placeholder="Enter announcement content"
                   rows={4}
                   required
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 />
               </div>
 
@@ -217,7 +217,7 @@ export const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({
                   placeholder="أدخل محتوى الإعلان"
                   rows={4}
                   dir="rtl"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 />
               </div>
 
@@ -227,7 +227,7 @@ export const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="info">Info</option>
                     <option value="warning">Warning</option>
@@ -242,7 +242,7 @@ export const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({
                   <select
                     value={targetAudience}
                     onChange={(e) => setTargetAudience(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="all">All</option>
                     <option value="starter">Starter</option>
@@ -297,14 +297,14 @@ export const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({
                 <h4 className="text-sm font-medium text-slate-700">Schedule</h4>
                 <div>
                   <label className="block text-sm text-slate-600 mb-1">
-                    Starts At <span className="text-red-500">*</span>
+                    Starts At <span className="text-danger">*</span>
                   </label>
                   <input
                     type="datetime-local"
                     value={startsAt}
                     onChange={(e) => setStartsAt(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
@@ -313,7 +313,7 @@ export const AnnouncementFormModal: React.FC<AnnouncementFormModalProps> = ({
                     type="datetime-local"
                     value={endsAt}
                     onChange={(e) => setEndsAt(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>

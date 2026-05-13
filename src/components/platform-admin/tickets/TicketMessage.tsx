@@ -17,9 +17,9 @@ export const TicketMessage: React.FC<TicketMessageProps> = ({ message }) => {
   const isSupport = message.sender_type === 'support';
 
   const bgColor = isInternal
-    ? 'bg-amber-50 border-amber-200'
+    ? 'bg-warning-muted border-warning/30'
     : isSupport
-    ? 'bg-blue-50 border-blue-200'
+    ? 'bg-info-muted border-info/30'
     : 'bg-slate-50 border-slate-200';
 
   const Icon = isSupport ? Headphones : User;
@@ -29,9 +29,9 @@ export const TicketMessage: React.FC<TicketMessageProps> = ({ message }) => {
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            isSupport ? 'bg-blue-100' : 'bg-slate-200'
+            isSupport ? 'bg-info-muted' : 'bg-slate-200'
           }`}>
-            <Icon className={`w-4 h-4 ${isSupport ? 'text-blue-600' : 'text-slate-600'}`} />
+            <Icon className={`w-4 h-4 ${isSupport ? 'text-info' : 'text-slate-600'}`} />
           </div>
           <div>
             <div className="flex items-center gap-2">

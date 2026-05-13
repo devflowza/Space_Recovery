@@ -37,7 +37,7 @@ export const SerialNumberSelect: React.FC<SerialNumberSelectProps> = ({
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value || null)}
       disabled={disabled || serials.length === 0}
-      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed text-sm"
+      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-slate-100 disabled:cursor-not-allowed text-sm"
     >
       <option value="">Select serial number...</option>
       {serials.length === 0 ? (

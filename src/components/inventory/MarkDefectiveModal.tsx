@@ -81,14 +81,14 @@ export function MarkDefectiveModal({
       className="!max-w-lg"
     >
       <div className="space-y-2">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-2">
+        <div className="bg-danger-muted border border-danger/30 rounded-lg p-2">
           <div className="flex items-start">
-            <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-danger mt-0.5 mr-2 flex-shrink-0" />
             <div className="flex-1">
-              <h4 className="text-xs font-semibold text-red-900 mb-0.5">
+              <h4 className="text-xs font-semibold text-danger mb-0.5">
                 Mark Donor as Defective
               </h4>
-              <p className="text-xs text-red-700">
+              <p className="text-xs text-danger">
                 This will mark the donor part as defective and remove it from available inventory.
                 Both the status and condition will be automatically updated to reflect the failure.
               </p>
@@ -128,7 +128,7 @@ export function MarkDefectiveModal({
 
         <div>
           <label className="block text-xs font-medium text-slate-700 mb-1">
-            Defect Reason <span className="text-red-500">*</span>
+            Defect Reason <span className="text-danger">*</span>
           </label>
           <Input
             type="text"
@@ -170,7 +170,7 @@ export function MarkDefectiveModal({
             value={usageNotes}
             onChange={(e) => setUsageNotes(e.target.value)}
             rows={2}
-            className="w-full px-2 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+            className="w-full px-2 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-xs"
             placeholder="Provide additional details about the failure, diagnostic results, or any other relevant information..."
             disabled={loading}
           />
@@ -180,25 +180,25 @@ export function MarkDefectiveModal({
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-2">
+          <div className="bg-danger-muted border border-danger/30 rounded-lg p-2">
             <div className="flex items-center">
-              <XCircle className="w-4 h-4 text-red-500 mr-2" />
-              <p className="text-xs text-red-700">{error}</p>
+              <XCircle className="w-4 h-4 text-danger mr-2" />
+              <p className="text-xs text-danger">{error}</p>
             </div>
           </div>
         )}
 
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
-          <p className="text-xs text-amber-800">
+        <div className="bg-warning-muted border border-warning/30 rounded-lg p-2">
+          <p className="text-xs text-warning">
             <strong>Automatic Updates:</strong> This action will:
           </p>
-          <ul className="text-xs text-amber-800 mt-1 ml-4 space-y-0.5 list-disc">
+          <ul className="text-xs text-warning mt-1 ml-4 space-y-0.5 list-disc">
             <li>Update the inventory status to <strong>"Defective"</strong></li>
             <li>Update the condition to <strong>"Damaged"</strong></li>
             <li>Remove the item from available inventory</li>
             <li>Log both changes in the item history</li>
           </ul>
-          <p className="text-xs text-amber-800 mt-1.5">
+          <p className="text-xs text-warning mt-1.5">
             The item will no longer be available for assignment until its status is manually changed.
           </p>
         </div>
@@ -214,7 +214,7 @@ export function MarkDefectiveModal({
           <Button
             onClick={handleMarkDefective}
             disabled={loading || !defectReason.trim()}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-danger hover:bg-danger/90 text-danger-foreground"
           >
             {loading ? (
               <>

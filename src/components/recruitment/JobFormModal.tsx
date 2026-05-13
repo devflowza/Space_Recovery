@@ -146,13 +146,13 @@ export const JobFormModal: React.FC<Props> = ({ isOpen, onClose, job }) => {
       <form onSubmit={handleSubmit(data => mutation.mutate(data))} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Job Title <span className="text-red-500">*</span>
+            Job Title <span className="text-danger">*</span>
           </label>
           <Input
             {...register('title', { required: 'Title is required' })}
             placeholder="e.g. Data Recovery Engineer"
           />
-          {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+          {errors.title && <p className="text-danger text-xs mt-1">{errors.title.message}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -160,7 +160,7 @@ export const JobFormModal: React.FC<Props> = ({ isOpen, onClose, job }) => {
             <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
             <select
               {...register('department_id')}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select department...</option>
               {departments.map(d => (
@@ -173,7 +173,7 @@ export const JobFormModal: React.FC<Props> = ({ isOpen, onClose, job }) => {
             <label className="block text-sm font-medium text-slate-700 mb-1">Position</label>
             <select
               {...register('position_id')}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select position...</option>
               {positions.map(p => (
@@ -188,7 +188,7 @@ export const JobFormModal: React.FC<Props> = ({ isOpen, onClose, job }) => {
             <label className="block text-sm font-medium text-slate-700 mb-1">Employment Type</label>
             <select
               {...register('employment_type')}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {EMPLOYMENT_TYPES.map(t => (
                 <option key={t} value={t}>{employmentTypeLabels[t]}</option>
@@ -200,7 +200,7 @@ export const JobFormModal: React.FC<Props> = ({ isOpen, onClose, job }) => {
             <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
             <select
               {...register('status')}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {JOB_STATUSES.map(s => (
                 <option key={s} value={s}>{statusLabels[s]}</option>
@@ -242,7 +242,7 @@ export const JobFormModal: React.FC<Props> = ({ isOpen, onClose, job }) => {
             {...register('description')}
             rows={4}
             placeholder="Describe responsibilities, requirements, and qualifications..."
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 

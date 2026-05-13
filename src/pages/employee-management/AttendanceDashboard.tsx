@@ -47,14 +47,8 @@ export const AttendanceDashboard: React.FC = () => {
     <div className="p-8 max-w-[1800px] mx-auto">
       <div className="mb-8 flex items-start justify-between">
         <div className="flex items-start gap-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{
-              backgroundColor: '#3b82f6',
-              boxShadow: '0 10px 40px -10px #3b82f680',
-            }}
-          >
-            <Calendar className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-primary shadow-primary/40">
+            <Calendar className="w-7 h-7 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-2">Attendance Management</h1>
@@ -63,15 +57,15 @@ export const AttendanceDashboard: React.FC = () => {
             </p>
             <div className="flex gap-4 mt-3">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <div className="w-2 h-2 rounded-full bg-success"></div>
                 <span className="text-slate-600">{stats.present} Present</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <div className="w-2 h-2 rounded-full bg-danger"></div>
                 <span className="text-slate-600">{stats.absent} Absent</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                <div className="w-2 h-2 rounded-full bg-warning"></div>
                 <span className="text-slate-600">{stats.late} Late</span>
               </div>
             </div>
@@ -91,50 +85,50 @@ export const AttendanceDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+        <div className="bg-success-muted rounded-xl p-4 border border-success/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Present</p>
-              <p className="text-2xl font-bold text-green-900 mt-1">{loading ? '...' : stats.present}</p>
+              <p className="text-xs font-medium text-success uppercase tracking-wide">Present</p>
+              <p className="text-2xl font-bold text-success mt-1">{loading ? '...' : stats.present}</p>
             </div>
-            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-success-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+        <div className="bg-danger-muted rounded-xl p-4 border border-danger/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Absent</p>
-              <p className="text-2xl font-bold text-red-900 mt-1">{loading ? '...' : stats.absent}</p>
+              <p className="text-xs font-medium text-danger uppercase tracking-wide">Absent</p>
+              <p className="text-2xl font-bold text-danger mt-1">{loading ? '...' : stats.absent}</p>
             </div>
-            <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-danger rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-danger-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+        <div className="bg-warning-muted rounded-xl p-4 border border-warning/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-orange-600 uppercase tracking-wide">Late</p>
-              <p className="text-2xl font-bold text-orange-900 mt-1">{loading ? '...' : stats.late}</p>
+              <p className="text-xs font-medium text-warning uppercase tracking-wide">Late</p>
+              <p className="text-2xl font-bold text-warning mt-1">{loading ? '...' : stats.late}</p>
             </div>
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-warning rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 text-warning-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+        <div className="bg-info-muted rounded-xl p-4 border border-info/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">On Leave</p>
-              <p className="text-2xl font-bold text-blue-900 mt-1">{loading ? '...' : stats.onLeave}</p>
+              <p className="text-xs font-medium text-info uppercase tracking-wide">On Leave</p>
+              <p className="text-2xl font-bold text-info mt-1">{loading ? '...' : stats.onLeave}</p>
             </div>
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-info-foreground" />
             </div>
           </div>
         </div>

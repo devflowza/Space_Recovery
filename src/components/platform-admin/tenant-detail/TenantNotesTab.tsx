@@ -51,7 +51,7 @@ export const TenantNotesTab: React.FC<TenantNotesTabProps> = ({ tenantId }) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -66,7 +66,7 @@ export const TenantNotesTab: React.FC<TenantNotesTabProps> = ({ tenantId }) => {
             onChange={(e) => setNoteContent(e.target.value)}
             placeholder="Type your internal note here... This will only be visible to platform admins."
             rows={4}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
           <div className="flex justify-end">
             <Button
@@ -98,8 +98,8 @@ export const TenantNotesTab: React.FC<TenantNotesTabProps> = ({ tenantId }) => {
                 <div key={note.id} className="border border-slate-200 rounded-lg p-4 bg-slate-50">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <StickyNote className="w-4 h-4 text-blue-600" />
+                      <div className="w-8 h-8 bg-info-muted rounded-full flex items-center justify-center">
+                        <StickyNote className="w-4 h-4 text-info" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-slate-900">

@@ -103,9 +103,9 @@ export default function BillingPage() {
   const isCancelled = status === 'cancelled';
 
   const getProgressColor = (percentage: number) => {
-    if (percentage >= 100) return 'bg-red-500';
-    if (percentage >= 80) return 'bg-amber-500';
-    return 'bg-blue-500';
+    if (percentage >= 100) return 'bg-danger';
+    if (percentage >= 80) return 'bg-warning';
+    return 'bg-primary';
   };
 
   const calculatePercentage = (current: number, limit: number | null) => {
@@ -121,11 +121,11 @@ export default function BillingPage() {
       />
 
       {isPastDue && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-warning-muted border border-warning/30 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-amber-900">Payment Past Due</p>
-            <p className="text-sm text-amber-700 mt-1">
+            <p className="font-medium text-warning">Payment Past Due</p>
+            <p className="text-sm text-warning mt-1">
               Your payment is overdue. Please update your payment method to continue using xSuite.
             </p>
           </div>
@@ -133,11 +133,11 @@ export default function BillingPage() {
       )}
 
       {isCancelled && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-danger-muted border border-danger/30 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-red-900">Subscription Cancelled</p>
-            <p className="text-sm text-red-700 mt-1">
+            <p className="font-medium text-danger">Subscription Cancelled</p>
+            <p className="text-sm text-danger mt-1">
               Your subscription has been cancelled.
               {subscription?.cancelled_at &&
                 ` You have access until ${format(new Date(subscription.cancelled_at), 'MMM d, yyyy')}.`}
@@ -150,8 +150,8 @@ export default function BillingPage() {
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-info-muted rounded-lg flex items-center justify-center">
+                <CreditCard className="w-6 h-6 text-info" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Current Plan</h3>
@@ -254,11 +254,11 @@ export default function BillingPage() {
       )}
 
       {(!isActive || plan?.code === 'starter') && (
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <Card className="bg-info-muted border-info/30">
           <div className="p-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-info-muted rounded-lg flex items-center justify-center ring-1 ring-info/30">
+                <Sparkles className="w-6 h-6 text-info" />
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 mb-1">Upgrade for More</h3>

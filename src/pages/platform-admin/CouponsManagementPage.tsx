@@ -83,7 +83,7 @@ export const CouponsManagementPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -128,7 +128,7 @@ export const CouponsManagementPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-700">{coupon.name || '—'}</td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-semibold text-green-700 bg-green-50 px-2 py-1 rounded">
+                      <span className="text-sm font-semibold text-success bg-success-muted px-2 py-1 rounded">
                         {formatDiscount(coupon)} off
                       </span>
                     </td>
@@ -143,9 +143,9 @@ export const CouponsManagementPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       {isExpired ? (
-                        <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">Expired</span>
+                        <span className="text-xs font-medium text-danger bg-danger-muted px-2 py-1 rounded-full">Expired</span>
                       ) : coupon.is_active ? (
-                        <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">Active</span>
+                        <span className="text-xs font-medium text-success bg-success-muted px-2 py-1 rounded-full">Active</span>
                       ) : (
                         <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-full">Inactive</span>
                       )}
@@ -154,7 +154,7 @@ export const CouponsManagementPage: React.FC = () => {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => { setEditingCoupon(coupon); setShowFormModal(true); }}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-primary hover:bg-info-muted rounded-lg transition-colors"
                           title="Edit"
                         >
                           <Pencil className="w-4 h-4" />
@@ -165,7 +165,7 @@ export const CouponsManagementPage: React.FC = () => {
                               deleteMutation.mutate(coupon.id);
                             }
                           }}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />

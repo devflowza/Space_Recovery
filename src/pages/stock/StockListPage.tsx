@@ -194,8 +194,8 @@ export const StockListPage: React.FC = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
-          <div className="p-2.5 rounded-lg bg-blue-50">
-            <Boxes className="w-5 h-5 text-blue-600" />
+          <div className="p-2.5 rounded-lg bg-info-muted">
+            <Boxes className="w-5 h-5 text-info" />
           </div>
           <div>
             <p className="text-sm text-slate-500 font-medium">Total Items</p>
@@ -206,8 +206,8 @@ export const StockListPage: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
-          <div className="p-2.5 rounded-lg bg-green-50">
-            <DollarSign className="w-5 h-5 text-green-600" />
+          <div className="p-2.5 rounded-lg bg-success-muted">
+            <DollarSign className="w-5 h-5 text-success" />
           </div>
           <div>
             <p className="text-sm text-slate-500 font-medium">Stock Value</p>
@@ -219,27 +219,27 @@ export const StockListPage: React.FC = () => {
 
         <Link
           to="/resources/stock?filter=low-stock"
-          className="bg-white rounded-xl border border-amber-200 p-5 flex items-start gap-4 hover:bg-amber-50 transition-colors group"
+          className="bg-white rounded-xl border border-warning/30 p-5 flex items-start gap-4 hover:bg-warning-muted transition-colors group"
           onClick={() => setActiveTab('low_stock')}
         >
-          <div className="p-2.5 rounded-lg bg-amber-50 group-hover:bg-amber-100 transition-colors">
-            <TrendingDown className="w-5 h-5 text-amber-600" />
+          <div className="p-2.5 rounded-lg bg-warning-muted group-hover:bg-warning-muted/80 transition-colors">
+            <TrendingDown className="w-5 h-5 text-warning" />
           </div>
           <div>
-            <p className="text-sm text-amber-700 font-medium">Low Stock</p>
-            <p className="text-2xl font-bold text-amber-900 mt-0.5 tabular-nums">
+            <p className="text-sm text-warning font-medium">Low Stock</p>
+            <p className="text-2xl font-bold text-warning mt-0.5 tabular-nums">
               {stats?.lowStockCount ?? 0}
             </p>
           </div>
         </Link>
 
-        <div className="bg-white rounded-xl border border-red-200 p-5 flex items-start gap-4">
-          <div className="p-2.5 rounded-lg bg-red-50">
-            <AlertCircle className="w-5 h-5 text-red-600" />
+        <div className="bg-white rounded-xl border border-danger/30 p-5 flex items-start gap-4">
+          <div className="p-2.5 rounded-lg bg-danger-muted">
+            <AlertCircle className="w-5 h-5 text-danger" />
           </div>
           <div>
-            <p className="text-sm text-red-700 font-medium">Out of Stock</p>
-            <p className="text-2xl font-bold text-red-900 mt-0.5 tabular-nums">
+            <p className="text-sm text-danger font-medium">Out of Stock</p>
+            <p className="text-2xl font-bold text-danger mt-0.5 tabular-nums">
               {stats?.outOfStockCount ?? 0}
             </p>
           </div>
@@ -262,13 +262,13 @@ export const StockListPage: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-3.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                   activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                 }`}
               >
                 {tab.label}
                 {tab.id === 'low_stock' && (stats?.lowStockCount ?? 0) > 0 && (
-                  <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+                  <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-warning-muted text-warning text-xs font-bold">
                     {stats?.lowStockCount}
                   </span>
                 )}
@@ -285,7 +285,7 @@ export const StockListPage: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, brand, SKU..."
-              className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
 

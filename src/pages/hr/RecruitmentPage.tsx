@@ -31,27 +31,27 @@ const stageLabels: Record<string, string> = {
 
 const stageColors: Record<string, string> = {
   applied: 'bg-slate-100 border-slate-200',
-  screening: 'bg-blue-50 border-blue-200',
-  interview: 'bg-amber-50 border-amber-200',
-  offer: 'bg-emerald-50 border-emerald-200',
-  hired: 'bg-green-50 border-green-200',
-  rejected: 'bg-red-50 border-red-200',
+  screening: 'bg-info-muted border-info/30',
+  interview: 'bg-warning-muted border-warning/30',
+  offer: 'bg-success-muted border-success/30',
+  hired: 'bg-success-muted border-success/30',
+  rejected: 'bg-danger-muted border-danger/30',
 };
 
 const stageBadgeColors: Record<string, string> = {
   applied: 'bg-slate-100 text-slate-700',
-  screening: 'bg-blue-100 text-blue-700',
-  interview: 'bg-amber-100 text-amber-700',
-  offer: 'bg-emerald-100 text-emerald-700',
-  hired: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700',
+  screening: 'bg-info-muted text-info',
+  interview: 'bg-warning-muted text-warning',
+  offer: 'bg-success-muted text-success',
+  hired: 'bg-success-muted text-success',
+  rejected: 'bg-danger-muted text-danger',
 };
 
-const jobStatusColor: Record<string, string> = {
-  open: 'green',
-  closed: 'gray',
-  paused: 'orange',
-  draft: 'blue',
+const jobStatusVariant: Record<string, 'success' | 'default' | 'warning' | 'info'> = {
+  open: 'success',
+  closed: 'default',
+  paused: 'warning',
+  draft: 'info',
 };
 
 const employmentTypeLabel: Record<string, string> = {
@@ -68,7 +68,7 @@ function StarRating({ rating }: { rating: number | null }) {
       {[1, 2, 3, 4, 5].map(n => (
         <Star
           key={n}
-          className={`w-3 h-3 ${n <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`}
+          className={`w-3 h-3 ${n <= rating ? 'fill-warning text-warning' : 'text-slate-200'}`}
         />
       ))}
     </div>
@@ -108,7 +108,7 @@ function CandidateCard({
           </button>
           <button
             onClick={() => onDelete(candidate.id)}
-            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -139,7 +139,7 @@ function CandidateCard({
       {canAdvance && (
         <button
           onClick={() => onMoveStage(candidate.id, nextStage)}
-          className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg py-1.5 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-primary hover:text-primary/90 bg-primary/10 hover:bg-primary/20 rounded-lg py-1.5 transition-colors"
         >
           Move to {stageLabels[nextStage]}
           <ArrowRight className="w-3 h-3" />
@@ -149,7 +149,7 @@ function CandidateCard({
       {candidate.current_stage !== 'rejected' && candidate.current_stage !== 'hired' && (
         <button
           onClick={() => onMoveStage(candidate.id, 'rejected')}
-          className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg py-1 mt-1 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-danger hover:text-danger/90 hover:bg-danger-muted rounded-lg py-1 mt-1 transition-colors"
         >
           <X className="w-3 h-3" />
           Reject
@@ -236,11 +236,8 @@ export const RecruitmentPage: React.FC = () => {
     <div className="p-8 max-w-[1800px] mx-auto">
       <div className="mb-8 flex items-start justify-between">
         <div className="flex items-start gap-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{ backgroundColor: '#0ea5e9', boxShadow: '0 10px 40px -10px #0ea5e980' }}
-          >
-            <Briefcase className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-info shadow-info/40">
+            <Briefcase className="w-7 h-7 text-info-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-1">Recruitment</h1>
@@ -255,12 +252,12 @@ export const RecruitmentPage: React.FC = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Open Positions', value: stats?.openJobs ?? '–', icon: Briefcase, color: 'blue', bg: 'from-blue-50 to-blue-100', border: 'border-blue-200', icon_bg: 'bg-blue-500', text: 'text-blue-600', num: 'text-blue-900' },
-          { label: 'Total Applicants', value: stats?.totalCandidates ?? '–', icon: Users, color: 'slate', bg: 'from-slate-50 to-slate-100', border: 'border-slate-200', icon_bg: 'bg-slate-500', text: 'text-slate-600', num: 'text-slate-900' },
-          { label: 'In Interview', value: stats?.interviews ?? '–', icon: TrendingUp, color: 'amber', bg: 'from-amber-50 to-amber-100', border: 'border-amber-200', icon_bg: 'bg-amber-500', text: 'text-amber-600', num: 'text-amber-900' },
-          { label: 'Hired This Period', value: stats?.hired ?? '–', icon: UserCheck, color: 'green', bg: 'from-green-50 to-green-100', border: 'border-green-200', icon_bg: 'bg-green-500', text: 'text-green-600', num: 'text-green-900' },
+          { label: 'Open Positions', value: stats?.openJobs ?? '–', icon: Briefcase, color: 'info', bg: 'bg-info-muted', border: 'border-info/30', icon_bg: 'bg-info', text: 'text-info', num: 'text-info' },
+          { label: 'Total Applicants', value: stats?.totalCandidates ?? '–', icon: Users, color: 'slate', bg: 'bg-slate-100', border: 'border-slate-200', icon_bg: 'bg-slate-500', text: 'text-slate-600', num: 'text-slate-900' },
+          { label: 'In Interview', value: stats?.interviews ?? '–', icon: TrendingUp, color: 'warning', bg: 'bg-warning-muted', border: 'border-warning/30', icon_bg: 'bg-warning', text: 'text-warning', num: 'text-warning' },
+          { label: 'Hired This Period', value: stats?.hired ?? '–', icon: UserCheck, color: 'success', bg: 'bg-success-muted', border: 'border-success/30', icon_bg: 'bg-success', text: 'text-success', num: 'text-success' },
         ].map(card => (
-          <div key={card.label} className={`bg-gradient-to-br ${card.bg} rounded-xl p-4 border ${card.border}`}>
+          <div key={card.label} className={`${card.bg} rounded-xl p-4 border ${card.border}`}>
             <div className="flex items-center justify-between">
               <div>
                 <p className={`text-xs font-medium ${card.text} uppercase tracking-wide`}>{card.label}</p>
@@ -300,14 +297,14 @@ export const RecruitmentPage: React.FC = () => {
                 placeholder="Search jobs..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
 
           {jobsLoading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : filteredJobs.length === 0 ? (
             <div className="text-center py-16">
@@ -329,7 +326,7 @@ export const RecruitmentPage: React.FC = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-1 ml-3">
-                      <Badge color={jobStatusColor[job.status || 'open'] as 'green' | 'gray' | 'orange' | 'blue'}>
+                      <Badge variant={jobStatusVariant[job.status || 'open']}>
                         {job.status?.charAt(0).toUpperCase() + (job.status?.slice(1) || '')}
                       </Badge>
                     </div>
@@ -377,7 +374,7 @@ export const RecruitmentPage: React.FC = () => {
                           setPipelineJob(job);
                           setActiveTab('pipeline');
                         }}
-                        className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 px-2 py-1 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/90 px-2 py-1 hover:bg-primary/10 rounded-lg transition-colors"
                       >
                         Pipeline
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -401,7 +398,7 @@ export const RecruitmentPage: React.FC = () => {
                             deleteJobMutation.mutate(job.id);
                           }
                         }}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -425,7 +422,7 @@ export const RecruitmentPage: React.FC = () => {
                   const job = jobs.find(j => j.id === e.target.value) || null;
                   setPipelineJob(job);
                 }}
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">All jobs</option>
                 {jobs.map(j => (
@@ -446,7 +443,7 @@ export const RecruitmentPage: React.FC = () => {
 
           {candidatesLoading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 overflow-x-auto">

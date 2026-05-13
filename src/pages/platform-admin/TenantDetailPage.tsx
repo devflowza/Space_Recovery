@@ -71,7 +71,7 @@ export const TenantDetailPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
@@ -129,7 +129,7 @@ export const TenantDetailPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setShowSuspendDialog(true)}
-              className="border-red-300 text-red-600 hover:bg-red-50"
+              className="border-danger/40 text-danger hover:bg-danger-muted"
             >
               Suspend Tenant
             </Button>
@@ -137,7 +137,7 @@ export const TenantDetailPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setShowReactivateDialog(true)}
-              className="border-green-300 text-green-600 hover:bg-green-50"
+              className="border-success/40 text-success hover:bg-success-muted"
             >
               Reactivate Tenant
             </Button>
@@ -153,7 +153,7 @@ export const TenantDetailPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`px-1 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
               }`}
             >

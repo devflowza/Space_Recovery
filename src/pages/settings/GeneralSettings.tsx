@@ -529,7 +529,7 @@ export const GeneralSettings: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
             <p className="text-slate-500 mt-4">Loading settings...</p>
           </div>
         </div>
@@ -571,7 +571,7 @@ export const GeneralSettings: React.FC = () => {
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold text-slate-900">General Settings</h1>
               {hasUnsavedChanges && (
-                <span className="px-3 py-1 bg-amber-100 text-amber-800 text-sm font-semibold rounded-full border border-amber-300 flex items-center gap-1.5">
+                <span className="px-3 py-1 bg-warning-muted text-warning text-sm font-semibold rounded-full border border-warning/30 flex items-center gap-1.5">
                   <AlertCircle className="w-4 h-4" />
                   Unsaved Changes
                 </span>
@@ -582,7 +582,7 @@ export const GeneralSettings: React.FC = () => {
             </p>
             {lastSavedAt && (
               <p className="text-slate-500 text-sm mt-1 flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <CheckCircle2 className="w-4 h-4 text-success" />
                 Last saved at {lastSavedAt.toLocaleTimeString()}
               </p>
             )}
@@ -590,14 +590,14 @@ export const GeneralSettings: React.FC = () => {
         </div>
       </div>
 
-      <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
+      <div className="mb-6 bg-info-muted border-l-4 border-info rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-sm font-semibold text-blue-900 mb-1">
+            <h4 className="text-sm font-semibold text-info mb-1">
               Important: Save Your Changes
             </h4>
-            <p className="text-sm text-blue-800">
+            <p className="text-sm text-info">
               Form field changes (text inputs, colors, etc.) are only saved when you click the "Save Changes" button.
               Uploaded files (logos, QR codes) are saved immediately upon upload.
             </p>
@@ -914,7 +914,7 @@ export const GeneralSettings: React.FC = () => {
         <CollapsibleSection
           title="Legal & Compliance"
           icon={Shield}
-          color="#8b5cf6"
+          color="rgb(var(--color-accent))"
           fieldCount={5}
           isOpen={openSections.has('legal_compliance')}
           onToggle={() => toggleSection('legal_compliance')}
@@ -1216,14 +1216,14 @@ export const GeneralSettings: React.FC = () => {
           onToggle={() => toggleSection('document_language')}
         >
           <div className="space-y-4">
-            <div className="bg-cyan-50 border-l-4 border-cyan-500 rounded-lg p-4">
+            <div className="bg-info-muted border-l-4 border-info rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <Languages className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+                <Languages className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-semibold text-cyan-900 mb-1">
+                  <h4 className="text-sm font-semibold text-info mb-1">
                     Multi-Language Support for Documents
                   </h4>
-                  <p className="text-sm text-cyan-800">
+                  <p className="text-sm text-info">
                     Configure language settings for printed documents including receipts, quotes, and invoices.
                     When bilingual mode is enabled, document headings and labels will appear in both English
                     and your selected secondary language. Content and descriptions remain in English.
@@ -1259,7 +1259,7 @@ export const GeneralSettings: React.FC = () => {
                     });
                   }
                 }}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 {SUPPORTED_LANGUAGES.map((lang) => (
                   <option key={lang.code || 'none'} value={lang.code || 'none'}>
@@ -1273,11 +1273,11 @@ export const GeneralSettings: React.FC = () => {
             </div>
 
             {formData.localization?.document_language_settings?.mode === 'bilingual' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-blue-900 mb-2">Preview Example</h4>
+              <div className="bg-info-muted border border-info/30 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-info mb-2">Preview Example</h4>
                 <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between border-b border-blue-200 pb-2">
-                    <span className="font-medium text-blue-900">
+                  <div className="flex items-center justify-between border-b border-info/30 pb-2">
+                    <span className="font-medium text-info">
                       QUOTATION | {
                         formData.localization.document_language_settings.secondary_language === 'ar'
                           ? 'عرض سعر'
@@ -1309,7 +1309,7 @@ export const GeneralSettings: React.FC = () => {
                       }
                     </span>
                   </div>
-                  <div className="text-blue-800">
+                  <div className="text-info">
                     <span className="font-medium">Customer Information</span> | {
                       formData.localization.document_language_settings.secondary_language === 'ar'
                         ? 'معلومات العميل'
@@ -1340,7 +1340,7 @@ export const GeneralSettings: React.FC = () => {
                         : 'Translation'
                     }
                   </div>
-                  <p className="text-xs text-blue-700 mt-3 italic">
+                  <p className="text-xs text-info mt-3 italic">
                     Only headings, labels, and field names will be displayed in both languages.
                     All content, descriptions, and customer data will remain in English.
                   </p>
@@ -1353,20 +1353,20 @@ export const GeneralSettings: React.FC = () => {
         <CollapsibleSection
           title="Clone Drive Defaults"
           icon={HardDrive}
-          color="#8b5cf6"
+          color="rgb(var(--color-accent))"
           fieldCount={3}
           isOpen={openSections.has('clone_defaults')}
           onToggle={() => toggleSection('clone_defaults')}
         >
           <div className="space-y-4">
-            <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
+            <div className="bg-info-muted border-l-4 border-info rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <HardDrive className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <HardDrive className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-semibold text-blue-900 mb-1">
+                  <h4 className="text-sm font-semibold text-info mb-1">
                     Clone Drive Retention Settings
                   </h4>
-                  <p className="text-sm text-blue-800">
+                  <p className="text-sm text-info">
                     Configure default retention periods for clone drives. These settings will be automatically
                     applied when creating new clone records, but can be adjusted on a per-clone basis.
                   </p>
@@ -1443,11 +1443,11 @@ export const GeneralSettings: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="bg-warning-muted border border-warning/30 rounded-lg p-3">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs text-amber-900">
+                  <p className="text-xs text-warning">
                     <span className="font-semibold">Note:</span> These settings only affect new clone drives.
                     Existing clones will retain their current retention periods unless manually updated.
                   </p>
@@ -1459,15 +1459,15 @@ export const GeneralSettings: React.FC = () => {
       </div>
 
       {hasUnsavedChanges && (
-        <div className="mt-8 bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 rounded-lg p-4 shadow-md">
+        <div className="mt-8 bg-warning-muted border-l-4 border-warning rounded-lg p-4 shadow-md">
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-semibold text-amber-900 mb-1">
+                <h4 className="text-sm font-semibold text-warning mb-1">
                   You have unsaved changes
                 </h4>
-                <p className="text-sm text-amber-800">
+                <p className="text-sm text-warning">
                   Click "Save All Changes" below to persist your updates. Changes will be lost if you leave this page without saving.
                 </p>
               </div>

@@ -17,11 +17,11 @@ interface AnnouncementCardProps {
 }
 
 const typeConfig = {
-  info: { icon: Info, color: 'bg-blue-500' },
-  warning: { icon: AlertTriangle, color: 'bg-amber-500' },
-  maintenance: { icon: Construction, color: 'bg-red-500' },
-  feature: { icon: Sparkles, color: 'bg-green-500' },
-  promotion: { icon: Tag, color: 'bg-purple-500' },
+  info: { icon: Info, color: 'bg-info' },
+  warning: { icon: AlertTriangle, color: 'bg-warning' },
+  maintenance: { icon: Construction, color: 'bg-danger' },
+  feature: { icon: Sparkles, color: 'bg-success' },
+  promotion: { icon: Tag, color: 'bg-accent' },
 };
 
 export const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onEdit }) => {
@@ -159,7 +159,7 @@ export const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement
                           setShowDeleteDialog(true);
                           setShowMenu(false);
                         }}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        className="w-full px-4 py-2 text-left text-sm text-danger hover:bg-danger-muted flex items-center gap-2"
                       >
                         <Trash2 className="w-4 h-4" />
                         Delete

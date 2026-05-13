@@ -87,8 +87,8 @@ export const InventoryInsightsHeader: React.FC<InventoryInsightsHeaderProps> = (
               icon={HardDrive}
               label="Hard Drives"
               value={formatNumber(hddCount)}
-              iconColor="text-blue-600"
-              iconBgColor="bg-blue-100"
+              iconColor="text-info"
+              iconBgColor="bg-info-muted"
             />
             <InsightCard
               icon={Cpu}

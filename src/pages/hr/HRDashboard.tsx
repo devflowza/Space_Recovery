@@ -44,14 +44,8 @@ export const HRDashboard: React.FC = () => {
     <div className="p-8 max-w-[1800px] mx-auto">
       <div className="mb-8 flex items-start justify-between">
         <div className="flex items-start gap-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{
-              backgroundColor: '#3b82f6',
-              boxShadow: '0 10px 40px -10px #3b82f680',
-            }}
-          >
-            <Users className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-primary shadow-primary/40">
+            <Users className="w-7 h-7 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-2">Human Resources</h1>
@@ -60,15 +54,15 @@ export const HRDashboard: React.FC = () => {
             </p>
             <div className="flex gap-4 mt-3">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <div className="w-2 h-2 rounded-full bg-info"></div>
                 <span className="text-slate-600">{stats.totalEmployees} Total Employees</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <div className="w-2 h-2 rounded-full bg-success"></div>
                 <span className="text-slate-600">{stats.activeEmployees} Active</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                <div className="w-2 h-2 rounded-full bg-warning"></div>
                 <span className="text-slate-600">{stats.openPositions} Open Positions</span>
               </div>
             </div>
@@ -88,50 +82,50 @@ export const HRDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+        <div className="bg-info-muted rounded-xl p-4 border border-info/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Employees</p>
-              <p className="text-2xl font-bold text-blue-900 mt-1">{loading ? '...' : stats.totalEmployees}</p>
+              <p className="text-xs font-medium text-info uppercase tracking-wide">Total Employees</p>
+              <p className="text-2xl font-bold text-info mt-1">{loading ? '...' : stats.totalEmployees}</p>
             </div>
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-info-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+        <div className="bg-success-muted rounded-xl p-4 border border-success/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Active Employees</p>
-              <p className="text-2xl font-bold text-green-900 mt-1">{loading ? '...' : stats.activeEmployees}</p>
+              <p className="text-xs font-medium text-success uppercase tracking-wide">Active Employees</p>
+              <p className="text-2xl font-bold text-success mt-1">{loading ? '...' : stats.activeEmployees}</p>
             </div>
-            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-success-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+        <div className="bg-warning-muted rounded-xl p-4 border border-warning/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-orange-600 uppercase tracking-wide">Open Positions</p>
-              <p className="text-2xl font-bold text-orange-900 mt-1">{loading ? '...' : stats.openPositions}</p>
+              <p className="text-xs font-medium text-warning uppercase tracking-wide">Open Positions</p>
+              <p className="text-2xl font-bold text-warning mt-1">{loading ? '...' : stats.openPositions}</p>
             </div>
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-warning rounded-lg flex items-center justify-center">
+              <Briefcase className="w-5 h-5 text-warning-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+        <div className="bg-danger-muted rounded-xl p-4 border border-danger/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Pending Reviews</p>
-              <p className="text-2xl font-bold text-red-900 mt-1">{loading ? '...' : stats.pendingReviews}</p>
+              <p className="text-xs font-medium text-danger uppercase tracking-wide">Pending Reviews</p>
+              <p className="text-2xl font-bold text-danger mt-1">{loading ? '...' : stats.pendingReviews}</p>
             </div>
-            <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-danger rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-danger-foreground" />
             </div>
           </div>
         </div>
@@ -141,7 +135,7 @@ export const HRDashboard: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
           <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <UserPlus className="w-6 h-6 text-blue-600" />
+              <UserPlus className="w-6 h-6 text-primary" />
               <h2 className="text-xl font-semibold text-slate-900">Quick Actions</h2>
             </div>
             <div className="space-y-3">
@@ -173,7 +167,7 @@ export const HRDashboard: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
           <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <Calendar className="w-6 h-6 text-green-600" />
+              <Calendar className="w-6 h-6 text-success" />
               <h2 className="text-xl font-semibold text-slate-900">Recent Activity</h2>
             </div>
             <div className="text-center py-8 text-slate-500">

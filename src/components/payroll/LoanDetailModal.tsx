@@ -85,30 +85,30 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-        return <TrendingUp className="h-5 w-5 text-green-600" />;
+        return <TrendingUp className="h-5 w-5 text-info" />;
       case 'pending':
-        return <Clock className="h-5 w-5 text-yellow-600" />;
+        return <Clock className="h-5 w-5 text-warning" />;
       case 'completed':
-        return <CheckCircle className="h-5 w-5 text-blue-600" />;
+        return <CheckCircle className="h-5 w-5 text-success" />;
       case 'cancelled':
-        return <XCircle className="h-5 w-5 text-red-600" />;
+        return <XCircle className="h-5 w-5 text-danger" />;
       default:
         return null;
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string): 'success' | 'warning' | 'info' | 'danger' | 'default' => {
     switch (status) {
       case 'active':
-        return 'green';
+        return 'info';
       case 'pending':
-        return 'yellow';
+        return 'warning';
       case 'completed':
-        return 'blue';
+        return 'success';
       case 'cancelled':
-        return 'red';
+        return 'danger';
       default:
-        return 'gray';
+        return 'default';
     }
   };
 
@@ -161,7 +161,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
           </div>
           <div className="flex items-center space-x-2">
             {getStatusIcon(loan.status || 'pending')}
-            <Badge color={getStatusColor(loan.status || 'pending')}>
+            <Badge variant={getStatusVariant(loan.status || 'pending')}>
               {(loan.status || 'pending').charAt(0).toUpperCase() +
                 (loan.status || 'pending').slice(1)}
             </Badge>
@@ -197,7 +197,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
               <span className="text-sm text-gray-600">Remaining</span>
               <TrendingUp className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="text-xl font-bold text-orange-600">
+            <p className="text-xl font-bold text-warning">
               {formatCurrency(Number(loan.remaining_balance))}
             </p>
           </Card>
@@ -227,7 +227,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3">
             <div
-              className="bg-blue-600 h-3 rounded-full transition-all"
+              className="bg-primary h-3 rounded-full transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -307,9 +307,9 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
                     key={item.installmentNumber}
                     className={
                       item.status === 'paid'
-                        ? 'bg-green-50'
+                        ? 'bg-success-muted'
                         : item.installmentNumber === (loan.installments_paid || 0) + 1
-                          ? 'bg-blue-50'
+                          ? 'bg-info-muted'
                           : ''
                     }
                   >
@@ -324,12 +324,12 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
                     </td>
                     <td className="px-4 py-3 text-center">
                       {item.status === 'paid' ? (
-                        <Badge color="green">
+                        <Badge variant="success">
                           <CheckCircle className="h-3 w-3 mr-1 inline" />
                           Paid
                         </Badge>
                       ) : (
-                        <Badge color="gray">
+                        <Badge variant="default">
                           <Clock className="h-3 w-3 mr-1 inline" />
                           Pending
                         </Badge>

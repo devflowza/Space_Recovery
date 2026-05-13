@@ -39,7 +39,7 @@ export const TenantIsolationTestPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-blue-600" />
+            <ShieldCheck className="w-6 h-6 text-primary" />
             Tenant Isolation Tests
           </h1>
           <p className="text-sm text-slate-600 mt-1">
@@ -49,7 +49,7 @@ export const TenantIsolationTestPage: React.FC = () => {
         <button
           onClick={runTests}
           disabled={running}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
         >
           {running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
           {running ? 'Running...' : 'Run Tests'}
@@ -57,7 +57,7 @@ export const TenantIsolationTestPage: React.FC = () => {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+        <div className="p-4 bg-danger-muted border border-danger/30 rounded-lg flex items-center gap-2 text-danger">
           <AlertTriangle className="w-5 h-5" />
           <span className="text-sm">{error}</span>
         </div>
@@ -69,23 +69,23 @@ export const TenantIsolationTestPage: React.FC = () => {
             <p className="text-3xl font-bold text-slate-900">{detailResults.length}</p>
             <p className="text-sm text-slate-500">Total Tests</p>
           </div>
-          <div className="bg-white rounded-lg border border-green-200 p-4 text-center">
-            <p className="text-3xl font-bold text-green-600">{passCount}</p>
-            <p className="text-sm text-green-600">Passed</p>
+          <div className="bg-white rounded-lg border border-success/30 p-4 text-center">
+            <p className="text-3xl font-bold text-success">{passCount}</p>
+            <p className="text-sm text-success">Passed</p>
           </div>
-          <div className={`bg-white rounded-lg border p-4 text-center ${failCount > 0 ? 'border-red-200' : 'border-slate-200'}`}>
-            <p className={`text-3xl font-bold ${failCount > 0 ? 'text-red-600' : 'text-slate-400'}`}>{failCount}</p>
-            <p className={`text-sm ${failCount > 0 ? 'text-red-600' : 'text-slate-500'}`}>Failed</p>
+          <div className={`bg-white rounded-lg border p-4 text-center ${failCount > 0 ? 'border-danger/30' : 'border-slate-200'}`}>
+            <p className={`text-3xl font-bold ${failCount > 0 ? 'text-danger' : 'text-slate-400'}`}>{failCount}</p>
+            <p className={`text-sm ${failCount > 0 ? 'text-danger' : 'text-slate-500'}`}>Failed</p>
           </div>
         </div>
       )}
 
       {summaryResults.map((s, i) => (
-        <div key={i} className={`p-4 rounded-lg border flex items-center gap-3 ${s.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-          {s.passed ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+        <div key={i} className={`p-4 rounded-lg border flex items-center gap-3 ${s.passed ? 'bg-success-muted border-success/30' : 'bg-danger-muted border-danger/30'}`}>
+          {s.passed ? <CheckCircle2 className="w-5 h-5 text-success" /> : <XCircle className="w-5 h-5 text-danger" />}
           <div>
-            <p className={`text-sm font-medium ${s.passed ? 'text-green-800' : 'text-red-800'}`}>{s.test_name}</p>
-            <p className={`text-xs ${s.passed ? 'text-green-600' : 'text-red-600'}`}>{s.details}</p>
+            <p className={`text-sm font-medium ${s.passed ? 'text-success' : 'text-danger'}`}>{s.test_name}</p>
+            <p className={`text-xs ${s.passed ? 'text-success' : 'text-danger'}`}>{s.details}</p>
           </div>
         </div>
       ))}
@@ -99,9 +99,9 @@ export const TenantIsolationTestPage: React.FC = () => {
             {detailResults.map((r, i) => (
               <div key={i} className="px-4 py-2 flex items-center gap-3 text-sm">
                 {r.passed ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
                 ) : (
-                  <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                  <XCircle className="w-4 h-4 text-danger flex-shrink-0" />
                 )}
                 <span className="flex-1 font-mono text-xs text-slate-700">{r.test_name}</span>
                 <span className="text-xs text-slate-400">{r.details}</span>

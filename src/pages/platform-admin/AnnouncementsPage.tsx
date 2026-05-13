@@ -87,7 +87,7 @@ export const AnnouncementsPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`px-1 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
               }`}
             >
@@ -99,7 +99,7 @@ export const AnnouncementsPage: React.FC = () => {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       ) : filteredAnnouncements.length === 0 ? (
         <div className="text-center py-12">

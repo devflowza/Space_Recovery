@@ -55,8 +55,8 @@ interface SectionHeaderProps {
 const SectionHeader: React.FC<SectionHeaderProps> = ({ icon: Icon, title, description, action }) => (
   <div className="flex items-start justify-between mb-4">
     <div className="flex items-center gap-3">
-      <div className="p-2.5 bg-blue-50 rounded-lg">
-        <Icon className="w-5 h-5 text-blue-600" />
+      <div className="p-2.5 bg-info-muted rounded-lg">
+        <Icon className="w-5 h-5 text-info" />
       </div>
       <div>
         <h2 className="text-base font-semibold text-slate-900">{title}</h2>
@@ -80,11 +80,11 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, sub, positive, negati
   <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-start gap-3">
     <div
       className={`p-2 rounded-lg flex-shrink-0 ${
-        positive ? 'bg-green-50' : negative ? 'bg-red-50' : 'bg-slate-50'
+        positive ? 'bg-success-muted' : negative ? 'bg-danger-muted' : 'bg-slate-50'
       }`}
     >
       <Icon
-        className={`w-5 h-5 ${positive ? 'text-green-600' : negative ? 'text-red-600' : 'text-slate-500'}`}
+        className={`w-5 h-5 ${positive ? 'text-success' : negative ? 'text-danger' : 'text-slate-500'}`}
       />
     </div>
     <div className="min-w-0">
@@ -168,7 +168,7 @@ export const StockReportsPage: React.FC = () => {
           </label>
           <input
             type="date"
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
@@ -179,7 +179,7 @@ export const StockReportsPage: React.FC = () => {
           </label>
           <input
             type="date"
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
           />
@@ -227,7 +227,7 @@ export const StockReportsPage: React.FC = () => {
 
         {loadingVal ? (
           <div className="py-8 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -289,10 +289,10 @@ export const StockReportsPage: React.FC = () => {
                       <span
                         className={`font-semibold text-sm ${
                           margin > 30
-                            ? 'text-green-600'
+                            ? 'text-success'
                             : margin > 10
-                            ? 'text-amber-600'
-                            : 'text-red-500'
+                            ? 'text-warning'
+                            : 'text-danger'
                         }`}
                       >
                         {formatPct(margin)}
@@ -321,7 +321,7 @@ export const StockReportsPage: React.FC = () => {
                       {formatCurrency(totalSellValue)}
                     </td>
                     <td className="px-3 py-2.5 text-right">
-                      <span className={overallMargin >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      <span className={overallMargin >= 0 ? 'text-success' : 'text-danger'}>
                         {formatPct(overallMargin)}
                       </span>
                     </td>
@@ -342,7 +342,7 @@ export const StockReportsPage: React.FC = () => {
 
         {loadingSales ? (
           <div className="py-8 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <>
@@ -398,7 +398,7 @@ export const StockReportsPage: React.FC = () => {
                       key={sale.id as string}
                       className="border-b border-slate-100 hover:bg-slate-50"
                     >
-                      <td className="px-3 py-2.5 font-mono text-blue-700">
+                      <td className="px-3 py-2.5 font-mono text-primary">
                         {(sale.sale_number as string) ?? '—'}
                       </td>
                       <td className="px-3 py-2.5 text-slate-600">
@@ -417,9 +417,9 @@ export const StockReportsPage: React.FC = () => {
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${
                             sale.payment_status === 'paid'
-                              ? 'bg-green-100 text-green-700'
+                              ? 'bg-success-muted text-success'
                               : sale.payment_status === 'pending'
-                              ? 'bg-amber-100 text-amber-700'
+                              ? 'bg-warning-muted text-warning'
                               : 'bg-slate-100 text-slate-600'
                           }`}
                         >
@@ -451,7 +451,7 @@ export const StockReportsPage: React.FC = () => {
 
         {loadingTop ? (
           <div className="py-8 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : topItems.length === 0 ? (
           <div className="py-8 text-center text-slate-400 text-sm">
@@ -479,7 +479,7 @@ export const StockReportsPage: React.FC = () => {
                     <tr key={item.id} className="border-b border-slate-100">
                       <td className="py-2.5 pr-2">
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                          <span className="w-5 h-5 rounded-full bg-info-muted text-info text-xs font-bold flex items-center justify-center flex-shrink-0">
                             {idx + 1}
                           </span>
                           <div>
@@ -549,13 +549,13 @@ export const StockReportsPage: React.FC = () => {
 
         {loadingLow ? (
           <div className="py-8 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : lowStockItems.length === 0 ? (
           <div className="py-8 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full">
-              <TrendingUp className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium text-green-700">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-success-muted rounded-full">
+              <TrendingUp className="w-4 h-4 text-success" />
+              <span className="text-sm font-medium text-success">
                 All items are adequately stocked
               </span>
             </div>
@@ -596,7 +596,7 @@ export const StockReportsPage: React.FC = () => {
                     <tr
                       key={item.id}
                       className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${
-                        isOut ? 'bg-red-50/40' : ''
+                        isOut ? 'bg-danger-muted/40' : ''
                       }`}
                     >
                       <td className="px-3 py-2.5">
@@ -609,7 +609,7 @@ export const StockReportsPage: React.FC = () => {
                       <td className="px-3 py-2.5 text-center">
                         <span
                           className={`font-mono font-bold text-sm ${
-                            isOut ? 'text-red-600' : 'text-amber-600'
+                            isOut ? 'text-danger' : 'text-warning'
                           }`}
                         >
                           {item.current_quantity}
@@ -622,7 +622,7 @@ export const StockReportsPage: React.FC = () => {
                         {item.reorder_quantity ?? '—'}
                       </td>
                       <td className="px-3 py-2.5 text-center">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-mono font-semibold text-sm">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-info-muted text-info font-mono font-semibold text-sm">
                           +{suggested}
                         </span>
                       </td>
@@ -630,8 +630,8 @@ export const StockReportsPage: React.FC = () => {
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold ${
                             isOut
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-amber-100 text-amber-700'
+                              ? 'bg-danger-muted text-danger'
+                              : 'bg-warning-muted text-warning'
                           }`}
                         >
                           <AlertTriangle className="w-3 h-3" />

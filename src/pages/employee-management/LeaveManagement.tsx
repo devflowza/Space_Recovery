@@ -112,11 +112,11 @@ const RequestLeaveModal: React.FC<RequestLeaveModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         {isAdmin && (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Employee <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Employee <span className="text-danger">*</span></label>
             <select
               value={form.employee_id}
               onChange={e => setForm(p => ({ ...p, employee_id: e.target.value }))}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               required
             >
               <option value="">Select employee...</option>
@@ -130,11 +130,11 @@ const RequestLeaveModal: React.FC<RequestLeaveModalProps> = ({
         )}
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Leave Type <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Leave Type <span className="text-danger">*</span></label>
           <select
             value={form.leave_type_id}
             onChange={e => setForm(p => ({ ...p, leave_type_id: e.target.value }))}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             required
           >
             <option value="">Select leave type...</option>
@@ -148,32 +148,32 @@ const RequestLeaveModal: React.FC<RequestLeaveModalProps> = ({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Start Date <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Start Date <span className="text-danger">*</span></label>
             <input
               type="date"
               value={form.start_date}
               onChange={e => setForm(p => ({ ...p, start_date: e.target.value }))}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">End Date <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">End Date <span className="text-danger">*</span></label>
             <input
               type="date"
               value={form.end_date}
               min={form.start_date}
               onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
           </div>
         </div>
 
         {form.start_date && form.end_date && (
-          <div className="bg-teal-50 border border-teal-200 rounded-lg px-4 py-3 flex items-center gap-3">
-            <CalendarDays className="w-4 h-4 text-teal-600 shrink-0" />
-            <span className="text-sm text-teal-800 font-medium">{daysRequested} working day{daysRequested !== 1 ? 's' : ''} requested</span>
+          <div className="bg-info-muted border border-info/30 rounded-lg px-4 py-3 flex items-center gap-3">
+            <CalendarDays className="w-4 h-4 text-info shrink-0" />
+            <span className="text-sm text-info font-medium">{daysRequested} working day{daysRequested !== 1 ? 's' : ''} requested</span>
           </div>
         )}
 
@@ -184,7 +184,7 @@ const RequestLeaveModal: React.FC<RequestLeaveModalProps> = ({
             onChange={e => setForm(p => ({ ...p, reason: e.target.value }))}
             rows={3}
             placeholder="Optional reason for leave..."
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 
@@ -193,7 +193,7 @@ const RequestLeaveModal: React.FC<RequestLeaveModalProps> = ({
           <Button
             type="submit"
             disabled={submitting}
-            className="bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary"
           >
             {submitting ? 'Submitting...' : 'Submit Request'}
           </Button>
@@ -256,7 +256,7 @@ const ApproveRejectModal: React.FC<ApproveRejectModalProps> = ({
     >
       {request && (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className={`rounded-lg p-4 border ${action === 'approve' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+          <div className={`rounded-lg p-4 border ${action === 'approve' ? 'bg-success-muted border-success/30' : 'bg-danger-muted border-danger/30'}`}>
             <p className="text-sm font-medium text-slate-800">
               {request.employee?.first_name} {request.employee?.last_name}
             </p>
@@ -270,14 +270,14 @@ const ApproveRejectModal: React.FC<ApproveRejectModalProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Notes {action === 'reject' && <span className="text-red-500">*</span>}
+              Notes {action === 'reject' && <span className="text-danger">*</span>}
             </label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               rows={3}
               placeholder={action === 'approve' ? 'Optional approval notes...' : 'Reason for rejection...'}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               required={action === 'reject'}
             />
           </div>
@@ -288,7 +288,7 @@ const ApproveRejectModal: React.FC<ApproveRejectModalProps> = ({
               type="submit"
               disabled={submitting}
               variant={action === 'approve' ? 'primary' : 'danger'}
-              className={action === 'approve' ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' : ''}
+              className={action === 'approve' ? 'bg-success hover:bg-success/90 focus:ring-success' : ''}
             >
               {submitting ? 'Processing...' : action === 'approve' ? 'Approve' : 'Reject'}
             </Button>
@@ -355,13 +355,13 @@ const LeaveTypeFormModal: React.FC<LeaveTypeFormModalProps> = ({ isOpen, onClose
     <Modal isOpen={isOpen} onClose={onClose} title={editingType ? 'Edit Leave Type' : 'New Leave Type'} icon={FileText} size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Name <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Name <span className="text-danger">*</span></label>
           <input
             type="text"
             value={form.name}
             onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
             placeholder="e.g. Annual Leave"
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             required
           />
         </div>
@@ -373,7 +373,7 @@ const LeaveTypeFormModal: React.FC<LeaveTypeFormModalProps> = ({ isOpen, onClose
             onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
             rows={2}
             placeholder="Optional description..."
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 
@@ -385,7 +385,7 @@ const LeaveTypeFormModal: React.FC<LeaveTypeFormModalProps> = ({ isOpen, onClose
             onChange={e => setForm(p => ({ ...p, days_per_year: Number(e.target.value) }))}
             min={0}
             max={365}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
@@ -395,7 +395,7 @@ const LeaveTypeFormModal: React.FC<LeaveTypeFormModalProps> = ({ isOpen, onClose
               type="checkbox"
               checked={form.is_paid}
               onChange={e => setForm(p => ({ ...p, is_paid: e.target.checked }))}
-              className="w-4 h-4 rounded accent-teal-600"
+              className="w-4 h-4 rounded accent-primary"
             />
             <div>
               <span className="text-sm font-medium text-slate-800">Paid Leave</span>
@@ -407,7 +407,7 @@ const LeaveTypeFormModal: React.FC<LeaveTypeFormModalProps> = ({ isOpen, onClose
               type="checkbox"
               checked={form.is_active}
               onChange={e => setForm(p => ({ ...p, is_active: e.target.checked }))}
-              className="w-4 h-4 rounded accent-teal-600"
+              className="w-4 h-4 rounded accent-primary"
             />
             <div>
               <span className="text-sm font-medium text-slate-800">Active</span>
@@ -418,7 +418,7 @@ const LeaveTypeFormModal: React.FC<LeaveTypeFormModalProps> = ({ isOpen, onClose
 
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={submitting} className="bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500">
+          <Button type="submit" disabled={submitting} className="bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary">
             {submitting ? 'Saving...' : editingType ? 'Update' : 'Create'}
           </Button>
         </div>
@@ -482,11 +482,11 @@ const AllocateBalanceModal: React.FC<AllocateBalanceModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title="Allocate Leave Balance" icon={CalendarCheck} size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Employee <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Employee <span className="text-danger">*</span></label>
           <select
             value={form.employee_id}
             onChange={e => setForm(p => ({ ...p, employee_id: e.target.value }))}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             required
           >
             <option value="">Select employee...</option>
@@ -499,11 +499,11 @@ const AllocateBalanceModal: React.FC<AllocateBalanceModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Leave Type <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Leave Type <span className="text-danger">*</span></label>
           <select
             value={form.leave_type_id}
             onChange={e => setForm(p => ({ ...p, leave_type_id: e.target.value }))}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             required
           >
             <option value="">Select leave type...</option>
@@ -522,7 +522,7 @@ const AllocateBalanceModal: React.FC<AllocateBalanceModalProps> = ({
               onChange={e => setForm(p => ({ ...p, year: Number(e.target.value) }))}
               min={2020}
               max={2099}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
@@ -532,14 +532,14 @@ const AllocateBalanceModal: React.FC<AllocateBalanceModalProps> = ({
               value={form.allocated_days}
               onChange={e => setForm(p => ({ ...p, allocated_days: Number(e.target.value) }))}
               min={0}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={submitting} className="bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500">
+          <Button type="submit" disabled={submitting} className="bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary">
             {submitting ? 'Allocating...' : 'Allocate'}
           </Button>
         </div>
@@ -672,26 +672,23 @@ export const LeaveManagement: React.FC = () => {
     <div className="p-8 max-w-[1800px] mx-auto">
       <div className="mb-8 flex items-start justify-between">
         <div className="flex items-start gap-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{ backgroundColor: '#0d9488', boxShadow: '0 10px 40px -10px #0d948880' }}
-          >
-            <CalendarDays className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-primary shadow-primary/40">
+            <CalendarDays className="w-7 h-7 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-2">Leave Management</h1>
             <p className="text-slate-600 text-base">Manage employee leave requests, balances, and policies</p>
             <div className="flex gap-4 mt-3">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                <div className="w-2 h-2 rounded-full bg-warning"></div>
                 <span className="text-slate-600">{stats?.pendingApprovals ?? 0} Pending</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+                <div className="w-2 h-2 rounded-full bg-info"></div>
                 <span className="text-slate-600">{stats?.employeesOnLeaveToday ?? 0} On Leave Today</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <div className="w-2 h-2 rounded-full bg-success"></div>
                 <span className="text-slate-600">{stats?.approvedThisMonth ?? 0} Approved This Month</span>
               </div>
             </div>
@@ -709,7 +706,7 @@ export const LeaveManagement: React.FC = () => {
           <Button
             onClick={() => setShowRequestModal(true)}
             size="sm"
-            className="bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary"
           >
             <Plus className="w-4 h-4 mr-2" />
             Request Leave
@@ -718,50 +715,50 @@ export const LeaveManagement: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+        <div className="bg-warning-muted rounded-xl p-4 border border-warning/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">Pending</p>
-              <p className="text-2xl font-bold text-amber-900 mt-1">{statsLoading ? '...' : stats?.pendingApprovals ?? 0}</p>
+              <p className="text-xs font-medium text-warning uppercase tracking-wide">Pending</p>
+              <p className="text-2xl font-bold text-warning mt-1">{statsLoading ? '...' : stats?.pendingApprovals ?? 0}</p>
             </div>
-            <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-warning rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 text-warning-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+        <div className="bg-success-muted rounded-xl p-4 border border-success/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Approved This Month</p>
-              <p className="text-2xl font-bold text-green-900 mt-1">{statsLoading ? '...' : stats?.approvedThisMonth ?? 0}</p>
+              <p className="text-xs font-medium text-success uppercase tracking-wide">Approved This Month</p>
+              <p className="text-2xl font-bold text-success mt-1">{statsLoading ? '...' : stats?.approvedThisMonth ?? 0}</p>
             </div>
-            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-              <CalendarCheck className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
+              <CalendarCheck className="w-5 h-5 text-success-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+        <div className="bg-danger-muted rounded-xl p-4 border border-danger/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Rejected This Month</p>
-              <p className="text-2xl font-bold text-red-900 mt-1">{statsLoading ? '...' : stats?.rejectedThisMonth ?? 0}</p>
+              <p className="text-xs font-medium text-danger uppercase tracking-wide">Rejected This Month</p>
+              <p className="text-2xl font-bold text-danger mt-1">{statsLoading ? '...' : stats?.rejectedThisMonth ?? 0}</p>
             </div>
-            <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
-              <CalendarX className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-danger rounded-lg flex items-center justify-center">
+              <CalendarX className="w-5 h-5 text-danger-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-4 border border-teal-200">
+        <div className="bg-info-muted rounded-xl p-4 border border-info/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-teal-600 uppercase tracking-wide">On Leave Today</p>
-              <p className="text-2xl font-bold text-teal-900 mt-1">{statsLoading ? '...' : stats?.employeesOnLeaveToday ?? 0}</p>
+              <p className="text-xs font-medium text-info uppercase tracking-wide">On Leave Today</p>
+              <p className="text-2xl font-bold text-info mt-1">{statsLoading ? '...' : stats?.employeesOnLeaveToday ?? 0}</p>
             </div>
-            <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-info-foreground" />
             </div>
           </div>
         </div>
@@ -779,7 +776,7 @@ export const LeaveManagement: React.FC = () => {
                     onClick={() => { setActiveTab(tab.id); setSearch(''); }}
                     className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
                       activeTab === tab.id
-                        ? 'border-teal-600 text-teal-700 bg-teal-50'
+                        ? 'border-primary text-primary bg-primary/10'
                         : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                     }`}
                   >
@@ -801,7 +798,7 @@ export const LeaveManagement: React.FC = () => {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder={activeTab === 'requests' ? 'Search by employee, leave type...' : activeTab === 'balances' ? 'Search employee or type...' : 'Search leave types...'}
-                className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
@@ -810,7 +807,7 @@ export const LeaveManagement: React.FC = () => {
                 <select
                   value={yearFilter}
                   onChange={e => setYearFilter(Number(e.target.value))}
-                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                 >
                   {[CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(y => (
                     <option key={y} value={y}>{y}</option>
@@ -821,7 +818,7 @@ export const LeaveManagement: React.FC = () => {
                   <select
                     value={employeeFilter}
                     onChange={e => setEmployeeFilter(e.target.value)}
-                    className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                   >
                     <option value="all">All Employees</option>
                     {employees.map(emp => (
@@ -837,7 +834,7 @@ export const LeaveManagement: React.FC = () => {
                 <select
                   value={statusFilter}
                   onChange={e => setStatusFilter(e.target.value)}
-                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                 >
                   <option value="all">All Statuses</option>
                   <option value="pending">Pending</option>
@@ -849,7 +846,7 @@ export const LeaveManagement: React.FC = () => {
                 <select
                   value={leaveTypeFilter}
                   onChange={e => setLeaveTypeFilter(e.target.value)}
-                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                 >
                   <option value="all">All Types</option>
                   {leaveTypes.map(lt => (
@@ -863,7 +860,7 @@ export const LeaveManagement: React.FC = () => {
               <Button
                 size="sm"
                 onClick={() => setShowAllocateModal(true)}
-                className="bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500 ml-auto"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary ml-auto"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Allocate Balance
@@ -874,7 +871,7 @@ export const LeaveManagement: React.FC = () => {
               <Button
                 size="sm"
                 onClick={() => { setEditingLeaveType(null); setShowLeaveTypeModal(true); }}
-                className="bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500 ml-auto"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary ml-auto"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 New Leave Type
@@ -886,7 +883,7 @@ export const LeaveManagement: React.FC = () => {
             <div>
               {requestsLoading ? (
                 <div className="flex items-center justify-center py-16">
-                  <RefreshCw className="w-8 h-8 text-teal-500 animate-spin" />
+                  <RefreshCw className="w-8 h-8 text-primary animate-spin" />
                 </div>
               ) : filteredRequests.length === 0 ? (
                 <div className="text-center py-16 text-slate-500">
@@ -923,7 +920,7 @@ export const LeaveManagement: React.FC = () => {
                           <td className="py-3 px-4">
                             <span className="font-medium text-slate-800">{req.leave_type?.name ?? '—'}</span>
                             {req.leave_type?.is_paid !== null && (
-                              <span className={`ml-2 text-xs px-1.5 py-0.5 rounded font-medium ${req.leave_type?.is_paid ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+                              <span className={`ml-2 text-xs px-1.5 py-0.5 rounded font-medium ${req.leave_type?.is_paid ? 'bg-success-muted text-success' : 'bg-slate-100 text-slate-600'}`}>
                                 {req.leave_type?.is_paid ? 'Paid' : 'Unpaid'}
                               </span>
                             )}
@@ -952,14 +949,14 @@ export const LeaveManagement: React.FC = () => {
                                   <>
                                     <button
                                       onClick={() => openApprove(req)}
-                                      className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                                      className="p-1.5 rounded-lg text-success hover:bg-success-muted transition-colors"
                                       title="Approve"
                                     >
                                       <Check className="w-4 h-4" />
                                     </button>
                                     <button
                                       onClick={() => openReject(req)}
-                                      className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                                      className="p-1.5 rounded-lg text-danger hover:bg-danger-muted transition-colors"
                                       title="Reject"
                                     >
                                       <X className="w-4 h-4" />
@@ -970,7 +967,7 @@ export const LeaveManagement: React.FC = () => {
                                   <div className="flex items-center gap-1">
                                     <button
                                       onClick={() => deleteMutation.mutate(req.id)}
-                                      className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                                      className="text-xs px-2 py-1 bg-danger text-danger-foreground rounded hover:bg-danger/90 transition-colors"
                                     >
                                       Confirm
                                     </button>
@@ -984,7 +981,7 @@ export const LeaveManagement: React.FC = () => {
                                 ) : (
                                   <button
                                     onClick={() => setDeleteConfirmId(req.id)}
-                                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-danger hover:bg-danger-muted transition-colors"
                                     title="Delete"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -1006,7 +1003,7 @@ export const LeaveManagement: React.FC = () => {
             <div>
               {balancesLoading ? (
                 <div className="flex items-center justify-center py-16">
-                  <RefreshCw className="w-8 h-8 text-teal-500 animate-spin" />
+                  <RefreshCw className="w-8 h-8 text-primary animate-spin" />
                 </div>
               ) : filteredBalances.length === 0 ? (
                 <div className="text-center py-16 text-slate-500">
@@ -1017,7 +1014,7 @@ export const LeaveManagement: React.FC = () => {
                     <Button
                       size="sm"
                       onClick={() => setShowAllocateModal(true)}
-                      className="mt-4 bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500"
+                      className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Allocate Balance
@@ -1044,8 +1041,8 @@ export const LeaveManagement: React.FC = () => {
                         const used = bal.used_days ?? 0;
                         const remaining = bal.remaining_days ?? (allocated - used);
                         const pct = allocated > 0 ? Math.min(100, Math.round((used / allocated) * 100)) : 0;
-                        const barColor = pct >= 80 ? 'bg-red-500' : pct >= 50 ? 'bg-amber-500' : 'bg-teal-500';
-                        const remainingColor = remaining <= 0 ? 'text-red-600 font-bold' : remaining <= (allocated * 0.2) ? 'text-amber-600 font-semibold' : 'text-green-700 font-semibold';
+                        const barColor = pct >= 80 ? 'bg-danger' : pct >= 50 ? 'bg-warning' : 'bg-primary';
+                        const remainingColor = remaining <= 0 ? 'text-danger font-bold' : remaining <= (allocated * 0.2) ? 'text-warning font-semibold' : 'text-success font-semibold';
 
                         return (
                           <tr key={bal.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
@@ -1060,7 +1057,7 @@ export const LeaveManagement: React.FC = () => {
                             <td className="py-3 px-4">
                               <span className="font-medium text-slate-800">{bal.leave_type?.name ?? '—'}</span>
                               {bal.leave_type?.is_paid !== null && (
-                                <span className={`ml-2 text-xs px-1.5 py-0.5 rounded font-medium ${bal.leave_type?.is_paid ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+                                <span className={`ml-2 text-xs px-1.5 py-0.5 rounded font-medium ${bal.leave_type?.is_paid ? 'bg-success-muted text-success' : 'bg-slate-100 text-slate-600'}`}>
                                   {bal.leave_type?.is_paid ? 'Paid' : 'Unpaid'}
                                 </span>
                               )}
@@ -1094,7 +1091,7 @@ export const LeaveManagement: React.FC = () => {
             <div>
               {typesLoading ? (
                 <div className="flex items-center justify-center py-16">
-                  <RefreshCw className="w-8 h-8 text-teal-500 animate-spin" />
+                  <RefreshCw className="w-8 h-8 text-primary animate-spin" />
                 </div>
               ) : filteredTypes.length === 0 ? (
                 <div className="text-center py-16 text-slate-500">
@@ -1105,7 +1102,7 @@ export const LeaveManagement: React.FC = () => {
                     <Button
                       size="sm"
                       onClick={() => { setEditingLeaveType(null); setShowLeaveTypeModal(true); }}
-                      className="mt-4 bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500"
+                      className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       New Leave Type
@@ -1117,23 +1114,23 @@ export const LeaveManagement: React.FC = () => {
                   {filteredTypes.map(lt => (
                     <div
                       key={lt.id}
-                      className={`rounded-xl border p-5 transition-all ${lt.is_active ? 'bg-white border-slate-200 hover:border-teal-300 hover:shadow-sm' : 'bg-slate-50 border-slate-200 opacity-60'}`}
+                      className={`rounded-xl border p-5 transition-all ${lt.is_active ? 'bg-white border-slate-200 hover:border-primary/40 hover:shadow-sm' : 'bg-slate-50 border-slate-200 opacity-60'}`}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${lt.is_active ? 'bg-teal-100' : 'bg-slate-200'}`}>
-                            <Calendar className={`w-4 h-4 ${lt.is_active ? 'text-teal-600' : 'text-slate-500'}`} />
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${lt.is_active ? 'bg-primary/10' : 'bg-slate-200'}`}>
+                            <Calendar className={`w-4 h-4 ${lt.is_active ? 'text-primary' : 'text-slate-500'}`} />
                           </div>
                           <div>
                             <h3 className="font-semibold text-slate-900 text-sm">{lt.name}</h3>
                             <div className="flex gap-1.5 mt-0.5">
                               {lt.is_paid ? (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-medium">Paid</span>
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-success-muted text-success font-medium">Paid</span>
                               ) : (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">Unpaid</span>
                               )}
                               {!lt.is_active && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-600 font-medium">Inactive</span>
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-danger-muted text-danger font-medium">Inactive</span>
                               )}
                             </div>
                           </div>
@@ -1141,7 +1138,7 @@ export const LeaveManagement: React.FC = () => {
                         {isAdmin && (
                           <button
                             onClick={() => { setEditingLeaveType(lt); setShowLeaveTypeModal(true); }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />

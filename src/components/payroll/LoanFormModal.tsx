@@ -142,7 +142,7 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({ isOpen, onClose })
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Employee <span className="text-red-500">*</span>
+              Employee <span className="text-danger">*</span>
             </label>
             <SearchableSelect
               options={employees.map((emp) => ({
@@ -157,12 +157,12 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({ isOpen, onClose })
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Loan Type <span className="text-red-500">*</span>
+              Loan Type <span className="text-danger">*</span>
             </label>
             <select
               value={formData.loan_type}
               onChange={(e) => handleChange('loan_type', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               required
             >
               <option value="salary_advance">Salary Advance</option>
@@ -173,7 +173,7 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({ isOpen, onClose })
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Principal Amount <span className="text-red-500">*</span>
+              Principal Amount <span className="text-danger">*</span>
             </label>
             <Input
               type="number"
@@ -203,7 +203,7 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({ isOpen, onClose })
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Number of Installments <span className="text-red-500">*</span>
+              Number of Installments <span className="text-danger">*</span>
             </label>
             <Input
               type="number"
@@ -217,7 +217,7 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({ isOpen, onClose })
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Start Date <span className="text-red-500">*</span>
+              Start Date <span className="text-danger">*</span>
             </label>
             <Input
               type="date"
@@ -233,40 +233,40 @@ export const LoanFormModal: React.FC<LoanFormModalProps> = ({ isOpen, onClose })
               value={formData.notes}
               onChange={(e) => handleChange('notes', e.target.value)}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Additional notes or comments..."
             />
           </div>
         </div>
 
         {formData.principal_amount && parseFloat(formData.principal_amount) > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+          <div className="bg-info-muted border border-info/30 rounded-lg p-4">
+            <h4 className="text-sm font-semibold text-info mb-3 flex items-center">
               <TrendingUp className="h-4 w-4 mr-2" />
               Loan Summary
             </h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-blue-700">Total Amount:</span>
-                <div className="font-semibold text-blue-900 mt-1">
+                <span className="text-info">Total Amount:</span>
+                <div className="font-semibold text-info mt-1">
                   {formatCurrency(calculatedValues.totalAmount)}
                 </div>
               </div>
               <div>
-                <span className="text-blue-700">Monthly Installment:</span>
-                <div className="font-semibold text-blue-900 mt-1">
+                <span className="text-info">Monthly Installment:</span>
+                <div className="font-semibold text-info mt-1">
                   {formatCurrency(calculatedValues.installmentAmount)}
                 </div>
               </div>
               <div>
-                <span className="text-blue-700">Start Date:</span>
-                <div className="font-semibold text-blue-900 mt-1">
+                <span className="text-info">Start Date:</span>
+                <div className="font-semibold text-info mt-1">
                   {new Date(formData.start_date).toLocaleDateString()}
                 </div>
               </div>
               <div>
-                <span className="text-blue-700">Estimated End Date:</span>
-                <div className="font-semibold text-blue-900 mt-1">
+                <span className="text-info">Estimated End Date:</span>
+                <div className="font-semibold text-info mt-1">
                   {calculatedValues.endDate
                     ? new Date(calculatedValues.endDate).toLocaleDateString()
                     : '-'}

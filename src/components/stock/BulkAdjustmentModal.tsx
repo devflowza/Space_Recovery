@@ -59,10 +59,10 @@ export const BulkAdjustmentModal: React.FC<Props> = ({ selectedItems, onClose })
       <div className="space-y-5">
         <div>
           <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
-            Adjustment Reason <span className="text-red-500">*</span>
+            Adjustment Reason <span className="text-danger">*</span>
           </label>
           <select
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
           >
@@ -94,7 +94,7 @@ export const BulkAdjustmentModal: React.FC<Props> = ({ selectedItems, onClose })
                 {lines.map((line, idx) => {
                   const change = line.newQty - line.currentQty;
                   return (
-                    <tr key={line.id} className={change !== 0 ? 'bg-blue-50/30' : ''}>
+                    <tr key={line.id} className={change !== 0 ? 'bg-info-muted/30' : ''}>
                       <td className="px-3 py-2.5">
                         <p className="font-medium text-slate-900 text-xs">{line.name}</p>
                       </td>
@@ -107,12 +107,12 @@ export const BulkAdjustmentModal: React.FC<Props> = ({ selectedItems, onClose })
                           min={0}
                           value={line.newQty}
                           onChange={(e) => updateQty(idx, Number(e.target.value))}
-                          className="w-20 text-center px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-20 text-center px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                         />
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         {change !== 0 ? (
-                          <span className={`font-semibold text-sm font-mono ${change > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <span className={`font-semibold text-sm font-mono ${change > 0 ? 'text-success' : 'text-danger'}`}>
                             {change > 0 ? '+' : ''}{change}
                           </span>
                         ) : (
@@ -126,7 +126,7 @@ export const BulkAdjustmentModal: React.FC<Props> = ({ selectedItems, onClose })
             </table>
           </div>
           {changedCount > 0 && (
-            <p className="text-xs text-blue-600 mt-1.5 font-medium">
+            <p className="text-xs text-info mt-1.5 font-medium">
               {changedCount} item{changedCount !== 1 ? 's' : ''} will be adjusted
             </p>
           )}

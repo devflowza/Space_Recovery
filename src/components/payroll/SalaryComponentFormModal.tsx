@@ -90,7 +90,7 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Code <span className="text-red-500">*</span>
+              Code <span className="text-danger">*</span>
             </label>
             <Input
               value={formData.code}
@@ -106,12 +106,12 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Component Type <span className="text-red-500">*</span>
+              Component Type <span className="text-danger">*</span>
             </label>
             <select
               value={formData.component_type}
               onChange={(e) => handleChange('component_type', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="earning">Earning</option>
               <option value="allowance">Allowance</option>
@@ -122,7 +122,7 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Name <span className="text-red-500">*</span>
+              Name <span className="text-danger">*</span>
             </label>
             <Input
               value={formData.name}
@@ -145,12 +145,12 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Calculation Type <span className="text-red-500">*</span>
+              Calculation Type <span className="text-danger">*</span>
             </label>
             <select
               value={formData.calculation_type}
               onChange={(e) => handleChange('calculation_type', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="fixed">Fixed Amount</option>
               <option value="percentage">Percentage</option>
@@ -183,7 +183,7 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
               <select
                 value={formData.percentage_of}
                 onChange={(e) => handleChange('percentage_of', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="basic_salary">Basic Salary</option>
                 <option value="gross_salary">Gross Salary</option>
@@ -198,7 +198,7 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
               type="checkbox"
               checked={formData.is_taxable}
               onChange={(e) => handleChange('is_taxable', e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
             <div>
               <span className="text-sm font-medium text-slate-700">Taxable</span>
@@ -211,7 +211,7 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
               type="checkbox"
               checked={formData.is_recurring}
               onChange={(e) => handleChange('is_recurring', e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
             <div>
               <span className="text-sm font-medium text-slate-700">Recurring</span>
@@ -224,7 +224,7 @@ export function SalaryComponentFormModal({ component, onClose }: Props) {
               type="checkbox"
               checked={formData.is_mandatory}
               onChange={(e) => handleChange('is_mandatory', e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
             <div>
               <span className="text-sm font-medium text-slate-700">Mandatory</span>

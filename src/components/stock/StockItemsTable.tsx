@@ -27,10 +27,10 @@ function MarginCell({ margin }: { margin: number | null }) {
   }
   const colorClass =
     margin >= 30
-      ? 'text-green-700'
+      ? 'text-success'
       : margin >= 15
-      ? 'text-amber-600'
-      : 'text-red-600';
+      ? 'text-warning'
+      : 'text-danger';
   return (
     <span className={`text-sm font-medium tabular-nums ${colorClass}`}>
       {margin.toFixed(1)}%
@@ -44,7 +44,7 @@ function ItemTypeBadge({ itemType }: { itemType: string }) {
   }
   if (itemType === 'saleable') {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 ring-1 ring-blue-200">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-info-muted text-info ring-1 ring-info/30">
         Saleable
       </span>
     );
@@ -228,9 +228,9 @@ export function StockItemsTable({
                     <span
                       className={`text-sm font-medium tabular-nums ${
                         available <= 0
-                          ? 'text-red-600'
+                          ? 'text-danger'
                           : available <= item.minimum_quantity
-                          ? 'text-amber-600'
+                          ? 'text-warning'
                           : 'text-slate-900'
                       }`}
                     >
@@ -281,21 +281,21 @@ export function StockItemsTable({
                       <button
                         onClick={() => onReceive(item)}
                         title="Receive stock"
-                        className="p-1.5 rounded hover:bg-green-50 text-slate-500 hover:text-green-700 transition-colors"
+                        className="p-1.5 rounded hover:bg-success-muted text-slate-500 hover:text-success transition-colors"
                       >
                         <PackagePlus className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onRecordUsage(item)}
                         title="Record usage"
-                        className="p-1.5 rounded hover:bg-amber-50 text-slate-500 hover:text-amber-700 transition-colors"
+                        className="p-1.5 rounded hover:bg-warning-muted text-slate-500 hover:text-warning transition-colors"
                       >
                         <PackageMinus className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onDelete(item)}
                         title="Delete"
-                        className="p-1.5 rounded hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
+                        className="p-1.5 rounded hover:bg-danger-muted text-slate-500 hover:text-danger transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

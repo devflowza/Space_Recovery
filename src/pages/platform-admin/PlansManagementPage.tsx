@@ -74,7 +74,7 @@ export const PlansManagementPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -180,7 +180,7 @@ const PlanRow: React.FC<{
       <td className="px-6 py-4 text-center">
         <div className="flex items-center justify-center gap-2">
           {plan.is_active ? (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-success bg-success-muted px-2 py-1 rounded-full">
               <Check className="w-3 h-3" /> Active
             </span>
           ) : (
@@ -189,7 +189,7 @@ const PlanRow: React.FC<{
             </span>
           )}
           {plan.is_public && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 px-2 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-info bg-info-muted px-2 py-1 rounded-full">
               Public
             </span>
           )}
@@ -202,21 +202,21 @@ const PlanRow: React.FC<{
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={onNavigate}
-            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-primary hover:bg-info-muted rounded-lg transition-colors"
             title="Edit"
           >
             <Pencil className="w-4 h-4" />
           </button>
           <button
             onClick={onToggleActive}
-            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-warning hover:bg-warning-muted rounded-lg transition-colors"
             title={plan.is_active ? 'Deactivate' : 'Activate'}
           >
             {plan.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
           <button
             onClick={onDelete}
-            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors"
             title="Delete"
           >
             <Trash2 className="w-4 h-4" />

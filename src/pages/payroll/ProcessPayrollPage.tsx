@@ -80,7 +80,7 @@ export default function ProcessPayrollPage() {
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
                 step >= s
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-slate-200 text-slate-600'
               }`}
             >
@@ -89,7 +89,7 @@ export default function ProcessPayrollPage() {
             {s < 3 && (
               <div
                 className={`w-32 h-1 mx-2 ${
-                  step > s ? 'bg-blue-600' : 'bg-slate-200'
+                  step > s ? 'bg-primary' : 'bg-slate-200'
                 }`}
               ></div>
             )}
@@ -110,7 +110,7 @@ export default function ProcessPayrollPage() {
                   type="text"
                   value={periodName}
                   onChange={(e) => setPeriodName(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="e.g., Payroll - March 2026"
                 />
               </div>
@@ -124,7 +124,7 @@ export default function ProcessPayrollPage() {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
@@ -136,7 +136,7 @@ export default function ProcessPayrollPage() {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 
@@ -148,7 +148,7 @@ export default function ProcessPayrollPage() {
                     type="date"
                     value={paymentDate}
                     onChange={(e) => setPaymentDate(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -172,20 +172,20 @@ export default function ProcessPayrollPage() {
         {step === 2 && (
           <div>
             <h2 className="text-2xl font-bold text-slate-900 mb-6">Step 2: Process Payroll</h2>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+            <div className="bg-info-muted border border-info/30 rounded-lg p-6 mb-6">
               <div className="flex items-center gap-3 mb-4">
-                <Users className="w-6 h-6 text-blue-600" />
+                <Users className="w-6 h-6 text-info" />
                 <div>
-                  <h3 className="font-semibold text-blue-900">Ready to Process</h3>
-                  <p className="text-sm text-blue-700">
+                  <h3 className="font-semibold text-info">Ready to Process</h3>
+                  <p className="text-sm text-info">
                     This will calculate payroll for all active employees for the period {periodName}
                   </p>
                 </div>
               </div>
-              <p className="text-sm text-blue-600">
+              <p className="text-sm text-info">
                 The system will:
               </p>
-              <ul className="text-sm text-blue-600 list-disc list-inside mt-2 space-y-1">
+              <ul className="text-sm text-info list-disc list-inside mt-2 space-y-1">
                 <li>Fetch attendance data for all employees</li>
                 <li>Calculate base salary, overtime, and allowances</li>
                 <li>Apply deductions (social security, loans, etc.)</li>

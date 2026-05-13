@@ -112,7 +112,7 @@ export default function InventoryFormPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -163,7 +163,7 @@ export default function InventoryFormPage() {
                   handleChange('category_id', e.target.value ? Number(e.target.value) : null)
                 }
                 required
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select Category</option>
                 {categories.map((category) => (
@@ -181,7 +181,7 @@ export default function InventoryFormPage() {
               <select
                 value={formData.item_type || 'donor_part'}
                 onChange={(e) => handleChange('item_type', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="donor_part">Donor Part</option>
                 <option value="clone_drive">Clone Drive</option>
@@ -201,7 +201,7 @@ export default function InventoryFormPage() {
                 onChange={(e) =>
                   handleChange('status_type_id', e.target.value ? Number(e.target.value) : null)
                 }
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select Status</option>
                 {statusTypes.map((status) => (
@@ -221,7 +221,7 @@ export default function InventoryFormPage() {
                 onChange={(e) =>
                   handleChange('condition_type_id', e.target.value ? Number(e.target.value) : null)
                 }
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select Condition</option>
                 {conditionTypes.map((condition) => (
@@ -240,7 +240,7 @@ export default function InventoryFormPage() {
                 value={formData.description || ''}
                 onChange={(e) => handleChange('description', e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Enter item description"
               />
             </div>
@@ -260,7 +260,7 @@ export default function InventoryFormPage() {
               <select
                 value={formData.brand_id || ''}
                 onChange={(e) => handleChange('brand_id', e.target.value || null)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select Brand</option>
                 {brands.map((brand) => (
@@ -278,7 +278,7 @@ export default function InventoryFormPage() {
               <select
                 value={formData.device_type_id || ''}
                 onChange={(e) => handleChange('device_type_id', e.target.value || null)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select Device Type</option>
                 {deviceTypes.map((type) => (
@@ -320,7 +320,7 @@ export default function InventoryFormPage() {
               <select
                 value={formData.capacity_id || ''}
                 onChange={(e) => handleChange('capacity_id', e.target.value || null)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select Capacity</option>
                 {capacities.map((capacity) => (
@@ -430,7 +430,7 @@ export default function InventoryFormPage() {
               <select
                 value={formData.storage_location_id || ''}
                 onChange={(e) => handleChange('storage_location_id', e.target.value || null)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select Location</option>
                 {locations.map((location) => (
@@ -449,7 +449,7 @@ export default function InventoryFormPage() {
                 value={formData.storage_notes || ''}
                 onChange={(e) => handleChange('storage_notes', e.target.value)}
                 rows={2}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Enter storage notes or location details"
               />
             </div>
@@ -549,7 +549,7 @@ export default function InventoryFormPage() {
                 value={formData.notes || ''}
                 onChange={(e) => handleChange('notes', e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Enter any additional notes or information"
               />
             </div>
@@ -560,7 +560,7 @@ export default function InventoryFormPage() {
                 id="is_active"
                 checked={formData.is_active || false}
                 onChange={(e) => handleChange('is_active', e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
               />
               <label htmlFor="is_active" className="ml-2 text-sm text-slate-700">
                 Active Item

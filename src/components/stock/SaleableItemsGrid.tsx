@@ -39,13 +39,13 @@ export const SaleableItemsGrid: React.FC<SaleableItemsGridProps> = ({
             onClick={() => onSelect(item)}
             className={`relative bg-white rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
               isSelected
-                ? 'border-blue-500 ring-2 ring-blue-200'
+                ? 'border-primary ring-2 ring-primary/30'
                 : 'border-slate-200 hover:border-slate-300'
             }`}
           >
             {isSelected && (
-              <div className="absolute top-2 right-2 z-10 bg-blue-500 rounded-full p-0.5">
-                <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+              <div className="absolute top-2 right-2 z-10 bg-primary rounded-full p-0.5">
+                <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />
               </div>
             )}
 
@@ -78,11 +78,11 @@ export const SaleableItemsGrid: React.FC<SaleableItemsGridProps> = ({
                 </span>
 
                 {inStock ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 ring-1 ring-green-200 whitespace-nowrap">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-success-muted text-success ring-1 ring-success/30 whitespace-nowrap">
                     In Stock {item.current_quantity}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 ring-1 ring-red-200 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-danger-muted text-danger ring-1 ring-danger/30 whitespace-nowrap">
                     Out of Stock
                   </span>
                 )}
@@ -96,7 +96,7 @@ export const SaleableItemsGrid: React.FC<SaleableItemsGridProps> = ({
                 }}
                 className={`w-full py-1.5 px-3 rounded-md text-sm font-medium transition-colors ${
                   isSelected
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                     : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                 }`}
               >

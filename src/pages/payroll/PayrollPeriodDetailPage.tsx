@@ -231,8 +231,8 @@ export default function PayrollPeriodDetailPage() {
       </div>
 
       {period.payment_date && (
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <p className="text-sm text-blue-800">
+        <div className="mb-6 bg-info-muted border border-info/30 rounded-xl p-4">
+          <p className="text-sm text-info">
             <strong>Payment Date:</strong> {format(new Date(period.payment_date), 'MMMM dd, yyyy')}
           </p>
         </div>
@@ -249,7 +249,7 @@ export default function PayrollPeriodDetailPage() {
                 placeholder="Search employees..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -319,10 +319,10 @@ export default function PayrollPeriodDetailPage() {
                     <td className="px-6 py-4 text-right text-sm text-slate-900">
                       {formatCurrency(record.base_salary || 0)}
                     </td>
-                    <td className="px-6 py-4 text-right text-sm font-medium text-green-600">
+                    <td className="px-6 py-4 text-right text-sm font-medium text-success">
                       {formatCurrency(record.gross_earnings || 0)}
                     </td>
-                    <td className="px-6 py-4 text-right text-sm font-medium text-red-600">
+                    <td className="px-6 py-4 text-right text-sm font-medium text-danger">
                       {formatCurrency(record.total_deductions || 0)}
                     </td>
                     <td className="px-6 py-4 text-right text-sm font-bold text-slate-900">

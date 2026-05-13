@@ -38,7 +38,7 @@ export default function PayrollHistoryPage() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {years.map(year => (
               <option key={year} value={year}>{year}</option>
@@ -51,7 +51,7 @@ export default function PayrollHistoryPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">All Statuses</option>
             <option value="draft">Draft</option>
@@ -75,7 +75,7 @@ export default function PayrollHistoryPage() {
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
         {isLoading ? (
           <div className="p-12 text-center">
-            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
             <p className="text-slate-600 mt-4">Loading payroll periods...</p>
           </div>
         ) : filteredPeriods && filteredPeriods.length > 0 ? (
@@ -126,13 +126,13 @@ export default function PayrollHistoryPage() {
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
                         period.status === 'paid'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-success-muted text-success'
                           : period.status === 'approved'
-                          ? 'bg-blue-100 text-blue-800'
+                          ? 'bg-info-muted text-info'
                           : period.status === 'processing'
-                          ? 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-warning-muted text-warning'
                           : period.status === 'cancelled'
-                          ? 'bg-red-100 text-red-800'
+                          ? 'bg-danger-muted text-danger'
                           : 'bg-slate-100 text-slate-800'
                       }`}>
                         {period.status}

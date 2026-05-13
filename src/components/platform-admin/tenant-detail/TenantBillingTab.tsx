@@ -34,7 +34,7 @@ export const TenantBillingTab: React.FC<TenantBillingTabProps> = ({ tenantId, su
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -82,7 +82,7 @@ export const TenantBillingTab: React.FC<TenantBillingTabProps> = ({ tenantId, su
                     href={`https://www.paypal.com/billing/subscriptions/${subscription.paypal_subscription_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-700"
+                    className="text-primary hover:text-primary/90"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </a>
@@ -132,7 +132,7 @@ export const TenantBillingTab: React.FC<TenantBillingTabProps> = ({ tenantId, su
                         href={invoice.invoice_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
+                        className="text-primary hover:text-primary/90 text-sm flex items-center gap-1"
                       >
                         Download
                         <ExternalLink className="w-3 h-3" />

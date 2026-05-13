@@ -154,7 +154,7 @@ export default function PurchaseOrdersListPage() {
       render: (order: Record<string, unknown>) => (
         <button
           onClick={() => navigate(`/purchase-orders/${order.id}`)}
-          className="text-blue-600 hover:text-blue-800 font-medium"
+          className="text-primary hover:text-primary/80 font-medium"
         >
           {order.po_number}
         </button>
@@ -226,19 +226,19 @@ export default function PurchaseOrdersListPage() {
           title="Pending Orders"
           value={stats.pending.toString()}
           icon={Clock}
-          iconColor="text-yellow-600"
+          iconColor="text-warning"
         />
         <StatsCard
           title="Approved/Received"
           value={stats.approved.toString()}
           icon={CheckCircle}
-          iconColor="text-green-600"
+          iconColor="text-success"
         />
         <StatsCard
           title="Total Value"
           value={`$${stats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={DollarSign}
-          iconColor="text-blue-600"
+          iconColor="text-primary"
         />
       </div>
 
@@ -261,7 +261,7 @@ export default function PurchaseOrdersListPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
               >
                 <option value="all">All Statuses</option>
                 {statuses.map((status) => (

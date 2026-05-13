@@ -73,26 +73,26 @@ export const ImportExport: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
+        return <CheckCircle className="w-4 h-4 text-success" />;
       case 'failed':
-        return <XCircle className="w-4 h-4 text-red-600" />;
+        return <XCircle className="w-4 h-4 text-danger" />;
       case 'processing':
-        return <Clock className="w-4 h-4 text-blue-600 animate-pulse" />;
+        return <Clock className="w-4 h-4 text-info animate-pulse" />;
       default:
-        return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+        return <AlertCircle className="w-4 h-4 text-warning" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success-muted text-success';
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'bg-danger-muted text-danger';
       case 'processing':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-info-muted text-info';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning-muted text-warning';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -110,8 +110,8 @@ export const ImportExport: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-              <Upload className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 rounded-xl bg-info-muted flex items-center justify-center">
+              <Upload className="w-6 h-6 text-info" />
             </div>
             <div>
               <p className="text-sm text-slate-600">Total Imports</p>
@@ -124,8 +124,8 @@ export const ImportExport: React.FC = () => {
 
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
-              <Download className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 rounded-xl bg-success-muted flex items-center justify-center">
+              <Download className="w-6 h-6 text-success" />
             </div>
             <div>
               <p className="text-sm text-slate-600">Total Exports</p>
@@ -138,8 +138,8 @@ export const ImportExport: React.FC = () => {
 
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-              <FileText className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center">
+              <FileText className="w-6 h-6 text-accent-foreground" />
             </div>
             <div>
               <p className="text-sm text-slate-600">Total Records</p>
@@ -162,7 +162,7 @@ export const ImportExport: React.FC = () => {
             return (
               <Card
                 key={entityType}
-                className="p-5 hover:shadow-lg transition-all duration-200 border-2 border-transparent hover:border-blue-200"
+                className="p-5 hover:shadow-lg transition-all duration-200 border-2 border-transparent hover:border-primary/30"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div
@@ -202,7 +202,7 @@ export const ImportExport: React.FC = () => {
                   <Button
                     size="sm"
                     onClick={() => handleEntitySelect(entityType, 'import')}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
                     <Upload className="w-4 h-4 mr-1" />
                     Import
@@ -210,7 +210,7 @@ export const ImportExport: React.FC = () => {
                   <Button
                     size="sm"
                     onClick={() => handleEntitySelect(entityType, 'export')}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
                   >
                     <Download className="w-4 h-4 mr-1" />
                     Export
@@ -228,7 +228,7 @@ export const ImportExport: React.FC = () => {
         <Card>
           {loadingJobs ? (
             <div className="p-8 text-center">
-              <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
               <p className="text-slate-500 mt-3">Loading activity...</p>
             </div>
           ) : recentJobs && recentJobs.length > 0 ? (
@@ -239,9 +239,9 @@ export const ImportExport: React.FC = () => {
                     <div className="flex items-center gap-4 flex-1">
                       <div className="flex items-center gap-2">
                         {job.job_type === 'import' ? (
-                          <Upload className="w-5 h-5 text-blue-600" />
+                          <Upload className="w-5 h-5 text-info" />
                         ) : (
-                          <Download className="w-5 h-5 text-green-600" />
+                          <Download className="w-5 h-5 text-success" />
                         )}
                         {getStatusIcon(job.status)}
                       </div>
@@ -283,7 +283,7 @@ export const ImportExport: React.FC = () => {
                       </div>
                       <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-blue-600 transition-all duration-300"
+                          className="h-full bg-primary transition-all duration-300"
                           style={{ width: `${(job.processed_records / job.total_records) * 100}%` }}
                         ></div>
                       </div>

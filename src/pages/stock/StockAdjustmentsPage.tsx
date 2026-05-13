@@ -249,7 +249,7 @@ export const StockAdjustmentsPage: React.FC = () => {
                 onClick={() => setStatusFilter(s)}
                 className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${
                   statusFilter === s
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -261,7 +261,7 @@ export const StockAdjustmentsPage: React.FC = () => {
 
         {isLoading ? (
           <div className="py-16 flex items-center justify-center">
-            <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center">
@@ -307,7 +307,7 @@ export const StockAdjustmentsPage: React.FC = () => {
                     key={adj.id}
                     className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
                   >
-                    <td className="px-4 py-3 font-mono font-medium text-blue-700">
+                    <td className="px-4 py-3 font-mono font-medium text-primary">
                       {adj.adjustment_number ?? '—'}
                     </td>
                     <td className="px-4 py-3 text-slate-700">
@@ -330,7 +330,7 @@ export const StockAdjustmentsPage: React.FC = () => {
                         <div className="flex items-center gap-1.5">
                           {approvingId === adj.id ? (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-green-700 font-medium">Approve?</span>
+                              <span className="text-xs text-success font-medium">Approve?</span>
                               <button
                                 onClick={() =>
                                   approveMutation.mutate({
@@ -338,7 +338,7 @@ export const StockAdjustmentsPage: React.FC = () => {
                                     userId: user?.id ?? '',
                                   })
                                 }
-                                className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+                                className="px-2 py-1 text-xs bg-success text-success-foreground rounded hover:bg-success/90 font-medium"
                               >
                                 Yes
                               </button>
@@ -351,10 +351,10 @@ export const StockAdjustmentsPage: React.FC = () => {
                             </div>
                           ) : cancellingId === adj.id ? (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-red-600 font-medium">Cancel?</span>
+                              <span className="text-xs text-danger font-medium">Cancel?</span>
                               <button
                                 onClick={() => cancelMutation.mutate(adj.id)}
-                                className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 font-medium"
+                                className="px-2 py-1 text-xs bg-danger text-danger-foreground rounded hover:bg-danger/90 font-medium"
                               >
                                 Yes
                               </button>
@@ -369,14 +369,14 @@ export const StockAdjustmentsPage: React.FC = () => {
                             <>
                               <button
                                 onClick={() => setApprovingId(adj.id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-green-50 text-green-700 rounded-md hover:bg-green-100 font-medium transition-colors border border-green-200"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-success-muted text-success rounded-md hover:bg-success-muted/80 font-medium transition-colors border border-success/30"
                               >
                                 <CheckCircle className="w-3.5 h-3.5" />
                                 Approve
                               </button>
                               <button
                                 onClick={() => setCancellingId(adj.id)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-red-50 text-red-600 rounded-md hover:bg-red-100 font-medium transition-colors border border-red-200"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-danger-muted text-danger rounded-md hover:bg-danger-muted/80 font-medium transition-colors border border-danger/30"
                               >
                                 <XCircle className="w-3.5 h-3.5" />
                                 Cancel
@@ -412,10 +412,10 @@ export const StockAdjustmentsPage: React.FC = () => {
             />
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Reason <span className="text-red-500">*</span>
+                Reason <span className="text-danger">*</span>
               </label>
               <select
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-white"
                 value={form.reason}
                 onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
               >
@@ -431,7 +431,7 @@ export const StockAdjustmentsPage: React.FC = () => {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
             <textarea
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm resize-none"
               rows={2}
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
@@ -450,7 +450,7 @@ export const StockAdjustmentsPage: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                 placeholder="Search stock items by name, SKU or brand..."
                 value={itemSearch}
                 onChange={(e) => setItemSearch(e.target.value)}
@@ -463,7 +463,7 @@ export const StockAdjustmentsPage: React.FC = () => {
                   <button
                     key={item.id}
                     onClick={() => addItem(item)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 text-left transition-colors border-b border-slate-100 last:border-0"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/10 text-left transition-colors border-b border-slate-100 last:border-0"
                   >
                     <Package className="w-4 h-4 text-slate-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -521,7 +521,7 @@ export const StockAdjustmentsPage: React.FC = () => {
                             <input
                               type="number"
                               min="0"
-                              className="w-full px-2 py-1 border border-slate-300 rounded text-sm text-center focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                              className="w-full px-2 py-1 border border-slate-300 rounded text-sm text-center focus:outline-none focus:ring-1 focus:ring-primary font-mono"
                               value={item.counted_quantity}
                               onChange={(e) =>
                                 updateItem(
@@ -536,9 +536,9 @@ export const StockAdjustmentsPage: React.FC = () => {
                             <span
                               className={
                                 variance > 0
-                                  ? 'text-green-600'
+                                  ? 'text-success'
                                   : variance < 0
-                                  ? 'text-red-600'
+                                  ? 'text-danger'
                                   : 'text-slate-400'
                               }
                             >
@@ -549,7 +549,7 @@ export const StockAdjustmentsPage: React.FC = () => {
                           <td className="px-3 py-2">
                             <input
                               type="text"
-                              className="w-full px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              className="w-full px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                               placeholder="Optional notes"
                               value={item.notes}
                               onChange={(e) =>
@@ -560,7 +560,7 @@ export const StockAdjustmentsPage: React.FC = () => {
                           <td className="px-3 py-2">
                             <button
                               onClick={() => removeItem(item.stock_item_id)}
-                              className="p-1 hover:bg-red-50 rounded text-slate-400 hover:text-red-500 transition-colors"
+                              className="p-1 hover:bg-danger-muted rounded text-slate-400 hover:text-danger transition-colors"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>

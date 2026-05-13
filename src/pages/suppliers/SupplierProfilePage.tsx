@@ -215,7 +215,7 @@ export default function SupplierProfilePage() {
                 className={`
                   flex items-center gap-2 px-1 py-4 border-b-2 font-medium text-sm whitespace-nowrap
                   ${activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }
                 `}
@@ -224,7 +224,7 @@ export default function SupplierProfilePage() {
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
                   <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
-                    activeTab === tab.id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
+                    activeTab === tab.id ? 'bg-info-muted text-info' : 'bg-gray-100 text-gray-600'
                   }`}>
                     {tab.count}
                   </span>
@@ -283,7 +283,7 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
               <div>
                 <label className="text-sm text-gray-500">Website</label>
                 {supplier.website ? (
-                  <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                     <Globe className="inline w-4 h-4 mr-1" />
                     Visit Website
                   </a>
@@ -380,7 +380,7 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="bg-green-500 h-2 rounded-full"
+                    className="bg-success h-2 rounded-full"
                     style={{ width: `${((supplier.on_time_delivery_rate || 0) / 5) * 100}%` }}
                   />
                 </div>
@@ -392,7 +392,7 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="bg-blue-500 h-2 rounded-full"
+                    className="bg-info h-2 rounded-full"
                     style={{ width: `${((supplier.quality_score || 0) / 5) * 100}%` }}
                   />
                 </div>
@@ -404,7 +404,7 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="bg-yellow-500 h-2 rounded-full"
+                    className="bg-warning h-2 rounded-full"
                     style={{ width: `${((supplier.pricing_score || 0) / 5) * 100}%` }}
                   />
                 </div>
@@ -416,7 +416,7 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="bg-purple-500 h-2 rounded-full"
+                    className="bg-accent h-2 rounded-full"
                     style={{ width: `${((supplier.reliability_score || 0) / 5) * 100}%` }}
                   />
                 </div>
@@ -529,7 +529,7 @@ function CommunicationsTab({ communications, supplierId, onUpdate }: { communica
         ) : (
           <div className="space-y-4">
             {communications.map((comm) => (
-              <div key={comm.id} className="border-l-4 border-blue-500 bg-gray-50 p-4 rounded">
+              <div key={comm.id} className="border-l-4 border-primary bg-gray-50 p-4 rounded">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -571,7 +571,7 @@ function DocumentsTab({ documents, supplierId, onUpdate }: { documents: Record<s
             {documents.map((doc) => (
               <div key={doc.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start gap-3">
-                  <FileText className="w-8 h-8 text-blue-500" />
+                  <FileText className="w-8 h-8 text-primary" />
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-gray-900 truncate">{doc.file_name}</h4>
                     <p className="text-sm text-gray-500 mt-1">{doc.document_type}</p>
@@ -689,7 +689,7 @@ function OrdersTab({ orders, supplierId }: { orders: Record<string, unknown>[]; 
       render: (order: Record<string, unknown>) => (
         <button
           onClick={() => navigate(`/purchase-orders/${order.id}`)}
-          className="text-blue-600 hover:text-blue-800 font-medium"
+          className="text-primary hover:text-primary/80 font-medium"
         >
           {order.po_number}
         </button>

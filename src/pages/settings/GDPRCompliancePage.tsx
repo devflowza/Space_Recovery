@@ -11,10 +11,10 @@ import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
-  pending: { bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700', icon: <Clock className="w-4 h-4" /> },
-  processing: { bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700', icon: <Loader2 className="w-4 h-4 animate-spin" /> },
-  completed: { bg: 'bg-green-50 border-green-200', text: 'text-green-700', icon: <CheckCircle2 className="w-4 h-4" /> },
-  rejected: { bg: 'bg-red-50 border-red-200', text: 'text-red-700', icon: <XCircle className="w-4 h-4" /> },
+  pending: { bg: 'bg-warning-muted border-warning/30', text: 'text-warning', icon: <Clock className="w-4 h-4" /> },
+  processing: { bg: 'bg-info-muted border-info/30', text: 'text-info', icon: <Loader2 className="w-4 h-4 animate-spin" /> },
+  completed: { bg: 'bg-success-muted border-success/30', text: 'text-success', icon: <CheckCircle2 className="w-4 h-4" /> },
+  rejected: { bg: 'bg-danger-muted border-danger/30', text: 'text-danger', icon: <XCircle className="w-4 h-4" /> },
 };
 
 export const GDPRCompliancePage: React.FC = () => {
@@ -115,7 +115,7 @@ export const GDPRCompliancePage: React.FC = () => {
         </div>
         <button
           onClick={() => setShowNewRequest(true)}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           New Request
@@ -178,7 +178,7 @@ export const GDPRCompliancePage: React.FC = () => {
             <button
               onClick={() => createMutation.mutate()}
               disabled={!formData.email || createMutation.isPending}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
             >
               {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Create Request
@@ -207,7 +207,7 @@ export const GDPRCompliancePage: React.FC = () => {
           </button>
         </div>
         {selectedCustomerId && (
-          <p className="text-xs text-green-600 mt-1">Customer selected: {selectedCustomerId}</p>
+          <p className="text-xs text-success mt-1">Customer selected: {selectedCustomerId}</p>
         )}
       </div>
 
@@ -220,7 +220,7 @@ export const GDPRCompliancePage: React.FC = () => {
         </div>
         {isLoading ? (
           <div className="p-8 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : requests.length === 0 ? (
           <div className="p-8 text-center text-slate-500">
@@ -247,7 +247,7 @@ export const GDPRCompliancePage: React.FC = () => {
                       {req.request_type === 'export' && (
                         <button
                           onClick={() => processExport(req.id)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                          className="p-1.5 text-primary hover:bg-info-muted rounded"
                           title="Process export"
                         >
                           <Download className="w-4 h-4" />
@@ -256,7 +256,7 @@ export const GDPRCompliancePage: React.FC = () => {
                       {req.request_type === 'deletion' && (
                         <button
                           onClick={() => processDeletion(req.id)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                          className="p-1.5 text-danger hover:bg-danger-muted rounded"
                           title="Process deletion"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -295,7 +295,7 @@ export const GDPRCompliancePage: React.FC = () => {
                   <td className="px-4 py-2">{p.retention_days}</td>
                   <td className="px-4 py-2">{p.auto_purge ? 'Yes' : 'No'}</td>
                   <td className="px-4 py-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${p.is_active ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${p.is_active ? 'bg-success-muted text-success' : 'bg-slate-100 text-slate-500'}`}>
                       {p.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>

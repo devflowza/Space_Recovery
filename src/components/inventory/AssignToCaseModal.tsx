@@ -130,13 +130,13 @@ export function AssignToCaseModal({
           <div className="flex items-center space-x-2">
             {availability && !availability.available ? (
               <>
-                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                <span className="text-xs text-red-600">Not Available</span>
+                <AlertCircle className="w-4 h-4 text-danger flex-shrink-0" />
+                <span className="text-xs text-danger">Not Available</span>
               </>
             ) : availability && availability.available ? (
               <>
-                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                <span className="text-xs text-green-600">Available</span>
+                <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
+                <span className="text-xs text-success">Available</span>
               </>
             ) : (
               <div className="h-4"></div>
@@ -144,15 +144,15 @@ export function AssignToCaseModal({
           </div>
 
           {availability && !availability.available && (
-            <div className="bg-red-50 border border-red-200 rounded p-2">
-              <p className="text-xs text-red-700">{availability.reason}</p>
+            <div className="bg-danger-muted border border-danger/30 rounded p-2">
+              <p className="text-xs text-danger">{availability.reason}</p>
             </div>
           )}
 
           {/* Case Selection */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-2">
-              Select Case <span className="text-red-500">*</span>
+              Select Case <span className="text-danger">*</span>
             </label>
             <SearchableSelect
               options={caseOptions}
@@ -171,7 +171,7 @@ export function AssignToCaseModal({
             <button
               type="button"
               onClick={() => setShowNotes(!showNotes)}
-              className="flex items-center text-xs text-blue-600 hover:text-blue-700"
+              className="flex items-center text-xs text-primary hover:text-primary/90"
             >
               {showNotes ? (
                 <ChevronUp className="w-3 h-3 mr-1" />
@@ -186,7 +186,7 @@ export function AssignToCaseModal({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className="w-full mt-2 px-2 py-2 border border-slate-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full mt-2 px-2 py-2 border border-slate-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder="Assignment notes..."
                 disabled={loading || (availability && !availability.available)}
               />
@@ -195,8 +195,8 @@ export function AssignToCaseModal({
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded p-2">
-              <p className="text-xs text-red-700">{error}</p>
+            <div className="bg-danger-muted border border-danger/30 rounded p-2">
+              <p className="text-xs text-danger">{error}</p>
             </div>
           )}
 

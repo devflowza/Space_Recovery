@@ -27,9 +27,9 @@ const CATEGORY_CONFIG = {
   diagnostic: { label: 'Diagnostic', color: '#ef4444', bgColor: '#fef2f2' },
   solution: { label: 'Solution', color: '#10b981', bgColor: '#f0fdf4' },
   timeline: { label: 'Timeline', color: '#f59e0b', bgColor: '#fffbeb' },
-  technical: { label: 'Technical', color: '#6366f1', bgColor: '#eef2ff' },
-  financial: { label: 'Financial', color: '#a855f7', bgColor: '#faf5ff' },
-  compliance: { label: 'Compliance', color: '#8b5cf6', bgColor: '#f5f3ff' },
+  technical: { label: 'Technical', color: 'rgb(var(--color-accent))', bgColor: 'rgb(var(--color-accent) / 0.1)' },
+  financial: { label: 'Financial', color: 'rgb(var(--color-accent))', bgColor: 'rgb(var(--color-accent) / 0.1)' },
+  compliance: { label: 'Compliance', color: 'rgb(var(--color-accent))', bgColor: 'rgb(var(--color-accent) / 0.1)' },
   risk: { label: 'Risk', color: '#dc2626', bgColor: '#fef2f2' },
 };
 
@@ -143,7 +143,7 @@ export const ReportSectionsPage: React.FC = () => {
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
               style={{
-                background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                background: 'linear-gradient(135deg, #ec4899 0%, rgb(var(--color-accent)) 100%)',
                 boxShadow: '0 6px 20px -4px rgba(236, 72, 153, 0.4)',
               }}
             >
@@ -171,12 +171,12 @@ export const ReportSectionsPage: React.FC = () => {
       </div>
 
       {/* Info Banner */}
-      <Card className="p-4 mb-6 bg-blue-50 border-blue-200">
+      <Card className="p-4 mb-6 bg-info-muted border-info/30">
         <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <Info className="w-5 h-5 text-info mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <h3 className="font-semibold text-blue-900 mb-1">About Report Sections</h3>
-            <p className="text-sm text-blue-800">
+            <h3 className="font-semibold text-info mb-1">About Report Sections</h3>
+            <p className="text-sm text-info">
               Report sections are reusable building blocks for creating professional reports.
               Each section can have predefined content snippets (presets) that speed up report
               creation. Configure sections here, then use them when building report templates.
@@ -237,7 +237,7 @@ export const ReportSectionsPage: React.FC = () => {
       {/* Sections Grid */}
       {isLoading ? (
         <div className="text-center py-12">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading sections...</p>
         </div>
       ) : filteredSections.length === 0 ? (
@@ -322,7 +322,7 @@ export const ReportSectionsPage: React.FC = () => {
                         variant="secondary"
                         size="sm"
                         onClick={() => handleDeleteSection(section)}
-                        className="text-red-600 hover:bg-red-50"
+                        className="text-danger hover:bg-danger-muted"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

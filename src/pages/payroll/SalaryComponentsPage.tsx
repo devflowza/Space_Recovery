@@ -201,14 +201,14 @@ export default function SalaryComponentsPage() {
                           </button>
                           <button
                             onClick={() => handleEdit(component)}
-                            className="p-1.5 text-blue-600 hover:text-blue-700 rounded-lg hover:bg-blue-50"
+                            className="p-1.5 text-primary hover:text-primary/90 rounded-lg hover:bg-primary/10"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(component)}
-                            className="p-1.5 text-red-600 hover:text-red-700 rounded-lg hover:bg-red-50"
+                            className="p-1.5 text-danger hover:text-danger/90 rounded-lg hover:bg-danger-muted"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -226,7 +226,7 @@ export default function SalaryComponentsPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-slate-900">Deductions</h2>
-            <Badge variant="error">{deductionComponents.length} Components</Badge>
+            <Badge variant="danger">{deductionComponents.length} Components</Badge>
           </div>
 
           {deductionComponents.length === 0 ? (
@@ -282,7 +282,7 @@ export default function SalaryComponentsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant="error">{component.component_type}</Badge>
+                        <Badge variant="danger">{component.component_type}</Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm text-slate-700 capitalize">{component.calculation_type}</span>
@@ -317,14 +317,14 @@ export default function SalaryComponentsPage() {
                           </button>
                           <button
                             onClick={() => handleEdit(component)}
-                            className="p-1.5 text-blue-600 hover:text-blue-700 rounded-lg hover:bg-blue-50"
+                            className="p-1.5 text-primary hover:text-primary/90 rounded-lg hover:bg-primary/10"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(component)}
-                            className="p-1.5 text-red-600 hover:text-red-700 rounded-lg hover:bg-red-50"
+                            className="p-1.5 text-danger hover:text-danger/90 rounded-lg hover:bg-danger-muted"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />

@@ -112,9 +112,9 @@ export const StockReturnModal: React.FC<Props> = ({ sale, onClose }) => {
   return (
     <Modal isOpen onClose={onClose} title="Create Return Request" size="lg">
       <div className="space-y-5">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-start gap-2.5">
-          <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-          <p className="text-sm text-amber-800">
+        <div className="bg-warning-muted border border-warning/30 rounded-lg px-4 py-3 flex items-start gap-2.5">
+          <AlertCircle className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+          <p className="text-sm text-warning">
             This creates a return request for <strong>{sale.sale_number}</strong>. Staff will need to approve and complete the return to restock items.
           </p>
         </div>
@@ -125,7 +125,7 @@ export const StockReturnModal: React.FC<Props> = ({ sale, onClose }) => {
               Return Reason
             </label>
             <select
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             >
@@ -139,7 +139,7 @@ export const StockReturnModal: React.FC<Props> = ({ sale, onClose }) => {
               Refund Method
             </label>
             <select
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
               value={refundMethod}
               onChange={(e) => setRefundMethod(e.target.value)}
             >
@@ -174,7 +174,7 @@ export const StockReturnModal: React.FC<Props> = ({ sale, onClose }) => {
                         type="checkbox"
                         checked={line.include}
                         onChange={(e) => updateLine(idx, { include: e.target.checked })}
-                        className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                        className="w-4 h-4 rounded border-slate-300 text-primary"
                       />
                     </td>
                     <td className="px-3 py-2.5">
@@ -194,7 +194,7 @@ export const StockReturnModal: React.FC<Props> = ({ sale, onClose }) => {
                         value={line.quantity}
                         disabled={!line.include}
                         onChange={(e) => updateLine(idx, { quantity: Math.min(line.maxQuantity, Math.max(1, Number(e.target.value))) })}
-                        className="w-16 text-center px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100"
+                        className="w-16 text-center px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-slate-100"
                       />
                     </td>
                     <td className="px-3 py-2.5">
@@ -202,7 +202,7 @@ export const StockReturnModal: React.FC<Props> = ({ sale, onClose }) => {
                         value={line.condition}
                         disabled={!line.include}
                         onChange={(e) => updateLine(idx, { condition: e.target.value })}
-                        className="px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 capitalize"
+                        className="px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-slate-100 capitalize"
                       >
                         {CONDITIONS.map((c) => (
                           <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
@@ -215,7 +215,7 @@ export const StockReturnModal: React.FC<Props> = ({ sale, onClose }) => {
                         checked={line.restock}
                         disabled={!line.include}
                         onChange={(e) => updateLine(idx, { restock: e.target.checked })}
-                        className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                        className="w-4 h-4 rounded border-slate-300 text-primary"
                       />
                     </td>
                     <td className="px-3 py-2.5 text-right">
@@ -226,7 +226,7 @@ export const StockReturnModal: React.FC<Props> = ({ sale, onClose }) => {
                         value={line.refund_amount}
                         disabled={!line.include}
                         onChange={(e) => updateLine(idx, { refund_amount: Number(e.target.value) })}
-                        className="w-24 text-right px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100"
+                        className="w-24 text-right px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-slate-100"
                       />
                     </td>
                   </tr>
@@ -247,7 +247,7 @@ export const StockReturnModal: React.FC<Props> = ({ sale, onClose }) => {
             Notes (optional)
           </label>
           <textarea
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             rows={2}
             placeholder="Additional notes about this return..."
             value={notes}

@@ -81,7 +81,7 @@ const StockTransferDetail: React.FC = () => {
   if (isLoading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[300px]">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -89,8 +89,8 @@ const StockTransferDetail: React.FC = () => {
   if (error || !transfer) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-          <p className="text-red-600">Transfer not found or failed to load.</p>
+        <div className="bg-danger-muted border border-danger/30 rounded-xl p-6 text-center">
+          <p className="text-danger">Transfer not found or failed to load.</p>
           <Button variant="secondary" size="sm" className="mt-4" onClick={() => navigate('/stock/transfers')}>
             Back to Transfers
           </Button>
@@ -178,8 +178,8 @@ const StockTransferDetail: React.FC = () => {
             </div>
             {transfer.completed_at && (
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                <div className="p-2 bg-success-muted rounded-lg">
+                  <CheckCircle className="w-4 h-4 text-success" />
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Completed</p>
@@ -194,8 +194,8 @@ const StockTransferDetail: React.FC = () => {
           <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Locations</h3>
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-red-50 rounded-lg mt-0.5">
-                <MapPin className="w-4 h-4 text-red-500" />
+              <div className="p-2 bg-danger-muted rounded-lg mt-0.5">
+                <MapPin className="w-4 h-4 text-danger" />
               </div>
               <div>
                 <p className="text-xs text-slate-500">From</p>
@@ -208,8 +208,8 @@ const StockTransferDetail: React.FC = () => {
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-green-50 rounded-lg mt-0.5">
-                <MapPin className="w-4 h-4 text-green-600" />
+              <div className="p-2 bg-success-muted rounded-lg mt-0.5">
+                <MapPin className="w-4 h-4 text-success" />
               </div>
               <div>
                 <p className="text-xs text-slate-500">To</p>

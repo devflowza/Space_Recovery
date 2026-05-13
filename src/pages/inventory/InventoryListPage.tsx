@@ -216,8 +216,8 @@ export default function InventoryListPage() {
   };
 
   const getStockColor = (count: number) => {
-    if (count === 0) return 'text-red-600';
-    if (count <= 2) return 'text-orange-600';
+    if (count === 0) return 'text-danger';
+    if (count <= 2) return 'text-warning';
     return 'text-gray-900';
   };
 
@@ -300,7 +300,7 @@ export default function InventoryListPage() {
           <Button
             onClick={() => setIsBulkImportOpen(true)}
             variant="secondary"
-            className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+            className="bg-success-muted hover:bg-success-muted/80 text-success border-success/30"
           >
             <Upload className="w-4 h-4 mr-2" />
             Bulk Import
@@ -334,13 +334,13 @@ export default function InventoryListPage() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+        <div className="bg-gradient-to-br from-info-muted to-info-muted rounded-xl p-4 border border-info/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Hard Drives</p>
-              <p className="text-2xl font-bold text-blue-900 mt-1">{insights.hddCount}</p>
+              <p className="text-xs font-medium text-info uppercase tracking-wide">Hard Drives</p>
+              <p className="text-2xl font-bold text-info mt-1">{insights.hddCount}</p>
             </div>
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
               <HardDrive className="w-5 h-5 text-white" />
             </div>
           </div>
@@ -381,7 +381,7 @@ export default function InventoryListPage() {
                 placeholder="Search inventory..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -392,7 +392,7 @@ export default function InventoryListPage() {
                   onClick={() => setSelectedCategory(selectedCategory === category.id ? null : category.id)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     selectedCategory === category.id
-                      ? 'bg-blue-500 text-white shadow-md'
+                      ? 'bg-primary text-primary-foreground shadow-md'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -420,7 +420,7 @@ export default function InventoryListPage() {
               <Filter className="w-4 h-4" />
               More Filters
               {(selectedCategory || selectedStatus) && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
           </div>
@@ -434,7 +434,7 @@ export default function InventoryListPage() {
                 <select
                   value={selectedCategory || ''}
                   onChange={(e) => setSelectedCategory(e.target.value || null)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="">All Categories</option>
                   {categories.map((category) => (
@@ -451,7 +451,7 @@ export default function InventoryListPage() {
                 <select
                   value={selectedStatus || ''}
                   onChange={(e) => setSelectedStatus(e.target.value || null)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="">All Statuses</option>
                   {statusTypes.map((status) => (
@@ -467,22 +467,22 @@ export default function InventoryListPage() {
       </div>
 
       {error && (
-        <div className="bg-white rounded-2xl shadow-lg border border-red-200 mb-6">
-          <div className="bg-red-50 p-4 rounded-2xl">
+        <div className="bg-white rounded-2xl shadow-lg border border-danger/30 mb-6">
+          <div className="bg-danger-muted p-4 rounded-2xl">
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-5 w-5 text-danger" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="ml-3 flex-1">
-                <h3 className="text-sm font-medium text-red-800">Error Loading Inventory</h3>
-                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <h3 className="text-sm font-medium text-danger">Error Loading Inventory</h3>
+                <p className="mt-1 text-sm text-danger">{error}</p>
                 <div className="mt-3">
                   <Button
                     variant="secondary"
                     onClick={loadData}
-                    className="bg-red-100 text-red-800 hover:bg-red-200"
+                    className="bg-danger-muted text-danger hover:bg-danger-muted/80"
                   >
                     Try Again
                   </Button>
@@ -495,7 +495,7 @@ export default function InventoryListPage() {
 
       {loading ? (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading inventory...</p>
         </div>
       ) : items.length === 0 ? (
@@ -556,9 +556,9 @@ export default function InventoryListPage() {
                             {item.brand?.name || 'Unknown'} {item.model || 'N/A'}
                           </div>
                           {item.inventory_code && (
-                            <div className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-md px-2.5 py-1">
-                              <span className="text-xs font-medium text-blue-600">INV#:</span>
-                              <span className="text-sm font-bold text-blue-700 font-mono tracking-wide">{item.inventory_code}</span>
+                            <div className="inline-flex items-center gap-1.5 bg-info-muted border border-info/30 rounded-md px-2.5 py-1">
+                              <span className="text-xs font-medium text-info">INV#:</span>
+                              <span className="text-sm font-bold text-info font-mono tracking-wide">{item.inventory_code}</span>
                             </div>
                           )}
                           {item.serial_number && (
@@ -687,7 +687,7 @@ export default function InventoryListPage() {
                               e.stopPropagation();
                               setEditingItemId(item.id);
                             }}
-                            className="action-button p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="action-button p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
                             title="Edit item"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -697,7 +697,7 @@ export default function InventoryListPage() {
                               e.stopPropagation();
                               setDeletingItemId(item.id);
                             }}
-                            className="action-button p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="action-button p-2 text-danger hover:bg-danger-muted rounded-lg transition-colors"
                             title="Delete item"
                           >
                             <Trash2 className="w-4 h-4" />

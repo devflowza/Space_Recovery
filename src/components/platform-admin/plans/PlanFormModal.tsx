@@ -90,7 +90,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
                 type="text"
                 value={formData.name || ''}
                 onChange={(e) => updateField('name', e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
             </div>
@@ -100,7 +100,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
                 type="text"
                 value={formData.code || ''}
                 onChange={(e) => updateField('code', e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -112,7 +112,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
                 type="text"
                 value={formData.slug || ''}
                 onChange={(e) => updateField('slug', e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
@@ -121,7 +121,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
                 type="number"
                 value={formData.sort_order ?? 0}
                 onChange={(e) => updateField('sort_order', parseInt(e.target.value) || 0)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -132,7 +132,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
               value={formData.description || ''}
               onChange={(e) => updateField('description', e.target.value)}
               rows={2}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
@@ -144,7 +144,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
                 step="0.01"
                 value={formData.price_monthly ?? 0}
                 onChange={(e) => updateField('price_monthly', parseFloat(e.target.value) || 0)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
@@ -154,7 +154,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
                 step="0.01"
                 value={formData.price_yearly ?? 0}
                 onChange={(e) => updateField('price_yearly', parseFloat(e.target.value) || 0)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
@@ -163,7 +163,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
                 type="text"
                 value={formData.currency || 'USD'}
                 onChange={(e) => updateField('currency', e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -174,7 +174,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
               type="number"
               value={formData.trial_days ?? ''}
               onChange={(e) => updateField('trial_days', e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="No trial"
             />
           </div>
@@ -185,7 +185,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
                 type="checkbox"
                 checked={formData.is_active ?? true}
                 onChange={(e) => updateField('is_active', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                className="w-4 h-4 rounded border-slate-300 text-primary"
               />
               <span className="text-sm text-slate-700">Active</span>
             </label>
@@ -194,7 +194,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
                 type="checkbox"
                 checked={formData.is_public ?? true}
                 onChange={(e) => updateField('is_public', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                className="w-4 h-4 rounded border-slate-300 text-primary"
               />
               <span className="text-sm text-slate-700">Public</span>
             </label>

@@ -15,21 +15,21 @@ function getStatusBadge(status: string | null) {
   switch (status) {
     case 'approved':
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-muted text-success">
           <CheckCircle className="w-3 h-3" />
           Approved
         </span>
       );
     case 'submitted':
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-info-muted text-info">
           <Send className="w-3 h-3" />
           Submitted
         </span>
       );
     case 'rejected':
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger-muted text-danger">
           <XCircle className="w-3 h-3" />
           Rejected
         </span>
@@ -47,7 +47,7 @@ function getStatusBadge(status: string | null) {
 function getBillableBadge(isBillable: boolean | null) {
   if (isBillable) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success-muted text-success">
         <DollarSign className="w-3 h-3" />
         Billable
       </span>
@@ -126,9 +126,9 @@ function TimesheetEntryModal({ entry, employees, onClose, onSave, currentUserId,
       <div className="space-y-4">
         {isAdmin && (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Employee <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Employee <span className="text-danger">*</span></label>
             <select
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               value={form.employee_id}
               onChange={e => setForm(f => ({ ...f, employee_id: e.target.value }))}
             >
@@ -144,22 +144,22 @@ function TimesheetEntryModal({ entry, employees, onClose, onSave, currentUserId,
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Work Date <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Work Date <span className="text-danger">*</span></label>
             <input
               type="date"
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               value={form.work_date}
               onChange={e => setForm(f => ({ ...f, work_date: e.target.value }))}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Hours <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Hours <span className="text-danger">*</span></label>
             <input
               type="number"
               step="0.5"
               min="0.5"
               max="24"
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               value={form.hours}
               onChange={e => setForm(f => ({ ...f, hours: e.target.value }))}
             />
@@ -170,7 +170,7 @@ function TimesheetEntryModal({ entry, employees, onClose, onSave, currentUserId,
           <label className="block text-sm font-medium text-slate-700 mb-1">Project Name</label>
           <input
             type="text"
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="e.g. Client Server Recovery"
             value={form.project_name}
             onChange={e => setForm(f => ({ ...f, project_name: e.target.value }))}
@@ -181,7 +181,7 @@ function TimesheetEntryModal({ entry, employees, onClose, onSave, currentUserId,
           <label className="block text-sm font-medium text-slate-700 mb-1">Task Description</label>
           <textarea
             rows={3}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             placeholder="Describe the work performed..."
             value={form.task_description}
             onChange={e => setForm(f => ({ ...f, task_description: e.target.value }))}
@@ -191,7 +191,7 @@ function TimesheetEntryModal({ entry, employees, onClose, onSave, currentUserId,
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 cursor-pointer">
             <div
-              className={`relative inline-flex w-10 h-5 rounded-full transition-colors ${form.is_billable ? 'bg-amber-500' : 'bg-slate-300'}`}
+              className={`relative inline-flex w-10 h-5 rounded-full transition-colors ${form.is_billable ? 'bg-primary' : 'bg-slate-300'}`}
               onClick={() => setForm(f => ({ ...f, is_billable: !f.is_billable }))}
             >
               <span
@@ -206,7 +206,7 @@ function TimesheetEntryModal({ entry, employees, onClose, onSave, currentUserId,
           <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
           <textarea
             rows={2}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             placeholder="Any additional notes..."
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
@@ -221,7 +221,7 @@ function TimesheetEntryModal({ entry, employees, onClose, onSave, currentUserId,
             Cancel
           </button>
           <button
-            className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending}
           >
@@ -284,11 +284,11 @@ function ApproveRejectModal({ entry, action, onClose, onDone, currentUserId }: A
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Notes {action === 'reject' && <span className="text-red-500">*</span>}
+            Notes {action === 'reject' && <span className="text-danger">*</span>}
           </label>
           <textarea
             rows={3}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             placeholder={action === 'reject' ? 'Reason for rejection...' : 'Optional notes...'}
             value={notes}
             onChange={e => setNotes(e.target.value)}
@@ -305,8 +305,8 @@ function ApproveRejectModal({ entry, action, onClose, onDone, currentUserId }: A
           <button
             className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 ${
               action === 'approve'
-                ? 'bg-emerald-600 hover:bg-emerald-700'
-                : 'bg-red-600 hover:bg-red-700'
+                ? 'bg-success hover:bg-success/90'
+                : 'bg-danger hover:bg-danger/90'
             }`}
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending || (action === 'reject' && !notes.trim())}
@@ -438,25 +438,25 @@ export function TimesheetManagement() {
       label: 'Total Hours This Week',
       value: stats ? `${stats.totalHoursThisWeek.toFixed(1)}h` : '—',
       icon: Clock,
-      bg: 'bg-amber-50',
-      iconBg: 'bg-amber-100',
-      iconColor: 'text-amber-600',
+      bg: 'bg-primary/10',
+      iconBg: 'bg-primary/20',
+      iconColor: 'text-primary',
     },
     {
       label: 'Billable Hours This Month',
       value: stats ? `${stats.billableHoursThisMonth.toFixed(1)}h` : '—',
       icon: DollarSign,
-      bg: 'bg-green-50',
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-600',
+      bg: 'bg-success-muted',
+      iconBg: 'bg-success/20',
+      iconColor: 'text-success',
     },
     {
       label: 'Pending Review',
       value: stats?.pendingReview ?? '—',
       icon: Send,
-      bg: 'bg-blue-50',
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
+      bg: 'bg-info-muted',
+      iconBg: 'bg-info/20',
+      iconColor: 'text-info',
     },
     {
       label: 'Total Entries',
@@ -476,7 +476,7 @@ export function TimesheetManagement() {
           <p className="text-slate-500 text-sm mt-1">Track and manage employee work hours</p>
         </div>
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-xl hover:bg-amber-700 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
           onClick={() => setEditingEntry(null)}
         >
           <Plus className="w-4 h-4" />
@@ -507,7 +507,7 @@ export function TimesheetManagement() {
             key={tab.id}
             className={`flex items-center gap-2 pb-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-amber-600 text-amber-600'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
             onClick={() => setActiveTab(tab.id)}
@@ -526,7 +526,7 @@ export function TimesheetManagement() {
               <input
                 type="text"
                 placeholder="Search project or task..."
-                className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
               />
@@ -535,7 +535,7 @@ export function TimesheetManagement() {
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <select
-                className="pl-9 pr-8 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none bg-white"
+                className="pl-9 pr-8 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary appearance-none bg-white"
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value as StatusFilter)}
               >
@@ -551,7 +551,7 @@ export function TimesheetManagement() {
               <div className="relative">
                 <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <select
-                  className="pl-9 pr-8 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none bg-white"
+                  className="pl-9 pr-8 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary appearance-none bg-white"
                   value={employeeFilter}
                   onChange={e => setEmployeeFilter(e.target.value)}
                 >
@@ -568,7 +568,7 @@ export function TimesheetManagement() {
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <select
-                className="pl-9 pr-8 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none bg-white"
+                className="pl-9 pr-8 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary appearance-none bg-white"
                 value={billableFilter}
                 onChange={e => setBillableFilter(e.target.value as typeof billableFilter)}
               >
@@ -640,7 +640,7 @@ export function TimesheetManagement() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <span className="inline-flex items-center justify-center w-14 py-1 rounded-lg text-sm font-semibold bg-amber-50 text-amber-700">
+                          <span className="inline-flex items-center justify-center w-14 py-1 rounded-lg text-sm font-semibold bg-primary/10 text-primary">
                             {entry.hours}h
                           </span>
                         </td>
@@ -656,7 +656,7 @@ export function TimesheetManagement() {
                               <>
                                 <button
                                   title="Edit"
-                                  className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                  className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                                   onClick={() => setEditingEntry(entry)}
                                 >
                                   <Edit className="w-4 h-4" />
@@ -664,7 +664,7 @@ export function TimesheetManagement() {
                                 {submitConfirmId === entry.id ? (
                                   <div className="flex items-center gap-1">
                                     <button
-                                      className="px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                                      className="px-2 py-1 text-xs font-medium text-info-foreground bg-info rounded-lg hover:bg-info/90 transition-colors"
                                       onClick={() => submitMutation.mutate(entry.id)}
                                       disabled={submitMutation.isPending}
                                     >
@@ -680,7 +680,7 @@ export function TimesheetManagement() {
                                 ) : (
                                   <button
                                     title="Submit for approval"
-                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    className="p-1.5 text-slate-400 hover:text-info hover:bg-info-muted rounded-lg transition-colors"
                                     onClick={() => setSubmitConfirmId(entry.id)}
                                   >
                                     <Send className="w-4 h-4" />
@@ -692,14 +692,14 @@ export function TimesheetManagement() {
                               <>
                                 <button
                                   title="Approve"
-                                  className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                  className="p-1.5 text-slate-400 hover:text-success hover:bg-success-muted rounded-lg transition-colors"
                                   onClick={() => setApprovingEntry({ entry, action: 'approve' })}
                                 >
                                   <CheckCircle className="w-4 h-4" />
                                 </button>
                                 <button
                                   title="Reject"
-                                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors"
                                   onClick={() => setApprovingEntry({ entry, action: 'reject' })}
                                 >
                                   <XCircle className="w-4 h-4" />
@@ -709,7 +709,7 @@ export function TimesheetManagement() {
                             {(entry.status === 'rejected') && (
                               <button
                                 title="Edit"
-                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                                 onClick={() => setEditingEntry(entry)}
                               >
                                 <Edit className="w-4 h-4" />
@@ -718,7 +718,7 @@ export function TimesheetManagement() {
                             {deletingId === entry.id ? (
                               <div className="flex items-center gap-1">
                                 <button
-                                  className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                                  className="px-2 py-1 text-xs font-medium text-danger-foreground bg-danger rounded-lg hover:bg-danger/90 transition-colors"
                                   onClick={() => deleteMutation.mutate(entry.id)}
                                   disabled={deleteMutation.isPending}
                                 >
@@ -734,7 +734,7 @@ export function TimesheetManagement() {
                             ) : (
                               <button
                                 title="Delete"
-                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors"
                                 onClick={() => setDeletingId(entry.id)}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -752,7 +752,7 @@ export function TimesheetManagement() {
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
             <div className="flex items-center gap-2 mb-4">
-              <CalendarDays className="w-5 h-5 text-amber-600" />
+              <CalendarDays className="w-5 h-5 text-primary" />
               <h3 className="text-sm font-semibold text-slate-800">
                 Current Week Overview — {format(weekStart, 'MMM d')} to {format(weekEnd, 'MMM d, yyyy')}
               </h3>
@@ -767,22 +767,22 @@ export function TimesheetManagement() {
                     key={key}
                     className={`rounded-xl p-3 text-center border transition-colors ${
                       isToday
-                        ? 'border-amber-300 bg-amber-50'
+                        ? 'border-primary/40 bg-primary/10'
                         : hours > 0
                         ? 'border-slate-200 bg-slate-50'
                         : 'border-dashed border-slate-200 bg-white'
                     }`}
                   >
-                    <div className={`text-xs font-medium mb-1 ${isToday ? 'text-amber-600' : 'text-slate-500'}`}>
+                    <div className={`text-xs font-medium mb-1 ${isToday ? 'text-primary' : 'text-slate-500'}`}>
                       {format(day, 'EEE')}
                     </div>
                     <div className={`text-xs text-slate-400 mb-2`}>{format(day, 'd')}</div>
                     <div
                       className={`text-sm font-bold ${
                         hours >= 8
-                          ? 'text-emerald-600'
+                          ? 'text-success'
                           : hours > 0
-                          ? 'text-amber-600'
+                          ? 'text-primary'
                           : 'text-slate-300'
                       }`}
                     >
@@ -801,7 +801,7 @@ export function TimesheetManagement() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <select
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                 value={summaryMonth}
                 onChange={e => setSummaryMonth(Number(e.target.value))}
               >
@@ -810,7 +810,7 @@ export function TimesheetManagement() {
                 ))}
               </select>
               <select
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                 value={summaryYear}
                 onChange={e => setSummaryYear(Number(e.target.value))}
               >
@@ -823,7 +823,7 @@ export function TimesheetManagement() {
               <div className="relative">
                 <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <select
-                  className="pl-9 pr-8 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none bg-white"
+                  className="pl-9 pr-8 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary appearance-none bg-white"
                   value={summaryEmployee}
                   onChange={e => setSummaryEmployee(e.target.value)}
                 >
@@ -898,12 +898,12 @@ export function TimesheetManagement() {
                           <td className="px-4 py-3 text-center text-sm text-slate-700">{row.totalDays}</td>
                           <td className="px-4 py-3 text-center">
                             <span className={`text-sm font-semibold ${
-                              row.totalHours >= 160 ? 'text-emerald-600' : row.totalHours >= 80 ? 'text-amber-600' : 'text-red-500'
+                              row.totalHours >= 160 ? 'text-success' : row.totalHours >= 80 ? 'text-warning' : 'text-danger'
                             }`}>
                               {row.totalHours.toFixed(1)}h
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-center text-sm font-medium text-green-600">
+                          <td className="px-4 py-3 text-center text-sm font-medium text-success">
                             {row.billableHours.toFixed(1)}h
                           </td>
                           <td className="px-4 py-3 text-center text-sm text-slate-500">
@@ -915,7 +915,7 @@ export function TimesheetManagement() {
                           <td className="px-4 py-3">
                             <div className="flex flex-wrap gap-1">
                               {row.projects.slice(0, 3).map(p => (
-                                <span key={p} className="inline-block px-2 py-0.5 bg-amber-50 text-amber-700 text-xs rounded-full border border-amber-100">
+                                <span key={p} className="inline-block px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full border border-primary/20">
                                   {p}
                                 </span>
                               ))}
@@ -948,7 +948,7 @@ export function TimesheetManagement() {
                                         <td className="px-3 py-2 text-slate-600">{format(parseISO(e.work_date), 'MMM d')}</td>
                                         <td className="px-3 py-2 text-slate-600">{e.project_name ?? '—'}</td>
                                         <td className="px-3 py-2 text-slate-500 max-w-[200px] truncate">{e.task_description ?? '—'}</td>
-                                        <td className="px-3 py-2 text-center font-medium text-amber-600">{e.hours}h</td>
+                                        <td className="px-3 py-2 text-center font-medium text-primary">{e.hours}h</td>
                                         <td className="px-3 py-2 text-center">{getBillableBadge(e.is_billable)}</td>
                                         <td className="px-3 py-2 text-center">{getStatusBadge(e.status)}</td>
                                       </tr>

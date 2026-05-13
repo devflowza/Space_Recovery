@@ -212,7 +212,7 @@ export const ReceiveStockModal: React.FC<ReceiveStockModalProps> = ({
                         <button
                           type="button"
                           onClick={() => removeSerial(index, sn)}
-                          className="text-slate-400 hover:text-red-500 transition-colors"
+                          className="text-slate-400 hover:text-danger transition-colors"
                         >
                           <X className="w-3 h-3" />
                         </button>

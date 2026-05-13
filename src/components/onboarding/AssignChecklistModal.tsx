@@ -82,12 +82,12 @@ export const AssignChecklistModal: React.FC<Props> = ({
       <form onSubmit={handleSubmit(data => mutation.mutate(data))} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Employee <span className="text-red-500">*</span>
+            Employee <span className="text-danger">*</span>
           </label>
           <select
             {...register('employee_id', { required: 'Select an employee' })}
             disabled={!!preselectedEmployeeId}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-slate-50"
           >
             <option value="">Select employee...</option>
             {employees.map(e => (
@@ -98,17 +98,17 @@ export const AssignChecklistModal: React.FC<Props> = ({
             ))}
           </select>
           {errors.employee_id && (
-            <p className="text-red-500 text-xs mt-1">{errors.employee_id.message}</p>
+            <p className="text-danger text-xs mt-1">{errors.employee_id.message}</p>
           )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Checklist <span className="text-red-500">*</span>
+            Checklist <span className="text-danger">*</span>
           </label>
           <select
             {...register('checklist_id', { required: 'Select a checklist' })}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">Select checklist...</option>
             {checklists.filter(c => c.is_active).map(c => (
@@ -118,20 +118,20 @@ export const AssignChecklistModal: React.FC<Props> = ({
             ))}
           </select>
           {errors.checklist_id && (
-            <p className="text-red-500 text-xs mt-1">{errors.checklist_id.message}</p>
+            <p className="text-danger text-xs mt-1">{errors.checklist_id.message}</p>
           )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Start Date <span className="text-red-500">*</span>
+            Start Date <span className="text-danger">*</span>
           </label>
           <Input
             {...register('start_date', { required: 'Start date is required' })}
             type="date"
           />
           {errors.start_date && (
-            <p className="text-red-500 text-xs mt-1">{errors.start_date.message}</p>
+            <p className="text-danger text-xs mt-1">{errors.start_date.message}</p>
           )}
         </div>
 

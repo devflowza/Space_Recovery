@@ -85,7 +85,7 @@ export function AdjustmentFormModal({ onClose }: Props) {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Employee <span className="text-red-500">*</span>
+            Employee <span className="text-danger">*</span>
           </label>
           <SearchableSelect
             options={employeeOptions}
@@ -98,12 +98,12 @@ export function AdjustmentFormModal({ onClose }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Type <span className="text-red-500">*</span>
+              Type <span className="text-danger">*</span>
             </label>
             <select
               value={formData.adjustment_type}
               onChange={(e) => handleChange('adjustment_type', e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="bonus">Bonus</option>
               <option value="commission">Commission</option>
@@ -116,7 +116,7 @@ export function AdjustmentFormModal({ onClose }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Effective Date <span className="text-red-500">*</span>
+              Effective Date <span className="text-danger">*</span>
             </label>
             <Input
               type="date"
@@ -128,7 +128,7 @@ export function AdjustmentFormModal({ onClose }: Props) {
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Amount (OMR) <span className="text-red-500">*</span>
+            Amount (OMR) <span className="text-danger">*</span>
           </label>
           <Input
             type="number"
@@ -145,7 +145,7 @@ export function AdjustmentFormModal({ onClose }: Props) {
               type="checkbox"
               checked={formData.is_deduction}
               onChange={(e) => handleChange('is_deduction', e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
             <div>
               <span className="text-sm font-medium text-slate-700">This is a deduction</span>
@@ -158,13 +158,13 @@ export function AdjustmentFormModal({ onClose }: Props) {
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            Description <span className="text-red-500">*</span>
+            Description <span className="text-danger">*</span>
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
             placeholder="Enter reason for adjustment..."
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             rows={3}
           />
         </div>

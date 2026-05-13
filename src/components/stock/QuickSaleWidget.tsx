@@ -57,10 +57,10 @@ export const QuickSaleWidget: React.FC<QuickSaleWidgetProps> = ({
     <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
         <div className="flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5 text-blue-600" />
+          <ShoppingCart className="w-5 h-5 text-primary" />
           <h3 className="font-semibold text-slate-900">Backup Devices</h3>
           {sales.length > 0 && (
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-info-muted text-info text-xs font-bold">
               {sales.length}
             </span>
           )}

@@ -72,7 +72,7 @@ export const PlanDetailPage: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           {plan.is_active ? (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-success bg-success-muted px-2.5 py-1 rounded-full">
               <Check className="w-3 h-3" /> Active
             </span>
           ) : (
@@ -91,7 +91,7 @@ export const PlanDetailPage: React.FC = () => {
               onClick={() => setActiveTab(tab)}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors capitalize ${
                 activeTab === tab
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -208,7 +208,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="text"
               value={formData.name || ''}
               onChange={(e) => updateField('name', e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </Field>
           <Field label="Code" required>
@@ -216,7 +216,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="text"
               value={formData.code || ''}
               onChange={(e) => updateField('code', e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </Field>
           <Field label="Slug" required>
@@ -224,7 +224,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="text"
               value={formData.slug || ''}
               onChange={(e) => updateField('slug', e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </Field>
           <Field label="Sort Order">
@@ -232,7 +232,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="number"
               value={formData.sort_order ?? 0}
               onChange={(e) => updateField('sort_order', parseInt(e.target.value) || 0)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </Field>
           <Field label="Description" className="md:col-span-2">
@@ -240,7 +240,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               value={formData.description || ''}
               onChange={(e) => updateField('description', e.target.value)}
               rows={3}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </Field>
         </div>
@@ -254,7 +254,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               step="0.01"
               value={formData.price_monthly ?? 0}
               onChange={(e) => updateField('price_monthly', parseFloat(e.target.value) || 0)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </Field>
           <Field label="Yearly Price">
@@ -263,7 +263,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               step="0.01"
               value={formData.price_yearly ?? 0}
               onChange={(e) => updateField('price_yearly', parseFloat(e.target.value) || 0)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </Field>
           <Field label="Currency">
@@ -271,7 +271,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="text"
               value={formData.currency || 'USD'}
               onChange={(e) => updateField('currency', e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </Field>
           <Field label="Trial Days">
@@ -279,7 +279,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="number"
               value={formData.trial_days ?? ''}
               onChange={(e) => updateField('trial_days', e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="No trial"
             />
           </Field>
@@ -293,7 +293,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="checkbox"
               checked={formData.is_active ?? false}
               onChange={(e) => updateField('is_active', e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
             />
             <span className="text-sm text-slate-700">Active</span>
           </label>
@@ -302,7 +302,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="checkbox"
               checked={formData.is_public ?? false}
               onChange={(e) => updateField('is_public', e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
             />
             <span className="text-sm text-slate-700">Public (visible on signup page)</span>
           </label>
@@ -316,7 +316,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="number"
               value={formData.api_calls_per_hour ?? ''}
               onChange={(e) => updateField('api_calls_per_hour', e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Unlimited"
             />
           </Field>
@@ -325,7 +325,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="number"
               value={formData.email_sends_per_day ?? ''}
               onChange={(e) => updateField('email_sends_per_day', e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Unlimited"
             />
           </Field>
@@ -334,7 +334,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="number"
               value={formData.pdf_generations_per_hour ?? ''}
               onChange={(e) => updateField('pdf_generations_per_hour', e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Unlimited"
             />
           </Field>
@@ -343,7 +343,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="number"
               value={formData.storage_limit_mb ?? ''}
               onChange={(e) => updateField('storage_limit_mb', e.target.value ? parseInt(e.target.value) : null)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Unlimited"
             />
           </Field>
@@ -357,7 +357,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="text"
               value={formData.paypal_product_id || ''}
               onChange={(e) => updateField('paypal_product_id', e.target.value || null)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="PROD-XXXXX"
             />
           </Field>
@@ -366,7 +366,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="text"
               value={formData.paypal_plan_monthly_id || ''}
               onChange={(e) => updateField('paypal_plan_monthly_id', e.target.value || null)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="P-XXXXX"
             />
           </Field>
@@ -375,7 +375,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               type="text"
               value={formData.paypal_plan_yearly_id || ''}
               onChange={(e) => updateField('paypal_plan_yearly_id', e.target.value || null)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="P-XXXXX"
             />
           </Field>
@@ -389,7 +389,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               value={featuresJson}
               onChange={(e) => setFeaturesJson(e.target.value)}
               rows={6}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="{}"
             />
           </Field>
@@ -398,7 +398,7 @@ const PlanDetailsForm: React.FC<{ plan: Database['public']['Tables']['subscripti
               value={limitsJson}
               onChange={(e) => setLimitsJson(e.target.value)}
               rows={6}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="{}"
             />
           </Field>
@@ -478,14 +478,14 @@ const PlanFeaturesTab: React.FC<{
                   </td>
                   <td className="px-6 py-3 text-center">
                     {feature.is_enabled ? (
-                      <Check className="w-4 h-4 text-green-600 mx-auto" />
+                      <Check className="w-4 h-4 text-success mx-auto" />
                     ) : (
                       <X className="w-4 h-4 text-slate-300 mx-auto" />
                     )}
                   </td>
                   <td className="px-6 py-3 text-center">
                     {feature.is_highlighted ? (
-                      <Check className="w-4 h-4 text-blue-600 mx-auto" />
+                      <Check className="w-4 h-4 text-primary mx-auto" />
                     ) : (
                       <X className="w-4 h-4 text-slate-300 mx-auto" />
                     )}
@@ -504,7 +504,7 @@ const PlanFeaturesTab: React.FC<{
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => onEditFeature(feature)}
-                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-primary hover:bg-info-muted rounded-lg transition-colors"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
@@ -512,7 +512,7 @@ const PlanFeaturesTab: React.FC<{
                         onClick={() => {
                           if (confirm('Remove this feature?')) deleteMutation.mutate(feature.id);
                         }}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -544,7 +544,7 @@ const Field: React.FC<{ label: string; required?: boolean; className?: string; c
   <div className={className}>
     <label className="block text-sm font-medium text-slate-700 mb-1">
       {label}
-      {required && <span className="text-red-500 ml-0.5">*</span>}
+      {required && <span className="text-danger ml-0.5">*</span>}
     </label>
     {children}
   </div>

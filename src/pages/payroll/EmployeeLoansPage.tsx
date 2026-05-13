@@ -62,31 +62,31 @@ export const EmployeeLoansPage: React.FC = () => {
       .reduce((sum, l) => sum + Number(l.installment_amount), 0),
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusVariant = (status: string): 'success' | 'warning' | 'info' | 'danger' | 'default' => {
     switch (status) {
       case 'active':
-        return 'green';
+        return 'info';
       case 'pending':
-        return 'yellow';
+        return 'warning';
       case 'completed':
-        return 'blue';
+        return 'success';
       case 'cancelled':
-        return 'red';
+        return 'danger';
       default:
-        return 'gray';
+        return 'default';
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeVariant = (type: string): 'info' | 'warning' | 'default' => {
     switch (type) {
       case 'salary_advance':
-        return 'blue';
+        return 'info';
       case 'personal_loan':
-        return 'purple';
+        return 'default';
       case 'emergency_loan':
-        return 'orange';
+        return 'warning';
       default:
-        return 'gray';
+        return 'default';
     }
   };
 
@@ -155,7 +155,7 @@ export const EmployeeLoansPage: React.FC = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -166,7 +166,7 @@ export const EmployeeLoansPage: React.FC = () => {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="all">All Types</option>
               <option value="salary_advance">Salary Advance</option>
@@ -239,7 +239,7 @@ export const EmployeeLoansPage: React.FC = () => {
                       onClick={() => setSelectedLoanId(loan.id)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                        <span className="text-sm font-medium text-primary hover:text-primary/80">
                           {loan.loan_number}
                         </span>
                       </td>
@@ -254,7 +254,7 @@ export const EmployeeLoansPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge color={getTypeColor(loan.loan_type)}>
+                        <Badge variant={getTypeVariant(loan.loan_type)}>
                           {formatType(loan.loan_type)}
                         </Badge>
                       </td>
@@ -278,7 +278,7 @@ export const EmployeeLoansPage: React.FC = () => {
                         <div className="flex items-center space-x-2">
                           <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-[100px]">
                             <div
-                              className="bg-blue-600 h-2 rounded-full transition-all"
+                              className="bg-primary h-2 rounded-full transition-all"
                               style={{ width: `${progress.percentage}%` }}
                             />
                           </div>
@@ -291,7 +291,7 @@ export const EmployeeLoansPage: React.FC = () => {
                         {formatCurrency(Number(loan.remaining_balance))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge color={getStatusColor(loan.status || 'pending')}>
+                        <Badge variant={getStatusVariant(loan.status || 'pending')}>
                           {(loan.status || 'pending').charAt(0).toUpperCase() +
                             (loan.status || 'pending').slice(1)}
                         </Badge>

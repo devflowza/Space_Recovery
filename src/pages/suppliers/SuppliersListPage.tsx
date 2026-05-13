@@ -207,49 +207,49 @@ export default function SuppliersListPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+        <div className="bg-gradient-to-br from-info-muted to-info-muted rounded-xl p-4 border border-info/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Suppliers</p>
-              <p className="text-2xl font-bold text-blue-900 mt-1">{stats.total}</p>
+              <p className="text-xs font-medium text-info uppercase tracking-wide">Total Suppliers</p>
+              <p className="text-2xl font-bold text-info mt-1">{stats.total}</p>
             </div>
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
               <Truck className="w-5 h-5 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
+        <div className="bg-gradient-to-br from-success-muted to-success-muted rounded-xl p-4 border border-success/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Active</p>
-              <p className="text-2xl font-bold text-emerald-900 mt-1">{stats.active}</p>
+              <p className="text-xs font-medium text-success uppercase tracking-wide">Active</p>
+              <p className="text-2xl font-bold text-success mt-1">{stats.active}</p>
             </div>
-            <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
               <UserCheck className="w-5 h-5 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-4 border border-violet-200">
+        <div className="bg-gradient-to-br from-accent/10 to-accent/20 rounded-xl p-4 border border-accent/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-violet-600 uppercase tracking-wide">Approved</p>
-              <p className="text-2xl font-bold text-violet-900 mt-1">{stats.approved}</p>
+              <p className="text-xs font-medium text-accent-foreground uppercase tracking-wide">Approved</p>
+              <p className="text-2xl font-bold text-accent-foreground mt-1">{stats.approved}</p>
             </div>
-            <div className="w-10 h-10 bg-violet-500 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-accent-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+        <div className="bg-gradient-to-br from-warning-muted to-warning-muted rounded-xl p-4 border border-warning/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">Total Spend (YTD)</p>
-              <p className="text-2xl font-bold text-amber-900 mt-1">{formatCurrency(stats.totalSpend)}</p>
+              <p className="text-xs font-medium text-warning uppercase tracking-wide">Total Spend (YTD)</p>
+              <p className="text-2xl font-bold text-warning mt-1">{formatCurrency(stats.totalSpend)}</p>
             </div>
-            <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-warning rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
           </div>
@@ -266,7 +266,7 @@ export default function SuppliersListPage() {
                 placeholder="Search suppliers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -275,7 +275,7 @@ export default function SuppliersListPage() {
                 onClick={() => setStatusFilter(statusFilter === 'active' ? 'all' : 'active')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === 'active'
-                    ? 'bg-emerald-500 text-white shadow-md'
+                    ? 'bg-success text-success-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -313,7 +313,7 @@ export default function SuppliersListPage() {
               <Filter className="w-4 h-4" />
               More Filters
               {(approvalFilter !== 'all' || categoryFilter !== 'all') && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
           </div>
@@ -327,7 +327,7 @@ export default function SuppliersListPage() {
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Categories</option>
                   {categories.map((category) => (
@@ -344,7 +344,7 @@ export default function SuppliersListPage() {
                 <select
                   value={approvalFilter}
                   onChange={(e) => setApprovalFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Approval Statuses</option>
                   <option value="approved">Approved</option>
@@ -358,7 +358,7 @@ export default function SuppliersListPage() {
 
       {loading ? (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading suppliers...</p>
         </div>
       ) : filteredSuppliers.length === 0 ? (
@@ -418,7 +418,7 @@ export default function SuppliersListPage() {
                       className="hover:bg-slate-50 transition-colors cursor-pointer"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-semibold text-blue-600">
+                        <span className="font-semibold text-primary">
                           {supplier.supplier_number}
                         </span>
                       </td>
@@ -464,7 +464,7 @@ export default function SuppliersListPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {supplier.category ? (
-                          <Badge variant="custom" color="#8b5cf6" size="sm">
+                          <Badge variant="custom" color="rgb(var(--color-accent))" size="sm">
                             {supplier.category.name}
                           </Badge>
                         ) : (

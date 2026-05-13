@@ -118,7 +118,7 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
           <select
             value={formData.document_type}
             onChange={(e) => setFormData({ ...formData, document_type: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             required
           >
             {documentTypes.map((type) => (
@@ -164,7 +164,7 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
           ) : (
             <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <div className="flex items-center gap-3">
-                <FileText className="w-8 h-8 text-blue-500" />
+                <FileText className="w-8 h-8 text-primary" />
                 <div>
                   <p className="font-medium text-gray-900">{selectedFile.name}</p>
                   <p className="text-sm text-gray-500">
@@ -175,7 +175,7 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
               <button
                 type="button"
                 onClick={() => setSelectedFile(null)}
-                className="text-red-600 hover:text-red-800"
+                className="text-danger hover:text-danger/80"
               >
                 <X className="w-5 h-5" />
               </button>

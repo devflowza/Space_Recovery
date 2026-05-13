@@ -160,9 +160,9 @@ export default function DonorSearchPage() {
   };
 
   const getCompatibilityColor = (score: number) => {
-    if (score >= 80) return 'bg-green-100 text-green-800 border-green-300';
-    if (score >= 50) return 'bg-blue-100 text-blue-800 border-blue-300';
-    if (score >= 30) return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    if (score >= 80) return 'bg-success-muted text-success border-success/30';
+    if (score >= 50) return 'bg-info-muted text-info border-info/30';
+    if (score >= 30) return 'bg-warning-muted text-warning border-warning/30';
     return 'bg-gray-100 text-gray-800 border-gray-300';
   };
 
@@ -210,7 +210,7 @@ export default function DonorSearchPage() {
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-slate-900 flex items-center">
-              <Star className="w-4 h-4 mr-2 text-yellow-500" />
+              <Star className="w-4 h-4 mr-2 text-warning" />
               Saved Search Templates
             </h3>
           </div>
@@ -340,7 +340,7 @@ export default function DonorSearchPage() {
             {results.map((drive) => (
               <div
                 key={drive.id}
-                className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all"
+                className="border border-slate-200 rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all"
               >
                 <div className="grid grid-cols-12 gap-4 items-start">
                   <div className="col-span-12 lg:col-span-3">
@@ -354,9 +354,9 @@ export default function DonorSearchPage() {
                         </Badge>
                       )}
                     </div>
-                    <div className="bg-blue-50 border-l-4 border-blue-500 rounded px-3 py-2 mb-2">
-                      <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-0.5">Inventory ID</div>
-                      <div className="text-base font-bold text-blue-700 font-mono tracking-wide">
+                    <div className="bg-info-muted border-l-4 border-info rounded px-3 py-2 mb-2">
+                      <div className="text-xs font-semibold text-info uppercase tracking-wider mb-0.5">Inventory ID</div>
+                      <div className="text-base font-bold text-info font-mono tracking-wide">
                         {drive.inventory_code}
                       </div>
                     </div>
@@ -398,14 +398,14 @@ export default function DonorSearchPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-slate-500">Available:</span>
-                        <span className={`font-bold ${drive.true_available > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`font-bold ${drive.true_available > 0 ? 'text-success' : 'text-danger'}`}>
                           {drive.true_available}
                         </span>
                       </div>
                       {drive.reserved_quantity > 0 && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-slate-500">Reserved:</span>
-                          <span className="font-medium text-orange-600">{drive.reserved_quantity}</span>
+                          <span className="font-medium text-warning">{drive.reserved_quantity}</span>
                         </div>
                       )}
                       <Button size="sm" className="w-full">
@@ -462,7 +462,7 @@ export default function DonorSearchPage() {
                   onChange={(e) => setTemplateDescription(e.target.value)}
                   placeholder="Describe this search template..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">

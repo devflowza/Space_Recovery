@@ -106,7 +106,7 @@ export const StockTransferModal: React.FC<Props> = ({ onClose }) => {
             <button
               type="button"
               onClick={addLine}
-              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="flex items-center gap-1 text-xs text-primary hover:text-primary/90 font-medium"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Item
@@ -118,7 +118,7 @@ export const StockTransferModal: React.FC<Props> = ({ onClose }) => {
                 <select
                   value={line.stock_item_id}
                   onChange={(e) => updateLine(idx, { stock_item_id: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                 >
                   <option value="">Select item...</option>
                   {stockItems.map((item) => (
@@ -132,14 +132,14 @@ export const StockTransferModal: React.FC<Props> = ({ onClose }) => {
                   min={1}
                   value={line.quantity}
                   onChange={(e) => updateLine(idx, { quantity: Math.max(1, Number(e.target.value)) })}
-                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Qty"
                 />
                 <button
                   type="button"
                   onClick={() => removeLine(idx)}
                   disabled={lines.length === 1}
-                  className="p-2 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-30"
+                  className="p-2 text-slate-400 hover:text-danger transition-colors disabled:opacity-30"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -153,7 +153,7 @@ export const StockTransferModal: React.FC<Props> = ({ onClose }) => {
             Notes (optional)
           </label>
           <textarea
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             rows={2}
             placeholder="Reason for transfer..."
             value={notes}

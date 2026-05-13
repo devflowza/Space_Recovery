@@ -71,7 +71,7 @@ export default function PayrollAdjustmentsPage() {
       case 'applied':
         return 'success';
       case 'cancelled':
-        return 'error';
+        return 'danger';
       default:
         return 'secondary';
     }
@@ -111,13 +111,13 @@ export default function PayrollAdjustmentsPage() {
               placeholder="Search adjustments..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -185,7 +185,7 @@ export default function PayrollAdjustmentsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant={adjustment.is_deduction ? 'error' : 'success'}>
+                      <Badge variant={adjustment.is_deduction ? 'danger' : 'success'}>
                         {getAdjustmentTypeLabel(adjustment.adjustment_type)}
                       </Badge>
                     </td>
@@ -195,13 +195,13 @@ export default function PayrollAdjustmentsPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
                         {adjustment.is_deduction ? (
-                          <TrendingDown className="w-4 h-4 text-red-500" />
+                          <TrendingDown className="w-4 h-4 text-danger" />
                         ) : (
-                          <TrendingUp className="w-4 h-4 text-green-500" />
+                          <TrendingUp className="w-4 h-4 text-success" />
                         )}
                         <span
                           className={`text-sm font-medium ${
-                            adjustment.is_deduction ? 'text-red-600' : 'text-green-600'
+                            adjustment.is_deduction ? 'text-danger' : 'text-success'
                           }`}
                         >
                           {formatCurrency(adjustment.amount)}
@@ -224,14 +224,14 @@ export default function PayrollAdjustmentsPage() {
                           <>
                             <button
                               onClick={() => setApprovingAdjustment(adjustment)}
-                              className="p-1.5 text-green-600 hover:text-green-700 rounded-lg hover:bg-green-50"
+                              className="p-1.5 text-success hover:text-success/90 rounded-lg hover:bg-success-muted"
                               title="Approve"
                             >
                               <Check className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => setCancellingAdjustment(adjustment)}
-                              className="p-1.5 text-red-600 hover:text-red-700 rounded-lg hover:bg-red-50"
+                              className="p-1.5 text-danger hover:text-danger/90 rounded-lg hover:bg-danger-muted"
                               title="Cancel"
                             >
                               <X className="w-4 h-4" />

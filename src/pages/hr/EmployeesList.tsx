@@ -75,14 +75,8 @@ export const EmployeesList: React.FC = () => {
     <div className="p-8 max-w-[1800px] mx-auto">
       <div className="mb-8 flex items-start justify-between">
         <div className="flex items-start gap-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{
-              backgroundColor: '#3b82f6',
-              boxShadow: '0 10px 40px -10px #3b82f680',
-            }}
-          >
-            <Users className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-primary shadow-primary/40">
+            <Users className="w-7 h-7 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-2">Employees</h1>
@@ -91,15 +85,15 @@ export const EmployeesList: React.FC = () => {
             </p>
             <div className="flex gap-4 mt-3">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <div className="w-2 h-2 rounded-full bg-info"></div>
                 <span className="text-slate-600">{employees.length} Total Employees</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <div className="w-2 h-2 rounded-full bg-success"></div>
                 <span className="text-slate-600">{activeEmployees.length} Active</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                <div className="w-2 h-2 rounded-full bg-warning"></div>
                 <span className="text-slate-600">{onLeaveEmployees.length} On Leave</span>
               </div>
             </div>
@@ -115,7 +109,7 @@ export const EmployeesList: React.FC = () => {
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             {loading ? 'Refreshing...' : 'Refresh'}
           </Button>
-          <Button style={{ backgroundColor: '#3b82f6' }}>
+          <Button>
             <Plus className="w-4 h-4 mr-2" />
             Add Employee
           </Button>
@@ -144,7 +138,7 @@ export const EmployeesList: React.FC = () => {
 
       {loading ? (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading employees...</p>
         </div>
       ) : filteredEmployees.length === 0 ? (

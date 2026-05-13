@@ -62,14 +62,14 @@ export function CompleteAssignmentModal({
       className="!max-w-lg"
     >
       <div className="space-y-2">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+        <div className="bg-success-muted border border-success/30 rounded-lg p-2">
           <div className="flex items-start">
-            <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-success mt-0.5 mr-2 flex-shrink-0" />
             <div className="flex-1">
-              <h4 className="text-xs font-semibold text-green-900 mb-0.5">
+              <h4 className="text-xs font-semibold text-success mb-0.5">
                 Mark Donor as Successfully Used
               </h4>
-              <p className="text-xs text-green-700">
+              <p className="text-xs text-success">
                 This will mark the donor part as working and make it available for reuse on future cases.
                 The item will be returned to available inventory with a "Previously Used" status.
               </p>
@@ -115,7 +115,7 @@ export function CompleteAssignmentModal({
             value={usageNotes}
             onChange={(e) => setUsageNotes(e.target.value)}
             rows={2}
-            className="w-full px-2 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+            className="w-full px-2 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-xs"
             placeholder="How did this donor perform? Any observations or recommendations for future use..."
             disabled={loading}
           />
@@ -125,16 +125,16 @@ export function CompleteAssignmentModal({
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-2">
-            <p className="text-xs text-red-700">{error}</p>
+          <div className="bg-danger-muted border border-danger/30 rounded-lg p-2">
+            <p className="text-xs text-danger">{error}</p>
           </div>
         )}
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
+        <div className="bg-info-muted border border-info/30 rounded-lg p-2">
           <div className="flex items-start">
-            <RefreshCw className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
+            <RefreshCw className="w-4 h-4 text-info mt-0.5 mr-2 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-xs text-blue-800">
+              <p className="text-xs text-info">
                 <strong>Reuse Ready:</strong> This donor part performed successfully and will be marked as
                 available for future data recovery cases. It will appear in the donor search with a
                 "Previously Used" badge.
@@ -154,7 +154,7 @@ export function CompleteAssignmentModal({
           <Button
             onClick={handleComplete}
             disabled={loading}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-success hover:bg-success/90 text-success-foreground"
           >
             {loading ? (
               <>

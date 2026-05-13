@@ -80,8 +80,8 @@ export default function DeleteInventoryConfirmationModal({
       size="lg"
     >
       <div className="text-center">
-        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-          <AlertTriangle className="h-8 w-8 text-red-600" />
+        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-danger-muted mb-4">
+          <AlertTriangle className="h-8 w-8 text-danger" />
         </div>
 
         <h3 className="text-2xl font-bold text-gray-900 mb-2">
@@ -92,8 +92,8 @@ export default function DeleteInventoryConfirmationModal({
           Are you sure you want to delete <span className="font-semibold text-gray-900">"{itemName}"</span>?
         </p>
 
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-          <p className="text-sm text-amber-800">
+        <div className="bg-warning-muted border border-warning/30 rounded-lg p-4 mb-6">
+          <p className="text-sm text-warning">
             <span className="font-semibold">Consider changing the status instead!</span>
             <br />
             Deleting this item will permanently remove it from the system. If you just want to mark it as unavailable, consider changing its status.
@@ -102,7 +102,7 @@ export default function DeleteInventoryConfirmationModal({
 
         {loadingStatusTypes ? (
           <div className="flex justify-center py-4 mb-6">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           </div>
         ) : (
           <div className="mb-6">
@@ -112,7 +112,7 @@ export default function DeleteInventoryConfirmationModal({
             <select
               value={selectedStatusId}
               onChange={(e) => setSelectedStatusId(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base"
               disabled={loading}
             >
               {statusTypes.map((status) => (
@@ -128,7 +128,7 @@ export default function DeleteInventoryConfirmationModal({
           <Button
             onClick={handleChangeStatus}
             disabled={loading || !selectedStatusId || loadingStatusTypes}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base font-medium"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-base font-medium"
           >
             {loading ? (
               <>
@@ -147,7 +147,7 @@ export default function DeleteInventoryConfirmationModal({
             onClick={handleDelete}
             disabled={loading || loadingStatusTypes}
             variant="destructive"
-            className="w-full bg-red-600 hover:bg-red-700 text-white py-3 text-base font-medium"
+            className="w-full bg-danger hover:bg-danger/90 text-danger-foreground py-3 text-base font-medium"
           >
             {loading ? (
               <>

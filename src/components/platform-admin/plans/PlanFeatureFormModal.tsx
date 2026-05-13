@@ -115,7 +115,7 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
                   type="text"
                   value={formData.feature_key}
                   onChange={(e) => setFormData((p) => ({ ...p, feature_key: e.target.value }))}
-                  className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="custom_feature_key"
                   required
                 />
@@ -128,7 +128,7 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
                 <select
                   value={formData.feature_key}
                   onChange={(e) => setFormData((p) => ({ ...p, feature_key: e.target.value }))}
-                  className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                 >
                   <option value="">Select a feature key...</option>
@@ -150,7 +150,7 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
                 type="text"
                 value={formData.feature_name}
                 onChange={(e) => setFormData((p) => ({ ...p, feature_name: e.target.value }))}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
             </div>
@@ -161,7 +161,7 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
                 dir="rtl"
                 value={formData.feature_name_ar}
                 onChange={(e) => setFormData((p) => ({ ...p, feature_name_ar: e.target.value }))}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -173,7 +173,7 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
                 type="text"
                 value={formData.limit_type}
                 onChange={(e) => setFormData((p) => ({ ...p, limit_type: e.target.value }))}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="e.g. users, cases, storage"
               />
             </div>
@@ -188,7 +188,7 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
                     limit_value: e.target.value ? parseInt(e.target.value) : null,
                   }))
                 }
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Unlimited"
               />
             </div>
@@ -202,7 +202,7 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
               onChange={(e) =>
                 setFormData((p) => ({ ...p, display_order: parseInt(e.target.value) || 0 }))
               }
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
@@ -212,7 +212,7 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
                 type="checkbox"
                 checked={formData.is_enabled}
                 onChange={(e) => setFormData((p) => ({ ...p, is_enabled: e.target.checked }))}
-                className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                className="w-4 h-4 rounded border-slate-300 text-primary"
               />
               <span className="text-sm text-slate-700">Enabled</span>
             </label>
@@ -221,7 +221,7 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
                 type="checkbox"
                 checked={formData.is_highlighted}
                 onChange={(e) => setFormData((p) => ({ ...p, is_highlighted: e.target.checked }))}
-                className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                className="w-4 h-4 rounded border-slate-300 text-primary"
               />
               <span className="text-sm text-slate-700">Highlighted</span>
             </label>

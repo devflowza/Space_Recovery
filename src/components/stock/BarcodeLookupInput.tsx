@@ -84,7 +84,7 @@ export const BarcodeLookupInput: React.FC<Props> = ({
       <div className="relative flex items-center">
         <div className="absolute left-3 top-1/2 -translate-y-1/2">
           {isLooking ? (
-            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           ) : (
             <Scan className="w-4 h-4 text-slate-400" />
           )}
@@ -99,7 +99,7 @@ export const BarcodeLookupInput: React.FC<Props> = ({
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full pl-9 pr-16 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-9 pr-16 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {value && (
@@ -115,7 +115,7 @@ export const BarcodeLookupInput: React.FC<Props> = ({
             type="button"
             onClick={() => performLookup(value)}
             disabled={!value.trim() || isLooking}
-            className="p-1 rounded hover:bg-blue-50 text-blue-500 transition-colors disabled:opacity-40"
+            className="p-1 rounded hover:bg-primary/10 text-primary transition-colors disabled:opacity-40"
           >
             <Search className="w-4 h-4" />
           </button>
@@ -125,12 +125,12 @@ export const BarcodeLookupInput: React.FC<Props> = ({
       {lastResult && (
         <div className="text-xs mt-1">
           {lastResult.item && (
-            <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded">
+            <span className="inline-flex items-center gap-1 text-success bg-success-muted px-2 py-0.5 rounded">
               Found: {lastResult.item.name}
             </span>
           )}
           {lastResult.serial && (
-            <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+            <span className="inline-flex items-center gap-1 text-info bg-info-muted px-2 py-0.5 rounded">
               Serial: {lastResult.serial.serial_number}
             </span>
           )}

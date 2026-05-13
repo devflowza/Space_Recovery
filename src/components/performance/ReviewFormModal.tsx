@@ -58,10 +58,10 @@ function StarPicker({
             className={`w-7 h-7 transition-colors ${
               n <= (hovered || value)
                 ? n <= 2
-                  ? 'fill-red-400 text-red-400'
+                  ? 'fill-danger text-danger'
                   : n === 3
-                  ? 'fill-amber-400 text-amber-400'
-                  : 'fill-green-500 text-green-500'
+                  ? 'fill-warning text-warning'
+                  : 'fill-success text-success'
                 : 'text-slate-200'
             }`}
           />
@@ -167,12 +167,12 @@ export const ReviewFormModal: React.FC<Props> = ({ isOpen, onClose, review }) =>
       <form onSubmit={handleSubmit(data => mutation.mutate(data))} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Employee <span className="text-red-500">*</span>
+            Employee <span className="text-danger">*</span>
           </label>
           <select
             {...register('employee_id', { required: 'Select an employee' })}
             disabled={isEditing}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-slate-50"
           >
             <option value="">Select employee...</option>
             {employees.map((e: { id: string; first_name: string; last_name: string; employee_number?: string | null }) => (
@@ -183,33 +183,33 @@ export const ReviewFormModal: React.FC<Props> = ({ isOpen, onClose, review }) =>
             ))}
           </select>
           {errors.employee_id && (
-            <p className="text-red-500 text-xs mt-1">{errors.employee_id.message}</p>
+            <p className="text-danger text-xs mt-1">{errors.employee_id.message}</p>
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Period Start <span className="text-red-500">*</span>
+              Period Start <span className="text-danger">*</span>
             </label>
             <Input
               {...register('review_period_start', { required: 'Required' })}
               type="date"
             />
             {errors.review_period_start && (
-              <p className="text-red-500 text-xs mt-1">{errors.review_period_start.message}</p>
+              <p className="text-danger text-xs mt-1">{errors.review_period_start.message}</p>
             )}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Period End <span className="text-red-500">*</span>
+              Period End <span className="text-danger">*</span>
             </label>
             <Input
               {...register('review_period_end', { required: 'Required' })}
               type="date"
             />
             {errors.review_period_end && (
-              <p className="text-red-500 text-xs mt-1">{errors.review_period_end.message}</p>
+              <p className="text-danger text-xs mt-1">{errors.review_period_end.message}</p>
             )}
           </div>
         </div>
@@ -225,7 +225,7 @@ export const ReviewFormModal: React.FC<Props> = ({ isOpen, onClose, review }) =>
             {...register('strengths')}
             rows={3}
             placeholder="Key strengths demonstrated during the review period..."
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 
@@ -235,7 +235,7 @@ export const ReviewFormModal: React.FC<Props> = ({ isOpen, onClose, review }) =>
             {...register('areas_for_improvement')}
             rows={3}
             placeholder="Areas that need development or improvement..."
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 
@@ -246,7 +246,7 @@ export const ReviewFormModal: React.FC<Props> = ({ isOpen, onClose, review }) =>
               {...register('goals_achieved')}
               rows={3}
               placeholder="Goals accomplished this period..."
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
           </div>
           <div>
@@ -255,7 +255,7 @@ export const ReviewFormModal: React.FC<Props> = ({ isOpen, onClose, review }) =>
               {...register('goals_next_period')}
               rows={3}
               placeholder="Objectives for the next review period..."
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
           </div>
         </div>
@@ -266,7 +266,7 @@ export const ReviewFormModal: React.FC<Props> = ({ isOpen, onClose, review }) =>
             {...register('comments')}
             rows={2}
             placeholder="Any additional comments or notes..."
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 
@@ -274,7 +274,7 @@ export const ReviewFormModal: React.FC<Props> = ({ isOpen, onClose, review }) =>
           <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
           <select
             {...register('status')}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="draft">Draft</option>
             <option value="submitted">Submitted</option>

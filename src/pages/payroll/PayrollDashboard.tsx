@@ -35,14 +35,8 @@ export const PayrollDashboard = () => {
     <div className="p-8 max-w-[1800px] mx-auto">
       <div className="mb-8 flex items-start justify-between">
         <div className="flex items-start gap-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{
-              backgroundColor: '#3b82f6',
-              boxShadow: '0 10px 40px -10px #3b82f680',
-            }}
-          >
-            <DollarSign className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-primary shadow-primary/40">
+            <DollarSign className="w-7 h-7 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-2">Payroll Management</h1>
@@ -52,14 +46,14 @@ export const PayrollDashboard = () => {
             {currentPeriod && (
               <div className="flex gap-4 mt-3">
                 <div className="flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <div className="w-2 h-2 rounded-full bg-success"></div>
                   <span className="text-slate-600">
                     Current Period: {format(new Date(currentPeriod.start_date), 'MMM d')} - {format(new Date(currentPeriod.end_date), 'MMM d, yyyy')}
                   </span>
                 </div>
                 {currentPeriod.payment_date && (
                   <div className="flex items-center gap-2 text-sm">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <div className="w-2 h-2 rounded-full bg-info"></div>
                     <span className="text-slate-600">Payment: {format(new Date(currentPeriod.payment_date), 'MMM d, yyyy')}</span>
                   </div>
                 )}
@@ -122,8 +116,8 @@ export const PayrollDashboard = () => {
               <Link to="/payroll/process" className="block">
                 <Button className="w-full justify-start h-auto py-4" variant="secondary">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Calendar className="w-5 h-5 text-blue-600" />
+                    <div className="w-10 h-10 bg-info-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-5 h-5 text-info" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-slate-900">Process Monthly Payroll</div>
@@ -136,8 +130,8 @@ export const PayrollDashboard = () => {
               <Link to="/payroll/adjustments" className="block">
                 <Button className="w-full justify-start h-auto py-4" variant="secondary">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-5 h-5 text-green-600" />
+                    <div className="w-10 h-10 bg-success-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                      <TrendingUp className="w-5 h-5 text-success" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-slate-900">Manage Adjustments</div>
@@ -154,8 +148,8 @@ export const PayrollDashboard = () => {
               <Link to="/payroll/loans" className="block">
                 <Button className="w-full justify-start h-auto py-4" variant="secondary">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <DollarSign className="w-5 h-5 text-orange-600" />
+                    <div className="w-10 h-10 bg-warning-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                      <DollarSign className="w-5 h-5 text-warning" />
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-slate-900">Employee Loans</div>
@@ -194,17 +188,17 @@ export const PayrollDashboard = () => {
                   </span>
                 </div>
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '65%' }}></div>
+                  <div className="h-full bg-primary rounded-full" style={{ width: '65%' }}></div>
                 </div>
               </div>
 
               {stats?.upcomingPaymentDate && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <div className="flex items-center gap-2 text-blue-900 text-sm font-medium mb-1">
+                <div className="bg-info-muted border border-info/30 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-info text-sm font-medium mb-1">
                     <Calendar className="w-4 h-4" />
                     Upcoming Payment
                   </div>
-                  <div className="text-blue-700 text-xs">
+                  <div className="text-info text-xs">
                     {format(new Date(stats.upcomingPaymentDate), 'EEEE, MMMM d, yyyy')}
                   </div>
                 </div>
@@ -213,19 +207,19 @@ export const PayrollDashboard = () => {
               {currentPeriod && (
                 <div className={`border rounded-lg p-3 ${
                   currentPeriod.status === 'paid'
-                    ? 'bg-green-50 border-green-200'
+                    ? 'bg-success-muted border-success/30'
                     : currentPeriod.status === 'approved'
-                    ? 'bg-blue-50 border-blue-200'
-                    : 'bg-orange-50 border-orange-200'
+                    ? 'bg-info-muted border-info/30'
+                    : 'bg-warning-muted border-warning/30'
                 }`}>
-                  <div className="text-sm font-medium mb-1 capitalize" style={{
-                    color: currentPeriod.status === 'paid' ? '#166534' : currentPeriod.status === 'approved' ? '#1e40af' : '#9a3412'
-                  }}>
+                  <div className={`text-sm font-medium mb-1 capitalize ${
+                    currentPeriod.status === 'paid' ? 'text-success' : currentPeriod.status === 'approved' ? 'text-info' : 'text-warning'
+                  }`}>
                     Current Period Status
                   </div>
-                  <div className="text-xs capitalize" style={{
-                    color: currentPeriod.status === 'paid' ? '#15803d' : currentPeriod.status === 'approved' ? '#2563eb' : '#ea580c'
-                  }}>
+                  <div className={`text-xs capitalize ${
+                    currentPeriod.status === 'paid' ? 'text-success' : currentPeriod.status === 'approved' ? 'text-info' : 'text-warning'
+                  }`}>
                     {currentPeriod.status}
                   </div>
                 </div>
@@ -269,11 +263,11 @@ export const PayrollDashboard = () => {
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
                           period.status === 'paid'
-                            ? 'bg-green-100 text-green-800'
+                            ? 'bg-success-muted text-success'
                             : period.status === 'approved'
-                            ? 'bg-blue-100 text-blue-800'
+                            ? 'bg-info-muted text-info'
                             : period.status === 'processing'
-                            ? 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-warning-muted text-warning'
                             : 'bg-slate-100 text-slate-800'
                         }`}>
                           {period.status}

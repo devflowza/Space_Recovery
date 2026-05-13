@@ -114,7 +114,7 @@ export const TicketDetailPage: React.FC = () => {
   if (ticketLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
@@ -149,7 +149,7 @@ export const TicketDetailPage: React.FC = () => {
               <div className="flex items-center gap-4 text-sm text-slate-500">
                 <Link
                   to={`/platform-admin/tenants/${ticket.tenant_id}`}
-                  className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  className="text-primary hover:text-primary/90 flex items-center gap-1"
                 >
                   <Building2 className="w-4 h-4" />
                   {ticket.tenant?.company_name}
@@ -169,7 +169,7 @@ export const TicketDetailPage: React.FC = () => {
             <div className="space-y-4 max-h-[500px] overflow-y-auto mb-6">
               {messagesLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                 </div>
               ) : messages.length === 0 ? (
                 <p className="text-center text-slate-500 py-8">No messages yet</p>
@@ -193,7 +193,7 @@ export const TicketDetailPage: React.FC = () => {
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Type your reply..."
                 rows={4}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               />
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -214,9 +214,9 @@ export const TicketDetailPage: React.FC = () => {
                 </Button>
               </div>
               {isInternalNote && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-amber-800">
+                <div className="bg-warning-muted border border-warning/30 rounded-lg p-3 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-warning">
                     This message will be marked as internal and will not be visible to the customer.
                   </p>
                 </div>
@@ -234,7 +234,7 @@ export const TicketDetailPage: React.FC = () => {
                 <select
                   value={ticket.status}
                   onChange={(e) => updateStatusMutation.mutate(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="open">Open</option>
                   <option value="in_progress">In Progress</option>
@@ -294,7 +294,7 @@ export const TicketDetailPage: React.FC = () => {
                 <p className="text-xs text-slate-500 mb-1">Company</p>
                 <Link
                   to={`/platform-admin/tenants/${ticket.tenant_id}`}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                  className="text-sm font-medium text-primary hover:text-primary/90"
                 >
                   {ticket.tenant?.company_name}
                 </Link>
@@ -316,7 +316,7 @@ export const TicketDetailPage: React.FC = () => {
               {ticket.status !== 'resolved' && ticket.status !== 'closed' && (
                 <Button
                   variant="outline"
-                  className="w-full justify-start border-green-300 text-green-600 hover:bg-green-50"
+                  className="w-full justify-start border-success/40 text-success hover:bg-success-muted"
                   onClick={() => setShowResolveDialog(true)}
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
@@ -338,7 +338,7 @@ export const TicketDetailPage: React.FC = () => {
               {ticket.status === 'closed' && (
                 <Button
                   variant="outline"
-                  className="w-full justify-start border-blue-300 text-blue-600 hover:bg-blue-50"
+                  className="w-full justify-start border-primary/40 text-primary hover:bg-info-muted"
                   onClick={() => updateStatusMutation.mutate('open')}
                 >
                   <AlertCircle className="w-4 h-4 mr-2" />
@@ -348,7 +348,7 @@ export const TicketDetailPage: React.FC = () => {
 
               <Button
                 variant="outline"
-                className="w-full justify-start border-red-300 text-red-600 hover:bg-red-50"
+                className="w-full justify-start border-danger/40 text-danger hover:bg-danger-muted"
                 onClick={() => setShowDeleteDialog(true)}
               >
                 <Trash2 className="w-4 h-4 mr-2" />

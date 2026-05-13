@@ -178,7 +178,7 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
           <textarea
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             rows={3}
             placeholder="Additional notes about this contact..."
           />
@@ -190,7 +190,7 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
               type="checkbox"
               checked={formData.is_primary}
               onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
             />
             <span className="text-sm font-medium text-gray-700">Set as primary contact</span>
           </label>

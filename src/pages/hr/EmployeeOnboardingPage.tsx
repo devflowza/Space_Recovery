@@ -22,15 +22,15 @@ import toast from 'react-hot-toast';
 
 const taskStatusColor: Record<string, string> = {
   pending: 'text-slate-500',
-  in_progress: 'text-blue-600',
-  completed: 'text-green-600',
+  in_progress: 'text-primary',
+  completed: 'text-success',
   skipped: 'text-slate-400',
 };
 
 const taskStatusBg: Record<string, string> = {
   pending: 'bg-slate-100 border-slate-200',
-  in_progress: 'bg-blue-50 border-blue-200',
-  completed: 'bg-green-50 border-green-200',
+  in_progress: 'bg-primary/10 border-primary/30',
+  completed: 'bg-success-muted border-success/30',
   skipped: 'bg-slate-50 border-slate-200',
 };
 
@@ -38,7 +38,7 @@ function ProgressBar({ value }: { value: number }) {
   return (
     <div className="w-full bg-slate-200 rounded-full h-2">
       <div
-        className="bg-blue-500 h-2 rounded-full transition-all"
+        className="bg-primary h-2 rounded-full transition-all"
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
     </div>
@@ -69,9 +69,9 @@ function TaskRow({
         className="mt-0.5 flex-shrink-0"
       >
         {task.status === 'completed' ? (
-          <CheckCircle2 className="w-5 h-5 text-green-500" />
+          <CheckCircle2 className="w-5 h-5 text-success" />
         ) : (
-          <div className="w-5 h-5 rounded-full border-2 border-slate-300 hover:border-blue-500 transition-colors" />
+          <div className="w-5 h-5 rounded-full border-2 border-slate-300 hover:border-primary transition-colors" />
         )}
       </button>
       <div className="flex-1 min-w-0">
@@ -89,7 +89,7 @@ function TaskRow({
           {task.due_date && (
             <span
               className={`flex items-center gap-1 text-xs ${
-                isOverdue ? 'text-red-500 font-medium' : 'text-slate-500'
+                isOverdue ? 'text-danger font-medium' : 'text-slate-500'
               }`}
             >
               {isOverdue && <AlertTriangle className="w-3 h-3" />}
@@ -146,14 +146,14 @@ function EmployeeOnboardingCard({
           </div>
           <div className="flex items-center gap-2">
             {employee.overdue_count > 0 && (
-              <span className="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-xs font-medium text-danger bg-danger-muted px-2 py-0.5 rounded-full">
                 <AlertTriangle className="w-3 h-3" />
                 {employee.overdue_count} overdue
               </span>
             )}
             <button
               onClick={() => onAssign(employee.id)}
-              className="text-xs font-medium text-blue-600 hover:text-blue-700 px-2.5 py-1 hover:bg-blue-50 rounded-lg transition-colors"
+              className="text-xs font-medium text-primary hover:text-primary/90 px-2.5 py-1 hover:bg-primary/10 rounded-lg transition-colors"
             >
               + Assign
             </button>
@@ -223,11 +223,11 @@ function ChecklistCard({
         </div>
         <div className="flex items-center gap-1 ml-3">
           {checklist.is_default && (
-            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-medium text-info bg-info-muted px-2 py-0.5 rounded-full">
               Default
             </span>
           )}
-          <Badge color={checklist.is_active ? 'green' : 'gray'}>
+          <Badge variant={checklist.is_active ? 'success' : 'default'}>
             {checklist.is_active ? 'Active' : 'Inactive'}
           </Badge>
         </div>
@@ -245,7 +245,7 @@ function ChecklistCard({
             title={checklist.is_active ? 'Deactivate' : 'Activate'}
           >
             {checklist.is_active ? (
-              <ToggleRight className="w-4 h-4 text-green-500" />
+              <ToggleRight className="w-4 h-4 text-success" />
             ) : (
               <ToggleLeft className="w-4 h-4" />
             )}
@@ -258,7 +258,7 @@ function ChecklistCard({
           </button>
           <button
             onClick={() => onDelete(checklist.id)}
-            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -330,11 +330,8 @@ export const EmployeeOnboardingPage: React.FC = () => {
     <div className="p-8 max-w-[1800px] mx-auto">
       <div className="mb-8 flex items-start justify-between">
         <div className="flex items-start gap-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{ backgroundColor: '#10b981', boxShadow: '0 10px 40px -10px #10b98180' }}
-          >
-            <UserCheck className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-success shadow-success/40">
+            <UserCheck className="w-7 h-7 text-success-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-1">Employee Onboarding</h1>
@@ -359,12 +356,12 @@ export const EmployeeOnboardingPage: React.FC = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Active Onboardees', value: stats?.activeOnboardees ?? '–', icon: UserCheck, bg: 'from-blue-50 to-blue-100', border: 'border-blue-200', icon_bg: 'bg-blue-500', text: 'text-blue-600', num: 'text-blue-900' },
-          { label: 'Overdue Tasks', value: stats?.overdueTasksCount ?? '–', icon: AlertTriangle, bg: 'from-red-50 to-red-100', border: 'border-red-200', icon_bg: 'bg-red-500', text: 'text-red-600', num: 'text-red-900' },
-          { label: 'Completion Rate', value: stats?.completionRate != null ? `${stats.completionRate}%` : '–', icon: CheckCircle2, bg: 'from-green-50 to-green-100', border: 'border-green-200', icon_bg: 'bg-green-500', text: 'text-green-600', num: 'text-green-900' },
-          { label: 'Templates', value: checklists.length || '–', icon: ClipboardList, bg: 'from-slate-50 to-slate-100', border: 'border-slate-200', icon_bg: 'bg-slate-500', text: 'text-slate-600', num: 'text-slate-900' },
+          { label: 'Active Onboardees', value: stats?.activeOnboardees ?? '–', icon: UserCheck, bg: 'bg-info-muted', border: 'border-info/30', icon_bg: 'bg-info', text: 'text-info', num: 'text-info' },
+          { label: 'Overdue Tasks', value: stats?.overdueTasksCount ?? '–', icon: AlertTriangle, bg: 'bg-danger-muted', border: 'border-danger/30', icon_bg: 'bg-danger', text: 'text-danger', num: 'text-danger' },
+          { label: 'Completion Rate', value: stats?.completionRate != null ? `${stats.completionRate}%` : '–', icon: CheckCircle2, bg: 'bg-success-muted', border: 'border-success/30', icon_bg: 'bg-success', text: 'text-success', num: 'text-success' },
+          { label: 'Templates', value: checklists.length || '–', icon: ClipboardList, bg: 'bg-slate-100', border: 'border-slate-200', icon_bg: 'bg-slate-500', text: 'text-slate-600', num: 'text-slate-900' },
         ].map(card => (
-          <div key={card.label} className={`bg-gradient-to-br ${card.bg} rounded-xl p-4 border ${card.border}`}>
+          <div key={card.label} className={`${card.bg} rounded-xl p-4 border ${card.border}`}>
             <div className="flex items-center justify-between">
               <div>
                 <p className={`text-xs font-medium ${card.text} uppercase tracking-wide`}>{card.label}</p>
@@ -398,7 +395,7 @@ export const EmployeeOnboardingPage: React.FC = () => {
         <>
           {loadingEmployees ? (
             <div className="flex items-center justify-center py-16">
-              <div className="w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : employeesWithTasks.length === 0 ? (
             <div className="text-center py-16">
@@ -428,7 +425,7 @@ export const EmployeeOnboardingPage: React.FC = () => {
         <>
           {loadingChecklists ? (
             <div className="flex items-center justify-center py-16">
-              <div className="w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : checklists.length === 0 ? (
             <div className="text-center py-16">

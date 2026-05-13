@@ -164,7 +164,7 @@ export const AccountingLocales: React.FC = () => {
 
       {isLoading ? (
         <div className="text-center py-12">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading locales...</p>
         </div>
       ) : (
@@ -208,7 +208,7 @@ export const AccountingLocales: React.FC = () => {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEdit(locale)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 hover:text-primary hover:bg-info-muted rounded-lg transition-colors"
                           title="Edit"
                         >
                           <Pencil className="w-4 h-4" />
@@ -223,7 +223,7 @@ export const AccountingLocales: React.FC = () => {
                         </button>
                         <button
                           onClick={() => deleteMutation.mutate(locale.id)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-lg transition-colors"
                           disabled={locale.is_default ?? false}
                           title="Delete"
                         >

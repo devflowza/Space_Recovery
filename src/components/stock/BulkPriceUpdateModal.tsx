@@ -70,7 +70,7 @@ export const BulkPriceUpdateModal: React.FC<Props> = ({ selectedItems, onClose }
               Price Field
             </label>
             <select
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
               value={priceField}
               onChange={(e) => setPriceField(e.target.value as typeof priceField)}
             >
@@ -84,7 +84,7 @@ export const BulkPriceUpdateModal: React.FC<Props> = ({ selectedItems, onClose }
               Direction
             </label>
             <select
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
               value={direction}
               onChange={(e) => setDirection(e.target.value as typeof direction)}
             >
@@ -107,7 +107,7 @@ export const BulkPriceUpdateModal: React.FC<Props> = ({ selectedItems, onClose }
                   onClick={() => setUpdateType(type)}
                   className={`flex-1 py-2 text-sm font-medium transition-colors ${
                     updateType === type
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-primary text-primary-foreground'
                       : 'bg-white text-slate-600 hover:bg-slate-50'
                   }`}
                 >
@@ -126,7 +126,7 @@ export const BulkPriceUpdateModal: React.FC<Props> = ({ selectedItems, onClose }
               step={updateType === 'percentage' ? 0.1 : 0.001}
               value={value}
               onChange={(e) => setValue(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder={updateType === 'percentage' ? 'e.g. 10' : 'e.g. 5.000'}
             />
           </div>
@@ -144,7 +144,7 @@ export const BulkPriceUpdateModal: React.FC<Props> = ({ selectedItems, onClose }
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-slate-400">{original != null ? formatCurrency(original) : '—'}</span>
                     <TrendingUp className="w-3.5 h-3.5 text-slate-300" />
-                    <span className={`font-semibold ${direction === 'increase' ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`font-semibold ${direction === 'increase' ? 'text-success' : 'text-danger'}`}>
                       {preview != null ? formatCurrency(preview) : '—'}
                     </span>
                   </div>

@@ -64,7 +64,7 @@ export const StockReturnsTable: React.FC = () => {
           <input
             type="text"
             placeholder="Search returns..."
-            className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -72,7 +72,7 @@ export const StockReturnsTable: React.FC = () => {
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-slate-400" />
           <select
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -87,7 +87,7 @@ export const StockReturnsTable: React.FC = () => {
 
       {isLoading ? (
         <div className="py-12 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center">
@@ -116,7 +116,7 @@ export const StockReturnsTable: React.FC = () => {
                 return (
                   <tr key={r.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3">
-                      <span className="font-mono text-sm font-semibold text-blue-700">{r.return_number}</span>
+                      <span className="font-mono text-sm font-semibold text-primary">{r.return_number}</span>
                     </td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-slate-900">{r.customers_enhanced?.customer_name ?? '—'}</p>
@@ -147,7 +147,7 @@ export const StockReturnsTable: React.FC = () => {
                         </Button>
                       )}
                       {r.status === 'completed' && (
-                        <span className="text-xs text-green-600 font-medium">Done</span>
+                        <span className="text-xs text-success font-medium">Done</span>
                       )}
                     </td>
                   </tr>

@@ -403,9 +403,9 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
       maxWidth="7xl"
       headerAction={
         nextInventoryNumber && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-info-muted border border-info/30 rounded-lg">
             <span className="text-xs font-medium text-gray-600">{itemId ? 'Code:' : 'Next Number:'}</span>
-            <span className="text-sm font-bold text-blue-600 font-mono">{nextInventoryNumber}</span>
+            <span className="text-sm font-bold text-info font-mono">{nextInventoryNumber}</span>
           </div>
         )
       }
@@ -414,12 +414,12 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
 
         {(loading || currencyLoading) ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : (
           <div className="overflow-y-auto pr-2">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+              <div className="bg-info-muted rounded-lg p-4 border border-info/20">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Basic Information</h3>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
                   <div>
@@ -434,7 +434,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                       clearable={false}
                     />
                     {errors.inventory_type_id && (
-                      <p className="mt-1 text-sm text-red-600">{errors.inventory_type_id}</p>
+                      <p className="mt-1 text-sm text-danger">{errors.inventory_type_id}</p>
                     )}
                   </div>
 
@@ -450,7 +450,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                       clearable={false}
                     />
                     {errors.device_type_id && (
-                      <p className="mt-1 text-sm text-red-600">{errors.device_type_id}</p>
+                      <p className="mt-1 text-sm text-danger">{errors.device_type_id}</p>
                     )}
                   </div>
 
@@ -468,7 +468,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Model Number <span className="text-red-500">*</span>
+                      Model Number <span className="text-danger">*</span>
                     </label>
                     <Input
                       type="text"
@@ -477,7 +477,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                       placeholder="Enter model number"
                       disabled={submitting}
                     />
-                    {errors.model && <p className="mt-1 text-sm text-red-600">{errors.model}</p>}
+                    {errors.model && <p className="mt-1 text-sm text-danger">{errors.model}</p>}
                   </div>
 
                   <div>
@@ -517,7 +517,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                             }))
                           }
                           disabled={submitting}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-gray-300 text-primary focus:ring-primary"
                         />
                         <span className="text-sm text-gray-700">Heads</span>
                       </label>
@@ -532,7 +532,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                             }))
                           }
                           disabled={submitting}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-gray-300 text-primary focus:ring-primary"
                         />
                         <span className="text-sm text-gray-700">PCB</span>
                       </label>
@@ -550,7 +550,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                             }))
                           }
                           disabled={submitting}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-gray-300 text-primary focus:ring-primary"
                         />
                         <span className="text-sm text-gray-700">Drive Enclosure</span>
                       </label>
@@ -559,7 +559,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                 </div>
               </div>
 
-              <div className="bg-green-50 rounded-lg p-4 border border-green-100">
+              <div className="bg-success-muted rounded-lg p-4 border border-success/20">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Technical Specifications</h3>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
                   <div>
@@ -677,7 +677,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
               </div>
             </div>
 
-            <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
+            <div className="bg-warning-muted rounded-lg p-4 border border-warning/20">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Inventory Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
@@ -747,7 +747,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantity <span className="text-red-500">*</span>
+                    Quantity <span className="text-danger">*</span>
                   </label>
                   <Input
                     type="number"
@@ -759,7 +759,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                     disabled={submitting}
                   />
                   {errors.quantity_available && (
-                    <p className="mt-1 text-sm text-red-600">{errors.quantity_available}</p>
+                    <p className="mt-1 text-sm text-danger">{errors.quantity_available}</p>
                   )}
                 </div>
 
@@ -795,8 +795,8 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
             </div>
 
             {errors.submit && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{errors.submit}</p>
+              <div className="mt-4 p-4 bg-danger-muted border border-danger/30 rounded-lg">
+                <p className="text-sm text-danger">{errors.submit}</p>
               </div>
             )}
 

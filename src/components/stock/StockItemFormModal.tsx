@@ -36,7 +36,7 @@ const TABS: { id: TabId; label: string }[] = [
 ];
 
 const inputClass =
-  'w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+  'w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary';
 
 const labelClass = 'block text-sm font-medium text-slate-700 mb-1';
 
@@ -217,7 +217,7 @@ export const StockItemFormModal: React.FC<StockItemFormModalProps> = ({
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
@@ -230,7 +230,7 @@ export const StockItemFormModal: React.FC<StockItemFormModalProps> = ({
           <div className="space-y-4">
             <div>
               <label className={labelClass}>
-                Name <span className="text-red-500">*</span>
+                Name <span className="text-danger">*</span>
               </label>
               <Input
                 type="text"
@@ -342,7 +342,7 @@ export const StockItemFormModal: React.FC<StockItemFormModalProps> = ({
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                 />
                 <span className="text-sm text-slate-700">Active</span>
               </label>
@@ -352,7 +352,7 @@ export const StockItemFormModal: React.FC<StockItemFormModalProps> = ({
                     type="checkbox"
                     checked={isFeatured}
                     onChange={(e) => setIsFeatured(e.target.checked)}
-                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
                   />
                   <span className="text-sm text-slate-700">Featured</span>
                 </label>
@@ -395,7 +395,7 @@ export const StockItemFormModal: React.FC<StockItemFormModalProps> = ({
                 type="checkbox"
                 checked={taxInclusive}
                 onChange={(e) => setTaxInclusive(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
               />
               <span className="text-sm text-slate-700">Price is tax inclusive</span>
             </label>
@@ -474,20 +474,20 @@ export const StockItemFormModal: React.FC<StockItemFormModalProps> = ({
                     value={row.key}
                     onChange={(e) => updateSpecRow(index, 'key', e.target.value)}
                     placeholder="Key"
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   <input
                     type="text"
                     value={row.value}
                     onChange={(e) => updateSpecRow(index, 'value', e.target.value)}
                     placeholder="Value"
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   <button
                     type="button"
                     onClick={() => removeSpecRow(index)}
                     disabled={specRows.length === 1}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="p-2 text-slate-400 hover:text-danger hover:bg-danger-muted rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

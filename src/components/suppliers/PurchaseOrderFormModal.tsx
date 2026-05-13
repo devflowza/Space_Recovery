@@ -223,7 +223,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
             <select
               value={formData.supplier_id}
               onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               required
               disabled={!!supplierId}
             >
@@ -268,7 +268,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
             <select
               value={formData.status_id}
               onChange={(e) => setFormData({ ...formData, status_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               required
             >
               <option value="">Select Status</option>
@@ -298,7 +298,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
             <textarea
               value={formData.shipping_address}
               onChange={(e) => setFormData({ ...formData, shipping_address: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={2}
               placeholder="Complete shipping address..."
             />
@@ -363,7 +363,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
                     variant="ghost"
                     size="sm"
                     onClick={() => removeLineItem(index)}
-                    className="text-red-600 hover:text-red-800"
+                    className="text-danger hover:text-danger/80"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -384,7 +384,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
               </div>
               <div className="flex justify-between w-64 text-lg border-t pt-2">
                 <span className="font-bold">Total:</span>
-                <span className="font-bold text-blue-600">${totals.total.toFixed(2)}</span>
+                <span className="font-bold text-primary">${totals.total.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -399,7 +399,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={3}
               placeholder="Notes for the supplier..."
             />
@@ -412,7 +412,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
             <textarea
               value={formData.internal_notes}
               onChange={(e) => setFormData({ ...formData, internal_notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={3}
               placeholder="Internal notes (not visible to supplier)..."
             />

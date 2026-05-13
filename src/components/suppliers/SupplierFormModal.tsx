@@ -208,7 +208,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
             <select
               value={formData.category_id}
               onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="">Select Category</option>
               {categories.map((cat) => (
@@ -331,7 +331,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
             <select
               value={formData.payment_terms_id}
               onChange={(e) => setFormData({ ...formData, payment_terms_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="">Select Payment Terms</option>
               {paymentTerms.map((term) => (
@@ -362,7 +362,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={3}
               placeholder="Brief description of the supplier and products/services..."
             />
@@ -427,7 +427,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
                   type="checkbox"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                 />
                 <span className="text-sm font-medium text-gray-700">Active Supplier</span>
               </label>
@@ -437,10 +437,10 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
                   type="checkbox"
                   checked={formData.is_approved}
                   onChange={(e) => setFormData({ ...formData, is_approved: e.target.checked })}
-                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  className="w-4 h-4 text-success border-gray-300 rounded focus:ring-success"
                 />
                 <span className="text-sm font-medium text-gray-700">
-                  <CheckCircle className="inline w-4 h-4 mr-1 text-green-600" />
+                  <CheckCircle className="inline w-4 h-4 mr-1 text-success" />
                   Approved Supplier
                 </span>
               </label>

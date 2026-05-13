@@ -137,12 +137,12 @@ export const StockSaleDetailPage: React.FC = () => {
           {canCancel && (
             <>
               {confirmCancel ? (
-                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5">
-                  <span className="text-sm text-red-700 font-medium">Confirm cancellation?</span>
+                <div className="flex items-center gap-2 bg-danger-muted border border-danger/30 rounded-lg px-3 py-1.5">
+                  <span className="text-sm text-danger font-medium">Confirm cancellation?</span>
                   <button
                     onClick={() => cancelMutation.mutate()}
                     disabled={cancelMutation.isPending}
-                    className="px-3 py-1 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:opacity-50"
+                    className="px-3 py-1 text-xs font-semibold text-danger-foreground bg-danger hover:bg-danger/90 rounded-md transition-colors disabled:opacity-50"
                   >
                     {cancelMutation.isPending ? 'Cancelling...' : 'Yes, Cancel'}
                   </button>
@@ -157,7 +157,7 @@ export const StockSaleDetailPage: React.FC = () => {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="gap-2 text-red-600 hover:bg-red-50 border-red-200"
+                  className="gap-2 text-danger hover:bg-danger-muted border-danger/30"
                   onClick={() => setConfirmCancel(true)}
                 >
                   <XCircle className="w-4 h-4" />
@@ -192,8 +192,8 @@ export const StockSaleDetailPage: React.FC = () => {
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-blue-50 rounded-lg">
-              <Receipt className="w-5 h-5 text-blue-600" />
+            <div className="p-2.5 bg-info-muted rounded-lg">
+              <Receipt className="w-5 h-5 text-info" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -237,7 +237,7 @@ export const StockSaleDetailPage: React.FC = () => {
               {sale.cases ? (
                 <Link
                   to={`/cases/${sale.cases.id}`}
-                  className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  className="text-sm font-semibold text-primary hover:text-primary/80 flex items-center gap-1"
                 >
                   <span className="font-mono">{sale.cases.case_no}</span>
                   <ExternalLink className="w-3 h-3" />
@@ -274,13 +274,13 @@ export const StockSaleDetailPage: React.FC = () => {
         </div>
 
         {sale.invoice_id && (
-          <div className="px-6 py-3 bg-blue-50 border-t border-blue-100 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-500" />
-            <p className="text-sm text-blue-700">
+          <div className="px-6 py-3 bg-info-muted border-t border-info/20 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-info" />
+            <p className="text-sm text-info">
               Linked to Invoice{' '}
               <Link
                 to={`/invoices/${sale.invoice_id}`}
-                className="font-semibold underline underline-offset-2 hover:text-blue-900 inline-flex items-center gap-1"
+                className="font-semibold underline underline-offset-2 hover:text-info/80 inline-flex items-center gap-1"
               >
                 #{sale.invoice_id.slice(0, 8).toUpperCase()}
                 <ExternalLink className="w-3 h-3" />
@@ -402,7 +402,7 @@ export const StockSaleDetailPage: React.FC = () => {
                     <td className="px-4 py-3 whitespace-nowrap">
                       {item.warranty_start_date || item.warranty_end_date ? (
                         <div className="flex items-center gap-1 text-xs text-slate-600">
-                          <ShieldCheck className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                          <ShieldCheck className="w-3.5 h-3.5 text-success shrink-0" />
                           <span>
                             {item.warranty_start_date
                               ? new Date(item.warranty_start_date).toLocaleDateString()
@@ -432,7 +432,7 @@ export const StockSaleDetailPage: React.FC = () => {
             </div>
 
             {(sale.discount_amount ?? 0) > 0 && (
-              <div className="flex justify-between text-sm text-green-700">
+              <div className="flex justify-between text-sm text-success">
                 <span className="flex items-center gap-1.5">
                   <Tag className="w-3.5 h-3.5" />
                   Discount
