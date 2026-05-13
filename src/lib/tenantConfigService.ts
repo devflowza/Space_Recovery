@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
-import type { TenantConfig, TaxSystem } from '../types/tenantConfig';
-import { DEFAULT_TENANT_CONFIG } from '../types/tenantConfig';
+import type { TenantConfig, TaxSystem, Theme } from '../types/tenantConfig';
+import { DEFAULT_TENANT_CONFIG, DEFAULT_THEME, THEMES } from '../types/tenantConfig';
 import { logger } from './logger';
 
 const configCache = new Map<string, { config: TenantConfig; timestamp: number }>();
@@ -10,7 +10,7 @@ async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
   const { data, error } = await supabase
     .from('tenants')
     .select(`
-      id, name,
+      id, name, theme,
       currency_code, currency_symbol, decimal_places,
       tax_system, tax_label, tax_number_label, tax_number, default_tax_rate,
       locale_code, timezone, date_format, fiscal_year_start,
@@ -76,6 +76,7 @@ async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
       languageCode: (country?.language_code as string) || 'en',
       postalCodeLabel: (country?.postal_code_label as string) || 'Postal Code',
     },
+    theme: THEMES.includes(data.theme as Theme) ? (data.theme as Theme) : DEFAULT_THEME,
   };
 }
 

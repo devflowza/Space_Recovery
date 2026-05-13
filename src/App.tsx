@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { TenantConfigProvider } from './contexts/TenantConfigContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { PortalAuthProvider } from './contexts/PortalAuthContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -36,6 +37,7 @@ const SettingsDashboard = lazyWithRetry(() => import('./pages/settings/SettingsD
 const CategoryDetail = lazyWithRetry(() => import('./pages/settings/CategoryDetail').then(m => ({ default: m.CategoryDetail })));
 const SystemNumbers = lazyWithRetry(() => import('./pages/settings/SystemNumbers').then(m => ({ default: m.SystemNumbers })));
 const GeneralSettings = lazyWithRetry(() => import('./pages/settings/GeneralSettings').then(m => ({ default: m.GeneralSettings })));
+const AppearanceSettings = lazyWithRetry(() => import('./pages/settings/AppearanceSettings').then(m => ({ default: m.AppearanceSettings })));
 const ClientsList = lazyWithRetry(() => import('./pages/clients/ClientsList').then(m => ({ default: m.ClientsList })));
 const CustomersListPage = lazyWithRetry(() => import('./pages/customers/CustomersListPage').then(m => ({ default: m.CustomersListPage })));
 const CustomerProfilePage = lazyWithRetry(() => import('./pages/customers/CustomerProfilePage').then(m => ({ default: m.CustomerProfilePage })));
@@ -174,6 +176,7 @@ function App() {
       />
       <AuthProvider>
         <TenantConfigProvider>
+        <ThemeProvider>
         <PermissionsProvider>
           <PortalAuthProvider>
             <Suspense fallback={<LoadingFallback />}>
@@ -562,6 +565,14 @@ function App() {
                 }
               />
               <Route
+                path="appearance"
+                element={
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
+                    <AppearanceSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="system-numbers"
                 element={
                   <ProtectedRoute allowedRoles={['owner', 'admin']}>
@@ -730,6 +741,7 @@ function App() {
           </Suspense>
           </PortalAuthProvider>
         </PermissionsProvider>
+        </ThemeProvider>
         </TenantConfigProvider>
       </AuthProvider>
     </BrowserRouter>

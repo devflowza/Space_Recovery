@@ -1,5 +1,9 @@
 export type TaxSystem = 'VAT' | 'GST' | 'SALES_TAX' | 'NONE';
 
+export type Theme = 'royal' | 'burgundy' | 'scarlet';
+export const THEMES: readonly Theme[] = ['royal', 'burgundy', 'scarlet'] as const;
+export const DEFAULT_THEME: Theme = 'royal';
+
 export interface CurrencyConfig {
   code: string;
   symbol: string;
@@ -43,6 +47,7 @@ export interface TenantConfig {
   tax: TaxConfig;
   dateTime: DateTimeConfig;
   locale: LocaleConfig;
+  theme: Theme;
 }
 
 export const DEFAULT_TENANT_CONFIG: TenantConfig = {
@@ -80,4 +85,5 @@ export const DEFAULT_TENANT_CONFIG: TenantConfig = {
     languageCode: 'en',
     postalCodeLabel: 'Postal Code',
   },
+  theme: DEFAULT_THEME,
 };

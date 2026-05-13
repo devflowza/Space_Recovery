@@ -6,6 +6,14 @@ import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import './index.css';
 import './lib/i18n';
 
+// Anti-flash: apply the user's last-seen theme synchronously before React mounts,
+// so returning visitors don't see a Royal-default paint before their saved theme loads.
+// First-time visitors fall through to the :root default (Royal) in index.css.
+const themeHint = localStorage.getItem('xsuite_theme_hint');
+if (themeHint === 'royal' || themeHint === 'burgundy' || themeHint === 'scarlet') {
+  document.documentElement.dataset.theme = themeHint;
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

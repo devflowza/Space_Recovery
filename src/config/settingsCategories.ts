@@ -10,6 +10,7 @@ import {
   Database,
   ShoppingCart,
   ShieldCheck,
+  Palette,
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
@@ -59,6 +60,16 @@ export interface SettingsCategory {
 }
 
 export const SETTINGS_CATEGORIES: SettingsCategory[] = [
+  {
+    id: 'appearance',
+    title: 'Appearance',
+    icon: Palette,
+    backgroundColor: '#0ea5e9',
+    borderColor: '#0ea5e9',
+    tables: [],
+    actionLabel: 'Choose Theme',
+    description: 'Pick the look and feel of xSuite for everyone in your workspace.',
+  },
   {
     id: 'device-media',
     title: 'Device & Media',
