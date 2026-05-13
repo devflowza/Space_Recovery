@@ -8,7 +8,7 @@ xSuite is an AI-powered, multi-tenant SaaS platform for the **data recovery indu
 - Frontend: React 18 + TypeScript + Vite + Tailwind CSS
 - State: TanStack Query v5 (server state), React context (auth/permissions)
 - Backend: Supabase (Postgres 15, Auth, Edge Functions, Storage, Realtime)
-- PDF: `@react-pdf/renderer` (React components) + `pdfmake` (programmatic)
+- PDF: `pdfmake` (sole PDF library; programmatic only)
 - Icons: `lucide-react` only — no other icon libraries
 
 ---
@@ -326,10 +326,50 @@ Sequences are tracked in `number_sequences` and audited in `number_sequences_aud
 
 ## PDF Generation
 
-- React-based documents: `src/components/documents/` (using `@react-pdf/renderer`)
-- Programmatic PDFs: `src/lib/pdf/` (using `pdfmake`)
-- Arabic/RTL support: Noto Sans Arabic + Tajawal fonts in `public/fonts/`
-- Font loading: `src/lib/pdf/fontLoader.ts`
+- All PDFs use `pdfmake` exclusively. `@react-pdf/renderer` is NOT installed despite older docs/Copy files; do not import it.
+- Programmatic document builders: `src/lib/pdf/documents/*.ts` (one per document type).
+- React preview wrappers that build pdfmake doc-definitions: `src/components/documents/*.tsx`.
+- Shared style constants: `src/lib/pdf/styles.ts` (`PDF_COLORS`, `PDF_STYLES`, `getStylesWithFont(fontFamily)`).
+- Arabic/RTL support: Noto Sans Arabic + Tajawal fonts in `public/fonts/`.
+- Font loading: `src/lib/pdf/fontLoader.ts`.
+- **PDFs stay neutral across themes.** The fixed device-icon SVG hexes in `src/lib/deviceIconMapper.ts` are intentional — see the Theming section.
+
+---
+
+## Theming
+
+xSuite supports three tenant-selectable themes — Royal (default), Burgundy, Scarlet — selected per-tenant from Settings → Appearance (admin-gated). Active theme propagates through CSS variables; nothing rebuilds.
+
+### Architecture
+- **Storage**: `tenants.theme text NOT NULL DEFAULT 'royal' CHECK (theme IN ('royal','burgundy','scarlet'))`.
+- **CSS vars**: defined in `src/index.css` under `:root[data-theme="royal|burgundy|scarlet"]` blocks plus a constant `:root` block for status/surface tokens. Each var stores an RGB triplet (e.g. `--color-primary: 22 38 96`) so Tailwind's `<alpha-value>` opacity syntax keeps working.
+- **Tailwind palette**: `tailwind.config.js` `theme.extend.colors` exposes the 14 semantic tokens via `rgb(var(--color-x) / <alpha-value>)`. Tailwind's built-in `gray/slate/zinc/white/black` palette stays available for utility neutrals.
+- **DOM application**: `ThemeContext` (`src/contexts/ThemeContext.tsx`) reads the active theme from `TenantConfigContext` and writes `document.documentElement.dataset.theme`. Also persists a `xsuite_theme_hint` to `localStorage`.
+- **Anti-flash**: `src/main.tsx` synchronously reads the localStorage hint and sets `data-theme` before `createRoot()` so returning visitors don't see a Royal-default paint. CSP forbids inline scripts in `index.html`, so the module-script approach is the only option.
+- **Mutation**: `src/lib/tenantThemeService.ts` `updateTenantTheme(tenantId, theme)`. `ThemeContext` optimistically applies the theme to the DOM, then calls the service, then refreshes the tenant config.
+- **Picker UI**: `src/pages/settings/AppearanceSettings.tsx` — three mini-preview cards (swatches + sample button + accent strip). Active card uses `border-primary` so the picker re-themes reactively.
+
+### Token vocabulary (locked)
+14 role-based tokens, each with foreground and (for status) muted variants:
+- Brand: `primary`, `primary-foreground`, `secondary`, `secondary-foreground`, `accent`, `accent-foreground`
+- Surface: `surface`, `surface-muted`, `border`, `ring`
+- Status (constant across themes): `success`, `success-foreground`, `success-muted`, `warning`, `warning-foreground`, `warning-muted`, `danger`, `danger-foreground`, `danger-muted`, `info`, `info-foreground`, `info-muted`
+
+Do NOT invent new tokens. If a color need doesn't fit, ask before extending the vocabulary.
+
+### Rules
+- Never write `bg-blue-600`, `text-purple-*`, or any brand hex like `#1E5BB8` / `#8b5cf6` / `#6366f1` / `#a855f7` / `#4A5568` / `#6A7A8A` in new code. Use semantic tokens.
+- `bg-purple-*`, `bg-indigo-*`, `bg-violet-*` (any shade) are BANNED. Use `bg-accent` or `bg-secondary`.
+- PDFs do NOT theme. `src/lib/deviceIconMapper.ts` SVG strings and `src/lib/pdf/styles.ts` `PDF_COLORS` are intentionally fixed.
+- Charts use `src/lib/chartTheme.ts` (`chartCategorical`, `chartAxis`, `chartGrid`, `chartTooltipBorder`) — also intentionally not themed.
+- The `*Copy.tsx` shadow tree under `src/` was removed in the theme-migration Phase 0 and must not be re-introduced. Do not commit `* - Copy.{ts,tsx}` files.
+- Tailwind v3.4 only — do NOT upgrade to v4 without a separate plan.
+
+### Adding a fourth theme
+1. Add a new value to the `tenants.theme` CHECK constraint and to the `Theme` union in `src/types/tenantConfig.ts` / `THEMES` array.
+2. Append a `:root[data-theme="new"]` block to `src/index.css` with the same six `--color-primary` / `-secondary` / `-accent` (+ foreground) triplets.
+3. Add an option to `THEME_OPTIONS` in `src/pages/settings/AppearanceSettings.tsx` (name, description, primary/secondary/accent swatches).
+4. No component changes required — the token system propagates automatically.
 
 ---
 
@@ -410,6 +450,16 @@ const formatted = formatCurrencyWithConfig(amount, currency);
 - All tenant-scoped tables enforce RESTRICTIVE isolation via `get_current_tenant_id()` / `is_platform_admin()`
 - Role hierarchy: `owner > admin > manager > technician = sales = accounts = hr > viewer`
 - See `docs/TABLE_MAPPING.md` for complete old → new table name mapping
+
+### Version 1.1.0 — Tenant-Selectable Theme System
+**Date**: 2026-05-14
+**Migration**: `add_tenants_theme_column`
+
+- Added `tenants.theme text NOT NULL DEFAULT 'royal' CHECK (theme IN ('royal','burgundy','scarlet'))` with partial index on non-deleted rows.
+- Frontend rewired to CSS-variable + Tailwind token system. 14 semantic tokens (primary/secondary/accent + foreground/-muted variants, plus surface/border/ring and status: success/warning/danger/info). All `*Copy.tsx` shadow tree (~371 stale duplicate files) removed in the same release.
+- ~370 source files retokenized across UI, layout, financial, banking, cases, portal, auth, settings, platform-admin, HR, payroll, inventory, stock, suppliers, templates, companies, customers, quotes, kb, dashboard, users, admin, resources, print, onboarding, plus shared components. Zero banned `purple-*`/`indigo-*`/`violet-*` classes or banned hex codes (`#1E5BB8`, `#4A5568`, `#6A7A8A`, `#8b5cf6`, `#6366f1`, `#a855f7`) remain in `src/` except the intentionally-fixed `src/lib/deviceIconMapper.ts` SVG strings.
+- New files: `src/contexts/ThemeContext.tsx`, `src/lib/tenantThemeService.ts`, `src/lib/chartTheme.ts`, `src/pages/settings/AppearanceSettings.tsx`.
+- See the **Theming** section above for the full token vocabulary and rules.
 
 ### Future Migration Guidelines
 
