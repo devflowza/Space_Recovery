@@ -114,7 +114,7 @@ export const PortalCases: React.FC = () => {
       case 'in-progress':
         return '#f59e0b';
       case 'waiting-approval':
-        return '#8b5cf6';
+        return 'rgb(var(--color-accent))';
       case 'ready':
         return '#06b6d4';
       case 'completed':
@@ -155,7 +155,7 @@ export const PortalCases: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-cyan-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading your cases...</p>
         </div>
       </div>
@@ -215,7 +215,7 @@ export const PortalCases: React.FC = () => {
                     <span>Due: {formatDate(caseItem.due_date)}</span>
                   )}
                 </div>
-                <span className="text-cyan-600 font-medium">View Details →</span>
+                <span className="text-primary font-medium">View Details →</span>
               </div>
             </Card>
           ))}
@@ -297,7 +297,7 @@ export const PortalCases: React.FC = () => {
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {caseHistory.map((history) => (
                     <div key={history.id} className="flex items-start gap-3 text-sm">
-                      <div className="w-2 h-2 rounded-full bg-cyan-500 mt-2 flex-shrink-0"></div>
+                      <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
                       <div className="flex-1">
                         <p className="font-medium text-slate-900">{history.action.replace(/_/g, ' ')}</p>
                         <p className="text-xs text-slate-500">{formatDate(history.created_at)}</p>

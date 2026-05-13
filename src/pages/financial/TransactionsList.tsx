@@ -166,7 +166,7 @@ export const TransactionsList: React.FC = () => {
       case 'asset':
         return '#3b82f6';
       case 'equity':
-        return '#8b5cf6';
+        return 'rgb(var(--color-accent))';
       default:
         return '#64748b';
     }
@@ -176,7 +176,7 @@ export const TransactionsList: React.FC = () => {
     return (
       <div className="p-8 max-w-[1800px] mx-auto">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading transactions...</p>
         </div>
       </div>
@@ -239,7 +239,7 @@ export const TransactionsList: React.FC = () => {
                 placeholder="Search transactions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -248,7 +248,7 @@ export const TransactionsList: React.FC = () => {
                 onClick={() => setTypeFilter(typeFilter === 'income' ? 'all' : 'income')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   typeFilter === 'income'
-                    ? 'bg-green-500 text-white shadow-md'
+                    ? 'bg-success text-success-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -258,7 +258,7 @@ export const TransactionsList: React.FC = () => {
                 onClick={() => setTypeFilter(typeFilter === 'expense' ? 'all' : 'expense')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   typeFilter === 'expense'
-                    ? 'bg-red-500 text-white shadow-md'
+                    ? 'bg-danger text-danger-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -268,7 +268,7 @@ export const TransactionsList: React.FC = () => {
                 onClick={() => setTypeFilter(typeFilter === 'asset' ? 'all' : 'asset')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   typeFilter === 'asset'
-                    ? 'bg-blue-500 text-white shadow-md'
+                    ? 'bg-info text-white shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -295,7 +295,7 @@ export const TransactionsList: React.FC = () => {
               <Filter className="w-4 h-4" />
               More Filters
               {(typeFilter !== 'all' || dateRange !== 'all') && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
           </div>
@@ -307,7 +307,7 @@ export const TransactionsList: React.FC = () => {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Types</option>
                   <option value="income">Income</option>
@@ -321,7 +321,7 @@ export const TransactionsList: React.FC = () => {
                 <select
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Time</option>
                   <option value="today">Today</option>
@@ -346,7 +346,6 @@ export const TransactionsList: React.FC = () => {
           </p>
           <Button
             onClick={() => setShowTransactionModal(true)}
-            style={{ backgroundColor: '#3b82f6' }}
           >
             <Plus className="w-4 h-4 mr-2" />
             New Transaction
@@ -419,7 +418,7 @@ export const TransactionsList: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <span
                         className={`text-sm font-bold ${
-                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                          transaction.type === 'income' ? 'text-success' : 'text-danger'
                         }`}
                       >
                         {transaction.type === 'income' ? '+' : '-'}
@@ -443,7 +442,7 @@ export const TransactionsList: React.FC = () => {
                         {transaction.status === 'completed' && (
                           <button
                             onClick={(e) => handleReconcile(transaction.id, e)}
-                            className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
+                            className="p-1.5 text-success hover:bg-success-muted rounded transition-colors"
                             title="Mark as Reconciled"
                           >
                             <CheckCircle className="w-4 h-4" />
@@ -452,14 +451,14 @@ export const TransactionsList: React.FC = () => {
                         {(transaction.status === 'completed' || transaction.status === 'pending') && (
                           <button
                             onClick={(e) => handleVoid(transaction.id, e)}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            className="p-1.5 text-danger hover:bg-danger-muted rounded transition-colors"
                             title="Void Transaction"
                           >
                             <XCircle className="w-4 h-4" />
                           </button>
                         )}
                         <button
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          className="p-1.5 text-primary hover:bg-info-muted rounded transition-colors"
                           title="View"
                         >
                           <Eye className="w-4 h-4" />

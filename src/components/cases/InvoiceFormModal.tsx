@@ -451,13 +451,13 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
 
   const headerBadges = (
     <>
-      <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-300 px-2.5 py-1 rounded-lg">
-        <FileBarChart className="w-3.5 h-3.5 text-blue-600" />
-        <span className="text-xs font-semibold text-blue-700">{invoiceNumber}</span>
+      <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/30 px-2.5 py-1 rounded-lg">
+        <FileBarChart className="w-3.5 h-3.5 text-primary" />
+        <span className="text-xs font-semibold text-primary">{invoiceNumber}</span>
       </div>
-      <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-300 px-2.5 py-1 rounded-lg">
-        <Briefcase className="w-3.5 h-3.5 text-blue-600" />
-        <span className="text-xs font-semibold text-blue-700">#{caseNumber}</span>
+      <div className="flex items-center gap-1.5 bg-info-muted border border-info/30 px-2.5 py-1 rounded-lg">
+        <Briefcase className="w-3.5 h-3.5 text-info" />
+        <span className="text-xs font-semibold text-info">#{caseNumber}</span>
       </div>
     </>
   );
@@ -485,7 +485,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
               <select
                 value={selectedCaseId}
                 onChange={(e) => handleCaseSelection(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
                 required
               >
                 <option value="">Select a case...</option>
@@ -516,7 +516,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                     onClick={() => setInvoiceData({ ...invoiceData, invoice_type: 'tax_invoice' })}
                     className={`flex-1 px-2 py-1 text-xs transition-all ${
                       invoiceData.invoice_type === 'tax_invoice'
-                        ? 'bg-blue-500 text-white shadow-sm'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -527,7 +527,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                     onClick={() => setInvoiceData({ ...invoiceData, invoice_type: 'proforma' })}
                     className={`flex-1 px-2 py-1 text-xs border-l border-slate-300 transition-all ${
                       invoiceData.invoice_type === 'proforma'
-                        ? 'bg-blue-500 text-white shadow-sm'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -541,7 +541,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <select
                   value={invoiceData.status}
                   onChange={(e) => setInvoiceData({ ...invoiceData, status: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="draft">Draft</option>
                   <option value="sent">Sent</option>
@@ -618,7 +618,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
             <select
               value={selectedQuoteId}
               onChange={(e) => handleQuoteSelection(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
               <option value="">Select a quote to import...</option>
               {quotes.map((quote) => (
@@ -666,7 +666,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                       placeholder="Describe the service or item"
                       value={item.description}
                       onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                       required
                     />
                   </div>
@@ -676,7 +676,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                       placeholder="Unit"
                       value={item.unit || ''}
                       onChange={(e) => updateLineItem(index, 'unit', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                     />
                   </div>
                   <div className="col-span-2">
@@ -689,7 +689,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                       }
                       min="0"
                       step="0.01"
-                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                       required
                     />
                   </div>
@@ -703,7 +703,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                       }
                       min="0"
                       step="0.01"
-                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                       required
                     />
                   </div>
@@ -711,7 +711,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <button
                   type="button"
                   onClick={() => removeLineItem(index)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-danger hover:bg-danger-muted rounded-lg transition-colors"
                   title="Remove line item"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -755,7 +755,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                     }
                     min="0"
                     step="0.01"
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-slate-300"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary border-slate-300"
                   />
                 </div>
                 <div>
@@ -768,7 +768,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                       onClick={() => setInvoiceData({ ...invoiceData, discount_type: 'fixed' })}
                       className={`flex-1 px-2 py-1 transition-all flex items-center justify-center ${
                         invoiceData.discount_type === 'fixed'
-                          ? 'bg-blue-500 text-white shadow-sm'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                       }`}
                       title="Fixed Amount"
@@ -780,7 +780,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                       onClick={() => setInvoiceData({ ...invoiceData, discount_type: 'percentage' })}
                       className={`flex-1 px-2 py-1 border-l border-slate-300 transition-all flex items-center justify-center ${
                         invoiceData.discount_type === 'percentage'
-                          ? 'bg-blue-500 text-white shadow-sm'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                       }`}
                       title="Percentage"
@@ -791,10 +791,10 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-2">
+              <div className="bg-info-muted border border-info/20 p-3 rounded-lg space-y-2">
                 <div className="flex items-center gap-2 mb-2">
-                  <Calculator className="w-4 h-4 text-blue-600" />
-                  <h4 className="text-sm font-semibold text-blue-900">Summary</h4>
+                  <Calculator className="w-4 h-4 text-info" />
+                  <h4 className="text-sm font-semibold text-info">Summary</h4>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-700">Base Amount</span>
@@ -815,15 +815,15 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                     <span className="text-slate-700">
                       Discount {invoiceData.discount_type === 'percentage' ? `(${invoiceData.discount_amount}%)` : ''}
                     </span>
-                    <span className="font-medium text-red-600">
+                    <span className="font-medium text-danger">
                       -{currencyFormat.currencySymbol}
                       {discountValue.toFixed(2)}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between text-base font-bold border-t border-blue-300 pt-2 mt-2">
-                  <span className="text-blue-900">Total Amount</span>
-                  <span className="text-blue-600">
+                <div className="flex justify-between text-base font-bold border-t border-info/30 pt-2 mt-2">
+                  <span className="text-info">Total Amount</span>
+                  <span className="text-primary">
                     {currencyFormat.currencySymbol}
                     {total.toFixed(2)}
                   </span>
@@ -847,7 +847,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <select
                   value={invoiceData.bank_account_id || ''}
                   onChange={(e) => setInvoiceData({ ...invoiceData, bank_account_id: e.target.value || null })}
-                  className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                   disabled={bankAccountsLoading}
                 >
                   <option value="">None selected</option>
@@ -858,7 +858,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                   ))}
                 </select>
                 {bankAccounts.length === 0 && !bankAccountsLoading && (
-                  <p className="text-xs text-amber-600 mt-1">No bank accounts set up. Add one in Banking &gt; Accounts to display payment details on invoices.</p>
+                  <p className="text-xs text-warning mt-1">No bank accounts set up. Add one in Banking &gt; Accounts to display payment details on invoices.</p>
                 )}
               </div>
 
@@ -870,7 +870,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowTermsTemplates(!showTermsTemplates)}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                    className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     Quick Add
@@ -889,12 +889,12 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                             key={template.id}
                             type="button"
                             onClick={() => applyTermsTemplate(template)}
-                            className="w-full text-left p-2 bg-white rounded border border-slate-200 hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                            className="w-full text-left p-2 bg-white rounded border border-slate-200 hover:border-primary/40 hover:bg-primary/10 transition-colors"
                           >
                             <div className="flex items-center justify-between">
                               <span className="text-xs font-medium text-slate-900">{template.name}</span>
                               {template.is_default && (
-                                <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                                <span className="text-xs bg-warning-muted text-warning px-1.5 py-0.5 rounded">
                                   Default
                                 </span>
                               )}
@@ -911,7 +911,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                     setInvoiceData({ ...invoiceData, terms_and_conditions: e.target.value })
                   }
                   rows={4}
-                  className="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                   placeholder="When payment is due (e.g., Net 30, Due on receipt)"
                 />
               </div>
@@ -925,7 +925,6 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
           </Button>
           <Button
             type="submit"
-            style={{ backgroundColor: '#3b82f6' }}
             disabled={isSubmitting}
             className="shadow-md hover:shadow-lg transition-shadow"
           >
@@ -953,7 +952,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
           >
             <div className="flex items-center justify-between p-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <Search className="w-5 h-5 text-blue-600" />
+                <Search className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-semibold text-slate-900">Quick Add from Catalog</h3>
               </div>
               <button
@@ -985,7 +984,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                       key={item.id}
                       type="button"
                       onClick={() => addFromCatalog(item)}
-                      className="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50 transition-all hover:shadow-md"
+                      className="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-primary/40 hover:bg-primary/10 transition-all hover:shadow-md"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -1003,7 +1002,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                           </div>
                         </div>
                         <div className="text-right ml-4">
-                          <div className="font-bold text-lg text-blue-600">
+                          <div className="font-bold text-lg text-primary">
                             {currencyFormat.currencySymbol}
                             {item.default_price.toFixed(2)}
                           </div>

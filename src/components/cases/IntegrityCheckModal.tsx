@@ -139,17 +139,17 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
     const configs = {
       passed: {
         icon: CheckCircle2,
-        color: 'bg-green-100 text-green-800 border-green-300',
+        color: 'bg-success-muted text-success border-success/30',
         label: 'Passed',
       },
       failed: {
         icon: XCircle,
-        color: 'bg-red-100 text-red-800 border-red-300',
+        color: 'bg-danger-muted text-danger border-danger/30',
         label: 'Failed',
       },
       warning: {
         icon: AlertTriangle,
-        color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+        color: 'bg-warning-muted text-warning border-warning/30',
         label: 'Warning',
       },
       not_applicable: {
@@ -174,9 +174,9 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title="Perform Integrity Check" icon={Shield} maxWidth="3xl">
       <div className="space-y-4">
         {performCheckMutation.error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
-            <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-red-800">
+          <div className="bg-danger-muted border border-danger/30 rounded-lg p-3 flex items-start gap-2">
+            <XCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-danger">
               {performCheckMutation.error instanceof Error
                 ? performCheckMutation.error.message
                 : 'An error occurred'}
@@ -184,12 +184,12 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
           </div>
         )}
 
-        <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-4">
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Package className="w-5 h-5 text-cyan-700" />
-            <span className="font-semibold text-cyan-900">Case Information</span>
+            <Package className="w-5 h-5 text-primary" />
+            <span className="font-semibold text-primary">Case Information</span>
           </div>
-          <div className="text-sm text-cyan-800">
+          <div className="text-sm text-primary">
             <p>
               <span className="font-medium">Case Number:</span> {caseNumber}
             </p>
@@ -202,7 +202,7 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Check Type <span className="text-red-500">*</span>
+              Check Type <span className="text-danger">*</span>
             </label>
             <SearchableSelect
               options={checkTypes}
@@ -230,14 +230,14 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
             value={checkReason}
             onChange={(e) => setCheckReason(e.target.value)}
             rows={2}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="Describe the reason for this integrity check..."
           />
         </div>
 
         <div className="border-t border-slate-200 pt-4">
           <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-            <Fingerprint className="w-4 h-4 text-teal-600" />
+            <Fingerprint className="w-4 h-4 text-primary" />
             Hash Verification
           </h3>
 
@@ -282,12 +282,12 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
           {hashMatch !== undefined && (
             <div className="mt-3">
               {hashMatch ? (
-                <div className="bg-green-50 border border-green-200 rounded p-2 flex items-center gap-2 text-sm text-green-800">
+                <div className="bg-success-muted border border-success/30 rounded p-2 flex items-center gap-2 text-sm text-success">
                   <CheckCircle2 className="w-4 h-4" />
                   <span className="font-medium">Hash values match - Integrity verified</span>
                 </div>
               ) : (
-                <div className="bg-red-50 border border-red-200 rounded p-2 flex items-center gap-2 text-sm text-red-800">
+                <div className="bg-danger-muted border border-danger/30 rounded p-2 flex items-center gap-2 text-sm text-danger">
                   <XCircle className="w-4 h-4" />
                   <span className="font-medium">Hash mismatch - Integrity compromised</span>
                 </div>
@@ -316,7 +316,7 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
                   onClick={() => setSealIntact(true)}
                   className={`flex-1 px-3 py-2 text-sm border-2 rounded transition-colors ${
                     sealIntact === true
-                      ? 'border-green-500 bg-green-50 text-green-800'
+                      ? 'border-success bg-success-muted text-success'
                       : 'border-slate-300 text-slate-600 hover:border-slate-400'
                   }`}
                 >
@@ -326,7 +326,7 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
                   onClick={() => setSealIntact(false)}
                   className={`flex-1 px-3 py-2 text-sm border-2 rounded transition-colors ${
                     sealIntact === false
-                      ? 'border-red-500 bg-red-50 text-red-800'
+                      ? 'border-danger bg-danger-muted text-danger'
                       : 'border-slate-300 text-slate-600 hover:border-slate-400'
                   }`}
                 >
@@ -342,7 +342,7 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
               value={physicalCondition}
               onChange={(e) => setPhysicalCondition(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Document the physical condition of the evidence..."
             />
           </div>
@@ -370,12 +370,12 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
               {anomalies.map((anomaly, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-2 text-sm bg-red-50 border border-red-200 rounded px-3 py-2"
+                  className="flex items-center gap-2 text-sm bg-danger-muted border border-danger/30 rounded px-3 py-2"
                 >
-                  <span className="flex-1 text-red-800">{anomaly}</span>
+                  <span className="flex-1 text-danger">{anomaly}</span>
                   <button
                     onClick={() => removeAnomaly(idx)}
-                    className="text-red-600 hover:text-red-800"
+                    className="text-danger hover:text-danger/80"
                   >
                     <XCircle className="w-4 h-4" />
                   </button>
@@ -391,7 +391,7 @@ export const IntegrityCheckModal: React.FC<IntegrityCheckModalProps> = ({
             value={findings}
             onChange={(e) => setFindings(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="Document your findings from this integrity check..."
           />
         </div>

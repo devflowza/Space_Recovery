@@ -295,7 +295,7 @@ export default function ReportFormModal({
         <div className="flex items-start justify-between mb-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <FileText className="w-5 h-5 text-blue-600" />
+              <FileText className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold text-gray-900">
                 {isNewVersion ? 'Create New Report Version' : 'Create New Report'}
               </h2>
@@ -312,13 +312,13 @@ export default function ReportFormModal({
           {!isNewVersion && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Report Type <span className="text-red-500">*</span>
+                Select Report Type <span className="text-danger">*</span>
               </label>
               <div className="relative">
                 <select
                   value={selectedType || ''}
                   onChange={(e) => handleTypeSelect(e.target.value as ReportType)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 >
                   <option value="">Choose the type of report to create...</option>
@@ -343,7 +343,7 @@ export default function ReportFormModal({
                         key={type.key}
                         type="button"
                         onClick={() => handleTypeSelect(type.key)}
-                        className="w-full flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors text-left"
+                        className="w-full flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-primary/40 transition-colors text-left"
                       >
                         <Icon className="w-5 h-5 mt-0.5" style={{ color: type.color }} />
                         <div className="flex-1 min-w-0">
@@ -382,7 +382,7 @@ export default function ReportFormModal({
                       <select
                         value={selectedTemplateId}
                         onChange={(e) => handleTemplateChange(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
                         <option value="blank">None (Blank Report)</option>
                         {availableTemplates.map((tmpl) => (
@@ -404,12 +404,12 @@ export default function ReportFormModal({
               {isNewVersion && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Version Notes <span className="text-red-500">*</span>
+                    Version Notes <span className="text-danger">*</span>
                   </label>
                   <textarea
                     value={versionNotes}
                     onChange={(e) => setVersionNotes(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     rows={3}
                     placeholder="Describe what changes were made in this version..."
                     required
@@ -428,14 +428,14 @@ export default function ReportFormModal({
                       <div key={section.key} className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           {typeof section.title === 'string' ? section.title : 'Untitled Section'}
-                          {section.required && <span className="text-red-500 ml-1">*</span>}
+                          {section.required && <span className="text-danger ml-1">*</span>}
                         </label>
                         {section.description && typeof section.description === 'string' && (
                           <p className="text-sm text-gray-600 mb-2">{section.description}</p>
                         )}
                         {section.type === 'chain_of_custody' ? (
-                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p className="text-sm text-blue-800">
+                          <div className="p-4 bg-info-muted border border-info/30 rounded-lg">
+                            <p className="text-sm text-info">
                               Chain of Custody timeline will be automatically populated from case
                               records when the report is generated.
                             </p>

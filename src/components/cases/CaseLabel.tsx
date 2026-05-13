@@ -108,7 +108,7 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-2 text-sm">Loading label...</p>
         </div>
       </div>
@@ -117,7 +117,7 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
 
   if (!caseData || !companySettings) {
     return (
-      <div className="p-4 text-center text-red-600 text-sm">
+      <div className="p-4 text-center text-danger text-sm">
         Error loading label data. Please try again.
       </div>
     );

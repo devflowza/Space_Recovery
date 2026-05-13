@@ -103,7 +103,7 @@ export const PortalDashboard: React.FC = () => {
       case 'in-progress':
         return '#f59e0b';
       case 'waiting-approval':
-        return '#8b5cf6';
+        return 'rgb(var(--color-accent))';
       case 'ready':
         return '#06b6d4';
       case 'completed':
@@ -137,7 +137,7 @@ export const PortalDashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
               <FileText className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -185,7 +185,7 @@ export const PortalDashboard: React.FC = () => {
               <div
                 key={quote.id}
                 onClick={() => navigate('/portal/quotes')}
-                className="p-4 bg-amber-50 border-2 border-amber-200 rounded-lg cursor-pointer hover:border-amber-300 transition-all"
+                className="p-4 bg-warning-muted border-2 border-warning/30 rounded-lg cursor-pointer hover:border-warning/50 transition-all"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
@@ -204,8 +204,8 @@ export const PortalDashboard: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-amber-600" />
-                  <span className="text-sm text-amber-800">Response required</span>
+                  <MessageSquare className="w-4 h-4 text-warning" />
+                  <span className="text-sm text-warning">Response required</span>
                 </div>
               </div>
             ))}
@@ -219,7 +219,7 @@ export const PortalDashboard: React.FC = () => {
           {recentCases.length > 0 && (
             <button
               onClick={() => navigate('/portal/cases')}
-              className="text-sm font-medium text-cyan-600 hover:text-cyan-700"
+              className="text-sm font-medium text-primary hover:text-primary/80"
             >
               View All
             </button>
@@ -240,7 +240,7 @@ export const PortalDashboard: React.FC = () => {
               <div
                 key={caseItem.id}
                 onClick={() => navigate('/portal/cases')}
-                className="p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-cyan-300 cursor-pointer transition-all"
+                className="p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-primary/50 cursor-pointer transition-all"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">

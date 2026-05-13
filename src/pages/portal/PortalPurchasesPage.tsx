@@ -90,8 +90,8 @@ export const PortalPurchasesPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <ShoppingBag className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-info-muted rounded-lg flex items-center justify-center">
+              <ShoppingBag className="w-5 h-5 text-info" />
             </div>
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Total Orders</p>
@@ -101,8 +101,8 @@ export const PortalPurchasesPage: React.FC = () => {
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <Shield className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 bg-success-muted rounded-lg flex items-center justify-center">
+              <Shield className="w-5 h-5 text-success" />
             </div>
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Active Warranties</p>
@@ -112,8 +112,8 @@ export const PortalPurchasesPage: React.FC = () => {
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-amber-600" />
+            <div className="w-10 h-10 bg-warning-muted rounded-lg flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-warning" />
             </div>
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Total Spent</p>
@@ -178,8 +178,8 @@ export const PortalPurchasesPage: React.FC = () => {
                             <div className="flex items-center gap-3 text-xs">
                               {item.warranty_end_date && (
                                 <span className={`flex items-center gap-1 font-medium ${
-                                  ws.color === 'success' ? 'text-emerald-600' :
-                                  ws.color === 'warning' ? 'text-amber-600' : 'text-red-600'
+                                  ws.color === 'success' ? 'text-success' :
+                                  ws.color === 'warning' ? 'text-warning' : 'text-danger'
                                 }`}>
                                   <WarrantyIcon className="w-3.5 h-3.5" />
                                   Warranty: {ws.label}
@@ -205,7 +205,7 @@ export const PortalPurchasesPage: React.FC = () => {
       {activeWarranties.length > 0 && (
         <Card className="overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-emerald-600" />
+            <Shield className="w-5 h-5 text-success" />
             <h2 className="text-lg font-semibold text-slate-900">Active Warranties</h2>
           </div>
           <div className="divide-y divide-slate-100">
@@ -218,12 +218,12 @@ export const PortalPurchasesPage: React.FC = () => {
                 <div key={item.id} className="px-6 py-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      ws.color === 'success' ? 'bg-emerald-100' :
-                      ws.color === 'warning' ? 'bg-amber-100' : 'bg-red-100'
+                      ws.color === 'success' ? 'bg-success-muted' :
+                      ws.color === 'warning' ? 'bg-warning-muted' : 'bg-danger-muted'
                     }`}>
                       <WarrantyIcon className={`w-4 h-4 ${
-                        ws.color === 'success' ? 'text-emerald-600' :
-                        ws.color === 'warning' ? 'text-amber-600' : 'text-red-600'
+                        ws.color === 'success' ? 'text-success' :
+                        ws.color === 'warning' ? 'text-warning' : 'text-danger'
                       }`} />
                     </div>
                     <div>

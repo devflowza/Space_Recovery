@@ -60,7 +60,7 @@ export const PortalSettings: React.FC = () => {
 
       <Card className="p-6 max-w-2xl">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
             <Lock className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -70,9 +70,9 @@ export const PortalSettings: React.FC = () => {
         </div>
 
         {success && (
-          <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-start gap-3">
-            <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-emerald-800">
+          <div className="mb-6 p-4 bg-success-muted border border-success/30 rounded-lg flex items-start gap-3">
+            <Check className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-success">
               <p className="font-semibold">Password Changed Successfully</p>
               <p>Your password has been updated. Use your new password for future logins.</p>
             </div>
@@ -80,9 +80,9 @@ export const PortalSettings: React.FC = () => {
         )}
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-red-800">
+          <div className="mb-6 p-4 bg-danger-muted border border-danger/30 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-danger">
               <p className="font-semibold">Error</p>
               <p>{error}</p>
             </div>
@@ -124,7 +124,7 @@ export const PortalSettings: React.FC = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-              style={{ backgroundColor: '#06b6d4' }}
+              className="bg-primary hover:bg-primary/90"
             >
               {isSubmitting ? 'Changing Password...' : 'Change Password'}
             </Button>

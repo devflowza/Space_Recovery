@@ -54,7 +54,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
             </div>
             <div className="flex items-center gap-1 ml-2 flex-shrink-0">
               {device.is_primary && (
-                <Badge variant="custom" color="#3b82f6" size="sm">Primary</Badge>
+                <Badge variant="custom" color="rgb(var(--color-primary))" size="sm">Primary</Badge>
               )}
               <Button
                 variant="secondary"
@@ -99,7 +99,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
                 <div>
                   <span className="text-slate-500 text-xs block mb-0.5">Encryption</span>
                   <span className="text-slate-900 text-sm flex items-center gap-1">
-                    <Shield className="w-3 h-3 text-red-500" />
+                    <Shield className="w-3 h-3 text-danger" />
                     {device.encryption_type.name}
                   </span>
                 </div>
@@ -146,7 +146,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <HardDrive className="w-6 h-6 text-orange-600" />
+                <HardDrive className="w-6 h-6 text-warning" />
                 Devices ({devices.length})
               </h2>
               <p className="text-sm text-slate-600 mt-1">Manage patient devices, backup devices, and donor parts</p>
@@ -156,7 +156,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
                 onSetEditingDevice(null);
                 onSetShowDeviceModal(true);
               }}
-              style={{ backgroundColor: '#10b981' }}
+              style={{ backgroundColor: 'rgb(var(--color-success))' }}
               size="sm"
             >
               <HardDrive className="w-4 h-4 mr-2" />
@@ -167,13 +167,13 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
       </Card>
 
       {caseData.checkout_date && (
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-success-muted border-success/30">
           <div className="p-4">
-            <div className="flex items-center gap-2 text-green-900 font-semibold mb-2">
+            <div className="flex items-center gap-2 text-success font-semibold mb-2">
               <CheckCircle2 className="w-5 h-5" />
               <span>Checked Out</span>
             </div>
-            <div className="text-sm text-green-800 flex flex-wrap gap-6">
+            <div className="text-sm text-success flex flex-wrap gap-6">
               <div><span className="font-medium">Collected by: </span>{caseData.checkout_collector_name}</div>
               <div><span className="font-medium">Date: </span>{formatDate(caseData.checkout_date)}</div>
               {caseData.recovery_outcome && (
@@ -206,13 +206,13 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
           {/* Patient Devices */}
           <div className="flex flex-col space-y-4 flex-1 min-w-0">
-            <Card className="bg-blue-50 border-blue-200 flex-shrink-0">
+            <Card className="bg-info-muted border-info/30 flex-shrink-0">
               <div className="p-3">
-                <h3 className="text-base font-bold text-blue-900 flex items-center gap-2">
-                  <HardDrive className="w-4 h-4 text-blue-700" />
+                <h3 className="text-base font-bold text-info flex items-center gap-2">
+                  <HardDrive className="w-4 h-4 text-info" />
                   Patient Devices ({patientDevices.length})
                 </h3>
-                <p className="text-xs text-blue-700 mt-1">Primary devices requiring data recovery</p>
+                <p className="text-xs text-info mt-1">Primary devices requiring data recovery</p>
               </div>
             </Card>
             <div className="overflow-y-auto max-h-[calc(100vh-450px)] space-y-3 pr-1">
@@ -231,13 +231,13 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
 
           {/* Backup & Support */}
           <div className="flex flex-col space-y-4 flex-1 min-w-0">
-            <Card className="bg-green-50 border-green-200 flex-shrink-0">
+            <Card className="bg-success-muted border-success/30 flex-shrink-0">
               <div className="p-3">
-                <h3 className="text-base font-bold text-green-900 flex items-center gap-2">
-                  <Grid className="w-4 h-4 text-green-700" />
+                <h3 className="text-base font-bold text-success flex items-center gap-2">
+                  <Grid className="w-4 h-4 text-success" />
                   Backup & Support ({backupAndSupportDevices.length})
                 </h3>
-                <p className="text-xs text-green-700 mt-1">Backup devices and donor parts for recovery operations</p>
+                <p className="text-xs text-success mt-1">Backup devices and donor parts for recovery operations</p>
               </div>
             </Card>
             <div className="overflow-y-auto max-h-[calc(100vh-450px)] space-y-3 pr-1">
@@ -291,7 +291,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
                                     <DeviceRoleBadge role={device.device_role.name} size="sm" />
                                   )}
                                   {device.is_primary && (
-                                    <Badge variant="custom" color="#3b82f6" size="sm">Primary</Badge>
+                                    <Badge variant="custom" color="rgb(var(--color-primary))" size="sm">Primary</Badge>
                                   )}
                                 </div>
                                 <p className="text-xs text-slate-600 truncate">

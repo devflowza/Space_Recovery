@@ -136,7 +136,7 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
     >
       {success ? (
         <div className="flex flex-col items-center justify-center py-12">
-          <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
+          <CheckCircle2 className="w-16 h-16 text-success mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 mb-2">Email Sent Successfully</h3>
           <p className="text-slate-500">The document has been sent to {to}</p>
         </div>
@@ -144,8 +144,8 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
         <div className="space-y-4">
           <div className="bg-slate-50 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <FileText className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1">
                 <p className="font-medium text-slate-900">{documentLabel}</p>
@@ -172,7 +172,7 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Recipient Email <span className="text-red-500">*</span>
+              Recipient Email <span className="text-danger">*</span>
             </label>
             <Input
               type="email"
@@ -189,7 +189,7 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
                 type="button"
                 onClick={() => setShowCc(true)}
                 disabled={isSending}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 px-2 py-1 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1 px-2 py-1 hover:bg-primary/10 rounded transition-colors disabled:opacity-50"
               >
                 <Plus className="w-3 h-3" />
                 Add CC
@@ -200,7 +200,7 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
                 type="button"
                 onClick={() => setShowBcc(true)}
                 disabled={isSending}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 px-2 py-1 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1 px-2 py-1 hover:bg-primary/10 rounded transition-colors disabled:opacity-50"
               >
                 <Plus className="w-3 h-3" />
                 Add BCC
@@ -277,14 +277,14 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={8}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary resize-none"
               placeholder="Email message..."
               disabled={isSending}
             />
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            <div className="flex items-center gap-2 p-3 bg-danger-muted border border-danger/30 rounded-lg text-danger">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <p className="text-sm">{error}</p>
             </div>
@@ -331,7 +331,7 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
           >
             <div className="flex items-center justify-between p-4 border-b border-slate-200">
               <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-blue-600" />
+                <FileText className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-semibold text-slate-900">PDF Preview</h3>
               </div>
               <button

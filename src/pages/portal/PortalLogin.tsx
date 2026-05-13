@@ -28,7 +28,7 @@ export const PortalLogin: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center mx-auto mb-4">
             <LogIn className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Customer Portal</h1>
@@ -37,9 +37,9 @@ export const PortalLogin: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="p-3 bg-danger-muted border border-danger/30 rounded-lg flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-danger">{error}</p>
             </div>
           )}
 
@@ -65,9 +65,8 @@ export const PortalLogin: React.FC = () => {
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-primary hover:bg-primary/90"
             disabled={isSubmitting}
-            style={{ backgroundColor: '#06b6d4' }}
           >
             {isSubmitting ? 'Signing in...' : 'Sign In'}
           </Button>

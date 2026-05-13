@@ -29,7 +29,7 @@ export const TestimonialCarousel = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <Quote className="w-5 h-5 text-blue-400/60 mb-3" />
+      <Quote className="w-5 h-5 text-primary/60 mb-3" />
 
       <div className="min-h-[100px]">
         <AnimatePresence mode="wait">
@@ -44,7 +44,7 @@ export const TestimonialCarousel = () => {
               &ldquo;{current.quote}&rdquo;
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-medium">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-medium">
                 {current.author.split(' ').map(n => n[0]).join('')}
               </div>
               <div>
@@ -64,7 +64,7 @@ export const TestimonialCarousel = () => {
             key={i}
             onClick={() => setActiveIndex(i)}
             className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-              i === activeIndex ? 'bg-blue-400 w-4' : 'bg-slate-600 hover:bg-slate-500'
+              i === activeIndex ? 'bg-primary w-4' : 'bg-slate-600 hover:bg-slate-500'
             }`}
             aria-label={`Show testimonial ${i + 1}`}
           />

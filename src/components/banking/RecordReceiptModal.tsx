@@ -259,11 +259,11 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { color: string; icon: React.ComponentType<{ className?: string }> }> = {
-      paid: { color: 'bg-green-100 text-green-800', icon: Check },
-      'partially-paid': { color: 'bg-blue-100 text-blue-800', icon: Clock },
-      sent: { color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle },
+      paid: { color: 'bg-success-muted text-success', icon: Check },
+      'partially-paid': { color: 'bg-info-muted text-info', icon: Clock },
+      sent: { color: 'bg-warning-muted text-warning', icon: AlertTriangle },
       draft: { color: 'bg-slate-100 text-slate-800', icon: Receipt },
-      overdue: { color: 'bg-red-100 text-red-800', icon: AlertTriangle },
+      overdue: { color: 'bg-danger-muted text-danger', icon: AlertTriangle },
     };
 
     const config = statusConfig[status] || statusConfig.draft;
@@ -286,9 +286,9 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="bg-danger-muted border border-danger/30 rounded-lg p-3 flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-danger">{error}</p>
           </div>
         )}
 
@@ -303,12 +303,12 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Deposit To Account <span className="text-red-600">*</span>
+              Deposit To Account <span className="text-danger">*</span>
             </label>
             <select
               value={formData.account_id}
               onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               required
             >
               <option value="">Select Account</option>
@@ -379,10 +379,10 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
                       onClick={() => !singleInvoiceMode && handleInvoiceToggle(invoice.id, outstanding)}
                       className={`w-full text-left border-2 rounded-lg p-3 transition-all ${
                         isSelected
-                          ? 'border-blue-500 bg-blue-50 shadow-sm'
+                          ? 'border-primary bg-info-muted shadow-sm'
                           : singleInvoiceMode
-                          ? 'border-blue-500 bg-blue-50 shadow-sm cursor-default'
-                          : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'
+                          ? 'border-primary bg-info-muted shadow-sm cursor-default'
+                          : 'border-slate-200 bg-white hover:border-primary/50 hover:shadow-sm'
                       }`}
                       disabled={singleInvoiceMode}
                     >
@@ -394,10 +394,10 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
                             </p>
                             {getStatusBadge(invoice.status)}
                             {isSelected && (
-                              <CheckCircle className="w-4 h-4 text-blue-600 ml-auto" />
+                              <CheckCircle className="w-4 h-4 text-primary ml-auto" />
                             )}
                             {singleInvoiceMode && (
-                              <span className="ml-auto text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                              <span className="ml-auto text-xs font-medium text-info bg-info-muted px-2 py-1 rounded">
                                 Current Invoice
                               </span>
                             )}
@@ -415,13 +415,13 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
                             </div>
                             <div>
                               <span className="text-slate-500 block">Amount Paid</span>
-                              <span className="font-semibold text-green-600">
+                              <span className="font-semibold text-success">
                                 {formatCurrencyValue(invoice.amount_paid || 0)}
                               </span>
                             </div>
                             <div>
                               <span className="text-slate-500 block">Outstanding</span>
-                              <span className="font-bold text-lg text-red-600">
+                              <span className="font-bold text-lg text-danger">
                                 {formatCurrencyValue(outstanding)}
                               </span>
                             </div>
@@ -430,7 +430,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
                       </div>
                     </button>
                     {isSelected && (
-                      <div className="ml-3 pl-3 border-l-2 border-blue-500">
+                      <div className="ml-3 pl-3 border-l-2 border-primary">
                         <label className="block text-xs font-medium text-slate-700 mb-1">
                           {singleInvoiceMode ? 'Payment Amount' : 'Allocate Amount'}
                         </label>
@@ -443,10 +443,10 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
                           onChange={(e) =>
                             handleAllocationAmountChange(invoice.id, parseFloat(e.target.value) || 0)
                           }
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                         />
                         {singleInvoiceMode && allocation > outstanding && (
-                          <p className="text-xs text-green-600 mt-1">
+                          <p className="text-xs text-success mt-1">
                             Overpayment: {formatCurrencyValue(allocation - outstanding)} will be recorded as credit
                           </p>
                         )}
@@ -465,11 +465,11 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
                 </div>
                 <div>
                   <p className="text-slate-600 text-xs mb-0.5">Total Allocated</p>
-                  <p className="font-bold text-lg text-blue-600">{formatCurrencyValue(totalAllocated)}</p>
+                  <p className="font-bold text-lg text-primary">{formatCurrencyValue(totalAllocated)}</p>
                 </div>
                 <div>
                   <p className="text-slate-600 text-xs mb-0.5">Unallocated</p>
-                  <p className={`font-bold text-lg ${unallocatedAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`font-bold text-lg ${unallocatedAmount >= 0 ? 'text-success' : 'text-danger'}`}>
                     {formatCurrencyValue(unallocatedAmount)}
                   </p>
                 </div>
@@ -501,7 +501,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
             <select
               value={formData.payment_method_id}
               onChange={(e) => setFormData({ ...formData, payment_method_id: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
               <option value="">Select Method</option>
               {paymentMethods.map((method: { id: string; name: string }) => (
@@ -533,7 +533,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="Additional notes..."
           />
         </div>

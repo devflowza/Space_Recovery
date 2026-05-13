@@ -548,14 +548,13 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="flex flex-col">
               <div
-                className="rounded-xl p-5 mb-4"
+                className="rounded-xl p-5 mb-4 bg-info-muted"
                 style={{
-                  backgroundColor: '#eff6ff',
-                  borderLeft: '4px solid #3b82f6',
+                  borderLeft: '4px solid rgb(var(--color-info))',
                 }}
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <Users className="w-5 h-5 text-blue-600" />
+                  <Users className="w-5 h-5 text-info" />
                   <h3 className="text-base font-bold text-slate-900">Client & Service</h3>
                 </div>
 
@@ -578,7 +577,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                       <button
                         type="button"
                         onClick={() => setIsCustomerModalOpen(true)}
-                        className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                        className="mt-2 text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Create New Customer
@@ -635,7 +634,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                           onChange={(e) =>
                             setFormData({ ...formData, welcome_email: e.target.checked })
                           }
-                          className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
                         />
                         <span className="text-sm font-medium text-slate-700">
                           Welcome Email
@@ -649,7 +648,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                           onChange={(e) =>
                             setFormData({ ...formData, welcome_sms: e.target.checked })
                           }
-                          className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
                         />
                         <span className="text-sm font-medium text-slate-700">
                           Welcome SMS
@@ -662,15 +661,14 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
 
             <div className="flex flex-col">
               <div
-                className="rounded-xl p-5 mb-4"
+                className="rounded-xl p-5 mb-4 bg-success-muted"
                 style={{
-                  backgroundColor: '#f0fdf4',
-                  borderLeft: '4px solid #10b981',
+                  borderLeft: '4px solid rgb(var(--color-success))',
                 }}
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <HardDrive className="w-5 h-5 text-green-600" />
+                    <HardDrive className="w-5 h-5 text-success" />
                     <h3 className="text-base font-bold text-slate-900">
                       Device Information ({devices.length}{bulkServerDrives.length > 0 ? ` + ${bulkServerDrives.length} bulk` : ''})
                     </h3>
@@ -681,7 +679,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                         onClick={() => setIsBulkDrivesModalOpen(true)}
                         variant="secondary"
                         size="sm"
-                        className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                        className="bg-info-muted text-info hover:bg-info/15 border-info/30"
                       >
                         <Layers className="w-4 h-4 mr-1" />
                         {bulkServerDrives.length > 0 ? `Edit ${bulkServerDrives.length} Drives` : 'Add Multiple Drives'}
@@ -699,18 +697,18 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                 </div>
 
                 {bulkServerDrives.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                  <div className="bg-info-muted border border-info/30 rounded-lg p-3 mb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Layers className="w-4 h-4 text-blue-600" />
-                        <span className="text-sm font-semibold text-blue-900">
+                        <Layers className="w-4 h-4 text-info" />
+                        <span className="text-sm font-semibold text-info">
                           {bulkServerDrives.length} Server Drive{bulkServerDrives.length !== 1 ? 's' : ''} (Bulk Entry)
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setIsBulkDrivesModalOpen(true)}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-xs text-primary hover:text-primary/80 font-medium"
                         >
                           View/Edit
                         </button>
@@ -719,13 +717,13 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                             const confirmed = window.confirm(`Remove all ${bulkServerDrives.length} bulk drives?`);
                             if (confirmed) setBulkServerDrives([]);
                           }}
-                          className="text-xs text-red-600 hover:text-red-700 font-medium"
+                          className="text-xs text-danger hover:text-danger/80 font-medium"
                         >
                           Remove All
                         </button>
                       </div>
                     </div>
-                    <p className="text-xs text-blue-700 mt-1">
+                    <p className="text-xs text-info mt-1">
                       {primaryDevice.serial_no
                         ? 'These drives will be automatically added as components of the server with Patient role and default settings'
                         : 'These drives will be added as a RAID array with equal status (no primary drive designation)'}
@@ -745,7 +743,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                             Device {index + 1}
                           </h4>
                           {device.is_primary && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium">
+                            <span className="text-xs bg-info-muted text-info px-2 py-0.5 rounded font-medium">
                               Primary
                             </span>
                           )}
@@ -753,7 +751,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                         {devices.length > 1 && (
                           <button
                             onClick={() => removeDevice(device.id)}
-                            className="text-red-500 hover:text-red-700 transition-colors"
+                            className="text-danger hover:text-danger/80 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -839,7 +837,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                                 <select
                                   value={device.parent_device_id}
                                   onChange={(e) => updateDevice(device.id, 'parent_device_id', e.target.value)}
-                                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                                 >
                                   <option value="">No link (optional)</option>
                                   {patientDevices.map((pd, pdIdx) => (
@@ -913,14 +911,13 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
 
             <div className="flex flex-col">
               <div
-                className="rounded-xl p-5 mb-4"
+                className="rounded-xl p-5 mb-4 bg-warning-muted"
                 style={{
-                  backgroundColor: '#fff7ed',
-                  borderLeft: '4px solid #f97316',
+                  borderLeft: '4px solid rgb(var(--color-warning))',
                 }}
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <AlertCircle className="w-5 h-5 text-orange-600" />
+                  <AlertCircle className="w-5 h-5 text-warning" />
                   <h3 className="text-base font-bold text-slate-900">
                     Problem & Requirements
                   </h3>
@@ -949,7 +946,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                         updateDevice('1', 'recovery_requirements', e.target.value)
                       }
                       rows={2}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-warning focus:border-warning text-sm"
                       placeholder="Describe what files or data the customer needs recovered (e.g., Family photos, Financial reports, Database files)"
                     />
                   </div>
@@ -965,7 +962,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                         onChange={(e) =>
                           updateDevice('1', 'device_password', e.target.value)
                         }
-                        className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                        className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-warning focus:border-warning text-sm"
                         placeholder="Password needed to access encrypted data (if applicable)"
                       />
                       <button
@@ -994,22 +991,22 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                   />
 
                   {isFormValid ? (
-                    <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <div className="flex items-center gap-2 text-green-800">
+                    <div className="mt-4 p-3 bg-success-muted rounded-lg border border-success/30">
+                      <div className="flex items-center gap-2 text-success">
                         <CheckCircle className="w-5 h-5" />
                         <span className="text-sm font-semibold">Ready to Create Case</span>
                       </div>
-                      <p className="text-xs text-green-700 mt-1">
+                      <p className="text-xs text-success mt-1">
                         All required information has been provided. Click "Create Case" to proceed.
                       </p>
                     </div>
                   ) : (
-                    <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                      <div className="flex items-center gap-2 text-amber-800">
+                    <div className="mt-4 p-3 bg-warning-muted rounded-lg border border-warning/30">
+                      <div className="flex items-center gap-2 text-warning">
                         <AlertCircle className="w-5 h-5" />
                         <span className="text-sm font-semibold">Required Information Missing</span>
                       </div>
-                      <p className="text-xs text-amber-700 mt-1">
+                      <p className="text-xs text-warning mt-1">
                         {isServerDevice && !primaryDevice.serial_no
                           ? 'Complete these required fields: Client, Service Type, Device Problem. Then add server drives using "Add Multiple Drives".'
                           : 'Complete these required fields: Client, Service Type, Serial Number, and Device Problem.'}
@@ -1031,7 +1028,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
           <Button
             onClick={handleSubmit}
             disabled={!isFormValid || createCaseMutation.isPending}
-            style={{ backgroundColor: '#10b981' }}
+            style={{ backgroundColor: 'rgb(var(--color-success))' }}
           >
             {createCaseMutation.isPending ? 'Creating Case...' : 'Create Case'}
           </Button>

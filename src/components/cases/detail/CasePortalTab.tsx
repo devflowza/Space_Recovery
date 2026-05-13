@@ -108,14 +108,14 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <Globe className="w-5 h-5 text-blue-600" />
+                <Globe className="w-5 h-5 text-primary" />
                 Client Portal Visibility
               </h2>
               <p className="text-sm text-slate-500 mt-1">Control what the customer can see in their portal</p>
             </div>
             <Button
               onClick={() => saveMutation.mutate(settings)}
-              style={{ backgroundColor: '#10b981' }}
+              style={{ backgroundColor: 'rgb(var(--color-success))' }}
               disabled={saveMutation.isPending}
             >
               <Save className="w-4 h-4 mr-2" />
@@ -125,14 +125,14 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
 
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-3 uppercase tracking-wide">
-              <Eye className="w-4 h-4 text-blue-500" />
+              <Eye className="w-4 h-4 text-primary" />
               Visibility Settings
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {visibilitySettings.map(({ key, label, description }) => (
                 <label
                   key={key}
-                  className="flex items-start justify-between p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors border border-transparent hover:border-blue-200"
+                  className="flex items-start justify-between p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-info-muted transition-colors border border-transparent hover:border-info/30"
                 >
                   <div className="flex-1 pr-4">
                     <p className="font-medium text-slate-900 text-sm">{label}</p>
@@ -146,7 +146,7 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
                       className="sr-only"
                     />
                     <div
-                      className={`w-10 h-6 rounded-full transition-colors ${settings[key] ? 'bg-blue-600' : 'bg-slate-300'}`}
+                      className={`w-10 h-6 rounded-full transition-colors ${settings[key] ? 'bg-primary' : 'bg-slate-300'}`}
                       onClick={() => toggle(key)}
                     >
                       <div className={`w-4 h-4 bg-white rounded-full shadow mt-1 transition-transform ${settings[key] ? 'translate-x-5' : 'translate-x-1'}`} />
@@ -159,14 +159,14 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
 
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2 mb-3 uppercase tracking-wide">
-              <Bell className="w-4 h-4 text-amber-500" />
+              <Bell className="w-4 h-4 text-warning" />
               Notification Settings
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {notificationSettings.map(({ key, label, description }) => (
                 <label
                   key={key}
-                  className="flex items-start justify-between p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-amber-50 transition-colors border border-transparent hover:border-amber-200"
+                  className="flex items-start justify-between p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-warning-muted transition-colors border border-transparent hover:border-warning/30"
                 >
                   <div className="flex-1 pr-4">
                     <p className="font-medium text-slate-900 text-sm">{label}</p>
@@ -180,7 +180,7 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
                       className="sr-only"
                     />
                     <div
-                      className={`w-10 h-6 rounded-full transition-colors ${settings[key] ? 'bg-amber-500' : 'bg-slate-300'}`}
+                      className={`w-10 h-6 rounded-full transition-colors ${settings[key] ? 'bg-warning' : 'bg-slate-300'}`}
                       onClick={() => toggle(key)}
                     >
                       <div className={`w-4 h-4 bg-white rounded-full shadow mt-1 transition-transform ${settings[key] ? 'translate-x-5' : 'translate-x-1'}`} />
@@ -201,14 +201,14 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
               onChange={(e) => setSettings(prev => ({ ...prev, custom_message: e.target.value }))}
               placeholder="Optional message displayed to the customer in the portal (e.g., special instructions, updates)..."
               rows={4}
-              className="w-full px-4 py-3 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
             />
           </div>
 
           <div className="flex justify-end mt-4 pt-4 border-t border-slate-100">
             <Button
               onClick={() => saveMutation.mutate(settings)}
-              style={{ backgroundColor: '#10b981' }}
+              style={{ backgroundColor: 'rgb(var(--color-success))' }}
               disabled={saveMutation.isPending}
             >
               <Save className="w-4 h-4 mr-2" />

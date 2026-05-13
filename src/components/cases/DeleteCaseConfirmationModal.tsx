@@ -43,11 +43,11 @@ export const DeleteCaseConfirmationModal: React.FC<DeleteCaseConfirmationModalPr
       size="sm"
     >
       <div className="space-y-4">
-        <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-3 bg-danger-muted border border-danger/30 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
           <div className="flex-1 text-sm">
-            <p className="font-medium text-red-900 mb-1">Warning: This action cannot be undone</p>
-            <p className="text-red-700">This will permanently delete all associated data.</p>
+            <p className="font-medium text-danger mb-1">Warning: This action cannot be undone</p>
+            <p className="text-danger">This will permanently delete all associated data.</p>
           </div>
         </div>
 
@@ -100,7 +100,7 @@ export const DeleteCaseConfirmationModal: React.FC<DeleteCaseConfirmationModalPr
             variant="primary"
             onClick={handleConfirm}
             disabled={!isConfirmEnabled}
-            className="bg-red-600 hover:bg-red-700 focus:ring-red-500 disabled:bg-red-300"
+            className="bg-danger hover:bg-danger/90 focus:ring-danger disabled:bg-danger/40"
           >
             {isDeleting ? (
               <>

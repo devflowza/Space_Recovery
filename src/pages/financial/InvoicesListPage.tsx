@@ -81,13 +81,13 @@ export const InvoicesListPage: React.FC = () => {
       partial: '#f59e0b',
       overdue: '#ef4444',
       cancelled: '#64748b',
-      converted: '#6366f1',
+      converted: 'rgb(var(--color-accent))',
     };
     return colors[status] || '#64748b';
   };
 
   const getTypeColor = (type: string) => {
-    return type === 'proforma' ? '#8b5cf6' : '#0ea5e9';
+    return type === 'proforma' ? 'rgb(var(--color-accent))' : '#0ea5e9';
   };
 
   const getClientName = (invoice: { customers_enhanced?: { customer_name?: string } | null; companies?: { company_name?: string } | null }) => {
@@ -114,7 +114,7 @@ export const InvoicesListPage: React.FC = () => {
     return (
       <div className="p-8 max-w-[1800px] mx-auto">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading invoices...</p>
         </div>
       </div>
@@ -178,7 +178,7 @@ export const InvoicesListPage: React.FC = () => {
                 placeholder="Search by invoice number, case number, or customer name"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -197,7 +197,7 @@ export const InvoicesListPage: React.FC = () => {
                 onClick={() => setStatusFilter(statusFilter === 'sent' ? 'all' : 'sent')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === 'sent'
-                    ? 'bg-blue-500 text-white shadow-md'
+                    ? 'bg-info text-info-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -207,7 +207,7 @@ export const InvoicesListPage: React.FC = () => {
                 onClick={() => setStatusFilter(statusFilter === 'paid' ? 'all' : 'paid')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === 'paid'
-                    ? 'bg-green-500 text-white shadow-md'
+                    ? 'bg-success text-success-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -217,7 +217,7 @@ export const InvoicesListPage: React.FC = () => {
                 onClick={() => setStatusFilter(statusFilter === 'overdue' ? 'all' : 'overdue')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === 'overdue'
-                    ? 'bg-red-500 text-white shadow-md'
+                    ? 'bg-danger text-danger-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -228,7 +228,7 @@ export const InvoicesListPage: React.FC = () => {
                 onClick={() => setTypeFilter(typeFilter === 'proforma' ? 'all' : 'proforma')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   typeFilter === 'proforma'
-                    ? 'bg-purple-500 text-white shadow-md'
+                    ? 'bg-accent text-accent-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -267,7 +267,7 @@ export const InvoicesListPage: React.FC = () => {
               <Filter className="w-4 h-4" />
               More Filters
               {(statusFilter !== 'all' || typeFilter !== 'all') && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
           </div>
@@ -279,7 +279,7 @@ export const InvoicesListPage: React.FC = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Statuses</option>
                   <option value="draft">Draft</option>
@@ -295,7 +295,7 @@ export const InvoicesListPage: React.FC = () => {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Types</option>
                   <option value="proforma">Proforma Invoice</option>
@@ -361,11 +361,11 @@ export const InvoicesListPage: React.FC = () => {
                     key={invoice.id}
                     onClick={() => navigate(`/invoices/${invoice.id}`)}
                     className={`hover:bg-slate-50 transition-colors cursor-pointer ${
-                      invoice.status === 'overdue' ? 'bg-red-50' : ''
+                      invoice.status === 'overdue' ? 'bg-danger-muted' : ''
                     }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-semibold text-blue-600">
+                      <span className="font-semibold text-primary">
                         {invoice.invoice_number}
                       </span>
                     </td>
@@ -425,7 +425,7 @@ export const InvoicesListPage: React.FC = () => {
                           {formatCurrency(invoice.total_amount || 0)}
                         </p>
                         {invoice.balance_due && invoice.balance_due > 0 && (
-                          <p className="text-xs text-orange-600">
+                          <p className="text-xs text-warning">
                             Due: {formatCurrency(invoice.balance_due)}
                           </p>
                         )}
@@ -442,7 +442,7 @@ export const InvoicesListPage: React.FC = () => {
                               e.stopPropagation();
                               navigate(`/invoices/${invoice.converted_to_invoice_id}`);
                             }}
-                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                             title="View converted tax invoice"
                           >
                             <ExternalLink className="w-3 h-3" />
@@ -471,7 +471,7 @@ export const InvoicesListPage: React.FC = () => {
                       >
                         <button
                           onClick={() => navigate(`/invoices/${invoice.id}`)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          className="p-1.5 text-primary hover:bg-info-muted rounded transition-colors"
                           title="View"
                         >
                           <Eye className="w-4 h-4" />
@@ -505,7 +505,7 @@ export const InvoicesListPage: React.FC = () => {
                               setPaymentInvoice(invoice);
                               setShowPaymentModal(true);
                             }}
-                            className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
+                            className="p-1.5 text-success hover:bg-success-muted rounded transition-colors"
                             title="Record Payment"
                           >
                             <DollarSign className="w-4 h-4" />
@@ -517,7 +517,7 @@ export const InvoicesListPage: React.FC = () => {
                           </div>
                         )}
                         {invoice.invoice_type === 'proforma' && invoice.status !== 'converted' && (
-                          <div className="flex items-center gap-1 text-xs text-yellow-600" title="Payments not allowed on proforma">
+                          <div className="flex items-center gap-1 text-xs text-warning" title="Payments not allowed on proforma">
                             <AlertCircle className="w-3 h-3" />
                           </div>
                         )}

@@ -274,10 +274,10 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
       {/* Client Details Card */}
       <Card variant="bordered" className="overflow-hidden">
-        <div className="bg-blue-50 border-b border-blue-100 px-4 py-3">
+        <div className="bg-info-muted border-b border-info/20 px-4 py-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-blue-900 flex items-center gap-2">
-              <User className="w-4 h-4 text-blue-600" />
+            <h2 className="text-base font-bold text-info flex items-center gap-2">
+              <User className="w-4 h-4 text-info" />
               Client Details
             </h2>
             <div className="flex items-center gap-1">
@@ -287,7 +287,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                 onClick={() => setShowChangeClientModal(true)}
                 title="Change Client"
               >
-                <ArrowLeftRight className="w-3 h-3 text-red-600" />
+                <ArrowLeftRight className="w-3 h-3 text-danger" />
               </Button>
               <Button
                 variant="secondary"
@@ -306,7 +306,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                 <Hash className="w-3.5 h-3.5 text-slate-400" />
                 Customer Number
               </label>
-              <p className="text-sm font-mono text-blue-600 font-semibold">
+              <p className="text-sm font-mono text-primary font-semibold">
                 {customer?.customer_number || '-'}
               </p>
             </div>
@@ -331,13 +331,13 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                   type="email"
                   value={editedClientData.email ?? customer?.email ?? ''}
                   onChange={(e) => setEditedClientData({ ...editedClientData, email: e.target.value })}
-                  className="text-sm px-2 py-1 border border-blue-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]"
+                  className="text-sm px-2 py-1 border border-primary/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary max-w-[200px]"
                   placeholder="email@example.com"
                 />
               ) : customer?.email ? (
                 <a
                   href={`mailto:${customer.email}`}
-                  className="text-sm text-blue-600 hover:text-blue-700 break-all text-right"
+                  className="text-sm text-primary hover:text-primary/80 break-all text-right"
                 >
                   {customer.email}
                 </a>
@@ -356,13 +356,13 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                   type="tel"
                   value={editedClientData.mobile_number ?? customer?.mobile_number ?? ''}
                   onChange={(e) => setEditedClientData({ ...editedClientData, mobile_number: e.target.value })}
-                  className="text-sm px-2 py-1 border border-blue-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]"
+                  className="text-sm px-2 py-1 border border-primary/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary max-w-[200px]"
                   placeholder="+123456789"
                 />
               ) : (customer?.mobile_number || customer?.phone_number) ? (
                 <a
                   href={`tel:${customer.mobile_number || customer.phone_number}`}
-                  className="text-sm text-blue-600 hover:text-blue-700 text-right"
+                  className="text-sm text-primary hover:text-primary/80 text-right"
                 >
                   {customer.mobile_number || customer.phone_number}
                 </a>
@@ -382,14 +382,14 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                     type="text"
                     value={editedClientData.city ?? customer?.city ?? ''}
                     onChange={(e) => setEditedClientData({ ...editedClientData, city: e.target.value })}
-                    className="text-sm px-2 py-1 border border-blue-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]"
+                    className="text-sm px-2 py-1 border border-primary/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary max-w-[200px]"
                     placeholder="City"
                   />
                   <input
                     type="text"
                     value={editedClientData.country ?? customer?.country ?? ''}
                     onChange={(e) => setEditedClientData({ ...editedClientData, country: e.target.value })}
-                    className="text-sm px-2 py-1 border border-blue-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]"
+                    className="text-sm px-2 py-1 border border-primary/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary max-w-[200px]"
                     placeholder="Country"
                   />
                 </div>
@@ -409,7 +409,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
               <Button
                 size="sm"
                 onClick={handleSaveClient}
-                style={{ backgroundColor: '#10b981' }}
+                style={{ backgroundColor: 'rgb(var(--color-success))' }}
                 disabled={updateCustomerMutation.isPending}
               >
                 <Save className="w-3 h-3 mr-1" />
@@ -430,10 +430,10 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
 
       {/* Company Details Card */}
       <Card variant="bordered" className="overflow-hidden">
-        <div className="bg-green-50 border-b border-green-100 px-4 py-3">
+        <div className="bg-success-muted border-b border-success/20 px-4 py-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-green-900 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-green-600" />
+            <h2 className="text-base font-bold text-success flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-success" />
               Company Details
             </h2>
             <div className="flex items-center gap-1">
@@ -443,7 +443,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                 onClick={() => setShowChangeCompanyModal(true)}
                 title="Change Company"
               >
-                <ArrowLeftRight className="w-3 h-3 text-red-600" />
+                <ArrowLeftRight className="w-3 h-3 text-danger" />
               </Button>
               {companyData && (
                 <Button
@@ -465,7 +465,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                   <Hash className="w-3.5 h-3.5 text-slate-400" />
                   Company Number
                 </label>
-                <p className="text-sm font-mono text-green-600 font-semibold">
+                <p className="text-sm font-mono text-success font-semibold">
                   {companyData.company_number}
                 </p>
               </div>
@@ -490,12 +490,12 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                     type="email"
                     value={editedCompanyData.email ?? companyData.email ?? ''}
                     onChange={(e) => setEditedCompanyData({ ...editedCompanyData, email: e.target.value })}
-                    className="text-sm px-2 py-1 border border-green-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-green-500 max-w-[200px]"
+                    className="text-sm px-2 py-1 border border-success/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-success max-w-[200px]"
                   />
                 ) : companyData.email ? (
                   <a
                     href={`mailto:${companyData.email}`}
-                    className="text-sm text-green-600 hover:text-green-700 break-all text-right"
+                    className="text-sm text-success hover:text-success/80 break-all text-right"
                   >
                     {companyData.email}
                   </a>
@@ -514,12 +514,12 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                     type="tel"
                     value={editedCompanyData.phone ?? companyData.phone ?? ''}
                     onChange={(e) => setEditedCompanyData({ ...editedCompanyData, phone: e.target.value })}
-                    className="text-sm px-2 py-1 border border-green-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-green-500 max-w-[200px]"
+                    className="text-sm px-2 py-1 border border-success/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-success max-w-[200px]"
                   />
                 ) : companyData.phone ? (
                   <a
                     href={`tel:${companyData.phone}`}
-                    className="text-sm text-green-600 hover:text-green-700 text-right"
+                    className="text-sm text-success hover:text-success/80 text-right"
                   >
                     {companyData.phone}
                   </a>
@@ -554,7 +554,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
               <Button
                 size="sm"
                 onClick={handleSaveCompany}
-                style={{ backgroundColor: '#10b981' }}
+                style={{ backgroundColor: 'rgb(var(--color-success))' }}
                 disabled={updateCompanyMutation.isPending}
               >
                 <Save className="w-3 h-3 mr-1" />
@@ -575,13 +575,13 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
 
       {/* Client Case History Card - Third Column */}
       <Card variant="bordered" className="overflow-hidden">
-        <div className="bg-orange-50 border-b border-orange-100 px-4 py-3">
+        <div className="bg-warning-muted border-b border-warning/20 px-4 py-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-orange-900 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-orange-600" />
+            <h2 className="text-base font-bold text-warning flex items-center gap-2">
+              <Clock className="w-4 h-4 text-warning" />
               Client Case History
             </h2>
-            <Badge variant="custom" color="#ea580c" size="sm">
+            <Badge variant="custom" color="rgb(var(--color-warning))" size="sm">
               {filteredCases.length} {filteredCases.length === 1 ? 'case' : 'cases'}
             </Badge>
           </div>
@@ -607,7 +607,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                       setCaseHistorySearch(e.target.value);
                       setCaseHistoryPage(1);
                     }}
-                    className="w-full pl-10 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-warning focus:border-transparent"
                   />
                 </div>
               </div>
@@ -623,7 +623,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                   paginatedCases.map((historyCase) => (
                 <div
                   key={historyCase.id}
-                  className="border border-slate-200 rounded-lg p-3 hover:border-orange-300 hover:bg-orange-50 transition-all cursor-pointer"
+                  className="border border-slate-200 rounded-lg p-3 hover:border-warning/40 hover:bg-warning-muted transition-all cursor-pointer"
                   onClick={() => window.open(`/cases/${historyCase.id}`, '_blank')}
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -662,7 +662,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-3 border-t border-orange-200">
+                <div className="flex items-center justify-between pt-3 border-t border-warning/20">
                   <p className="text-xs text-slate-600">
                     Page {caseHistoryPage} of {totalPages}
                   </p>

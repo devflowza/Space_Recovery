@@ -111,8 +111,8 @@ export const DeviceCheckoutModal: React.FC<DeviceCheckoutModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Device Checkout">
       <div className="space-y-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-blue-900 font-semibold mb-2">
+        <div className="bg-info-muted border border-info/30 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-info font-semibold mb-2">
             <Package className="w-5 h-5" />
             <span>Select Devices to Checkout</span>
           </div>
@@ -120,20 +120,20 @@ export const DeviceCheckoutModal: React.FC<DeviceCheckoutModalProps> = ({
             {devices.map((device, index) => (
               <label
                 key={device.id}
-                className="flex items-start gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-blue-400 transition-colors"
+                className="flex items-start gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-primary/60 transition-colors"
               >
                 <input
                   type="checkbox"
                   checked={selectedDevices.includes(device.id)}
                   onChange={() => handleDeviceToggle(device.id)}
-                  className="mt-1 w-4 h-4 text-blue-600"
+                  className="mt-1 w-4 h-4 text-primary"
                 />
                 <div className="flex-1">
                   <div className="font-semibold text-slate-900">
                     {device.device_type?.name || 'Unknown Device'}{' '}
                     {device.brand?.name && `- ${device.brand.name}`}
                     {index === 0 && (
-                      <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
+                      <span className="ml-2 text-xs bg-danger-muted text-danger px-2 py-0.5 rounded">
                         Patient
                       </span>
                     )}
@@ -149,8 +149,8 @@ export const DeviceCheckoutModal: React.FC<DeviceCheckoutModalProps> = ({
           </div>
         </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-green-900 font-semibold mb-4">
+        <div className="bg-success-muted border border-success/30 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-success font-semibold mb-4">
             <User className="w-5 h-5" />
             <span>Collector Information</span>
           </div>
@@ -194,14 +194,14 @@ export const DeviceCheckoutModal: React.FC<DeviceCheckoutModalProps> = ({
           </div>
         </div>
 
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <label className="block text-sm font-medium text-purple-900 mb-2">
+        <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
+          <label className="block text-sm font-medium text-accent-foreground mb-2">
             Recovery Outcome
           </label>
           <select
             value={recoveryOutcome}
             onChange={(e) => setRecoveryOutcome(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
           >
             <option value="full">Full Recovery - All data recovered successfully</option>
             <option value="partial">Partial Recovery - Some data recovered</option>
@@ -211,7 +211,7 @@ export const DeviceCheckoutModal: React.FC<DeviceCheckoutModalProps> = ({
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+          <div className="bg-danger-muted border border-danger/30 rounded-lg p-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -227,7 +227,7 @@ export const DeviceCheckoutModal: React.FC<DeviceCheckoutModalProps> = ({
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            style={{ backgroundColor: '#8b5cf6' }}
+            style={{ backgroundColor: 'rgb(var(--color-accent))' }}
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">

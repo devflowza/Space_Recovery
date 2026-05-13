@@ -214,7 +214,7 @@ export const ExpensesList: React.FC = () => {
     return (
       <div className="p-8 max-w-[1800px] mx-auto">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading expenses...</p>
         </div>
       </div>
@@ -225,7 +225,7 @@ export const ExpensesList: React.FC = () => {
     return (
       <div className="p-8 max-w-[1800px] mx-auto">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <AlertCircle className="w-16 h-16 text-danger mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-slate-900 mb-2">Unable to Load Expenses</h3>
           <p className="text-slate-600 mb-4">
             There was an error loading expense data. Please try again or contact support if the problem persists.
@@ -298,7 +298,7 @@ export const ExpensesList: React.FC = () => {
                 placeholder="Search expenses..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -310,13 +310,13 @@ export const ExpensesList: React.FC = () => {
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     statusFilter === status
                       ? status === 'pending'
-                        ? 'bg-amber-500 text-white shadow-md'
+                        ? 'bg-warning text-warning-foreground shadow-md'
                         : status === 'approved'
-                        ? 'bg-green-500 text-white shadow-md'
+                        ? 'bg-success text-success-foreground shadow-md'
                         : status === 'rejected'
-                        ? 'bg-red-500 text-white shadow-md'
+                        ? 'bg-danger text-danger-foreground shadow-md'
                         : status === 'paid'
-                        ? 'bg-blue-500 text-white shadow-md'
+                        ? 'bg-info text-info-foreground shadow-md'
                         : 'bg-slate-600 text-white shadow-md'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
@@ -374,7 +374,7 @@ export const ExpensesList: React.FC = () => {
                     className="hover:bg-slate-50 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-semibold text-blue-600">{expense.expense_number}</span>
+                      <span className="font-semibold text-primary">{expense.expense_number}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                       {formatDate(expense.expense_date)}
@@ -386,7 +386,7 @@ export const ExpensesList: React.FC = () => {
                       <p className="text-xs text-slate-500">
                         By {expense.submitter?.full_name || 'Unknown'}
                         {expense.case && (
-                          <span className="ml-2 text-blue-600">
+                          <span className="ml-2 text-primary">
                             Case: {expense.case.case_no}
                           </span>
                         )}
@@ -416,7 +416,7 @@ export const ExpensesList: React.FC = () => {
                         {expense.status}
                       </Badge>
                       {expense.status === 'rejected' && expense.notes && (
-                        <p className="text-xs text-red-500 mt-1 max-w-[150px] truncate" title={expense.notes}>
+                        <p className="text-xs text-danger mt-1 max-w-[150px] truncate" title={expense.notes}>
                           {expense.notes}
                         </p>
                       )}
@@ -427,14 +427,14 @@ export const ExpensesList: React.FC = () => {
                           <>
                             <button
                               onClick={(e) => handleApprove(expense.id, e)}
-                              className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
+                              className="p-1.5 text-success hover:bg-success-muted rounded transition-colors"
                               title="Approve"
                             >
                               <Check className="w-4 h-4" />
                             </button>
                             <button
                               onClick={(e) => handleRejectClick(expense.id, e)}
-                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                              className="p-1.5 text-danger hover:bg-danger-muted rounded transition-colors"
                               title="Reject"
                             >
                               <X className="w-4 h-4" />
@@ -444,7 +444,7 @@ export const ExpensesList: React.FC = () => {
                         {(expense.status === 'draft' || expense.status === 'pending') && (
                           <button
                             onClick={(e) => handleEdit(expense, e)}
-                            className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                            className="p-1.5 text-warning hover:bg-warning-muted rounded transition-colors"
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
@@ -452,7 +452,7 @@ export const ExpensesList: React.FC = () => {
                         )}
                         <button
                           onClick={() => setSelectedExpense(expense)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          className="p-1.5 text-primary hover:bg-info-muted rounded transition-colors"
                           title="View"
                         >
                           <Eye className="w-4 h-4" />
@@ -502,8 +502,8 @@ export const ExpensesList: React.FC = () => {
         size="xs"
       >
         <div className="text-center py-2">
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Check className="w-6 h-6 text-green-600" />
+          <div className="w-12 h-12 bg-success-muted rounded-full flex items-center justify-center mx-auto mb-3">
+            <Check className="w-6 h-6 text-success" />
           </div>
           <p className="text-base font-medium text-slate-900 mb-4">
             Approve this expense?
@@ -549,7 +549,7 @@ export const ExpensesList: React.FC = () => {
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-danger focus:border-danger text-sm"
             placeholder="Enter rejection reason..."
             autoFocus
           />

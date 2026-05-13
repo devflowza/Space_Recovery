@@ -300,7 +300,7 @@ export const ReportsDashboard: React.FC = () => {
       name: 'Revenue by Service',
       description: 'Income breakdown by service type',
       icon: PieChart,
-      color: 'purple',
+      color: 'accent',
     },
     {
       id: 'expense-by-category',
@@ -321,7 +321,7 @@ export const ReportsDashboard: React.FC = () => {
       name: 'Invoice vs Expense',
       description: 'Profitability and margin analysis',
       icon: TrendingDown,
-      color: 'indigo',
+      color: 'accent',
     },
   ];
 
@@ -329,7 +329,7 @@ export const ReportsDashboard: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-600 mt-4">Loading reports...</p>
         </div>
       </div>
@@ -343,8 +343,8 @@ export const ReportsDashboard: React.FC = () => {
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
             style={{
-              backgroundColor: '#3b82f6',
-              boxShadow: '0 10px 40px -10px #3b82f680',
+              backgroundColor: 'rgb(var(--color-primary))',
+              boxShadow: '0 10px 40px -10px rgba(var(--color-primary) / 0.5)',
             }}
           >
             <BarChart3 className="w-7 h-7 text-white" />
@@ -356,15 +356,15 @@ export const ReportsDashboard: React.FC = () => {
             </p>
             <div className="flex gap-4 mt-3">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <div className="w-2 h-2 rounded-full bg-success"></div>
                 <span className="text-slate-600">{formatCurrency(reportData?.totalRevenue || 0)} Revenue</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <div className="w-2 h-2 rounded-full bg-danger"></div>
                 <span className="text-slate-600">{formatCurrency(reportData?.totalExpenses || 0)} Expenses</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <div className="w-2 h-2 rounded-full bg-info"></div>
                 <span className="text-slate-600">{formatCurrency(reportData?.netProfit || 0)} Net Profit</span>
               </div>
             </div>
@@ -374,7 +374,7 @@ export const ReportsDashboard: React.FC = () => {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           >
             <option value="thisMonth">This Month</option>
             <option value="lastMonth">Last Month</option>
@@ -390,52 +390,52 @@ export const ReportsDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+        <div className="bg-gradient-to-br from-success-muted to-success-muted rounded-xl p-4 border border-success/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Total Revenue</p>
-              <p className="text-2xl font-bold text-green-900 mt-1">
+              <p className="text-xs font-medium text-success uppercase tracking-wide">Total Revenue</p>
+              <p className="text-2xl font-bold text-success mt-1">
                 {formatCurrency(reportData?.totalRevenue || 0)}
               </p>
-              <p className="text-xs text-green-600 mt-1 font-medium">
+              <p className="text-xs text-success mt-1 font-medium">
                 {reportData?.invoiceCount || 0} invoices
               </p>
             </div>
-            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+        <div className="bg-gradient-to-br from-danger-muted to-danger-muted rounded-xl p-4 border border-danger/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Total Expenses</p>
-              <p className="text-2xl font-bold text-red-900 mt-1">
+              <p className="text-xs font-medium text-danger uppercase tracking-wide">Total Expenses</p>
+              <p className="text-2xl font-bold text-danger mt-1">
                 {formatCurrency(reportData?.totalExpenses || 0)}
               </p>
-              <p className="text-xs text-red-600 mt-1 font-medium">
+              <p className="text-xs text-danger mt-1 font-medium">
                 {reportData?.expenseCount || 0} expenses
               </p>
             </div>
-            <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-danger rounded-lg flex items-center justify-center">
               <TrendingDown className="w-5 h-5 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+        <div className="bg-gradient-to-br from-info-muted to-info-muted rounded-xl p-4 border border-info/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Net Profit</p>
-              <p className="text-2xl font-bold text-blue-900 mt-1">
+              <p className="text-xs font-medium text-info uppercase tracking-wide">Net Profit</p>
+              <p className="text-2xl font-bold text-info mt-1">
                 {formatCurrency(reportData?.netProfit || 0)}
               </p>
-              <p className="text-xs text-blue-600 mt-1 font-medium">
+              <p className="text-xs text-info mt-1 font-medium">
                 {(reportData?.netProfit || 0) >= 0 ? 'Profit' : 'Loss'}
               </p>
             </div>
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-white" />
             </div>
           </div>
@@ -501,7 +501,7 @@ export const ReportsDashboard: React.FC = () => {
                     .map(([category, amount]) => (
                       <div key={category} className="flex items-center justify-between">
                         <span className="text-sm text-slate-900">{category}</span>
-                        <span className="text-sm font-semibold text-red-600">
+                        <span className="text-sm font-semibold text-danger">
                           {formatCurrency(amount)}
                         </span>
                       </div>
@@ -529,7 +529,7 @@ export const ReportsDashboard: React.FC = () => {
                         <span className="text-xs font-semibold text-slate-500">#{index + 1}</span>
                         <span className="text-sm text-slate-900">{customer.name}</span>
                       </div>
-                      <span className="text-sm font-semibold text-green-600">
+                      <span className="text-sm font-semibold text-success">
                         {formatCurrency(customer.amount)}
                       </span>
                     </div>
@@ -557,8 +557,8 @@ export const ReportsDashboard: React.FC = () => {
                   onClick={() => handleGenerateReport(report.id)}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <IconComponent className="w-6 h-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-info-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                      <IconComponent className="w-6 h-6 text-primary" />
                     </div>
                     <div className="flex-1">
                       <h3 className="text-sm font-semibold text-slate-900 mb-1">
@@ -596,7 +596,7 @@ export const ReportsDashboard: React.FC = () => {
         <div className="space-y-6">
           {reportLoading ? (
             <div className="text-center py-12">
-              <div className="inline-block w-10 h-10 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <div className="inline-block w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
               <p className="text-slate-500 mt-4">Generating report...</p>
             </div>
           ) : (
@@ -604,24 +604,24 @@ export const ReportsDashboard: React.FC = () => {
               {selectedReport === 'profit-loss' && profitLossData && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                      <p className="text-sm font-medium text-green-600">Total Revenue</p>
-                      <p className="text-2xl font-bold text-green-900">{formatCurrency(profitLossData.revenue.total)}</p>
+                    <div className="bg-success-muted rounded-xl p-4 border border-success/30">
+                      <p className="text-sm font-medium text-success">Total Revenue</p>
+                      <p className="text-2xl font-bold text-success">{formatCurrency(profitLossData.revenue.total)}</p>
                     </div>
-                    <div className="bg-red-50 rounded-xl p-4 border border-red-200">
-                      <p className="text-sm font-medium text-red-600">Total Expenses</p>
-                      <p className="text-2xl font-bold text-red-900">{formatCurrency(profitLossData.expenses.total)}</p>
+                    <div className="bg-danger-muted rounded-xl p-4 border border-danger/30">
+                      <p className="text-sm font-medium text-danger">Total Expenses</p>
+                      <p className="text-2xl font-bold text-danger">{formatCurrency(profitLossData.expenses.total)}</p>
                     </div>
                   </div>
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                  <div className="bg-info-muted rounded-xl p-4 border border-info/30">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm font-medium text-blue-600">Net Profit</p>
-                        <p className="text-2xl font-bold text-blue-900">{formatCurrency(profitLossData.netProfit)}</p>
+                        <p className="text-sm font-medium text-info">Net Profit</p>
+                        <p className="text-2xl font-bold text-info">{formatCurrency(profitLossData.netProfit)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-blue-600">Profit Margin</p>
-                        <p className="text-2xl font-bold text-blue-900">{profitLossData.profitMargin.toFixed(2)}%</p>
+                        <p className="text-sm font-medium text-info">Profit Margin</p>
+                        <p className="text-2xl font-bold text-info">{profitLossData.profitMargin.toFixed(2)}%</p>
                       </div>
                     </div>
                   </div>
@@ -644,25 +644,25 @@ export const ReportsDashboard: React.FC = () => {
               {selectedReport === 'aged-receivables' && agedReceivablesData && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-5 gap-3">
-                    <div className="bg-green-50 rounded-lg p-3 border border-green-200 text-center">
-                      <p className="text-xs font-medium text-green-600">Current</p>
-                      <p className="text-lg font-bold text-green-900">{formatCurrency(agedReceivablesData.totals.current)}</p>
+                    <div className="bg-success-muted rounded-lg p-3 border border-success/30 text-center">
+                      <p className="text-xs font-medium text-success">Current</p>
+                      <p className="text-lg font-bold text-success">{formatCurrency(agedReceivablesData.totals.current)}</p>
                     </div>
-                    <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 text-center">
-                      <p className="text-xs font-medium text-amber-600">1-30 Days</p>
-                      <p className="text-lg font-bold text-amber-900">{formatCurrency(agedReceivablesData.totals.thirtyDays)}</p>
+                    <div className="bg-warning-muted rounded-lg p-3 border border-warning/30 text-center">
+                      <p className="text-xs font-medium text-warning">1-30 Days</p>
+                      <p className="text-lg font-bold text-warning">{formatCurrency(agedReceivablesData.totals.thirtyDays)}</p>
                     </div>
                     <div className="bg-orange-50 rounded-lg p-3 border border-orange-200 text-center">
                       <p className="text-xs font-medium text-orange-600">31-60 Days</p>
                       <p className="text-lg font-bold text-orange-900">{formatCurrency(agedReceivablesData.totals.sixtyDays)}</p>
                     </div>
-                    <div className="bg-red-50 rounded-lg p-3 border border-red-200 text-center">
-                      <p className="text-xs font-medium text-red-600">61-90 Days</p>
-                      <p className="text-lg font-bold text-red-900">{formatCurrency(agedReceivablesData.totals.ninetyDays)}</p>
+                    <div className="bg-danger-muted rounded-lg p-3 border border-danger/30 text-center">
+                      <p className="text-xs font-medium text-danger">61-90 Days</p>
+                      <p className="text-lg font-bold text-danger">{formatCurrency(agedReceivablesData.totals.ninetyDays)}</p>
                     </div>
-                    <div className="bg-red-100 rounded-lg p-3 border border-red-300 text-center">
-                      <p className="text-xs font-medium text-red-700">90+ Days</p>
-                      <p className="text-lg font-bold text-red-900">{formatCurrency(agedReceivablesData.totals.overNinetyDays)}</p>
+                    <div className="bg-danger-muted rounded-lg p-3 border border-danger/50 text-center">
+                      <p className="text-xs font-medium text-danger">90+ Days</p>
+                      <p className="text-lg font-bold text-danger">{formatCurrency(agedReceivablesData.totals.overNinetyDays)}</p>
                     </div>
                   </div>
                   <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-center">
@@ -679,23 +679,23 @@ export const ReportsDashboard: React.FC = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-sm text-slate-600">Cash Receipts</span>
-                        <span className="text-sm font-semibold text-green-600">+{formatCurrency(cashFlowData.operatingActivities.receipts)}</span>
+                        <span className="text-sm font-semibold text-success">+{formatCurrency(cashFlowData.operatingActivities.receipts)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-slate-600">Cash Payments</span>
-                        <span className="text-sm font-semibold text-red-600">-{formatCurrency(cashFlowData.operatingActivities.payments)}</span>
+                        <span className="text-sm font-semibold text-danger">-{formatCurrency(cashFlowData.operatingActivities.payments)}</span>
                       </div>
                       <div className="flex justify-between pt-2 border-t border-slate-200">
                         <span className="text-sm font-medium text-slate-700">Net Operating</span>
-                        <span className={`text-sm font-bold ${cashFlowData.operatingActivities.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`text-sm font-bold ${cashFlowData.operatingActivities.net >= 0 ? 'text-success' : 'text-danger'}`}>
                           {formatCurrency(cashFlowData.operatingActivities.net)}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200 text-center">
-                    <p className="text-sm font-medium text-blue-600">Net Cash Flow</p>
-                    <p className={`text-3xl font-bold ${cashFlowData.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <div className="bg-info-muted rounded-xl p-4 border border-info/30 text-center">
+                    <p className="text-sm font-medium text-info">Net Cash Flow</p>
+                    <p className={`text-3xl font-bold ${cashFlowData.netCashFlow >= 0 ? 'text-success' : 'text-danger'}`}>
                       {formatCurrency(cashFlowData.netCashFlow)}
                     </p>
                   </div>
@@ -705,21 +705,21 @@ export const ReportsDashboard: React.FC = () => {
               {selectedReport === 'invoice-report' && invoiceSummaryData && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-4 gap-3">
-                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 text-center">
-                      <p className="text-xs font-medium text-blue-600">Invoiced</p>
-                      <p className="text-lg font-bold text-blue-900">{formatCurrency(invoiceSummaryData.totals.invoiced)}</p>
+                    <div className="bg-info-muted rounded-lg p-3 border border-info/30 text-center">
+                      <p className="text-xs font-medium text-info">Invoiced</p>
+                      <p className="text-lg font-bold text-info">{formatCurrency(invoiceSummaryData.totals.invoiced)}</p>
                     </div>
-                    <div className="bg-green-50 rounded-lg p-3 border border-green-200 text-center">
-                      <p className="text-xs font-medium text-green-600">Paid</p>
-                      <p className="text-lg font-bold text-green-900">{formatCurrency(invoiceSummaryData.totals.paid)}</p>
+                    <div className="bg-success-muted rounded-lg p-3 border border-success/30 text-center">
+                      <p className="text-xs font-medium text-success">Paid</p>
+                      <p className="text-lg font-bold text-success">{formatCurrency(invoiceSummaryData.totals.paid)}</p>
                     </div>
-                    <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 text-center">
-                      <p className="text-xs font-medium text-amber-600">Outstanding</p>
-                      <p className="text-lg font-bold text-amber-900">{formatCurrency(invoiceSummaryData.totals.outstanding)}</p>
+                    <div className="bg-warning-muted rounded-lg p-3 border border-warning/30 text-center">
+                      <p className="text-xs font-medium text-warning">Outstanding</p>
+                      <p className="text-lg font-bold text-warning">{formatCurrency(invoiceSummaryData.totals.outstanding)}</p>
                     </div>
-                    <div className="bg-red-50 rounded-lg p-3 border border-red-200 text-center">
-                      <p className="text-xs font-medium text-red-600">Overdue</p>
-                      <p className="text-lg font-bold text-red-900">{formatCurrency(invoiceSummaryData.totals.overdue)}</p>
+                    <div className="bg-danger-muted rounded-lg p-3 border border-danger/30 text-center">
+                      <p className="text-xs font-medium text-danger">Overdue</p>
+                      <p className="text-lg font-bold text-danger">{formatCurrency(invoiceSummaryData.totals.overdue)}</p>
                     </div>
                   </div>
                   {invoiceSummaryData.byStatus.length > 0 && (
@@ -758,7 +758,7 @@ export const ReportsDashboard: React.FC = () => {
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
             <Button variant="secondary" onClick={closeReportModal}>Close</Button>
             {(profitLossData || agedReceivablesData || cashFlowData) && (
-              <Button onClick={handleExportCSV} className="flex items-center gap-2" style={{ backgroundColor: '#3b82f6' }}>
+              <Button onClick={handleExportCSV} className="flex items-center gap-2">
                 <Download className="w-4 h-4" />
                 Export CSV
               </Button>

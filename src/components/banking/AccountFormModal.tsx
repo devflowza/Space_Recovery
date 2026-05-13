@@ -198,9 +198,9 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
   const getAccountTypeIcon = () => {
     switch (formData.account_type) {
       case 'bank':
-        return <Building className="w-5 h-5 text-blue-600" />;
+        return <Building className="w-5 h-5 text-primary" />;
       case 'cash':
-        return <Wallet className="w-5 h-5 text-green-600" />;
+        return <Wallet className="w-5 h-5 text-success" />;
       case 'mobile':
         return <Smartphone className="w-5 h-5 text-orange-600" />;
     }
@@ -210,9 +210,9 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title={initialData ? 'Edit Account' : 'Add New Account'} size="large">
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="bg-danger-muted border border-danger/30 rounded-lg p-3 flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-danger">{error}</p>
           </div>
         )}
 
@@ -234,7 +234,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
                 })}
                 className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
                   formData.account_type === type.value
-                    ? 'border-blue-600 bg-blue-50'
+                    ? 'border-primary bg-info-muted'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -265,8 +265,8 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
         </div>
 
         {formData.account_type === 'cash' && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <p className="text-sm text-green-800">
+          <div className="bg-success-muted border border-success/30 rounded-lg p-3">
+            <p className="text-sm text-success">
               Cash accounts do not require an account number. The location will serve as the primary identifier.
             </p>
           </div>
@@ -325,7 +325,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
                 <select
                   value={formData.employee_id}
                   onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                   required
                 >
                   <option value="">Select Employee</option>
@@ -371,7 +371,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
             <select
               value={formData.currency_id}
               onChange={(e) => setFormData({ ...formData, currency_id: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
               <option value="">{defaultCurrency ? `${defaultCurrency.code} (Default)` : 'Select Currency'}</option>
               {currencies.map((curr: { code: string; name: string; symbol?: string }) => (
@@ -408,7 +408,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
               type="checkbox"
               checked={formData.is_active}
               onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
             <span className="text-sm font-medium text-slate-700">Active Account</span>
           </label>
@@ -418,7 +418,7 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
               type="checkbox"
               checked={formData.is_default}
               onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
             <span className="text-sm font-medium text-slate-700">Set as Default</span>
           </label>

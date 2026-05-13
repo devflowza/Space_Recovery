@@ -17,7 +17,7 @@ export const BrandShowcase = () => {
         <h1 className="font-display text-4xl xl:text-5xl text-white leading-tight">
           Data Recovery,
           <br />
-          <span className="text-blue-400">Simplified.</span>
+          <span className="text-primary">Simplified.</span>
         </h1>
         <p className="text-slate-400 mt-4 text-lg font-body leading-relaxed">
           The complete lab management platform trusted by recovery professionals worldwide.

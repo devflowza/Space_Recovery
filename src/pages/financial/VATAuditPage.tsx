@@ -220,8 +220,8 @@ export const VATAuditPage: React.FC = () => {
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
             style={{
-              backgroundColor: '#3b82f6',
-              boxShadow: '0 10px 40px -10px #3b82f680',
+              backgroundColor: 'rgb(var(--color-primary))',
+              boxShadow: '0 10px 40px -10px rgba(var(--color-primary) / 0.5)',
             }}
           >
             <FileCheck className="w-7 h-7 text-white" />
@@ -233,15 +233,15 @@ export const VATAuditPage: React.FC = () => {
             </p>
             <div className="flex gap-4 mt-3">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <div className="w-2 h-2 rounded-full bg-success"></div>
                 <span className="text-slate-600">{formatCurrency(totalVATCollected)} VAT Collected</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <div className="w-2 h-2 rounded-full bg-danger"></div>
                 <span className="text-slate-600">{formatCurrency(totalVATPaid)} VAT Paid</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <div className="w-2 h-2 rounded-full bg-info"></div>
                 <span className="text-slate-600">{formatCurrency(Math.abs(netVATPosition))} Net Position</span>
               </div>
             </div>
@@ -254,7 +254,6 @@ export const VATAuditPage: React.FC = () => {
           </Button>
           <Button
             className="flex items-center gap-2"
-            style={{ backgroundColor: '#3b82f6' }}
             onClick={() => setShowVATReturnModal(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -269,7 +268,7 @@ export const VATAuditPage: React.FC = () => {
             onClick={() => setActiveTab('vat')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === 'vat'
-                ? 'bg-blue-500 text-white shadow-md'
+                ? 'bg-primary text-primary-foreground shadow-md'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -279,7 +278,7 @@ export const VATAuditPage: React.FC = () => {
             onClick={() => setActiveTab('audit')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === 'audit'
-                ? 'bg-blue-500 text-white shadow-md'
+                ? 'bg-primary text-primary-foreground shadow-md'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -291,46 +290,46 @@ export const VATAuditPage: React.FC = () => {
       {activeTab === 'vat' && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                <div className="bg-gradient-to-br from-success-muted to-success-muted rounded-xl p-4 border border-success/30">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-medium text-green-600 uppercase tracking-wide">VAT Collected</p>
-                      <p className="text-2xl font-bold text-green-900 mt-1">
+                      <p className="text-xs font-medium text-success uppercase tracking-wide">VAT Collected</p>
+                      <p className="text-2xl font-bold text-success mt-1">
                         {formatCurrency(totalVATCollected)}
                       </p>
                     </div>
-                    <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
                       <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+                <div className="bg-gradient-to-br from-danger-muted to-danger-muted rounded-xl p-4 border border-danger/30">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-medium text-red-600 uppercase tracking-wide">VAT Paid</p>
-                      <p className="text-2xl font-bold text-red-900 mt-1">
+                      <p className="text-xs font-medium text-danger uppercase tracking-wide">VAT Paid</p>
+                      <p className="text-2xl font-bold text-danger mt-1">
                         {formatCurrency(totalVATPaid)}
                       </p>
                     </div>
-                    <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-danger rounded-lg flex items-center justify-center">
                       <TrendingDown className="w-5 h-5 text-white" />
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                <div className="bg-gradient-to-br from-info-muted to-info-muted rounded-xl p-4 border border-info/30">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Net VAT Position</p>
-                      <p className="text-2xl font-bold text-blue-900 mt-1">
+                      <p className="text-xs font-medium text-info uppercase tracking-wide">Net VAT Position</p>
+                      <p className="text-2xl font-bold text-info mt-1">
                         {formatCurrency(Math.abs(netVATPosition))}
                       </p>
-                      <p className="text-xs text-blue-600 mt-1 font-medium">
+                      <p className="text-xs text-info mt-1 font-medium">
                         {netVATPosition >= 0 ? 'Payable' : 'Reclaimable'}
                       </p>
                     </div>
-                    <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
                       <Calculator className="w-5 h-5 text-white" />
                     </div>
                   </div>
@@ -386,13 +385,13 @@ export const VATAuditPage: React.FC = () => {
                                 {formatDate(vatReturn.period_start)} - {formatDate(vatReturn.period_end)}
                               </div>
                             </td>
-                            <td className="py-4 px-6 text-right text-sm font-semibold text-green-600">
+                            <td className="py-4 px-6 text-right text-sm font-semibold text-success">
                               {formatCurrency(vatReturn.output_vat)}
                             </td>
-                            <td className="py-4 px-6 text-right text-sm font-semibold text-red-600">
+                            <td className="py-4 px-6 text-right text-sm font-semibold text-danger">
                               {formatCurrency(vatReturn.input_vat)}
                             </td>
-                            <td className="py-4 px-6 text-right text-sm font-bold text-blue-600">
+                            <td className="py-4 px-6 text-right text-sm font-bold text-primary">
                               {formatCurrency(vatReturn.net_vat)}
                             </td>
                             <td className="py-4 px-6">
@@ -409,7 +408,7 @@ export const VATAuditPage: React.FC = () => {
                                 {(vatReturn.status === 'draft' || vatReturn.status === 'review') && (
                                   <button
                                     onClick={(e) => handleSubmitReturn(vatReturn.id, e)}
-                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                    className="p-1.5 text-primary hover:bg-info-muted rounded transition-colors"
                                     title="Submit Return"
                                   >
                                     <Send className="w-4 h-4" />
@@ -418,14 +417,14 @@ export const VATAuditPage: React.FC = () => {
                                 {vatReturn.status === 'submitted' && (
                                   <button
                                     onClick={(e) => handleMarkPaid(vatReturn.id, e)}
-                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
+                                    className="p-1.5 text-success hover:bg-success-muted rounded transition-colors"
                                     title="Mark as Paid"
                                   >
                                     <CheckCircle className="w-4 h-4" />
                                   </button>
                                 )}
                                 <button
-                                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                  className="p-1.5 text-primary hover:bg-info-muted rounded transition-colors"
                                   title="View"
                                 >
                                   <Eye className="w-4 h-4" />
@@ -454,7 +453,7 @@ export const VATAuditPage: React.FC = () => {
                       <select
                         value={recordTypeFilter}
                         onChange={(e) => setRecordTypeFilter(e.target.value)}
-                        className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="all">All Types</option>
                         <option value="sale">Sales</option>
@@ -463,7 +462,7 @@ export const VATAuditPage: React.FC = () => {
                       <select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value)}
-                        className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="month">This Month</option>
                         <option value="quarter">This Quarter</option>
@@ -489,7 +488,7 @@ export const VATAuditPage: React.FC = () => {
                       {vatLoading ? (
                         <tr>
                           <td colSpan={6} className="py-12 text-center">
-                            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+                            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
                           </td>
                         </tr>
                       ) : vatRecords.length === 0 ? (
@@ -517,7 +516,7 @@ export const VATAuditPage: React.FC = () => {
                             <td className="py-3 px-4">
                               <p className="text-sm font-mono text-slate-600">{record.record_id?.substring(0, 8)}...</p>
                             </td>
-                            <td className="py-3 px-4 text-right text-sm font-semibold text-blue-600">
+                            <td className="py-3 px-4 text-right text-sm font-semibold text-primary">
                               {formatCurrency(record.vat_amount)}
                             </td>
                             <td className="py-3 px-4 text-center text-sm text-slate-600">
@@ -570,7 +569,7 @@ export const VATAuditPage: React.FC = () => {
                     {auditLoading ? (
                       <tr>
                         <td colSpan={6} className="py-12 text-center">
-                          <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+                          <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
                         </td>
                       </tr>
                     ) : auditLogs.length === 0 ? (
@@ -612,7 +611,7 @@ export const VATAuditPage: React.FC = () => {
                             </td>
                             <td className="py-4 px-6 text-right">
                               <button
-                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                className="p-1.5 text-primary hover:bg-info-muted rounded transition-colors"
                                 title="View Details"
                               >
                                 <Eye className="w-4 h-4" />

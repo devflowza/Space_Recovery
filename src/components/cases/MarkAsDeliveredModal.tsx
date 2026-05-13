@@ -83,8 +83,8 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
       >
         <div className="flex items-center justify-between p-5 border-b border-slate-200">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-              <Truck className="w-4 h-4 text-green-600" />
+            <div className="w-8 h-8 bg-success-muted rounded-lg flex items-center justify-center">
+              <Truck className="w-4 h-4 text-success" />
             </div>
             <h2 className="text-lg font-semibold text-slate-900">Mark Clone as Delivered</h2>
           </div>
@@ -98,10 +98,10 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
         </div>
 
         <div className="p-5">
-          <div className="mb-3 p-2.5 bg-green-50 border-l-4 border-green-500 rounded">
+          <div className="mb-3 p-2.5 bg-success-muted border-l-4 border-success rounded">
             <div className="flex gap-2">
-              <Info className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-green-900">
+              <Info className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-success">
                 This will mark the clone as delivered to the customer. The retention countdown will begin,
                 and the clone will be eligible for deletion after the retention period expires.
               </p>
@@ -147,7 +147,7 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
                 </div>
                 <div className="text-xs text-slate-900 font-mono bg-white p-1.5 rounded border border-slate-200 break-all">
                   {clone.storage_server && (
-                    <span className="text-blue-600 font-semibold">{clone.storage_server}:</span>
+                    <span className="text-primary font-semibold">{clone.storage_server}:</span>
                   )}
                   {clone.storage_path}
                 </div>
@@ -178,25 +178,25 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+              <div className="bg-info-muted border border-info/30 rounded-lg p-2.5">
                 <div className="flex gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-info flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <div className="text-xs font-medium text-blue-900 mb-0.5">
+                    <div className="text-xs font-medium text-info mb-0.5">
                       Delivery will be recorded as:
                     </div>
-                    <div className="text-xs text-blue-800">
+                    <div className="text-xs text-info">
                       {formatDate(deliveryDate.toISOString())}
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+              <div className="bg-warning-muted border border-warning/30 rounded-lg p-2.5">
                 <div className="flex gap-2">
-                  <Clock className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <Clock className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <div className="text-xs font-medium text-amber-900 mb-1">
+                    <div className="text-xs font-medium text-warning mb-1">
                       Retention Period (days)
                     </div>
                     <Input
@@ -207,7 +207,7 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
                       disabled={isLoading}
                       className="w-full"
                     />
-                    <div className="text-xs text-amber-800 mt-1">
+                    <div className="text-xs text-warning mt-1">
                       Eligible for deletion after: {formatDate(retentionDeadline.toISOString())}
                     </div>
                   </div>
@@ -238,7 +238,7 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
                     checked={updateCaseStatus}
                     onChange={(e) => setUpdateCaseStatus(e.target.checked)}
                     disabled={isLoading}
-                    className="mt-0.5 w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                    className="mt-0.5 w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
                   />
                   <div className="flex-1">
                     <div className="text-xs font-medium text-slate-900">
@@ -264,7 +264,7 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
             <Button
               onClick={handleConfirm}
               disabled={isLoading}
-              style={{ backgroundColor: '#10b981' }}
+              style={{ backgroundColor: 'rgb(var(--color-success))' }}
               className="flex items-center gap-2"
             >
               <Truck className="w-4 h-4" />

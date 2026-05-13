@@ -23,9 +23,9 @@ function getStrength(password: string): { level: number; label: string; color: s
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  if (score <= 2) return { level: 1, label: 'Weak', color: 'bg-red-500' };
-  if (score <= 4) return { level: 2, label: 'Medium', color: 'bg-amber-500' };
-  return { level: 3, label: 'Strong', color: 'bg-emerald-500' };
+  if (score <= 2) return { level: 1, label: 'Weak', color: 'bg-danger' };
+  if (score <= 4) return { level: 2, label: 'Medium', color: 'bg-warning' };
+  return { level: 3, label: 'Strong', color: 'bg-success' };
 }
 
 export const PasswordStrength = ({ password }: PasswordStrengthProps) => {
@@ -39,9 +39,9 @@ export const PasswordStrength = ({ password }: PasswordStrengthProps) => {
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs text-slate-500 font-body">Strength</span>
           <span className={`text-xs font-medium font-body ${
-            strength.level === 1 ? 'text-red-400' :
-            strength.level === 2 ? 'text-amber-400' :
-            'text-emerald-400'
+            strength.level === 1 ? 'text-danger' :
+            strength.level === 2 ? 'text-warning' :
+            'text-success'
           }`}>
             {strength.label}
           </span>
@@ -71,9 +71,9 @@ export const PasswordStrength = ({ password }: PasswordStrengthProps) => {
                 transition={{ type: 'spring', stiffness: 400, damping: 15 }}
               >
                 <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                  met ? 'bg-emerald-500/20' : 'bg-slate-800'
+                  met ? 'bg-success/20' : 'bg-slate-800'
                 }`}>
-                  <Check className={`w-2.5 h-2.5 ${met ? 'text-emerald-400' : 'text-slate-600'}`} />
+                  <Check className={`w-2.5 h-2.5 ${met ? 'text-success' : 'text-slate-600'}`} />
                 </div>
               </motion.div>
               <span className={met ? 'text-slate-300' : 'text-slate-600'}>{req.label}</span>

@@ -47,9 +47,9 @@ export const StepContainer = ({ step, stepIndex, direction, children }: StepCont
             className="mb-6"
           >
             <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-blue-500/10 blur-2xl scale-150" />
-              <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 flex items-center justify-center shadow-glow-blue">
-                <Icon className="w-12 h-12 text-blue-400" />
+              <div className="absolute inset-0 rounded-full bg-primary/10 blur-2xl scale-150" />
+              <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 flex items-center justify-center shadow-glow-blue">
+                <Icon className="w-12 h-12 text-primary" />
               </div>
             </div>
           </motion.div>

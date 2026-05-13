@@ -183,7 +183,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="What was this expense for?"
               required
             />
@@ -212,7 +212,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               >
                 <option value="">Select Category</option>
                 {categories.map((cat) => (
@@ -235,7 +235,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
               <select
                 value={caseId}
                 onChange={(e) => setCaseId(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               >
                 <option value="">No Case</option>
                 {cases.map((c) => (
@@ -254,7 +254,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
             <select
               value={paymentMethodId}
               onChange={(e) => setPaymentMethodId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
               <option value="">Select Method</option>
               {paymentMethods.map((method) => (
@@ -274,7 +274,7 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="Additional notes..."
           />
         </div>
@@ -297,7 +297,6 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
             onClick={(e) => handleSubmit(e, true)}
             disabled={isSubmitting || amount <= 0}
             className="flex items-center gap-2"
-            style={{ backgroundColor: '#3b82f6' }}
           >
             <Upload className="w-4 h-4" />
             {isSubmitting ? 'Saving...' : 'Submit for Approval'}

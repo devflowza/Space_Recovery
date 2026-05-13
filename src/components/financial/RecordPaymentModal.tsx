@@ -244,14 +244,14 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            Case <span className="text-red-500">*</span>
+            Case <span className="text-danger">*</span>
           </label>
           <div className="relative">
             <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
             <select
               value={selectedCaseId}
               onChange={(e) => handleCaseChange(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               required
             >
               <option value="">Select Case</option>
@@ -263,7 +263,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
             </select>
           </div>
           {casesWithInvoices.length === 0 && (
-            <p className="mt-1 text-xs text-amber-600">
+            <p className="mt-1 text-xs text-warning">
               No cases with unpaid invoices found.
             </p>
           )}
@@ -332,7 +332,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               <select
                 value={paymentMethodId}
                 onChange={(e) => setPaymentMethodId(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               >
                 <option value="">Select Method</option>
                 {paymentMethods.map((method) => (
@@ -343,7 +343,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               </select>
             </div>
             {paymentMethods.length === 0 && (
-              <p className="mt-1 text-xs text-amber-600">
+              <p className="mt-1 text-xs text-warning">
                 No payment methods enabled. Enable them in Settings.
               </p>
             )}
@@ -356,7 +356,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
             <select
               value={bankAccountId}
               onChange={(e) => setBankAccountId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
               <option value="">Select Account</option>
               {bankAccounts.map((account) => (
@@ -393,7 +393,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                     e.target.value = '';
                   }
                 }}
-                className="text-sm px-2 py-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="text-sm px-2 py-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary"
               >
                 <option value="">+ Add Invoice</option>
                 {availableInvoices.map((inv) => (
@@ -457,7 +457,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveAllocation(alloc.invoice_id)}
-                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                          className="p-1 text-danger hover:bg-danger-muted rounded"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -470,7 +470,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                     <td colSpan={2} className="py-2 px-3 text-right text-sm font-semibold text-slate-700">
                       Total Allocated:
                     </td>
-                    <td className="py-2 px-3 text-right text-sm font-bold text-blue-600">
+                    <td className="py-2 px-3 text-right text-sm font-bold text-primary">
                       {formatCurrency(totalAllocated)}
                     </td>
                     <td></td>
@@ -498,7 +498,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="Optional payment notes..."
           />
         </div>

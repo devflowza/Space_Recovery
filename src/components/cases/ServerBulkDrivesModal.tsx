@@ -330,14 +330,14 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  <CheckCircle2 className="w-4 h-4 text-success" />
                   <span className="font-medium text-slate-700">
                     {validDrives.length} Complete
                   </span>
                 </div>
                 {incompleteDrives.length > 0 && (
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-amber-600" />
+                    <AlertCircle className="w-4 h-4 text-warning" />
                     <span className="font-medium text-slate-700">
                       {incompleteDrives.length} Incomplete
                     </span>
@@ -357,17 +357,17 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                       type="checkbox"
                       checked={smartFillEnabled}
                       onChange={(e) => setSmartFillEnabled(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
                     />
                     <span className="text-slate-700 font-medium">
-                      <Zap className="w-3.5 h-3.5 inline mr-1 text-blue-600" />
+                      <Zap className="w-3.5 h-3.5 inline mr-1 text-primary" />
                       Smart Fill
                     </span>
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowKeyboardShortcuts(!showKeyboardShortcuts)}
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium"
+                    className="flex items-center gap-1 text-primary hover:text-primary/80 font-medium"
                   >
                     <Keyboard className="w-3.5 h-3.5" />
                     Shortcuts
@@ -393,14 +393,14 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                 <tr>
                   <th className="px-3 py-2 text-left font-semibold text-slate-700 w-16">#</th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-700">
-                    Brand <span className="text-red-500">*</span>
+                    Brand <span className="text-danger">*</span>
                   </th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-700">
-                    Serial Number <span className="text-red-500">*</span>
+                    Serial Number <span className="text-danger">*</span>
                   </th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-700">Model</th>
                   <th className="px-3 py-2 text-left font-semibold text-slate-700">
-                    Capacity <span className="text-red-500">*</span>
+                    Capacity <span className="text-danger">*</span>
                   </th>
                   <th className="px-3 py-2 text-center font-semibold text-slate-700 w-32">Actions</th>
                 </tr>
@@ -409,9 +409,9 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                 {drives.map((drive, index) => {
                   const hasDuplicateSerial = checkForDuplicateSerials.has(drive.serial_no.trim().toLowerCase());
                   const rowBgColor = drive.isValid
-                    ? 'bg-green-50'
+                    ? 'bg-success-muted'
                     : incompleteDrives.includes(drive)
-                    ? 'bg-amber-50'
+                    ? 'bg-warning-muted'
                     : index % 2 === 0
                     ? 'bg-white'
                     : 'bg-slate-50';
@@ -419,7 +419,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                   return (
                     <tr
                       key={drive.id}
-                      className={`border-b border-slate-200 hover:bg-blue-50 transition-colors ${rowBgColor}`}
+                      className={`border-b border-slate-200 hover:bg-primary/10 transition-colors ${rowBgColor}`}
                     >
                       <td className="px-3 py-2 text-slate-600 font-medium">{index + 1}</td>
                       <td className="px-3 py-2">
@@ -443,14 +443,14 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                           onChange={(e) => updateDrive(drive.id, 'serial_no', e.target.value)}
                           onKeyDown={(e) => handleKeyDown(e, drive.id, 'serial', index)}
                           placeholder="Enter S/N..."
-                          className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary ${
                             hasDuplicateSerial
-                              ? 'border-red-500 bg-red-50'
+                              ? 'border-danger bg-danger-muted'
                               : 'border-slate-300'
                           }`}
                         />
                         {hasDuplicateSerial && (
-                          <p className="text-xs text-red-600 mt-1">Duplicate serial!</p>
+                          <p className="text-xs text-danger mt-1">Duplicate serial!</p>
                         )}
                       </td>
                       <td className="px-3 py-2">
@@ -460,7 +460,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                           onChange={(e) => updateDrive(drive.id, 'model', e.target.value)}
                           onKeyDown={(e) => handleKeyDown(e, drive.id, 'model', index)}
                           placeholder="Model..."
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         />
                       </td>
                       <td className="px-3 py-2">
@@ -482,7 +482,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                             <button
                               type="button"
                               onClick={() => copyPreviousRow(index)}
-                              className="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded transition-colors"
+                              className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
                               title="Copy from previous row"
                             >
                               <Copy className="w-4 h-4" />
@@ -491,7 +491,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                           <button
                             type="button"
                             onClick={() => copyRowDown(index)}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            className="p-1.5 text-info hover:bg-info-muted rounded transition-colors"
                             title="Copy to all rows below"
                           >
                             <CopyPlus className="w-4 h-4" />
@@ -499,7 +499,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                           <button
                             type="button"
                             onClick={() => applyToAllEmpty(index)}
-                            className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
+                            className="p-1.5 text-success hover:bg-success-muted rounded transition-colors"
                             title="Apply to all empty rows"
                           >
                             <Zap className="w-4 h-4" />
@@ -508,7 +508,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                             <button
                               type="button"
                               onClick={() => removeDrive(drive.id)}
-                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                              className="p-1.5 text-danger hover:bg-danger-muted rounded transition-colors"
                               title="Remove row"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -526,7 +526,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
           <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-200 mt-4">
             <div className="text-sm text-slate-600">
               Total: <span className="font-semibold text-slate-900">{drives.length}</span> rows |
-              Valid: <span className="font-semibold text-green-600">{validDrives.length}</span>
+              Valid: <span className="font-semibold text-success">{validDrives.length}</span>
             </div>
             <div className="flex items-center gap-3">
               <Button variant="secondary" onClick={handleClose}>
@@ -536,7 +536,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
               <Button
                 onClick={handleSave}
                 disabled={validDrives.length === 0}
-                style={{ backgroundColor: '#10b981' }}
+                style={{ backgroundColor: 'rgb(var(--color-success))' }}
               >
                 <CheckCircle2 className="w-4 h-4 mr-1" />
                 Add {validDrives.length} Drive{validDrives.length !== 1 ? 's' : ''}

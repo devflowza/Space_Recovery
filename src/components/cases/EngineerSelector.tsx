@@ -86,7 +86,7 @@ export const EngineerSelector: React.FC<EngineerSelectorProps> = ({
         className={`w-full px-3 py-2 text-left border rounded-lg transition-all ${
           disabled
             ? 'bg-slate-50 text-slate-400 cursor-not-allowed border-slate-200'
-            : 'bg-white border-slate-300 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+            : 'bg-white border-slate-300 hover:border-primary/60 focus:border-primary focus:ring-2 focus:ring-primary/30'
         }`}
       >
         <div className="flex items-center justify-between gap-2">
@@ -98,7 +98,7 @@ export const EngineerSelector: React.FC<EngineerSelectorProps> = ({
                   {selectedEngineer.full_name}
                 </span>
                 {showBadgeInDisplay && selectedEngineer.case_access_level === 'restricted' && (
-                  <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
+                  <span className="text-xs px-1.5 py-0.5 bg-warning-muted text-warning rounded">
                     Restricted
                   </span>
                 )}
@@ -137,14 +137,14 @@ export const EngineerSelector: React.FC<EngineerSelectorProps> = ({
               placeholder="Search engineers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
               autoFocus
             />
           </div>
 
           <div className="max-h-48 overflow-y-auto bg-white">
             {error ? (
-              <div className="px-3 py-2 text-sm text-red-500 text-center">
+              <div className="px-3 py-2 text-sm text-danger text-center">
                 Error loading engineers
               </div>
             ) : isLoading ? (
@@ -178,13 +178,13 @@ export const EngineerSelector: React.FC<EngineerSelectorProps> = ({
                     key={engineer.id}
                     onClick={() => handleSelect(engineer.id)}
                     className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 transition-colors flex items-center gap-2 ${
-                      value === engineer.id ? 'bg-blue-50' : ''
+                      value === engineer.id ? 'bg-primary/10' : ''
                     }`}
                   >
                     <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
                     <span className="text-slate-900 flex-1 truncate">{engineer.full_name}</span>
                     {engineer.case_access_level === 'restricted' && (
-                      <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded flex-shrink-0">
+                      <span className="text-xs px-1.5 py-0.5 bg-warning-muted text-warning rounded flex-shrink-0">
                         Restricted
                       </span>
                     )}

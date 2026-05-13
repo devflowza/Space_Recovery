@@ -194,10 +194,10 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* Case Info Card */}
       <Card variant="bordered" className="overflow-visible">
-        <div className="bg-blue-50 border-b border-blue-100 px-4 py-3 rounded-t-lg">
+        <div className="bg-info-muted border-b border-info/20 px-4 py-3 rounded-t-lg">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-blue-900 flex items-center gap-2">
-              <FileStack className="w-4 h-4 text-blue-600" />
+            <h2 className="text-base font-bold text-info flex items-center gap-2">
+              <FileStack className="w-4 h-4 text-info" />
               Case Info
             </h2>
             <Button variant="secondary" size="sm" onClick={() => setEditingSection(editingSection === 'case' ? null : 'case')}>
@@ -212,7 +212,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                 <FileStack className="w-3.5 h-3.5 text-slate-400" />
                 Job ID
               </label>
-              <p className="text-sm font-semibold text-blue-600">{caseData.case_no}</p>
+              <p className="text-sm font-semibold text-primary">{caseData.case_no}</p>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-slate-100">
               <label className="text-sm text-slate-600 flex items-center gap-2">
@@ -225,7 +225,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                   value={editedCaseData.client_reference ?? caseData.client_reference ?? ''}
                   onChange={(e) => setEditedCaseData((prev) => ({ ...prev, client_reference: e.target.value }))}
                   placeholder="Enter client reference..."
-                  className="text-sm px-2 py-1 border border-blue-300 rounded bg-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px]"
+                  className="text-sm px-2 py-1 border border-primary/40 rounded bg-white font-mono focus:outline-none focus:ring-2 focus:ring-primary max-w-[200px]"
                 />
               ) : (
                 <p className="text-sm font-mono text-slate-900">{caseData.client_reference || '-'}</p>
@@ -267,7 +267,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                   <select
                     value={caseData.status}
                     onChange={(e) => { onUpdateStatus(e.target.value); setIsEditingStatus(false); }}
-                    className="text-xs px-2 py-1 border border-blue-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="text-xs px-2 py-1 border border-primary/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary"
                     autoFocus
                   >
                     {statusOptions.map((option) => (
@@ -293,7 +293,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                   <select
                     value={caseData.priority}
                     onChange={(e) => { onUpdatePriority(e.target.value); setIsEditingPriority(false); }}
-                    className="text-xs px-2 py-1 border border-orange-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="text-xs px-2 py-1 border border-warning/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-warning"
                     autoFocus
                   >
                     {priorityOptions.map((option) => (
@@ -328,7 +328,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
         {editingSection === 'case' && (
           <div className="px-4 pb-4 pt-0 border-t border-slate-100 bg-white">
             <div className="flex gap-2 pt-3">
-              <Button size="sm" onClick={handleSaveCaseInfo} style={{ backgroundColor: '#10b981' }} disabled={isSavingCaseInfo}>
+              <Button size="sm" onClick={handleSaveCaseInfo} style={{ backgroundColor: 'rgb(var(--color-success))' }} disabled={isSavingCaseInfo}>
                 <Save className="w-3 h-3 mr-1" />
                 {isSavingCaseInfo ? 'Saving...' : 'Save'}
               </Button>
@@ -343,10 +343,10 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
 
       {/* Device Info Card */}
       <Card variant="bordered" className="overflow-hidden">
-        <div className="bg-green-50 border-b border-green-100 px-4 py-3">
+        <div className="bg-success-muted border-b border-success/20 px-4 py-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-green-900 flex items-center gap-2">
-              <HardDrive className="w-4 h-4 text-green-600" />
+            <h2 className="text-base font-bold text-success flex items-center gap-2">
+              <HardDrive className="w-4 h-4 text-success" />
               Device Info
             </h2>
             <Button variant="secondary" size="sm" onClick={() => setEditingSection(editingSection === 'device' ? null : 'device')}>
@@ -365,7 +365,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                 <select
                   value={editedDeviceData.device_type_id ?? devices[0]?.device_type_id ?? ''}
                   onChange={(e) => handleDeviceFieldChange('device_type_id', e.target.value || null)}
-                  className="text-sm px-2 py-1 border border-green-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-green-500 max-w-[200px]"
+                  className="text-sm px-2 py-1 border border-success/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-success max-w-[200px]"
                 >
                   <option value="">Select type...</option>
                   {deviceTypes.map((type) => (
@@ -389,7 +389,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                       value={editedDeviceData.model ?? devices[0]?.model ?? ''}
                       onChange={(e) => handleDeviceFieldChange('model', e.target.value)}
                       placeholder="Enter model..."
-                      className="text-sm px-2 py-1 border border-green-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-green-500 max-w-[200px]"
+                      className="text-sm px-2 py-1 border border-success/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-success max-w-[200px]"
                     />
                   ) : (
                     <p className="text-sm text-slate-900 font-medium text-right">{devices[0].model || '-'}</p>
@@ -406,7 +406,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                       value={editedDeviceData.serial_no ?? devices[0]?.serial_no ?? ''}
                       onChange={(e) => handleDeviceFieldChange('serial_no', e.target.value)}
                       placeholder="Enter serial number..."
-                      className="text-sm px-2 py-1 border border-green-300 rounded bg-white font-mono focus:outline-none focus:ring-2 focus:ring-green-500 max-w-[200px]"
+                      className="text-sm px-2 py-1 border border-success/40 rounded bg-white font-mono focus:outline-none focus:ring-2 focus:ring-success max-w-[200px]"
                     />
                   ) : (
                     <p className="text-sm font-mono text-slate-900 font-medium text-right">{devices[0].serial_no || '-'}</p>
@@ -421,7 +421,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                     <select
                       value={editedDeviceData.capacity_id ?? devices[0]?.capacity_id ?? ''}
                       onChange={(e) => handleDeviceFieldChange('capacity_id', e.target.value || null)}
-                      className="text-sm px-2 py-1 border border-green-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-green-500 max-w-[200px]"
+                      className="text-sm px-2 py-1 border border-success/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-success max-w-[200px]"
                     >
                       <option value="">Select capacity...</option>
                       {capacities.map((cap) => (
@@ -464,7 +464,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                 <select
                   value={editedDeviceData.device_problem ?? devices[0]?.device_problem ?? ''}
                   onChange={(e) => handleDeviceFieldChange('device_problem', e.target.value)}
-                  className="text-sm px-2 py-1 border border-green-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-green-500 max-w-[200px]"
+                  className="text-sm px-2 py-1 border border-success/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-success max-w-[200px]"
                 >
                   <option value="">Select problem...</option>
                   {serviceProblems.map((problem) => (
@@ -492,7 +492,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
         {editingSection === 'device' && (
           <div className="px-4 pb-4 pt-0 border-t border-slate-100 bg-white">
             <div className="flex gap-2 pt-3">
-              <Button size="sm" onClick={handleSaveDeviceInfo} style={{ backgroundColor: '#10b981' }} disabled={isSavingDeviceInfo}>
+              <Button size="sm" onClick={handleSaveDeviceInfo} style={{ backgroundColor: 'rgb(var(--color-success))' }} disabled={isSavingDeviceInfo}>
                 <Save className="w-3 h-3 mr-1" />
                 {isSavingDeviceInfo ? 'Saving...' : 'Save'}
               </Button>
@@ -507,10 +507,10 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
 
       {/* Client Info Card */}
       <Card variant="bordered" className="overflow-hidden">
-        <div className="bg-pink-50 border-b border-pink-100 px-4 py-3">
+        <div className="bg-accent/10 border-b border-accent/20 px-4 py-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-pink-900 flex items-center gap-2">
-              <User className="w-4 h-4 text-pink-600" />
+            <h2 className="text-base font-bold text-accent flex items-center gap-2">
+              <User className="w-4 h-4 text-accent" />
               Client Info
             </h2>
             <Button variant="secondary" size="sm" onClick={() => setEditingSection(editingSection === 'client' ? null : 'client')}>
@@ -540,7 +540,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                 Email
               </label>
               {caseData.customer?.email ? (
-                <a href={`mailto:${caseData.customer.email}`} className="text-sm text-blue-600 hover:text-blue-700 break-all text-right">
+                <a href={`mailto:${caseData.customer.email}`} className="text-sm text-primary hover:text-primary/80 break-all text-right">
                   {caseData.customer.email}
                 </a>
               ) : (
@@ -553,7 +553,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                 Mobile Number
               </label>
               {(caseData.customer?.mobile_number || caseData.customer?.phone_number) ? (
-                <a href={`tel:${caseData.customer.mobile_number || caseData.customer.phone_number}`} className="text-sm text-blue-600 hover:text-blue-700 text-right">
+                <a href={`tel:${caseData.customer.mobile_number || caseData.customer.phone_number}`} className="text-sm text-primary hover:text-primary/80 text-right">
                   {caseData.customer.mobile_number || caseData.customer.phone_number}
                 </a>
               ) : (
@@ -583,7 +583,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                     value={editedDeviceData.device_password ?? devices[0]?.device_password ?? ''}
                     onChange={(e) => setEditedDeviceData((prev) => ({ ...prev, device_password: e.target.value }))}
                     placeholder="Enter password..."
-                    className="font-mono text-xs bg-white px-2 py-1 rounded border border-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-500 w-24"
+                    className="font-mono text-xs bg-white px-2 py-1 rounded border border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent w-24"
                   />
                   <Button variant="secondary" size="sm" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
@@ -608,7 +608,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
         {editingSection === 'client' && (
           <div className="px-4 pb-4 pt-0 border-t border-slate-100 bg-white">
             <div className="flex gap-2 pt-3">
-              <Button size="sm" onClick={handleSaveClientInfo} style={{ backgroundColor: '#10b981' }} disabled={isSavingClientInfo}>
+              <Button size="sm" onClick={handleSaveClientInfo} style={{ backgroundColor: 'rgb(var(--color-success))' }} disabled={isSavingClientInfo}>
                 <Save className="w-3 h-3 mr-1" />
                 {isSavingClientInfo ? 'Saving...' : 'Save'}
               </Button>

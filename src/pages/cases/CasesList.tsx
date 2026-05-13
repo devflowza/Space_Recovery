@@ -281,14 +281,8 @@ export const CasesList: React.FC = () => {
     <div className="p-6 max-w-[1800px] mx-auto">
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-start gap-4">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
-            style={{
-              backgroundColor: '#3b82f6',
-              boxShadow: '0 10px 40px -10px #3b82f680',
-            }}
-          >
-            <Briefcase className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg bg-primary">
+            <Briefcase className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-1">Cases</h1>
@@ -312,7 +306,7 @@ export const CasesList: React.FC = () => {
             <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
             {isFetching ? 'Refreshing...' : 'Refresh'}
           </Button>
-          <Button onClick={handleCreateCase} style={{ backgroundColor: '#3b82f6' }}>
+          <Button onClick={handleCreateCase}>
             <Plus className="w-4 h-4 mr-2" />
             Create Case
           </Button>
@@ -320,9 +314,9 @@ export const CasesList: React.FC = () => {
       </div>
 
       {caseUsage && caseUsage.percentage >= 80 && caseUsage.percentage < 100 && (
-        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-          <span className="text-amber-800">
+        <div className="mb-4 bg-warning-muted border border-warning/30 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-warning flex-shrink-0" />
+          <span className="text-warning">
             You've used {caseUsage.current} of {caseUsage.limit} cases this month ({caseUsage.percentage}%).
             Consider upgrading your plan for more capacity.
           </span>
@@ -330,50 +324,50 @@ export const CasesList: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+        <div className="bg-info-muted rounded-xl p-4 border border-info/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Active Cases</p>
-              <p className="text-2xl font-bold text-blue-900 mt-1">{allCasesForStats.filter(c => !getStatusesByType('completed').includes(c.status) && !getStatusesByType('delivered').includes(c.status) && !getStatusesByType('cancelled').includes(c.status)).length}</p>
+              <p className="text-xs font-medium text-info uppercase tracking-wide">Active Cases</p>
+              <p className="text-2xl font-bold text-info mt-1">{allCasesForStats.filter(c => !getStatusesByType('completed').includes(c.status) && !getStatusesByType('delivered').includes(c.status) && !getStatusesByType('cancelled').includes(c.status)).length}</p>
             </div>
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
+              <Briefcase className="w-5 h-5 text-info-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+        <div className="bg-danger-muted rounded-xl p-4 border border-danger/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-orange-600 uppercase tracking-wide">Urgent</p>
-              <p className="text-2xl font-bold text-orange-900 mt-1">{allCasesForStats.filter(c => c.priority === 'urgent').length}</p>
+              <p className="text-xs font-medium text-danger uppercase tracking-wide">Urgent</p>
+              <p className="text-2xl font-bold text-danger mt-1">{allCasesForStats.filter(c => c.priority === 'urgent').length}</p>
             </div>
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-danger rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-danger-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+        <div className="bg-warning-muted rounded-xl p-4 border border-warning/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">In Diagnosis</p>
-              <p className="text-2xl font-bold text-amber-900 mt-1">{allCasesForStats.filter(c => getStatusesByType('diagnosis').includes(c.status)).length}</p>
+              <p className="text-xs font-medium text-warning uppercase tracking-wide">In Diagnosis</p>
+              <p className="text-2xl font-bold text-warning mt-1">{allCasesForStats.filter(c => getStatusesByType('diagnosis').includes(c.status)).length}</p>
             </div>
-            <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
-              <Search className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-warning rounded-lg flex items-center justify-center">
+              <Search className="w-5 h-5 text-warning-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+        <div className="bg-success-muted rounded-xl p-4 border border-success/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Ready</p>
-              <p className="text-2xl font-bold text-green-900 mt-1">{allCasesForStats.filter(c => getStatusesByType('ready').includes(c.status)).length}</p>
+              <p className="text-xs font-medium text-success uppercase tracking-wide">Ready</p>
+              <p className="text-2xl font-bold text-success mt-1">{allCasesForStats.filter(c => getStatusesByType('ready').includes(c.status)).length}</p>
             </div>
-            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-success-foreground" />
             </div>
           </div>
         </div>
@@ -389,7 +383,7 @@ export const CasesList: React.FC = () => {
                 placeholder="Search cases..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -398,7 +392,7 @@ export const CasesList: React.FC = () => {
                 onClick={() => setFilterStatus(filterStatus === 'Received' ? 'all' : 'Received')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   filterStatus === 'Received'
-                    ? 'bg-blue-500 text-white shadow-md'
+                    ? 'bg-info text-info-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -408,7 +402,7 @@ export const CasesList: React.FC = () => {
                 onClick={() => setFilterStatus(filterStatus === 'Approved - In Queue' ? 'all' : 'Approved - In Queue')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   filterStatus === 'Approved - In Queue'
-                    ? 'bg-violet-500 text-white shadow-md'
+                    ? 'bg-accent text-accent-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -418,7 +412,7 @@ export const CasesList: React.FC = () => {
                 onClick={() => setFilterStatus(filterStatus === 'Recovery in Progress' ? 'all' : 'Recovery in Progress')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   filterStatus === 'Recovery in Progress'
-                    ? 'bg-violet-600 text-white shadow-md'
+                    ? 'bg-warning text-warning-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -455,7 +449,7 @@ export const CasesList: React.FC = () => {
               <Filter className="w-4 h-4" />
               More Filters
               {(filterStatus !== 'all' || filterPriority !== 'all') && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
           </div>
@@ -469,7 +463,7 @@ export const CasesList: React.FC = () => {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Statuses</option>
                   {caseStatuses.map((status) => (
@@ -486,7 +480,7 @@ export const CasesList: React.FC = () => {
                 <select
                   value={filterPriority}
                   onChange={(e) => setFilterPriority(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Priorities</option>
                   {casePriorities.map((priority) => (
@@ -503,7 +497,7 @@ export const CasesList: React.FC = () => {
 
       {isLoading ? (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading cases...</p>
         </div>
       ) : cases.length === 0 ? (
@@ -563,7 +557,7 @@ export const CasesList: React.FC = () => {
                     className="hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-semibold text-blue-600">
+                      <span className="font-semibold text-primary">
                         {caseItem.case_no}
                       </span>
                     </td>

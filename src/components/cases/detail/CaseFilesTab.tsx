@@ -149,7 +149,7 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-slate-900">Files & Attachments</h2>
           <Button
-            style={{ backgroundColor: '#3b82f6' }}
+            style={{ backgroundColor: 'rgb(var(--color-primary))' }}
             size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
@@ -169,8 +169,8 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
         />
 
         {uploading && uploadProgress && (
-          <div className="mb-4 flex items-center gap-2 text-sm text-blue-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <div className="mb-4 flex items-center gap-2 text-sm text-primary bg-info-muted border border-info/30 rounded-lg p-3">
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
             {uploadProgress}
           </div>
         )}
@@ -178,7 +178,7 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
         {attachments.length === 0 && !uploading ? (
           <div
             className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
-              isDragOver ? 'border-blue-400 bg-blue-50' : 'border-slate-300 bg-slate-50'
+              isDragOver ? 'border-primary/60 bg-primary/10' : 'border-slate-300 bg-slate-50'
             }`}
             onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
             onDragLeave={() => setIsDragOver(false)}
@@ -197,7 +197,7 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
           <>
             <div
               className={`mb-4 border-2 border-dashed rounded-lg p-4 text-center text-sm text-slate-500 transition-colors ${
-                isDragOver ? 'border-blue-400 bg-blue-50 text-blue-600' : 'border-slate-200'
+                isDragOver ? 'border-primary/60 bg-primary/10 text-primary' : 'border-slate-200'
               }`}
               onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
               onDragLeave={() => setIsDragOver(false)}
@@ -213,11 +213,11 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
                 return (
                   <div
                     key={file.id}
-                    className="border border-slate-200 rounded-lg p-3 hover:border-blue-300 transition-colors bg-white"
+                    className="border border-slate-200 rounded-lg p-3 hover:border-primary/40 transition-colors bg-white"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
-                        <FileIcon className="w-5 h-5 text-blue-600" />
+                      <div className="w-10 h-10 bg-primary/10 rounded flex items-center justify-center flex-shrink-0">
+                        <FileIcon className="w-5 h-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-slate-900 text-sm truncate" title={file.file_name}>
@@ -245,9 +245,9 @@ export const CaseFilesTab: React.FC<CaseFilesTabProps> = ({ caseId, attachments,
                           title="Delete"
                         >
                           {deletingId === file.id ? (
-                            <div className="w-3 h-3 border border-red-500 border-t-transparent rounded-full animate-spin" />
+                            <div className="w-3 h-3 border border-danger border-t-transparent rounded-full animate-spin" />
                           ) : (
-                            <Trash2 className="w-3 h-3 text-red-500" />
+                            <Trash2 className="w-3 h-3 text-danger" />
                           )}
                         </Button>
                       </div>

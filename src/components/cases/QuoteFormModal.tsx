@@ -397,13 +397,13 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
 
   const headerBadges = (
     <>
-      <div className="flex items-center gap-1.5 bg-green-50 border border-green-300 px-2.5 py-1 rounded-lg">
-        <FileBarChart className="w-3.5 h-3.5 text-green-600" />
-        <span className="text-xs font-semibold text-green-700">{quoteNumber}</span>
+      <div className="flex items-center gap-1.5 bg-success-muted border border-success/30 px-2.5 py-1 rounded-lg">
+        <FileBarChart className="w-3.5 h-3.5 text-success" />
+        <span className="text-xs font-semibold text-success">{quoteNumber}</span>
       </div>
-      <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-300 px-2.5 py-1 rounded-lg">
-        <Briefcase className="w-3.5 h-3.5 text-blue-600" />
-        <span className="text-xs font-semibold text-blue-700">#{caseNumber}</span>
+      <div className="flex items-center gap-1.5 bg-info-muted border border-info/30 px-2.5 py-1 rounded-lg">
+        <Briefcase className="w-3.5 h-3.5 text-info" />
+        <span className="text-xs font-semibold text-info">#{caseNumber}</span>
       </div>
     </>
   );
@@ -431,7 +431,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
               <select
                 value={selectedCaseId}
                 onChange={(e) => setSelectedCaseId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-success focus:border-success"
                 required
               >
                 <option value="">Select a case...</option>
@@ -477,7 +477,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
               <select
                 value={quoteData.status}
                 onChange={(e) => setQuoteData({ ...quoteData, status: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-success focus:border-success"
               >
                 <option value="draft">Draft</option>
                 <option value="sent">Sent</option>
@@ -533,7 +533,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                       placeholder="Describe the service or item"
                       value={item.description}
                       onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-success focus:border-success"
                       required
                     />
                   </div>
@@ -543,7 +543,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                       placeholder="Unit"
                       value={item.unit || ''}
                       onChange={(e) => updateLineItem(index, 'unit', e.target.value)}
-                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-success focus:border-success"
                     />
                   </div>
                   <div className="col-span-2">
@@ -556,7 +556,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                       }
                       min="0"
                       step="0.01"
-                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-success focus:border-success"
                       required
                     />
                   </div>
@@ -570,7 +570,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                       }
                       min="0"
                       step="0.01"
-                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full px-2 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-success focus:border-success"
                       required
                     />
                   </div>
@@ -578,7 +578,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                 <button
                   type="button"
                   onClick={() => removeLineItem(index)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-danger hover:bg-danger-muted rounded-lg transition-colors"
                   title="Remove line item"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -622,7 +622,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                     }
                     min="0"
                     step="0.01"
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-slate-300"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary border-slate-300"
                   />
                 </div>
                 <div>
@@ -635,7 +635,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                       onClick={() => setQuoteData({ ...quoteData, discount_type: 'fixed' })}
                       className={`flex-1 px-2 py-1 transition-all flex items-center justify-center ${
                         quoteData.discount_type === 'fixed'
-                          ? 'bg-green-500 text-white shadow-sm'
+                          ? 'bg-success text-success-foreground shadow-sm'
                           : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                       }`}
                       title="Fixed Amount"
@@ -647,7 +647,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                       onClick={() => setQuoteData({ ...quoteData, discount_type: 'percentage' })}
                       className={`flex-1 px-2 py-1 border-l border-slate-300 transition-all flex items-center justify-center ${
                         quoteData.discount_type === 'percentage'
-                          ? 'bg-green-500 text-white shadow-sm'
+                          ? 'bg-success text-success-foreground shadow-sm'
                           : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                       }`}
                       title="Percentage"
@@ -658,10 +658,10 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-2">
+              <div className="bg-info-muted border border-info/20 p-3 rounded-lg space-y-2">
                 <div className="flex items-center gap-2 mb-2">
-                  <Calculator className="w-4 h-4 text-blue-600" />
-                  <h4 className="text-sm font-semibold text-blue-900">Summary</h4>
+                  <Calculator className="w-4 h-4 text-info" />
+                  <h4 className="text-sm font-semibold text-info">Summary</h4>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-700">Base Amount</span>
@@ -682,15 +682,15 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                     <span className="text-slate-700">
                       Discount {quoteData.discount_type === 'percentage' ? `(${quoteData.discount_amount}%)` : ''}
                     </span>
-                    <span className="font-medium text-red-600">
+                    <span className="font-medium text-danger">
                       -{currencyFormat.currencySymbol}
                       {discountValue.toFixed(2)}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between text-base font-bold border-t border-blue-300 pt-2 mt-2">
-                  <span className="text-blue-900">Total Amount</span>
-                  <span className="text-green-600">
+                <div className="flex justify-between text-base font-bold border-t border-info/30 pt-2 mt-2">
+                  <span className="text-info">Total Amount</span>
+                  <span className="text-success">
                     {currencyFormat.currencySymbol}
                     {total.toFixed(2)}
                   </span>
@@ -714,7 +714,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                 <select
                   value={quoteData.bank_account_id || ''}
                   onChange={(e) => setQuoteData({ ...quoteData, bank_account_id: e.target.value || null })}
-                  className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-success focus:border-success"
                   disabled={bankAccountsLoading}
                 >
                   <option value="">None selected</option>
@@ -725,7 +725,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                   ))}
                 </select>
                 {bankAccounts.length === 0 && !bankAccountsLoading && (
-                  <p className="text-xs text-amber-600 mt-1">No bank accounts set up. Add one in Banking &gt; Accounts to display payment details on quotes.</p>
+                  <p className="text-xs text-warning mt-1">No bank accounts set up. Add one in Banking &gt; Accounts to display payment details on quotes.</p>
                 )}
               </div>
 
@@ -737,7 +737,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowTermsTemplates(!showTermsTemplates)}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                    className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     Quick Add
@@ -756,12 +756,12 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                             key={template.id}
                             type="button"
                             onClick={() => applyTermsTemplate(template)}
-                            className="w-full text-left p-2 bg-white rounded border border-slate-200 hover:border-green-400 hover:bg-green-50 transition-colors"
+                            className="w-full text-left p-2 bg-white rounded border border-slate-200 hover:border-success/60 hover:bg-success-muted transition-colors"
                           >
                             <div className="flex items-center justify-between">
                               <span className="text-xs font-medium text-slate-900">{template.name}</span>
                               {template.is_default && (
-                                <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                                <span className="text-xs bg-warning-muted text-warning px-1.5 py-0.5 rounded">
                                   Default
                                 </span>
                               )}
@@ -778,7 +778,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                     setQuoteData({ ...quoteData, terms_and_conditions: e.target.value })
                   }
                   rows={4}
-                  className="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-success focus:border-success"
                   placeholder="Quote validity and payment terms (e.g., Quote valid for 30 days, 50% deposit required)"
                 />
               </div>
@@ -792,7 +792,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
           </Button>
           <Button
             type="submit"
-            style={{ backgroundColor: '#10b981' }}
+            style={{ backgroundColor: 'rgb(var(--color-success))' }}
             disabled={isSubmitting}
             className="shadow-md hover:shadow-lg transition-shadow"
           >
@@ -820,7 +820,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
           >
             <div className="flex items-center justify-between p-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <Search className="w-5 h-5 text-blue-600" />
+                <Search className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-semibold text-slate-900">Quick Add from Catalog</h3>
               </div>
               <button
@@ -852,7 +852,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                       key={item.id}
                       type="button"
                       onClick={() => addFromCatalog(item)}
-                      className="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-green-400 hover:bg-green-50 transition-all hover:shadow-md"
+                      className="w-full text-left p-3 bg-white rounded-lg border border-slate-200 hover:border-success/60 hover:bg-success-muted transition-all hover:shadow-md"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -870,7 +870,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                           </div>
                         </div>
                         <div className="text-right ml-4">
-                          <div className="font-bold text-lg text-green-600">
+                          <div className="font-bold text-lg text-success">
                             {currencyFormat.currencySymbol}
                             {item.default_price.toFixed(2)}
                           </div>

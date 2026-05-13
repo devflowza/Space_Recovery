@@ -32,8 +32,8 @@ export const DuplicateCaseConfirmationModal: React.FC<DuplicateCaseConfirmationM
       >
         <div className="flex items-center justify-between p-5 border-b border-slate-200">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Copy className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+              <Copy className="w-4 h-4 text-primary" />
             </div>
             <h2 className="text-lg font-semibold text-slate-900">Confirm Case Duplication</h2>
           </div>
@@ -47,10 +47,10 @@ export const DuplicateCaseConfirmationModal: React.FC<DuplicateCaseConfirmationM
         </div>
 
         <div className="p-5">
-          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+          <div className="mb-4 p-3 bg-info-muted border-l-4 border-info rounded">
             <div className="flex gap-2">
-              <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-blue-900">
+              <Info className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-info">
                 This will create an exact copy of the case with a new job number. The original case will not be changed.
               </p>
             </div>
@@ -71,10 +71,10 @@ export const DuplicateCaseConfirmationModal: React.FC<DuplicateCaseConfirmationM
             </div>
           </div>
 
-          <div className="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="mb-5 p-3 bg-warning-muted border border-warning/30 rounded-lg">
             <div className="flex gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-900">
+              <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-warning">
                 The new job will be set to 'Received' status and all devices will be marked as 'In Lab'.
               </p>
             </div>
@@ -91,7 +91,7 @@ export const DuplicateCaseConfirmationModal: React.FC<DuplicateCaseConfirmationM
             <Button
               onClick={onConfirm}
               disabled={isLoading}
-              style={{ backgroundColor: '#3b82f6' }}
+              style={{ backgroundColor: 'rgb(var(--color-primary))' }}
               className="flex items-center gap-2"
             >
               <Copy className="w-4 h-4" />

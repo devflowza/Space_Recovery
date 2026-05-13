@@ -243,9 +243,9 @@ export default function ReportViewModal({
 
           {/* Version Notes */}
           {report.version_notes && (
-            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="text-xs font-medium text-blue-900 mb-1">Version Notes</div>
-              <div className="text-sm text-blue-800">{report.version_notes}</div>
+            <div className="mt-3 p-3 bg-info-muted border border-info/30 rounded-lg">
+              <div className="text-xs font-medium text-info mb-1">Version Notes</div>
+              <div className="text-sm text-info">{report.version_notes}</div>
             </div>
           )}
         </div>
@@ -253,12 +253,12 @@ export default function ReportViewModal({
         {/* PDF Preview */}
         <div className="flex-1 overflow-hidden">
           {pdfError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-danger-muted border border-danger/30 rounded-lg p-4">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-red-900 mb-1">Error Loading PDF</h4>
-                  <p className="text-sm text-red-700">{pdfError}</p>
+                  <h4 className="text-sm font-semibold text-danger mb-1">Error Loading PDF</h4>
+                  <p className="text-sm text-danger">{pdfError}</p>
                 </div>
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function ReportViewModal({
           {!pdfError && !pdfBlobUrl && (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-sm text-gray-600">Generating PDF preview...</p>
               </div>
             </div>

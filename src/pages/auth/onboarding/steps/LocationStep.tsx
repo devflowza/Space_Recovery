@@ -40,14 +40,14 @@ export const LocationStep = ({
         transition={{ delay: 0.1 }}
       >
         <label className="block text-sm font-medium text-slate-300 font-body mb-2">
-          Country <span className="text-blue-400">*</span>
+          Country <span className="text-primary">*</span>
         </label>
         <div className="relative">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
           <select
             value={formData.countryId}
             onChange={e => updateField('countryId', e.target.value)}
-            className="w-full bg-slate-800/50 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white font-body text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all appearance-none"
+            className="w-full bg-slate-800/50 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white font-body text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all appearance-none"
           >
             <option value="" className="bg-slate-900">Select your country...</option>
             {countries.map(c => (
@@ -58,7 +58,7 @@ export const LocationStep = ({
           </select>
         </div>
         {errors.countryId && (
-          <p className="text-red-400 text-xs mt-1 font-body">{errors.countryId}</p>
+          <p className="text-danger text-xs mt-1 font-body">{errors.countryId}</p>
         )}
       </motion.div>
 
@@ -113,7 +113,7 @@ export const LocationStep = ({
         <Button
           onClick={onNext}
           disabled={!formData.countryId}
-          className="flex-1 !bg-blue-600 hover:!bg-blue-500 !text-white !rounded-xl !py-3 !font-body disabled:!opacity-40"
+          className="flex-1 !bg-primary hover:!bg-primary/90 !text-primary-foreground !rounded-xl !py-3 !font-body disabled:!opacity-40"
         >
           Continue
         </Button>

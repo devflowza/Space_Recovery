@@ -65,7 +65,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
   });
 
   const margin = caseFinancialSummary?.profitMargin ?? 0;
-  const marginColor = margin > 20 ? 'text-green-600' : margin >= 0 ? 'text-amber-600' : 'text-red-600';
+  const marginColor = margin > 20 ? 'text-success' : margin >= 0 ? 'text-warning' : 'text-danger';
   const MarginIcon = margin > 20 ? TrendingUp : margin >= 0 ? Minus : TrendingDown;
 
   return (
@@ -75,11 +75,11 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-slate-900">Quotes & Invoices</h2>
             <div className="flex gap-2">
-              <Button onClick={() => onSetShowQuoteModal(true)} style={{ backgroundColor: '#10b981' }} size="sm">
+              <Button onClick={() => onSetShowQuoteModal(true)} style={{ backgroundColor: 'rgb(var(--color-success))' }} size="sm">
                 <DollarSign className="w-4 h-4 mr-2" />
                 New Quote
               </Button>
-              <Button onClick={() => onSetShowInvoiceModal(true)} style={{ backgroundColor: '#3b82f6' }} size="sm">
+              <Button onClick={() => onSetShowInvoiceModal(true)} size="sm">
                 <FileText className="w-4 h-4 mr-2" />
                 New Invoice
               </Button>
@@ -88,24 +88,24 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
 
           {caseFinancialSummary && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Quoted</p>
-                <p className="text-xl font-bold text-green-900 mt-1">{formatCurrency(caseFinancialSummary.totalQuoted)}</p>
-                <p className="text-xs text-green-600 mt-1">{caseFinancialSummary.quotesCount} quotes</p>
+              <div className="bg-success-muted rounded-xl p-4 border border-success/20">
+                <p className="text-xs font-medium text-success uppercase tracking-wide">Quoted</p>
+                <p className="text-xl font-bold text-success mt-1">{formatCurrency(caseFinancialSummary.totalQuoted)}</p>
+                <p className="text-xs text-success mt-1">{caseFinancialSummary.quotesCount} quotes</p>
               </div>
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-                <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Invoiced</p>
-                <p className="text-xl font-bold text-blue-900 mt-1">{formatCurrency(caseFinancialSummary.totalInvoiced)}</p>
-                <p className="text-xs text-blue-600 mt-1">{caseFinancialSummary.invoicesCount} invoices</p>
+              <div className="bg-info-muted rounded-xl p-4 border border-info/20">
+                <p className="text-xs font-medium text-info uppercase tracking-wide">Invoiced</p>
+                <p className="text-xl font-bold text-info mt-1">{formatCurrency(caseFinancialSummary.totalInvoiced)}</p>
+                <p className="text-xs text-info mt-1">{caseFinancialSummary.invoicesCount} invoices</p>
               </div>
-              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
-                <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Received</p>
-                <p className="text-xl font-bold text-emerald-900 mt-1">{formatCurrency(caseFinancialSummary.totalPaid)}</p>
-                <p className="text-xs text-emerald-600 mt-1">{formatCurrency(caseFinancialSummary.outstandingBalance)} outstanding</p>
+              <div className="bg-success/15 rounded-xl p-4 border border-success/25">
+                <p className="text-xs font-medium text-success uppercase tracking-wide">Received</p>
+                <p className="text-xl font-bold text-success mt-1">{formatCurrency(caseFinancialSummary.totalPaid)}</p>
+                <p className="text-xs text-success mt-1">{formatCurrency(caseFinancialSummary.outstandingBalance)} outstanding</p>
               </div>
-              <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
-                <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">Expenses</p>
-                <p className="text-xl font-bold text-amber-900 mt-1">{formatCurrency(caseFinancialSummary.totalExpenses)}</p>
+              <div className="bg-warning-muted rounded-xl p-4 border border-warning/20">
+                <p className="text-xs font-medium text-warning uppercase tracking-wide">Expenses</p>
+                <p className="text-xl font-bold text-warning mt-1">{formatCurrency(caseFinancialSummary.totalExpenses)}</p>
                 <p className={`text-xs mt-1 flex items-center gap-1 ${marginColor}`}>
                   <MarginIcon className="w-3 h-3" />
                   {margin.toFixed(1)}% margin
@@ -119,23 +119,23 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-green-600" />
+                  <FileText className="w-5 h-5 text-success" />
                   Quotes
                 </h3>
-                <Button onClick={() => onSetShowQuoteModal(true)} style={{ backgroundColor: '#10b981' }} size="sm">
+                <Button onClick={() => onSetShowQuoteModal(true)} style={{ backgroundColor: 'rgb(var(--color-success))' }} size="sm">
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
               {quotes.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 bg-gradient-to-br from-green-50 to-white rounded-lg border-2 border-dashed border-green-200">
-                  <DollarSign className="w-12 h-12 mx-auto mb-3 text-green-300" />
+                <div className="text-center py-12 text-slate-500 bg-success-muted/40 rounded-lg border-2 border-dashed border-success/30">
+                  <DollarSign className="w-12 h-12 mx-auto mb-3 text-success/40" />
                   <p className="font-medium text-slate-600">No quotes generated for this case yet.</p>
                   <p className="text-sm text-slate-500 mt-1">Create a quote using the button above.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {quotes.map((quote) => (
-                    <div key={quote.id} className="border border-slate-200 rounded-lg p-4 hover:border-green-400 hover:shadow-md transition-all bg-white">
+                    <div key={quote.id} className="border border-slate-200 rounded-lg p-4 hover:border-success/60 hover:shadow-md transition-all bg-white">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
@@ -204,28 +204,28 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-600" />
+                  <FileText className="w-5 h-5 text-primary" />
                   Invoices
                 </h3>
-                <Button onClick={() => onSetShowInvoiceModal(true)} style={{ backgroundColor: '#3b82f6' }} size="sm">
+                <Button onClick={() => onSetShowInvoiceModal(true)} size="sm">
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
               {invoices.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 bg-gradient-to-br from-blue-50 to-white rounded-lg border-2 border-dashed border-blue-200">
-                  <FileText className="w-12 h-12 mx-auto mb-3 text-blue-300" />
+                <div className="text-center py-12 text-slate-500 bg-info-muted/40 rounded-lg border-2 border-dashed border-info/30">
+                  <FileText className="w-12 h-12 mx-auto mb-3 text-info/40" />
                   <p className="font-medium text-slate-600">No invoices created for this case yet.</p>
                   <p className="text-sm text-slate-500 mt-1">Create an invoice using the button above.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {invoices.map((invoice) => (
-                    <div key={invoice.id} className="border border-slate-200 rounded-lg p-4 hover:border-blue-400 hover:shadow-md transition-all bg-white">
+                    <div key={invoice.id} className="border border-slate-200 rounded-lg p-4 hover:border-primary/60 hover:shadow-md transition-all bg-white">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="font-semibold text-slate-900">{invoice.invoice_number || 'Draft'}</span>
-                            <Badge variant="custom" color={invoice.invoice_type === 'proforma' ? '#8b5cf6' : '#3b82f6'} size="sm">
+                            <Badge variant="custom" color={invoice.invoice_type === 'proforma' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-primary))'} size="sm">
                               {invoice.invoice_type === 'proforma' ? 'Proforma' : 'Tax Invoice'}
                             </Badge>
                             <Badge
@@ -235,7 +235,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                                   : invoice.status === 'sent' ? '#3b82f6'
                                   : invoice.status === 'paid' ? '#10b981'
                                   : invoice.status === 'overdue' ? '#ef4444'
-                                  : invoice.status === 'converted' ? '#6366f1'
+                                  : invoice.status === 'converted' ? 'rgb(var(--color-accent))'
                                   : '#f59e0b'
                               }
                               size="sm"
@@ -248,7 +248,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                                   e.stopPropagation();
                                   navigate(`/invoices/${invoice.converted_to_invoice_id}`);
                                 }}
-                                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                                className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                                 title="View converted tax invoice"
                               >
                                 <ExternalLink className="w-3 h-3" />
@@ -277,7 +277,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                             )}
                           </p>
                           {invoice.amount_paid > 0 && (
-                            <p className="text-sm text-green-600">
+                            <p className="text-sm text-success">
                               Paid: {formatCurrencyAmount(
                                 invoice.amount_paid,
                                 invoice.currency_symbol || 'USD',
@@ -285,7 +285,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                                 invoice.decimal_places || 2
                               )}
                               {invoice.balance_due > 0 && (
-                                <span className="text-orange-600 ml-2">
+                                <span className="text-warning ml-2">
                                   • Balance: {formatCurrencyAmount(
                                     invoice.balance_due,
                                     invoice.currency_symbol || 'USD',
@@ -333,7 +333,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                               size="sm"
                               onClick={() => onHandleRecordPayment(invoice)}
                               title="Record Payment"
-                              style={{ backgroundColor: '#10b981', color: 'white' }}
+                              style={{ backgroundColor: 'rgb(var(--color-success))', color: 'rgb(var(--color-success-foreground))' }}
                             >
                               <CreditCard className="w-4 h-4" />
                             </Button>
@@ -347,7 +347,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                                 onSetShowConvertProformaModal(true);
                               }}
                               title="Convert to Tax Invoice"
-                              style={{ backgroundColor: '#3b82f6', color: 'white' }}
+                              style={{ backgroundColor: 'rgb(var(--color-primary))', color: 'rgb(var(--color-primary-foreground))' }}
                             >
                               <RefreshCw className="w-4 h-4" />
                             </Button>
@@ -373,15 +373,15 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
-              <Wallet className="w-5 h-5 text-emerald-600" />
+              <Wallet className="w-5 h-5 text-success" />
               Payment History
             </h3>
             <div className="space-y-2">
               {payments.map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+                <div key={payment.id} className="flex items-center justify-between p-3 bg-success-muted border border-success/20 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                      <CreditCard className="w-4 h-4 text-emerald-600" />
+                    <div className="w-8 h-8 bg-success/20 rounded-full flex items-center justify-center">
+                      <CreditCard className="w-4 h-4 text-success" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-slate-900">{payment.payment_number}</p>
@@ -392,7 +392,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                       </p>
                     </div>
                   </div>
-                  <p className="text-sm font-bold text-emerald-700">{formatDate(payment.payment_date)}</p>
+                  <p className="text-sm font-bold text-success">{formatDate(payment.payment_date)}</p>
                 </div>
               ))}
             </div>
@@ -405,15 +405,15 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2 mb-4">
-              <Receipt className="w-5 h-5 text-amber-600" />
+              <Receipt className="w-5 h-5 text-warning" />
               Case Expenses
             </h3>
             <div className="space-y-2">
               {expenses.map((expense) => (
-                <div key={expense.id} className="flex items-center justify-between p-3 bg-amber-50 border border-amber-100 rounded-lg">
+                <div key={expense.id} className="flex items-center justify-between p-3 bg-warning-muted border border-warning/20 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                      <Receipt className="w-4 h-4 text-amber-600" />
+                    <div className="w-8 h-8 bg-warning/20 rounded-full flex items-center justify-center">
+                      <Receipt className="w-4 h-4 text-warning" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-slate-900">
@@ -428,7 +428,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-amber-700">{expense.amount?.toFixed(2)}</p>
+                    <p className="text-sm font-bold text-warning">{expense.amount?.toFixed(2)}</p>
                     <Badge
                       variant="custom"
                       color={expense.status === 'paid' ? '#10b981' : expense.status === 'approved' ? '#3b82f6' : '#64748b'}

@@ -62,8 +62,8 @@ export const ExtractCloneConfirmationModal: React.FC<ExtractCloneConfirmationMod
       >
         <div className="flex items-center justify-between p-5 border-b border-slate-200">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <div className="w-8 h-8 bg-success-muted rounded-lg flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4 text-success" />
             </div>
             <h2 className="text-lg font-semibold text-slate-900">Extract Clone Drive</h2>
           </div>
@@ -77,10 +77,10 @@ export const ExtractCloneConfirmationModal: React.FC<ExtractCloneConfirmationMod
         </div>
 
         <div className="p-5">
-          <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-500 rounded">
+          <div className="mb-4 p-3 bg-success-muted border-l-4 border-success rounded">
             <div className="flex gap-2">
-              <Info className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-green-900">
+              <Info className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-success">
                 This will mark the clone as extracted and record the extraction date and time. The data has been successfully extracted from this clone drive.
               </p>
             </div>
@@ -125,7 +125,7 @@ export const ExtractCloneConfirmationModal: React.FC<ExtractCloneConfirmationMod
                 </div>
                 <div className="text-xs text-slate-900 font-mono bg-white p-2 rounded border border-slate-200 break-all">
                   {clone.storage_server && (
-                    <span className="text-blue-600 font-semibold">{clone.storage_server}:</span>
+                    <span className="text-primary font-semibold">{clone.storage_server}:</span>
                   )}
                   {clone.storage_path}
                 </div>
@@ -161,14 +161,14 @@ export const ExtractCloneConfirmationModal: React.FC<ExtractCloneConfirmationMod
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="bg-info-muted border border-info/30 rounded-lg p-3">
               <div className="flex gap-2">
-                <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <div className="text-sm font-medium text-blue-900 mb-1">
+                  <div className="text-sm font-medium text-info mb-1">
                     Extraction will be recorded as:
                   </div>
-                  <div className="text-sm text-blue-800">
+                  <div className="text-sm text-info">
                     {formatDate(new Date().toISOString())}
                   </div>
                 </div>
@@ -187,7 +187,7 @@ export const ExtractCloneConfirmationModal: React.FC<ExtractCloneConfirmationMod
             <Button
               onClick={onConfirm}
               disabled={isLoading}
-              style={{ backgroundColor: '#10b981' }}
+              style={{ backgroundColor: 'rgb(var(--color-success))' }}
               className="flex items-center gap-2"
             >
               <CheckCircle2 className="w-4 h-4" />

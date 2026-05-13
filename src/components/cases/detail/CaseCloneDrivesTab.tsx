@@ -32,14 +32,14 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <Copy className="w-6 h-6 text-blue-600" />
+                <Copy className="w-6 h-6 text-primary" />
                 Clone Drives & Disk Images
               </h2>
               <p className="text-sm text-slate-600 mt-1">Track disk images and clone storage locations for data recovery</p>
             </div>
             <Button
               onClick={() => onSetShowCloneDriveModal(true)}
-              style={{ backgroundColor: '#3b82f6' }}
+              style={{ backgroundColor: 'rgb(var(--color-primary))' }}
               size="sm"
             >
               <Copy className="w-4 h-4 mr-2" />
@@ -99,7 +99,7 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
           <Card>
             <div className="p-4">
               <div className="text-sm text-slate-600">Active</div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-success">
                 {cloneDrives.filter(c => c.status === 'active').length}
               </div>
             </div>
@@ -107,7 +107,7 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
           <Card>
             <div className="p-4">
               <div className="text-sm text-slate-600">Extracted</div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-info">
                 {cloneDrives.filter(c => c.status === 'extracted').length}
               </div>
             </div>

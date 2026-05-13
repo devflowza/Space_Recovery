@@ -125,7 +125,7 @@ export const ArchiveCloneConfirmationModal: React.FC<ArchiveCloneConfirmationMod
                 </div>
                 <div className="text-xs text-slate-900 font-mono bg-white p-2 rounded border border-slate-200 break-all">
                   {clone.storage_server && (
-                    <span className="text-blue-600 font-semibold">{clone.storage_server}:</span>
+                    <span className="text-primary font-semibold">{clone.storage_server}:</span>
                   )}
                   {clone.storage_path}
                 </div>
@@ -161,14 +161,14 @@ export const ArchiveCloneConfirmationModal: React.FC<ArchiveCloneConfirmationMod
               </div>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="bg-warning-muted border border-warning/30 rounded-lg p-3">
               <div className="flex gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <div className="text-sm font-medium text-amber-900 mb-1">
+                  <div className="text-sm font-medium text-warning mb-1">
                     Physical Drive Availability
                   </div>
-                  <p className="text-sm text-amber-800">
+                  <p className="text-sm text-warning">
                     If this clone is stored on a physical drive, that drive will be marked as available for reuse once archived.
                   </p>
                 </div>

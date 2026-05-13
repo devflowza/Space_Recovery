@@ -181,13 +181,13 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
 
         {isCalculating ? (
           <div className="p-8 text-center">
-            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
             <p className="text-slate-500 mt-3">Calculating VAT...</p>
           </div>
         ) : summary ? (
           <div className="bg-slate-50 rounded-xl p-6 space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <Calculator className="w-5 h-5 text-blue-600" />
+              <Calculator className="w-5 h-5 text-primary" />
               <h3 className="font-semibold text-slate-900">VAT Summary</h3>
               <span className="text-sm text-slate-500 ml-auto">
                 {summary.recordCount} records found
@@ -195,22 +195,22 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white rounded-lg p-4 border border-green-200">
+              <div className="bg-white rounded-lg p-4 border border-success/30">
                 <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-700">Output VAT (Sales)</span>
+                  <TrendingUp className="w-4 h-4 text-success" />
+                  <span className="text-sm font-medium text-success">Output VAT (Sales)</span>
                 </div>
-                <p className="text-lg font-bold text-green-700">
+                <p className="text-lg font-bold text-success">
                   {formatCurrency(summary.totalOutputVAT)}
                 </p>
               </div>
 
-              <div className="bg-white rounded-lg p-4 border border-red-200">
+              <div className="bg-white rounded-lg p-4 border border-danger/30">
                 <div className="flex items-center gap-2 mb-2">
-                  <TrendingDown className="w-4 h-4 text-red-600" />
-                  <span className="text-sm font-medium text-red-700">Input VAT (Purchases)</span>
+                  <TrendingDown className="w-4 h-4 text-danger" />
+                  <span className="text-sm font-medium text-danger">Input VAT (Purchases)</span>
                 </div>
-                <p className="text-lg font-bold text-red-700">
+                <p className="text-lg font-bold text-danger">
                   {formatCurrency(summary.totalInputVAT)}
                 </p>
               </div>
@@ -218,20 +218,20 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
 
             <div className={`rounded-lg p-4 border ${
               summary.netVAT >= 0
-                ? 'bg-blue-50 border-blue-200'
+                ? 'bg-info-muted border-info/30'
                 : 'bg-orange-50 border-orange-200'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileCheck className={`w-5 h-5 ${
-                    summary.netVAT >= 0 ? 'text-blue-600' : 'text-orange-600'
+                    summary.netVAT >= 0 ? 'text-info' : 'text-orange-600'
                   }`} />
                   <span className="font-medium text-slate-900">
                     Net VAT {summary.netVAT >= 0 ? 'Payable' : 'Reclaimable'}
                   </span>
                 </div>
                 <p className={`text-2xl font-bold ${
-                  summary.netVAT >= 0 ? 'text-blue-700' : 'text-orange-700'
+                  summary.netVAT >= 0 ? 'text-info' : 'text-orange-700'
                 }`}>
                   {formatCurrency(Math.abs(summary.netVAT))}
                 </p>
@@ -264,7 +264,6 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
             onClick={() => handleSubmit(true)}
             disabled={isSubmitting || !summary}
             className="flex items-center gap-2"
-            style={{ backgroundColor: '#3b82f6' }}
           >
             <Send className="w-4 h-4" />
             {isSubmitting ? 'Saving...' : 'Submit for Review'}

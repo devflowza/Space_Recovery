@@ -63,15 +63,15 @@ interface ProfessionalReportFormModalProps {
   onSuccess: () => void;
 }
 
-const CATEGORY_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  general: { label: 'General', color: '#3b82f6', icon: User },
-  diagnostic: { label: 'Diagnostic', color: '#ef4444', icon: AlertCircle },
-  solution: { label: 'Solution', color: '#10b981', icon: Sparkles },
-  timeline: { label: 'Timeline', color: '#f59e0b', icon: Clock },
-  technical: { label: 'Technical', color: '#6366f1', icon: HardDrive },
-  financial: { label: 'Financial', color: '#a855f7', icon: DollarSign },
-  compliance: { label: 'Compliance', color: '#8b5cf6', icon: Shield },
-  risk: { label: 'Risk', color: '#dc2626', icon: AlertTriangle },
+const CATEGORY_CONFIG: Record<string, { label: string; color: string; tint: string; icon: React.ElementType }> = {
+  general: { label: 'General', color: '#3b82f6', tint: '#3b82f620', icon: User },
+  diagnostic: { label: 'Diagnostic', color: '#ef4444', tint: '#ef444420', icon: AlertCircle },
+  solution: { label: 'Solution', color: '#10b981', tint: '#10b98120', icon: Sparkles },
+  timeline: { label: 'Timeline', color: '#f59e0b', tint: '#f59e0b20', icon: Clock },
+  technical: { label: 'Technical', color: 'rgb(var(--color-accent))', tint: 'rgb(var(--color-accent) / 0.12)', icon: HardDrive },
+  financial: { label: 'Financial', color: 'rgb(var(--color-accent))', tint: 'rgb(var(--color-accent) / 0.12)', icon: DollarSign },
+  compliance: { label: 'Compliance', color: 'rgb(var(--color-accent))', tint: 'rgb(var(--color-accent) / 0.12)', icon: Shield },
+  risk: { label: 'Risk', color: '#dc2626', tint: '#dc262620', icon: AlertTriangle },
 };
 
 export function ProfessionalReportFormModal({
@@ -298,7 +298,7 @@ DOM: ${deviceData.dom || 'N/A'}`;
         <div className="flex items-center justify-between pb-3 border-b border-slate-200">
           <div className="flex-1 flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-600" />
+              <FileText className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-bold text-slate-900">Create Professional Report</h2>
             </div>
             <div className="h-4 w-px bg-slate-300" />
@@ -312,7 +312,7 @@ DOM: ${deviceData.dom || 'N/A'}`;
               <div className="flex items-center gap-2">
                 <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300"
+                    className="h-full bg-primary transition-all duration-300"
                     style={{ width: `${getCompletionPercentage()}%` }}
                   />
                 </div>
@@ -341,7 +341,7 @@ DOM: ${deviceData.dom || 'N/A'}`;
                     onClick={() => setSelectedType(type.key)}
                     className={`w-full flex items-center gap-2 p-2.5 rounded-lg text-left transition-all ${
                       isSelected
-                        ? 'bg-blue-50 border-2 border-blue-400'
+                        ? 'bg-primary/10 border-2 border-primary/60'
                         : 'border-2 border-transparent hover:bg-slate-50'
                     }`}
                     title={type.description}
@@ -360,7 +360,7 @@ DOM: ${deviceData.dom || 'N/A'}`;
                         {type.name}
                       </div>
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />}
+                    {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
                   </button>
                 );
               })}
@@ -380,7 +380,7 @@ DOM: ${deviceData.dom || 'N/A'}`;
             {loadingSections ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="inline-block w-6 h-6 border-3 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+                  <div className="inline-block w-6 h-6 border-3 border-slate-200 border-t-primary rounded-full animate-spin"></div>
                   <p className="text-xs text-slate-500 mt-2">Loading sections...</p>
                 </div>
               </div>
@@ -407,7 +407,7 @@ DOM: ${deviceData.dom || 'N/A'}`;
                     >
                       <div className="flex-shrink-0 mt-0.5">
                         {hasContent ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <CheckCircle className="w-4 h-4 text-success" />
                         ) : (
                           <Circle className="w-4 h-4 text-slate-300" />
                         )}
@@ -461,7 +461,7 @@ DOM: ${deviceData.dom || 'N/A'}`;
                         <div
                           className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                           style={{
-                            backgroundColor: `${categoryConfig.color}20`,
+                            backgroundColor: categoryConfig.tint,
                             color: categoryConfig.color,
                           }}
                         >
@@ -505,7 +505,7 @@ DOM: ${deviceData.dom || 'N/A'}`;
                         <button
                           key={preset.id}
                           onClick={() => handlePresetSelect(activeSectionKey!, preset)}
-                          className="px-3 py-1.5 bg-white border border-slate-200 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
+                          className="px-3 py-1.5 bg-white border border-slate-200 rounded-md hover:border-primary/40 hover:bg-primary/10 transition-colors text-left"
                           title={preset.preset_content}
                         >
                           <div className="text-xs font-medium text-slate-900">

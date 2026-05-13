@@ -24,7 +24,7 @@ export const AccountStep = ({
   const [showConfirm, setShowConfirm] = useState(false);
 
   const inputClasses = (hasError: boolean) =>
-    `w-full bg-slate-800/50 border ${hasError ? 'border-red-500/60' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-600 font-body text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all`;
+    `w-full bg-slate-800/50 border ${hasError ? 'border-danger/60' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-600 font-body text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all`;
 
   return (
     <div className="space-y-4">
@@ -34,7 +34,7 @@ export const AccountStep = ({
         transition={{ delay: 0.1 }}
       >
         <label className="block text-sm font-medium text-slate-300 font-body mb-2">
-          Full Name <span className="text-blue-400">*</span>
+          Full Name <span className="text-primary">*</span>
         </label>
         <input
           type="text"
@@ -43,7 +43,7 @@ export const AccountStep = ({
           placeholder="John Doe"
           className={inputClasses(!!errors.fullName)}
         />
-        {errors.fullName && <p className="text-red-400 text-xs mt-1 font-body">{errors.fullName}</p>}
+        {errors.fullName && <p className="text-danger text-xs mt-1 font-body">{errors.fullName}</p>}
       </motion.div>
 
       <motion.div
@@ -52,7 +52,7 @@ export const AccountStep = ({
         transition={{ delay: 0.15 }}
       >
         <label className="block text-sm font-medium text-slate-300 font-body mb-2">
-          Email Address <span className="text-blue-400">*</span>
+          Email Address <span className="text-primary">*</span>
         </label>
         <input
           type="email"
@@ -61,7 +61,7 @@ export const AccountStep = ({
           placeholder="john@acme.com"
           className={inputClasses(!!errors.email)}
         />
-        {errors.email && <p className="text-red-400 text-xs mt-1 font-body">{errors.email}</p>}
+        {errors.email && <p className="text-danger text-xs mt-1 font-body">{errors.email}</p>}
       </motion.div>
 
       <motion.div
@@ -70,7 +70,7 @@ export const AccountStep = ({
         transition={{ delay: 0.2 }}
       >
         <label className="block text-sm font-medium text-slate-300 font-body mb-2">
-          Password <span className="text-blue-400">*</span>
+          Password <span className="text-primary">*</span>
         </label>
         <div className="relative">
           <input
@@ -88,7 +88,7 @@ export const AccountStep = ({
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-        {errors.password && <p className="text-red-400 text-xs mt-1 font-body">{errors.password}</p>}
+        {errors.password && <p className="text-danger text-xs mt-1 font-body">{errors.password}</p>}
         <PasswordStrength password={formData.password} />
       </motion.div>
 
@@ -98,7 +98,7 @@ export const AccountStep = ({
         transition={{ delay: 0.25 }}
       >
         <label className="block text-sm font-medium text-slate-300 font-body mb-2">
-          Confirm Password <span className="text-blue-400">*</span>
+          Confirm Password <span className="text-primary">*</span>
         </label>
         <div className="relative">
           <input
@@ -116,7 +116,7 @@ export const AccountStep = ({
             {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-        {errors.confirmPassword && <p className="text-red-400 text-xs mt-1 font-body">{errors.confirmPassword}</p>}
+        {errors.confirmPassword && <p className="text-danger text-xs mt-1 font-body">{errors.confirmPassword}</p>}
       </motion.div>
 
       <motion.div
@@ -144,7 +144,7 @@ export const AccountStep = ({
         </button>
         <Button
           onClick={onNext}
-          className="flex-1 !bg-blue-600 hover:!bg-blue-500 !text-white !rounded-xl !py-3 !font-body disabled:!opacity-40"
+          className="flex-1 !bg-primary hover:!bg-primary/90 !text-primary-foreground !rounded-xl !py-3 !font-body disabled:!opacity-40"
         >
           Continue
         </Button>

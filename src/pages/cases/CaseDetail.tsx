@@ -221,7 +221,7 @@ export const CaseDetail: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-600 mt-4">Loading case details...</p>
         </div>
       </div>
@@ -232,7 +232,7 @@ export const CaseDetail: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-red-300 mx-auto mb-4" />
+          <AlertCircle className="w-16 h-16 text-danger/40 mx-auto mb-4" />
           <p className="text-slate-500 text-lg">Error loading case</p>
           <p className="text-slate-400 text-sm mt-2">{(caseError as Error).message}</p>
           <Button onClick={() => navigate('/cases')} className="mt-4">
@@ -273,7 +273,7 @@ export const CaseDetail: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-3 mb-2 flex-wrap">
-              <h1 className="text-2xl md:text-3xl font-bold text-blue-600">Case #{caseData.case_no}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-primary">Case #{caseData.case_no}</h1>
               <Badge variant="custom" color={getStatusColor(caseData.status)} size="lg">
                 {getStatusDisplayName(caseData.status)}
               </Badge>
@@ -330,7 +330,7 @@ export const CaseDetail: React.FC = () => {
             </Button>
             <Button
               onClick={() => modals.setShowCheckoutModal(true)}
-              style={{ backgroundColor: '#8b5cf6' }}
+              style={{ backgroundColor: 'rgb(var(--color-accent))' }}
               size="sm"
               title="Device Checkout"
             >
@@ -349,7 +349,7 @@ export const CaseDetail: React.FC = () => {
             {profile?.role === 'admin' && (
               <Button
                 onClick={handleDeleteCase}
-                style={{ backgroundColor: '#dc2626' }}
+                style={{ backgroundColor: 'rgb(var(--color-danger))' }}
                 size="sm"
                 title="Delete Case Permanently"
               >
@@ -362,10 +362,10 @@ export const CaseDetail: React.FC = () => {
 
         {/* Quick Info Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-blue-50/30 border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+          <div className="bg-info-muted/30 border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <User className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-info-muted rounded-lg flex items-center justify-center">
+                <User className="w-5 h-5 text-info" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-slate-500 font-medium">Customer</div>
@@ -374,10 +374,10 @@ export const CaseDetail: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-green-50/30 border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+          <div className="bg-success-muted/30 border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Settings className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 bg-success-muted rounded-lg flex items-center justify-center">
+                <Settings className="w-5 h-5 text-success" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-slate-500 font-medium">Service</div>
@@ -386,10 +386,10 @@ export const CaseDetail: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-violet-50/30 border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+          <div className="bg-accent/10 border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
-                <Package className="w-5 h-5 text-violet-600" />
+              <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+                <Package className="w-5 h-5 text-accent" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-slate-500 font-medium">Devices</div>
@@ -398,10 +398,10 @@ export const CaseDetail: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-amber-50/30 border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+          <div className="bg-warning-muted/30 border border-slate-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                <Activity className="w-5 h-5 text-amber-600" />
+              <div className="w-10 h-10 bg-warning-muted rounded-lg flex items-center justify-center">
+                <Activity className="w-5 h-5 text-warning" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-slate-500 font-medium">Priority</div>
@@ -423,7 +423,7 @@ export const CaseDetail: React.FC = () => {
                 onClick={() => setActiveTab(tab.id as TabType)}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
                   activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600 bg-blue-50'
+                    ? 'border-primary text-primary bg-primary/10'
                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >

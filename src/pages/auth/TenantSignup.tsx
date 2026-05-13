@@ -129,7 +129,7 @@ export const TenantSignup = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-6xl w-full">
           <div className="text-center mb-8">
-            <Building2 className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+            <Building2 className="w-12 h-12 text-primary mx-auto mb-4" />
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Choose Your Plan</h1>
             <p className="text-gray-600">Select the plan that best fits your lab's needs</p>
           </div>
@@ -158,14 +158,14 @@ export const TenantSignup = () => {
                   key={plan.id}
                   className={`p-6 cursor-pointer transition-all ${
                     isSelected
-                      ? 'border-2 border-blue-500 shadow-lg'
-                      : 'border border-gray-200 hover:border-blue-300'
+                      ? 'border-2 border-primary shadow-lg'
+                      : 'border border-gray-200 hover:border-primary/50'
                   }`}
                   onClick={() => setSelectedPlanId(plan.id)}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                    {isSelected && <Check className="w-6 h-6 text-blue-500" />}
+                    {isSelected && <Check className="w-6 h-6 text-primary" />}
                   </div>
 
                   <div className="mb-4">
@@ -206,7 +206,7 @@ export const TenantSignup = () => {
 
                   {plan.slug === 'professional' && (
                     <div className="mt-4">
-                      <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+                      <span className="inline-block bg-info-muted text-info text-xs font-semibold px-2 py-1 rounded">
                         Most Popular
                       </span>
                     </div>
@@ -226,7 +226,7 @@ export const TenantSignup = () => {
             </Button>
             <p className="text-sm text-gray-500 mt-4">
               Already have an account?{' '}
-              <Link to="/login" className="text-blue-500 hover:underline">
+              <Link to="/login" className="text-primary hover:underline">
                 Log in
               </Link>
             </p>
@@ -240,7 +240,7 @@ export const TenantSignup = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="max-w-md w-full p-8">
         <div className="text-center mb-8">
-          <Building2 className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+          <Building2 className="w-12 h-12 text-primary mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h1>
           <p className="text-gray-600">Start your 14-day free trial</p>
         </div>
@@ -274,7 +274,7 @@ export const TenantSignup = () => {
               value={selectedCountryId}
               onChange={(e) => setSelectedCountryId(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
             >
               <option value="">Select a country...</option>
               {countries.map((country) => (
@@ -364,7 +364,7 @@ export const TenantSignup = () => {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-500 hover:underline">
+          <Link to="/login" className="text-primary hover:underline">
             Log in
           </Link>
         </p>

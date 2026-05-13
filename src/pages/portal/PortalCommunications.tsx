@@ -63,7 +63,7 @@ export const PortalCommunications: React.FC = () => {
       case 'phone':
         return '#10b981';
       case 'meeting':
-        return '#8b5cf6';
+        return 'rgb(var(--color-accent))';
       case 'sms':
         return '#f59e0b';
       default:
@@ -75,7 +75,7 @@ export const PortalCommunications: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-cyan-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading communications...</p>
         </div>
       </div>

@@ -25,7 +25,7 @@ const statusConfig = {
 };
 
 const typeConfig = {
-  proforma: { label: 'Proforma Invoice', color: '#8b5cf6' },
+  proforma: { label: 'Proforma Invoice', color: 'rgb(var(--color-accent))' },
   tax: { label: 'Tax Invoice', color: '#0ea5e9' },
 };
 
@@ -446,20 +446,20 @@ export const InvoiceDetailPage: React.FC = () => {
                 </div>
 
                 {isConverted && invoice.converted_to_invoice_id && (
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="mt-4 p-3 bg-info-muted border border-info/30 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <Lock className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-900">Read-Only (Converted)</span>
+                      <Lock className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium text-info">Read-Only (Converted)</span>
                     </div>
                     <button
                       onClick={() => navigate(`/invoices/${invoice.converted_to_invoice_id}`)}
-                      className="flex items-center gap-2 text-sm text-blue-700 hover:text-blue-900 font-medium transition-colors"
+                      className="flex items-center gap-2 text-sm text-info hover:text-info/80 font-medium transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
                       View Tax Invoice
                     </button>
                     {invoice.converted_at && (
-                      <p className="text-xs text-blue-600 mt-1">
+                      <p className="text-xs text-info mt-1">
                         Converted on {new Date(invoice.converted_at).toLocaleDateString()}
                       </p>
                     )}
@@ -490,12 +490,12 @@ export const InvoiceDetailPage: React.FC = () => {
 
               {/* Error Messages */}
               {(translationsError || settingsError || resourceError) && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <div className="bg-danger-muted border border-danger/30 rounded-lg p-3 mb-4">
                   <div className="flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-red-900 mb-1">Cannot Generate PDF</h4>
-                      <p className="text-sm text-red-700">
+                      <h4 className="text-sm font-semibold text-danger mb-1">Cannot Generate PDF</h4>
+                      <p className="text-sm text-danger">
                         {translationsError && translationsErrorMessage}
                         {settingsError && resourceError}
                       </p>
@@ -506,10 +506,10 @@ export const InvoiceDetailPage: React.FC = () => {
 
               {/* Loading Status */}
               {(isLoadingTranslations || isLoadingSettings) && !translationsError && !settingsError && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <div className="bg-info-muted border border-info/30 rounded-lg p-3 mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-sm text-blue-900">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span className="text-sm text-info">
                       Loading resources...
                     </span>
                   </div>
@@ -606,14 +606,14 @@ export const InvoiceDetailPage: React.FC = () => {
                 {invoice.amount_paid > 0 && (
                   <>
                     <div>
-                      <span className="text-green-700">Paid:</span>
-                      <span className="ml-2 text-green-600 font-bold">
+                      <span className="text-success">Paid:</span>
+                      <span className="ml-2 text-success font-bold">
                         {formatCurrency(invoice.amount_paid)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-orange-700">Balance Due:</span>
-                      <span className="ml-2 text-orange-600 font-bold">
+                      <span className="text-warning">Balance Due:</span>
+                      <span className="ml-2 text-warning font-bold">
                         {formatCurrency(invoice.balance_due || (invoice.total_amount - invoice.amount_paid))}
                       </span>
                     </div>

@@ -82,36 +82,36 @@ export const ChangeCompanyModal: React.FC<ChangeCompanyModalProps> = ({
       <div className="space-y-6">
         {/* Current Company Info */}
         {currentCompany ? (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-green-900 mb-3 flex items-center gap-2">
+          <div className="bg-success-muted border border-success/30 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-success mb-3 flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               Current Company
             </h3>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <Hash className="w-3 h-3 text-green-600" />
-                <span className="text-green-900 font-medium">{currentCompany.company_number}</span>
+                <Hash className="w-3 h-3 text-success" />
+                <span className="text-success font-medium">{currentCompany.company_number}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <Building2 className="w-3 h-3 text-green-600" />
-                <span className="text-green-900 font-semibold">{currentCompany.name || currentCompany.company_name}</span>
+                <Building2 className="w-3 h-3 text-success" />
+                <span className="text-success font-semibold">{currentCompany.name || currentCompany.company_name}</span>
               </div>
               {currentCompany.email && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Mail className="w-3 h-3 text-green-600" />
-                  <span className="text-green-700">{currentCompany.email}</span>
+                  <Mail className="w-3 h-3 text-success" />
+                  <span className="text-success">{currentCompany.email}</span>
                 </div>
               )}
               {currentCompany.phone && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Phone className="w-3 h-3 text-green-600" />
-                  <span className="text-green-700">{currentCompany.phone}</span>
+                  <Phone className="w-3 h-3 text-success" />
+                  <span className="text-success">{currentCompany.phone}</span>
                 </div>
               )}
               {(currentCompany.geo_cities?.name || currentCompany.geo_countries?.name) && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Globe className="w-3 h-3 text-green-600" />
-                  <span className="text-green-700">
+                  <Globe className="w-3 h-3 text-success" />
+                  <span className="text-success">
                     {[currentCompany.geo_cities?.name, currentCompany.geo_countries?.name].filter(Boolean).join(', ')}
                   </span>
                 </div>
@@ -148,8 +148,8 @@ export const ChangeCompanyModal: React.FC<ChangeCompanyModalProps> = ({
 
         {/* Warning Message */}
         {hasChanged && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <p className="text-sm text-amber-900">
+          <div className="bg-warning-muted border border-warning/30 rounded-lg p-3">
+            <p className="text-sm text-warning">
               <strong>Note:</strong> Changing the company will update this case's business association.
               This action will be logged in the case history.
             </p>
@@ -168,7 +168,7 @@ export const ChangeCompanyModal: React.FC<ChangeCompanyModalProps> = ({
           <Button
             onClick={handleConfirm}
             disabled={!hasChanged || isLoading}
-            style={{ backgroundColor: '#10b981' }}
+            style={{ backgroundColor: 'rgb(var(--color-success))' }}
           >
             {isLoading ? 'Changing Company...' : 'Change Company'}
           </Button>

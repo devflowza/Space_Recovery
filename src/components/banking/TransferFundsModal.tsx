@@ -97,16 +97,16 @@ export const TransferFundsModal: React.FC<TransferFundsModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title="Transfer Funds" size="large">
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="bg-danger-muted border border-danger/30 rounded-lg p-3 flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-danger">{error}</p>
           </div>
         )}
 
         {warning && (
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-orange-800">{warning}</p>
+          <div className="bg-warning-muted border border-warning/30 rounded-lg p-3 flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-warning">{warning}</p>
           </div>
         )}
 
@@ -124,7 +124,7 @@ export const TransferFundsModal: React.FC<TransferFundsModalProps> = ({
             <select
               value={formData.from_account_id}
               onChange={(e) => setFormData({ ...formData, from_account_id: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               required
             >
               <option value="">Select Source</option>
@@ -142,7 +142,7 @@ export const TransferFundsModal: React.FC<TransferFundsModalProps> = ({
           </div>
 
           <div className="pb-2">
-            <ArrowRight className="w-6 h-6 text-blue-600" />
+            <ArrowRight className="w-6 h-6 text-primary" />
           </div>
 
           <div>
@@ -150,7 +150,7 @@ export const TransferFundsModal: React.FC<TransferFundsModalProps> = ({
             <select
               value={formData.to_account_id}
               onChange={(e) => setFormData({ ...formData, to_account_id: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               required
             >
               <option value="">Select Destination</option>
@@ -192,7 +192,7 @@ export const TransferFundsModal: React.FC<TransferFundsModalProps> = ({
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="Reason for transfer..."
           />
         </div>

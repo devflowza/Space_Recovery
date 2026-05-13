@@ -65,30 +65,30 @@ export const ChangeClientModal: React.FC<ChangeClientModalProps> = ({
       <div className="space-y-6">
         {/* Current Client Info */}
         {currentCustomer && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
+          <div className="bg-info-muted border border-info/30 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-info mb-3 flex items-center gap-2">
               <User className="w-4 h-4" />
               Current Client
             </h3>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <Hash className="w-3 h-3 text-blue-600" />
-                <span className="text-blue-900 font-medium">{currentCustomer.customer_number}</span>
+                <Hash className="w-3 h-3 text-info" />
+                <span className="text-info font-medium">{currentCustomer.customer_number}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <User className="w-3 h-3 text-blue-600" />
-                <span className="text-blue-900 font-semibold">{currentCustomer.customer_name}</span>
+                <User className="w-3 h-3 text-info" />
+                <span className="text-info font-semibold">{currentCustomer.customer_name}</span>
               </div>
               {currentCustomer.email && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Mail className="w-3 h-3 text-blue-600" />
-                  <span className="text-blue-700">{currentCustomer.email}</span>
+                  <Mail className="w-3 h-3 text-info" />
+                  <span className="text-info">{currentCustomer.email}</span>
                 </div>
               )}
               {currentCustomer.mobile_number && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Phone className="w-3 h-3 text-blue-600" />
-                  <span className="text-blue-700">{currentCustomer.mobile_number}</span>
+                  <Phone className="w-3 h-3 text-info" />
+                  <span className="text-info">{currentCustomer.mobile_number}</span>
                 </div>
               )}
             </div>
@@ -116,8 +116,8 @@ export const ChangeClientModal: React.FC<ChangeClientModalProps> = ({
 
         {/* Warning Message */}
         {selectedCustomerId && selectedCustomerId !== currentCustomer?.id && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <p className="text-sm text-amber-900">
+          <div className="bg-warning-muted border border-warning/30 rounded-lg p-3">
+            <p className="text-sm text-warning">
               <strong>Note:</strong> Changing the client will update this case's customer information.
               This action will be logged in the case history.
             </p>
@@ -136,7 +136,6 @@ export const ChangeClientModal: React.FC<ChangeClientModalProps> = ({
           <Button
             onClick={handleConfirm}
             disabled={!selectedCustomerId || selectedCustomerId === currentCustomer?.id || isLoading}
-            style={{ backgroundColor: '#3b82f6' }}
           >
             {isLoading ? 'Changing Client...' : 'Change Client'}
           </Button>

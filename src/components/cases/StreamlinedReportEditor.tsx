@@ -352,7 +352,7 @@ export function StreamlinedReportEditor({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
         <div className="bg-white rounded-lg shadow-xl p-8 flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           <p className="text-slate-600">Loading report sections...</p>
         </div>
       </div>
@@ -465,7 +465,7 @@ export function StreamlinedReportEditor({
                   >
                     <div className="flex-shrink-0 mt-0.5">
                       {hasContent ? (
-                        <Check className="w-4 h-4 text-green-600" />
+                        <Check className="w-4 h-4 text-success" />
                       ) : (
                         <div className="w-4 h-4 rounded-full border-2 border-slate-300" />
                       )}
@@ -475,7 +475,7 @@ export function StreamlinedReportEditor({
                         {config.title}
                       </div>
                       {config.required && (
-                        <div className="text-xs text-red-600 font-medium">Required</div>
+                        <div className="text-xs text-danger font-medium">Required</div>
                       )}
                       {hasContent && (
                         <div className="text-xs text-slate-500 mt-1">

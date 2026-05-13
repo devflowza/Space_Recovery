@@ -78,7 +78,7 @@ export const AddStockSaleToInvoiceModal: React.FC<AddStockSaleToInvoiceModalProp
       <div className="space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
-            <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin" />
           </div>
         ) : pendingSales.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-slate-400">
@@ -102,10 +102,10 @@ export const AddStockSaleToInvoiceModal: React.FC<AddStockSaleToInvoiceModalProp
                     key={sale.id}
                     onClick={() => toggleSale(sale.id)}
                     className={`flex items-center gap-4 p-4 cursor-pointer transition-colors ${
-                      isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'
+                      isSelected ? 'bg-info-muted' : 'hover:bg-slate-50'
                     }`}
                   >
-                    <div className="flex-shrink-0 text-blue-600">
+                    <div className="flex-shrink-0 text-primary">
                       {isSelected
                         ? <CheckSquare className="w-5 h-5" />
                         : <Square className="w-5 h-5 text-slate-300" />
@@ -135,14 +135,14 @@ export const AddStockSaleToInvoiceModal: React.FC<AddStockSaleToInvoiceModalProp
             </div>
 
             {selected.size > 0 && (
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between p-3 bg-info-muted rounded-lg border border-info/30">
                 <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">
+                  <ShoppingBag className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-info">
                     {selected.size} sale{selected.size !== 1 ? 's' : ''} selected
                   </span>
                 </div>
-                <span className="text-sm font-bold text-blue-900">{formatCurrency(selectedTotal)}</span>
+                <span className="text-sm font-bold text-info">{formatCurrency(selectedTotal)}</span>
               </div>
             )}
           </>

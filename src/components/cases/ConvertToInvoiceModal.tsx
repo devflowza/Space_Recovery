@@ -55,12 +55,12 @@ export const ConvertToInvoiceModal: React.FC<ConvertToInvoiceModalProps> = ({
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-info-muted border border-info/30 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <FileText className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h4 className="text-sm font-semibold text-blue-900 mb-1">Quote Details</h4>
-              <div className="space-y-1 text-sm text-blue-800">
+              <h4 className="text-sm font-semibold text-info mb-1">Quote Details</h4>
+              <div className="space-y-1 text-sm text-info">
                 <div className="flex justify-between">
                   <span>Quote Number:</span>
                   <span className="font-medium">{quote?.quote_number || 'N/A'}</span>
@@ -73,7 +73,7 @@ export const ConvertToInvoiceModal: React.FC<ConvertToInvoiceModalProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span>Amount:</span>
-                  <span className="font-bold text-green-700">{getTotalAmount()}</span>
+                  <span className="font-bold text-success">{getTotalAmount()}</span>
                 </div>
               </div>
             </div>
@@ -91,12 +91,12 @@ export const ConvertToInvoiceModal: React.FC<ConvertToInvoiceModalProps> = ({
                 onClick={() => setInvoiceType('proforma')}
                 className={`p-4 border-2 rounded-lg text-left transition-all ${
                   invoiceType === 'proforma'
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-primary bg-primary/10'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Receipt className="w-5 h-5 text-blue-600" />
+                  <Receipt className="w-5 h-5 text-primary" />
                   <span className="font-semibold text-slate-900">Proforma Invoice</span>
                 </div>
                 <p className="text-xs text-slate-600">
@@ -109,12 +109,12 @@ export const ConvertToInvoiceModal: React.FC<ConvertToInvoiceModalProps> = ({
                 onClick={() => setInvoiceType('tax_invoice')}
                 className={`p-4 border-2 rounded-lg text-left transition-all ${
                   invoiceType === 'tax_invoice'
-                    ? 'border-green-500 bg-green-50'
+                    ? 'border-success bg-success-muted'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <DollarSign className="w-5 h-5 text-success" />
                   <span className="font-semibold text-slate-900">Tax Invoice</span>
                 </div>
                 <p className="text-xs text-slate-600">
@@ -146,17 +146,17 @@ export const ConvertToInvoiceModal: React.FC<ConvertToInvoiceModalProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="Add any additional notes or special instructions for this invoice..."
             />
           </div>
         </div>
 
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-          <p className="text-sm text-amber-800">
+        <div className="bg-warning-muted border border-warning/30 rounded-lg p-3">
+          <p className="text-sm text-warning">
             <strong>Note:</strong> Converting this quote will:
           </p>
-          <ul className="text-xs text-amber-700 mt-2 ml-4 space-y-1 list-disc">
+          <ul className="text-xs text-warning mt-2 ml-4 space-y-1 list-disc">
             <li>Create a new {invoiceType === 'proforma' ? 'Proforma' : 'Tax'} Invoice with all quote details</li>
             <li>Update the quote status to "Converted"</li>
             <li>Link the invoice back to this quote for reference</li>
@@ -174,7 +174,7 @@ export const ConvertToInvoiceModal: React.FC<ConvertToInvoiceModalProps> = ({
           </Button>
           <Button
             type="submit"
-            style={{ backgroundColor: invoiceType === 'proforma' ? '#3b82f6' : '#10b981' }}
+            style={{ backgroundColor: invoiceType === 'proforma' ? 'rgb(var(--color-primary))' : 'rgb(var(--color-success))' }}
             disabled={isConverting}
             className="shadow-md hover:shadow-lg transition-shadow"
           >

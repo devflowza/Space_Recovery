@@ -64,12 +64,12 @@ interface CloneDriveCardProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  active: { label: 'Active', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  delivered: { label: 'Delivered', color: 'bg-green-100 text-green-700 border-green-200' },
-  preserved: { label: 'Preserved', color: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+  active: { label: 'Active', color: 'bg-info-muted text-info border-info/20' },
+  delivered: { label: 'Delivered', color: 'bg-success-muted text-success border-success/20' },
+  preserved: { label: 'Preserved', color: 'bg-primary/10 text-primary border-primary/20' },
   archived: { label: 'Archived', color: 'bg-slate-100 text-slate-700 border-slate-200' },
-  overwritten: { label: 'Overwritten', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-  deleted: { label: 'Deleted', color: 'bg-red-100 text-red-700 border-red-200' },
+  overwritten: { label: 'Overwritten', color: 'bg-warning-muted text-warning border-warning/20' },
+  deleted: { label: 'Deleted', color: 'bg-danger-muted text-danger border-danger/20' },
 };
 
 export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
@@ -121,8 +121,8 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
     <div className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-            <Copy className="w-5 h-5 text-purple-600" />
+          <div className="w-10 h-10 rounded-lg bg-accent/15 flex items-center justify-center">
+            <Copy className="w-5 h-5 text-accent" />
           </div>
           <div>
             <h3 className="font-semibold text-slate-900">
@@ -136,7 +136,7 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
         <div className="flex flex-col items-end gap-1">
           <Badge variant={statusInfo.color}>{statusInfo.label}</Badge>
           {isOld && clone.status === 'active' && (
-            <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+            <span className="text-xs text-warning font-medium flex items-center gap-1">
               <Clock className="w-3 h-3" />
               Old Clone
             </span>
@@ -147,11 +147,11 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
       <div className="space-y-2 mb-3">
         {/* Clone Disk ID - Prominently displayed */}
         {cloneId && (
-          <div className="flex items-start gap-2 text-sm bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <HardDrive className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="flex items-start gap-2 text-sm bg-info-muted border border-info/30 rounded-lg p-3">
+            <HardDrive className="w-4 h-4 text-info mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <span className="text-blue-700 font-medium">Clone Disk ID:</span>
-              <div className="text-blue-900 font-bold font-mono text-base mt-0.5">
+              <span className="text-info font-medium">Clone Disk ID:</span>
+              <div className="text-info font-bold font-mono text-base mt-0.5">
                 {cloneId}
               </div>
             </div>
@@ -182,7 +182,7 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
             <span className="text-slate-600">Storage Path:</span>
             <div className="text-slate-900 font-mono text-xs break-all bg-slate-50 p-1.5 rounded mt-1">
               {clone.storage_server && (
-                <span className="text-blue-600 font-semibold">{clone.storage_server}:</span>
+                <span className="text-primary font-semibold">{clone.storage_server}:</span>
               )}
               {clone.storage_path}
             </div>
@@ -235,12 +235,12 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
 
         {/* Delivered Date */}
         {clone.delivered_date && (
-          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+          <div className="flex items-center gap-2 text-sm text-success bg-success-muted p-2 rounded">
             <CheckCircle2 className="w-4 h-4" />
             <div className="flex-1">
               <div>Delivered on {formatDate(clone.delivered_date)}</div>
               {clone.delivered_by_name && (
-                <div className="text-xs text-green-700">by {clone.delivered_by_name}</div>
+                <div className="text-xs text-success">by {clone.delivered_by_name}</div>
               )}
             </div>
           </div>
@@ -250,10 +250,10 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
         {retentionStatus && clone.status === 'delivered' && (
           <div className={`flex items-center gap-2 text-sm p-2 rounded ${
             retentionStatus.isOverdue
-              ? 'bg-red-50 text-red-700'
+              ? 'bg-danger-muted text-danger'
               : retentionStatus.isWarning
-              ? 'bg-amber-50 text-amber-700'
-              : 'bg-blue-50 text-blue-700'
+              ? 'bg-warning-muted text-warning'
+              : 'bg-info-muted text-info'
           }`}>
             <Clock className="w-4 h-4" />
             <span>
@@ -269,7 +269,7 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
 
         {/* Preservation Reason */}
         {clone.preserve_reason && clone.status === 'preserved' && (
-          <div className="text-sm text-cyan-700 bg-cyan-50 p-2 rounded border border-cyan-200">
+          <div className="text-sm text-primary bg-primary/10 p-2 rounded border border-primary/20">
             <span className="font-medium">Preserved:</span> {clone.preserve_reason}
           </div>
         )}
@@ -295,7 +295,7 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
             size="sm"
             variant="primary"
             onClick={() => onMarkAsDelivered(clone)}
-            style={{ backgroundColor: '#10b981' }}
+            style={{ backgroundColor: 'rgb(var(--color-success))' }}
           >
             <CheckCircle2 className="w-4 h-4" />
             Mark as Delivered
@@ -306,7 +306,7 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
             size="sm"
             variant="secondary"
             onClick={() => onPreserve(clone)}
-            style={{ color: '#0891b2', borderColor: '#0891b2' }}
+            style={{ color: 'rgb(var(--color-primary))', borderColor: 'rgb(var(--color-primary))' }}
           >
             <Archive className="w-4 h-4" />
             Preserve

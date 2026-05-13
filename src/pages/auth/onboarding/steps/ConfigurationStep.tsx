@@ -49,13 +49,13 @@ export const ConfigurationStep = ({
         transition={{ delay: 0.1 }}
       >
         <label className="block text-sm font-medium text-slate-300 font-body mb-3">
-          Primary Services <span className="text-blue-400">*</span>
+          Primary Services <span className="text-primary">*</span>
         </label>
         <ServiceSelector
           selected={formData.services}
           onChange={val => updateField('services', val)}
         />
-        {errors.services && <p className="text-red-400 text-xs mt-2 font-body">{errors.services}</p>}
+        {errors.services && <p className="text-danger text-xs mt-2 font-body">{errors.services}</p>}
       </motion.div>
 
       <motion.div
@@ -64,7 +64,7 @@ export const ConfigurationStep = ({
         transition={{ delay: 0.15 }}
       >
         <label className="block text-sm font-medium text-slate-300 font-body mb-3">
-          Estimated Monthly Cases <span className="text-blue-400">*</span>
+          Estimated Monthly Cases <span className="text-primary">*</span>
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {CASE_VOLUME_OPTIONS.map(opt => (
@@ -74,7 +74,7 @@ export const ConfigurationStep = ({
               onClick={() => updateField('estimatedCases', opt.value)}
               className={`py-2.5 px-3 rounded-xl border text-sm font-body transition-all ${
                 formData.estimatedCases === opt.value
-                  ? 'border-blue-500/60 bg-blue-500/10 text-white'
+                  ? 'border-primary/60 bg-primary/10 text-white'
                   : 'border-slate-700/60 bg-slate-800/30 text-slate-400 hover:border-slate-600'
               }`}
             >
@@ -82,7 +82,7 @@ export const ConfigurationStep = ({
             </button>
           ))}
         </div>
-        {errors.estimatedCases && <p className="text-red-400 text-xs mt-2 font-body">{errors.estimatedCases}</p>}
+        {errors.estimatedCases && <p className="text-danger text-xs mt-2 font-body">{errors.estimatedCases}</p>}
       </motion.div>
 
       <motion.div
@@ -91,7 +91,7 @@ export const ConfigurationStep = ({
         transition={{ delay: 0.2 }}
       >
         <label className="block text-sm font-medium text-slate-300 font-body mb-3">
-          Choose Your Plan <span className="text-blue-400">*</span>
+          Choose Your Plan <span className="text-primary">*</span>
         </label>
 
         {plansLoading ? (
@@ -118,13 +118,13 @@ export const ConfigurationStep = ({
                   onClick={() => updateField('planId', plan.id)}
                   className={`relative text-left p-4 rounded-xl border transition-all ${
                     isSelected
-                      ? 'border-blue-500/60 bg-blue-500/10'
+                      ? 'border-primary/60 bg-primary/10'
                       : 'border-slate-700/60 bg-slate-800/30 hover:border-slate-600'
                   }`}
                 >
                   {isRecommended && formData.estimatedCases && (
                     <div className="absolute -top-2.5 left-3">
-                      <span className="inline-flex items-center gap-1 bg-blue-600 text-white text-[10px] font-medium font-body px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-medium font-body px-2 py-0.5 rounded-full">
                         <Sparkles className="w-2.5 h-2.5" /> Recommended
                       </span>
                     </div>
@@ -141,7 +141,7 @@ export const ConfigurationStep = ({
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0"
+                        className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0"
                       >
                         <Check className="w-3 h-3 text-white" />
                       </motion.div>
@@ -160,7 +160,7 @@ export const ConfigurationStep = ({
             })}
           </div>
         )}
-        {errors.planId && <p className="text-red-400 text-xs mt-2 font-body">{errors.planId}</p>}
+        {errors.planId && <p className="text-danger text-xs mt-2 font-body">{errors.planId}</p>}
       </motion.div>
 
       <motion.div
@@ -180,7 +180,7 @@ export const ConfigurationStep = ({
         <Button
           onClick={onSubmit}
           disabled={submitting || plansLoading}
-          className="flex-1 !bg-blue-600 hover:!bg-blue-500 !text-white !rounded-xl !py-3 !font-body disabled:!opacity-40"
+          className="flex-1 !bg-primary hover:!bg-primary/90 !text-primary-foreground !rounded-xl !py-3 !font-body disabled:!opacity-40"
         >
           {submitting ? 'Creating Account...' : 'Create Account'}
         </Button>

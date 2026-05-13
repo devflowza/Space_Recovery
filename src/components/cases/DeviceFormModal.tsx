@@ -539,7 +539,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       <Modal isOpen={isOpen} onClose={onClose} title={isEditMode ? 'Edit Device' : 'Add Device'} maxWidth="4xl">
         <div className="space-y-4">
           <div className="flex items-center gap-3 mb-4 p-4 bg-slate-50 rounded-lg">
-            <HardDrive className="w-5 h-5 text-orange-600" />
+            <HardDrive className="w-5 h-5 text-warning" />
             <div>
               <h3 className="font-semibold text-slate-900">
                 {isEditMode ? 'Update Device Information' : 'Add New Device to Case'}
@@ -668,7 +668,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                     type="checkbox"
                     checked={formData.is_primary}
                     onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-slate-300 text-primary focus:ring-primary"
                   />
                   <span className="text-sm font-medium text-slate-700">
                     Mark as Primary Device
@@ -700,7 +700,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                       value={formData.device_password}
                       onChange={(e) => setFormData({ ...formData, device_password: e.target.value })}
                       placeholder="Enter device password if applicable..."
-                      className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                     <Button
                       variant="secondary"
@@ -733,7 +733,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                     <select
                       value={formData.parent_device_id}
                       onChange={(e) => setFormData({ ...formData, parent_device_id: e.target.value })}
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="">No link</option>
                       {patientDevices.map((pd: { id: string; device_type?: { name?: string }; serial_no?: string; model?: string }) => (
@@ -756,7 +756,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                         onChange={(e) => setFormData({ ...formData, device_problem: e.target.value })}
                         placeholder="Describe the device problem or symptoms..."
                         rows={2}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
 
@@ -769,7 +769,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                         onChange={(e) => setFormData({ ...formData, recovery_requirements: e.target.value })}
                         placeholder="Specify what data needs to be recovered..."
                         rows={2}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
                   </>
@@ -784,7 +784,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, role_notes: e.target.value })}
                     placeholder="Additional notes specific to this device role..."
                     rows={2}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </>
@@ -802,7 +802,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                     {showDiagnosticsSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     <Cpu className="w-4 h-4" />
                     Component Diagnostics (Evaluation)
-                    <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">
+                    <span className="ml-2 px-2 py-0.5 text-xs bg-info-muted text-info rounded">
                       {diagnosticsFormData.device_type_category.toUpperCase()}
                     </span>
                   </button>
@@ -867,7 +867,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                                 type="checkbox"
                                 checked={diagnosticsFormData.sa_access}
                                 onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, sa_access: e.target.checked })}
-                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                className="rounded border-slate-300 text-primary focus:ring-primary"
                               />
                               <span className="font-medium text-slate-700">Service Area (SA) Access Available</span>
                             </label>
@@ -926,7 +926,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                                 type="checkbox"
                                 checked={diagnosticsFormData.firmware_corruption}
                                 onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, firmware_corruption: e.target.checked })}
-                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                className="rounded border-slate-300 text-primary focus:ring-primary"
                               />
                               <span className="font-medium text-slate-700">Firmware Corruption Detected</span>
                             </label>
@@ -935,7 +935,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                                 type="checkbox"
                                 checked={diagnosticsFormData.trim_support}
                                 onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, trim_support: e.target.checked })}
-                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                className="rounded border-slate-300 text-primary focus:ring-primary"
                               />
                               <span className="font-medium text-slate-700">TRIM Support Enabled</span>
                             </label>
@@ -983,7 +983,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                             onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, physical_damage_notes: e.target.value })}
                             placeholder="Describe any physical damage observed..."
                             rows={2}
-                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                           />
                         </div>
                         <div>
@@ -995,7 +995,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                             onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, technical_notes: e.target.value })}
                             placeholder="Additional technical observations..."
                             rows={2}
-                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                           />
                         </div>
                       </div>
@@ -1012,7 +1012,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 <Button
                   variant="secondary"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="bg-red-50 text-red-600 hover:bg-red-100"
+                  className="bg-danger-muted text-danger hover:bg-danger/15"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete Device
@@ -1026,7 +1026,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
               <Button
                 onClick={handleSubmit}
                 disabled={!isFormValid || isSubmitting}
-                style={{ backgroundColor: '#10b981' }}
+                style={{ backgroundColor: 'rgb(var(--color-success))' }}
               >
                 {isSubmitting ? 'Saving...' : isEditMode ? 'Update Device' : 'Add Device'}
               </Button>
@@ -1051,7 +1051,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
             <Button
               onClick={handleDelete}
               disabled={isSubmitting}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-danger hover:bg-danger/90 text-danger-foreground"
             >
               {isSubmitting ? 'Deleting...' : 'Delete Device'}
             </Button>

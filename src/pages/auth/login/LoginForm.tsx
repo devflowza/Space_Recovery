@@ -51,7 +51,7 @@ export const LoginForm = ({ onSubmit, error, loading }: LoginFormProps) => {
             key={shakeKey}
             animate={shouldReduceMotion ? {} : { x: [0, -8, 8, -8, 4, 0] }}
             transition={{ duration: 0.4 }}
-            className="mb-5 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm"
+            className="mb-5 p-3 bg-danger-muted border border-danger/30 text-danger rounded-xl text-sm"
             role="alert"
           >
             {error}
@@ -94,13 +94,13 @@ export const LoginForm = ({ onSubmit, error, loading }: LoginFormProps) => {
             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
               <input
                 type="checkbox"
-                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
+                className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary focus:ring-offset-0"
               />
               Remember me
             </label>
             <button
               type="button"
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
             >
               Forgot password?
             </button>
@@ -110,7 +110,7 @@ export const LoginForm = ({ onSubmit, error, loading }: LoginFormProps) => {
             type="submit"
             disabled={loading}
             aria-busy={loading}
-            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground font-medium rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -133,7 +133,7 @@ export const LoginForm = ({ onSubmit, error, loading }: LoginFormProps) => {
         New to xSuite?{' '}
         <Link
           to="/signup/tenant"
-          className="text-blue-600 font-medium hover:text-blue-700 transition-colors inline-flex items-center gap-0.5"
+          className="text-primary font-medium hover:text-primary/80 transition-colors inline-flex items-center gap-0.5"
         >
           Create your lab
           <ChevronRight className="w-3.5 h-3.5" />

@@ -108,7 +108,7 @@ export const RevenueDashboard: React.FC = () => {
     return (
       <div className="p-8 max-w-[1800px] mx-auto">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading revenue data...</p>
         </div>
       </div>
@@ -171,7 +171,7 @@ export const RevenueDashboard: React.FC = () => {
                 placeholder="Search revenue records..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -180,7 +180,7 @@ export const RevenueDashboard: React.FC = () => {
                 onClick={() => setDateFilter(dateFilter === 'today' ? 'month' : 'today')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   dateFilter === 'today'
-                    ? 'bg-blue-500 text-white shadow-md'
+                    ? 'bg-primary text-primary-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -190,7 +190,7 @@ export const RevenueDashboard: React.FC = () => {
                 onClick={() => setDateFilter(dateFilter === 'week' ? 'month' : 'week')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   dateFilter === 'week'
-                    ? 'bg-blue-500 text-white shadow-md'
+                    ? 'bg-primary text-primary-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -200,7 +200,7 @@ export const RevenueDashboard: React.FC = () => {
                 onClick={() => setDateFilter('month')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   dateFilter === 'month'
-                    ? 'bg-blue-500 text-white shadow-md'
+                    ? 'bg-primary text-primary-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -210,7 +210,7 @@ export const RevenueDashboard: React.FC = () => {
                 onClick={() => setDateFilter(dateFilter === 'year' ? 'month' : 'year')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   dateFilter === 'year'
-                    ? 'bg-blue-500 text-white shadow-md'
+                    ? 'bg-primary text-primary-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -291,12 +291,12 @@ export const RevenueDashboard: React.FC = () => {
                     .map((invoice: { id: string; invoice_number: string; invoice_date: string; customer?: { customer_name?: string }; total_amount?: number; amount_paid?: number; status?: string }) => (
                       <tr key={invoice.id} onClick={() => navigate(`/invoices/${invoice.id}`)} className="hover:bg-slate-50 transition-colors cursor-pointer">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="font-semibold text-blue-600">{invoice.invoice_number}</span>
+                          <span className="font-semibold text-primary">{invoice.invoice_number}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{formatDate(invoice.invoice_date)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{invoice.customer?.customer_name || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 text-right">{formatCurrency(invoice.total_amount || 0)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 text-right">{formatCurrency(invoice.amount_paid || 0)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-success text-right">{formatCurrency(invoice.amount_paid || 0)}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Badge variant={invoice.status === 'paid' ? 'success' : 'secondary'} size="sm">{invoice.status}</Badge>
                         </td>
@@ -341,19 +341,19 @@ export const RevenueDashboard: React.FC = () => {
                       <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <Users className="w-4 h-4 text-blue-600" />
+                            <div className="w-8 h-8 bg-info-muted rounded-full flex items-center justify-center">
+                              <Users className="w-4 h-4 text-primary" />
                             </div>
                             <span className="font-medium text-slate-900">{customer.name}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{customer.email || '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 text-right">{customer.count}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600 text-right">{formatCurrency(customer.amount)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-success text-right">{formatCurrency(customer.amount)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="flex items-center justify-end gap-2">
                             <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
-                              <div className="h-full bg-green-500 rounded-full" style={{ width: `${Math.min(percentage, 100)}%` }} />
+                              <div className="h-full bg-success rounded-full" style={{ width: `${Math.min(percentage, 100)}%` }} />
                             </div>
                             <span className="text-sm text-slate-600 w-12 text-right">{percentage.toFixed(1)}%</span>
                           </div>
@@ -396,13 +396,13 @@ export const RevenueDashboard: React.FC = () => {
                   caseRevenue.map((c: { id: string; caseNo: string; title?: string; revenue: number; expenses: number; profit: number }) => (
                     <tr key={c.id} onClick={() => navigate(`/cases/${c.id}`)} className="hover:bg-slate-50 transition-colors cursor-pointer">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-semibold text-blue-600">{c.caseNo}</span>
+                        <span className="font-semibold text-primary">{c.caseNo}</span>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-900">{c.title || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600 text-right">{formatCurrency(c.revenue)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600 text-right">{formatCurrency(c.expenses)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-success text-right">{formatCurrency(c.revenue)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-danger text-right">{formatCurrency(c.expenses)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <span className={`text-sm font-bold ${c.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`text-sm font-bold ${c.profit >= 0 ? 'text-success' : 'text-danger'}`}>
                           {formatCurrency(c.profit)}
                         </span>
                       </td>

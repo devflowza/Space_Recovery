@@ -272,7 +272,7 @@ export const PaymentsList: React.FC = () => {
     return (
       <div className="p-8 max-w-[1800px] mx-auto">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading payments...</p>
         </div>
       </div>
@@ -337,7 +337,7 @@ export const PaymentsList: React.FC = () => {
                   placeholder="Search payments..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
 
@@ -345,7 +345,7 @@ export const PaymentsList: React.FC = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="all">All Status</option>
                   <option value="completed">Completed</option>
@@ -357,7 +357,7 @@ export const PaymentsList: React.FC = () => {
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="all">All Time</option>
                   <option value="today">Today</option>
@@ -369,7 +369,7 @@ export const PaymentsList: React.FC = () => {
                 <select
                   value={paymentMethodFilter}
                   onChange={(e) => setPaymentMethodFilter(e.target.value)}
-                  className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="all">All Methods</option>
                   {paymentMethods.map((method: { id: string; name: string }) => (
@@ -415,29 +415,29 @@ export const PaymentsList: React.FC = () => {
       </div>
 
       {showAnalytics && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-lg border border-blue-200 mb-6 p-6">
+        <div className="bg-gradient-to-br from-info-muted to-info-muted rounded-2xl shadow-lg border border-info/30 mb-6 p-6">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
+            <TrendingUp className="w-5 h-5 text-primary" />
             <h3 className="text-lg font-semibold text-slate-900">Payment Analytics</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg p-4 border border-blue-100">
+            <div className="bg-white rounded-lg p-4 border border-info/20">
               <p className="text-xs text-slate-500 mb-1">Average Payment</p>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-bold text-primary">
                 {formatCurrency(payments.length > 0 ? totalPayments / payments.length : 0)}
               </p>
             </div>
-            <div className="bg-white rounded-lg p-4 border border-green-100">
+            <div className="bg-white rounded-lg p-4 border border-success/20">
               <p className="text-xs text-slate-500 mb-1">Success Rate</p>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-success">
                 {payments.length > 0
                   ? ((completedPayments.length / payments.length) * 100).toFixed(1)
                   : 0}%
               </p>
             </div>
-            <div className="bg-white rounded-lg p-4 border border-purple-100">
+            <div className="bg-white rounded-lg p-4 border border-accent/20">
               <p className="text-xs text-slate-500 mb-1">Total Transactions</p>
-              <p className="text-2xl font-bold text-purple-600">{payments.length}</p>
+              <p className="text-2xl font-bold text-accent-foreground">{payments.length}</p>
             </div>
           </div>
         </div>
@@ -480,7 +480,7 @@ export const PaymentsList: React.FC = () => {
                     className="hover:bg-slate-50 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-semibold text-blue-600">{payment.payment_number}</span>
+                      <span className="font-semibold text-primary">{payment.payment_number}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                       {formatDate(payment.payment_date)}
@@ -490,7 +490,7 @@ export const PaymentsList: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <Briefcase className="w-4 h-4 text-slate-400" />
                           <div>
-                            <span className="text-sm font-medium text-blue-600">
+                            <span className="text-sm font-medium text-primary">
                               {payment.case.case_no}
                             </span>
                             <p className="text-xs text-slate-500 truncate max-w-[150px]">
@@ -511,7 +511,7 @@ export const PaymentsList: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <span className="text-sm font-bold text-green-600">
+                      <span className="text-sm font-bold text-success">
                         {formatCurrency(payment.amount)}
                       </span>
                     </td>
@@ -538,14 +538,14 @@ export const PaymentsList: React.FC = () => {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleViewPayment(payment)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          className="p-1.5 text-primary hover:bg-info-muted rounded transition-colors"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handlePrintReceipt(payment)}
-                          className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
+                          className="p-1.5 text-success hover:bg-success-muted rounded transition-colors"
                           title="Print Receipt"
                         >
                           <Receipt className="w-4 h-4" />
@@ -604,7 +604,7 @@ export const PaymentsList: React.FC = () => {
                                       setOpenDropdown(null);
                                       handleVoidPayment(payment.id, e);
                                     }}
-                                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                    className="w-full px-4 py-2 text-left text-sm text-danger hover:bg-danger-muted flex items-center gap-2"
                                   >
                                     <XCircle className="w-4 h-4" />
                                     Void Payment

@@ -31,7 +31,7 @@ export const FinancialModuleHeader: React.FC<FinancialModuleHeaderProps> = ({
   primaryAction,
   onRefresh,
   isRefreshing = false,
-  iconBgColor = '#3b82f6',
+  iconBgColor = 'rgb(var(--color-primary))',
 }) => {
   return (
     <div className="mb-8 flex items-start justify-between">
@@ -76,7 +76,7 @@ export const FinancialModuleHeader: React.FC<FinancialModuleHeaderProps> = ({
           </Button>
         )}
         {primaryAction && (
-          <Button onClick={primaryAction.onClick} style={{ backgroundColor: '#3b82f6' }}>
+          <Button onClick={primaryAction.onClick}>
             {primaryAction.icon && <span className="mr-2">{primaryAction.icon}</span>}
             {primaryAction.label}
           </Button>

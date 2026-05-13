@@ -108,11 +108,11 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
       size="lg"
     >
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+        <div className="bg-gradient-to-r from-success-muted to-success-muted rounded-xl p-6 border border-success/30">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <Receipt className="w-8 h-8 text-green-600" />
+                <Receipt className="w-8 h-8 text-success" />
                 <div>
                   <p className="text-sm text-slate-600">Payment Number</p>
                   <h3 className="text-2xl font-bold text-slate-900">
@@ -129,7 +129,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
             </div>
             <div className="text-right">
               <p className="text-sm text-slate-600 mb-1">Amount</p>
-              <p className="text-3xl font-bold text-green-600">
+              <p className="text-3xl font-bold text-success">
                 {formatCurrency(payment.amount)}
               </p>
               <div className="mt-2">
@@ -150,7 +150,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
             <div className="flex items-center gap-2 mb-3">
-              <User className="w-5 h-5 text-blue-600" />
+              <User className="w-5 h-5 text-primary" />
               <h4 className="font-semibold text-slate-900">Customer Information</h4>
             </div>
             <div className="space-y-2">
@@ -167,7 +167,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
 
           <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
             <div className="flex items-center gap-2 mb-3">
-              <Briefcase className="w-5 h-5 text-purple-600" />
+              <Briefcase className="w-5 h-5 text-accent-foreground" />
               <h4 className="font-semibold text-slate-900">Case Information</h4>
             </div>
             <div>
@@ -179,7 +179,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
 
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <div className="flex items-center gap-2 mb-4">
-            <CreditCard className="w-5 h-5 text-green-600" />
+            <CreditCard className="w-5 h-5 text-success" />
             <h4 className="font-semibold text-slate-900">Payment Details</h4>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -219,7 +219,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
           <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
             <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
+                <FileText className="w-5 h-5 text-primary" />
                 <h4 className="font-semibold text-slate-900">Invoice Allocations</h4>
               </div>
             </div>
@@ -244,7 +244,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <FileText className="w-4 h-4 text-slate-400" />
-                          <span className="text-sm font-medium text-blue-600">
+                          <span className="text-sm font-medium text-primary">
                             {allocation.invoice?.invoice_number || 'N/A'}
                           </span>
                         </div>
@@ -255,7 +255,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
                           : 'N/A'}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="text-sm font-bold text-green-600">
+                        <span className="text-sm font-bold text-success">
                           {formatCurrency(allocation.amount)}
                         </span>
                       </td>
@@ -268,7 +268,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
                       Total Allocated:
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-base font-bold text-green-600">
+                      <span className="text-base font-bold text-success">
                         {formatCurrency(
                           payment.allocations!.reduce(
                             (sum: number, a) => sum + (a.amount || 0),
@@ -285,7 +285,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
         )}
 
         {payment.notes && (
-          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+          <div className="bg-warning-muted rounded-lg p-4 border border-warning/30">
             <h4 className="text-sm font-semibold text-slate-900 mb-2">Notes</h4>
             <p className="text-sm text-slate-700 whitespace-pre-wrap">{payment.notes}</p>
           </div>

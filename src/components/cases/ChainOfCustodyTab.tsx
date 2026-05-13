@@ -212,8 +212,8 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
         {entry.before_values && Object.keys(entry.before_values).length > 0 && (
           <div>
             <span className="font-semibold text-slate-600 text-xs">Before Values:</span>
-            <div className="mt-1 bg-red-50 border border-red-200 rounded p-2">
-              <pre className="text-xs text-red-800 whitespace-pre-wrap">
+            <div className="mt-1 bg-danger-muted border border-danger/30 rounded p-2">
+              <pre className="text-xs text-danger whitespace-pre-wrap">
                 {JSON.stringify(entry.before_values, null, 2)}
               </pre>
             </div>
@@ -223,8 +223,8 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
         {entry.after_values && Object.keys(entry.after_values).length > 0 && (
           <div>
             <span className="font-semibold text-slate-600 text-xs">After Values:</span>
-            <div className="mt-1 bg-green-50 border border-green-200 rounded p-2">
-              <pre className="text-xs text-green-800 whitespace-pre-wrap">
+            <div className="mt-1 bg-success-muted border border-success/30 rounded p-2">
+              <pre className="text-xs text-success whitespace-pre-wrap">
                 {JSON.stringify(entry.after_values, null, 2)}
               </pre>
             </div>
@@ -252,7 +252,7 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
         )}
 
         {entry.witness_name && (
-          <div className="flex items-center gap-2 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded p-2">
+          <div className="flex items-center gap-2 text-xs text-info bg-info-muted border border-info/30 rounded p-2">
             <User className="w-4 h-4 flex-shrink-0" />
             <span className="font-semibold">Witnessed by:</span>
             <span>{entry.witness_name}</span>
@@ -266,7 +266,7 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
     return (
       <Card>
         <div className="p-6 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading Chain of Custody records...</p>
         </div>
       </Card>
@@ -279,8 +279,8 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
         <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-cyan-100 rounded-lg">
-                <Shield className="w-6 h-6 text-cyan-700" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Shield className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-slate-900">Forensic Chain of Custody</h2>
@@ -334,12 +334,12 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
               onClick={() => setShowFilters(!showFilters)}
               variant="outline"
               size="sm"
-              className={showFilters ? 'bg-cyan-50 border-cyan-300' : ''}
+              className={showFilters ? 'bg-primary/10 border-primary/40' : ''}
             >
               <Filter className="w-4 h-4 mr-2" />
               Filters
               {selectedCategories.length > 0 && (
-                <Badge className="ml-2 bg-cyan-600">{selectedCategories.length}</Badge>
+                <Badge className="ml-2 bg-primary">{selectedCategories.length}</Badge>
               )}
             </Button>
           </div>
@@ -365,7 +365,7 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
               {selectedCategories.length > 0 && (
                 <button
                   onClick={() => setSelectedCategories([])}
-                  className="mt-3 text-xs text-cyan-600 hover:text-cyan-700 font-medium"
+                  className="mt-3 text-xs text-primary hover:text-primary/80 font-medium"
                 >
                   Clear all filters
                 </button>
@@ -489,7 +489,7 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
       <Card>
         <div className="p-4 bg-slate-50 border-t border-slate-200">
           <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+            <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
             <div className="text-xs text-slate-600">
               <p className="font-semibold text-slate-700 mb-1">Legal Notice</p>
               <p>

@@ -20,9 +20,9 @@ export const ProgressIndicator = ({ currentStep }: ProgressIndicatorProps) => {
               <motion.div
                 className={`relative flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors duration-300 ${
                   isCompleted
-                    ? 'bg-emerald-500/20 border-emerald-500'
+                    ? 'bg-success/20 border-success'
                     : isCurrent
-                    ? 'bg-blue-500/20 border-blue-500'
+                    ? 'bg-primary/20 border-primary'
                     : 'bg-slate-800/50 border-slate-700'
                 }`}
                 animate={isCurrent ? {
@@ -36,14 +36,14 @@ export const ProgressIndicator = ({ currentStep }: ProgressIndicatorProps) => {
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                   >
-                    <Check className="w-5 h-5 text-emerald-400" />
+                    <Check className="w-5 h-5 text-success" />
                   </motion.div>
                 ) : (
-                  <Icon className={`w-5 h-5 ${isCurrent ? 'text-blue-400' : 'text-slate-500'}`} />
+                  <Icon className={`w-5 h-5 ${isCurrent ? 'text-primary' : 'text-slate-500'}`} />
                 )}
               </motion.div>
               <span className={`hidden sm:block text-xs mt-2 font-body transition-colors duration-300 ${
-                isCurrent ? 'text-blue-400 font-medium' : isCompleted ? 'text-emerald-400/70' : 'text-slate-600'
+                isCurrent ? 'text-primary font-medium' : isCompleted ? 'text-success/70' : 'text-slate-600'
               }`}>
                 {s.id.charAt(0).toUpperCase() + s.id.slice(1)}
               </span>
@@ -52,7 +52,7 @@ export const ProgressIndicator = ({ currentStep }: ProgressIndicatorProps) => {
             {i < STEPS.length - 1 && (
               <div className="relative w-12 sm:w-20 h-0.5 mx-1 sm:mx-2 bg-slate-800 overflow-hidden rounded-full">
                 <motion.div
-                  className="absolute inset-y-0 left-0 bg-emerald-500 rounded-full"
+                  className="absolute inset-y-0 left-0 bg-success rounded-full"
                   initial={{ width: '0%' }}
                   animate={{ width: i < currentStep ? '100%' : '0%' }}
                   transition={{ duration: 0.4, ease: 'easeOut' }}

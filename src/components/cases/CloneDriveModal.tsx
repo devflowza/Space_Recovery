@@ -263,11 +263,11 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2.5">
-            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-danger-muted border border-danger/30 rounded-lg p-3 flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 text-danger flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-xs font-semibold text-red-900 mb-0.5">Error</h4>
-              <p className="text-xs text-red-700">{error}</p>
+              <h4 className="text-xs font-semibold text-danger mb-0.5">Error</h4>
+              <p className="text-xs text-danger">{error}</p>
             </div>
           </div>
         )}
@@ -276,7 +276,7 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
           <div className="space-y-3">
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
               <h3 className="text-xs font-semibold text-slate-900 mb-2.5">
-                Patient Device <span className="text-red-500">*</span>
+                Patient Device <span className="text-danger">*</span>
               </h3>
               <SearchableSelect
                 label=""
@@ -294,9 +294,9 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
               />
             </div>
 
-            <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
+            <div className="border border-info/30 rounded-lg p-3 bg-info-muted">
               <div className="flex items-center gap-2 mb-2.5">
-                <HardDrive className="w-4 h-4 text-blue-600" />
+                <HardDrive className="w-4 h-4 text-info" />
                 <h3 className="text-xs font-semibold text-slate-900">
                   Physical Clone Drive
                 </h3>
@@ -344,7 +344,7 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
                         storage_type: e.target.value as typeof formData.storage_type,
                       })
                     }
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="nas">NAS</option>
                     <option value="local">Local Storage</option>
@@ -381,16 +381,16 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
         </div>
 
         {selectedResource && (
-          <div className="bg-white border-2 border-blue-300 rounded-lg p-3 shadow-sm">
-            <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-blue-200">
-              <HardDrive className="w-4 h-4 text-blue-600" />
+          <div className="bg-white border-2 border-info/40 rounded-lg p-3 shadow-sm">
+            <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-info/30">
+              <HardDrive className="w-4 h-4 text-info" />
               <h3 className="text-sm font-bold text-slate-900">Selected Drive Details</h3>
             </div>
 
             <div className="grid grid-cols-6 gap-2.5">
-              <div className="bg-blue-50 rounded-lg p-2">
+              <div className="bg-info-muted rounded-lg p-2">
                 <div className="text-[10px] font-medium text-slate-500 mb-0.5">Clone ID</div>
-                <div className="font-mono font-bold text-blue-700 text-xs">{selectedResource.clone_id}</div>
+                <div className="font-mono font-bold text-info text-xs">{selectedResource.clone_id}</div>
               </div>
 
               <div className="bg-slate-50 rounded-lg p-2">
@@ -439,17 +439,17 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
                         : `${Math.round(selectedResource.capacity_gb)} GB`}
                     </div>
                   </div>
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-2 border border-blue-200">
-                    <div className="text-[10px] font-medium text-blue-700 mb-0.5">Used Space</div>
-                    <div className="text-sm font-bold text-blue-600">
+                  <div className="bg-info-muted rounded-lg p-2 border border-info/20">
+                    <div className="text-[10px] font-medium text-info mb-0.5">Used Space</div>
+                    <div className="text-sm font-bold text-info">
                       {selectedResource.current_used_gb >= 1024
                         ? `${(selectedResource.current_used_gb / 1024).toFixed(2)} TB`
                         : `${Math.round(selectedResource.current_used_gb)} GB`}
                     </div>
                   </div>
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-2 border border-green-200">
-                    <div className="text-[10px] font-medium text-green-700 mb-0.5">Available Space</div>
-                    <div className="text-sm font-bold text-green-600">
+                  <div className="bg-success-muted rounded-lg p-2 border border-success/20">
+                    <div className="text-[10px] font-medium text-success mb-0.5">Available Space</div>
+                    <div className="text-sm font-bold text-success">
                       {selectedResource.available_space_gb >= 1024
                         ? `${(selectedResource.available_space_gb / 1024).toFixed(2)} TB`
                         : `${Math.round(selectedResource.available_space_gb)} GB`}
@@ -466,7 +466,7 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-1.5">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all"
+                        className="bg-primary h-1.5 rounded-full transition-all"
                         style={{
                           width: `${selectedResource.capacity_gb > 0 ? (selectedResource.current_used_gb / selectedResource.capacity_gb) * 100 : 0}%`
                         }}
@@ -492,7 +492,7 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
                   image_format: e.target.value as typeof formData.image_format,
                 })
               }
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="dd">DD (Raw)</option>
               <option value="e01">E01 (EnCase)</option>
@@ -531,7 +531,7 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             rows={2}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Additional notes about this clone..."
           />
         </div>

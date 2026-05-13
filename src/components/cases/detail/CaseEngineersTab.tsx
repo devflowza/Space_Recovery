@@ -93,7 +93,7 @@ export const CaseEngineersTab: React.FC<CaseEngineersTabProps> = ({ caseId, case
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-slate-900">Assigned Engineers</h2>
             <Button
-              style={{ backgroundColor: '#3b82f6' }}
+              style={{ backgroundColor: 'rgb(var(--color-primary))' }}
               size="sm"
               onClick={() => setShowAddModal(true)}
             >
@@ -115,8 +115,8 @@ export const CaseEngineersTab: React.FC<CaseEngineersTabProps> = ({ caseId, case
           ) : (
             <div className="space-y-3">
               {caseEngineers.map((assignment) => (
-                <div key={assignment.id} className="border border-slate-200 rounded-lg p-4 flex items-center gap-4 bg-white hover:border-blue-300 transition-colors">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                <div key={assignment.id} className="border border-slate-200 rounded-lg p-4 flex items-center gap-4 bg-white hover:border-primary/40 transition-colors">
+                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-sm flex-shrink-0">
                     {assignment.engineer.full_name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -129,7 +129,7 @@ export const CaseEngineersTab: React.FC<CaseEngineersTabProps> = ({ caseId, case
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="custom" color="#3b82f6" size="sm">
+                    <Badge variant="custom" color="rgb(var(--color-primary))" size="sm">
                       {assignment.engineer.role}
                     </Badge>
                     <Button
@@ -140,9 +140,9 @@ export const CaseEngineersTab: React.FC<CaseEngineersTabProps> = ({ caseId, case
                       title="Remove engineer"
                     >
                       {removingId === assignment.id ? (
-                        <div className="w-3 h-3 border border-red-500 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-3 h-3 border border-danger border-t-transparent rounded-full animate-spin" />
                       ) : (
-                        <Trash2 className="w-3 h-3 text-red-500" />
+                        <Trash2 className="w-3 h-3 text-danger" />
                       )}
                     </Button>
                   </div>
@@ -178,7 +178,7 @@ export const CaseEngineersTab: React.FC<CaseEngineersTabProps> = ({ caseId, case
               value={roleText}
               onChange={(e) => setRoleText(e.target.value)}
               placeholder="e.g. Lead Technician, QA Reviewer..."
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             />
           </div>
           <div className="flex gap-3 justify-end pt-2 border-t border-slate-100">
@@ -195,7 +195,7 @@ export const CaseEngineersTab: React.FC<CaseEngineersTabProps> = ({ caseId, case
             </Button>
             <Button
               onClick={handleAdd}
-              style={{ backgroundColor: '#3b82f6' }}
+              style={{ backgroundColor: 'rgb(var(--color-primary))' }}
               disabled={!selectedEngineerId || addEngineerMutation.isPending}
             >
               <Plus className="w-4 h-4 mr-2" />

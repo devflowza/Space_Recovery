@@ -171,7 +171,7 @@ export const PortalQuotes: React.FC = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-cyan-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading quotes...</p>
         </div>
       </div>
@@ -193,14 +193,14 @@ export const PortalQuotes: React.FC = () => {
       {pendingQuotes.length > 0 && (
         <div>
           <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-amber-600" />
+            <Clock className="w-5 h-5 text-warning" />
             Awaiting Your Response
           </h2>
           <div className="grid grid-cols-1 gap-4">
             {pendingQuotes.map((quote) => (
               <Card
                 key={quote.id}
-                className="p-6 border-2 border-amber-200 bg-amber-50 cursor-pointer hover:shadow-lg transition-shadow"
+                className="p-6 border-2 border-warning/30 bg-warning-muted cursor-pointer hover:shadow-lg transition-shadow"
                 onClick={() => handleViewDetails(quote)}
               >
                 <div className="flex items-start justify-between mb-4">
@@ -220,11 +220,11 @@ export const PortalQuotes: React.FC = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center justify-between pt-4 border-t border-amber-200">
+                <div className="flex items-center justify-between pt-4 border-t border-warning/30">
                   <Badge variant="custom" color="#f59e0b">
                     Response Required
                   </Badge>
-                  <span className="text-sm text-cyan-600 font-medium">View & Respond →</span>
+                  <span className="text-sm text-primary font-medium">View & Respond →</span>
                 </div>
               </Card>
             ))}
@@ -371,7 +371,7 @@ export const PortalQuotes: React.FC = () => {
                     setIsDetailModalOpen(false);
                     setIsRejectModalOpen(true);
                   }}
-                  className="flex-1 text-red-600 hover:bg-red-50"
+                  className="flex-1 text-danger hover:bg-danger-muted"
                 >
                   <XCircle className="w-4 h-4 mr-2" />
                   Reject Quote
@@ -381,8 +381,7 @@ export const PortalQuotes: React.FC = () => {
                     setIsDetailModalOpen(false);
                     setIsApproveModalOpen(true);
                   }}
-                  className="flex-1"
-                  style={{ backgroundColor: '#10b981' }}
+                  className="flex-1 bg-success hover:bg-success/90"
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Approve Quote
@@ -413,7 +412,7 @@ export const PortalQuotes: React.FC = () => {
               value={response}
               onChange={(e) => setResponse(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="Add any comments or special instructions..."
             />
           </div>
@@ -430,7 +429,7 @@ export const PortalQuotes: React.FC = () => {
             <Button
               onClick={handleApprove}
               disabled={approveMutation.isPending}
-              style={{ backgroundColor: '#10b981' }}
+              className="bg-success hover:bg-success/90"
             >
               {approveMutation.isPending ? 'Approving...' : 'Confirm Approval'}
             </Button>
@@ -458,7 +457,7 @@ export const PortalQuotes: React.FC = () => {
               value={response}
               onChange={(e) => setResponse(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder="Please explain why you're rejecting this quote..."
             />
           </div>
@@ -475,7 +474,7 @@ export const PortalQuotes: React.FC = () => {
             <Button
               onClick={handleReject}
               disabled={rejectMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-danger hover:bg-danger/90"
             >
               {rejectMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
             </Button>

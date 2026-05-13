@@ -37,7 +37,7 @@ export function ReportTypeSelectionModal({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
+            <FileText className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold text-slate-900">Create New Report</h2>
           </div>
           <button
@@ -50,7 +50,7 @@ export function ReportTypeSelectionModal({
 
         {/* Case Info */}
         <div className="px-5 py-3 bg-slate-50 border-b border-slate-200">
-          <div className="text-sm text-blue-600 font-medium mb-0.5">Service: {serviceType}</div>
+          <div className="text-sm text-primary font-medium mb-0.5">Service: {serviceType}</div>
           <div className="text-sm text-slate-600">Case: #{caseNumber}</div>
         </div>
 

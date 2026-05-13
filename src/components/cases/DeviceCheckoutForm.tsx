@@ -182,7 +182,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
     return (
       <div className="flex items-center justify-center p-12">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading checkout form...</p>
         </div>
       </div>
@@ -191,7 +191,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
 
   if (!caseData || !companySettings) {
     return (
-      <div className="p-8 text-center text-red-600">
+      <div className="p-8 text-center text-danger">
         Error loading checkout form data. Please try again.
       </div>
     );
@@ -334,7 +334,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
                   <td className="border border-slate-200 px-2 py-1.5">
                     {roleLabel !== '-' ? (
                       <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                        device.role === 'patient' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
+                        device.role === 'patient' ? 'bg-danger-muted text-danger' : 'bg-info-muted text-info'
                       }`}>{roleLabel}</span>
                     ) : (
                       <span className="text-slate-500">-</span>

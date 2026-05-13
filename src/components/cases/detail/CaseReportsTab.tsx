@@ -52,7 +52,7 @@ export const CaseReportsTab: React.FC<CaseReportsTabProps> = ({
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-slate-900">Case Reports</h2>
           <Button
-            style={{ backgroundColor: '#3b82f6' }}
+            style={{ backgroundColor: 'rgb(var(--color-primary))' }}
             size="sm"
             onClick={() => onSetShowReportTypeSelector(true)}
           >
@@ -67,7 +67,7 @@ export const CaseReportsTab: React.FC<CaseReportsTabProps> = ({
             <select
               value={reportTypeFilter}
               onChange={(e) => onSetReportTypeFilter(e.target.value as ReportType | 'all')}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="all">All Types</option>
               {Object.values(REPORT_TYPES).map((type) => (
@@ -81,7 +81,7 @@ export const CaseReportsTab: React.FC<CaseReportsTabProps> = ({
             <select
               value={reportStatusFilter}
               onChange={(e) => onSetReportStatusFilter(e.target.value as ReportStatus | 'all')}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="all">All Statuses</option>
               <option value="draft">Draft</option>
@@ -97,7 +97,7 @@ export const CaseReportsTab: React.FC<CaseReportsTabProps> = ({
                 type="checkbox"
                 checked={showLatestOnly}
                 onChange={(e) => onSetShowLatestOnly(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
               />
               <span className="text-sm text-slate-700">Latest versions only</span>
             </label>
@@ -120,7 +120,7 @@ export const CaseReportsTab: React.FC<CaseReportsTabProps> = ({
               return (
                 <div
                   key={report.id}
-                  className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all"
+                  className="border border-slate-200 rounded-lg p-4 hover:border-primary/40 hover:shadow-sm transition-all"
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 mt-1">
@@ -184,13 +184,13 @@ export const CaseReportsTab: React.FC<CaseReportsTabProps> = ({
                           {formatDate(report.created_at)}
                         </span>
                         {report.approved_at && (
-                          <span className="flex items-center gap-1 text-green-600">
+                          <span className="flex items-center gap-1 text-success">
                             <CheckCircle2 className="w-4 h-4" />
                             Approved
                           </span>
                         )}
                         {report.sent_to_customer_at && (
-                          <span className="flex items-center gap-1 text-blue-600">
+                          <span className="flex items-center gap-1 text-primary">
                             <Send className="w-4 h-4" />
                             Sent
                           </span>

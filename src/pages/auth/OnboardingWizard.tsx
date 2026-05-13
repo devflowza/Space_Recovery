@@ -31,7 +31,7 @@ export const OnboardingWizard = () => {
           to="/login"
           className="text-sm text-slate-400 hover:text-slate-200 transition-colors font-body"
         >
-          Already have an account? <span className="text-blue-400">Log in</span>
+          Already have an account? <span className="text-primary">Log in</span>
         </Link>
       </header>
 

@@ -40,8 +40,8 @@ export const CaseSuccessModal: React.FC<CaseSuccessModalProps> = ({
         </button>
 
         <div className="p-8 text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-            <CheckCircle className="w-12 h-12 text-green-600" />
+          <div className="w-20 h-20 bg-success-muted rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+            <CheckCircle className="w-12 h-12 text-success" />
           </div>
 
           <div className="mb-6">
@@ -55,7 +55,6 @@ export const CaseSuccessModal: React.FC<CaseSuccessModalProps> = ({
             <Button
               onClick={handleGoToCaseProfile}
               className="w-full flex items-center justify-center gap-2 py-3"
-              style={{ backgroundColor: '#3b82f6' }}
             >
               <FileCheck className="w-5 h-5" />
               Go to Case Profile
@@ -63,7 +62,7 @@ export const CaseSuccessModal: React.FC<CaseSuccessModalProps> = ({
 
             <button
               onClick={onPrintReceipt}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 border-2 border-green-500 text-green-600 rounded-lg hover:bg-green-50 transition-all font-medium"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 border-2 border-success text-success rounded-lg hover:bg-success-muted transition-all font-medium"
             >
               <FileText className="w-5 h-5" />
               Print Office Check-in Receipt
@@ -71,7 +70,7 @@ export const CaseSuccessModal: React.FC<CaseSuccessModalProps> = ({
 
             <button
               onClick={onPrintLabel}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 border-2 border-purple-500 text-purple-600 rounded-lg hover:bg-purple-50 transition-all font-medium"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 border-2 border-accent text-accent rounded-lg hover:bg-accent/10 transition-all font-medium"
             >
               <Tag className="w-5 h-5" />
               Print Case Label

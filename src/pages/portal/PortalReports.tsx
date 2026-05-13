@@ -165,7 +165,7 @@ export default function PortalReports() {
               return (
                 <div
                   key={report.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
+                  className="p-4 border border-gray-200 rounded-lg hover:border-primary/50 hover:shadow-sm transition-all"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1">
@@ -311,7 +311,7 @@ function PortalReportViewModal({ reportId, onClose }: PortalReportViewModalProps
 
         <div className="space-y-6">
           {sections.map((section) => (
-            <div key={section.id} className="border-l-4 border-blue-500 pl-4">
+            <div key={section.id} className="border-l-4 border-primary pl-4">
               <h3 className="text-lg font-medium text-gray-900 mb-2">{section.section_title}</h3>
               <div
                 className="prose max-w-none text-gray-700"

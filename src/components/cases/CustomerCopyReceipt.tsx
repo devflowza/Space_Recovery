@@ -215,7 +215,7 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
     return (
       <div className="flex items-center justify-center p-12">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading receipt...</p>
         </div>
       </div>
@@ -224,7 +224,7 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
 
   if (!caseData || !companySettings) {
     return (
-      <div className="p-8 text-center text-red-600">
+      <div className="p-8 text-center text-danger">
         Error loading receipt data. Please try again.
       </div>
     );
@@ -341,7 +341,7 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
                   <td className="border border-slate-200 px-2 py-1.5 text-center text-slate-800">{device.capacity?.name || '-'}</td>
                   <td className="border border-slate-200 px-2 py-1.5">
                     {index === 0 ? (
-                      <span className="bg-red-50 text-red-600 px-1.5 py-0.5 rounded text-[10px] font-medium">Patient</span>
+                      <span className="bg-danger-muted text-danger px-1.5 py-0.5 rounded text-[10px] font-medium">Patient</span>
                     ) : (
                       <span className="text-slate-500">-</span>
                     )}
