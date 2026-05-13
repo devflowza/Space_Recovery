@@ -1,3 +1,8 @@
+// Device icon SVG strings consumed by pdfmake PDF builders. The fixed
+// stroke/fill hex values below (#4A5568 etc.) are intentionally NOT
+// tokenized — PDFs render in a neutral palette regardless of tenant
+// theme, so icons must stay the same color in every export. See the
+// theme migration spec for the PDF-neutrality decision.
 import {
   HardDrive,
   Database,

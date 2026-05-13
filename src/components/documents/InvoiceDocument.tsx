@@ -80,7 +80,7 @@ const getStatusColor = (status: string) => {
 };
 
 const getInvoiceTypeColor = (type: string) => {
-  return type === 'proforma' ? '#8b5cf6' : '#0ea5e9';
+  return type === 'proforma' ? '#d946ef' : '#0ea5e9';
 };
 
 export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({
