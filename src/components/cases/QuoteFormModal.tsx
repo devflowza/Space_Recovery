@@ -118,7 +118,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
           // Fetch the next quote number from the system
           try {
             const { data: nextNumber, error } = await supabase
-              .rpc('get_next_number', { sequence_scope: 'quote' });
+              .rpc('get_next_number', { p_scope: 'quote' });
 
             if (!error && nextNumber) {
               setQuoteNumber(nextNumber);

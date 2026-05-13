@@ -222,7 +222,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
         } else {
           try {
             const { data: nextNumber, error } = await supabase
-              .rpc('get_next_number', { sequence_scope: 'invoice' });
+              .rpc('get_next_number', { p_scope: 'invoice' });
 
             if (!error && nextNumber) {
               setInvoiceNumber(nextNumber);

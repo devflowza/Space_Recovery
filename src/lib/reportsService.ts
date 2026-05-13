@@ -76,7 +76,7 @@ export const reportsService = {
     const sequenceScope = `report_${reportType}`;
 
     const { data, error } = await supabase.rpc('get_next_number', {
-      sequence_scope: sequenceScope
+      p_scope: sequenceScope
     });
 
     if (error) {

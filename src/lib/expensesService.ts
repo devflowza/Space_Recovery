@@ -53,7 +53,7 @@ export interface ExpenseAttachment {
 
 export const getNextExpenseNumber = async (): Promise<string> => {
   const { data, error } = await supabase.rpc('get_next_number', {
-    sequence_scope: 'expense'
+    p_scope: 'expense'
   });
 
   if (error) {

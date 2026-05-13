@@ -559,7 +559,7 @@ export const payrollService = {
 
   async createEmployeeLoan(data: EmployeeLoanInsert) {
     const { data: nextNumber } = await supabase.rpc('get_next_number', {
-      sequence_name: 'loan',
+      p_scope: 'loan',
     });
 
     const loanData = {
@@ -824,7 +824,7 @@ export const payrollService = {
     const records = await this.getPayrollRecords(periodId);
 
     const { data: nextNumber } = await supabase.rpc('get_next_number', {
-      sequence_name: 'payroll_bank_file',
+      p_scope: 'payroll_bank_file',
     });
 
     const fileContent = this.generateWPSFileContent(records);

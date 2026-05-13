@@ -243,7 +243,7 @@ export const fetchQuoteById = async (id: string) => {
 
 export const getNextQuoteNumber = async () => {
   const { data, error } = await supabase.rpc('get_next_number', {
-    sequence_scope: 'quote',
+    p_scope: 'quote',
   });
 
   if (error) {

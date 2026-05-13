@@ -537,7 +537,7 @@ export const QuotesListPage: React.FC = () => {
               if (itemsError) throw itemsError;
             } else {
               const { data: nextNumber } = await supabase.rpc('get_next_number', {
-                sequence_scope: 'quote',
+                p_scope: 'quote',
               });
 
               const subtotal = items.reduce(

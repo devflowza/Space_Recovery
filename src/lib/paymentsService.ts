@@ -69,7 +69,7 @@ export interface PaymentWithDetails extends Payment {
 
 export const getNextPaymentNumber = async (): Promise<string> => {
   const { data, error } = await supabase.rpc('get_next_number', {
-    sequence_scope: 'payment'
+    p_scope: 'payment'
   });
 
   if (error) {

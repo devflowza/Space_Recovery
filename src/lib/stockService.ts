@@ -225,7 +225,7 @@ export async function getLowStockItems(): Promise<StockItemWithCategory[]> {
 }
 
 export async function createStockItem(data: StockItemInsert): Promise<StockItem> {
-  const sku = await supabase.rpc('get_next_number', { sequence_scope: 'stock' });
+  const sku = await supabase.rpc('get_next_number', { p_scope: 'stock' });
 
   const { data: result, error } = await supabase
     .from('stock_items')
@@ -488,7 +488,7 @@ export async function getSalesByCustomer(customerId: string): Promise<StockSaleW
 }
 
 export async function createStockSale(data: StockSaleCreateData): Promise<StockSale> {
-  const saleNumberResult = await supabase.rpc('get_next_number', { sequence_scope: 'stock_sale' });
+  const saleNumberResult = await supabase.rpc('get_next_number', { p_scope: 'stock_sale' });
   const saleNumber = saleNumberResult.data;
 
   let subtotal = 0;
@@ -754,7 +754,7 @@ export async function createStockAdjustment(
     items: Array<{ stock_item_id: string; system_quantity: number; counted_quantity: number; notes?: string }>;
   }
 ): Promise<StockAdjustmentSession> {
-  const numberResult = await supabase.rpc('get_next_number', { sequence_scope: 'stock_adjustment' });
+  const numberResult = await supabase.rpc('get_next_number', { p_scope: 'stock_adjustment' });
 
   const { data: session, error: sessionError } = await supabase
     .from('stock_adjustment_sessions')
@@ -1230,7 +1230,7 @@ export async function getStockReturn(id: string): Promise<StockReturnWithDetails
 }
 
 export async function createStockReturn(data: CreateStockReturnInput): Promise<StockReturn> {
-  const numberResult = await supabase.rpc('get_next_number', { sequence_scope: 'SRET' });
+  const numberResult = await supabase.rpc('get_next_number', { p_scope: 'SRET' });
   const returnNumber = numberResult.data ?? `SRET-${Date.now()}`;
 
   const totalRefund = data.items.reduce((sum, item) => sum + (item.refund_amount ?? 0), 0);
@@ -1841,7 +1841,7 @@ export async function getStockTransfer(id: string): Promise<StockTransferWithDet
 }
 
 export async function createStockTransfer(data: CreateTransferInput): Promise<StockTransfer> {
-  const numberResult = await supabase.rpc('get_next_number', { sequence_scope: 'STFR' });
+  const numberResult = await supabase.rpc('get_next_number', { p_scope: 'STFR' });
   const transferNumber = numberResult.data ?? `STFR-${Date.now()}`;
 
   const { data: transfer, error: transferError } = await supabase

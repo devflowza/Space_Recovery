@@ -352,7 +352,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
   const createCaseMutation = useMutation({
     mutationFn: async () => {
       const { data: caseNumber, error: numberError } = await supabase
-        .rpc('get_next_number', { sequence_scope: 'case' });
+        .rpc('get_next_number', { p_scope: 'case' });
 
       if (numberError) {
         logger.error('Error generating case number:', numberError);
