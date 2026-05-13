@@ -42,10 +42,10 @@ export const PendingApprovalScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-info-muted flex items-center justify-center p-4">
       <div className="max-w-lg w-full">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-lg shadow-blue-500/25 mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-primary rounded-2xl shadow-lg shadow-primary/25 mb-4">
             <Shield className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">xSuite</h2>
@@ -53,16 +53,16 @@ export const PendingApprovalScreen: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 px-8 py-6 border-b border-amber-100">
+          <div className="bg-gradient-to-r from-warning-muted to-warning-muted px-8 py-6 border-b border-warning/20">
             <div className="flex items-center justify-center space-x-3">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
-                <Clock className="w-6 h-6 text-amber-600" />
+                <Clock className="w-6 h-6 text-warning" />
               </div>
               <div className="text-left">
                 <h1 className="text-xl font-semibold text-gray-900">
                   Account Created Successfully
                 </h1>
-                <p className="text-sm text-amber-700">Awaiting administrator approval</p>
+                <p className="text-sm text-warning">Awaiting administrator approval</p>
               </div>
             </div>
           </div>
@@ -91,12 +91,12 @@ export const PendingApprovalScreen: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-100">
+            <div className="bg-info-muted rounded-xl p-4 mb-6 border border-info/20">
               <div className="flex items-start space-x-3">
-                <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-blue-900 mb-1">What happens next?</p>
-                  <ul className="text-sm text-blue-700 space-y-1">
+                  <p className="text-sm font-medium text-info mb-1">What happens next?</p>
+                  <ul className="text-sm text-info space-y-1">
                     <li>An administrator will assign you the appropriate role</li>
                     <li>You'll gain access based on your assigned permissions</li>
                     <li>Most accounts are approved within 24 hours</li>
@@ -112,7 +112,7 @@ export const PendingApprovalScreen: React.FC = () => {
                   type="checkbox"
                   checked={autoRefreshEnabled}
                   onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
-                  className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  className="w-3.5 h-3.5 text-primary rounded border-gray-300 focus:ring-primary"
                 />
                 <span>Auto-refresh every 30s</span>
               </label>

@@ -77,8 +77,8 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({ onVerified, onCancel
       <div className="max-w-md w-full mx-4">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ShieldCheck className="w-8 h-8 text-blue-600" />
+            <div className="w-16 h-16 bg-info-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShieldCheck className="w-8 h-8 text-primary" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Two-Factor Authentication</h2>
             <p className="text-slate-600 text-sm">
@@ -87,7 +87,7 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({ onVerified, onCancel
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded flex items-center gap-2">
+            <div className="mb-4 p-3 bg-danger-muted border border-danger/30 text-danger rounded flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
@@ -105,13 +105,13 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({ onVerified, onCancel
                 onChange={e => handleChange(index, e.target.value)}
                 onKeyDown={e => handleKeyDown(index, e)}
                 disabled={loading}
-                className="w-12 h-14 text-center text-2xl font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+                className="w-12 h-14 text-center text-2xl font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50"
               />
             ))}
           </div>
 
           {loading && (
-            <div className="flex items-center justify-center gap-2 text-blue-600 mb-4">
+            <div className="flex items-center justify-center gap-2 text-primary mb-4">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span className="text-sm">Verifying...</span>
             </div>
@@ -127,7 +127,7 @@ export const MFAChallenge: React.FC<MFAChallengeProps> = ({ onVerified, onCancel
             <button
               onClick={() => handleVerify(code.join(''))}
               disabled={loading || code.some(d => d === '')}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               Verify
             </button>

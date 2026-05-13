@@ -421,13 +421,12 @@ export const CustomersListPage: React.FC = () => {
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-start gap-4">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
+            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg bg-primary"
             style={{
-              backgroundColor: '#3b82f6',
-              boxShadow: '0 10px 40px -10px #3b82f680',
+              boxShadow: '0 10px 40px -10px rgb(var(--color-primary) / 0.5)',
             }}
           >
-            <Users className="w-6 h-6 text-white" />
+            <Users className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-1">Customers</h1>
@@ -436,57 +435,57 @@ export const CustomersListPage: React.FC = () => {
             </p>
           </div>
         </div>
-        <Button onClick={handleOpenModal} style={{ backgroundColor: '#3b82f6' }}>
+        <Button onClick={handleOpenModal}>
           <Plus className="w-4 h-4 mr-2" />
           Add Customer
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+        <div className="bg-info-muted rounded-xl p-4 border border-info/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Customers</p>
-              <p className="text-2xl font-bold text-blue-900 mt-1">{customers.length}</p>
+              <p className="text-xs font-medium text-info uppercase tracking-wide">Total Customers</p>
+              <p className="text-2xl font-bold text-info mt-1">{customers.length}</p>
             </div>
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-info-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+        <div className="bg-success-muted rounded-xl p-4 border border-success/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Portal Enabled</p>
-              <p className="text-2xl font-bold text-green-900 mt-1">{customers.filter((c) => c.portal_enabled).length}</p>
+              <p className="text-xs font-medium text-success uppercase tracking-wide">Portal Enabled</p>
+              <p className="text-2xl font-bold text-success mt-1">{customers.filter((c) => c.portal_enabled).length}</p>
             </div>
-            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-success-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-4 border border-violet-200">
+        <div className="bg-accent/10 rounded-xl p-4 border border-accent/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-violet-600 uppercase tracking-wide">Recent (30d)</p>
-              <p className="text-2xl font-bold text-violet-900 mt-1">{recentCustomers.length}</p>
+              <p className="text-xs font-medium text-accent-foreground uppercase tracking-wide">Recent (30d)</p>
+              <p className="text-2xl font-bold text-accent-foreground mt-1">{recentCustomers.length}</p>
             </div>
-            <div className="w-10 h-10 bg-violet-500 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 text-accent-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
+        <div className="bg-success-muted rounded-xl p-4 border border-success/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Active</p>
-              <p className="text-2xl font-bold text-emerald-900 mt-1">{customers.filter((c) => c.is_active).length}</p>
+              <p className="text-xs font-medium text-success uppercase tracking-wide">Active</p>
+              <p className="text-2xl font-bold text-success mt-1">{customers.filter((c) => c.is_active).length}</p>
             </div>
-            <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-success-foreground" />
             </div>
           </div>
         </div>
@@ -502,7 +501,7 @@ export const CustomersListPage: React.FC = () => {
                 placeholder="Search customers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -511,7 +510,7 @@ export const CustomersListPage: React.FC = () => {
                 onClick={() => setFilterPortal(filterPortal === 'enabled' ? 'all' : 'enabled')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   filterPortal === 'enabled'
-                    ? 'bg-green-500 text-white shadow-md'
+                    ? 'bg-success text-success-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -548,7 +547,7 @@ export const CustomersListPage: React.FC = () => {
               <Filter className="w-4 h-4" />
               More Filters
               {(filterGroup !== 'all' || filterPortal !== 'all') && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
           </div>
@@ -562,7 +561,7 @@ export const CustomersListPage: React.FC = () => {
                 <select
                   value={filterGroup}
                   onChange={(e) => setFilterGroup(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Groups</option>
                   {customerGroups.map((group) => (
@@ -579,7 +578,7 @@ export const CustomersListPage: React.FC = () => {
                 <select
                   value={filterPortal}
                   onChange={(e) => setFilterPortal(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Statuses</option>
                   <option value="enabled">Portal Enabled</option>
@@ -649,7 +648,7 @@ export const CustomersListPage: React.FC = () => {
                       className="hover:bg-slate-50 transition-colors cursor-pointer"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-semibold text-blue-600">
+                        <span className="font-semibold text-primary">
                           {customer.customer_number}
                         </span>
                       </td>
@@ -700,7 +699,7 @@ export const CustomersListPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {customer.customer_groups ? (
-                          <Badge variant="custom" color="#8b5cf6" size="sm">
+                          <Badge variant="custom" color="rgb(var(--color-accent))" size="sm">
                             {customer.customer_groups.name}
                           </Badge>
                         ) : (
@@ -876,7 +875,7 @@ export const CustomersListPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, portal_enabled: e.target.checked })
                 }
-                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
               />
               <span className="text-sm font-medium text-slate-700">
                 Enable Client Portal Access
@@ -892,7 +891,7 @@ export const CustomersListPage: React.FC = () => {
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
               placeholder="Add any internal notes..."
             />
           </div>
@@ -908,7 +907,7 @@ export const CustomersListPage: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" style={{ backgroundColor: '#3b82f6' }}>
+            <Button type="submit">
               Create Customer
             </Button>
           </div>
@@ -942,7 +941,7 @@ export const CustomersListPage: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" style={{ backgroundColor: '#3b82f6' }}>
+            <Button type="submit">
               Create Company
             </Button>
           </div>
@@ -1031,7 +1030,7 @@ export const CustomersListPage: React.FC = () => {
                 onChange={(e) =>
                   setEditFormData({ ...editFormData, portal_enabled: e.target.checked })
                 }
-                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
               />
               <span className="text-sm font-medium text-slate-700">
                 Enable Client Portal Access
@@ -1047,7 +1046,7 @@ export const CustomersListPage: React.FC = () => {
               value={editFormData.notes}
               onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
               placeholder="Add any internal notes..."
             />
           </div>
@@ -1063,7 +1062,7 @@ export const CustomersListPage: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" style={{ backgroundColor: '#3b82f6' }} disabled={updateCustomerMutation.isPending}>
+            <Button type="submit" disabled={updateCustomerMutation.isPending}>
               {updateCustomerMutation.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>

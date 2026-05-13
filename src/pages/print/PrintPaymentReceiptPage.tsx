@@ -44,7 +44,7 @@ export const PrintPaymentReceiptPage: React.FC = () => {
   if (!paymentId) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-600">Invalid payment ID</p>
+        <p className="text-danger">Invalid payment ID</p>
       </div>
     );
   }
@@ -53,7 +53,7 @@ export const PrintPaymentReceiptPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-green-600 rounded-full animate-spin mb-4"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin mb-4"></div>
           <p className="text-slate-600">Loading payment receipt...</p>
         </div>
       </div>
@@ -63,7 +63,7 @@ export const PrintPaymentReceiptPage: React.FC = () => {
   if (paymentError || !payment) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-600">Error loading payment. Please try again.</p>
+        <p className="text-danger">Error loading payment. Please try again.</p>
       </div>
     );
   }
@@ -73,7 +73,7 @@ export const PrintPaymentReceiptPage: React.FC = () => {
       <div className="no-print fixed bottom-4 right-4 z-50 flex gap-2">
         <button
           onClick={() => window.print()}
-          className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+          className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold shadow-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />

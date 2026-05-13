@@ -65,13 +65,13 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Reset User Password" size="md">
       <div className="space-y-4">
-        <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-warning-muted border border-warning/30 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm text-orange-800 font-medium">
+            <p className="text-sm text-warning font-medium">
               Password Reset Confirmation
             </p>
-            <p className="text-sm text-orange-700 mt-1">
+            <p className="text-sm text-warning mt-1">
               A temporary password has been generated. Copy it and share it securely with the user.
               They will be required to change it on their next login.
             </p>
@@ -79,7 +79,7 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({
         </div>
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+          <div className="p-3 bg-danger-muted border border-danger/30 text-danger rounded-lg text-sm">
             {error}
           </div>
         )}
@@ -118,10 +118,10 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({
               <button
                 type="button"
                 onClick={handleCopy}
-                className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                className="p-1.5 text-slate-600 hover:text-primary hover:bg-info-muted rounded transition-colors"
                 title="Copy to clipboard"
               >
-                {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -130,8 +130,8 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({
           </p>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-800">
+        <div className="bg-info-muted border border-info/30 rounded-lg p-3">
+          <p className="text-sm text-info">
             <strong>Important:</strong> Share this password securely with the user through a private channel.
             The user will be prompted to change it immediately upon their next login.
           </p>

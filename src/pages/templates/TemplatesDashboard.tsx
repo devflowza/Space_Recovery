@@ -229,8 +229,8 @@ export const TemplatesDashboard: React.FC = () => {
               <p className="text-sm text-slate-600">Template Types</p>
               <p className="text-2xl font-bold text-slate-900 mt-1">{templateTypes.length}</p>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <ListIcon className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
+              <ListIcon className="w-6 h-6 text-accent-foreground" />
             </div>
           </div>
         </Card>

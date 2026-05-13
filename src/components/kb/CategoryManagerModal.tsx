@@ -173,8 +173,8 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
           )}
 
           {showForm && (
-            <div className="border border-blue-200 rounded-xl p-4 bg-blue-50 space-y-4">
-              <h4 className="text-sm font-semibold text-blue-900">{editingId ? 'Edit Category' : 'New Category'}</h4>
+            <div className="border border-info/30 rounded-xl p-4 bg-info-muted space-y-4">
+              <h4 className="text-sm font-semibold text-info">{editingId ? 'Edit Category' : 'New Category'}</h4>
               <div className="grid grid-cols-2 gap-3">
                 <FormField label="Name" required>
                   <Input
@@ -204,7 +204,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
                   <select
                     value={form.parent_id}
                     onChange={(e) => setForm({ ...form, parent_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                   >
                     <option value="">None (top-level)</option>
                     {parentOptions.map((cat) => (
@@ -275,13 +275,13 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
                     </button>
                     <button
                       onClick={() => startEdit(cat)}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-1.5 text-gray-400 hover:text-primary hover:bg-info-muted rounded transition-colors"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setDeleteConfirmId(cat.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      className="p-1.5 text-gray-400 hover:text-danger hover:bg-danger-muted rounded transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

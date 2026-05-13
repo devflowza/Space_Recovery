@@ -76,7 +76,7 @@ export const QuotesListPage: React.FC = () => {
       accepted: '#10b981',
       rejected: '#ef4444',
       expired: '#f59e0b',
-      converted: '#8b5cf6',
+      converted: 'rgb(var(--color-accent))',
     };
     return colors[status] || '#64748b';
   };
@@ -104,7 +104,7 @@ export const QuotesListPage: React.FC = () => {
     return (
       <div className="p-8 max-w-[1800px] mx-auto">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading quotes...</p>
         </div>
       </div>
@@ -115,7 +115,7 @@ export const QuotesListPage: React.FC = () => {
     return (
       <div className="p-8 max-w-[1800px] mx-auto">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="text-red-500 mb-4">
+          <div className="text-danger mb-4">
             <FileText className="w-12 h-12 mx-auto mb-2" />
             <p className="text-lg font-semibold">Error Loading Quotes</p>
             <p className="text-sm text-slate-600 mt-2">{(quotesError as Error)?.message || 'Failed to load quotes'}</p>
@@ -197,7 +197,7 @@ export const QuotesListPage: React.FC = () => {
                 placeholder="Search by quote number, title, or customer name"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -216,7 +216,7 @@ export const QuotesListPage: React.FC = () => {
                 onClick={() => setStatusFilter(statusFilter === 'sent' ? 'all' : 'sent')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === 'sent'
-                    ? 'bg-blue-500 text-white shadow-md'
+                    ? 'bg-primary text-primary-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -228,7 +228,7 @@ export const QuotesListPage: React.FC = () => {
                 }
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === 'accepted'
-                    ? 'bg-green-500 text-white shadow-md'
+                    ? 'bg-success text-success-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -240,7 +240,7 @@ export const QuotesListPage: React.FC = () => {
                 }
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === 'rejected'
-                    ? 'bg-red-500 text-white shadow-md'
+                    ? 'bg-danger text-danger-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -250,7 +250,7 @@ export const QuotesListPage: React.FC = () => {
                 onClick={() => setStatusFilter(statusFilter === 'expired' ? 'all' : 'expired')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === 'expired'
-                    ? 'bg-orange-500 text-white shadow-md'
+                    ? 'bg-warning text-warning-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -262,7 +262,7 @@ export const QuotesListPage: React.FC = () => {
                 }
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   statusFilter === 'converted'
-                    ? 'bg-purple-500 text-white shadow-md'
+                    ? 'bg-accent text-accent-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -286,7 +286,7 @@ export const QuotesListPage: React.FC = () => {
               <Filter className="w-4 h-4" />
               More Filters
               {statusFilter !== 'all' && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
           </div>
@@ -297,7 +297,7 @@ export const QuotesListPage: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
               >
                 <option value="all">All Statuses</option>
                 <option value="draft">Draft</option>
@@ -365,7 +365,7 @@ export const QuotesListPage: React.FC = () => {
                     className="hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-semibold text-blue-600">
+                      <span className="font-semibold text-primary">
                         {quote.quote_number}
                       </span>
                     </td>
@@ -416,7 +416,7 @@ export const QuotesListPage: React.FC = () => {
                       >
                         <button
                           onClick={() => navigate(`/quotes/${quote.id}`)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
                           title="View"
                         >
                           <Eye className="w-4 h-4" />
@@ -473,11 +473,11 @@ export const QuotesListPage: React.FC = () => {
                               }
                             }}
                             disabled={sendingQuoteId === quote.id}
-                            className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-1.5 text-success hover:bg-success-muted rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Send Quote"
                           >
                             {sendingQuoteId === quote.id ? (
-                              <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+                              <div className="w-4 h-4 border-2 border-success border-t-transparent rounded-full animate-spin" />
                             ) : (
                               <Send className="w-4 h-4" />
                             )}

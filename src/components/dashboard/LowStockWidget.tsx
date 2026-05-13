@@ -19,8 +19,8 @@ export const LowStockWidget: React.FC = () => {
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
+          <div className="w-8 h-8 rounded-lg bg-warning-muted flex items-center justify-center">
+            <AlertTriangle className="w-4 h-4 text-warning" />
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Low Stock</p>
@@ -30,7 +30,7 @@ export const LowStockWidget: React.FC = () => {
           </div>
         </div>
         {items.length > 0 && (
-          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-warning-muted text-warning">
             {items.filter((i) => i.current_quantity === 0).length} out of stock
           </span>
         )}
@@ -61,7 +61,7 @@ export const LowStockWidget: React.FC = () => {
                 )}
               </div>
               <div className="flex-shrink-0 ml-3 text-right">
-                <span className={`text-sm font-bold ${item.current_quantity === 0 ? 'text-red-600' : 'text-amber-600'}`}>
+                <span className={`text-sm font-bold ${item.current_quantity === 0 ? 'text-danger' : 'text-warning'}`}>
                   {item.current_quantity}
                 </span>
                 <span className="text-xs text-slate-400 ml-0.5">/ {item.minimum_quantity} min</span>
@@ -73,7 +73,7 @@ export const LowStockWidget: React.FC = () => {
 
       <button
         onClick={() => navigate('/resources/stock')}
-        className="mt-4 flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+        className="mt-4 flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
       >
         View all stock items
         <ArrowRight className="w-3 h-3" />

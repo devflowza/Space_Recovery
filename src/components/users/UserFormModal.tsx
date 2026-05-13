@@ -114,7 +114,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+          <div className="p-3 bg-danger-muted border border-danger/30 text-danger rounded-lg text-sm">
             {error}
           </div>
         )}
@@ -216,7 +216,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                   role: e.target.value as UserFormData['role'],
                 })
               }
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               required
             >
               <option value="admin">Admin</option>
@@ -240,7 +240,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                     case_access_level: e.target.value as 'restricted' | 'full',
                   })
                 }
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <option value="full">Full Access - Can view all cases</option>
                 <option value="restricted">Restricted - Only own/assigned cases</option>
@@ -260,7 +260,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               onChange={(e) =>
                 setFormData({ ...formData, is_active: e.target.value === 'active' })
               }
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>

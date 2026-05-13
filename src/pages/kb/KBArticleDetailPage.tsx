@@ -19,8 +19,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 const STATUS_COLORS: Record<string, string> = {
-  published: 'bg-emerald-100 text-emerald-700',
-  draft: 'bg-amber-100 text-amber-700',
+  published: 'bg-success-muted text-success',
+  draft: 'bg-warning-muted text-warning',
   archived: 'bg-gray-100 text-gray-500',
 };
 
@@ -42,7 +42,7 @@ function VersionItem({
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isLatest ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isLatest ? 'bg-primary text-primary-foreground' : 'bg-gray-100 text-gray-600'}`}>
             {version.version_number}
           </div>
           <div className="flex-1 min-w-0">
@@ -56,13 +56,13 @@ function VersionItem({
           {!isLatest && (
             <button
               onClick={(e) => { e.stopPropagation(); onRestore(version); }}
-              className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              className="p-1 text-gray-400 hover:text-primary hover:bg-primary/10 rounded transition-colors"
               title="Restore this version"
             >
               <RotateCcw className="w-3 h-3" />
             </button>
           )}
-          {isLatest && <span className="text-xs text-blue-600 font-medium">Current</span>}
+          {isLatest && <span className="text-xs text-primary font-medium">Current</span>}
           {expanded ? <ChevronDown className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
         </div>
       </div>
@@ -164,14 +164,14 @@ export const KBArticleDetailPage: React.FC = () => {
               onClick={() => setIsVersionHistoryOpen(!isVersionHistoryOpen)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                 isVersionHistoryOpen
-                  ? 'bg-blue-50 text-blue-600 font-medium'
+                  ? 'bg-primary/10 text-primary font-medium'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               }`}
             >
               <History className="w-3.5 h-3.5" />
               History
               {article.version && article.version > 1 && (
-                <span className="ml-1 bg-blue-100 text-blue-600 text-xs px-1.5 py-0.5 rounded-full">
+                <span className="ml-1 bg-primary/10 text-primary text-xs px-1.5 py-0.5 rounded-full">
                   v{article.version}
                 </span>
               )}
@@ -189,8 +189,8 @@ export const KBArticleDetailPage: React.FC = () => {
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               {article.is_featured && (
-                <span className="inline-flex items-center gap-1 text-xs font-medium bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">
-                  <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                <span className="inline-flex items-center gap-1 text-xs font-medium bg-warning-muted text-warning px-2.5 py-1 rounded-full">
+                  <Star className="w-3 h-3 fill-warning text-warning" />
                   Featured
                 </span>
               )}

@@ -202,14 +202,14 @@ export const RolePermissions: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Shield className="w-8 h-8 text-blue-600" />
+            <Shield className="w-8 h-8 text-primary" />
           </div>
         </div>
 
-        <Card className="p-4 bg-blue-50 border-blue-200">
+        <Card className="p-4 bg-info-muted border-info/30">
           <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-900">
+            <Info className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-info">
               <p className="font-medium mb-1">About Role Permissions</p>
               <p>
                 Use the checkboxes below to control which modules each role can access.
@@ -237,7 +237,7 @@ export const RolePermissions: React.FC = () => {
                   p-4 rounded-lg border-2 transition-all
                   ${
                     isSelected
-                      ? 'border-blue-500 bg-blue-50 shadow-md'
+                      ? 'border-primary bg-primary/10 shadow-md'
                       : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
                   }
                 `}
@@ -245,7 +245,7 @@ export const RolePermissions: React.FC = () => {
                 <div className="flex items-center justify-center mb-2">
                   <Shield
                     className={`w-6 h-6 ${
-                      isSelected ? 'text-blue-600' : 'text-slate-400'
+                      isSelected ? 'text-primary' : 'text-slate-400'
                     }`}
                   />
                 </div>
@@ -313,7 +313,7 @@ export const RolePermissions: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleSelectAll(category)}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-xs text-primary hover:text-primary/80 font-medium"
                         >
                           Select All
                         </button>
@@ -343,7 +343,7 @@ export const RolePermissions: React.FC = () => {
                               isDisabled
                                 ? 'bg-slate-50 border-slate-200 cursor-not-allowed'
                                 : hasAccess
-                                ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                                ? 'bg-success-muted border-success/30 hover:bg-success-muted/70'
                                 : 'bg-white border-slate-200 hover:bg-slate-50'
                             }
                             transition-colors cursor-pointer
@@ -352,7 +352,7 @@ export const RolePermissions: React.FC = () => {
                         >
                           <div className="flex-shrink-0">
                             {hasAccess ? (
-                              <CheckCircle className="w-5 h-5 text-green-600" />
+                              <CheckCircle className="w-5 h-5 text-success" />
                             ) : (
                               <XCircle className="w-5 h-5 text-slate-300" />
                             )}

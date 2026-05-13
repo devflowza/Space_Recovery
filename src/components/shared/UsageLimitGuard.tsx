@@ -55,9 +55,9 @@ export function UsageLimitGuard({
   }
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-center">
-      <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-100 rounded-full mb-4">
-        <AlertTriangle className="w-6 h-6 text-amber-600" />
+    <div className="bg-warning-muted border border-warning/30 rounded-lg p-6 text-center">
+      <div className="inline-flex items-center justify-center w-12 h-12 bg-warning-muted rounded-full mb-4">
+        <AlertTriangle className="w-6 h-6 text-warning" />
       </div>
 
       <h3 className="text-lg font-semibold text-gray-900 mb-2">Plan Limit Reached</h3>

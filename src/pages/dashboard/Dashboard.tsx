@@ -87,16 +87,16 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-6 text-primary-foreground shadow-lg">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-blue-200 text-sm font-medium mb-1">{greeting()},</p>
+            <p className="text-primary-foreground/80 text-sm font-medium mb-1">{greeting()},</p>
             <h1 className="text-2xl font-bold">{profile?.full_name || 'Welcome back'}</h1>
-            <p className="text-blue-200 text-sm mt-1 capitalize">{profile?.role?.replace('_', ' ') || 'Staff'}</p>
+            <p className="text-primary-foreground/80 text-sm mt-1 capitalize">{profile?.role?.replace('_', ' ') || 'Staff'}</p>
           </div>
-          <div className="text-right text-blue-200 text-sm">
+          <div className="text-right text-primary-foreground/80 text-sm">
             <p>{new Date().toLocaleDateString('en-US', { weekday: 'long' })}</p>
-            <p className="font-semibold text-white">
+            <p className="font-semibold text-primary-foreground">
               {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
           </div>
@@ -119,24 +119,24 @@ export const Dashboard: React.FC = () => {
             label="Active Cases"
             value={caseStats?.active ?? '—'}
             icon={Briefcase}
-            color="text-blue-600"
-            bgColor="bg-blue-50"
+            color="text-primary"
+            bgColor="bg-primary/10"
             onClick={() => navigate('/cases')}
           />
           <QuickStat
             label="New Today"
             value={caseStats?.today ?? '—'}
             icon={TrendingUp}
-            color="text-green-600"
-            bgColor="bg-green-50"
+            color="text-success"
+            bgColor="bg-success-muted"
             onClick={() => navigate('/cases')}
           />
           <QuickStat
             label="Pending"
             value={caseStats?.pending ?? '—'}
             icon={Clock}
-            color="text-amber-600"
-            bgColor="bg-amber-50"
+            color="text-warning"
+            bgColor="bg-warning-muted"
             onClick={() => navigate('/cases')}
           />
           <QuickStat
@@ -165,10 +165,10 @@ export const Dashboard: React.FC = () => {
           className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 text-left hover:shadow-md transition-all group"
         >
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-              <HardDrive className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <HardDrive className="w-4 h-4 text-primary" />
             </div>
-            <span className="font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">Cases</span>
+            <span className="font-semibold text-slate-800 group-hover:text-primary transition-colors">Cases</span>
           </div>
           <p className="text-xs text-slate-500">Manage data recovery cases, devices, and reports</p>
         </button>
@@ -178,10 +178,10 @@ export const Dashboard: React.FC = () => {
           className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 text-left hover:shadow-md transition-all group"
         >
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <div className="w-8 h-8 rounded-lg bg-success-muted flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4 text-success" />
             </div>
-            <span className="font-semibold text-slate-800 group-hover:text-green-600 transition-colors">Invoices</span>
+            <span className="font-semibold text-slate-800 group-hover:text-success transition-colors">Invoices</span>
           </div>
           <p className="text-xs text-slate-500">Track and manage invoices and payments</p>
         </button>

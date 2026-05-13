@@ -57,7 +57,7 @@ export const CustomerPurchasesTab: React.FC<CustomerPurchasesTabProps> = ({ cust
       <Card>
         <div className="p-6">
           <div className="flex items-center gap-2 mb-4">
-            <ShoppingBag className="w-5 h-5 text-blue-600" />
+            <ShoppingBag className="w-5 h-5 text-primary" />
             <h3 className="text-lg font-semibold text-slate-900">Devices Purchased</h3>
             {sales.length > 0 && (
               <span className="ml-1 text-sm text-slate-500">({sales.length} sale{sales.length !== 1 ? 's' : ''})</span>
@@ -66,7 +66,7 @@ export const CustomerPurchasesTab: React.FC<CustomerPurchasesTabProps> = ({ cust
 
           {loadingSales ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin" />
             </div>
           ) : sales.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-slate-400">
@@ -94,7 +94,7 @@ export const CustomerPurchasesTab: React.FC<CustomerPurchasesTabProps> = ({ cust
                       .join(', ');
                     return (
                       <tr key={sale.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 font-mono text-blue-600">{sale.sale_number}</td>
+                        <td className="py-3 font-mono text-primary">{sale.sale_number}</td>
                         <td className="py-3 text-slate-600">{formatDate(sale.sale_date ?? sale.created_at)}</td>
                         <td className="py-3 text-slate-700 max-w-xs truncate">{itemNames || '—'}</td>
                         <td className="py-3 text-right font-semibold text-slate-900">
@@ -108,7 +108,7 @@ export const CustomerPurchasesTab: React.FC<CustomerPurchasesTabProps> = ({ cust
                         <td className="py-3 text-right">
                           <button
                             onClick={() => navigate(`/resources/stock/sales/${sale.id}`)}
-                            className="text-slate-400 hover:text-blue-600 transition-colors"
+                            className="text-slate-400 hover:text-primary transition-colors"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </button>
@@ -135,13 +135,13 @@ export const CustomerPurchasesTab: React.FC<CustomerPurchasesTabProps> = ({ cust
       <Card>
         <div className="p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Shield className="w-5 h-5 text-green-600" />
+            <Shield className="w-5 h-5 text-success" />
             <h3 className="text-lg font-semibold text-slate-900">Active Warranties</h3>
           </div>
 
           {loadingWarranties ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin" />
             </div>
           ) : warranties.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-slate-400">
@@ -200,7 +200,7 @@ export const CustomerPurchasesTab: React.FC<CustomerPurchasesTabProps> = ({ cust
 
           {loadingSerials ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin" />
             </div>
           ) : serialNumbers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-slate-400">

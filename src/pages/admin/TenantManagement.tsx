@@ -201,7 +201,7 @@ export const TenantManagement = () => {
               <p className="text-sm text-gray-500">Total Tenants</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{totalTenants}</p>
             </div>
-            <Building2 className="w-10 h-10 text-blue-500" />
+            <Building2 className="w-10 h-10 text-primary" />
           </div>
         </Card>
 
@@ -209,9 +209,9 @@ export const TenantManagement = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Active</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">{activeTenants}</p>
+              <p className="text-3xl font-bold text-success mt-1">{activeTenants}</p>
             </div>
-            <CheckCircle className="w-10 h-10 text-green-500" />
+            <CheckCircle className="w-10 h-10 text-success" />
           </div>
         </Card>
 
@@ -219,9 +219,9 @@ export const TenantManagement = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Trial</p>
-              <p className="text-3xl font-bold text-blue-600 mt-1">{trialTenants}</p>
+              <p className="text-3xl font-bold text-info mt-1">{trialTenants}</p>
             </div>
-            <AlertCircle className="w-10 h-10 text-blue-500" />
+            <AlertCircle className="w-10 h-10 text-info" />
           </div>
         </Card>
 
@@ -233,7 +233,7 @@ export const TenantManagement = () => {
                 ${totalRevenue.toFixed(0)}
               </p>
             </div>
-            <DollarSign className="w-10 h-10 text-green-500" />
+            <DollarSign className="w-10 h-10 text-success" />
           </div>
         </Card>
       </div>

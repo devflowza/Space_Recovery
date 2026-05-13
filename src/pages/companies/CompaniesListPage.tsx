@@ -355,13 +355,12 @@ export const CompaniesListPage: React.FC = () => {
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-start gap-4">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
+            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg bg-primary"
             style={{
-              backgroundColor: '#0ea5e9',
-              boxShadow: '0 10px 40px -10px #0ea5e980',
+              boxShadow: '0 10px 40px -10px rgb(var(--color-primary) / 0.5)',
             }}
           >
-            <Building2 className="w-6 h-6 text-white" />
+            <Building2 className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-slate-900 mb-1">Companies</h1>
@@ -370,57 +369,57 @@ export const CompaniesListPage: React.FC = () => {
             </p>
           </div>
         </div>
-        <Button onClick={handleOpenModal} style={{ backgroundColor: '#0ea5e9' }}>
+        <Button onClick={handleOpenModal}>
           <Plus className="w-4 h-4 mr-2" />
           Add Company
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+        <div className="bg-info-muted rounded-xl p-4 border border-info/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Companies</p>
-              <p className="text-2xl font-bold text-blue-900 mt-1">{companies.length}</p>
+              <p className="text-xs font-medium text-info uppercase tracking-wide">Total Companies</p>
+              <p className="text-2xl font-bold text-info mt-1">{companies.length}</p>
             </div>
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-info-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200">
+        <div className="bg-success-muted rounded-xl p-4 border border-success/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Active</p>
-              <p className="text-2xl font-bold text-emerald-900 mt-1">{companies.filter((c) => c.is_active).length}</p>
+              <p className="text-xs font-medium text-success uppercase tracking-wide">Active</p>
+              <p className="text-2xl font-bold text-success mt-1">{companies.filter((c) => c.is_active).length}</p>
             </div>
-            <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-success rounded-lg flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-success-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl p-4 border border-violet-200">
+        <div className="bg-accent/10 rounded-xl p-4 border border-accent/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-violet-600 uppercase tracking-wide">Recent (30d)</p>
-              <p className="text-2xl font-bold text-violet-900 mt-1">{recentCompanies.length}</p>
+              <p className="text-xs font-medium text-accent-foreground uppercase tracking-wide">Recent (30d)</p>
+              <p className="text-2xl font-bold text-accent-foreground mt-1">{recentCompanies.length}</p>
             </div>
-            <div className="w-10 h-10 bg-violet-500 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 text-accent-foreground" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+        <div className="bg-warning-muted rounded-xl p-4 border border-warning/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-amber-600 uppercase tracking-wide">Industries</p>
-              <p className="text-2xl font-bold text-amber-900 mt-1">{industries.length}</p>
+              <p className="text-xs font-medium text-warning uppercase tracking-wide">Industries</p>
+              <p className="text-2xl font-bold text-warning mt-1">{industries.length}</p>
             </div>
-            <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-warning rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-warning-foreground" />
             </div>
           </div>
         </div>
@@ -436,7 +435,7 @@ export const CompaniesListPage: React.FC = () => {
                 placeholder="Search companies..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -445,7 +444,7 @@ export const CompaniesListPage: React.FC = () => {
                 onClick={() => setFilterStatus(filterStatus === 'active' ? 'all' : 'active')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   filterStatus === 'active'
-                    ? 'bg-emerald-500 text-white shadow-md'
+                    ? 'bg-success text-success-foreground shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -482,7 +481,7 @@ export const CompaniesListPage: React.FC = () => {
               <Filter className="w-4 h-4" />
               More Filters
               {(filterIndustry !== 'all' || filterStatus !== 'all') && (
-                <span className="ml-1 w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
           </div>
@@ -496,7 +495,7 @@ export const CompaniesListPage: React.FC = () => {
                 <select
                   value={filterIndustry}
                   onChange={(e) => setFilterIndustry(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Industries</option>
                   {industries.map((industry) => (
@@ -513,7 +512,7 @@ export const CompaniesListPage: React.FC = () => {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="all">All Statuses</option>
                   <option value="active">Active</option>
@@ -526,17 +525,17 @@ export const CompaniesListPage: React.FC = () => {
       </div>
 
       {companiesError ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-red-200 p-12 text-center">
-          <Building2 className="w-16 h-16 text-red-300 mx-auto mb-4" />
-          <p className="text-red-600 text-lg font-semibold mb-2">Error loading companies</p>
+        <div className="bg-white rounded-2xl shadow-lg border border-danger/20 p-12 text-center">
+          <Building2 className="w-16 h-16 text-danger/40 mx-auto mb-4" />
+          <p className="text-danger text-lg font-semibold mb-2">Error loading companies</p>
           <p className="text-slate-500 text-sm mb-4">{companiesError.message}</p>
-          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['companies'] })} style={{ backgroundColor: '#0ea5e9' }}>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['companies'] })}>
             Retry
           </Button>
         </div>
       ) : isLoading ? (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading companies...</p>
         </div>
       ) : filteredCompanies.length === 0 ? (
@@ -592,13 +591,13 @@ export const CompaniesListPage: React.FC = () => {
                       className="hover:bg-slate-50 transition-colors cursor-pointer"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-semibold text-blue-600">
+                        <span className="font-semibold text-primary">
                           {company.company_number}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
+                          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-semibold text-sm shadow-md">
                             {(company.name || company.company_name || '??').substring(0, 2).toUpperCase()}
                           </div>
                           <div>
@@ -645,7 +644,7 @@ export const CompaniesListPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {company.master_industries ? (
-                          <Badge variant="custom" color="#8b5cf6" size="sm">
+                          <Badge variant="custom" color="rgb(var(--color-accent))" size="sm">
                             {company.master_industries.name}
                           </Badge>
                         ) : (
@@ -824,7 +823,7 @@ export const CompaniesListPage: React.FC = () => {
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
               placeholder="Add any internal notes..."
             />
           </div>
@@ -840,7 +839,7 @@ export const CompaniesListPage: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" style={{ backgroundColor: '#0ea5e9' }}>
+            <Button type="submit">
               Create Company
             </Button>
           </div>
@@ -934,7 +933,7 @@ export const CompaniesListPage: React.FC = () => {
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
               placeholder="Add any internal notes..."
             />
           </div>
@@ -951,7 +950,7 @@ export const CompaniesListPage: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" style={{ backgroundColor: '#0ea5e9' }} disabled={updateMutation.isPending}>
+            <Button type="submit" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>

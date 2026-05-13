@@ -348,7 +348,7 @@ export const CompanyProfilePage: React.FC = () => {
     return (
       <div className="p-8 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-sky-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading company profile...</p>
         </div>
       </div>
@@ -389,7 +389,7 @@ export const CompanyProfilePage: React.FC = () => {
       case 'phone':
         return '#10b981';
       case 'meeting':
-        return '#8b5cf6';
+        return 'rgb(var(--color-accent))';
       case 'sms':
         return '#f59e0b';
       default:
@@ -411,13 +411,13 @@ export const CompanyProfilePage: React.FC = () => {
 
       <Card className="p-6 mb-4">
         <div className="flex items-start gap-6">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+          <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-2xl shadow-lg">
             {(company.name || company.company_name || '??').substring(0, 2).toUpperCase()}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-2xl font-bold text-slate-900">{company.name || company.company_name}</h1>
-              <Badge variant="custom" color="#0ea5e9">
+              <Badge variant="custom" color="rgb(var(--color-primary))">
                 {company.company_number}
               </Badge>
               {!company.is_active && <Badge variant="default">Inactive</Badge>}
@@ -425,7 +425,7 @@ export const CompanyProfilePage: React.FC = () => {
 
             <div className="flex items-center gap-3 mb-4">
               {company.master_industries && (
-                <Badge variant="custom" color="#8b5cf6">
+                <Badge variant="custom" color="rgb(var(--color-accent))">
                   {company.master_industries.name}
                 </Badge>
               )}
@@ -440,7 +440,7 @@ export const CompanyProfilePage: React.FC = () => {
               {company.email && (
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <Mail className="w-4 h-4 text-slate-400" />
-                  <a href={`mailto:${company.email}`} className="hover:text-sky-600">
+                  <a href={`mailto:${company.email}`} className="hover:text-primary">
                     {company.email}
                   </a>
                 </div>
@@ -448,7 +448,7 @@ export const CompanyProfilePage: React.FC = () => {
               {company.phone && (
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <Phone className="w-4 h-4 text-slate-400" />
-                  <a href={`tel:${company.phone}`} className="hover:text-sky-600">
+                  <a href={`tel:${company.phone}`} className="hover:text-primary">
                     {company.phone}
                   </a>
                 </div>
@@ -456,7 +456,7 @@ export const CompanyProfilePage: React.FC = () => {
               {company.website && (
                 <div className="flex items-center gap-2 text-sm text-slate-600">
                   <Globe className="w-4 h-4 text-slate-400" />
-                  <a href={company.website} target="_blank" rel="noopener noreferrer" className="hover:text-sky-600 truncate">
+                  <a href={company.website} target="_blank" rel="noopener noreferrer" className="hover:text-primary truncate">
                     {company.website}
                   </a>
                 </div>
@@ -495,52 +495,52 @@ export const CompanyProfilePage: React.FC = () => {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        <Card className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <Card className="p-4 bg-success-muted border-success/20">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-success flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-success-foreground" />
             </div>
-            <p className="text-sm font-semibold text-green-700">Total Revenue</p>
+            <p className="text-sm font-semibold text-success">Total Revenue</p>
           </div>
-          <p className="text-2xl font-bold text-green-900">
+          <p className="text-2xl font-bold text-success">
             ${companyInsights?.totalRevenue?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
           </p>
-          <p className="text-xs text-green-600 mt-1">
+          <p className="text-xs text-success mt-1">
             From approved quotes
           </p>
         </Card>
 
-        <Card className="p-4 bg-gradient-to-br from-blue-50 to-sky-50 border-blue-200">
+        <Card className="p-4 bg-info-muted border-info/20">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-info flex items-center justify-center">
+              <Briefcase className="w-5 h-5 text-info-foreground" />
             </div>
-            <p className="text-sm font-semibold text-blue-700">Total Cases</p>
+            <p className="text-sm font-semibold text-info">Total Cases</p>
           </div>
-          <p className="text-2xl font-bold text-blue-900">
+          <p className="text-2xl font-bold text-info">
             {companyInsights?.totalCases || 0}
           </p>
           <div className="flex items-center gap-3 mt-1 text-xs">
-            <span className="text-green-600 font-medium">
+            <span className="text-success font-medium">
               ✓ {companyInsights?.completedCases || 0} Done
             </span>
-            <span className="text-amber-600 font-medium">
+            <span className="text-warning font-medium">
               ⏳ {companyInsights?.pendingCases || 0} Pending
             </span>
           </div>
         </Card>
 
-        <Card className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200">
+        <Card className="p-4 bg-accent/10 border-accent/20">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-violet-500 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
+              <FileText className="w-5 h-5 text-accent-foreground" />
             </div>
-            <p className="text-sm font-semibold text-violet-700">Quotes</p>
+            <p className="text-sm font-semibold text-accent-foreground">Quotes</p>
           </div>
-          <p className="text-2xl font-bold text-violet-900">
+          <p className="text-2xl font-bold text-accent-foreground">
             {companyInsights?.totalQuotes || 0}
           </p>
-          <p className="text-xs text-violet-600 mt-1">
+          <p className="text-xs text-accent-foreground/80 mt-1">
             {companyInsights?.approvedQuotes || 0} approved
           </p>
         </Card>
@@ -576,7 +576,7 @@ export const CompanyProfilePage: React.FC = () => {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-sky-50 text-sky-700 shadow-sm'
+                    ? 'bg-primary/10 text-primary shadow-sm'
                     : 'text-slate-600 hover:bg-slate-50'
                 }`}
               >
@@ -638,41 +638,41 @@ export const CompanyProfilePage: React.FC = () => {
                   {communications.length > 3 && (
                     <button
                       onClick={() => setActiveTab('communications')}
-                      className="w-full mt-3 text-xs font-medium text-sky-600 hover:text-sky-700 transition-colors"
+                      className="w-full mt-3 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                     >
                       View all activity →
                     </button>
                   )}
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl border border-blue-200 p-4">
-                  <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wider mb-3">Contact Summary</h3>
+                <div className="bg-info-muted rounded-xl border border-info/20 p-4">
+                  <h3 className="text-sm font-bold text-info uppercase tracking-wider mb-3">Contact Summary</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-blue-700">Total Contacts</span>
-                      <span className="text-lg font-bold text-blue-900">{contacts.length}</span>
+                      <span className="text-sm text-info">Total Contacts</span>
+                      <span className="text-lg font-bold text-info">{contacts.length}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-blue-700">Portal Enabled</span>
-                      <span className="text-lg font-bold text-blue-900">
+                      <span className="text-sm text-info">Portal Enabled</span>
+                      <span className="text-lg font-bold text-info">
                         {contacts.filter(c => c.customers_enhanced?.portal_enabled).length}
                       </span>
                     </div>
                     {primaryContact && primaryContact.customers_enhanced && (
-                      <div className="mt-3 pt-3 border-t border-blue-200">
-                        <p className="text-xs text-blue-700 mb-1">Primary Contact</p>
-                        <p className="text-sm font-semibold text-blue-900">
+                      <div className="mt-3 pt-3 border-t border-info/20">
+                        <p className="text-xs text-info mb-1">Primary Contact</p>
+                        <p className="text-sm font-semibold text-info">
                           {primaryContact.customers_enhanced.customer_name}
                         </p>
                         {primaryContact.job_title && (
-                          <p className="text-xs text-blue-600 mt-1">{primaryContact.job_title}</p>
+                          <p className="text-xs text-info mt-1">{primaryContact.job_title}</p>
                         )}
                       </div>
                     )}
                   </div>
                   <button
                     onClick={() => setActiveTab('contacts')}
-                    className="w-full mt-3 px-3 py-2 bg-white rounded-lg text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+                    className="w-full mt-3 px-3 py-2 bg-white rounded-lg text-xs font-medium text-info hover:bg-info-muted transition-colors"
                   >
                     View all contacts
                   </button>
@@ -700,11 +700,11 @@ export const CompanyProfilePage: React.FC = () => {
                     return (
                       <div
                         key={contact.id}
-                        className="p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-cyan-300 cursor-pointer transition-all"
+                        className="p-4 bg-slate-50 rounded-lg border border-slate-200 hover:border-primary/40 cursor-pointer transition-all"
                         onClick={() => navigate(`/customers/${customer.id}`)}
                       >
                         <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-white font-semibold">
+                          <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-semibold">
                             {customer.customer_name?.[0] || 'C'}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -713,7 +713,7 @@ export const CompanyProfilePage: React.FC = () => {
                                 {customer.customer_name}
                               </p>
                               {contact.is_primary_contact && (
-                                <Badge variant="custom" color="#10b981" size="sm">
+                                <Badge variant="success" size="sm">
                                   Primary
                                 </Badge>
                               )}
@@ -920,7 +920,7 @@ export const CompanyProfilePage: React.FC = () => {
               value={editFormData.notes}
               onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
               placeholder="Add any internal notes..."
             />
           </div>
@@ -933,7 +933,7 @@ export const CompanyProfilePage: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" style={{ backgroundColor: '#0ea5e9' }} disabled={updateMutation.isPending}>
+            <Button type="submit" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>

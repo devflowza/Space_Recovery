@@ -10,11 +10,11 @@ import type { Database } from '../../types/database.types';
 type PlatformAnnouncement = Database['public']['Tables']['platform_announcements']['Row'];
 
 const typeConfig = {
-  info: { icon: Info, color: 'bg-blue-500 text-white' },
-  warning: { icon: AlertTriangle, color: 'bg-amber-500 text-white' },
-  maintenance: { icon: Construction, color: 'bg-red-500 text-white' },
-  feature: { icon: Sparkles, color: 'bg-green-500 text-white' },
-  promotion: { icon: Tag, color: 'bg-purple-500 text-white' },
+  info: { icon: Info, color: 'bg-info text-info-foreground' },
+  warning: { icon: AlertTriangle, color: 'bg-warning text-warning-foreground' },
+  maintenance: { icon: Construction, color: 'bg-danger text-danger-foreground' },
+  feature: { icon: Sparkles, color: 'bg-success text-success-foreground' },
+  promotion: { icon: Tag, color: 'bg-accent text-accent-foreground' },
 };
 
 export const AnnouncementBanner: React.FC = () => {

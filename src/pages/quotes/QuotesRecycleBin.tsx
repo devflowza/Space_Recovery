@@ -129,7 +129,7 @@ export const QuotesRecycleBin: React.FC = () => {
               <Calendar className="w-3 h-3" />
               {formatDate(quote.deleted_at)}
             </div>
-            <div className="flex items-center gap-2 text-xs text-amber-600">
+            <div className="flex items-center gap-2 text-xs text-warning">
               <AlertTriangle className="w-3 h-3" />
               {daysLeft} days until permanent deletion
             </div>
@@ -155,8 +155,7 @@ export const QuotesRecycleBin: React.FC = () => {
           <Button
             size="sm"
             onClick={() => handleRestore(quote)}
-            style={{ backgroundColor: '#10b981' }}
-            className="text-xs"
+            className="text-xs bg-success text-success-foreground hover:bg-success/90"
           >
             <RotateCcw className="w-3 h-3 mr-1" />
             Restore
@@ -165,7 +164,7 @@ export const QuotesRecycleBin: React.FC = () => {
             size="sm"
             variant="secondary"
             onClick={() => handlePermanentDelete(quote)}
-            className="text-xs text-red-600 hover:bg-red-50"
+            className="text-xs text-danger hover:bg-danger-muted"
           >
             <Trash2 className="w-3 h-3 mr-1" />
             Delete
@@ -192,7 +191,7 @@ export const QuotesRecycleBin: React.FC = () => {
         <Card className="mt-6">
           {isLoading ? (
             <div className="p-8 text-center">
-              <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
+              <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin" />
               <p className="text-slate-600 mt-4">Loading deleted quotes...</p>
             </div>
           ) : deletedQuotes.length === 0 ? (
@@ -207,14 +206,14 @@ export const QuotesRecycleBin: React.FC = () => {
             </div>
           ) : (
             <>
-              <div className="p-4 bg-blue-50 border-b border-blue-100">
+              <div className="p-4 bg-info-muted border-b border-info/20">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="text-sm font-semibold text-blue-900 mb-1">
+                    <h4 className="text-sm font-semibold text-info mb-1">
                       About the Recycle Bin
                     </h4>
-                    <p className="text-sm text-blue-800">
+                    <p className="text-sm text-info">
                       Deleted quotes are kept for 30 days before being permanently removed. You can
                       restore them at any time before auto-purge. Permanently deleting a quote
                       cannot be undone.
@@ -237,12 +236,12 @@ export const QuotesRecycleBin: React.FC = () => {
         title="Restore Quote"
       >
         <div className="space-y-4">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-success-muted border border-success/20 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <RotateCcw className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <RotateCcw className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-semibold text-green-900 mb-1">Restoring Quote</h4>
-                <div className="text-sm text-green-800 space-y-1">
+                <h4 className="text-sm font-semibold text-success mb-1">Restoring Quote</h4>
+                <div className="text-sm text-success space-y-1">
                   <p>
                     <strong>Quote Number:</strong> {selectedQuote?.quote_number || 'N/A'}
                   </p>
@@ -274,7 +273,7 @@ export const QuotesRecycleBin: React.FC = () => {
             </Button>
             <Button
               onClick={() => restoreMutation.mutate(selectedQuote?.id)}
-              style={{ backgroundColor: '#10b981' }}
+              className="bg-success text-success-foreground hover:bg-success/90"
               disabled={restoreMutation.isPending}
             >
               {restoreMutation.isPending ? (
@@ -300,12 +299,12 @@ export const QuotesRecycleBin: React.FC = () => {
         title="Permanently Delete Quote"
       >
         <div className="space-y-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="bg-danger-muted border border-danger/20 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-semibold text-red-900 mb-1">Warning: Permanent Deletion</h4>
-                <div className="text-sm text-red-800 space-y-1">
+                <h4 className="text-sm font-semibold text-danger mb-1">Warning: Permanent Deletion</h4>
+                <div className="text-sm text-danger space-y-1">
                   <p>
                     <strong>Quote Number:</strong> {selectedQuote?.quote_number || 'N/A'}
                   </p>
@@ -338,7 +337,7 @@ export const QuotesRecycleBin: React.FC = () => {
             </Button>
             <Button
               onClick={() => permanentDeleteMutation.mutate(selectedQuote?.id)}
-              style={{ backgroundColor: '#ef4444' }}
+              className="bg-danger text-danger-foreground hover:bg-danger/90"
               disabled={permanentDeleteMutation.isPending}
             >
               {permanentDeleteMutation.isPending ? (

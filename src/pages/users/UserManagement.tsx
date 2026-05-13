@@ -366,17 +366,17 @@ export const UserManagement: React.FC = () => {
                     <div className="flex items-center gap-2">
                       {user.is_active ? (
                         <>
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          <span className="text-sm text-green-700 font-medium">Active</span>
+                          <CheckCircle className="w-4 h-4 text-success" />
+                          <span className="text-sm text-success font-medium">Active</span>
                         </>
                       ) : (
                         <>
-                          <XCircle className="w-4 h-4 text-red-500" />
-                          <span className="text-sm text-red-700 font-medium">Inactive</span>
+                          <XCircle className="w-4 h-4 text-danger" />
+                          <span className="text-sm text-danger font-medium">Inactive</span>
                         </>
                       )}
                       {user.password_reset_required && (
-                        <AlertCircle className="w-4 h-4 text-orange-500" title="Password reset required" />
+                        <AlertCircle className="w-4 h-4 text-warning" title="Password reset required" />
                       )}
                     </div>
                   </td>
@@ -398,7 +398,7 @@ export const UserManagement: React.FC = () => {
                             setSelectedUser(user);
                             setShowEditModal(true);
                           }}
-                          className="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                          className="px-3 py-1.5 bg-success text-success-foreground text-sm font-medium rounded-lg hover:bg-success/90 transition-colors flex items-center gap-2"
                           title="Approve user"
                         >
                           <UserCheck className="w-4 h-4" />
@@ -411,7 +411,7 @@ export const UserManagement: React.FC = () => {
                               setSelectedUser(user);
                               setShowEditModal(true);
                             }}
-                            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-600 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                             title="Edit user"
                           >
                             <Edit className="w-4 h-4" />
@@ -421,7 +421,7 @@ export const UserManagement: React.FC = () => {
                               setSelectedUser(user);
                               setShowPasswordResetModal(true);
                             }}
-                            className="p-2 text-slate-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-600 hover:text-warning hover:bg-warning-muted rounded-lg transition-colors"
                             title="Reset password"
                           >
                             <Shield className="w-4 h-4" />
@@ -434,8 +434,8 @@ export const UserManagement: React.FC = () => {
                               }}
                               className={`p-2 rounded-lg transition-colors ${
                                 user.is_active
-                                  ? 'text-slate-600 hover:text-red-600 hover:bg-red-50'
-                                  : 'text-slate-600 hover:text-green-600 hover:bg-green-50'
+                                  ? 'text-slate-600 hover:text-danger hover:bg-danger-muted'
+                                  : 'text-slate-600 hover:text-success hover:bg-success-muted'
                               }`}
                               title={user.is_active ? 'Deactivate user' : 'Activate user'}
                             >

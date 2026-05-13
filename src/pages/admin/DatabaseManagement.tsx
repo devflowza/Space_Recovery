@@ -157,8 +157,8 @@ export const DatabaseManagement: React.FC = () => {
                 <p className="text-sm text-slate-600 mb-1">Total Backups</p>
                 <p className="text-2xl font-bold text-slate-900">{backups.length}</p>
               </div>
-              <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                <Database className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Database className="w-6 h-6 text-primary" />
               </div>
             </div>
           </div>
@@ -169,12 +169,12 @@ export const DatabaseManagement: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 mb-1">Successful</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-success">
                   {backups.filter((b) => b.status === 'completed').length}
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 rounded-lg bg-success-muted flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-success" />
               </div>
             </div>
           </div>
@@ -185,12 +185,12 @@ export const DatabaseManagement: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 mb-1">Failed</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-2xl font-bold text-danger">
                   {backups.filter((b) => b.status === 'failed').length}
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
-                <XCircle className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 rounded-lg bg-danger-muted flex items-center justify-center">
+                <XCircle className="w-6 h-6 text-danger" />
               </div>
             </div>
           </div>

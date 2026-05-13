@@ -529,12 +529,12 @@ export const QuoteDetailPage: React.FC = () => {
 
               {/* Error Messages */}
               {(translationsError || settingsError || resourceError) && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <div className="bg-danger-muted border border-danger/20 rounded-lg p-3 mb-4">
                   <div className="flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-red-900 mb-1">Cannot Generate PDF</h4>
-                      <p className="text-sm text-red-700">
+                      <h4 className="text-sm font-semibold text-danger mb-1">Cannot Generate PDF</h4>
+                      <p className="text-sm text-danger">
                         {translationsError && translationsErrorMessage}
                         {settingsError && resourceError}
                       </p>
@@ -545,10 +545,10 @@ export const QuoteDetailPage: React.FC = () => {
 
               {/* Loading Status */}
               {(isLoadingTranslations || isLoadingSettings) && !translationsError && !settingsError && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <div className="bg-info-muted border border-info/20 rounded-lg p-3 mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-sm text-blue-900">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-info"></div>
+                    <span className="text-sm text-info">
                       Loading resources...
                     </span>
                   </div>
@@ -566,8 +566,7 @@ export const QuoteDetailPage: React.FC = () => {
                 {canConvert && (
                   <Button
                     onClick={() => setShowConvertModal(true)}
-                    style={{ backgroundColor: '#14b8a6' }}
-                    className="w-full shadow-md hover:shadow-lg transition-shadow"
+                    className="w-full shadow-md hover:shadow-lg transition-shadow bg-success text-success-foreground hover:bg-success/90"
                   >
                     <Receipt className="w-4 h-4 mr-2" />
                     Convert to Invoice
@@ -577,7 +576,6 @@ export const QuoteDetailPage: React.FC = () => {
                 {canEdit && (
                   <Button
                     onClick={() => setShowEditModal(true)}
-                    style={{ backgroundColor: '#3b82f6' }}
                     className="w-full"
                   >
                     <Edit className="w-4 h-4 mr-2" />
@@ -608,7 +606,7 @@ export const QuoteDetailPage: React.FC = () => {
                   <Button
                     onClick={() => setShowDeleteModal(true)}
                     variant="secondary"
-                    className="w-full text-red-600 hover:bg-red-50 border-red-200"
+                    className="w-full text-danger hover:bg-danger-muted border-danger/20"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete Quote
@@ -678,12 +676,12 @@ export const QuoteDetailPage: React.FC = () => {
         title="Delete Quote"
       >
         <div className="space-y-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="bg-warning-muted border border-warning/20 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-semibold text-amber-900 mb-1">Deleting Quote</h4>
-                <div className="text-sm text-amber-800 space-y-1">
+                <h4 className="text-sm font-semibold text-warning mb-1">Deleting Quote</h4>
+                <div className="text-sm text-warning space-y-1">
                   <p><strong>Quote Number:</strong> {quote?.quote_number || 'N/A'}</p>
                   <p><strong>Customer:</strong> {quote?.customers?.customer_name || quote?.companies?.company_name || 'N/A'}</p>
                   <p><strong>Amount:</strong> {formatCurrency(quote?.total_amount || 0)}</p>
@@ -709,7 +707,7 @@ export const QuoteDetailPage: React.FC = () => {
                 deleteMutation.mutate();
                 setShowDeleteModal(false);
               }}
-              style={{ backgroundColor: '#ef4444' }}
+              className="bg-danger text-danger-foreground hover:bg-danger/90"
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? (
@@ -742,7 +740,7 @@ export const QuoteDetailPage: React.FC = () => {
             <select
               value={newStatus}
               onChange={(e) => setNewStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select Status</option>
               <option value="draft">Draft</option>

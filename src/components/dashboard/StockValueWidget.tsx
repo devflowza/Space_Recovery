@@ -27,8 +27,8 @@ export const StockValueWidget: React.FC = () => {
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-            <Layers className="w-4 h-4 text-blue-600" />
+          <div className="w-8 h-8 rounded-lg bg-info-muted flex items-center justify-center">
+            <Layers className="w-4 h-4 text-primary" />
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Stock Value</p>
@@ -62,7 +62,7 @@ export const StockValueWidget: React.FC = () => {
                 style={{ width: `${internalPct}%` }}
               />
               <div
-                className="h-full bg-blue-500 rounded-r-full transition-all"
+                className="h-full bg-primary rounded-r-full transition-all"
                 style={{ width: `${saleablePct}%` }}
               />
             </div>
@@ -77,7 +77,7 @@ export const StockValueWidget: React.FC = () => {
             </div>
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block" />
                 <span className="text-slate-600">Saleable Devices</span>
               </div>
               <span className="font-medium text-slate-900">{formatCurrency(saleableValue)}</span>
@@ -88,7 +88,7 @@ export const StockValueWidget: React.FC = () => {
 
       <button
         onClick={() => navigate('/resources/stock/reports')}
-        className="mt-4 flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+        className="mt-4 flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
       >
         View stock reports
         <ArrowRight className="w-3 h-3" />

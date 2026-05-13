@@ -79,7 +79,7 @@ export const MFAEnrollment: React.FC<MFAEnrollmentProps> = ({ isOpen, onClose, o
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-blue-600" />
+            <ShieldCheck className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold text-slate-900">Set Up Two-Factor Authentication</h2>
           </div>
           {step !== 'complete' && (
@@ -91,7 +91,7 @@ export const MFAEnrollment: React.FC<MFAEnrollmentProps> = ({ isOpen, onClose, o
 
         <div className="p-6">
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded flex items-center gap-2">
+            <div className="mb-4 p-3 bg-danger-muted border border-danger/30 text-danger rounded flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
@@ -123,7 +123,7 @@ export const MFAEnrollment: React.FC<MFAEnrollmentProps> = ({ isOpen, onClose, o
                     title="Copy secret"
                   >
                     {secretCopied ? (
-                      <Check className="w-4 h-4 text-green-600" />
+                      <Check className="w-4 h-4 text-success" />
                     ) : (
                       <Copy className="w-4 h-4 text-slate-500" />
                     )}
@@ -136,7 +136,7 @@ export const MFAEnrollment: React.FC<MFAEnrollmentProps> = ({ isOpen, onClose, o
                   setStep('verify');
                   setTimeout(() => inputRef.current?.focus(), 100);
                 }}
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors"
               >
                 I've scanned the QR code
               </button>
@@ -164,7 +164,7 @@ export const MFAEnrollment: React.FC<MFAEnrollmentProps> = ({ isOpen, onClose, o
                   if (e.key === 'Enter' && code.length === 6) handleVerify();
                 }}
                 placeholder="000000"
-                className="w-full text-center text-2xl font-mono tracking-[0.5em] px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full text-center text-2xl font-mono tracking-[0.5em] px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               />
 
               <div className="flex gap-3">
@@ -177,7 +177,7 @@ export const MFAEnrollment: React.FC<MFAEnrollmentProps> = ({ isOpen, onClose, o
                 <button
                   onClick={handleVerify}
                   disabled={loading || code.length !== 6}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                   Verify & Enable
@@ -188,8 +188,8 @@ export const MFAEnrollment: React.FC<MFAEnrollmentProps> = ({ isOpen, onClose, o
 
           {step === 'complete' && (
             <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto">
-                <Check className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-success-muted rounded-full flex items-center justify-center mx-auto">
+                <Check className="w-8 h-8 text-success" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900">MFA Enabled Successfully</h3>
               <p className="text-sm text-slate-600">
@@ -197,7 +197,7 @@ export const MFAEnrollment: React.FC<MFAEnrollmentProps> = ({ isOpen, onClose, o
               </p>
               <button
                 onClick={() => { onEnrolled(); onClose(); }}
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors"
               >
                 Done
               </button>
@@ -206,7 +206,7 @@ export const MFAEnrollment: React.FC<MFAEnrollmentProps> = ({ isOpen, onClose, o
 
           {loading && !enrollment && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           )}
         </div>

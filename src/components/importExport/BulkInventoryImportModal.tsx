@@ -203,7 +203,7 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
             <div
               key={s}
               className={`flex-1 h-2 rounded-full mx-1 transition-colors ${
-                s <= step ? 'bg-blue-600' : 'bg-slate-200'
+                s <= step ? 'bg-primary' : 'bg-slate-200'
               }`}
             />
           ))}
@@ -212,12 +212,12 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
 
       {step === 1 && (
         <div className="space-y-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-info-muted border border-info/30 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <Info className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <p className="font-medium text-blue-900 mb-2">Smart Import Features</p>
-                <ul className="text-sm text-blue-800 space-y-1">
+                <p className="font-medium text-info mb-2">Smart Import Features</p>
+                <ul className="text-sm text-info space-y-1">
                   <li>• Automatic name-to-ID matching (e.g., "Seagate" → Brand ID)</li>
                   <li>• Batch processing for efficient large imports</li>
                   <li>• Real-time validation with detailed error reporting</li>
@@ -230,7 +230,7 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
           <div
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
-            className="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center hover:border-blue-400 transition-colors cursor-pointer"
+            className="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center hover:border-primary/60 transition-colors cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload className="w-16 h-16 text-slate-400 mx-auto mb-4" />
@@ -258,7 +258,7 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
                   Download a CSV template with example data showing the correct format.
                   Use friendly names like "Seagate", "1TB", "SATA" instead of UUIDs.
                 </p>
-                <Button size="sm" variant="ghost" onClick={downloadTemplate} className="text-blue-600">
+                <Button size="sm" variant="ghost" onClick={downloadTemplate} className="text-primary">
                   <Download className="w-4 h-4 mr-2" />
                   Download Template
                 </Button>
@@ -297,7 +297,7 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
                     onChange={(e) =>
                       setFieldMappings({ ...fieldMappings, [sourceField]: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                   >
                     <option value="">Skip this field</option>
                     <optgroup label="Required Fields">
@@ -379,8 +379,8 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
         <div className="space-y-6">
           {isImporting ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Loader className="w-10 h-10 text-blue-600 animate-spin" />
+              <div className="w-16 h-16 bg-info-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Loader className="w-10 h-10 text-primary animate-spin" />
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">
                 {progress?.status === 'preparing' ? 'Preparing Import...' : 'Importing Records...'}
@@ -394,7 +394,7 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
               <div className="max-w-md mx-auto">
                 <div className="bg-slate-200 rounded-full h-3 mb-2 overflow-hidden">
                   <div
-                    className="bg-blue-600 h-full transition-all duration-300"
+                    className="bg-primary h-full transition-all duration-300"
                     style={{ width: `${getProgressPercentage()}%` }}
                   />
                 </div>
@@ -403,17 +403,17 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
 
               {progress && progress.processed > 0 && (
                 <div className="mt-6 grid grid-cols-3 gap-4 max-w-md mx-auto">
-                  <div className="bg-green-50 rounded-lg p-3">
-                    <p className="text-2xl font-bold text-green-600">{progress.successful}</p>
-                    <p className="text-xs text-green-700">Successful</p>
+                  <div className="bg-success-muted rounded-lg p-3">
+                    <p className="text-2xl font-bold text-success">{progress.successful}</p>
+                    <p className="text-xs text-success">Successful</p>
                   </div>
-                  <div className="bg-red-50 rounded-lg p-3">
-                    <p className="text-2xl font-bold text-red-600">{progress.failed}</p>
-                    <p className="text-xs text-red-700">Failed</p>
+                  <div className="bg-danger-muted rounded-lg p-3">
+                    <p className="text-2xl font-bold text-danger">{progress.failed}</p>
+                    <p className="text-xs text-danger">Failed</p>
                   </div>
-                  <div className="bg-yellow-50 rounded-lg p-3">
-                    <p className="text-2xl font-bold text-yellow-600">{progress.warnings.length}</p>
-                    <p className="text-xs text-yellow-700">Warnings</p>
+                  <div className="bg-warning-muted rounded-lg p-3">
+                    <p className="text-2xl font-bold text-warning">{progress.warnings.length}</p>
+                    <p className="text-xs text-warning">Warnings</p>
                   </div>
                 </div>
               )}
@@ -423,14 +423,14 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
               <div
                 className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
                   progress?.status === 'completed' && progress.failed === 0
-                    ? 'bg-green-100'
-                    : 'bg-yellow-100'
+                    ? 'bg-success-muted'
+                    : 'bg-warning-muted'
                 }`}
               >
                 {progress?.status === 'completed' && progress.failed === 0 ? (
-                  <CheckCircle className="w-10 h-10 text-green-600" />
+                  <CheckCircle className="w-10 h-10 text-success" />
                 ) : (
-                  <AlertTriangle className="w-10 h-10 text-yellow-600" />
+                  <AlertTriangle className="w-10 h-10 text-warning" />
                 )}
               </div>
 
@@ -439,17 +439,17 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
               {progress && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-6">
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <p className="text-3xl font-bold text-green-600">{progress.successful}</p>
-                      <p className="text-sm text-green-700">Imported</p>
+                    <div className="bg-success-muted rounded-lg p-4">
+                      <p className="text-3xl font-bold text-success">{progress.successful}</p>
+                      <p className="text-sm text-success">Imported</p>
                     </div>
-                    <div className="bg-red-50 rounded-lg p-4">
-                      <p className="text-3xl font-bold text-red-600">{progress.failed}</p>
-                      <p className="text-sm text-red-700">Failed</p>
+                    <div className="bg-danger-muted rounded-lg p-4">
+                      <p className="text-3xl font-bold text-danger">{progress.failed}</p>
+                      <p className="text-sm text-danger">Failed</p>
                     </div>
-                    <div className="bg-yellow-50 rounded-lg p-4">
-                      <p className="text-3xl font-bold text-yellow-600">{progress.warnings.length}</p>
-                      <p className="text-sm text-yellow-700">Warnings</p>
+                    <div className="bg-warning-muted rounded-lg p-4">
+                      <p className="text-3xl font-bold text-warning">{progress.warnings.length}</p>
+                      <p className="text-sm text-warning">Warnings</p>
                     </div>
                   </div>
 
@@ -458,19 +458,19 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
                       <h4 className="font-medium text-slate-900 mb-2">Issues Found</h4>
                       <div className="space-y-2 max-h-48 overflow-y-auto text-left">
                         {progress.errors.slice(0, 5).map((error, idx) => (
-                          <div key={idx} className="text-sm bg-red-50 border border-red-200 rounded p-2">
-                            <p className="font-medium text-red-900">
+                          <div key={idx} className="text-sm bg-danger-muted border border-danger/30 rounded p-2">
+                            <p className="font-medium text-danger">
                               Row {error.row}: {error.field}
                             </p>
-                            <p className="text-red-700">{error.message}</p>
+                            <p className="text-danger">{error.message}</p>
                           </div>
                         ))}
                         {progress.warnings.slice(0, 3).map((warning, idx) => (
-                          <div key={idx} className="text-sm bg-yellow-50 border border-yellow-200 rounded p-2">
-                            <p className="font-medium text-yellow-900">
+                          <div key={idx} className="text-sm bg-warning-muted border border-warning/30 rounded p-2">
+                            <p className="font-medium text-warning">
                               Row {warning.row}: {warning.field}
                             </p>
-                            <p className="text-yellow-700">{warning.message}</p>
+                            <p className="text-warning">{warning.message}</p>
                           </div>
                         ))}
                         {(progress.errors.length > 5 || progress.warnings.length > 3) && (
@@ -493,7 +493,7 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
                   )}
 
                   <div className="flex gap-3 justify-center mt-6">
-                    <Button onClick={handleClose} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Button onClick={handleClose} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                       Done
                     </Button>
                   </div>
@@ -520,7 +520,7 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
                 if (step === 2) handleStartImport();
               }}
               disabled={step === 1 && !file}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {step === 2 ? 'Start Import' : 'Next'}
             </Button>

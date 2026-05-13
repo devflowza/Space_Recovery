@@ -328,16 +328,16 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
             <div
               key={s}
               className={`flex-1 h-2 rounded-full mx-1 transition-colors ${
-                s <= step ? 'bg-blue-600' : 'bg-slate-200'
+                s <= step ? 'bg-primary' : 'bg-slate-200'
               }`}
             />
           ))}
         </div>
         <div className="flex items-center justify-between text-sm text-slate-600">
-          <span className={step >= 1 ? 'text-blue-600 font-medium' : ''}>Upload</span>
-          <span className={step >= 2 ? 'text-blue-600 font-medium' : ''}>Map Fields</span>
-          <span className={step >= 3 ? 'text-blue-600 font-medium' : ''}>Validate</span>
-          <span className={step >= 4 ? 'text-blue-600 font-medium' : ''}>Complete</span>
+          <span className={step >= 1 ? 'text-primary font-medium' : ''}>Upload</span>
+          <span className={step >= 2 ? 'text-primary font-medium' : ''}>Map Fields</span>
+          <span className={step >= 3 ? 'text-primary font-medium' : ''}>Validate</span>
+          <span className={step >= 4 ? 'text-primary font-medium' : ''}>Complete</span>
         </div>
       </div>
 
@@ -351,7 +351,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
                   type="checkbox"
                   checked={useNameBasedLookup}
                   onChange={(e) => setUseNameBasedLookup(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
                 />
                 <div>
                   <p className="font-medium text-slate-900">Use Name-Based Import</p>
@@ -366,7 +366,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
           <div
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
-            className="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center hover:border-blue-400 transition-colors cursor-pointer"
+            className="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center hover:border-primary/60 transition-colors cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload className="w-16 h-16 text-slate-400 mx-auto mb-4" />
@@ -385,12 +385,12 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
             />
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-info-muted border border-info/30 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
+              <FileText className="w-5 h-5 text-primary mt-0.5" />
               <div>
-                <p className="font-medium text-blue-900 mb-1">Need a template?</p>
-                <p className="text-sm text-blue-700 mb-3">
+                <p className="font-medium text-info mb-1">Need a template?</p>
+                <p className="text-sm text-info mb-3">
                   Download a pre-formatted CSV template with the correct column headers for {config.label}.
                   {entityType === 'inventory' && (
                     <span className="block mt-1">
@@ -402,17 +402,17 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
                 </p>
                 {entityType === 'inventory' && useNameBasedLookup ? (
                   <div className="flex gap-2">
-                    <Button size="sm" variant="ghost" onClick={() => downloadTemplate(true)} className="text-blue-600">
+                    <Button size="sm" variant="ghost" onClick={() => downloadTemplate(true)} className="text-primary">
                       <Download className="w-4 h-4 mr-2" />
                       Download Name-Based Template
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => downloadTemplate(false)} className="text-blue-600">
+                    <Button size="sm" variant="ghost" onClick={() => downloadTemplate(false)} className="text-primary">
                       <Download className="w-4 h-4 mr-2" />
                       Download UUID Template
                     </Button>
                   </div>
                 ) : (
-                  <Button size="sm" variant="ghost" onClick={() => downloadTemplate(false)} className="text-blue-600">
+                  <Button size="sm" variant="ghost" onClick={() => downloadTemplate(false)} className="text-primary">
                     <Download className="w-4 h-4 mr-2" />
                     Download Template
                   </Button>
@@ -466,7 +466,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
                     onChange={(e) =>
                       setFieldMappings({ ...fieldMappings, [sourceField]: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                   >
                     <option value="">Skip this field</option>
                     {entityType === 'inventory' ? (
@@ -615,24 +615,24 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
       {step === 3 && (
         <div className="space-y-4">
           {unresolvedNames.length > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="bg-warning-muted border border-warning/30 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-warning mt-0.5" />
                 <div className="flex-1">
-                  <p className="font-medium text-yellow-900 mb-2">
+                  <p className="font-medium text-warning mb-2">
                     Unresolved Names ({unresolvedNames.length})
                   </p>
-                  <p className="text-sm text-yellow-800 mb-2">
+                  <p className="text-sm text-warning mb-2">
                     The following names could not be found in the database:
                   </p>
                   <div className="space-y-1 max-h-32 overflow-y-auto">
                     {unresolvedNames.slice(0, 10).map((name, index) => (
-                      <p key={index} className="text-sm text-yellow-700">
+                      <p key={index} className="text-sm text-warning">
                         {name}
                       </p>
                     ))}
                     {unresolvedNames.length > 10 && (
-                      <p className="text-sm text-yellow-700">
+                      <p className="text-sm text-warning">
                         ... and {unresolvedNames.length - 10} more
                       </p>
                     )}
@@ -662,8 +662,8 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
 
           {validationResults.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-10 h-10 text-green-600" />
+              <div className="w-16 h-16 bg-success-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-10 h-10 text-success" />
               </div>
               <p className="text-lg font-medium text-slate-900 mb-2">Ready to Import!</p>
               <p className="text-slate-600">
@@ -673,14 +673,14 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {validationResults.slice(0, 50).map((error, index) => (
-                <div key={index} className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div key={index} className="p-3 bg-danger-muted border border-danger/30 rounded-lg">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5" />
+                    <AlertTriangle className="w-4 h-4 text-danger mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-red-900">
+                      <p className="text-sm font-medium text-danger">
                         Row {error.rowNumber}: {error.field}
                       </p>
-                      <p className="text-sm text-red-700">{error.error}</p>
+                      <p className="text-sm text-danger">{error.error}</p>
                     </div>
                   </div>
                 </div>
@@ -693,11 +693,11 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
             </div>
           )}
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="bg-warning-muted border border-warning/30 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-warning mt-0.5" />
               <div>
-                <p className="text-sm text-yellow-800">
+                <p className="text-sm text-warning">
                   {validationResults.length > 0
                     ? 'You can proceed with the import, but records with errors will be skipped.'
                     : 'Once imported, this action cannot be undone. Make sure your data is correct.'}
@@ -713,8 +713,8 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
         <div className="text-center py-8">
           {isImporting ? (
             <>
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Loader className="w-10 h-10 text-blue-600 animate-spin" />
+              <div className="w-16 h-16 bg-info-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Loader className="w-10 h-10 text-primary animate-spin" />
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Importing Records...</h3>
               <p className="text-slate-600 mb-6">
@@ -729,8 +729,8 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
             </>
           ) : (
             <>
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-10 h-10 text-green-600" />
+              <div className="w-16 h-16 bg-success-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-10 h-10 text-success" />
               </div>
               <h3 className="text-xl font-semibold text-slate-900 mb-2">Import Complete!</h3>
               <p className="text-slate-600 mb-6">
@@ -742,7 +742,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
                 )}
               </p>
 
-              <Button onClick={onClose} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button onClick={onClose} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 Done
               </Button>
             </>
@@ -767,7 +767,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
               else if (step === 3) handleImport();
             }}
             disabled={step === 1 && !file}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {step === 2 ? 'Validate Data' : step === 3 ? 'Import Now' : 'Next'}
           </Button>

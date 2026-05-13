@@ -72,8 +72,8 @@ const SectionHeader: React.FC<{
     onClick={collapsible ? onToggle : undefined}
   >
     <div className="flex items-center gap-2">
-      <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center">
-        <Icon className="w-3.5 h-3.5 text-blue-600" />
+      <div className="w-6 h-6 rounded-md bg-info-muted flex items-center justify-center">
+        <Icon className="w-3.5 h-3.5 text-primary" />
       </div>
       <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{title}</span>
     </div>
@@ -392,7 +392,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAltPhone(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors py-0.5"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors py-0.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add alternative phone
@@ -481,7 +481,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               <div className="mt-2.5 space-y-3 animate-fadeIn">
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-white border border-slate-200">
                   <div className="mt-0.5">
-                    <Shield className="w-4 h-4 text-blue-500" />
+                    <Shield className="w-4 h-4 text-primary" />
                   </div>
                   <div className="flex-1">
                     <label className="flex items-center justify-between cursor-pointer">
@@ -491,7 +491,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                       </div>
                       <div
                         className={`relative w-10 h-5 rounded-full transition-colors ${
-                          formData.portal_enabled ? 'bg-blue-600' : 'bg-slate-300'
+                          formData.portal_enabled ? 'bg-primary' : 'bg-slate-300'
                         }`}
                         onClick={() => handleFieldChange('portal_enabled', !formData.portal_enabled)}
                       >
@@ -514,7 +514,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                     value={formData.notes}
                     onChange={(e) => handleFieldChange('notes', e.target.value)}
                     rows={2}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none transition-shadow bg-white"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm resize-none transition-shadow bg-white"
                     placeholder="Private notes visible only to staff"
                   />
                 </div>
@@ -524,7 +524,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
           {/* ── Footer ── */}
           {createMutation.isError && (
-            <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="px-3 py-2 bg-danger-muted border border-danger/30 rounded-lg text-sm text-danger">
               {createMutation.error instanceof Error
                 ? createMutation.error.message
                 : 'Failed to create customer. Please try again.'}
@@ -533,7 +533,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
           <div className="flex items-center justify-between pt-3 border-t border-slate-200">
             <p className="text-xs text-slate-400">
-              <span className="text-red-400">*</span> Required fields
+              <span className="text-danger">*</span> Required fields
             </p>
             <div className="flex gap-2.5">
               <Button type="button" variant="secondary" size="sm" onClick={handleClose}>
@@ -580,7 +580,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           />
 
           {createCompanyMutation.isError && (
-            <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="px-3 py-2 bg-danger-muted border border-danger/30 rounded-lg text-sm text-danger">
               {createCompanyMutation.error instanceof Error
                 ? createCompanyMutation.error.message
                 : 'Failed to create company.'}

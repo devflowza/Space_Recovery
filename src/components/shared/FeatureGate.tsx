@@ -69,7 +69,7 @@ export function FeatureGate({
       <button
         onClick={() => navigate('/settings/plans')}
         className={cn(
-          'inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium',
+          'inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium',
           className
         )}
       >
@@ -82,12 +82,12 @@ export function FeatureGate({
   return (
     <div
       className={cn(
-        'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-8 text-center',
+        'bg-gradient-to-br from-info-muted to-accent/10 border border-info/30 rounded-xl p-8 text-center',
         className
       )}
     >
-      <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-100 rounded-full mb-4">
-        <Lock className="w-7 h-7 text-blue-600" />
+      <div className="inline-flex items-center justify-center w-14 h-14 bg-info-muted rounded-full mb-4">
+        <Lock className="w-7 h-7 text-primary" />
       </div>
 
       <h3 className="text-xl font-semibold text-gray-900 mb-2">

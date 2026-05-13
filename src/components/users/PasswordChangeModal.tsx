@@ -53,11 +53,11 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
     if (/[^A-Za-z0-9]/.test(password)) strength++;
 
     if (strength <= 2) {
-      return { label: 'Weak', color: 'bg-red-500', width: '33%' };
+      return { label: 'Weak', color: 'bg-danger', width: '33%' };
     } else if (strength <= 4) {
-      return { label: 'Medium', color: 'bg-orange-500', width: '66%' };
+      return { label: 'Medium', color: 'bg-warning', width: '66%' };
     } else {
-      return { label: 'Strong', color: 'bg-green-500', width: '100%' };
+      return { label: 'Strong', color: 'bg-success', width: '100%' };
     }
   };
 
@@ -113,13 +113,13 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
       closeButton={false}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-warning-muted border border-warning/30 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm text-orange-800 font-medium">
+            <p className="text-sm text-warning font-medium">
               Password Change Required
             </p>
-            <p className="text-sm text-orange-700 mt-1">
+            <p className="text-sm text-warning mt-1">
               Hi {userName}, your password has been reset by an administrator. For security reasons,
               you must change it now before continuing.
             </p>
@@ -127,7 +127,7 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
         </div>
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-start gap-2">
+          <div className="p-3 bg-danger-muted border border-danger/30 text-danger rounded-lg text-sm flex items-start gap-2">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -188,9 +188,9 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-slate-600">Password Strength:</span>
                 <span className={`text-xs font-medium ${
-                  passwordStrength.label === 'Weak' ? 'text-red-600' :
-                  passwordStrength.label === 'Medium' ? 'text-orange-600' :
-                  'text-green-600'
+                  passwordStrength.label === 'Weak' ? 'text-danger' :
+                  passwordStrength.label === 'Medium' ? 'text-warning' :
+                  'text-success'
                 }`}>
                   {passwordStrength.label}
                 </span>
@@ -205,19 +205,19 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
           )}
           <ul className="mt-2 space-y-1 text-xs text-slate-600">
             <li className="flex items-center gap-2">
-              <CheckCircle className={`w-3 h-3 ${newPassword.length >= 6 ? 'text-green-600' : 'text-slate-300'}`} />
+              <CheckCircle className={`w-3 h-3 ${newPassword.length >= 6 ? 'text-success' : 'text-slate-300'}`} />
               At least 6 characters
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle className={`w-3 h-3 ${/[A-Z]/.test(newPassword) ? 'text-green-600' : 'text-slate-300'}`} />
+              <CheckCircle className={`w-3 h-3 ${/[A-Z]/.test(newPassword) ? 'text-success' : 'text-slate-300'}`} />
               One uppercase letter
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle className={`w-3 h-3 ${/[a-z]/.test(newPassword) ? 'text-green-600' : 'text-slate-300'}`} />
+              <CheckCircle className={`w-3 h-3 ${/[a-z]/.test(newPassword) ? 'text-success' : 'text-slate-300'}`} />
               One lowercase letter
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle className={`w-3 h-3 ${/[0-9]/.test(newPassword) ? 'text-green-600' : 'text-slate-300'}`} />
+              <CheckCircle className={`w-3 h-3 ${/[0-9]/.test(newPassword) ? 'text-success' : 'text-slate-300'}`} />
               One number
             </li>
           </ul>
@@ -248,7 +248,7 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
             </button>
           </div>
           {confirmPassword && newPassword !== confirmPassword && (
-            <p className="text-xs text-red-600 mt-1">Passwords do not match</p>
+            <p className="text-xs text-danger mt-1">Passwords do not match</p>
           )}
         </div>
 

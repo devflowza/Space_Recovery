@@ -26,7 +26,7 @@ export function UpgradeBanner({
     return (
       <div
         className={cn(
-          'flex items-center justify-between gap-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg px-4 py-3',
+          'flex items-center justify-between gap-4 bg-gradient-to-r from-primary to-accent text-white rounded-lg px-4 py-3',
           className
         )}
       >
@@ -37,7 +37,7 @@ export function UpgradeBanner({
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/settings/plans')}
-            className="inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 px-3 py-1.5 text-sm bg-white text-blue-600 hover:bg-blue-50"
+            className="inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 px-3 py-1.5 text-sm bg-white text-primary hover:bg-info-muted"
           >
             Upgrade
           </button>
@@ -54,7 +54,7 @@ export function UpgradeBanner({
   return (
     <div
       className={cn(
-        'relative bg-gradient-to-br from-blue-500 via-indigo-500 to-blue-600 text-white rounded-xl p-6 overflow-hidden',
+        'relative bg-gradient-to-br from-primary via-accent to-primary text-white rounded-xl p-6 overflow-hidden',
         className
       )}
     >
@@ -68,10 +68,10 @@ export function UpgradeBanner({
               <Sparkles className="w-5 h-5" />
               <h3 className="text-lg font-semibold">{title}</h3>
             </div>
-            <p className="text-blue-100 text-sm max-w-md mb-4">{description}</p>
+            <p className="text-white/80 text-sm max-w-md mb-4">{description}</p>
             <button
               onClick={() => navigate('/settings/plans')}
-              className="inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 px-4 py-2 text-base bg-white text-blue-600 hover:bg-blue-50"
+              className="inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 px-4 py-2 text-base bg-white text-primary hover:bg-info-muted"
             >
               {targetPlan ? `Upgrade to ${targetPlan}` : 'View Plans'}
             </button>

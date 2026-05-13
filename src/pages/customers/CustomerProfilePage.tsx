@@ -400,7 +400,7 @@ export const CustomerProfilePage: React.FC = () => {
       case 'phone':
         return '#10b981';
       case 'meeting':
-        return '#8b5cf6';
+        return 'rgb(var(--color-accent))';
       case 'sms':
         return '#f59e0b';
       default:
@@ -435,7 +435,7 @@ export const CustomerProfilePage: React.FC = () => {
                   <h1 className="text-2xl font-bold text-slate-900">
                     {customer.customer_name}
                   </h1>
-                  <Badge variant="custom" color="#06b6d4">
+                  <Badge variant="custom" color="rgb(var(--color-primary))">
                     {customer.customer_number}
                   </Badge>
                   {customer.portal_enabled && (
@@ -446,7 +446,7 @@ export const CustomerProfilePage: React.FC = () => {
 
                 {customer.customer_groups && (
                   <div className="flex items-center gap-2 mb-4">
-                    <Badge variant="custom" color="#8b5cf6">
+                    <Badge variant="custom" color="rgb(var(--color-accent))">
                       {customer.customer_groups.name}
                     </Badge>
                   </div>
@@ -456,7 +456,7 @@ export const CustomerProfilePage: React.FC = () => {
                   {customer.email && (
                     <div className="flex items-center gap-2 text-sm text-slate-600">
                       <Mail className="w-4 h-4 text-slate-400" />
-                      <a href={`mailto:${customer.email}`} className="hover:text-cyan-600">
+                      <a href={`mailto:${customer.email}`} className="hover:text-primary">
                         {customer.email}
                       </a>
                     </div>
@@ -464,7 +464,7 @@ export const CustomerProfilePage: React.FC = () => {
                   {customer.mobile_number && (
                     <div className="flex items-center gap-2 text-sm text-slate-600">
                       <Phone className="w-4 h-4 text-slate-400" />
-                      <a href={`tel:${customer.mobile_number}`} className="hover:text-cyan-600">
+                      <a href={`tel:${customer.mobile_number}`} className="hover:text-primary">
                         {customer.mobile_number}
                       </a>
                     </div>
@@ -506,7 +506,7 @@ export const CustomerProfilePage: React.FC = () => {
                 {companies.map((rel) => (
                   <div
                     key={rel.id}
-                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-sky-300 cursor-pointer transition-all"
+                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-primary/40 cursor-pointer transition-all"
                     onClick={() => navigate(`/companies/${rel.companies.id}`)}
                   >
                     <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -518,7 +518,7 @@ export const CustomerProfilePage: React.FC = () => {
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs text-slate-500">{rel.companies.company_number}</span>
                           {rel.is_primary_contact && (
-                            <Badge variant="custom" color="#10b981" size="sm">
+                            <Badge variant="success" size="sm">
                               Primary
                             </Badge>
                           )}
@@ -543,11 +543,11 @@ export const CustomerProfilePage: React.FC = () => {
 
           {customer.portal_enabled && customer.email ? (
             <div className="space-y-4">
-              <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border-2 border-emerald-200">
+              <div className="p-4 bg-success-muted rounded-xl border-2 border-success/30">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-xs font-semibold text-emerald-700 uppercase">Active</span>
+                    <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+                    <span className="text-xs font-semibold text-success uppercase">Active</span>
                   </div>
                 </div>
 
@@ -564,7 +564,7 @@ export const CustomerProfilePage: React.FC = () => {
                         title="Copy email"
                       >
                         {copiedEmail ? (
-                          <Check className="w-4 h-4 text-emerald-600" />
+                          <Check className="w-4 h-4 text-success" />
                         ) : (
                           <Copy className="w-4 h-4 text-slate-600" />
                         )}
@@ -618,7 +618,7 @@ export const CustomerProfilePage: React.FC = () => {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="w-full justify-start text-sm text-red-600 hover:bg-red-50"
+                  className="w-full justify-start text-sm text-danger hover:bg-danger-muted"
                   onClick={handleDisablePortalAccess}
                   disabled={disablePortalAccessMutation.isPending}
                 >
@@ -654,7 +654,6 @@ export const CustomerProfilePage: React.FC = () => {
               <p className="text-sm text-slate-600 mb-4">Portal access is currently disabled for this customer.</p>
               <Button
                 size="sm"
-                style={{ backgroundColor: '#06b6d4' }}
                 onClick={handleGeneratePassword}
                 disabled={generatePasswordMutation.isPending || !customer.email}
               >
@@ -662,7 +661,7 @@ export const CustomerProfilePage: React.FC = () => {
                 Enable Portal Access
               </Button>
               {!customer.email && (
-                <p className="text-xs text-amber-600 mt-2">Email address required to enable portal access</p>
+                <p className="text-xs text-warning mt-2">Email address required to enable portal access</p>
               )}
             </div>
           )}
@@ -684,7 +683,7 @@ export const CustomerProfilePage: React.FC = () => {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
                   activeTab === tab.id
-                    ? 'bg-cyan-50 text-cyan-700 shadow-sm'
+                    ? 'bg-primary/10 text-primary shadow-sm'
                     : 'text-slate-600 hover:bg-slate-50'
                 }`}
               >
@@ -842,14 +841,14 @@ export const CustomerProfilePage: React.FC = () => {
         <div className="space-y-4">
           {generatePasswordMutation.isPending ? (
             <div className="text-center py-8">
-              <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-cyan-600 rounded-full animate-spin mb-4"></div>
+              <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin mb-4"></div>
               <p className="text-slate-600">Generating secure password...</p>
             </div>
           ) : generatedPassword ? (
             <>
-              <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-emerald-800">
+              <div className="flex items-start gap-3 p-4 bg-success-muted border border-success/20 rounded-lg">
+                <Check className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-success">
                   <p className="font-semibold mb-1">Password Generated Successfully</p>
                   <p>
                     A new password has been generated. Please copy and share it with the customer securely.
@@ -873,7 +872,7 @@ export const CustomerProfilePage: React.FC = () => {
                       title="Copy email"
                     >
                       {copiedEmail ? (
-                        <Check className="w-5 h-5 text-emerald-600" />
+                        <Check className="w-5 h-5 text-success" />
                       ) : (
                         <Copy className="w-5 h-5 text-slate-600" />
                       )}
@@ -886,18 +885,18 @@ export const CustomerProfilePage: React.FC = () => {
                     Generated Password
                   </label>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 px-4 py-3 bg-amber-50 rounded-lg text-lg font-mono font-bold text-slate-900 border-2 border-amber-300 tracking-wider">
+                    <div className="flex-1 px-4 py-3 bg-warning-muted rounded-lg text-lg font-mono font-bold text-slate-900 border-2 border-warning/40 tracking-wider">
                       {generatedPassword}
                     </div>
                     <button
                       onClick={() => handleCopyPassword(generatedPassword)}
-                      className="p-3 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                      className="p-3 bg-warning-muted hover:bg-warning/20 rounded-lg transition-colors"
                       title="Copy password"
                     >
                       {copiedPassword ? (
-                        <Check className="w-5 h-5 text-emerald-600" />
+                        <Check className="w-5 h-5 text-success" />
                       ) : (
-                        <Copy className="w-5 h-5 text-amber-700" />
+                        <Copy className="w-5 h-5 text-warning" />
                       )}
                     </button>
                   </div>
@@ -915,7 +914,6 @@ export const CustomerProfilePage: React.FC = () => {
 
               <Button
                 className="w-full"
-                style={{ backgroundColor: '#06b6d4' }}
                 onClick={() => {
                   if (customer?.email && generatedPassword) {
                     handleCopyCredentials(customer.email, generatedPassword);
@@ -941,7 +939,7 @@ export const CustomerProfilePage: React.FC = () => {
             </>
           ) : (
             <div className="text-center py-8">
-              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <AlertTriangle className="w-12 h-12 text-danger mx-auto mb-4" />
               <p className="text-slate-600">Failed to generate password. Please try again.</p>
             </div>
           )}
@@ -1045,7 +1043,7 @@ export const CustomerProfilePage: React.FC = () => {
                 onChange={(e) =>
                   setEditFormData({ ...editFormData, portal_enabled: e.target.checked })
                 }
-                className="w-4 h-4 text-cyan-600 border-slate-300 rounded focus:ring-cyan-500"
+                className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
               />
               <span className="text-sm font-medium text-slate-700">
                 Enable Client Portal Access
@@ -1061,7 +1059,7 @@ export const CustomerProfilePage: React.FC = () => {
               value={editFormData.notes}
               onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-sm"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
               placeholder="Add any internal notes..."
             />
           </div>
@@ -1074,7 +1072,7 @@ export const CustomerProfilePage: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" style={{ backgroundColor: '#06b6d4' }} disabled={updateMutation.isPending || uploadingPhoto}>
+            <Button type="submit" disabled={updateMutation.isPending || uploadingPhoto}>
               {uploadingPhoto ? 'Uploading Photo...' : updateMutation.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>

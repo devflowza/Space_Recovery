@@ -24,8 +24,8 @@ export const StockSalesWidget: React.FC = () => {
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
-            <ShoppingCart className="w-4 h-4 text-green-600" />
+          <div className="w-8 h-8 rounded-lg bg-success-muted flex items-center justify-center">
+            <ShoppingCart className="w-4 h-4 text-success" />
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Today's Sales</p>
@@ -36,7 +36,7 @@ export const StockSalesWidget: React.FC = () => {
         </div>
         <div className="text-right">
           <p className="text-xs text-slate-500">Revenue</p>
-          <p className="text-base font-bold text-green-600">
+          <p className="text-base font-bold text-success">
             {isLoading ? '—' : formatCurrency(revenue)}
           </p>
         </div>
@@ -81,7 +81,7 @@ export const StockSalesWidget: React.FC = () => {
 
       <button
         onClick={() => navigate('/resources/stock/sales')}
-        className="mt-4 flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+        className="mt-4 flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
       >
         View all sales
         <ArrowRight className="w-3 h-3" />

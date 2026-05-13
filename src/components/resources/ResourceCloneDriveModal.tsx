@@ -209,20 +209,20 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-danger-muted border border-danger/30 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-danger flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-sm font-semibold text-red-900 mb-1">Error</h4>
-              <p className="text-sm text-red-700">{error}</p>
+              <h4 className="text-sm font-semibold text-danger mb-1">Error</h4>
+              <p className="text-sm text-danger">{error}</p>
             </div>
           </div>
         )}
 
         {editingDrive && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-info-muted border border-info/30 rounded-lg p-4">
             <div className="flex items-center gap-2">
-              <HardDrive className="w-5 h-5 text-blue-600" />
-              <span className="text-sm font-semibold text-blue-900">
+              <HardDrive className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold text-info">
                 Clone ID: {editingDrive.clone_id}
               </span>
             </div>
@@ -309,7 +309,7 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="available">Available</option>
                   <option value="in_use">In Use</option>
@@ -393,7 +393,7 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             rows={3}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Additional information about this drive..."
           />
         </div>

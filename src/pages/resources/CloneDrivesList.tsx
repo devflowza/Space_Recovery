@@ -311,8 +311,8 @@ export const CloneDrivesList: React.FC = () => {
         <div className="p-6">
           <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                <HardDrive className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <HardDrive className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-wide mb-0.5">Total Drives</p>
@@ -321,32 +321,32 @@ export const CloneDrivesList: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 rounded-lg bg-success-muted flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-success" />
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-wide mb-0.5">Available</p>
-                <p className="text-2xl font-bold text-green-600">{stats.available}</p>
+                <p className="text-2xl font-bold text-success">{stats.available}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                <Database className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 rounded-lg bg-info-muted flex items-center justify-center flex-shrink-0">
+                <Database className="w-5 h-5 text-info" />
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-wide mb-0.5">In Use</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.inUse}</p>
+                <p className="text-2xl font-bold text-info">{stats.inUse}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-                <AlertCircle className="w-5 h-5 text-amber-600" />
+              <div className="w-10 h-10 rounded-lg bg-warning-muted flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-warning" />
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-wide mb-0.5">Needs Attention</p>
-                <p className="text-2xl font-bold text-amber-600">{stats.needsAttention}</p>
+                <p className="text-2xl font-bold text-warning">{stats.needsAttention}</p>
               </div>
             </div>
 
@@ -361,12 +361,12 @@ export const CloneDrivesList: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
-                <Database className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 rounded-lg bg-success-muted flex items-center justify-center flex-shrink-0">
+                <Database className="w-5 h-5 text-success" />
               </div>
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-wide mb-0.5">Available Capacity</p>
-                <p className="text-2xl font-bold text-green-600">{formatCapacity(stats.availableCapacity)}</p>
+                <p className="text-2xl font-bold text-success">{formatCapacity(stats.availableCapacity)}</p>
               </div>
             </div>
           </div>
@@ -410,7 +410,7 @@ export const CloneDrivesList: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {statusOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -427,7 +427,7 @@ export const CloneDrivesList: React.FC = () => {
               <select
                 value={driveTypeFilter}
                 onChange={(e) => setDriveTypeFilter(e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {driveTypeOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -439,8 +439,8 @@ export const CloneDrivesList: React.FC = () => {
           </div>
 
           {caseIdSearch && caseAssignments.length > 0 && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
+            <div className="mb-4 p-4 bg-info-muted border border-info/30 rounded-lg">
+              <h3 className="text-sm font-semibold text-info mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 Case Assignment Results ({caseAssignments.length})
               </h3>
@@ -457,7 +457,7 @@ export const CloneDrivesList: React.FC = () => {
                   };
 
                   return (
-                    <div key={assignment.id} className="bg-white p-3 rounded border border-blue-100">
+                    <div key={assignment.id} className="bg-white p-3 rounded border border-info/20">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-1">
@@ -465,7 +465,7 @@ export const CloneDrivesList: React.FC = () => {
                               Case: {assignment.cases?.case_no}
                             </span>
                             <span className="text-slate-600">→</span>
-                            <span className="font-semibold text-blue-600 font-mono">
+                            <span className="font-semibold text-primary font-mono">
                               {assignment.drive_label || 'N/A'}
                             </span>
                             <Badge
@@ -499,8 +499,8 @@ export const CloneDrivesList: React.FC = () => {
           )}
 
           {caseIdSearch && caseAssignments.length === 0 && (
-            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800">
+            <div className="mb-4 p-4 bg-warning-muted border border-warning/30 rounded-lg">
+              <p className="text-sm text-warning">
                 No clone drive assignments found for case ID: <span className="font-semibold">{caseIdSearch}</span>
               </p>
             </div>
@@ -514,7 +514,7 @@ export const CloneDrivesList: React.FC = () => {
             {(searchTerm || caseIdSearch || statusFilter !== 'all' || driveTypeFilter !== 'all') && (
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium"
               >
                 <X className="w-4 h-4" />
                 Clear All Filters
@@ -724,10 +724,10 @@ export const CloneDrivesList: React.FC = () => {
                               e.stopPropagation();
                               handleEditDrive(drive);
                             }}
-                            className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
+                            className="p-2 hover:bg-primary/10 rounded-lg transition-colors group"
                             title="Edit Drive"
                           >
-                            <Edit2 className="w-4 h-4 text-slate-600 group-hover:text-blue-600" />
+                            <Edit2 className="w-4 h-4 text-slate-600 group-hover:text-primary" />
                           </button>
                         </div>
                       </td>
@@ -770,7 +770,7 @@ export const CloneDrivesList: React.FC = () => {
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs text-slate-600">Used:</span>
-                                  <span className="text-sm font-semibold text-blue-600">
+                                  <span className="text-sm font-semibold text-primary">
                                     {formatCapacity(drive.current_used_gb || 0)}
                                   </span>
                                 </div>
@@ -851,9 +851,9 @@ export const CloneDrivesList: React.FC = () => {
                             )}
                             {(drive.health_percentage < 80 || drive.condition_rating < 3) && (
                               <div className="col-span-4">
-                                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                  <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                                  <p className="text-sm text-amber-800">
+                                <div className="flex items-center gap-2 p-3 bg-warning-muted border border-warning/30 rounded-lg">
+                                  <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
+                                  <p className="text-sm text-warning">
                                     This drive needs attention - Consider maintenance or replacement
                                   </p>
                                 </div>

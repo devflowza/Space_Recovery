@@ -177,13 +177,13 @@ export const ResourceCloneDriveCard: React.FC<ResourceCloneDriveCardProps> = ({
                   <div className="mt-2 space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-600">Used:</span>
-                      <span className="font-medium text-blue-600">
+                      <span className="font-medium text-primary">
                         {drive.current_used_gb > 0 ? `${drive.current_used_gb.toFixed(0)} GB` : '0 GB'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-600">Available:</span>
-                      <span className="font-medium text-green-600">
+                      <span className="font-medium text-success">
                         {drive.available_space_gb > 0 ? `${drive.available_space_gb.toFixed(0)} GB` : `${drive.capacity_gb.toFixed(0)} GB`}
                       </span>
                     </div>
@@ -214,9 +214,9 @@ export const ResourceCloneDriveCard: React.FC<ResourceCloneDriveCardProps> = ({
         </div>
 
         {drive.health_percentage !== null && drive.health_percentage < 80 && (
-          <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <p className="text-sm text-amber-800">
+          <div className="flex items-center gap-2 p-3 bg-warning-muted border border-warning/30 rounded-lg">
+            <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
+            <p className="text-sm text-warning">
               Health: {drive.health_percentage}% - Consider maintenance or replacement
             </p>
           </div>
@@ -240,7 +240,7 @@ export const ResourceCloneDriveCard: React.FC<ResourceCloneDriveCardProps> = ({
           )}
           <button
             onClick={onEdit}
-            className="flex-1 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+            className="flex-1 px-4 py-2 text-sm font-medium text-primary bg-info-muted hover:bg-info-muted/70 rounded-lg transition-colors"
           >
             Edit Details
           </button>

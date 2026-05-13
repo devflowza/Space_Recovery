@@ -144,16 +144,16 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
             <div
               key={s}
               className={`flex-1 h-2 rounded-full mx-1 transition-colors ${
-                s <= step ? 'bg-blue-600' : 'bg-slate-200'
+                s <= step ? 'bg-primary' : 'bg-slate-200'
               }`}
             />
           ))}
         </div>
         <div className="flex items-center justify-between text-sm text-slate-600">
-          <span className={step >= 1 ? 'text-blue-600 font-medium' : ''}>Format</span>
-          <span className={step >= 2 ? 'text-blue-600 font-medium' : ''}>Filters</span>
-          <span className={step >= 3 ? 'text-blue-600 font-medium' : ''}>Columns</span>
-          <span className={step >= 4 ? 'text-blue-600 font-medium' : ''}>Download</span>
+          <span className={step >= 1 ? 'text-primary font-medium' : ''}>Format</span>
+          <span className={step >= 2 ? 'text-primary font-medium' : ''}>Filters</span>
+          <span className={step >= 3 ? 'text-primary font-medium' : ''}>Columns</span>
+          <span className={step >= 4 ? 'text-primary font-medium' : ''}>Download</span>
         </div>
       </div>
 
@@ -167,11 +167,11 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
                 onClick={() => setFormat('csv')}
                 className={`p-6 border-2 rounded-xl text-left transition-all ${
                   format === 'csv'
-                    ? 'border-blue-600 bg-blue-50'
+                    ? 'border-primary bg-info-muted'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
-                <FileText className={`w-8 h-8 mb-3 ${format === 'csv' ? 'text-blue-600' : 'text-slate-400'}`} />
+                <FileText className={`w-8 h-8 mb-3 ${format === 'csv' ? 'text-primary' : 'text-slate-400'}`} />
                 <h3 className="font-semibold text-slate-900 mb-1">CSV Format</h3>
                 <p className="text-sm text-slate-600">
                   Comma-separated values, compatible with Excel and most tools
@@ -182,11 +182,11 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
                 onClick={() => setFormat('excel')}
                 className={`p-6 border-2 rounded-xl text-left transition-all ${
                   format === 'excel'
-                    ? 'border-blue-600 bg-blue-50'
+                    ? 'border-primary bg-info-muted'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
-                <FileText className={`w-8 h-8 mb-3 ${format === 'excel' ? 'text-blue-600' : 'text-slate-400'}`} />
+                <FileText className={`w-8 h-8 mb-3 ${format === 'excel' ? 'text-primary' : 'text-slate-400'}`} />
                 <h3 className="font-semibold text-slate-900 mb-1">Excel Format</h3>
                 <p className="text-sm text-slate-600">
                   XLSX format with formatting, ideal for Excel users
@@ -258,13 +258,13 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
             {allColumns.map((column) => (
               <label
                 key={column}
-                className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-blue-300 cursor-pointer transition-colors"
+                className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-primary/40 cursor-pointer transition-colors"
               >
                 <input
                   type="checkbox"
                   checked={selectedColumns.includes(column)}
                   onChange={() => handleColumnToggle(column)}
-                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
                 />
                 <span className="text-sm text-slate-700 font-medium">{column}</span>
               </label>
@@ -282,15 +282,15 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
       {/* Step 4: Download Result */}
       {step === 4 && exportResult && (
         <div className="text-center py-8">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-10 h-10 text-green-600" />
+          <div className="w-16 h-16 bg-success-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-10 h-10 text-success" />
           </div>
           <h3 className="text-xl font-semibold text-slate-900 mb-2">Export Complete!</h3>
           <p className="text-slate-600 mb-6">
             Successfully exported {exportResult.recordCount.toLocaleString()} records
           </p>
 
-          <Button onClick={handleDownload} className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button onClick={handleDownload} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Download className="w-4 h-4 mr-2" />
             Download File
           </Button>
@@ -307,7 +307,7 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({ entityType, onClose 
           <Button
             onClick={handleNext}
             disabled={exportMutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {exportMutation.isPending ? (
               <>

@@ -173,7 +173,7 @@ export const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({ isOpen, 
               onChange={(e) => setExcerpt(e.target.value)}
               rows={2}
               placeholder="Brief summary of this article..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
           </FormField>
 
@@ -208,8 +208,8 @@ export const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({ isOpen, 
                   className={`flex-1 py-2 text-sm font-medium capitalize transition-colors ${
                     status === s
                       ? s === 'published'
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-amber-500 text-white'
+                        ? 'bg-success text-success-foreground'
+                        : 'bg-warning text-warning-foreground'
                       : 'bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
@@ -224,7 +224,7 @@ export const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({ isOpen, 
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
             >
               <option value="">No category</option>
               {categories.map((cat) => (
@@ -238,7 +238,7 @@ export const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({ isOpen, 
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Tags</label>
               <button
                 onClick={() => setIsCreatingTag(!isCreatingTag)}
-                className="text-blue-600 hover:text-blue-700"
+                className="text-primary hover:text-primary/80"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -250,13 +250,13 @@ export const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({ isOpen, 
                   onChange={(e) => setNewTagInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateTag()}
                   placeholder="New tag name..."
-                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                   autoFocus
                 />
                 <button
                   onClick={handleCreateTag}
                   disabled={createTagMutation.isPending}
-                  className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:opacity-50"
+                  className="px-2 py-1 bg-primary text-primary-foreground rounded text-xs hover:bg-primary/90 disabled:opacity-50"
                 >
                   Add
                 </button>
@@ -271,7 +271,7 @@ export const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({ isOpen, 
                     onClick={() => toggleTag(tag.id)}
                     className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
                       selected
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-primary text-primary-foreground'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
@@ -293,7 +293,7 @@ export const ArticleEditorModal: React.FC<ArticleEditorModalProps> = ({ isOpen, 
               <div
                 onClick={() => setIsFeatured(!isFeatured)}
                 className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors ${
-                  isFeatured ? 'bg-amber-500 border-amber-500' : 'border-gray-300 group-hover:border-amber-400'
+                  isFeatured ? 'bg-warning border-warning' : 'border-gray-300 group-hover:border-warning/60'
                 }`}
               >
                 {isFeatured && <Star className="w-3 h-3 text-white fill-white" />}

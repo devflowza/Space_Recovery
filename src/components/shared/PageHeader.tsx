@@ -26,7 +26,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           {Icon && (
-            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg shadow-blue-500/30">
+            <div className="p-3 bg-gradient-to-br from-primary to-primary rounded-xl shadow-lg shadow-primary/30">
               <Icon className="w-6 h-6 text-white" />
             </div>
           )}

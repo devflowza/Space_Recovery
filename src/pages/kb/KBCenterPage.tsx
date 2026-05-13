@@ -25,8 +25,8 @@ const STATUS_TABS = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-  published: 'bg-emerald-100 text-emerald-700',
-  draft: 'bg-amber-100 text-amber-700',
+  published: 'bg-success-muted text-success',
+  draft: 'bg-warning-muted text-warning',
   archived: 'bg-gray-100 text-gray-500',
 };
 
@@ -45,7 +45,7 @@ function ArticleCard({ article, onEdit, onClick }: { article: KBArticleWithDetai
   return (
     <div
       onClick={() => onClick(article.id)}
-      className="group bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden"
+      className="group bg-white rounded-xl border border-gray-200 hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden"
     >
       <div className="h-1 w-full" style={{ backgroundColor: catColor }} />
       <div className="p-5">
@@ -53,7 +53,7 @@ function ArticleCard({ article, onEdit, onClick }: { article: KBArticleWithDetai
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5">
               {article.is_featured && (
-                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
+                <Star className="w-3.5 h-3.5 text-warning fill-warning flex-shrink-0" />
               )}
               {article.kb_categories && (
                 <span
@@ -67,13 +67,13 @@ function ArticleCard({ article, onEdit, onClick }: { article: KBArticleWithDetai
                 {article.status || 'draft'}
               </span>
             </div>
-            <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-700 transition-colors leading-snug line-clamp-2">
+            <h3 className="text-sm font-semibold text-gray-900 group-hover:text-primary transition-colors leading-snug line-clamp-2">
               {article.title}
             </h3>
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(article); }}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
           >
             <Edit3 className="w-3.5 h-3.5" />
           </button>
@@ -192,8 +192,8 @@ export const KBCenterPage: React.FC = () => {
         <div className="px-6 py-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-600 rounded-xl">
-                <BookOpen className="w-5 h-5 text-white" />
+              <div className="p-2 bg-primary rounded-xl">
+                <BookOpen className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">KB Center</h1>
@@ -216,9 +216,9 @@ export const KBCenterPage: React.FC = () => {
 
           {stats && (
             <div className="grid grid-cols-4 gap-3 mb-4">
-              <StatCard icon={FileText} label="Total Articles" value={stats.total} color="bg-blue-50 text-blue-700" />
-              <StatCard icon={CheckCircle} label="Published" value={stats.published} color="bg-emerald-50 text-emerald-700" />
-              <StatCard icon={Edit3} label="Drafts" value={stats.drafts} color="bg-amber-50 text-amber-700" />
+              <StatCard icon={FileText} label="Total Articles" value={stats.total} color="bg-info-muted text-info" />
+              <StatCard icon={CheckCircle} label="Published" value={stats.published} color="bg-success-muted text-success" />
+              <StatCard icon={Edit3} label="Drafts" value={stats.drafts} color="bg-warning-muted text-warning" />
               <StatCard icon={Layers} label="Categories" value={stats.categories} color="bg-slate-50 text-slate-700" />
             </div>
           )}
@@ -230,7 +230,7 @@ export const KBCenterPage: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search articles by title, content, or excerpt..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
             />
           </div>
         </div>
@@ -242,7 +242,7 @@ export const KBCenterPage: React.FC = () => {
               onClick={() => setActiveTab(tab.key)}
               className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -263,7 +263,7 @@ export const KBCenterPage: React.FC = () => {
               onClick={() => setSelectedCategoryId(null)}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
                 selectedCategoryId === null
-                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  ? 'bg-primary/10 text-primary font-medium'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -276,7 +276,7 @@ export const KBCenterPage: React.FC = () => {
                 onClick={() => setSelectedCategoryId(cat.id === selectedCategoryId ? null : cat.id)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
                   selectedCategoryId === cat.id
-                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    ? 'bg-primary/10 text-primary font-medium'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -301,7 +301,7 @@ export const KBCenterPage: React.FC = () => {
           {activeTab === 'all' && featuredArticles.length > 0 && !searchTerm && !selectedCategoryId && (
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <Star className="w-4 h-4 text-warning fill-warning" />
                 <h2 className="text-sm font-semibold text-gray-700">Featured</h2>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -309,18 +309,18 @@ export const KBCenterPage: React.FC = () => {
                   <div
                     key={article.id}
                     onClick={() => navigate(`/procedures/${article.id}`)}
-                    className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl p-3.5 cursor-pointer hover:bg-amber-100 hover:border-amber-200 transition-colors group"
+                    className="flex items-center gap-3 bg-warning-muted border border-warning/20 rounded-xl p-3.5 cursor-pointer hover:bg-warning/20 hover:border-warning/30 transition-colors group"
                   >
-                    <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors flex-shrink-0">
-                      <Star className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />
+                    <div className="p-2 bg-warning/20 rounded-lg group-hover:bg-warning/30 transition-colors flex-shrink-0">
+                      <Star className="w-3.5 h-3.5 text-warning fill-warning" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 group-hover:text-amber-700 transition-colors truncate">{article.title}</div>
+                      <div className="text-sm font-medium text-gray-900 group-hover:text-warning transition-colors truncate">{article.title}</div>
                       {article.kb_categories && (
                         <div className="text-xs text-gray-500 mt-0.5">{article.kb_categories.name}</div>
                       )}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-amber-500 flex-shrink-0 transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-warning flex-shrink-0 transition-colors" />
                   </div>
                 ))}
               </div>

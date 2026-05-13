@@ -117,35 +117,40 @@ export const AdminPanel: React.FC = () => {
       description: 'Manage user accounts and permissions',
       icon: Users,
       link: '/users',
-      color: 'blue',
+      iconBg: 'bg-primary/10',
+      iconText: 'text-primary',
     },
     {
       title: 'Role Permissions',
       description: 'Configure module access for roles',
       icon: Shield,
       link: '/admin/role-permissions',
-      color: 'blue',
+      iconBg: 'bg-primary/10',
+      iconText: 'text-primary',
     },
     {
       title: 'System Logs',
       description: 'View application logs and errors',
       icon: FileText,
       link: '/admin/logs',
-      color: 'green',
+      iconBg: 'bg-success-muted',
+      iconText: 'text-success',
     },
     {
       title: 'Audit Trails',
       description: 'Track user actions and changes',
       icon: Shield,
       link: '/admin/audit',
-      color: 'orange',
+      iconBg: 'bg-warning-muted',
+      iconText: 'text-warning',
     },
     {
       title: 'Database Management',
       description: 'Backup and restore database',
       icon: Database,
       link: '/admin/database',
-      color: 'purple',
+      iconBg: 'bg-accent',
+      iconText: 'text-accent-foreground',
     },
   ];
 
@@ -153,7 +158,7 @@ export const AdminPanel: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-600 mt-4">Loading admin panel...</p>
         </div>
       </div>
@@ -209,10 +214,10 @@ export const AdminPanel: React.FC = () => {
                   <Link
                     key={action.link}
                     to={action.link}
-                    className="p-4 border border-slate-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all group"
+                    className="p-4 border border-slate-200 rounded-lg hover:border-primary/40 hover:shadow-md transition-all group"
                   >
-                    <div className={`w-10 h-10 rounded-lg bg-${action.color}-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                      <Icon className={`w-5 h-5 text-${action.color}-600`} />
+                    <div className={`w-10 h-10 rounded-lg ${action.iconBg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                      <Icon className={`w-5 h-5 ${action.iconText}`} />
                     </div>
                     <h3 className="font-medium text-slate-900 mb-1">{action.title}</h3>
                     <p className="text-xs text-slate-500">{action.description}</p>
@@ -229,7 +234,7 @@ export const AdminPanel: React.FC = () => {
               <h2 className="text-lg font-semibold text-slate-900">Recent Activity</h2>
               <Link
                 to="/admin/audit"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-primary hover:text-primary/80 font-medium"
               >
                 View All
               </Link>
@@ -240,8 +245,8 @@ export const AdminPanel: React.FC = () => {
                   key={activity.id}
                   className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg"
                 >
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <Activity className="w-4 h-4 text-blue-600" />
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Activity className="w-4 h-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-900">

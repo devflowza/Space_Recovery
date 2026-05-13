@@ -54,7 +54,7 @@ export const BackupDeviceRecommendation: React.FC<BackupDeviceRecommendationProp
         className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
       >
         <div className="flex items-center gap-2">
-          <HardDrive className="w-4 h-4 text-blue-600" />
+          <HardDrive className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium text-slate-800">Recommended Backup Devices</span>
           {estimatedDataSizeGB > 0 && (
             <span className="text-xs text-slate-500">
@@ -75,7 +75,7 @@ export const BackupDeviceRecommendation: React.FC<BackupDeviceRecommendationProp
         <div className="p-4 space-y-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
-              <div className="w-6 h-6 border-3 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+              <div className="w-6 h-6 border-3 border-slate-200 border-t-primary rounded-full animate-spin" />
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-6 text-slate-400">
@@ -96,10 +96,10 @@ export const BackupDeviceRecommendation: React.FC<BackupDeviceRecommendationProp
                       key={item.id}
                       onClick={() => toggleItem(item.id)}
                       className={`flex items-center gap-3 p-3 cursor-pointer transition-colors ${
-                        isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'
+                        isSelected ? 'bg-info-muted' : 'hover:bg-slate-50'
                       }`}
                     >
-                      <div className="flex-shrink-0 text-blue-600">
+                      <div className="flex-shrink-0 text-primary">
                         {isSelected
                           ? <CheckSquare className="w-4 h-4" />
                           : <Square className="w-4 h-4 text-slate-300" />
