@@ -18,10 +18,10 @@ const roleIcons: Record<string, React.ElementType> = {
 };
 
 const roleColors: Record<string, string> = {
-  patient: 'text-blue-600',
-  backup: 'text-green-600',
-  donor: 'text-amber-600',
-  clone: 'text-purple-600',
+  patient: 'text-info',
+  backup: 'text-success',
+  donor: 'text-warning',
+  clone: 'text-accent-foreground',
 };
 
 export const DeviceRoleSelector: React.FC<DeviceRoleSelectorProps> = ({
@@ -46,7 +46,7 @@ export const DeviceRoleSelector: React.FC<DeviceRoleSelectorProps> = ({
         disabled={disabled}
         className={`
           w-full border border-slate-300 rounded-lg
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
           disabled:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500
           appearance-none pr-10
           ${sizeClasses[size]}

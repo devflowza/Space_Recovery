@@ -134,7 +134,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         </label>
       )}
 
-      <div className="border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+      <div className="border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary">
         <div className="bg-slate-50 border-b border-slate-300 p-2 flex flex-wrap gap-1 items-center">
           {formatButtons.map(({ icon: Icon, command, title }) => (
             <button
@@ -271,7 +271,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               type="button"
               onClick={() => applyQuickFormat('warning')}
               title="Red Warning Text (Bold + Red)"
-              className="px-2 py-1 text-xs bg-red-100 text-red-700 hover:bg-red-200 rounded transition-colors font-semibold"
+              className="px-2 py-1 text-xs bg-danger-muted text-danger hover:bg-danger/20 rounded transition-colors font-semibold"
             >
               <AlertTriangle className="w-3 h-3 inline mr-1" />
               Warning
@@ -280,7 +280,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
               type="button"
               onClick={() => applyQuickFormat('important')}
               title="Important (Bold + Yellow Highlight)"
-              className="px-2 py-1 text-xs bg-yellow-100 text-slate-700 hover:bg-yellow-200 rounded transition-colors font-semibold"
+              className="px-2 py-1 text-xs bg-warning-muted text-slate-700 hover:bg-warning/20 rounded transition-colors font-semibold"
             >
               <Zap className="w-3 h-3 inline mr-1" />
               Important

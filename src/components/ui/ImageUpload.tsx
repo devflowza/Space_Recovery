@@ -235,7 +235,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                   e.stopPropagation();
                   handleRemove(e);
                 }}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-danger hover:bg-danger/90 text-danger-foreground"
                 size="sm"
               >
                 <X className="w-4 h-4 mr-2" />
@@ -243,7 +243,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               </Button>
             </div>
             {uploadSuccess && (
-              <div className="absolute top-3 right-3 bg-green-600 text-white rounded-full p-2 shadow-lg">
+              <div className="absolute top-3 right-3 bg-success text-success-foreground rounded-full p-2 shadow-lg">
                 <Check className="w-4 h-4" />
               </div>
             )}
@@ -278,7 +278,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             className.includes('compact-upload') ? 'p-4' : 'p-8'
           } ${
             isDragging
-              ? 'border-blue-500 bg-blue-50'
+              ? 'border-primary bg-primary/5'
               : 'border-slate-300 bg-slate-50 hover:border-slate-400 hover:bg-slate-100'
           }`}
           onDragOver={handleDragOver}
@@ -322,7 +322,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                   e.stopPropagation();
                   fileInputRef.current?.click();
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 size="sm"
               >
                 <Upload className="w-4 h-4 mr-2" />
@@ -340,9 +340,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       )}
 
         {error && (
-          <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="flex items-start gap-2 p-3 bg-danger-muted border border-danger/30 rounded-lg">
+            <AlertCircle className="w-4 h-4 text-danger mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-danger">{error}</p>
           </div>
         )}
       </div>

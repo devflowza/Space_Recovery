@@ -18,7 +18,7 @@ const accentDotColors: Record<AccentColor, string> = {
   emerald: '#059669',
   teal: '#0D9488',
   sky: '#0284C7',
-  payroll: '#7C3AED',
+  payroll: '#0891B2',
   employee: '#DB2777',
   slate: '#475569',
   blue: '#3b82f6',
@@ -75,7 +75,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
           style={{
             padding: '9px 10px',
             background: isHeaderHovered ? '#E8ECF2' : 'transparent',
-            borderLeft: `3px solid ${isHeaderHovered ? '#A8C4E8' : 'transparent'}`,
+            borderLeft: `3px solid ${isHeaderHovered ? 'rgb(var(--color-primary) / 0.4)' : 'transparent'}`,
           }}
           onMouseEnter={() => setIsHeaderHovered(true)}
           onMouseLeave={() => setIsHeaderHovered(false)}
@@ -95,7 +95,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
             )}
             <span
               className="font-[600] uppercase tracking-[0.07em] transition-colors duration-[180ms]"
-              style={{ fontSize: '11.5px', color: isHeaderHovered ? '#1E5BB8' : '#5A6A7A' }}
+              style={{ fontSize: '11.5px', color: isHeaderHovered ? 'rgb(var(--color-primary))' : '#5A6A7A' }}
             >
               {title}
             </span>
@@ -105,7 +105,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
             style={{
               width: '14px',
               height: '14px',
-              color: isHeaderHovered ? '#1E5BB8' : '#7A8A9A',
+              color: isHeaderHovered ? 'rgb(var(--color-primary))' : '#7A8A9A',
               transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
             }}
           />

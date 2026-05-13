@@ -20,10 +20,10 @@ export const Badge: React.FC<BadgeProps> = ({
   const variantClasses = {
     default: 'bg-slate-100 text-slate-800',
     secondary: 'bg-slate-200 text-slate-700 ring-1 ring-slate-300',
-    success: 'bg-green-100 text-green-800 ring-1 ring-green-200',
-    warning: 'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200',
-    danger: 'bg-red-100 text-red-800 ring-1 ring-red-200',
-    info: 'bg-blue-100 text-blue-800 ring-1 ring-blue-200',
+    success: 'bg-success-muted text-success ring-1 ring-success/30',
+    warning: 'bg-warning-muted text-warning ring-1 ring-warning/30',
+    danger: 'bg-danger-muted text-danger ring-1 ring-danger/30',
+    info: 'bg-info-muted text-info ring-1 ring-info/30',
     custom: '',
   };
 

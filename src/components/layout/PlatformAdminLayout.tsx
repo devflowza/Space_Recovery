@@ -67,7 +67,7 @@ export const PlatformAdminLayout: React.FC = () => {
 
           <div className="p-4 border-t border-slate-800">
             <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-slate-800 rounded-lg">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center font-semibold">
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center font-semibold">
                 {profile?.email?.[0].toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">

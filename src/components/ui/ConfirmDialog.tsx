@@ -29,22 +29,22 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   const variantStyles = {
     danger: {
-      bg: 'bg-red-50',
-      iconBg: 'bg-red-100',
-      iconColor: 'text-red-600',
-      buttonBg: 'bg-red-600 hover:bg-red-700',
+      bg: 'bg-danger-muted',
+      iconBg: 'bg-danger-muted',
+      iconColor: 'text-danger',
+      buttonBg: 'bg-danger hover:bg-danger/90',
     },
     warning: {
-      bg: 'bg-amber-50',
-      iconBg: 'bg-amber-100',
-      iconColor: 'text-amber-600',
-      buttonBg: 'bg-amber-600 hover:bg-amber-700',
+      bg: 'bg-warning-muted',
+      iconBg: 'bg-warning-muted',
+      iconColor: 'text-warning',
+      buttonBg: 'bg-warning hover:bg-warning/90',
     },
     info: {
-      bg: 'bg-blue-50',
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
-      buttonBg: 'bg-blue-600 hover:bg-blue-700',
+      bg: 'bg-info-muted',
+      iconBg: 'bg-info-muted',
+      iconColor: 'text-info',
+      buttonBg: 'bg-info hover:bg-info/90',
     },
   };
 

@@ -118,7 +118,7 @@ export const Sidebar: React.FC = () => {
   const canViewHR = hasModuleAccess('hr-dashboard') || hasModuleAccess('employees');
 
   const getRoleColor = (_role?: string) => {
-    return { bg: '#E6EEFA', text: '#1E5BB8' };
+    return { bg: 'rgb(var(--color-primary) / 0.12)', text: 'rgb(var(--color-primary))' };
   };
 
   const getRoleAvatarBg = (role?: string) => {
@@ -166,8 +166,8 @@ export const Sidebar: React.FC = () => {
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-                boxShadow: '0 0 0 1px rgba(59,130,246,0.3), 0 4px 12px rgba(59,130,246,0.25)',
+                background: 'rgb(var(--color-primary))',
+                boxShadow: '0 0 0 1px rgb(var(--color-primary) / 0.3), 0 4px 12px rgb(var(--color-primary) / 0.25)',
               }}
             >
               <HardDrive className="w-5 h-5 text-white" />
@@ -175,7 +175,7 @@ export const Sidebar: React.FC = () => {
             {!isCollapsed && (
               <div>
                 <h1 style={{ fontSize: '15px', fontWeight: 600, color: '#151E2C', lineHeight: 1.2, letterSpacing: '-0.01em' }}>DataRecovery</h1>
-                <p style={{ fontSize: '11.5px', fontWeight: 500, color: '#6A7A8A', marginTop: '2px', letterSpacing: '0.02em' }}>Professional Suite</p>
+                <p style={{ fontSize: '11.5px', fontWeight: 500, color: '#64748b', marginTop: '2px', letterSpacing: '0.02em' }}>Professional Suite</p>
               </div>
             )}
           </div>
@@ -183,14 +183,14 @@ export const Sidebar: React.FC = () => {
           <button
             onClick={handleToggleCollapse}
             className="absolute top-1/2 -translate-y-1/2 right-3 w-6 h-6 flex items-center justify-center rounded-lg transition-all duration-200"
-            style={{ background: '#E0E6ED', color: '#6A7A8A' }}
+            style={{ background: '#E0E6ED', color: '#64748b' }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLButtonElement).style.background = '#D4DCE8';
               (e.currentTarget as HTMLButtonElement).style.color = '#3A4A5C';
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLButtonElement).style.background = '#E0E6ED';
-              (e.currentTarget as HTMLButtonElement).style.color = '#6A7A8A';
+              (e.currentTarget as HTMLButtonElement).style.color = '#64748b';
             }}
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
@@ -538,14 +538,14 @@ export const Sidebar: React.FC = () => {
               <button
                 className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-[180ms] mx-auto"
                 title="Help & Support"
-                style={{ background: 'transparent', color: '#6A7A8A' }}
+                style={{ background: 'transparent', color: '#64748b' }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLButtonElement).style.background = '#E8ECF2';
-                  (e.currentTarget as HTMLButtonElement).style.color = '#1E5BB8';
+                  (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--color-primary))';
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-                  (e.currentTarget as HTMLButtonElement).style.color = '#6A7A8A';
+                  (e.currentTarget as HTMLButtonElement).style.color = '#64748b';
                 }}
               >
                 <LifeBuoy className="w-5 h-5" />
@@ -575,14 +575,14 @@ export const Sidebar: React.FC = () => {
                       width: '13px',
                       height: '13px',
                       strokeWidth: 1.5,
-                      color: helpHovered ? '#1E5BB8' : '#6880A0',
+                      color: helpHovered ? 'rgb(var(--color-primary))' : '#6880A0',
                       transition: 'color 0.18s ease',
                     }}
                   />
                 </div>
                 <span
                   className="font-medium transition-colors duration-[180ms]"
-                  style={{ fontSize: '13px', color: helpHovered ? '#1E5BB8' : '#6A7A8A' }}
+                  style={{ fontSize: '13px', color: helpHovered ? 'rgb(var(--color-primary))' : '#64748b' }}
                 >
                   Help & Support
                 </span>
@@ -619,7 +619,7 @@ export const Sidebar: React.FC = () => {
                     padding: '10px',
                     borderRadius: '10px',
                     background: userCardHovered ? '#DDE4EC' : '#EAEFF4',
-                    boxShadow: userCardHovered ? '0 1px 4px rgba(30,91,184,0.08)' : 'none',
+                    boxShadow: userCardHovered ? '0 1px 4px rgb(var(--color-primary) / 0.08)' : 'none',
                   }}
                   onMouseEnter={() => setUserCardHovered(true)}
                   onMouseLeave={() => setUserCardHovered(false)}
@@ -650,17 +650,17 @@ export const Sidebar: React.FC = () => {
                     style={{
                       opacity: userCardHovered ? 1 : 0,
                       background: 'transparent',
-                      color: '#6A7A8A',
+                      color: '#64748b',
                       transition: 'opacity 0.18s ease, background 0.18s ease, color 0.18s ease',
                       marginLeft: 'auto',
                     }}
                     onMouseEnter={e => {
-                      (e.currentTarget as HTMLButtonElement).style.background = '#fee2e2';
-                      (e.currentTarget as HTMLButtonElement).style.color = '#ef4444';
+                      (e.currentTarget as HTMLButtonElement).style.background = 'rgb(var(--color-danger-muted))';
+                      (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--color-danger))';
                     }}
                     onMouseLeave={e => {
                       (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-                      (e.currentTarget as HTMLButtonElement).style.color = '#6A7A8A';
+                      (e.currentTarget as HTMLButtonElement).style.color = '#64748b';
                     }}
                     title="Logout"
                   >

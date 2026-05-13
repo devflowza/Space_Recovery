@@ -219,15 +219,15 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       {label && (
         <label className="block text-sm font-medium text-slate-700 mb-1">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-danger ml-1">*</span>}
         </label>
       )}
       <div
         className={`flex border rounded-md overflow-hidden transition-all ${
           error
-            ? 'border-red-500'
+            ? 'border-danger'
             : isDropdownOpen
-            ? 'border-cyan-500 ring-2 ring-cyan-500 ring-opacity-20'
+            ? 'border-primary ring-2 ring-primary ring-opacity-20'
             : 'border-slate-300 hover:border-slate-400'
         } ${disabled ? 'bg-slate-100 cursor-not-allowed' : ''}`}
       >
@@ -265,7 +265,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
         />
       </div>
 
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-sm text-danger">{error}</p>}
 
       {isDropdownOpen &&
         createPortal(
@@ -280,7 +280,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
                 <input
                   ref={searchInputRef}
                   type="text"
-                  className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                  className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   placeholder="Search country or code..."
                   value={searchTerm}
                   onChange={(e) => {
@@ -307,9 +307,9 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
                     key={`${country.id}-${country.phone_code}`}
                     className={`flex items-center justify-between px-3 py-2 cursor-pointer transition-colors text-sm ${
                       highlightedIndex === index
-                        ? 'bg-cyan-50 text-cyan-900'
+                        ? 'bg-primary/5 text-primary'
                         : country.phone_code === activeDialCode
-                        ? 'bg-cyan-100 text-cyan-900'
+                        ? 'bg-primary/10 text-primary'
                         : 'text-slate-900 hover:bg-slate-50'
                     }`}
                     onClick={() => handleDialCodeSelect(country.phone_code!)}

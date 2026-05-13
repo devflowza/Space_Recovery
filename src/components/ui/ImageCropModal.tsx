@@ -167,7 +167,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
                 step={0.1}
                 value={zoom}
                 onChange={(e) => setZoom(Number(e.target.value))}
-                className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-600"
+                className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
               />
               <button
                 type="button"
@@ -211,7 +211,6 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
             type="button"
             onClick={handleCrop}
             disabled={isCropping}
-            style={{ backgroundColor: '#06b6d4' }}
           >
             {isCropping ? 'Cropping...' : 'Apply Crop'}
           </Button>

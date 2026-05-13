@@ -91,7 +91,7 @@ export const Modal: React.FC<ModalProps> = ({
         {title && (
           <div className="no-print flex items-center justify-between p-3 border-b border-slate-200">
             <div className="flex items-center gap-3">
-              {Icon && <Icon className="w-5 h-5 text-blue-600" />}
+              {Icon && <Icon className="w-5 h-5 text-primary" />}
               <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
               {headerBadges && <div className="flex items-center gap-2 ml-2">{headerBadges}</div>}
             </div>

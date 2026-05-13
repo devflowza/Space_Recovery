@@ -10,7 +10,7 @@ interface IconButtonProps {
 
 export const IconButton: React.FC<IconButtonProps> = ({
   icon: Icon,
-  backgroundColor = '#3b82f6',
+  backgroundColor = 'rgb(var(--color-primary))',
   size = 'md',
   className = '',
 }) => {

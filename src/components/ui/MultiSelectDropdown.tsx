@@ -120,7 +120,7 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
           <input
             ref={searchInputRef}
             type="text"
-            className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+            className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -146,13 +146,13 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                     toggleOption(option.id);
                   }}
                   className={`px-3 py-2 cursor-pointer flex items-center justify-between hover:bg-slate-50 transition-colors ${
-                    isSelected ? 'bg-cyan-50' : ''
+                    isSelected ? 'bg-primary/5' : ''
                   }`}
                 >
-                  <span className={`text-sm ${isSelected ? 'text-cyan-700 font-medium' : 'text-slate-700'}`}>
+                  <span className={`text-sm ${isSelected ? 'text-primary font-medium' : 'text-slate-700'}`}>
                     {option.name}
                   </span>
-                  {isSelected && <Check className="w-4 h-4 text-cyan-600" />}
+                  {isSelected && <Check className="w-4 h-4 text-primary" />}
                 </div>
               );
             })}
@@ -172,14 +172,14 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     <div className="relative" ref={containerRef}>
       <label className="block text-sm font-medium text-slate-700 mb-1">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-danger ml-1">*</span>}
       </label>
 
       <div
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full min-h-[42px] px-3 py-2 border rounded-lg bg-white cursor-pointer transition-all ${
           isOpen
-            ? 'border-cyan-500 ring-2 ring-cyan-500 ring-opacity-20'
+            ? 'border-primary ring-2 ring-primary ring-opacity-20'
             : 'border-slate-300 hover:border-slate-400'
         }`}
       >
@@ -194,13 +194,13 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
               {selectedOptions.map((option) => (
                 <span
                   key={option.id}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-cyan-100 text-cyan-700 text-xs font-medium rounded-md"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-md"
                 >
                   {option.name}
                   <button
                     type="button"
                     onClick={(e) => removeOption(option.id, e)}
-                    className="hover:bg-cyan-200 rounded-full p-0.5 transition-colors"
+                    className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
                   >
                     <X className="w-3 h-3" />
                   </button>

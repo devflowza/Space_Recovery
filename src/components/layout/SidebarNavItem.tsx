@@ -24,25 +24,25 @@ export const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const badgeColorClasses = {
-    blue: 'bg-blue-500 text-white',
-    red: 'bg-rose-500 text-white',
-    green: 'bg-emerald-500 text-white',
-    orange: 'bg-amber-500 text-white',
-    purple: 'bg-violet-500 text-white',
+    blue: 'bg-info text-info-foreground',
+    red: 'bg-danger text-danger-foreground',
+    green: 'bg-success text-success-foreground',
+    orange: 'bg-warning text-warning-foreground',
+    purple: 'bg-accent text-accent-foreground',
   };
 
   const getItemStyle = () => {
     if (isActive) {
       return {
         background: '#ffffff',
-        boxShadow: '0 1px 4px rgba(30,91,184,0.1)',
-        borderLeft: '3px solid #1E5BB8',
+        boxShadow: '0 1px 4px rgb(var(--color-primary) / 0.1)',
+        borderLeft: '3px solid rgb(var(--color-primary))',
       };
     }
     if (isHovered) {
       return {
         background: '#E8ECF2',
-        borderLeft: '3px solid #A8C4E8',
+        borderLeft: '3px solid rgb(var(--color-primary) / 0.4)',
       };
     }
     return {
@@ -52,20 +52,20 @@ export const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
   };
 
   const getIconBoxStyle = () => {
-    if (isActive) return { background: '#E6EEFA' };
+    if (isActive) return { background: 'rgb(var(--color-primary) / 0.12)' };
     if (isHovered) return { background: '#D4DCE8' };
     return { background: '#E8ECF2' };
   };
 
   const getIconColor = () => {
-    if (isActive) return '#1E5BB8';
-    if (isHovered) return '#1E5BB8';
+    if (isActive) return 'rgb(var(--color-primary))';
+    if (isHovered) return 'rgb(var(--color-primary))';
     return '#4A6080';
   };
 
   const getLabelColor = () => {
-    if (isActive) return '#1E5BB8';
-    if (isHovered) return '#1E5BB8';
+    if (isActive) return 'rgb(var(--color-primary))';
+    if (isHovered) return 'rgb(var(--color-primary))';
     return '#2C3A4A';
   };
 
@@ -87,7 +87,7 @@ export const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
       {isCollapsed && isActive && (
         <div
           className="absolute left-0 top-0 bottom-0 rounded-r-sm"
-          style={{ width: '3px', background: '#1E5BB8' }}
+          style={{ width: '3px', background: 'rgb(var(--color-primary))' }}
         />
       )}
 

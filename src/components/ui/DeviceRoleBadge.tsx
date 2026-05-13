@@ -11,27 +11,23 @@ interface DeviceRoleBadgeProps {
 const roleConfig = {
   patient: {
     label: 'Patient',
-    color: 'bg-blue-100 text-blue-700 border-blue-200',
+    color: 'bg-info-muted text-info border-info/30',
     icon: HardDrive,
-    darkColor: 'dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700',
   },
   backup: {
     label: 'Backup',
-    color: 'bg-green-100 text-green-700 border-green-200',
+    color: 'bg-success-muted text-success border-success/30',
     icon: Database,
-    darkColor: 'dark:bg-green-900/30 dark:text-green-300 dark:border-green-700',
   },
   donor: {
     label: 'Donor',
-    color: 'bg-amber-100 text-amber-700 border-amber-200',
+    color: 'bg-warning-muted text-warning border-warning/30',
     icon: Wrench,
-    darkColor: 'dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700',
   },
   clone: {
     label: 'Clone',
-    color: 'bg-purple-100 text-purple-700 border-purple-200',
+    color: 'bg-accent text-accent-foreground border-accent-foreground/20',
     icon: Copy,
-    darkColor: 'dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700',
   },
 };
 
@@ -61,7 +57,7 @@ export const DeviceRoleBadge: React.FC<DeviceRoleBadgeProps> = ({
     <span
       className={`
         inline-flex items-center gap-1.5 font-medium rounded-md border
-        ${config.color} ${config.darkColor} ${sizeClasses[size]} ${className}
+        ${config.color} ${sizeClasses[size]} ${className}
       `}
     >
       {showIcon && <Icon className={iconSizes[size]} />}

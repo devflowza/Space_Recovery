@@ -181,7 +181,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     <div className="relative" ref={containerRef}>
       <label className="block text-sm font-medium text-slate-700 mb-1">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-danger ml-1">*</span>}
       </label>
 
       <div
@@ -189,7 +189,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           disabled
             ? 'bg-slate-100 border-slate-300 cursor-not-allowed'
             : isOpen
-            ? 'border-cyan-500 ring-2 ring-cyan-500 ring-opacity-20'
+            ? 'border-primary ring-2 ring-primary ring-opacity-20'
             : 'border-slate-300 hover:border-slate-400'
         }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -231,7 +231,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
               <input
                 ref={searchInputRef}
                 type="text"
-                className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => {
@@ -260,9 +260,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     option.disabled
                       ? 'text-slate-400 cursor-not-allowed'
                       : highlightedIndex === index
-                      ? 'bg-cyan-50 text-cyan-900'
+                      ? 'bg-primary/5 text-primary'
                       : option.id === value
-                      ? 'bg-cyan-100 text-cyan-900'
+                      ? 'bg-primary/10 text-primary'
                       : 'text-slate-900 hover:bg-slate-50'
                   }`}
                   onClick={() => !option.disabled && handleSelect(option.id)}
@@ -279,7 +279,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
               <button
                 type="button"
                 onClick={handleAddNew}
-                className="w-full px-3 py-2 text-sm font-medium text-cyan-600 hover:bg-cyan-50 rounded-md transition-colors text-left"
+                className="w-full px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5 rounded-md transition-colors text-left"
               >
                 + {addNewLabel}
               </button>
@@ -306,7 +306,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
               <input
                 ref={searchInputRef}
                 type="text"
-                className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => {
@@ -335,9 +335,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                     option.disabled
                       ? 'text-slate-400 cursor-not-allowed'
                       : highlightedIndex === index
-                      ? 'bg-cyan-50 text-cyan-900'
+                      ? 'bg-primary/5 text-primary'
                       : option.id === value
-                      ? 'bg-cyan-100 text-cyan-900'
+                      ? 'bg-primary/10 text-primary'
                       : 'text-slate-900 hover:bg-slate-50'
                   }`}
                   onClick={() => !option.disabled && handleSelect(option.id)}
@@ -354,7 +354,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
               <button
                 type="button"
                 onClick={handleAddNew}
-                className="w-full px-3 py-2 text-sm font-medium text-cyan-600 hover:bg-cyan-50 rounded-md transition-colors text-left"
+                className="w-full px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5 rounded-md transition-colors text-left"
               >
                 + {addNewLabel}
               </button>
