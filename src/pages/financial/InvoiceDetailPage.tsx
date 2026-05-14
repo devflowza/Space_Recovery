@@ -10,10 +10,13 @@ import { PDFDownloadButton } from '../../components/shared/PDFDownloadButton';
 import { InvoiceDocument } from '../../components/documents/InvoiceDocument';
 import { useCurrency } from '../../hooks/useCurrency';
 import { usePDFDownload } from '../../hooks/usePDFDownload';
+import { useToast } from '../../hooks/useToast';
 import { FileText, ArrowLeft, CreditCard as Edit, DollarSign, AlertCircle, RefreshCw, CheckCircle, ArrowRight, ExternalLink, Lock, ShoppingBag } from 'lucide-react';
 import { RecordReceiptModal } from '../../components/banking/RecordReceiptModal';
 import { AddStockSaleToInvoiceModal } from '../../components/financial/AddStockSaleToInvoiceModal';
 import { logger } from '../../lib/logger';
+import { supabase } from '../../lib/supabaseClient';
+import type { PaymentReceipt } from '../../lib/bankingService';
 
 const statusConfig = {
   draft: { label: 'Draft', color: 'secondary', icon: FileText },
@@ -33,6 +36,7 @@ export const InvoiceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { formatCurrency, currencyFormat } = useCurrency();
   const {
     companySettings,
@@ -46,11 +50,17 @@ export const InvoiceDetailPage: React.FC = () => {
     isLoadingTranslations,
     t,
   } = usePDFDownload();
+  // Adapter so the strongly-typed translation hook can satisfy InvoiceDocument's
+  // looser `(key: string, fallback: string) => string` prop.
+  const tForDocument = React.useCallback(
+    (key: string, fallback: string): string => t(key as Parameters<typeof t>[0], fallback),
+    [t]
+  );
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showConversionHistoryModal, setShowConversionHistoryModal] = useState(false);
-  const [conversionHistory, setConversionHistory] = useState<any[]>([]);
+  const [conversionHistory, setConversionHistory] = useState<Array<Record<string, unknown>>>([]);
   const [showStockSaleModal, setShowStockSaleModal] = useState(false);
 
   const { data: invoice, isLoading } = useQuery({
@@ -60,12 +70,12 @@ export const InvoiceDetailPage: React.FC = () => {
   });
 
   const handleDownloadPDF = async () => {
-    if (!invoice) return;
+    if (!invoice || !id) return;
 
     setIsGenerating(true);
     try {
       const { generateInvoicePDF } = await import('../../lib/invoiceService');
-      const result = await generateInvoicePDF(invoice.id, true);
+      const result = await generateInvoicePDF(id, true);
 
       if (!result.success) {
         toast.error(result.error || 'Failed to generate PDF');
@@ -79,33 +89,36 @@ export const InvoiceDetailPage: React.FC = () => {
   };
 
   const handleConvertToTax = async () => {
-    if (!invoice || invoice.invoice_type !== 'proforma') return;
+    if (!invoice || !id || invoice.invoice_type !== 'proforma') return;
 
     try {
-      const result = await convertProformaToTaxInvoice(invoice.id);
-      if (result.success) {
-        alert('Successfully converted to tax invoice');
-        queryClient.invalidateQueries({ queryKey: ['invoice', id] });
-        queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      } else {
-        alert(`Failed to convert: ${result.error}`);
-      }
+      await convertProformaToTaxInvoice(id);
+      toast.success('Successfully converted to tax invoice');
+      queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
     } catch (error) {
       logger.error('Error converting invoice:', error);
-      alert('Failed to convert invoice. Please try again.');
+      toast.error(
+        `Failed to convert: ${error instanceof Error ? error.message : 'unknown error'}`
+      );
     }
   };
 
   const handleViewConversionHistory = async () => {
-    if (!invoice) return;
+    if (!invoice || !id) return;
 
     try {
-      const history = await getConversionHistory(invoice.id);
-      setConversionHistory(history);
+      const history = await getConversionHistory(id);
+      setConversionHistory(
+        (history ?? []).filter(
+          (item): item is Record<string, unknown> =>
+            typeof item === 'object' && item !== null
+        )
+      );
       setShowConversionHistoryModal(true);
     } catch (error) {
       logger.error('Error fetching conversion history:', error);
-      alert('Failed to load conversion history.');
+      toast.error('Failed to load conversion history.');
     }
   };
 
@@ -406,22 +419,16 @@ export const InvoiceDetailPage: React.FC = () => {
           <span>Back to Invoices</span>
         </button>
 
-        <PageHeader
-          title={`Invoice ${invoice.invoice_number || 'Draft'}`}
-          breadcrumbs={[
-            { label: 'Invoices', href: '/invoices' },
-            { label: invoice.invoice_number || 'Draft' },
-          ]}
-        />
+        <PageHeader title={`Invoice ${invoice.invoice_number || 'Draft'}`} />
 
         <div className="flex flex-col xl:grid xl:grid-cols-3 gap-6 mb-6">
           <div className="xl:col-span-2 w-full">
             <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-3 sm:p-6 min-w-0 overflow-x-auto">
               <InvoiceDocument
-                invoice={invoice}
+                invoice={invoice as unknown as Record<string, unknown>}
                 companySettings={companySettings}
                 currencyFormat={currencyFormat}
-                t={t}
+                t={tForDocument}
                 elementId="invoice-print-content"
               />
             </div>
@@ -603,18 +610,21 @@ export const InvoiceDetailPage: React.FC = () => {
                     {formatCurrency(invoice.total_amount || 0)}
                   </span>
                 </div>
-                {invoice.amount_paid > 0 && (
+                {(invoice.amount_paid ?? 0) > 0 && (
                   <>
                     <div>
                       <span className="text-success">Paid:</span>
                       <span className="ml-2 text-success font-bold">
-                        {formatCurrency(invoice.amount_paid)}
+                        {formatCurrency(invoice.amount_paid ?? 0)}
                       </span>
                     </div>
                     <div>
                       <span className="text-warning">Balance Due:</span>
                       <span className="ml-2 text-warning font-bold">
-                        {formatCurrency(invoice.balance_due || (invoice.total_amount - invoice.amount_paid))}
+                        {formatCurrency(
+                          invoice.balance_due ??
+                            ((invoice.total_amount ?? 0) - (invoice.amount_paid ?? 0))
+                        )}
                       </span>
                     </div>
                   </>
@@ -626,21 +636,71 @@ export const InvoiceDetailPage: React.FC = () => {
       </div>
 
       {/* Record Payment Modal */}
-      {showPaymentModal && (
+      {showPaymentModal && id && (
         <RecordReceiptModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
-          invoiceId={invoice.id}
-          onSuccess={handlePaymentRecorded}
+          singleInvoiceMode
+          invoiceId={id}
+          onSave={async (
+            receiptData: Record<string, unknown>,
+            allocations?: Array<{ invoice_id: string; allocated_amount: number }>
+          ) => {
+            const receiptRow = receiptData as Partial<PaymentReceipt> & {
+              status?: string;
+            };
+            // `receipts` is the live tenant table. Several caller-facing fields
+            // (account_id, payment_method_id, case_id, company_id, reference_number,
+            // description, source_type) are not persisted here — they exist only on
+            // the modal's draft. tenant_id is auto-populated by the
+            // set_tenant_and_audit_fields trigger.
+            if (typeof receiptRow.amount !== 'number') {
+              throw new Error('Receipt amount is required');
+            }
+            const { data: receipt, error: receiptError } = await supabase
+              .from('receipts')
+              .insert({
+                tenant_id: '' as string,
+                amount: receiptRow.amount,
+                receipt_date: receiptRow.receipt_date,
+                customer_id: receiptRow.customer_id ?? null,
+                payment_method: receiptRow.payment_method_id ?? null,
+                reference: receiptRow.reference_number ?? null,
+                notes: receiptRow.notes ?? null,
+                status: receiptRow.status ?? 'completed',
+              })
+              .select()
+              .maybeSingle();
+
+            if (receiptError) throw receiptError;
+            if (!receipt) throw new Error('Receipt insert returned no row');
+
+            if (allocations && allocations.length > 0) {
+              const allocationRecords = allocations.map((alloc) => ({
+                tenant_id: '' as string,
+                receipt_id: receipt.id,
+                invoice_id: alloc.invoice_id,
+                amount: alloc.allocated_amount,
+              }));
+
+              const { error: allocError } = await supabase
+                .from('receipt_allocations')
+                .insert(allocationRecords);
+
+              if (allocError) throw allocError;
+            }
+
+            handlePaymentRecorded();
+          }}
         />
       )}
 
       {/* Add Stock Sale Modal */}
-      {showStockSaleModal && invoice?.customer_id && (
+      {showStockSaleModal && id && invoice?.customer_id && (
         <AddStockSaleToInvoiceModal
           isOpen={showStockSaleModal}
           onClose={() => setShowStockSaleModal(false)}
-          invoiceId={invoice.id}
+          invoiceId={id}
           customerId={invoice.customer_id}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['invoice', id] });
@@ -655,19 +715,33 @@ export const InvoiceDetailPage: React.FC = () => {
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Conversion History</h3>
             {conversionHistory.length > 0 ? (
               <div className="space-y-3">
-                {conversionHistory.map((item, index) => (
-                  <div key={index} className="border border-slate-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-slate-900">
-                        {item.proforma_invoice_number} → {item.tax_invoice_number}
-                      </span>
-                      <Badge variant="success">Converted</Badge>
+                {conversionHistory.map((item, index) => {
+                  const proformaNumber =
+                    typeof item.proforma_invoice_number === 'string'
+                      ? item.proforma_invoice_number
+                      : '';
+                  const taxNumber =
+                    typeof item.tax_invoice_number === 'string'
+                      ? item.tax_invoice_number
+                      : '';
+                  const convertedAt =
+                    typeof item.converted_at === 'string' ? item.converted_at : null;
+                  return (
+                    <div key={index} className="border border-slate-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-slate-900">
+                          {proformaNumber} → {taxNumber}
+                        </span>
+                        <Badge variant="success">Converted</Badge>
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        {convertedAt
+                          ? `Converted on ${new Date(convertedAt).toLocaleDateString()}`
+                          : 'Converted'}
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-600">
-                      Converted on {new Date(item.converted_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-slate-600 text-center py-8">No conversion history available.</p>
