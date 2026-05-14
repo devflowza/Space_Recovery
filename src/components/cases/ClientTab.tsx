@@ -1,17 +1,54 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
+import type { Database } from '../../types/database.types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { ChangeClientModal } from './ChangeClientModal';
 import { ChangeCompanyModal } from './ChangeCompanyModal';
 import { formatDate } from '../../lib/format';
-import { User, Mail, Phone, MapPin, Hash, Globe, CreditCard as Edit, Save, X, ArrowLeftRight, Building2, FileText, Clock, Activity, Briefcase, CheckCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Hash, CreditCard as Edit, Save, X, ArrowLeftRight, Building2, FileText, Clock, Briefcase, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+
+type CustomerUpdate = Database['public']['Tables']['customers_enhanced']['Update'];
+type CompanyUpdate = Database['public']['Tables']['companies']['Update'];
+
+type CaseCustomer = {
+  id: string;
+  customer_number: string | null;
+  customer_name: string;
+  email: string | null;
+  mobile_number: string | null;
+  phone: string | null;
+  address: string | null;
+  country_id: string | null;
+  city_id: string | null;
+  geo_countries: { name: string } | null;
+  geo_cities: { name: string } | null;
+};
+
+type CaseCompany = {
+  id: string;
+  company_number: string | null;
+  name: string;
+  company_name: string | null;
+  email: string | null;
+  phone: string | null;
+  tax_number: string | null;
+  geo_countries: { name: string } | null;
+  geo_cities: { name: string } | null;
+};
+
+interface CaseDataShape {
+  customer_id?: string | null;
+  company_id?: string | null;
+  customer?: CaseCustomer | null;
+  [key: string]: unknown;
+}
 
 interface ClientTabProps {
   caseId: string;
-  caseData: Record<string, unknown>;
+  caseData: CaseDataShape;
 }
 
 export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
@@ -21,8 +58,8 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
   const [showChangeClientModal, setShowChangeClientModal] = useState(false);
   const [showChangeCompanyModal, setShowChangeCompanyModal] = useState(false);
 
-  const [editedClientData, setEditedClientData] = useState<Record<string, unknown>>({});
-  const [editedCompanyData, setEditedCompanyData] = useState<Record<string, unknown>>({});
+  const [editedClientData, setEditedClientData] = useState<CustomerUpdate>({});
+  const [editedCompanyData, setEditedCompanyData] = useState<CompanyUpdate & { name?: string | null }>({});
   const [caseHistoryPage, setCaseHistoryPage] = useState(1);
   const [caseHistorySearch, setCaseHistorySearch] = useState('');
   const CASES_PER_PAGE = 5;
@@ -30,19 +67,19 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
   // Fetch company details with two-tier fallback
   // Tier 1: Use case-level company_id if set
   // Tier 2: Fallback to customer's company from customer_company_relationships
-  const { data: companyData } = useQuery({
+  const { data: companyData } = useQuery<CaseCompany | null>({
     queryKey: ['case_company', caseData?.company_id, caseData?.customer_id],
-    queryFn: async () => {
+    queryFn: async (): Promise<CaseCompany | null> => {
       // Tier 1: Check if case has direct company association
       if (caseData?.company_id) {
         const { data, error } = await supabase
           .from('companies')
-          .select('*, geo_countries(name), geo_cities(name)')
+          .select('id, company_number, name, company_name, email, phone, tax_number, geo_countries(name), geo_cities(name)')
           .eq('id', caseData.company_id)
           .maybeSingle();
 
         if (error) throw error;
-        return data;
+        return (data as CaseCompany | null) ?? null;
       }
 
       // Tier 2: Fallback to customer's company relationship
@@ -51,7 +88,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
           .from('customer_company_relationships')
           .select(`
             company_id,
-            companies (*, geo_countries(name), geo_cities(name))
+            companies (id, company_number, name, company_name, email, phone, tax_number, geo_countries(name), geo_cities(name))
           `)
           .eq('customer_id', caseData.customer_id)
           .order('is_primary', { ascending: false })
@@ -59,7 +96,9 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
           .maybeSingle();
 
         if (relError) throw relError;
-        return relationship?.companies || null;
+        const embedded = relationship?.companies as unknown;
+        if (!embedded) return null;
+        return (Array.isArray(embedded) ? (embedded[0] as CaseCompany | undefined) ?? null : (embedded as CaseCompany));
       }
 
       return null;
@@ -86,11 +125,12 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
         `)
         .eq('customer_id', caseData.customer_id)
         .neq('id', caseId)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(10);
 
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
     enabled: !!caseData?.customer_id,
   });
@@ -124,11 +164,12 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
 
   // Update customer mutation
   const updateCustomerMutation = useMutation({
-    mutationFn: async (updates: Record<string, unknown>) => {
+    mutationFn: async (updates: CustomerUpdate) => {
+      if (!caseData?.customer_id) return;
       const { error } = await supabase
         .from('customers_enhanced')
         .update(updates)
-        .eq('id', caseData?.customer_id);
+        .eq('id', caseData.customer_id);
 
       if (error) throw error;
     },
@@ -141,11 +182,12 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
 
   // Update company mutation
   const updateCompanyMutation = useMutation({
-    mutationFn: async (updates: Record<string, unknown>) => {
+    mutationFn: async (updates: CompanyUpdate) => {
+      if (!caseData?.company_id) return;
       const { error } = await supabase
         .from('companies')
         .update(updates)
-        .eq('id', caseData?.company_id);
+        .eq('id', caseData.company_id);
 
       if (error) throw error;
     },
@@ -220,9 +262,11 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
 
   const handleSaveCompany = () => {
     if (Object.keys(editedCompanyData).length > 0) {
-      const updates = { ...editedCompanyData };
-      if (updates.name) {
-        updates.company_name = updates.name;
+      const { name, ...rest } = editedCompanyData;
+      const updates: CompanyUpdate = { ...rest };
+      if (name) {
+        updates.name = name;
+        updates.company_name = name;
       }
       updateCompanyMutation.mutate(updates);
     } else {
@@ -250,7 +294,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
     return priority?.color || '#6b7280';
   };
 
-  const customer = caseData?.customer;
+  const customer: CaseCustomer | null = caseData?.customer ?? null;
 
   // Filter and paginate case history
   const filteredCases = customerCases.filter(c =>
@@ -359,12 +403,12 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                   className="text-sm px-2 py-1 border border-primary/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary max-w-[200px]"
                   placeholder="+123456789"
                 />
-              ) : (customer?.mobile_number || customer?.phone_number) ? (
+              ) : (customer?.mobile_number || customer?.phone) ? (
                 <a
-                  href={`tel:${customer.mobile_number || customer.phone_number}`}
+                  href={`tel:${customer.mobile_number || customer.phone}`}
                   className="text-sm text-primary hover:text-primary/80 text-right"
                 >
-                  {customer.mobile_number || customer.phone_number}
+                  {customer.mobile_number || customer.phone}
                 </a>
               ) : (
                 <p className="text-sm text-slate-400 text-right">-</p>
@@ -376,30 +420,11 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                 <MapPin className="w-3.5 h-3.5 text-slate-400" />
                 Location
               </label>
-              {editingClient ? (
-                <div className="flex gap-1 flex-col items-end">
-                  <input
-                    type="text"
-                    value={editedClientData.city ?? customer?.city ?? ''}
-                    onChange={(e) => setEditedClientData({ ...editedClientData, city: e.target.value })}
-                    className="text-sm px-2 py-1 border border-primary/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary max-w-[200px]"
-                    placeholder="City"
-                  />
-                  <input
-                    type="text"
-                    value={editedClientData.country ?? customer?.country ?? ''}
-                    onChange={(e) => setEditedClientData({ ...editedClientData, country: e.target.value })}
-                    className="text-sm px-2 py-1 border border-primary/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary max-w-[200px]"
-                    placeholder="Country"
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-slate-900 font-medium text-right">
-                  {customer?.city && customer?.country
-                    ? `${customer.city}, ${customer.country}`
-                    : customer?.city || customer?.country || '-'}
-                </p>
-              )}
+              <p className="text-sm text-slate-900 font-medium text-right">
+                {customer?.geo_cities?.name && customer?.geo_countries?.name
+                  ? `${customer.geo_cities.name}, ${customer.geo_countries.name}`
+                  : customer?.geo_cities?.name || customer?.geo_countries?.name || '-'}
+              </p>
             </div>
           </div>
         </div>
@@ -632,7 +657,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                         #{historyCase.case_no}
                         <Badge
                           variant="custom"
-                          color={getStatusColor(historyCase.status)}
+                          color={getStatusColor(historyCase.status ?? '')}
                           size="sm"
                         >
                           {historyCase.status}
@@ -645,7 +670,7 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
                     </div>
                     <Badge
                       variant="custom"
-                      color={getPriorityColor(historyCase.priority)}
+                      color={getPriorityColor(historyCase.priority ?? '')}
                       size="sm"
                     >
                       {historyCase.priority}
@@ -696,7 +721,13 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
       <ChangeClientModal
         isOpen={showChangeClientModal}
         onClose={() => setShowChangeClientModal(false)}
-        currentCustomer={customer}
+        currentCustomer={customer ? {
+          id: customer.id,
+          customer_name: customer.customer_name,
+          email: customer.email ?? undefined,
+          mobile_number: customer.mobile_number ?? undefined,
+          customer_number: customer.customer_number ?? '',
+        } : null}
         onConfirm={(newCustomerId) => changeClientMutation.mutate(newCustomerId)}
         isLoading={changeClientMutation.isPending}
       />
@@ -705,7 +736,17 @@ export const ClientTab: React.FC<ClientTabProps> = ({ caseId, caseData }) => {
       <ChangeCompanyModal
         isOpen={showChangeCompanyModal}
         onClose={() => setShowChangeCompanyModal(false)}
-        currentCompany={companyData}
+        currentCompany={companyData ? {
+          id: companyData.id,
+          name: companyData.name,
+          company_name: companyData.company_name ?? undefined,
+          company_number: companyData.company_number ?? '',
+          email: companyData.email ?? undefined,
+          phone: companyData.phone ?? undefined,
+          tax_number: companyData.tax_number ?? undefined,
+          geo_cities: companyData.geo_cities,
+          geo_countries: companyData.geo_countries,
+        } : null}
         onConfirm={(newCompanyId) => changeCompanyMutation.mutate(newCompanyId)}
         isLoading={changeCompanyMutation.isPending}
       />
