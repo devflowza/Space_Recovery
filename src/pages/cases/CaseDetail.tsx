@@ -448,8 +448,8 @@ export const CaseDetail: React.FC = () => {
             if (Object.keys(customerUpdates).length > 0) {
               updateCustomerInfoMutation.mutate(customerUpdates);
             }
-            if (deviceUpdates.device_password !== undefined && devices[0]) {
-              updateDeviceInfoMutation.mutate({ deviceId: devices[0].id, updates: { device_password: deviceUpdates.device_password } });
+            if (deviceUpdates.password !== undefined && devices[0]) {
+              updateDeviceInfoMutation.mutate({ deviceId: devices[0].id, updates: { password: deviceUpdates.password } });
             }
           }}
           onUpdateStatus={(newStatus) => updateCaseStatusMutation.mutate(newStatus)}

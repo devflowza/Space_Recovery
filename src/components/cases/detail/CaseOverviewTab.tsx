@@ -105,8 +105,6 @@ interface OverviewProfile {
   case_access_level?: string | null;
 }
 
-type DeviceUpdates = Partial<CaseDeviceRow> & { device_password?: string | null };
-
 interface CaseOverviewTabProps {
   caseData: CaseWithEmbeds;
   devices: CaseDeviceWithEmbeds[];
@@ -115,7 +113,7 @@ interface CaseOverviewTabProps {
   isSavingClientInfo: boolean;
   onSaveCaseInfo: (updates: Partial<CaseRow>) => void;
   onSaveDeviceInfo: (deviceId: string, updates: Partial<CaseDeviceRow>) => void;
-  onSaveClientInfo: (customerUpdates: Record<string, unknown>, deviceUpdates: DeviceUpdates) => void;
+  onSaveClientInfo: (customerUpdates: Record<string, unknown>, deviceUpdates: Partial<CaseDeviceRow>) => void;
   onUpdateStatus: (newStatus: string) => void;
   onUpdatePriority: (newPriority: string) => void;
   onUpdateEngineer: (engineerId: string | null) => void;
