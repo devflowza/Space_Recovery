@@ -436,21 +436,21 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
             : null;
 
           return {
+            tenant_id: profile!.tenant_id,
             case_id: newCase.id,
             device_type_id: device.device_type_id || null,
             brand_id: device.brand_id || null,
             model: device.model || null,
-            serial_no: device.serial_no || null,
+            serial_number: device.serial_no || null,
             capacity_id: device.capacity_id || null,
-            condition_id: device.condition_id ? parseInt(device.condition_id) : null,
+            condition_id: device.condition_id || null,
             accessories: device.accessories.length > 0 ? device.accessories : null,
-            device_problem: problemName,
-            recovery_requirements: device.recovery_requirements || null,
-            device_password: device.device_password || null,
-            encryption_type_id: device.encryption_type_id || null,
+            symptoms: problemName,
+            notes: device.recovery_requirements || null,
+            password: device.device_password || null,
+            encryption_id: device.encryption_type_id || null,
             device_role_id: device.device_role_id || null,
             is_primary: device.is_primary || false,
-            parent_device_id: device.parent_device_id || null,
             created_by: profile?.id || null,
           };
         });
