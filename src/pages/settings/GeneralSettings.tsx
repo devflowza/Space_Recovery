@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { uploadLogo, uploadQRCode, deleteLogo, deleteQRCode } from '../../lib/fileStorageService';
 import { SUPPORTED_LANGUAGES, type LanguageCode } from '../../lib/documentTranslations';
+import type { Database } from '../../types/database.types';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ImageUpload } from '../../components/ui/ImageUpload';
@@ -29,31 +30,52 @@ import {
   Languages,
 } from 'lucide-react';
 
-interface CompanySettings {
-  id: number;
-  basic_info: Record<string, string | number | boolean | null>;
-  location: Record<string, string | number | boolean | null>;
-  contact_info: Record<string, string | number | boolean | null>;
-  branding: Record<string, string | number | boolean | null>;
-  online_presence: Record<string, string | number | boolean | null>;
-  business_hours: Record<string, string | number | boolean | null>;
-  company_profile: Record<string, string | number | boolean | null>;
-  legal_compliance: Record<string, string | number | boolean | null>;
-  financial_settings: Record<string, string | number | boolean | null>;
-  banking_info: Record<string, string | number | boolean | null>;
-  localization?: {
-    document_language_settings?: {
-      mode: 'english_only' | 'bilingual';
-      secondary_language: LanguageCode | null;
-      language_name: string | null;
-    };
-  };
-  clone_defaults?: {
-    default_retention_days?: number;
-    min_retention_days?: number;
-    max_retention_days?: number;
-  };
+type JsonObject = Record<string, unknown>;
+
+type CompanySettingsInsert = Database['public']['Tables']['company_settings']['Insert'];
+type CompanySettingsUpdate = Database['public']['Tables']['company_settings']['Update'];
+
+interface DocumentLanguageSettings {
+  mode: 'english_only' | 'bilingual';
+  secondary_language: LanguageCode | null;
+  language_name: string | null;
 }
+
+interface LocalizationSettings {
+  document_language_settings?: DocumentLanguageSettings;
+}
+
+interface CloneDefaults {
+  default_retention_days?: number;
+  min_retention_days?: number;
+  max_retention_days?: number;
+}
+
+interface CompanySettings {
+  id: string;
+  basic_info: JsonObject;
+  location: JsonObject;
+  contact_info: JsonObject;
+  branding: JsonObject;
+  online_presence: JsonObject;
+  legal_compliance: JsonObject;
+  banking_info: JsonObject;
+  localization?: LocalizationSettings;
+  clone_defaults?: CloneDefaults;
+}
+
+// Coerce arbitrary JSON values to a string for text-input display.
+const toStr = (v: unknown): string => {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  return '';
+};
+
+// Type guard: only the JSON-bag sections on CompanySettings.
+type JsonSection = 'basic_info' | 'location' | 'contact_info' | 'branding' | 'online_presence' | 'legal_compliance' | 'banking_info';
+type StructuredSection = 'localization' | 'clone_defaults';
+type EditableSection = JsonSection | StructuredSection;
 
 interface Country {
   id: string;
@@ -71,7 +93,7 @@ const FormField = ({
   fullWidth = false,
 }: {
   label: string;
-  value: string;
+  value: unknown;
   onChange: (val: string) => void;
   placeholder?: string;
   type?: string;
@@ -82,7 +104,7 @@ const FormField = ({
     <label className="block text-sm font-semibold text-slate-700 mb-2">{label}</label>
     <Input
       type={type}
-      value={value || ''}
+      value={toStr(value)}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       className="w-full"
@@ -97,7 +119,7 @@ export const GeneralSettings: React.FC = () => {
   const toast = useToast();
   const [formData, setFormData] = useState<Partial<CompanySettings> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [_uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+  const [, setUploadingFiles] = useState<Set<string>>(new Set());
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [openSections, setOpenSections] = useState<Set<string>>(() => {
@@ -115,7 +137,7 @@ export const GeneralSettings: React.FC = () => {
         .maybeSingle();
 
       if (error) throw error;
-      return data as CompanySettings;
+      return data as unknown as CompanySettings | null;
     },
   });
 
@@ -312,10 +334,15 @@ export const GeneralSettings: React.FC = () => {
         throw new Error('Your account is inactive. Please contact your administrator.');
       }
 
+      // Drop the local-only `id` field; supabase generates uuid for us on insert,
+      // and updates are scoped by .not('id', 'is', null) below.
+      const { id: _omitId, ...updatePayload } = updates;
+      void _omitId;
+
       // Try update first
       const { data: updateData, error: updateError } = await supabase
         .from('company_settings')
-        .update(updates)
+        .update(updatePayload as CompanySettingsUpdate)
         .not('id', 'is', null)
         .select();
 
@@ -336,9 +363,18 @@ export const GeneralSettings: React.FC = () => {
         .eq('id', session.user.id)
         .maybeSingle();
 
+      if (!profile?.tenant_id) {
+        throw new Error('Cannot create company settings without a tenant_id.');
+      }
+
+      const insertPayload: CompanySettingsInsert = {
+        ...(updatePayload as CompanySettingsUpdate),
+        tenant_id: profile.tenant_id,
+      };
+
       const { data: insertData, error: insertError } = await supabase
         .from('company_settings')
-        .insert({ ...updates, tenant_id: profile?.tenant_id } as any)
+        .insert(insertPayload)
         .select();
 
       if (insertError) {
@@ -362,12 +398,15 @@ export const GeneralSettings: React.FC = () => {
     },
   });
 
-  const updateField = (section: string, field: string, value: string | number | boolean | null) => {
+  const updateField = (section: EditableSection, field: string, value: unknown) => {
     if (!formData) return;
+    const current = formData[section];
+    const base: Record<string, unknown> =
+      current && typeof current === 'object' ? { ...(current as Record<string, unknown>) } : {};
     setFormData({
       ...formData,
       [section]: {
-        ...formData[section as keyof CompanySettings],
+        ...base,
         [field]: value,
       },
     });
@@ -407,12 +446,14 @@ export const GeneralSettings: React.FC = () => {
     setUploadingFiles(prev => new Set(prev).add(uploadKey));
 
     try {
-      const oldFilePath =
+      const branding = formData.branding ?? {};
+      const oldFilePathRaw =
         type === 'primary'
-          ? formData.branding?.logo_file_path
+          ? branding.logo_file_path
           : type === 'light'
-          ? formData.branding?.logo_light_file_path
-          : formData.branding?.favicon_file_path;
+          ? branding.logo_light_file_path
+          : branding.favicon_file_path;
+      const oldFilePath = typeof oldFilePathRaw === 'string' ? oldFilePathRaw : '';
 
       if (oldFilePath) {
         await deleteLogo(oldFilePath);
@@ -430,12 +471,17 @@ export const GeneralSettings: React.FC = () => {
             ? 'logo_light_file_path'
             : 'favicon_file_path';
 
-        const updatedBranding = {
-          ...formData.branding,
+        const existingLogoMetadata =
+          branding.logo_metadata && typeof branding.logo_metadata === 'object'
+            ? (branding.logo_metadata as Record<string, unknown>)
+            : {};
+
+        const updatedBranding: JsonObject = {
+          ...branding,
           [urlField]: result.publicUrl,
           [pathField]: result.filePath,
           logo_metadata: {
-            ...formData.branding?.logo_metadata,
+            ...existingLogoMetadata,
             width: result.metadata?.width,
             height: result.metadata?.height,
             size_bytes: result.metadata?.size,
@@ -451,7 +497,7 @@ export const GeneralSettings: React.FC = () => {
 
         await supabase
           .from('company_settings')
-          .update({ branding: updatedBranding })
+          .update({ branding: updatedBranding } as CompanySettingsUpdate)
           .not('id', 'is', null);
 
         queryClient.invalidateQueries({ queryKey: ['company_settings'] });
@@ -478,7 +524,9 @@ export const GeneralSettings: React.FC = () => {
     setUploadingFiles(prev => new Set(prev).add(uploadKey));
 
     try {
-      const oldFilePath = formData.branding?.[`qr_code_${type}_file_path`];
+      const branding = formData.branding ?? {};
+      const oldFilePathRaw = branding[`qr_code_${type}_file_path`];
+      const oldFilePath = typeof oldFilePathRaw === 'string' ? oldFilePathRaw : '';
 
       if (oldFilePath) {
         await deleteQRCode(oldFilePath);
@@ -487,12 +535,17 @@ export const GeneralSettings: React.FC = () => {
       const result = await uploadQRCode(file, type);
 
       if (result.success && result.filePath && result.publicUrl) {
-        const updatedBranding = {
-          ...formData.branding,
+        const existingQrMetadata =
+          branding.qr_metadata && typeof branding.qr_metadata === 'object'
+            ? (branding.qr_metadata as Record<string, unknown>)
+            : {};
+
+        const updatedBranding: JsonObject = {
+          ...branding,
           [`qr_code_${type}_url`]: result.publicUrl,
           [`qr_code_${type}_file_path`]: result.filePath,
           qr_metadata: {
-            ...formData.branding?.qr_metadata,
+            ...existingQrMetadata,
             [type]: {
               uploaded_at: new Date().toISOString(),
               size_bytes: result.metadata?.size,
@@ -507,7 +560,7 @@ export const GeneralSettings: React.FC = () => {
 
         await supabase
           .from('company_settings')
-          .update({ branding: updatedBranding })
+          .update({ branding: updatedBranding } as CompanySettingsUpdate)
           .not('id', 'is', null);
 
         queryClient.invalidateQueries({ queryKey: ['company_settings'] });
@@ -609,7 +662,7 @@ export const GeneralSettings: React.FC = () => {
         <div className="flex gap-2">
           <Button
             onClick={expandAll}
-            variant="outline"
+            variant="ghost"
             className="flex items-center gap-2 text-sm"
           >
             <Maximize2 className="w-4 h-4" />
@@ -617,7 +670,7 @@ export const GeneralSettings: React.FC = () => {
           </Button>
           <Button
             onClick={collapseAll}
-            variant="outline"
+            variant="ghost"
             className="flex items-center gap-2 text-sm"
           >
             <Minimize2 className="w-4 h-4" />
@@ -761,7 +814,7 @@ export const GeneralSettings: React.FC = () => {
             />
             <SearchableSelect
               label="Default Country"
-              value={formData.location?.default_country_id || ''}
+              value={toStr(formData.location?.default_country_id)}
               onChange={(value) => updateField('location', 'default_country_id', value)}
               options={countries.map((c) => ({ id: c.id, name: c.name }))}
               placeholder="Select Default Country"
@@ -977,7 +1030,7 @@ export const GeneralSettings: React.FC = () => {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <ImageUpload
-                  value={formData.branding?.logo_url}
+                  value={toStr(formData.branding?.logo_url)}
                   onChange={(file, previewUrl) => handleLogoUpload(file, previewUrl, 'primary')}
                   label="Primary Logo"
                   description="Main logo for documents and web"
@@ -986,7 +1039,7 @@ export const GeneralSettings: React.FC = () => {
                   bucketName="company-assets"
                 />
                 <ImageUpload
-                  value={formData.branding?.logo_light_url}
+                  value={toStr(formData.branding?.logo_light_url)}
                   onChange={(file, previewUrl) => handleLogoUpload(file, previewUrl, 'light')}
                   label="Light Logo"
                   description="For dark backgrounds"
@@ -995,7 +1048,7 @@ export const GeneralSettings: React.FC = () => {
                   bucketName="company-assets"
                 />
                 <ImageUpload
-                  value={formData.branding?.favicon_url}
+                  value={toStr(formData.branding?.favicon_url)}
                   onChange={(file, previewUrl) => handleLogoUpload(file, previewUrl, 'favicon')}
                   label="Favicon"
                   description="Browser tab icon"
@@ -1014,7 +1067,7 @@ export const GeneralSettings: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="space-y-3">
                   <ImageUpload
-                    value={formData.branding?.qr_code_invoice_url}
+                    value={toStr(formData.branding?.qr_code_invoice_url)}
                     onChange={(file, previewUrl) => handleQRCodeUpload(file, previewUrl, 'invoice')}
                     label="Invoice QR"
                     description="For invoice payments"
@@ -1027,7 +1080,7 @@ export const GeneralSettings: React.FC = () => {
                       QR Code Caption
                     </label>
                     <Input
-                      value={formData.branding?.qr_code_invoice_caption || ''}
+                      value={toStr(formData.branding?.qr_code_invoice_caption)}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val.length <= 150) {
@@ -1038,13 +1091,13 @@ export const GeneralSettings: React.FC = () => {
                       className="w-full"
                     />
                     <p className="text-xs text-slate-500 mt-1">
-                      {(formData.branding?.qr_code_invoice_caption || '').length}/150 characters
+                      {toStr(formData.branding?.qr_code_invoice_caption).length}/150 characters
                     </p>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <ImageUpload
-                    value={formData.branding?.qr_code_quote_url}
+                    value={toStr(formData.branding?.qr_code_quote_url)}
                     onChange={(file, previewUrl) => handleQRCodeUpload(file, previewUrl, 'quote')}
                     label="Quote QR"
                     description="For quote approvals"
@@ -1057,7 +1110,7 @@ export const GeneralSettings: React.FC = () => {
                       QR Code Caption
                     </label>
                     <Input
-                      value={formData.branding?.qr_code_quote_caption || ''}
+                      value={toStr(formData.branding?.qr_code_quote_caption)}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val.length <= 150) {
@@ -1068,13 +1121,13 @@ export const GeneralSettings: React.FC = () => {
                       className="w-full"
                     />
                     <p className="text-xs text-slate-500 mt-1">
-                      {(formData.branding?.qr_code_quote_caption || '').length}/150 characters
+                      {toStr(formData.branding?.qr_code_quote_caption).length}/150 characters
                     </p>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <ImageUpload
-                    value={formData.branding?.qr_code_label_url}
+                    value={toStr(formData.branding?.qr_code_label_url)}
                     onChange={(file, previewUrl) => handleQRCodeUpload(file, previewUrl, 'label')}
                     label="Label QR"
                     description="For case labels"
@@ -1087,7 +1140,7 @@ export const GeneralSettings: React.FC = () => {
                       QR Code Caption
                     </label>
                     <Input
-                      value={formData.branding?.qr_code_label_caption || ''}
+                      value={toStr(formData.branding?.qr_code_label_caption)}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val.length <= 150) {
@@ -1098,13 +1151,13 @@ export const GeneralSettings: React.FC = () => {
                       className="w-full"
                     />
                     <p className="text-xs text-slate-500 mt-1">
-                      {(formData.branding?.qr_code_label_caption || '').length}/150 characters
+                      {toStr(formData.branding?.qr_code_label_caption).length}/150 characters
                     </p>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <ImageUpload
-                    value={formData.branding?.qr_code_general_url}
+                    value={toStr(formData.branding?.qr_code_general_url)}
                     onChange={(file, previewUrl) => handleQRCodeUpload(file, previewUrl, 'general')}
                     label="General QR"
                     description="Multi-purpose QR"
@@ -1117,7 +1170,7 @@ export const GeneralSettings: React.FC = () => {
                       QR Code Caption
                     </label>
                     <Input
-                      value={formData.branding?.qr_code_general_caption || ''}
+                      value={toStr(formData.branding?.qr_code_general_caption)}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val.length <= 150) {
@@ -1128,7 +1181,7 @@ export const GeneralSettings: React.FC = () => {
                       className="w-full"
                     />
                     <p className="text-xs text-slate-500 mt-1">
-                      {(formData.branding?.qr_code_general_caption || '').length}/150 characters
+                      {toStr(formData.branding?.qr_code_general_caption).length}/150 characters
                     </p>
                   </div>
                 </div>
@@ -1145,12 +1198,12 @@ export const GeneralSettings: React.FC = () => {
                   <div className="flex gap-2">
                     <input
                       type="color"
-                      value={formData.branding?.primary_color || '#0ea5e9'}
+                      value={toStr(formData.branding?.primary_color) || '#0ea5e9'}
                       onChange={(e) => updateField('branding', 'primary_color', e.target.value)}
                       className="w-16 h-10 rounded-lg border border-slate-300 cursor-pointer"
                     />
                     <Input
-                      value={formData.branding?.primary_color || '#0ea5e9'}
+                      value={toStr(formData.branding?.primary_color) || '#0ea5e9'}
                       onChange={(e) => updateField('branding', 'primary_color', e.target.value)}
                       placeholder="#0ea5e9"
                       className="flex-1"
@@ -1164,12 +1217,12 @@ export const GeneralSettings: React.FC = () => {
                   <div className="flex gap-2">
                     <input
                       type="color"
-                      value={formData.branding?.secondary_color || '#10b981'}
+                      value={toStr(formData.branding?.secondary_color) || '#10b981'}
                       onChange={(e) => updateField('branding', 'secondary_color', e.target.value)}
                       className="w-16 h-10 rounded-lg border border-slate-300 cursor-pointer"
                     />
                     <Input
-                      value={formData.branding?.secondary_color || '#10b981'}
+                      value={toStr(formData.branding?.secondary_color) || '#10b981'}
                       onChange={(e) => updateField('branding', 'secondary_color', e.target.value)}
                       placeholder="#10b981"
                       className="flex-1"
@@ -1183,12 +1236,12 @@ export const GeneralSettings: React.FC = () => {
                   <div className="flex gap-2">
                     <input
                       type="color"
-                      value={formData.branding?.accent_color || '#f59e0b'}
+                      value={toStr(formData.branding?.accent_color) || '#f59e0b'}
                       onChange={(e) => updateField('branding', 'accent_color', e.target.value)}
                       className="w-16 h-10 rounded-lg border border-slate-300 cursor-pointer"
                     />
                     <Input
-                      value={formData.branding?.accent_color || '#f59e0b'}
+                      value={toStr(formData.branding?.accent_color) || '#f59e0b'}
                       onChange={(e) => updateField('branding', 'accent_color', e.target.value)}
                       placeholder="#f59e0b"
                       className="flex-1"
@@ -1243,20 +1296,22 @@ export const GeneralSettings: React.FC = () => {
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === 'none') {
-                    updateField('localization', 'document_language_settings', {
+                    const next: DocumentLanguageSettings = {
                       mode: 'english_only',
                       secondary_language: null,
                       language_name: null,
-                    });
+                    };
+                    updateField('localization', 'document_language_settings', next);
                   } else {
                     const selectedLang = SUPPORTED_LANGUAGES.find(
                       (lang) => lang.code === value
                     );
-                    updateField('localization', 'document_language_settings', {
+                    const next: DocumentLanguageSettings = {
                       mode: 'bilingual',
-                      secondary_language: value,
+                      secondary_language: value as LanguageCode,
                       language_name: selectedLang?.name || null,
-                    });
+                    };
+                    updateField('localization', 'document_language_settings', next);
                   }
                 }}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
