@@ -7,27 +7,21 @@ import {
   XCircle,
   Receipt,
   User,
-  Calendar,
-  CreditCard,
   FileText,
   ExternalLink,
   ShoppingBag,
-  Hash,
-  ShieldCheck,
-  Tag,
   RotateCcw,
 } from 'lucide-react';
 import { stockKeys } from '../../lib/queryKeys';
 import { getStockSale, cancelStockSale } from '../../lib/stockService';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { PageHeader } from '../../components/shared/PageHeader';
 import { useToast } from '../../hooks/useToast';
 import { StockReturnModal } from '../../components/stock/StockReturnModal';
 
-type PaymentStatusVariant = 'warning' | 'success' | 'info' | 'secondary' | 'danger';
+type SaleStatusVariant = 'warning' | 'success' | 'info' | 'secondary' | 'danger';
 
-const paymentStatusConfig: Record<string, { label: string; variant: PaymentStatusVariant }> = {
+const saleStatusConfig: Record<string, { label: string; variant: SaleStatusVariant }> = {
   pending: { label: 'Pending', variant: 'warning' },
   paid: { label: 'Paid', variant: 'success' },
   partial: { label: 'Partially Paid', variant: 'info' },
@@ -47,11 +41,6 @@ const formatDate = (value: string | null): string => {
 const formatCurrency = (value: number | null | undefined): string => {
   if (value === null || value === undefined) return '—';
   return value.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-};
-
-const formatPaymentMethod = (method: string | null): string => {
-  if (!method) return '—';
-  return method.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
 export const StockSaleDetailPage: React.FC = () => {
@@ -117,10 +106,10 @@ export const StockSaleDetailPage: React.FC = () => {
   }
 
   const statusCfg =
-    paymentStatusConfig[sale.payment_status ?? 'pending'] ?? paymentStatusConfig['pending'];
+    saleStatusConfig[sale.status ?? 'pending'] ?? saleStatusConfig['pending'];
 
   const items = sale.stock_sale_items ?? [];
-  const canCancel = sale.payment_status !== 'refunded' && sale.payment_status !== 'cancelled';
+  const canCancel = sale.status !== 'refunded' && sale.status !== 'cancelled';
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6 print:p-0 print:space-y-4">
@@ -166,7 +155,7 @@ export const StockSaleDetailPage: React.FC = () => {
               )}
             </>
           )}
-          {sale.payment_status === 'paid' && (
+          {sale.status === 'paid' && (
             <Button
               variant="secondary"
               size="sm"
@@ -210,7 +199,7 @@ export const StockSaleDetailPage: React.FC = () => {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
           <div className="px-6 py-4 flex items-start gap-3">
             <User className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
             <div className="min-w-0">
@@ -247,47 +236,7 @@ export const StockSaleDetailPage: React.FC = () => {
               )}
             </div>
           </div>
-
-          <div className="px-6 py-4 flex items-start gap-3">
-            <CreditCard className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                Payment
-              </p>
-              <p className="text-sm font-semibold text-slate-900">
-                {formatPaymentMethod(sale.payment_method)}
-              </p>
-            </div>
-          </div>
-
-          <div className="px-6 py-4 flex items-start gap-3">
-            <User className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                Sold By
-              </p>
-              <p className="text-sm font-semibold text-slate-900">
-                {sale.sold_by ?? '—'}
-              </p>
-            </div>
-          </div>
         </div>
-
-        {sale.invoice_id && (
-          <div className="px-6 py-3 bg-info-muted border-t border-info/20 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-info" />
-            <p className="text-sm text-info">
-              Linked to Invoice{' '}
-              <Link
-                to={`/invoices/${sale.invoice_id}`}
-                className="font-semibold underline underline-offset-2 hover:text-info/80 inline-flex items-center gap-1"
-              >
-                #{sale.invoice_id.slice(0, 8).toUpperCase()}
-                <ExternalLink className="w-3 h-3" />
-              </Link>
-            </p>
-          </div>
-        )}
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -314,9 +263,6 @@ export const StockSaleDetailPage: React.FC = () => {
                   Unit Price
                 </th>
                 <th className="text-right px-4 py-3 font-semibold text-slate-600 whitespace-nowrap">
-                  Cost
-                </th>
-                <th className="text-right px-4 py-3 font-semibold text-slate-600 whitespace-nowrap">
                   Discount
                 </th>
                 <th className="text-right px-4 py-3 font-semibold text-slate-600 whitespace-nowrap">
@@ -325,18 +271,12 @@ export const StockSaleDetailPage: React.FC = () => {
                 <th className="text-right px-4 py-3 font-semibold text-slate-600 whitespace-nowrap">
                   Line Total
                 </th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600 whitespace-nowrap">
-                  Serial #
-                </th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600 whitespace-nowrap">
-                  Warranty
-                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-sm text-slate-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">
                     No line items
                   </td>
                 </tr>
@@ -374,48 +314,17 @@ export const StockSaleDetailPage: React.FC = () => {
                       {formatCurrency(item.unit_price)}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap tabular-nums text-slate-500">
-                      {formatCurrency(item.cost_price)}
-                    </td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap tabular-nums text-slate-500">
-                      {item.discount_amount > 0
-                        ? formatCurrency(item.discount_amount)
+                      {(item.discount ?? 0) > 0
+                        ? formatCurrency(item.discount)
                         : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap tabular-nums text-slate-500">
-                      {item.tax_amount > 0
+                      {(item.tax_amount ?? 0) > 0
                         ? formatCurrency(item.tax_amount)
                         : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap tabular-nums font-semibold text-slate-900">
-                      {formatCurrency(item.line_total)}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {item.serial_number ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
-                          <Hash className="w-3 h-3" />
-                          {item.serial_number}
-                        </span>
-                      ) : (
-                        <span className="text-slate-300">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {item.warranty_start_date || item.warranty_end_date ? (
-                        <div className="flex items-center gap-1 text-xs text-slate-600">
-                          <ShieldCheck className="w-3.5 h-3.5 text-success shrink-0" />
-                          <span>
-                            {item.warranty_start_date
-                              ? new Date(item.warranty_start_date).toLocaleDateString()
-                              : '?'}
-                            {' – '}
-                            {item.warranty_end_date
-                              ? new Date(item.warranty_end_date).toLocaleDateString()
-                              : '?'}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-300">—</span>
-                      )}
+                      {formatCurrency(item.total)}
                     </td>
                   </tr>
                 ))
@@ -433,13 +342,7 @@ export const StockSaleDetailPage: React.FC = () => {
 
             {(sale.discount_amount ?? 0) > 0 && (
               <div className="flex justify-between text-sm text-success">
-                <span className="flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5" />
-                  Discount
-                  {sale.discount_type === 'percentage' && sale.discount_value
-                    ? ` (${sale.discount_value}%)`
-                    : ''}
-                </span>
+                <span>Discount</span>
                 <span className="tabular-nums">
                   -{formatCurrency(sale.discount_amount)}
                 </span>
@@ -474,12 +377,6 @@ export const StockSaleDetailPage: React.FC = () => {
         <StockReturnModal
           sale={sale}
           onClose={() => setShowReturnModal(false)}
-          onSuccess={() => {
-            setShowReturnModal(false);
-            queryClient.invalidateQueries({ queryKey: stockKeys.sale(id!) });
-            queryClient.invalidateQueries({ queryKey: stockKeys.returns() });
-            toast.success('Return request created');
-          }}
         />
       )}
     </div>
