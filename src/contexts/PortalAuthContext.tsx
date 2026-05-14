@@ -1,15 +1,23 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { checkRateLimit, RATE_LIMITS } from '../lib/rateLimiter';
+import { getPortalSettings } from '../lib/portalUrlService';
 import { logger } from '../lib/logger';
 
 interface PortalCustomer {
   id: string;
+  tenant_id: string;
   customer_number: string;
   customer_name: string;
   email: string | null;
   mobile_number: string | null;
   profile_photo_url: string | null;
+}
+
+interface PortalSession {
+  customer: PortalCustomer;
+  last_activity_at: number;
 }
 
 interface PortalAuthContextType {
@@ -23,6 +31,10 @@ interface PortalAuthContextType {
 
 const PortalAuthContext = createContext<PortalAuthContextType | undefined>(undefined);
 
+const SESSION_STORAGE_KEY = 'portal_session';
+// Default timeout used when portal_settings is unreachable. In minutes.
+const DEFAULT_TIMEOUT_MINUTES = 1440;
+
 export const usePortalAuth = () => {
   const context = useContext(PortalAuthContext);
   if (!context) {
@@ -31,67 +43,119 @@ export const usePortalAuth = () => {
   return context;
 };
 
+function isValidPortalCustomer(data: unknown): data is PortalCustomer {
+  if (!data || typeof data !== 'object') return false;
+  const obj = data as Record<string, unknown>;
+  return (
+    typeof obj.id === 'string' &&
+    typeof obj.tenant_id === 'string' &&
+    typeof obj.customer_number === 'string' &&
+    typeof obj.customer_name === 'string' &&
+    (obj.email === null || typeof obj.email === 'string') &&
+    (obj.mobile_number === null || typeof obj.mobile_number === 'string') &&
+    (obj.profile_photo_url === null || typeof obj.profile_photo_url === 'string')
+  );
+}
+
+function readSession(): PortalSession | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      typeof parsed.last_activity_at === 'number' &&
+      isValidPortalCustomer(parsed.customer)
+    ) {
+      return parsed as PortalSession;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSession(session: PortalSession): void {
+  sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+}
+
+function clearSession(): void {
+  sessionStorage.removeItem(SESSION_STORAGE_KEY);
+}
+
+// Read tenant_id directly from sessionStorage without subscribing to context.
+// Used by other providers (ThemeContext, TenantConfigContext) that mount above
+// PortalAuthProvider and therefore cannot use the hook.
+export function getPortalTenantIdFromSession(): string | null {
+  const session = readSession();
+  return session?.customer.tenant_id ?? null;
+}
+
 export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [customer, setCustomer] = useState<PortalCustomer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timeoutMinutes, setTimeoutMinutes] = useState<number>(DEFAULT_TIMEOUT_MINUTES);
+  const location = useLocation();
 
-  useEffect(() => {
-    checkPortalSession();
-  }, []);
-
-  const isValidPortalCustomer = (data: unknown): data is PortalCustomer => {
-    if (!data || typeof data !== 'object') return false;
-    const obj = data as Record<string, unknown>;
-    return (
-      typeof obj.id === 'string' &&
-      typeof obj.customer_number === 'string' &&
-      typeof obj.customer_name === 'string' &&
-      (obj.email === null || typeof obj.email === 'string') &&
-      (obj.mobile_number === null || typeof obj.mobile_number === 'string') &&
-      (obj.profile_photo_url === null || typeof obj.profile_photo_url === 'string')
-    );
-  };
-
-  const checkPortalSession = async () => {
+  // Resolve session-timeout from tenant portal settings; refreshed when login
+  // happens. getPortalSettings has its own 5-minute cache.
+  const refreshTimeout = useCallback(async () => {
     try {
-      const customerData = sessionStorage.getItem('portal_customer');
-      if (customerData) {
-        const parsed = JSON.parse(customerData);
-        if (isValidPortalCustomer(parsed)) {
-          setCustomer(parsed);
-        } else {
-          logger.error('Invalid portal customer data in session, clearing');
-          sessionStorage.removeItem('portal_customer');
-        }
+      const settings = await getPortalSettings();
+      const minutes = settings?.portal_session_timeout;
+      if (typeof minutes === 'number' && minutes > 0) {
+        setTimeoutMinutes(minutes);
+      } else {
+        setTimeoutMinutes(DEFAULT_TIMEOUT_MINUTES);
       }
     } catch (err) {
-      logger.error('Session check error:', err);
-      sessionStorage.removeItem('portal_customer');
-    } finally {
-      setLoading(false);
+      logger.error('Failed to load portal session timeout setting:', err);
+      setTimeoutMinutes(DEFAULT_TIMEOUT_MINUTES);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const session = readSession();
+    if (session) {
+      const ageMs = Date.now() - session.last_activity_at;
+      // Initial check uses default; refreshTimeout will recheck after settings load.
+      if (ageMs > DEFAULT_TIMEOUT_MINUTES * 60_000) {
+        clearSession();
+      } else {
+        setCustomer(session.customer);
+      }
+    }
+    refreshTimeout().finally(() => setLoading(false));
+  }, [refreshTimeout]);
+
+  // On every route change, validate the timeout and refresh last_activity_at.
+  useEffect(() => {
+    if (!customer) return;
+    const session = readSession();
+    if (!session) {
+      setCustomer(null);
+      return;
+    }
+    const ageMs = Date.now() - session.last_activity_at;
+    const limitMs = timeoutMinutes * 60_000;
+    if (ageMs > limitMs) {
+      clearSession();
+      setCustomer(null);
+      setError('Your session has expired. Please log in again.');
+      return;
+    }
+    writeSession({ ...session, last_activity_at: Date.now() });
+    // intentionally only on pathname change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
-    // Check lockout from failed attempts
-    const lockoutKey = `portal_lockout_${email}`;
-    const lockoutData = sessionStorage.getItem(lockoutKey);
-    if (lockoutData) {
-      const { lockedUntil } = JSON.parse(lockoutData);
-      if (Date.now() < lockedUntil) {
-        const minutesLeft = Math.ceil((lockedUntil - Date.now()) / 60_000);
-        setError(`Account temporarily locked. Please try again in ${minutesLeft} minute${minutesLeft === 1 ? '' : 's'}.`);
-        setLoading(false);
-        return false;
-      }
-      sessionStorage.removeItem(lockoutKey);
-    }
-
-    // Rate limit check
+    // Client-side rate limit (in addition to DB-side lockout).
     const rl = checkRateLimit({ ...RATE_LIMITS.PORTAL_LOGIN, key: `portal_login:${email}` });
     if (!rl.allowed) {
       setError(rl.message);
@@ -100,37 +164,34 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     try {
-      const { data, error } = await supabase.rpc('authenticate_portal_customer', {
+      const { data, error: rpcError } = await supabase.rpc('authenticate_portal_customer', {
         p_email: email,
         p_password: password,
       });
 
-      if (error || !data) {
-        logger.error('Authentication error:', error);
-        // Track failed attempts
-        const failKey = `portal_fails_${email}`;
-        const fails = parseInt(sessionStorage.getItem(failKey) || '0') + 1;
-        sessionStorage.setItem(failKey, String(fails));
-
-        if (fails >= 5) {
-          const lockedUntil = Date.now() + 15 * 60_000; // 15 minutes
-          sessionStorage.setItem(lockoutKey, JSON.stringify({ lockedUntil }));
-          sessionStorage.removeItem(failKey);
-          setError('Too many failed attempts. Account locked for 15 minutes.');
-        } else {
-          setError('Invalid email or password');
-        }
+      if (rpcError || !data) {
+        // DB returns NULL when password is wrong, account locked, or account
+        // missing. We cannot distinguish without leaking info; show generic.
+        if (rpcError) logger.error('Authentication error:', rpcError);
+        setError('Invalid email or password. After several failed attempts, the account will be locked for 15 minutes.');
         return false;
       }
 
-      // Successful login — clear failed attempts
-      sessionStorage.removeItem(`portal_fails_${email}`);
-      sessionStorage.removeItem(lockoutKey);
+      if (!isValidPortalCustomer(data)) {
+        logger.error('authenticate_portal_customer returned malformed data');
+        setError('Login failed. Please contact support.');
+        return false;
+      }
 
-      const customerData = data as PortalCustomer;
-      setCustomer(customerData);
-      sessionStorage.setItem('portal_customer', JSON.stringify(customerData));
+      const session: PortalSession = {
+        customer: data,
+        last_activity_at: Date.now(),
+      };
+      writeSession(session);
+      setCustomer(data);
       setError(null);
+      // Refresh session-timeout in case settings changed.
+      void refreshTimeout();
       return true;
     } catch (err) {
       logger.error('Login error:', err);
@@ -148,14 +209,14 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     try {
-      const { data, error } = await supabase.rpc('change_portal_password', {
+      const { data, error: rpcError } = await supabase.rpc('change_portal_password', {
         p_customer_id: customer.id,
         p_current_password: currentPassword,
         p_new_password: newPassword,
       });
 
-      if (error) {
-        logger.error('Password change error:', error);
+      if (rpcError) {
+        logger.error('Password change error:', rpcError);
         setError('Failed to change password');
         return false;
       }
@@ -174,7 +235,7 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const logout = () => {
-    sessionStorage.removeItem('portal_customer');
+    clearSession();
     setCustomer(null);
     setError(null);
   };

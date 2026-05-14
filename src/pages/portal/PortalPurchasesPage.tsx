@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePortalAuth } from '../../contexts/PortalAuthContext';
 import { supabase } from '../../lib/supabaseClient';
@@ -29,7 +29,16 @@ function getWarrantyStatus(daysRemaining: number | null): { label: string; color
 export const PortalPurchasesPage: React.FC = () => {
   const { customer } = usePortalAuth();
 
-  const { data: purchases, isLoading: loadingPurchases } = useQuery({
+  useEffect(() => {
+    document.title = 'My Purchases — Customer Portal';
+  }, []);
+
+  const {
+    data: purchases,
+    isLoading: loadingPurchases,
+    isError: purchasesError,
+    refetch: refetchPurchases,
+  } = useQuery({
     queryKey: ['portal_purchases', customer?.id],
     queryFn: async () => {
       if (!customer?.id) return [];
@@ -51,7 +60,12 @@ export const PortalPurchasesPage: React.FC = () => {
     enabled: !!customer?.id,
   });
 
-  const { data: serialNumbers, isLoading: loadingSerials } = useQuery({
+  const {
+    data: serialNumbers,
+    isLoading: loadingSerials,
+    isError: serialsError,
+    refetch: refetchSerials,
+  } = useQuery({
     queryKey: ['portal_serials', customer?.id],
     queryFn: async () => {
       if (!customer?.id) return [];
@@ -87,11 +101,26 @@ export const PortalPurchasesPage: React.FC = () => {
         <p className="text-slate-500 mt-1">View your purchased devices, warranties, and serial numbers.</p>
       </div>
 
+      {(purchasesError || serialsError) && (
+        <div role="alert" className="rounded-lg border border-danger/30 bg-danger-muted p-4 text-sm">
+          <p className="text-danger">Some purchase data failed to load. Please try again.</p>
+          <button
+            onClick={() => {
+              if (purchasesError) refetchPurchases();
+              if (serialsError) refetchSerials();
+            }}
+            className="mt-2 text-primary underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-info-muted rounded-lg flex items-center justify-center">
-              <ShoppingBag className="w-5 h-5 text-info" />
+              <ShoppingBag className="w-5 h-5 text-info" aria-hidden="true" />
             </div>
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Total Orders</p>
@@ -102,7 +131,7 @@ export const PortalPurchasesPage: React.FC = () => {
         <Card className="p-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-success-muted rounded-lg flex items-center justify-center">
-              <Shield className="w-5 h-5 text-success" />
+              <Shield className="w-5 h-5 text-success" aria-hidden="true" />
             </div>
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Active Warranties</p>
@@ -113,7 +142,7 @@ export const PortalPurchasesPage: React.FC = () => {
         <Card className="p-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-warning-muted rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-warning" />
+              <DollarSign className="w-5 h-5 text-warning" aria-hidden="true" />
             </div>
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Total Spent</p>

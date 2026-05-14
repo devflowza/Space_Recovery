@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { usePortalAuth } from '../../contexts/PortalAuthContext';
@@ -7,10 +7,15 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { FileText, DollarSign, MessageSquare, Clock } from 'lucide-react';
 import { formatDate } from '../../lib/format';
+import { fetchPortalVisibility, getVisibleCaseIds, getCaseIdsWithFlag } from '../../lib/portalVisibility';
 
 export const PortalDashboard: React.FC = () => {
   const { customer } = usePortalAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = 'Dashboard — Customer Portal';
+  }, []);
 
   const { data: casePriorities = [] } = useQuery({
     queryKey: ['case_priorities'],
@@ -25,72 +30,94 @@ export const PortalDashboard: React.FC = () => {
     },
   });
 
-  const { data: casesStats } = useQuery({
-    queryKey: ['portal_cases_stats', customer?.id],
+  const { data: visibility = [] } = useQuery({
+    queryKey: ['portal_visibility', customer?.id],
+    queryFn: () => fetchPortalVisibility(customer!.id),
+    enabled: !!customer?.id,
+  });
+
+  const visibleCaseIds = React.useMemo(() => getVisibleCaseIds(visibility), [visibility]);
+  const quoteVisibleCaseIds = React.useMemo(
+    () => getCaseIdsWithFlag(visibility, 'show_quotes'),
+    [visibility]
+  );
+
+  const {
+    data: casesStats,
+    isError: casesStatsError,
+    refetch: refetchCasesStats,
+  } = useQuery({
+    queryKey: ['portal_cases_stats', customer?.id, visibleCaseIds.join(',')],
     queryFn: async () => {
-      if (!customer?.id) return null;
+      if (visibleCaseIds.length === 0) return { total: 0, active: 0, completed: 0 };
 
       const { data, error } = await supabase
         .from('cases')
         .select('id, status')
-        .eq('customer_id', customer.id)
-        .eq('portal_visible', true);
+        .in('id', visibleCaseIds);
 
       if (error) throw error;
 
-      const total = data.length;
-      const active = data.filter((c) =>
-        ['received', 'diagnosis', 'in-progress', 'waiting-approval'].includes(c.status)
+      const rows = data ?? [];
+      const total = rows.length;
+      const active = rows.filter((c) =>
+        ['received', 'diagnosis', 'in-progress', 'in_progress', 'waiting-approval'].includes(c.status || '')
       ).length;
-      const completed = data.filter((c) => ['completed', 'delivered'].includes(c.status)).length;
+      const completed = rows.filter((c) => ['completed', 'delivered'].includes(c.status || '')).length;
 
       return { total, active, completed };
     },
     enabled: !!customer?.id,
   });
 
-  const { data: recentCases = [] } = useQuery({
-    queryKey: ['portal_recent_cases', customer?.id],
+  const {
+    data: recentCases = [],
+    isError: recentCasesError,
+    refetch: refetchRecentCases,
+  } = useQuery({
+    queryKey: ['portal_recent_cases', customer?.id, visibleCaseIds.join(',')],
     queryFn: async () => {
-      if (!customer?.id) return [];
+      if (visibleCaseIds.length === 0) return [];
 
       const { data, error } = await supabase
         .from('cases')
         .select('id, case_no, title, status, priority, created_at')
-        .eq('customer_id', customer.id)
-        .eq('portal_visible', true)
+        .in('id', visibleCaseIds)
         .order('created_at', { ascending: false })
         .limit(5);
 
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
     enabled: !!customer?.id,
   });
 
-  const { data: pendingQuotes = [] } = useQuery({
-    queryKey: ['portal_pending_quotes', customer?.id],
+  const {
+    data: pendingQuotes = [],
+    isError: pendingQuotesError,
+    refetch: refetchPendingQuotes,
+  } = useQuery({
+    queryKey: ['portal_pending_quotes', customer?.id, quoteVisibleCaseIds.join(',')],
     queryFn: async () => {
-      if (!customer?.id) return [];
+      if (quoteVisibleCaseIds.length === 0) return [];
 
       const { data, error } = await supabase
         .from('case_quotes')
         .select(`
           id,
           quote_number,
-          title,
           total_amount,
-          currency,
           status,
           valid_until,
-          cases!inner(customer_id)
+          case_id,
+          cases!inner(case_no, title)
         `)
-        .eq('cases.customer_id', customer.id)
+        .in('case_id', quoteVisibleCaseIds)
         .eq('status', 'pending_approval')
-        .eq('portal_visible', true);
+        .is('deleted_at', null);
 
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
     enabled: !!customer?.id,
   });
@@ -134,11 +161,30 @@ export const PortalDashboard: React.FC = () => {
         </p>
       </div>
 
+      {(casesStatsError || recentCasesError || pendingQuotesError) && (
+        <div
+          role="alert"
+          className="rounded-lg border border-danger/30 bg-danger-muted p-4 text-sm"
+        >
+          <p className="text-danger">Some dashboard data failed to load. Please try again.</p>
+          <button
+            onClick={() => {
+              if (casesStatsError) refetchCasesStats();
+              if (recentCasesError) refetchRecentCases();
+              if (pendingQuotesError) refetchPendingQuotes();
+            }}
+            className="mt-2 text-primary underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
+              <FileText className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
             <div>
               <p className="text-sm text-slate-600 mb-1">Total Cases</p>
@@ -150,7 +196,7 @@ export const PortalDashboard: React.FC = () => {
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-              <Clock className="w-6 h-6 text-white" />
+              <Clock className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
             <div>
               <p className="text-sm text-slate-600 mb-1">Active Cases</p>
@@ -162,7 +208,7 @@ export const PortalDashboard: React.FC = () => {
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-white" />
+              <DollarSign className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
             <div>
               <p className="text-sm text-slate-600 mb-1">Pending Quotes</p>
@@ -181,34 +227,39 @@ export const PortalDashboard: React.FC = () => {
             </Badge>
           </div>
           <div className="space-y-3">
-            {pendingQuotes.map((quote) => (
-              <div
-                key={quote.id}
-                onClick={() => navigate('/portal/quotes')}
-                className="p-4 bg-warning-muted border-2 border-warning/30 rounded-lg cursor-pointer hover:border-warning/50 transition-all"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="font-semibold text-slate-900">{quote.title}</p>
-                    <p className="text-sm text-slate-600">{quote.quote_number}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-slate-900">
-                      {quote.currency} {quote.total_amount.toLocaleString()}
-                    </p>
-                    {quote.valid_until && (
-                      <p className="text-xs text-slate-500">
-                        Valid until {formatDate(quote.valid_until)}
+            {pendingQuotes.map((quote) => {
+              const caseRel = Array.isArray((quote as { cases?: unknown }).cases)
+                ? (quote as { cases: Array<{ case_no: string; title: string }> }).cases[0]
+                : (quote as { cases: { case_no: string; title: string } }).cases;
+              return (
+                <div
+                  key={quote.id}
+                  onClick={() => navigate('/portal/quotes')}
+                  className="p-4 bg-warning-muted border-2 border-warning/30 rounded-lg cursor-pointer hover:border-warning/50 transition-all"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="font-semibold text-slate-900">{caseRel?.title ?? quote.quote_number}</p>
+                      <p className="text-sm text-slate-600">{quote.quote_number}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-slate-900">
+                        {Number(quote.total_amount).toLocaleString()}
                       </p>
-                    )}
+                      {quote.valid_until && (
+                        <p className="text-xs text-slate-500">
+                          Valid until {formatDate(quote.valid_until)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-warning" aria-hidden="true" />
+                    <span className="text-sm text-warning">Response required</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-warning" />
-                  <span className="text-sm text-warning">Response required</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
       )}
@@ -228,7 +279,7 @@ export const PortalDashboard: React.FC = () => {
 
         {recentCases.length === 0 ? (
           <div className="text-center py-12">
-            <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" aria-hidden="true" />
             <p className="text-slate-600">No cases found</p>
             <p className="text-sm text-slate-500 mt-2">
               Your data recovery cases will appear here

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePortalAuth } from '../../contexts/PortalAuthContext';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -7,6 +7,10 @@ import { Lock, Check, AlertCircle } from 'lucide-react';
 
 export const PortalSettings: React.FC = () => {
   const { changePassword } = usePortalAuth();
+
+  useEffect(() => {
+    document.title = 'Settings — Customer Portal';
+  }, []);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

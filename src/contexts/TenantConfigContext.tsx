@@ -3,6 +3,7 @@ import type { TenantConfig, CurrencyConfig, TaxConfig, DateTimeConfig, LocaleCon
 import { DEFAULT_TENANT_CONFIG } from '../types/tenantConfig';
 import { getTenantConfig, invalidateTenantConfigCache } from '../lib/tenantConfigService';
 import { useAuth } from './AuthContext';
+import { getPortalTenantIdFromSession } from './PortalAuthContext';
 import { logger } from '../lib/logger';
 
 interface TenantConfigContextType {
@@ -19,7 +20,31 @@ const TenantConfigContext = createContext<TenantConfigContextType>({
 
 export function TenantConfigProvider({ children }: { children: React.ReactNode }) {
   const { profile } = useAuth();
-  const tenantId = profile?.tenant_id;
+  // Resolve tenant_id from staff profile first, falling back to the portal
+  // customer session so portal routes inherit tenant config & theme. The
+  // portal session is read from sessionStorage so we re-check on focus to
+  // pick up login/logout from the portal auth provider that mounts below us.
+  const [portalTenantId, setPortalTenantId] = useState<string | null>(() =>
+    getPortalTenantIdFromSession()
+  );
+
+  useEffect(() => {
+    const sync = () => setPortalTenantId(getPortalTenantIdFromSession());
+    window.addEventListener('storage', sync);
+    window.addEventListener('focus', sync);
+    // Re-check on a short interval at startup to catch the login event
+    // (sessionStorage writes do not fire 'storage' in the same tab).
+    const intervalId = window.setInterval(sync, 1000);
+    const stopAfter = window.setTimeout(() => window.clearInterval(intervalId), 30_000);
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener('focus', sync);
+      window.clearInterval(intervalId);
+      window.clearTimeout(stopAfter);
+    };
+  }, []);
+
+  const tenantId = profile?.tenant_id ?? portalTenantId ?? undefined;
   const [config, setConfig] = useState<TenantConfig>(DEFAULT_TENANT_CONFIG);
   const [isLoading, setIsLoading] = useState(true);
 

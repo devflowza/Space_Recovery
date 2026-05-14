@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePortalAuth } from '../../contexts/PortalAuthContext';
 import { supabase } from '../../lib/supabaseClient';
@@ -9,11 +9,12 @@ import { formatDate } from '../../lib/format';
 
 interface Communication {
   id: string;
-  communication_type: string;
+  type: string;
   subject: string | null;
   content: string | null;
   direction: string | null;
   created_at: string;
+  sent_at: string | null;
   profiles: {
     full_name: string;
   } | null;
@@ -22,23 +23,40 @@ interface Communication {
 export const PortalCommunications: React.FC = () => {
   const { customer } = usePortalAuth();
 
-  const { data: communications = [], isLoading } = useQuery({
+  useEffect(() => {
+    document.title = 'Messages — Customer Portal';
+  }, []);
+
+  const { data: communications = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['portal_communications', customer?.id],
     queryFn: async () => {
       if (!customer?.id) return [];
 
+      // Gate messages on the customer having at least one case flagged for
+      // portal visibility. customer_communications does not have a case_id
+      // column, so this is the closest available proxy.
+      const { data: visibleCases, error: visErr } = await supabase
+        .from('cases')
+        .select('id, case_portal_visibility!inner(is_visible)')
+        .eq('customer_id', customer.id)
+        .eq('case_portal_visibility.is_visible', true)
+        .is('deleted_at', null)
+        .limit(1);
+      if (visErr) throw visErr;
+      if (!visibleCases || visibleCases.length === 0) return [];
+
       const { data, error } = await supabase
         .from('customer_communications')
         .select(`
-          *,
-          profiles(full_name)
+          id, type, subject, content, direction, created_at, sent_at,
+          profiles:sent_by(full_name)
         `)
         .eq('customer_id', customer.id)
-        .eq('portal_visible', true)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Communication[];
+      return (data ?? []) as unknown as Communication[];
     },
     enabled: !!customer?.id,
   });
@@ -73,10 +91,27 @@ export const PortalCommunications: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
-          <p className="text-slate-500 mt-4">Loading communications...</p>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Communications</h1>
+          <p className="text-slate-600">View messages and updates regarding your cases</p>
+        </div>
+        <div className="space-y-4">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="bg-white rounded-lg border border-slate-200 p-6 animate-pulse"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-200" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/4 bg-slate-200 rounded" />
+                  <div className="h-3 w-1/3 bg-slate-200 rounded" />
+                  <div className="h-3 w-3/4 bg-slate-200 rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -91,7 +126,14 @@ export const PortalCommunications: React.FC = () => {
         </p>
       </div>
 
-      {communications.length === 0 ? (
+      {isError && (
+        <div role="alert" className="rounded-lg border border-danger/30 bg-danger-muted p-4 text-sm">
+          <p className="text-danger">Failed to load messages. Please try again.</p>
+          <button onClick={() => refetch()} className="mt-2 text-primary underline">Retry</button>
+        </div>
+      )}
+
+      {communications.length === 0 && !isError ? (
         <Card className="p-12 text-center">
           <MessageSquare className="w-16 h-16 text-slate-300 mx-auto mb-4" />
           <p className="text-lg text-slate-600 mb-2">No communications yet</p>
@@ -106,19 +148,19 @@ export const PortalCommunications: React.FC = () => {
               <div className="flex items-start gap-4">
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0"
-                  style={{ backgroundColor: getCommunicationColor(comm.communication_type) }}
+                  style={{ backgroundColor: getCommunicationColor(comm.type) }}
                 >
-                  {getCommunicationIcon(comm.communication_type)}
+                  {getCommunicationIcon(comm.type)}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <Badge
                       variant="custom"
-                      color={getCommunicationColor(comm.communication_type)}
+                      color={getCommunicationColor(comm.type)}
                       size="sm"
                     >
-                      {comm.communication_type}
+                      {comm.type}
                     </Badge>
                     {comm.direction && (
                       <Badge variant="default" size="sm">

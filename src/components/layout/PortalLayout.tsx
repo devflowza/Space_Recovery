@@ -1,18 +1,83 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { usePortalAuth } from '../../contexts/PortalAuthContext';
 import { CustomerAvatar } from '../ui/CustomerAvatar';
-import { FileText, DollarSign, MessageSquare, LogOut, LayoutDashboard, Settings, FileBarChart, ShoppingBag } from 'lucide-react';
-import { Button } from '../ui/Button';
+import { FileText, DollarSign, MessageSquare, LogOut, LayoutDashboard, Settings, FileBarChart, ShoppingBag, ChevronDown } from 'lucide-react';
 import { AnnouncementBanner } from '../shared/AnnouncementBanner';
+import { getPortalSettings } from '../../lib/portalUrlService';
+import { logger } from '../../lib/logger';
+
+interface PortalBranding {
+  logoUrl: string | null;
+  supportEmail: string | null;
+  supportPhone: string | null;
+}
 
 export const PortalLayout: React.FC = () => {
   const { customer, logout } = usePortalAuth();
   const navigate = useNavigate();
+  const [branding, setBranding] = useState<PortalBranding>({
+    logoUrl: null,
+    supportEmail: null,
+    supportPhone: null,
+  });
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const settings = await getPortalSettings();
+        if (cancelled || !settings) return;
+        const s = settings as Record<string, unknown>;
+        setBranding({
+          logoUrl: typeof s.portal_custom_logo_url === 'string' && s.portal_custom_logo_url
+            ? s.portal_custom_logo_url
+            : null,
+          supportEmail: typeof s.portal_support_email === 'string' && s.portal_support_email
+            ? s.portal_support_email
+            : null,
+          supportPhone: typeof s.portal_support_phone === 'string' && s.portal_support_phone
+            ? s.portal_support_phone
+            : null,
+        });
+      } catch (err) {
+        logger.error('Failed to load portal branding:', err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleLogout = () => {
+    setMenuOpen(false);
     logout();
     navigate('/portal/login');
+  };
+
+  const handleOpenSettings = () => {
+    setMenuOpen(false);
+    navigate('/portal/settings');
   };
 
   if (!customer) {
@@ -36,7 +101,15 @@ export const PortalLayout: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-8">
-              <h1 className="text-xl font-bold text-slate-900">Customer Portal</h1>
+              {branding.logoUrl ? (
+                <img
+                  src={branding.logoUrl}
+                  alt="Portal logo"
+                  className="h-10 w-auto max-w-[200px] object-contain"
+                />
+              ) : (
+                <h1 className="text-xl font-bold text-slate-900">Customer Portal</h1>
+              )}
               <nav className="hidden md:flex items-center gap-1">
                 {navItems.map((item) => {
                   const Icon = item.icon;
@@ -60,30 +133,59 @@ export const PortalLayout: React.FC = () => {
               </nav>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-3">
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                aria-label="Open account menu"
+                className="flex items-center gap-2 rounded-full p-1 pr-2 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors"
+              >
                 <CustomerAvatar
                   firstName={customer.customer_name}
                   lastName=""
                   photoUrl={customer.profile_photo_url}
                   size="sm"
                 />
-                <div className="text-right">
-                  <p className="text-sm font-medium text-slate-900">
-                    {customer.customer_name}
-                  </p>
-                  <p className="text-xs text-slate-500">{customer.customer_number}</p>
+                <span className="hidden sm:inline text-sm font-medium text-slate-900 max-w-[140px] truncate">
+                  {customer.customer_name}
+                </span>
+                <ChevronDown className="w-4 h-4 text-slate-500" aria-hidden="true" />
+              </button>
+
+              {menuOpen && (
+                <div
+                  role="menu"
+                  aria-label="Account menu"
+                  className="absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-slate-200 py-2 z-50"
+                >
+                  <div className="px-3 py-2 border-b border-slate-100">
+                    <p className="text-sm font-medium text-slate-900 truncate">
+                      {customer.customer_name}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate">{customer.customer_number}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleOpenSettings}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Settings className="w-4 h-4" aria-hidden="true" />
+                    Settings
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <LogOut className="w-4 h-4" aria-hidden="true" />
+                    Logout
+                  </button>
                 </div>
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleLogout}
-                className="flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
+              )}
             </div>
           </div>
 
@@ -116,10 +218,23 @@ export const PortalLayout: React.FC = () => {
       </main>
 
       <footer className="bg-white border-t border-slate-200 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-sm text-slate-500">
-            Need assistance? Contact our support team for help.
-          </p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-2 text-center text-sm text-slate-500">
+          <p>Need assistance? Contact our support team for help.</p>
+          {(branding.supportEmail || branding.supportPhone) && (
+            <p className="text-xs">
+              {branding.supportEmail && (
+                <a href={`mailto:${branding.supportEmail}`} className="text-primary hover:underline">
+                  {branding.supportEmail}
+                </a>
+              )}
+              {branding.supportEmail && branding.supportPhone && <span className="mx-2">·</span>}
+              {branding.supportPhone && (
+                <a href={`tel:${branding.supportPhone}`} className="text-primary hover:underline">
+                  {branding.supportPhone}
+                </a>
+              )}
+            </p>
+          )}
         </div>
       </footer>
     </div>

@@ -13923,8 +13923,12 @@ export type Database = {
       }
       belongs_to_tenant: { Args: { check_tenant_id: string }; Returns: boolean }
       change_portal_password: {
-        Args: { p_customer_id: string; p_new_hash: string }
-        Returns: undefined
+        Args: { p_customer_id: string; p_current_password: string; p_new_password: string }
+        Returns: boolean
+      }
+      set_portal_password: {
+        Args: { p_customer_id: string; p_new_password: string }
+        Returns: boolean
       }
       check_module_access: { Args: { p_module_slug: string }; Returns: boolean }
       check_rate_limit: {

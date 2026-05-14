@@ -9,6 +9,12 @@ interface PortalSettings {
   portal_require_email_verification: boolean;
   portal_allow_self_registration: boolean;
   portal_maintenance_mode: boolean;
+  portal_support_email?: string;
+  portal_support_phone?: string;
+  portal_terms_url?: string;
+  portal_privacy_url?: string;
+  portal_custom_logo_url?: string;
+  portal_maintenance_message?: string;
 }
 
 let cachedPortalSettings: PortalSettings | null = null;

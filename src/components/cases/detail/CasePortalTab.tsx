@@ -48,17 +48,55 @@ const defaultSettings = (caseId: string): PortalSettings => ({
   custom_message: '',
 });
 
+// Decode the DB row shape (`visible_fields text[]` + scalar columns) back
+// into the boolean flag state the UI uses. The save path inverts this: any
+// flag set to true is added as a string to `visible_fields`. This makes the
+// toggles round-trip even though the DB doesn't have a column per flag.
+function decodePortalSettings(
+  caseId: string,
+  raw: Partial<PortalSettings> | null
+): PortalSettings {
+  const base = defaultSettings(caseId);
+  if (!raw) return base;
+
+  const visibleFields = (raw as unknown as { visible_fields?: unknown }).visible_fields;
+  const flagNames: string[] = Array.isArray(visibleFields)
+    ? (visibleFields as unknown[]).filter((v): v is string => typeof v === 'string')
+    : [];
+
+  const flagKeys: Array<keyof PortalSettings> = [
+    'show_device_details',
+    'show_technical_details',
+    'show_device_password',
+    'show_important_data',
+    'show_accessories',
+    'show_status_updates',
+    'show_quotes',
+    'show_invoices',
+    'show_reports',
+    'show_attachments',
+    'auto_notify_status_change',
+    'auto_notify_quote_ready',
+    'auto_notify_device_ready',
+  ];
+
+  const decoded: PortalSettings = { ...base };
+  for (const k of flagKeys) {
+    (decoded as Record<string, unknown>)[k] = flagNames.includes(k as string);
+  }
+  decoded.custom_message = (raw.custom_message as string) || '';
+  return decoded;
+}
+
 export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSettings }) => {
   const toast = useToast();
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState<PortalSettings>(() =>
-    portalSettings ? { ...defaultSettings(caseId), ...portalSettings, custom_message: portalSettings.custom_message || '' } : defaultSettings(caseId)
+    decodePortalSettings(caseId, portalSettings)
   );
 
   useEffect(() => {
-    if (portalSettings) {
-      setSettings({ ...defaultSettings(caseId), ...portalSettings, custom_message: portalSettings.custom_message || '' });
-    }
+    setSettings(decodePortalSettings(caseId, portalSettings));
   }, [portalSettings, caseId]);
 
   const saveMutation = useMutation({
@@ -151,31 +189,39 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
               Visibility Settings
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {visibilitySettings.map(({ key, label, description }) => (
-                <label
-                  key={key}
-                  className="flex items-start justify-between p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-info-muted transition-colors border border-transparent hover:border-info/30"
-                >
-                  <div className="flex-1 pr-4">
-                    <p className="font-medium text-slate-900 text-sm">{label}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{description}</p>
-                  </div>
-                  <div className="relative flex-shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={!!settings[key]}
-                      onChange={() => toggle(key)}
-                      className="sr-only"
-                    />
-                    <div
-                      className={`w-10 h-6 rounded-full transition-colors ${settings[key] ? 'bg-primary' : 'bg-slate-300'}`}
-                      onClick={() => toggle(key)}
-                    >
-                      <div className={`w-4 h-4 bg-white rounded-full shadow mt-1 transition-transform ${settings[key] ? 'translate-x-5' : 'translate-x-1'}`} />
+              {visibilitySettings.map(({ key, label, description }) => {
+                const isOn = !!settings[key];
+                return (
+                  <div
+                    key={key}
+                    className="flex items-start justify-between p-3 bg-slate-50 rounded-lg hover:bg-info-muted transition-colors border border-transparent hover:border-info/30"
+                  >
+                    <label htmlFor={`vis-${key}`} className="flex-1 pr-4 cursor-pointer">
+                      <p className="font-medium text-slate-900 text-sm">{label}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+                    </label>
+                    <div className="relative flex-shrink-0">
+                      <button
+                        id={`vis-${key}`}
+                        type="button"
+                        role="switch"
+                        aria-checked={isOn}
+                        aria-label={label}
+                        onClick={() => toggle(key)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            toggle(key);
+                          }
+                        }}
+                        className={`w-10 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${isOn ? 'bg-primary' : 'bg-slate-300'}`}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full shadow mt-1 transition-transform ${isOn ? 'translate-x-5' : 'translate-x-1'}`} />
+                      </button>
                     </div>
                   </div>
-                </label>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -185,31 +231,39 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
               Notification Settings
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {notificationSettings.map(({ key, label, description }) => (
-                <label
-                  key={key}
-                  className="flex items-start justify-between p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-warning-muted transition-colors border border-transparent hover:border-warning/30"
-                >
-                  <div className="flex-1 pr-4">
-                    <p className="font-medium text-slate-900 text-sm">{label}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{description}</p>
-                  </div>
-                  <div className="relative flex-shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={!!settings[key]}
-                      onChange={() => toggle(key)}
-                      className="sr-only"
-                    />
-                    <div
-                      className={`w-10 h-6 rounded-full transition-colors ${settings[key] ? 'bg-warning' : 'bg-slate-300'}`}
-                      onClick={() => toggle(key)}
-                    >
-                      <div className={`w-4 h-4 bg-white rounded-full shadow mt-1 transition-transform ${settings[key] ? 'translate-x-5' : 'translate-x-1'}`} />
+              {notificationSettings.map(({ key, label, description }) => {
+                const isOn = !!settings[key];
+                return (
+                  <div
+                    key={key}
+                    className="flex items-start justify-between p-3 bg-slate-50 rounded-lg hover:bg-warning-muted transition-colors border border-transparent hover:border-warning/30"
+                  >
+                    <label htmlFor={`notif-${key}`} className="flex-1 pr-4 cursor-pointer">
+                      <p className="font-medium text-slate-900 text-sm">{label}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+                    </label>
+                    <div className="relative flex-shrink-0">
+                      <button
+                        id={`notif-${key}`}
+                        type="button"
+                        role="switch"
+                        aria-checked={isOn}
+                        aria-label={label}
+                        onClick={() => toggle(key)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            toggle(key);
+                          }
+                        }}
+                        className={`w-10 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-warning/40 ${isOn ? 'bg-warning' : 'bg-slate-300'}`}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full shadow mt-1 transition-transform ${isOn ? 'translate-x-5' : 'translate-x-1'}`} />
+                      </button>
                     </div>
                   </div>
-                </label>
-              ))}
+                );
+              })}
             </div>
           </div>
 

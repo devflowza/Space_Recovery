@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Download, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
@@ -6,29 +6,33 @@ import { usePortalAuth } from '../../contexts/PortalAuthContext';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import { getReportTypeConfig, getReportStatusConfig, type ReportType } from '../../lib/reportTypes';
+import { Modal } from '../../components/ui/Modal';
+import { getReportStatusConfig } from '../../lib/reportTypes';
 import { reportPDFService } from '../../lib/reportPDFService';
 import { format } from 'date-fns';
 import { sanitizeHtml } from '../../lib/sanitizeHtml';
 import { logger } from '../../lib/logger';
+import { fetchPortalVisibility, getCaseIdsWithFlag } from '../../lib/portalVisibility';
 
 interface PortalReport {
   id: string;
   report_number: string;
-  report_type: ReportType;
   title: string;
   status: string;
-  version_number: number;
+  generated_at: string | null;
+  generated_by: string | null;
   created_at: string;
-  sent_to_customer_at: string;
-  customer_viewed_at: string | null;
-  customer_downloaded_at: string | null;
-  download_count: number;
+  created_by: string | null;
   case_id: string;
-  case: {
+  cases: {
     case_number: string;
-    service_type: string;
-  };
+  } | { case_number: string }[];
+}
+
+function getCaseNumber(report: PortalReport): string {
+  const c = report.cases;
+  if (Array.isArray(c)) return c[0]?.case_number ?? '';
+  return c?.case_number ?? '';
 }
 
 export default function PortalReports() {
@@ -36,53 +40,53 @@ export default function PortalReports() {
   const [viewingReportId, setViewingReportId] = useState<string | null>(null);
   const [downloadingReportId, setDownloadingReportId] = useState<string | null>(null);
 
-  const { data: reports = [], isLoading, refetch } = useQuery({
-    queryKey: ['portal_reports', customer?.id],
+  useEffect(() => {
+    document.title = 'Reports — Customer Portal';
+  }, []);
+
+  const { data: visibility = [] } = useQuery({
+    queryKey: ['portal_visibility', customer?.id],
+    queryFn: () => fetchPortalVisibility(customer!.id),
+    enabled: !!customer?.id,
+  });
+
+  const reportVisibleCaseIds = React.useMemo(
+    () => getCaseIdsWithFlag(visibility, 'show_reports'),
+    [visibility]
+  );
+
+  const { data: reports = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ['portal_reports', customer?.id, reportVisibleCaseIds.join(',')],
     queryFn: async () => {
-      if (!customer) return [];
+      if (reportVisibleCaseIds.length === 0) return [];
 
       const { data, error } = await supabase
         .from('case_reports')
         .select(`
           id,
           report_number,
-          report_type,
           title,
           status,
-          version_number,
+          generated_at,
+          generated_by,
           created_at,
-          sent_to_customer_at,
-          customer_viewed_at,
-          customer_downloaded_at,
-          download_count,
+          created_by,
           case_id,
-          cases!inner(
-            case_number,
-            service_type,
-            customer_id
-          )
+          cases!inner(case_number)
         `)
-        .eq('visible_to_customer', true)
-        .eq('cases.customer_id', customer.id)
+        .in('case_id', reportVisibleCaseIds)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      return data as unknown as PortalReport[];
+      return (data ?? []) as unknown as PortalReport[];
     },
-    enabled: !!customer
+    enabled: !!customer,
   });
 
-  const handleView = async (reportId: string) => {
+  const handleView = (reportId: string) => {
     setViewingReportId(reportId);
-
-    await supabase
-      .from('case_reports')
-      .update({ customer_viewed_at: new Date().toISOString() })
-      .eq('id', reportId)
-      .is('customer_viewed_at', null);
-
-    await refetch();
   };
 
   const handleDownload = async (report: PortalReport) => {
@@ -99,10 +103,8 @@ export default function PortalReports() {
   };
 
   const groupedReports = reports.reduce((acc, report) => {
-    const caseNumber = report.case.case_number;
-    if (!acc[caseNumber]) {
-      acc[caseNumber] = [];
-    }
+    const caseNumber = getCaseNumber(report) || 'Unknown';
+    if (!acc[caseNumber]) acc[caseNumber] = [];
     acc[caseNumber].push(report);
     return acc;
   }, {} as Record<string, PortalReport[]>);
@@ -113,7 +115,32 @@ export default function PortalReports() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
         </div>
-        <div className="text-center py-12 text-gray-500">Loading reports...</div>
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="rounded-lg border border-slate-200 bg-white p-4 animate-pulse">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-200" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/3 bg-slate-200 rounded" />
+                  <div className="h-3 w-1/4 bg-slate-200 rounded" />
+                  <div className="h-3 w-1/2 bg-slate-200 rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
+        <div role="alert" className="rounded-lg border border-danger/30 bg-danger-muted p-4 text-sm">
+          <p className="text-danger">Failed to load reports. Please try again.</p>
+          <button onClick={() => refetch()} className="mt-2 text-primary underline">Retry</button>
+        </div>
       </div>
     );
   }
@@ -126,7 +153,7 @@ export default function PortalReports() {
         </div>
         <Card>
           <div className="text-center py-12">
-            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" aria-hidden="true" />
             <p className="text-gray-500 mb-2">No reports available</p>
             <p className="text-sm text-gray-400">Reports will appear here when they are ready</p>
           </div>
@@ -153,14 +180,11 @@ export default function PortalReports() {
         <Card key={caseNumber}>
           <div className="mb-4 pb-3 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Case {caseNumber}</h2>
-            <p className="text-sm text-gray-600">{caseReports[0].case.service_type}</p>
           </div>
 
           <div className="space-y-3">
             {caseReports.map((report) => {
-              const typeConfig = getReportTypeConfig(report.report_type);
               const statusConfig = getReportStatusConfig(report.status);
-              const TypeIcon = typeConfig.icon;
 
               return (
                 <div
@@ -169,19 +193,13 @@ export default function PortalReports() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1">
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: `${typeConfig.color}20` }}
-                      >
-                        <TypeIcon className="w-5 h-5" style={{ color: typeConfig.color }} />
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-primary/10">
+                        <FileText className="w-5 h-5 text-primary" aria-hidden="true" />
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-medium text-gray-900">{report.title}</h3>
-                          {report.version_number > 1 && (
-                            <Badge variant="secondary">v{report.version_number}</Badge>
-                          )}
                         </div>
 
                         <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
@@ -189,20 +207,18 @@ export default function PortalReports() {
                           <Badge style={{ backgroundColor: statusConfig.color, color: 'white' }}>
                             {statusConfig.label}
                           </Badge>
-                          <Badge variant="secondary">{typeConfig.name}</Badge>
                         </div>
 
                         <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>
-                            Sent: {format(new Date(report.sent_to_customer_at), 'MMM dd, yyyy')}
-                          </span>
-                          {report.customer_viewed_at && (
+                          {report.generated_at && (
                             <span>
-                              Viewed: {format(new Date(report.customer_viewed_at), 'MMM dd, yyyy')}
+                              Generated: {format(new Date(report.generated_at), 'MMM dd, yyyy')}
                             </span>
                           )}
-                          {report.download_count > 0 && (
-                            <span>Downloaded {report.download_count}x</span>
+                          {!report.generated_at && (
+                            <span>
+                              Created: {format(new Date(report.created_at), 'MMM dd, yyyy')}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -214,7 +230,7 @@ export default function PortalReports() {
                         size="sm"
                         onClick={() => handleView(report.id)}
                       >
-                        <Eye className="w-4 h-4 mr-1" />
+                        <Eye className="w-4 h-4 mr-1" aria-hidden="true" />
                         View
                       </Button>
                       <Button
@@ -223,7 +239,7 @@ export default function PortalReports() {
                         onClick={() => handleDownload(report)}
                         disabled={downloadingReportId === report.id}
                       >
-                        <Download className="w-4 h-4 mr-1" />
+                        <Download className="w-4 h-4 mr-1" aria-hidden="true" />
                         {downloadingReportId === report.id ? 'Downloading...' : 'PDF'}
                       </Button>
                     </div>
@@ -250,13 +266,27 @@ interface PortalReportViewModalProps {
   onClose: () => void;
 }
 
+interface ReportData {
+  id: string;
+  title: string;
+  report_number: string;
+}
+
+interface ReportSection {
+  id: string;
+  section_title: string;
+  section_content: string | null;
+  section_order: number;
+}
+
 function PortalReportViewModal({ reportId, onClose }: PortalReportViewModalProps) {
-  const [report, setReport] = useState<any>(null);
-  const [sections, setSections] = useState<any[]>([]);
+  const [report, setReport] = useState<ReportData | null>(null);
+  const [sections, setSections] = useState<ReportSection[]>([]);
   const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
     loadReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportId]);
 
   const loadReport = async () => {
@@ -264,12 +294,20 @@ function PortalReportViewModal({ reportId, onClose }: PortalReportViewModalProps
       setLoading(true);
 
       const [reportRes, sectionsRes] = await Promise.all([
-        supabase.from('case_reports').select('*').eq('id', reportId).single(),
-        supabase.from('case_report_sections').select('*').eq('report_id', reportId).order('section_order')
+        supabase
+          .from('case_reports')
+          .select('id, title, report_number')
+          .eq('id', reportId)
+          .maybeSingle(),
+        supabase
+          .from('case_report_sections')
+          .select('id, section_title, section_content, section_order')
+          .eq('report_id', reportId)
+          .order('section_order'),
       ]);
 
-      if (reportRes.data) setReport(reportRes.data);
-      if (sectionsRes.data) setSections(sectionsRes.data);
+      if (reportRes.data) setReport(reportRes.data as ReportData);
+      if (sectionsRes.data) setSections(sectionsRes.data as ReportSection[]);
     } catch (error) {
       logger.error('Error loading report:', error);
     } finally {
@@ -279,52 +317,40 @@ function PortalReportViewModal({ reportId, onClose }: PortalReportViewModalProps
 
   if (loading || !report) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="text-center py-8">Loading report...</div>
-        </div>
-      </div>
+      <Modal isOpen={true} onClose={onClose} title="Loading report..." maxWidth="4xl">
+        <div className="text-center py-8 text-slate-500">Loading report...</div>
+      </Modal>
     );
   }
 
-  const typeConfig = getReportTypeConfig(report.report_type);
-  const TypeIcon = typeConfig.icon;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-start justify-between mb-6 pb-4 border-b">
-          <div className="flex items-center gap-3">
-            <TypeIcon className="w-6 h-6" style={{ color: typeConfig.color }} />
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{report.title}</h2>
-              <p className="text-sm text-gray-600 mt-1">{report.report_number}</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="space-y-6">
-          {sections.map((section) => (
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={report.title}
+      maxWidth="4xl"
+      icon={FileText}
+      headerBadges={<span className="text-sm text-slate-500">{report.report_number}</span>}
+    >
+      <div className="space-y-6">
+        {sections.map((section) => {
+          const safeHtml = sanitizeHtml(section.section_content || 'No content');
+          return (
             <div key={section.id} className="border-l-4 border-primary pl-4">
               <h3 className="text-lg font-medium text-gray-900 mb-2">{section.section_title}</h3>
               <div
                 className="prose max-w-none text-gray-700"
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(section.section_content || 'No content') }}
+                /* eslint-disable-next-line react/no-danger */
+                dangerouslySetInnerHTML={{ __html: safeHtml }}
               />
             </div>
-          ))}
-        </div>
-
-        <div className="mt-6 pt-4 border-t flex justify-end">
-          <Button onClick={onClose}>Close</Button>
-        </div>
+          );
+        })}
       </div>
-    </div>
+
+      <div className="mt-6 pt-4 border-t flex justify-end">
+        <Button onClick={onClose}>Close</Button>
+      </div>
+    </Modal>
   );
 }
