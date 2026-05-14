@@ -15,6 +15,7 @@ import { DeviceCheckoutModal } from '../../components/cases/DeviceCheckoutModal'
 import { DuplicateCaseConfirmationModal } from '../../components/cases/DuplicateCaseConfirmationModal';
 import { DeleteCaseConfirmationModal } from '../../components/cases/DeleteCaseConfirmationModal';
 import { ClientTab } from '../../components/cases/ClientTab';
+import { CloneDriveModal } from '../../components/cases/CloneDriveModal';
 import { DeviceFormModal } from '../../components/cases/DeviceFormModal';
 import { MarkAsDeliveredModal } from '../../components/cases/MarkAsDeliveredModal';
 import { PreserveLongTermModal } from '../../components/cases/PreserveLongTermModal';
@@ -53,7 +54,7 @@ export const CaseDetail: React.FC = () => {
   const formatCurrencyAmount = (
     amount: number,
     currencySymbol: string,
-    currencyPosition: 'before' | 'after',
+    currencyPosition: string,
     decimalPlaces: number
   ) => {
     const formattedAmount = amount.toFixed(decimalPlaces);
@@ -97,12 +98,12 @@ export const CaseDetail: React.FC = () => {
     try {
       openWhatsAppChat({
         phoneNumber,
-        caseNumber: caseData.case_no,
+        caseNumber: caseData.case_no ?? '',
         customerName: caseData.customer?.customer_name || 'Customer',
-        status: caseData.status,
+        status: caseData.status ?? undefined,
       });
 
-      await logWhatsAppCommunication(supabase, id!, phoneNumber, `Case ${caseData.case_no} update`);
+      await logWhatsAppCommunication(supabase, id!, phoneNumber, `Case ${caseData.case_no ?? ''} update`);
     } catch (error) {
       logger.error('Error opening WhatsApp:', error);
       toast.error('Failed to open WhatsApp. Please check the phone number.');
@@ -135,15 +136,19 @@ export const CaseDetail: React.FC = () => {
     modals.setShowPDFPreviewModal(true);
   };
 
-  const handleRecordPayment = async (invoice: { id: string; invoice_type?: string }) => {
+  const handleRecordPayment = (invoice: Record<string, unknown>): void => {
     // Only allow payment recording for tax invoices, not proforma invoices
     if (invoice.invoice_type !== 'tax_invoice') {
       toast.error('Payments can only be recorded against Tax Invoices, not Proforma Invoices. Please convert this to a Tax Invoice first.');
       return;
     }
-    const fullInvoice = await invoiceService.fetchInvoiceById(invoice.id);
-    modals.setSelectedInvoiceForPayment(fullInvoice);
-    modals.setShowRecordPaymentModal(true);
+    void (async () => {
+      const invoiceId = typeof invoice.id === 'string' ? invoice.id : '';
+      if (!invoiceId) return;
+      const fullInvoice = await invoiceService.fetchInvoiceById(invoiceId);
+      modals.setSelectedInvoiceForPayment(fullInvoice);
+      modals.setShowRecordPaymentModal(true);
+    })();
   };
 
   const handleDuplicateCase = () => {
@@ -169,12 +174,14 @@ export const CaseDetail: React.FC = () => {
   };
 
 
-  const getStatusColor = (statusName: string) => {
+  const getStatusColor = (statusName: string | null | undefined) => {
+    if (!statusName) return '#6b7280';
     const status = caseStatuses.find(s => s.name === statusName);
     return status?.color || '#6b7280';
   };
 
-  const getStatusDisplayName = (statusName: string) => {
+  const getStatusDisplayName = (statusName: string | null | undefined) => {
+    if (!statusName) return '';
     const status = caseStatuses.find(s => s.name === statusName);
     return status?.name || statusName;
   };
@@ -426,14 +433,14 @@ export const CaseDetail: React.FC = () => {
             if (Object.keys(customerUpdates).length > 0) {
               updateCustomerInfoMutation.mutate(customerUpdates);
             }
-            if (deviceUpdates.password !== undefined && devices[0]) {
-              updateDeviceInfoMutation.mutate({ deviceId: devices[0].id, updates: { password: deviceUpdates.password } });
+            if (deviceUpdates.device_password !== undefined && devices[0]) {
+              updateDeviceInfoMutation.mutate({ deviceId: devices[0].id, updates: { device_password: deviceUpdates.device_password } });
             }
           }}
           onUpdateStatus={(newStatus) => updateCaseStatusMutation.mutate(newStatus)}
           onUpdatePriority={(newPriority) => updateCasePriorityMutation.mutate(newPriority)}
           onUpdateEngineer={(engineerId) => updateAssignedEngineerMutation.mutate(engineerId)}
-          profile={profile}
+          profile={(profile ?? {}) as unknown as Record<string, unknown>}
         />
       )}
 
@@ -466,6 +473,7 @@ export const CaseDetail: React.FC = () => {
               caseData={caseData}
               devices={devices || []}
               cloneDrives={cloneDrives || []}
+              onSetShowCloneDriveModal={modals.setShowCloneDriveModal}
               onSetViewCloneModal={modals.setViewCloneModal}
               onSetSelectedClone={modals.setSelectedClone}
               onSetShowMarkAsDeliveredModal={modals.setShowMarkAsDeliveredModal}
@@ -477,7 +485,15 @@ export const CaseDetail: React.FC = () => {
           {/* Reports Tab */}
           {activeTab === 'reports' && (
             <CaseReportsTab
-              reports={reports || []}
+              reports={(reports || []).map((r) => ({
+                id: r.id,
+                title: r.title,
+                report_number: r.report_number ?? '',
+                report_type: 'evaluation' as const,
+                status: (r.status ?? 'draft') as 'draft' | 'review' | 'approved' | 'sent',
+                version_number: 1,
+                created_at: r.created_at,
+              }))}
               reportTypeFilter={modals.reportTypeFilter}
               reportStatusFilter={modals.reportStatusFilter}
               showLatestOnly={modals.showLatestOnly}
@@ -495,6 +511,7 @@ export const CaseDetail: React.FC = () => {
           {activeTab === 'quotes' && (
             <CaseFinancesTab
               caseId={id!}
+              caseData={caseData}
               quotes={quotes || []}
               invoices={invoices || []}
               caseFinancialSummary={caseFinancialSummary}
@@ -519,7 +536,14 @@ export const CaseDetail: React.FC = () => {
           {activeTab === 'files' && (
             <CaseFilesTab
               caseId={id!}
-              attachments={attachments}
+              attachments={(attachments || []).map((a) => ({
+                id: a.id,
+                file_name: a.file_name,
+                file_path: a.file_url,
+                file_size: a.file_size ?? undefined,
+                file_type: a.file_type ?? undefined,
+                created_at: a.created_at ?? undefined,
+              }))}
               uploadedBy={profile?.id || ''}
             />
           )}
@@ -528,7 +552,15 @@ export const CaseDetail: React.FC = () => {
           {activeTab === 'engineers' && (
             <CaseEngineersTab
               caseId={id!}
-              caseEngineers={caseEngineers}
+              caseEngineers={(caseEngineers || []).map((e) => ({
+                id: e.id,
+                role_text: e.role_text ?? undefined,
+                created_at: e.created_at,
+                engineer: {
+                  full_name: '',
+                  role: '',
+                },
+              }))}
             />
           )}
 
@@ -536,7 +568,12 @@ export const CaseDetail: React.FC = () => {
           {activeTab === 'notes' && (
             <CaseNotesTab
               caseId={id!}
-              notes={notes}
+              notes={(notes || []).map((n) => ({
+                id: n.id,
+                note_text: n.content,
+                created_at: n.created_at,
+                author: { full_name: '' },
+              }))}
               newNote={modals.newNote}
               onNoteChange={modals.setNewNote}
               onAddNote={handleAddNote}
@@ -548,7 +585,7 @@ export const CaseDetail: React.FC = () => {
           {activeTab === 'portal' && (
             <CasePortalTab
               caseId={id!}
-              portalSettings={portalSettings}
+              portalSettings={portalSettings as unknown as React.ComponentProps<typeof CasePortalTab>['portalSettings']}
             />
           )}
 
@@ -556,14 +593,14 @@ export const CaseDetail: React.FC = () => {
           {activeTab === 'stock' && (
             <CaseBackupDevicesTab
               caseId={id!}
-              customerId={caseData.customer_id}
+              customerId={caseData.customer_id ?? ''}
               companyId={caseData.company_id}
             />
           )}
 
           {/* History Tab - Forensic Chain of Custody */}
           {activeTab === 'history' && (
-            <ChainOfCustodyTab caseId={id!} caseNumber={caseData.case_no} />
+            <ChainOfCustodyTab caseId={id!} caseNumber={caseData.case_no ?? ''} />
           )}
         </>
       )}
@@ -574,15 +611,36 @@ export const CaseDetail: React.FC = () => {
           isOpen={modals.showCheckoutModal}
           onClose={() => modals.setShowCheckoutModal(false)}
           caseId={id!}
-          caseNumber={caseData.case_no}
-          devices={devices as any}
+          caseNumber={caseData.case_no ?? ''}
+          devices={devices as unknown as React.ComponentProps<typeof DeviceCheckoutModal>['devices']}
           customerName={caseData.customer?.customer_name || ''}
-          customerMobileNumber={caseData.customer?.mobile_number || caseData.customer?.phone_number || ''}
+          customerMobileNumber={caseData.customer?.mobile_number || caseData.customer?.phone || ''}
           onCheckoutComplete={() => {
             queryClient.invalidateQueries({ queryKey: ['case', id] });
             queryClient.invalidateQueries({ queryKey: ['case_history', id] });
           }}
           onShowCheckoutPreview={handleOpenCheckoutPreview}
+        />
+      )}
+
+      {/* Clone Drive Modal */}
+      {modals.showCloneDriveModal && (
+        <CloneDriveModal
+          isOpen={modals.showCloneDriveModal}
+          onClose={() => modals.setShowCloneDriveModal(false)}
+          caseId={id!}
+          caseNo={caseData.case_no ?? ''}
+          patientDevices={devices
+            .filter(d => d.device_role?.name?.toLowerCase() === 'patient')
+            .map(d => ({
+              id: d.id,
+              name: `${d.device_type?.name || 'Device'} - ${d.brand?.name || ''} ${d.model || ''}`.trim(),
+              serial_number: d.serial_number ?? undefined,
+            }))}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['clone_drives', id] });
+            modals.setShowCloneDriveModal(false);
+          }}
         />
       )}
 
@@ -592,7 +650,7 @@ export const CaseDetail: React.FC = () => {
           isOpen={modals.showDuplicateModal}
           onClose={() => modals.setShowDuplicateModal(false)}
           onConfirm={handleConfirmDuplicate}
-          originalCaseNumber={caseData.case_no}
+          originalCaseNumber={caseData.case_no ?? ''}
           customerName={caseData.customer?.customer_name || 'Unknown'}
           serviceName={caseData.service_type?.name || 'Unknown'}
           isLoading={duplicateCaseMutation.isPending}
@@ -605,7 +663,7 @@ export const CaseDetail: React.FC = () => {
           isOpen={modals.showDeleteModal}
           onClose={() => modals.setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
-          caseNumber={caseData.case_no}
+          caseNumber={caseData.case_no ?? ''}
           caseTitle={caseData.title || 'Untitled Case'}
           isDeleting={deleteCaseMutation.isPending}
         />
@@ -709,14 +767,14 @@ export const CaseDetail: React.FC = () => {
           }
         }}
         clone={modals.selectedClone}
-        caseNo={caseData?.case_no}
-        caseStatus={caseData?.status}
+        caseNo={caseData?.case_no ?? undefined}
+        caseStatus={caseData?.status ?? undefined}
         patientDeviceName={
           modals.selectedClone && devices.length > 0
             ? (() => {
                 const patientDevice = devices.find(d => d.id === modals.selectedClone.patient_device_id);
                 return patientDevice
-                  ? `${patientDevice.device_type?.name || 'Device'} ${patientDevice.serial_no ? `(${patientDevice.serial_no})` : ''}`
+                  ? `${patientDevice.device_type?.name || 'Device'} ${patientDevice.serial_number ? `(${patientDevice.serial_number})` : ''}`
                   : 'Unknown Device';
               })()
             : undefined
@@ -737,13 +795,13 @@ export const CaseDetail: React.FC = () => {
           }
         }}
         clone={modals.selectedClone}
-        caseNo={caseData?.case_no}
+        caseNo={caseData?.case_no ?? undefined}
         patientDeviceName={
           modals.selectedClone && devices.length > 0
             ? (() => {
                 const patientDevice = devices.find(d => d.id === modals.selectedClone.patient_device_id);
                 return patientDevice
-                  ? `${patientDevice.device_type?.name || 'Device'} ${patientDevice.serial_no ? `(${patientDevice.serial_no})` : ''}`
+                  ? `${patientDevice.device_type?.name || 'Device'} ${patientDevice.serial_number ? `(${patientDevice.serial_number})` : ''}`
                   : 'Unknown Device';
               })()
             : undefined
@@ -803,11 +861,13 @@ export const CaseDetail: React.FC = () => {
           caseData={{
             case_no: caseData.case_no || caseData.case_number || '',
             title: caseData.title || '',
-            summary: caseData.summary,
-            important_data: caseData.important_data,
-            service_type: caseData.service_type,
-            customer: caseData.customer,
-            assigned_engineer: caseData.assigned_engineer,
+            service_type: caseData.service_type ?? undefined,
+            customer: caseData.customer
+              ? {
+                  first_name: caseData.customer.customer_name,
+                }
+              : undefined,
+            assigned_engineer: caseData.assigned_engineer ?? undefined,
             created_at: caseData.created_at,
           }}
           deviceData={devices && devices.length > 0 ? {
@@ -817,11 +877,9 @@ export const CaseDetail: React.FC = () => {
             capacity: devices[0].capacity?.name || '',
             serial_number: devices[0].serial_number || '',
             symptoms: devices[0].symptoms || '',
-            diagnostic_notes: devices[0].diagnostic_notes || '',
           } : undefined}
           reportId={modals.editingReport?.id}
           existingReport={modals.editingReport}
-          versioningFromReportId={modals.reportVersioningId || undefined}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['case_reports', id] });
             modals.setSelectedReportType(null);
@@ -861,7 +919,7 @@ export const CaseDetail: React.FC = () => {
           documentId={id!}
           documentNumber={caseData.case_no || caseData.case_number || ''}
           documentType={modals.previewDocumentType}
-          customerEmail={caseData.customer?.email}
+          customerEmail={caseData.customer?.email ?? undefined}
           onSendEmail={handleSendEmailFromPreview}
         />
       )}
@@ -881,7 +939,7 @@ export const CaseDetail: React.FC = () => {
           caseId={id!}
           caseNumber={caseData.case_no || caseData.case_number || ''}
           customerName={caseData.customer?.customer_name || 'Customer'}
-          customerEmail={caseData.customer?.email}
+          customerEmail={caseData.customer?.email ?? undefined}
           companyName="Data Recovery"
         />
       )}
