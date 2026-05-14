@@ -13,10 +13,28 @@ import { format } from 'date-fns';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { generatePayslip } from '../../lib/pdf/pdfService';
 
+type RecordRow = Awaited<ReturnType<typeof payrollService.getPayrollRecords>>[number];
+
+const getEmployeeName = (record: RecordRow): string => {
+  const employee = record.employee;
+  if (!employee) return '';
+  const first = employee.first_name ?? '';
+  const last = employee.last_name ?? '';
+  return `${first} ${last}`.trim();
+};
+
+const getEmployeeNumber = (record: RecordRow): string => record.employee?.employee_number ?? '';
+
+const getDepartmentName = (record: RecordRow): string => {
+  const department = record.employee?.department;
+  if (!department) return '';
+  return Array.isArray(department) ? (department[0]?.name ?? '') : (department.name ?? '');
+};
+
 export default function PayrollPeriodDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,11 +58,11 @@ export default function PayrollPeriodDetailPage() {
     mutationFn: () => payrollService.approvePayrollPeriod(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: payrollKeys.period(id!) });
-      showToast('Payroll period approved successfully', 'success');
+      toast.success('Payroll period approved successfully');
       setShowApproveDialog(false);
     },
     onError: (error: Error) => {
-      showToast(error.message || 'Failed to approve payroll period', 'error');
+      toast.error(error.message || 'Failed to approve payroll period');
     },
   });
 
@@ -52,29 +70,35 @@ export default function PayrollPeriodDetailPage() {
     mutationFn: () => payrollService.markPayrollPeriodAsPaid(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: payrollKeys.period(id!) });
-      showToast('Payroll period marked as paid', 'success');
+      toast.success('Payroll period marked as paid');
       setShowPayDialog(false);
     },
     onError: (error: Error) => {
-      showToast(error.message || 'Failed to mark payroll as paid', 'error');
+      toast.error(error.message || 'Failed to mark payroll as paid');
     },
   });
 
   const handleExportBankFile = async () => {
     try {
       const bankFile = await payrollService.generateBankFile(id!, 'WPS');
-      const blob = new Blob([bankFile.file_content], { type: 'text/plain' });
+      if (!bankFile) {
+        toast.error('Failed to generate bank file');
+        return;
+      }
+      const fileContent = payrollService.generateWPSFileContent(records);
+      const blob = new Blob([fileContent], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${period?.period_name.replace(/\s/g, '_')}_${bankFile.file_number}.txt`;
+      const safePeriodName = (period?.period_name ?? 'payroll').replace(/\s/g, '_');
+      a.download = `${safePeriodName}_${bankFile.file_name || bankFile.id}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast('Bank file generated successfully', 'success');
+      toast.success('Bank file generated successfully');
     } catch (error: unknown) {
-      showToast(error instanceof Error ? error.message : 'Failed to generate bank file', 'error');
+      toast.error(error instanceof Error ? error.message : 'Failed to generate bank file');
     }
   };
 
@@ -82,34 +106,36 @@ export default function PayrollPeriodDetailPage() {
     try {
       const result = await generatePayslip(recordId);
       if (result.success) {
-        showToast('Payslip downloaded successfully', 'success');
+        toast.success('Payslip downloaded successfully');
       } else {
-        showToast(result.error || 'Failed to download payslip', 'error');
+        toast.error(result.error || 'Failed to download payslip');
       }
     } catch (error: unknown) {
-      showToast(error instanceof Error ? error.message : 'Failed to download payslip', 'error');
+      toast.error(error instanceof Error ? error.message : 'Failed to download payslip');
     }
   };
 
   const handleDownloadAllPayslips = async () => {
     try {
-      showToast('Generating payslips...', 'info');
+      toast.info('Generating payslips...');
       for (const record of records) {
         await handleDownloadPayslip(record.id);
         await new Promise(resolve => setTimeout(resolve, 500));
       }
-      showToast('All payslips downloaded successfully', 'success');
+      toast.success('All payslips downloaded successfully');
     } catch (error: unknown) {
-      showToast(error instanceof Error ? error.message : 'Failed to download payslips', 'error');
+      toast.error(error instanceof Error ? error.message : 'Failed to download payslips');
     }
   };
 
-  const filteredRecords = records.filter(
-    (record) =>
-      record.employee_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.employee_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.department_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRecords = records.filter((record) => {
+    const query = searchTerm.toLowerCase();
+    return (
+      getEmployeeName(record).toLowerCase().includes(query) ||
+      getEmployeeNumber(record).toLowerCase().includes(query) ||
+      getDepartmentName(record).toLowerCase().includes(query)
+    );
+  });
 
   if (periodLoading || recordsLoading) {
     return (
@@ -136,7 +162,7 @@ export default function PayrollPeriodDetailPage() {
     );
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null): 'secondary' | 'warning' | 'success' | 'danger' => {
     switch (status) {
       case 'draft':
         return 'secondary';
@@ -147,7 +173,7 @@ export default function PayrollPeriodDetailPage() {
       case 'paid':
         return 'success';
       case 'cancelled':
-        return 'error';
+        return 'danger';
       default:
         return 'secondary';
     }
@@ -173,11 +199,11 @@ export default function PayrollPeriodDetailPage() {
               {format(new Date(period.end_date), 'MMM dd, yyyy')}
             </p>
           </div>
-          <Badge variant={getStatusColor(period.status)}>{period.status?.toUpperCase()}</Badge>
+          <Badge variant={getStatusColor(period.status)}>{(period.status ?? '').toUpperCase()}</Badge>
         </div>
         <div className="flex items-center gap-3">
           {canApprove && (
-            <Button onClick={() => setShowApproveDialog(true)} variant="success">
+            <Button onClick={() => setShowApproveDialog(true)} variant="primary">
               <Check className="w-4 h-4 mr-2" />
               Approve Payroll
             </Button>
@@ -208,25 +234,21 @@ export default function PayrollPeriodDetailPage() {
           title="Total Employees"
           value={period.employee_count?.toString() || '0'}
           icon={Users}
-          trend="neutral"
         />
         <StatsCard
           title="Gross Earnings"
           value={formatCurrency(period.total_gross || 0)}
           icon={TrendingUp}
-          trend="up"
         />
         <StatsCard
           title="Total Deductions"
           value={formatCurrency(period.total_deductions || 0)}
           icon={TrendingDown}
-          trend="down"
         />
         <StatsCard
           title="Net Payroll"
           value={formatCurrency(period.total_net || 0)}
           icon={DollarSign}
-          trend="neutral"
         />
       </div>
 
@@ -266,7 +288,7 @@ export default function PayrollPeriodDetailPage() {
                   Department
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                  Days Worked
+                  Hours / Days
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-600 uppercase tracking-wider">
                   Base Salary
@@ -307,20 +329,20 @@ export default function PayrollPeriodDetailPage() {
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-900">
-                          {record.employee_name}
+                          {getEmployeeName(record)}
                         </span>
-                        <span className="text-xs text-slate-500">{record.employee_number}</span>
+                        <span className="text-xs text-slate-500">{getEmployeeNumber(record)}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-700">{record.department_name}</td>
+                    <td className="px-6 py-4 text-sm text-slate-700">{getDepartmentName(record)}</td>
                     <td className="px-6 py-4 text-sm text-slate-700">
-                      {record.days_worked} / {record.working_days}
+                      {record.hours_worked ?? 0} / {record.working_days ?? 0}
                     </td>
                     <td className="px-6 py-4 text-right text-sm text-slate-900">
-                      {formatCurrency(record.base_salary || 0)}
+                      {formatCurrency(record.basic_salary || 0)}
                     </td>
                     <td className="px-6 py-4 text-right text-sm font-medium text-success">
-                      {formatCurrency(record.gross_earnings || 0)}
+                      {formatCurrency(record.total_earnings || 0)}
                     </td>
                     <td className="px-6 py-4 text-right text-sm font-medium text-danger">
                       {formatCurrency(record.total_deductions || 0)}
@@ -370,7 +392,7 @@ export default function PayrollPeriodDetailPage() {
           title="Approve Payroll Period"
           message={`Are you sure you want to approve the payroll for ${period.period_name}? This action will finalize all calculations.`}
           confirmText="Approve"
-          variant="success"
+          variant="info"
         />
       )}
 
@@ -382,7 +404,7 @@ export default function PayrollPeriodDetailPage() {
           title="Mark as Paid"
           message={`Are you sure you want to mark the payroll for ${period.period_name} as paid? This should only be done after payments have been processed.`}
           confirmText="Mark as Paid"
-          variant="success"
+          variant="info"
         />
       )}
     </div>
