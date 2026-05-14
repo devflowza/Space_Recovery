@@ -1,26 +1,53 @@
 import React from 'react';
-import { HardDrive, Grid2x2 as Grid, History, Clock, Eye, EyeOff, Shield, Package, CheckCircle2 } from 'lucide-react';
+import { HardDrive, Grid2x2 as Grid, History, Clock, Eye, EyeOff, Shield, Package } from 'lucide-react';
 import { CreditCard as Edit } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { DeviceRoleBadge } from '../../ui/DeviceRoleBadge';
 import { getDeviceIconComponent } from '@/lib/deviceIconMapper';
-import { formatDate, formatDateTime } from '@/lib/format';
+import { formatDateTime } from '@/lib/format';
+
+type NamedUuidRef = { id: string; name: string } | null;
+type NameOnlyRef = { name: string } | null;
+type DeviceRoleRef = { id: number; name: string } | null;
+
+export interface CaseDeviceWithEmbeds {
+  id: string;
+  model: string | null;
+  serial_number: string | null;
+  symptoms: string | null;
+  notes: string | null;
+  password: string | null;
+  device_type_id: string | null;
+  capacity_id: string | null;
+  accessories: string[] | null;
+  device_role_id: number | null;
+  is_primary: boolean | null;
+  role_notes: string | null;
+  created_at: string;
+  created_by: string | null;
+  device_type: NamedUuidRef;
+  brand: NameOnlyRef;
+  capacity: NamedUuidRef;
+  condition: NameOnlyRef;
+  encryption_type: NameOnlyRef;
+  device_role: DeviceRoleRef;
+  created_by_profile?: { full_name: string | null } | null;
+}
 
 interface CaseDevicesTabProps {
   caseData: Record<string, unknown>;
-  devices: Record<string, unknown>[];
+  devices: CaseDeviceWithEmbeds[];
   expandedDevices: Set<string>;
   showPassword: boolean;
   onToggleDeviceDetails: (deviceId: string) => void;
   onSetShowDeviceModal: (v: boolean) => void;
-  onSetEditingDevice: (device: Record<string, unknown> | null) => void;
+  onSetEditingDevice: (device: CaseDeviceWithEmbeds | null) => void;
   onSetShowPassword: (v: boolean) => void;
 }
 
 export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
-  caseData,
   devices,
   expandedDevices,
   showPassword,
@@ -35,7 +62,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
     return roleName === 'backup' || roleName === 'donor';
   });
 
-  const renderDeviceCard = (device: Record<string, unknown>, idx: number) => {
+  const renderDeviceCard = (device: CaseDeviceWithEmbeds, idx: number) => {
     const isExpanded = expandedDevices.has(device.id);
     const DeviceIcon = getDeviceIconComponent(device.device_type?.name);
     return (
@@ -165,24 +192,6 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
           </div>
         </div>
       </Card>
-
-      {caseData.checkout_date && (
-        <Card className="bg-success-muted border-success/30">
-          <div className="p-4">
-            <div className="flex items-center gap-2 text-success font-semibold mb-2">
-              <CheckCircle2 className="w-5 h-5" />
-              <span>Checked Out</span>
-            </div>
-            <div className="text-sm text-success flex flex-wrap gap-6">
-              <div><span className="font-medium">Collected by: </span>{caseData.checkout_collector_name}</div>
-              <div><span className="font-medium">Date: </span>{formatDate(caseData.checkout_date)}</div>
-              {caseData.recovery_outcome && (
-                <div><span className="font-medium">Outcome: </span>{caseData.recovery_outcome}</div>
-              )}
-            </div>
-          </div>
-        </Card>
-      )}
 
       {devices.length === 0 ? (
         <Card>
