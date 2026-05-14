@@ -34,7 +34,7 @@ export async function getPortalSettings(): Promise<PortalSettings | null> {
       return null;
     }
 
-    if (data?.portal_settings) {
+    if (data?.portal_settings && Object.keys(data.portal_settings as object).length > 0) {
       cachedPortalSettings = data.portal_settings as PortalSettings;
       cacheTimestamp = now;
       return cachedPortalSettings;

@@ -340,7 +340,7 @@ export function buildPaymentReceiptDocument(
         {
           width: '50%',
           stack: [
-            { text: 'Bank Account / تفاصيل البنك', fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
+            { text: bankAccountSectionLabel, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
             {
               table: {
                 widths: ['*'],
@@ -348,11 +348,11 @@ export function buildPaymentReceiptDocument(
                   [
                     {
                       stack: [
-                        ...(paymentData.bank_accounts.account_name ? [{ text: `Account Name: ${paymentData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(paymentData.bank_accounts.account_number ? [{ text: `Account No: ${paymentData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(paymentData.bank_accounts.bank_name ? [{ text: `Bank: ${paymentData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(paymentData.bank_accounts.iban ? [{ text: `IBAN: ${paymentData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(paymentData.bank_accounts.swift_code ? [{ text: `SWIFT: ${paymentData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(paymentData.bank_accounts.account_name ? [{ text: `${accountNameRowLabel} ${paymentData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(paymentData.bank_accounts.account_number ? [{ text: `${accountNoRowLabel} ${paymentData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(paymentData.bank_accounts.bank_name ? [{ text: `${bankRowLabel} ${paymentData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(paymentData.bank_accounts.iban ? [{ text: `${ibanRowLabel} ${paymentData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(paymentData.bank_accounts.swift_code ? [{ text: `${swiftRowLabel} ${paymentData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
                       ],
                       fillColor: PDF_COLORS.background,
                       margin: [6, 4, 6, 4],

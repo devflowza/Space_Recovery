@@ -371,7 +371,7 @@ export function buildQuoteDocument(
         {
           width: '50%',
           stack: [
-            { text: 'Bank Account / تفاصيل البنك', fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
+            { text: bankAccountSectionLabel, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
             {
               table: {
                 widths: ['*'],
@@ -379,11 +379,11 @@ export function buildQuoteDocument(
                   [
                     {
                       stack: [
-                        ...(quoteData.bank_accounts.account_name ? [{ text: `Account Name: ${quoteData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(quoteData.bank_accounts.account_number ? [{ text: `Account No: ${quoteData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(quoteData.bank_accounts.bank_name ? [{ text: `Bank: ${quoteData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(quoteData.bank_accounts.iban ? [{ text: `IBAN: ${quoteData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(quoteData.bank_accounts.swift_code ? [{ text: `SWIFT: ${quoteData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(quoteData.bank_accounts.account_name ? [{ text: `${accountNameRowLabel} ${quoteData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(quoteData.bank_accounts.account_number ? [{ text: `${accountNoRowLabel} ${quoteData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(quoteData.bank_accounts.bank_name ? [{ text: `${bankRowLabel} ${quoteData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(quoteData.bank_accounts.iban ? [{ text: `${ibanRowLabel} ${quoteData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(quoteData.bank_accounts.swift_code ? [{ text: `${swiftRowLabel} ${quoteData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
                       ],
                       fillColor: PDF_COLORS.background,
                       margin: [6, 4, 6, 4],

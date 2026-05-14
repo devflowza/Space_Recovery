@@ -70,10 +70,11 @@ export function buildCaseLabelDocument(
     ],
   };
 
+  const receivedLabelText = isBilingual ? t('receivedLabel', 'Received:') : 'Received:';
   const dateSection: Content = {
     columns: [
       {
-        text: `Received: ${formatDate(caseData.created_at, 'dd/MM/yyyy')}`,
+        text: `${receivedLabelText} ${formatDate(caseData.created_at, 'dd/MM/yyyy')}`,
         fontSize: 9,
         color: PDF_COLORS.textLight,
       },

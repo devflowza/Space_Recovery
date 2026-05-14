@@ -39,7 +39,7 @@ export function buildPayslipDocument(
   const headerSection: Content = {
     stack: [
       { text: companyName, fontSize: 18, bold: true, color: PDF_COLORS.primaryDark },
-      { text: t('payslip.subtitle', 'Employee Payslip'), fontSize: 10, color: PDF_COLORS.textLight, margin: [0, 2, 0, 0] },
+      { text: t('employeePayslipSubtitle', 'Employee Payslip'), fontSize: 10, color: PDF_COLORS.textLight, margin: [0, 2, 0, 0] },
       {
         canvas: [
           {
@@ -59,7 +59,7 @@ export function buildPayslipDocument(
   };
 
   const titleSection: Content = {
-    text: `${t('payslip.salarySlip', 'Salary Slip')} - ${safeString(payslipData.payroll_period?.period_name)}`,
+    text: `${t('salarySlip', 'Salary Slip')} - ${safeString(payslipData.payroll_period?.period_name)}`,
     fontSize: 16,
     bold: true,
     color: PDF_COLORS.text,
@@ -74,30 +74,36 @@ export function buildPayslipDocument(
     ]);
   };
 
+  const extractArabic = (key: string, fallback: string): string | null => {
+    if (!isBilingual) return null;
+    const parts = t(key, fallback).split(' | ');
+    return parts[1] || null;
+  };
+
   const employeeInfoSection: Content[] = [
     createBilingualSectionHeader(
-      t('payslip.employeeInfo', 'Employee Information'),
-      isBilingual ? t('payslip.employeeInfo.ar', 'Employee Information') : null
+      'Employee Information',
+      extractArabic('employeeInformation', 'Employee Information')
     ) as Content,
     {
       table: {
         widths: ['40%', '60%'],
         body: buildKeyValueRows([
           {
-            label: t('payslip.employeeName', 'Employee Name'),
+            label: t('employeeName', 'Employee Name'),
             value: `${safeString(payslipData.employee?.first_name)} ${safeString(payslipData.employee?.last_name)}`,
           },
           {
-            label: t('payslip.employeeNumber', 'Employee Number'),
+            label: t('employeeNumber', 'Employee Number'),
             value: safeString(payslipData.employee?.employee_number),
           },
           {
-            label: t('payslip.payPeriod', 'Pay Period'),
+            label: t('payPeriod', 'Pay Period'),
             value: `${formatDate(payslipData.payroll_period?.start_date)} - ${formatDate(payslipData.payroll_period?.end_date)}`,
           },
           {
-            label: t('payslip.paymentDate', 'Payment Date'),
-            value: payslipData.payment_date ? formatDate(payslipData.payment_date) : t('payslip.notPaid', 'Not paid'),
+            label: t('paymentDate', 'Payment Date'),
+            value: payslipData.payment_date ? formatDate(payslipData.payment_date) : t('notPaid', 'Not paid'),
           },
         ]),
       },
@@ -108,31 +114,31 @@ export function buildPayslipDocument(
 
   const attendanceSection: Content[] = [
     createBilingualSectionHeader(
-      t('payslip.attendanceSummary', 'Attendance Summary'),
-      isBilingual ? t('payslip.attendanceSummary.ar', 'Attendance Summary') : null
+      'Attendance Summary',
+      extractArabic('attendanceSummary', 'Attendance Summary')
     ) as Content,
     {
       table: {
         widths: ['40%', '60%'],
         body: buildKeyValueRows([
           {
-            label: t('payslip.workingDays', 'Working Days'),
+            label: t('workingDays', 'Working Days'),
             value: String(payslipData.working_days || 0),
           },
           {
-            label: t('payslip.daysWorked', 'Days Worked'),
+            label: t('daysWorked', 'Days Worked'),
             value: String(payslipData.days_worked || 0),
           },
           {
-            label: t('payslip.daysAbsent', 'Days Absent'),
+            label: t('daysAbsent', 'Days Absent'),
             value: String(payslipData.days_absent || 0),
           },
           {
-            label: t('payslip.regularHours', 'Regular Hours'),
+            label: t('regularHours', 'Regular Hours'),
             value: String(payslipData.regular_hours || 0),
           },
           {
-            label: t('payslip.overtimeHours', 'Overtime Hours'),
+            label: t('overtimeHours', 'Overtime Hours'),
             value: String(payslipData.overtime_hours || 0),
           },
         ]),
@@ -150,9 +156,9 @@ export function buildPayslipDocument(
     totalAmount: number
   ): Content[] => {
     const headerRow: TableCell[] = [
-      { text: t('payslip.component', 'Component'), style: 'tableHeader', fillColor: PDF_COLORS.headerBg, color: PDF_COLORS.text },
-      { text: t('payslip.calculation', 'Calculation'), style: 'tableHeader', fillColor: PDF_COLORS.headerBg, color: PDF_COLORS.text },
-      { text: t('payslip.amount', 'Amount'), style: 'tableHeader', fillColor: PDF_COLORS.headerBg, color: PDF_COLORS.text, alignment: 'right' },
+      { text: t('component', 'Component'), style: 'tableHeader', fillColor: PDF_COLORS.headerBg, color: PDF_COLORS.text },
+      { text: t('calculation', 'Calculation'), style: 'tableHeader', fillColor: PDF_COLORS.headerBg, color: PDF_COLORS.text },
+      { text: t('amount', 'Amount'), style: 'tableHeader', fillColor: PDF_COLORS.headerBg, color: PDF_COLORS.text, alignment: 'right' },
     ];
 
     const dataRows: TableCell[][] = items.map((item) => [
@@ -170,7 +176,7 @@ export function buildPayslipDocument(
     return [
       createBilingualSectionHeader(
         sectionTitle,
-        isBilingual ? sectionTitleAr : null
+        sectionTitleAr
       ) as Content,
       {
         table: {
@@ -185,18 +191,18 @@ export function buildPayslipDocument(
   };
 
   const earningsSection = buildComponentTable(
-    t('payslip.earnings', 'Earnings'),
-    t('payslip.earnings.ar', 'Earnings'),
+    'Earnings',
+    extractArabic('earnings', 'Earnings'),
     earnings,
-    t('payslip.totalEarnings', 'Total Earnings'),
+    t('totalEarnings', 'Total Earnings'),
     totalEarnings
   );
 
   const deductionsSection = buildComponentTable(
-    t('payslip.deductions', 'Deductions'),
-    t('payslip.deductions.ar', 'Deductions'),
+    'Deductions',
+    extractArabic('deductions', 'Deductions'),
     deductions,
-    t('payslip.totalDeductions', 'Total Deductions'),
+    t('totalDeductions', 'Total Deductions'),
     totalDeductions
   );
 
@@ -207,7 +213,7 @@ export function buildPayslipDocument(
         [
           {
             stack: [
-              { text: t('payslip.netSalary', 'Net Salary'), fontSize: 12, color: PDF_COLORS.primaryDark, margin: [0, 0, 0, 4] },
+              { text: t('netSalary', 'Net Salary'), fontSize: 12, color: PDF_COLORS.primaryDark, margin: [0, 0, 0, 4] },
               { text: formatCurrency(Number(payslipData.net_salary)), fontSize: 20, bold: true, color: PDF_COLORS.primaryDark },
             ],
             fillColor: '#DBEAFE',
@@ -244,13 +250,13 @@ export function buildPayslipDocument(
         margin: [0, 0, 0, 8],
       },
       {
-        text: t('payslip.systemGenerated', 'This is a system-generated payslip and does not require a signature.'),
+        text: t('systemGenerated', 'This is a system-generated payslip and does not require a signature.'),
         fontSize: 9,
         color: PDF_COLORS.textLight,
         alignment: 'center',
       },
       {
-        text: `${t('payslip.generatedOn', 'Generated on')} ${formatDate(new Date())}`,
+        text: `${t('generatedOn', 'Generated on')} ${formatDate(new Date())}`,
         fontSize: 9,
         color: PDF_COLORS.textLight,
         alignment: 'center',

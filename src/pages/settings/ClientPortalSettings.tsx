@@ -113,8 +113,11 @@ export const ClientPortalSettings: React.FC = () => {
   });
 
   useEffect(() => {
-    if (settings) {
-      setFormData(settings as PortalSettings);
+    if (settings && Object.keys(settings).length > 0) {
+      // Merge with defaults so partially-saved jsonb columns keep sensible
+      // values for fields that haven't been persisted yet. Replacing formData
+      // outright leaves toggles as `checked={undefined}` (uncontrolled).
+      setFormData(prev => ({ ...prev, ...(settings as Partial<PortalSettings>) }));
     }
   }, [settings]);
 

@@ -251,20 +251,22 @@ export function buildReportDocument(
   const customerPhone = customerData?.mobile_number || caseData?.customer_phone || 'N/A';
   const clientReference = caseData?.client_reference;
 
+  const labelWidth = isBilingual ? 130 : 70;
+
   const customerInfoContent: object[] = [
-    createInfoRow('Name:', customerName),
-    createInfoRow('Company:', companyNameValue),
-    createInfoRow('Phone:', customerPhone),
-    createInfoRow('Email:', customerEmail),
-    createInfoRow('Reference:', clientReference),
+    createInfoRow(t('nameLabel', 'Name:'), customerName, labelWidth),
+    createInfoRow(t('companyLabel', 'Company:'), companyNameValue, labelWidth),
+    createInfoRow(t('phoneLabel', 'Phone:'), customerPhone, labelWidth),
+    createInfoRow(t('emailLabel', 'Email:'), customerEmail, labelWidth),
+    createInfoRow(t('referenceLabel', 'Reference:'), clientReference, labelWidth),
   ];
 
   const reportDetailsContent: object[] = [
-    createInfoRow('Case ID:', caseData?.case_no),
-    createInfoRow('Report No:', report.report_number || 'Draft'),
-    createInfoRow('Service:', caseData?.service_type),
-    createInfoRow('Prepared By:', preparedByName || 'N/A'),
-    createInfoRow('Created Date:', formatDate(report.created_at, 'dd MMM yyyy')),
+    createInfoRow(t('caseIdLabel', 'Case ID:'), caseData?.case_no, labelWidth),
+    createInfoRow(t('reportNoLabel', 'Report No:'), report.report_number || 'Draft', labelWidth),
+    createInfoRow(t('serviceLabel', 'Service:'), caseData?.service_type, labelWidth),
+    createInfoRow(t('preparedByLabel', 'Prepared By:'), preparedByName || 'N/A', labelWidth),
+    createInfoRow(t('createdDateLabel', 'Created Date:'), formatDate(report.created_at, 'dd MMM yyyy'), labelWidth),
   ];
 
   const customerInfoTitle = isBilingual
@@ -303,11 +305,16 @@ export function buildReportDocument(
     const hardDriveIconSvg = getGeneralIconSvg('hardDrive');
     const mediaDetailsHeader: Content = createBilingualSectionHeader(mediaDetailsTitle, null, hardDriveIconSvg) as Content;
 
+    const typeLabel = isBilingual ? (t('type', '').split(' | ')[1] ? `Type | ${t('type', '').split(' | ')[1]}` : 'Type') : 'Type';
+    const modelLabel = isBilingual ? (t('model', '').split(' | ')[1] ? `Model | ${t('model', '').split(' | ')[1]}` : 'Model') : 'Model';
+    const capacityLabel = isBilingual ? (t('capacity', '').split(' | ')[1] ? `Capacity | ${t('capacity', '').split(' | ')[1]}` : 'Capacity') : 'Capacity';
+    const serialLabel = isBilingual ? (t('serialNumber', '').split(' | ')[1] ? `Serial No | ${t('serialNumber', '').split(' | ')[1]}` : 'Serial No') : 'Serial No';
+
     const deviceInfoParts: string[] = [];
-    if (deviceData.device_type) deviceInfoParts.push(`Type: ${deviceData.device_type}`);
-    if (deviceData.model) deviceInfoParts.push(`Model: ${deviceData.model}`);
-    if (deviceData.capacity) deviceInfoParts.push(`Capacity: ${deviceData.capacity}`);
-    if (deviceData.serial_number) deviceInfoParts.push(`Serial No: ${deviceData.serial_number}`);
+    if (deviceData.device_type) deviceInfoParts.push(`${typeLabel}: ${deviceData.device_type}`);
+    if (deviceData.model) deviceInfoParts.push(`${modelLabel}: ${deviceData.model}`);
+    if (deviceData.capacity) deviceInfoParts.push(`${capacityLabel}: ${deviceData.capacity}`);
+    if (deviceData.serial_number) deviceInfoParts.push(`${serialLabel}: ${deviceData.serial_number}`);
 
     const deviceInfoText = deviceInfoParts.join(' | ');
 
@@ -354,8 +361,13 @@ export function buildReportDocument(
       }
 
       if (diagnosticsData.physical_damage_notes) {
+        const physicalDamageLabel = isBilingual
+          ? (t('physicalDamageNotesLabel', '').split(' | ')[1]
+              ? `Physical Damage Notes | ${t('physicalDamageNotesLabel', '').split(' | ')[1].replace(/:$/, '')}`
+              : 'Physical Damage Notes')
+          : 'Physical Damage Notes';
         mediaDetailsContent.push({
-          text: `Physical Damage Notes: ${diagnosticsData.physical_damage_notes}`,
+          text: `${physicalDamageLabel}: ${diagnosticsData.physical_damage_notes}`,
           fontSize: 8,
           color: PDF_COLORS.text,
           margin: [0, 3, 0, 0],
@@ -617,10 +629,10 @@ export function buildReportDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 70): Content {
   return {
     columns: [
-      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: 70 },
+      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },
       { text: safeString(value), fontSize: 9, color: PDF_COLORS.text, width: '*' },
     ],
     margin: [0, 0, 0, 2],

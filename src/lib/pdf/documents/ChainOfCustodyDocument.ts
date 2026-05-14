@@ -366,7 +366,7 @@ function buildSignatureSection(
           widths: ['auto'],
           body: [[
             {
-              text: `\u2713 Entry #${padEntryNumber(entry.entry_number)} — Digitally Signed`,
+              text: `\u2713 Entry #${padEntryNumber(entry.entry_number)} — Digitally Signed${isBilingual && digitallySignedAr ? ' | ' + digitallySignedAr : ''}`,
               fontSize: 7,
               bold: true,
               color: '#0D9488',
@@ -413,6 +413,10 @@ export function buildChainOfCustodyDocument(
   const signatureSection = buildSignatureSection(data, ctx);
   if (signatureSection) content.push(signatureSection);
 
+  const pageWord = isBilingual ? t('page', 'Page') : 'Page';
+  const ofWord = isBilingual ? t('of', 'of') : 'of';
+  const certifiedText = isBilingual ? t('pageFooterCertified', 'This document is a certified Chain of Custody record') : 'This document is a certified Chain of Custody record';
+
   return {
     pageSize: 'A4',
     pageMargins: [25, 25, 25, 40],
@@ -423,7 +427,7 @@ export function buildChainOfCustodyDocument(
     },
     styles: getStylesWithFont(fontFamily),
     footer: (currentPage: number, pageCount: number): Content => ({
-      text: `Page ${currentPage} of ${pageCount} | This document is a certified Chain of Custody record`,
+      text: `${pageWord} ${currentPage} ${ofWord} ${pageCount} | ${certifiedText}`,
       fontSize: 7,
       color: PDF_COLORS.textMuted,
       alignment: 'center',
