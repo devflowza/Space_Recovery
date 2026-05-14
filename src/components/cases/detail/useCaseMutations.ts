@@ -102,7 +102,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
     mutationFn: async (newEngineerId: string | null) => {
       const { data, error } = await supabase
         .from('cases')
-        .update({ assigned_engineer_id: newEngineerId, updated_at: new Date().toISOString() })
+        .update({ assigned_to: newEngineerId, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select();
 

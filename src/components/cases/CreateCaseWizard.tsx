@@ -372,7 +372,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
       const caseData = {
         case_number: caseNumber,
         customer_id: formData.customer_id,
-        title: `Case for ${customerName}`,
+        subject: `Case for ${customerName}`,
         priority: formData.priority,
         status: 'Received',
       };
@@ -391,7 +391,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
 
         // Auto-assign technicians to cases they create
         if (profile.role === 'technician') {
-          caseData.assigned_engineer_id = profile.id;
+          caseData.assigned_to = profile.id;
         }
       }
 
