@@ -8,15 +8,40 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
-import { HardDrive, Eye, EyeOff, Trash2, ChevronDown, ChevronUp, Cpu, CheckCircle2, XCircle, AlertTriangle, Wrench, HelpCircle } from 'lucide-react';
+import { HardDrive, Eye, EyeOff, Trash2, ChevronDown, ChevronUp, Cpu } from 'lucide-react';
 import { diagnosticsService } from '../../lib/diagnosticsService';
 import { logger } from '../../lib/logger';
+import type { Database } from '../../types/database.types';
+
+type CaseDeviceInsert = Database['public']['Tables']['case_devices']['Insert'];
+type CaseDeviceUpdate = Database['public']['Tables']['case_devices']['Update'];
+
+// Shape of `deviceData` accepted by this modal. Editing flow passes a row from
+// `case_devices` (uuid id, bigint device_role_id, uuid FK columns, etc.). The
+// optional shape keeps the prop tolerant of partial rows from callers.
+export interface DeviceFormDeviceData {
+  id?: string;
+  device_role_id?: number | string | null;
+  device_type_id?: string | null;
+  brand_id?: string | null;
+  model?: string | null;
+  serial_number?: string | null;
+  capacity_id?: string | null;
+  condition_id?: string | null;
+  accessories?: string[] | null;
+  symptoms?: string | null;
+  notes?: string | null;
+  password?: string | null;
+  encryption_id?: string | null;
+  is_primary?: boolean | null;
+  role_notes?: string | null;
+}
 
 interface DeviceFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   caseId: string;
-  deviceData?: Record<string, unknown>;
+  deviceData?: DeviceFormDeviceData | null;
   onSuccess: () => void;
 }
 
@@ -36,16 +61,15 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     device_type_id: '',
     brand_id: '',
     model: '',
-    serial_no: '',
+    serial_number: '',
     capacity_id: '',
     condition_id: '',
     accessories: [] as string[],
-    device_problem: '',
-    recovery_requirements: '',
-    device_password: '',
-    encryption_type_id: '',
+    symptoms: '',
+    recovery_notes: '',
+    password: '',
+    encryption_id: '',
     is_primary: false,
-    parent_device_id: '',
     role_notes: '',
   });
 
@@ -168,31 +192,6 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     },
   });
 
-  const { data: patientDevices = [] } = useQuery({
-    queryKey: ['case_patient_devices', caseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('case_devices')
-        .select(`
-          id,
-          serial_no,
-          model,
-          device_type_id,
-          device_role_id,
-          device_type:device_types(name)
-        `)
-        .eq('case_id', caseId);
-
-      if (error) throw error;
-
-      const patientRole = deviceRoles.find(r => r.name.toLowerCase() === 'patient');
-      if (!patientRole) return [];
-
-      return (data || []).filter(d => d.device_role_id === patientRole.id && (!deviceData || d.id !== deviceData.id));
-    },
-    enabled: isOpen && deviceRoles.length > 0,
-  });
-
   const { data: donorInventory = [] } = useQuery({
     queryKey: ['donor_inventory'],
     queryFn: async () => {
@@ -203,18 +202,16 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
           name,
           serial_number,
           model,
-          quantity_available,
-          unit_cost,
-          device_type_id,
+          quantity,
+          purchase_price,
           brand_id,
           capacity_id,
-          device_types(name),
-          brands(name),
-          capacities(name)
+          brand:catalog_device_brands(name),
+          capacity:catalog_device_capacities(name)
         `)
-        .eq('item_type', 'donor_part')
-        .eq('status', 'available')
-        .gt('quantity_available', 0)
+        .eq('is_donor', true)
+        .gt('quantity', 0)
+        .is('deleted_at', null)
         .order('name');
 
       if (error) throw error;
@@ -226,45 +223,43 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   useEffect(() => {
     if (deviceData) {
       setFormData({
-        device_role_id: deviceData.device_role_id?.toString() || '',
-        device_type_id: deviceData.device_type_id || '',
-        brand_id: deviceData.brand_id || '',
-        model: deviceData.model || '',
-        serial_no: deviceData.serial_no || '',
-        capacity_id: deviceData.capacity_id || '',
-        condition_id: deviceData.condition_id?.toString() || '',
-        accessories: deviceData.accessories || [],
-        device_problem: deviceData.device_problem || '',
-        recovery_requirements: deviceData.recovery_requirements || '',
-        device_password: deviceData.device_password || '',
-        encryption_type_id: deviceData.encryption_type_id || '',
-        is_primary: deviceData.is_primary || false,
-        parent_device_id: deviceData.parent_device_id || '',
-        role_notes: deviceData.role_notes || '',
+        device_role_id: deviceData.device_role_id != null ? deviceData.device_role_id.toString() : '',
+        device_type_id: deviceData.device_type_id ?? '',
+        brand_id: deviceData.brand_id ?? '',
+        model: deviceData.model ?? '',
+        serial_number: deviceData.serial_number ?? '',
+        capacity_id: deviceData.capacity_id ?? '',
+        condition_id: deviceData.condition_id ?? '',
+        accessories: deviceData.accessories ?? [],
+        symptoms: deviceData.symptoms ?? '',
+        recovery_notes: deviceData.notes ?? '',
+        password: deviceData.password ?? '',
+        encryption_id: deviceData.encryption_id ?? '',
+        is_primary: deviceData.is_primary ?? false,
+        role_notes: deviceData.role_notes ?? '',
       });
-      setSelectedDonorInventoryId(deviceData.inventory_item_id || '');
+      setSelectedDonorInventoryId('');
 
       // Load existing diagnostics if in edit mode
       if (deviceData.id) {
-        loadDiagnostics(deviceData.id);
+        void loadDiagnostics(deviceData.id);
       }
     } else {
       const patientRole = deviceRoles.find(r => r.name.toLowerCase() === 'patient');
       setFormData({
-        device_role_id: patientRole?.id?.toString() || '',
+        device_role_id: patientRole?.id != null ? patientRole.id.toString() : '',
         device_type_id: '',
         brand_id: '',
         model: '',
-        serial_no: '',
+        serial_number: '',
         capacity_id: '',
         condition_id: '',
         accessories: [],
-        device_problem: '',
-        recovery_requirements: '',
-        device_password: '',
-        encryption_type_id: '',
+        symptoms: '',
+        recovery_notes: '',
+        password: '',
+        encryption_id: '',
         is_primary: false,
-        parent_device_id: '',
         role_notes: '',
       });
       setSelectedDonorInventoryId('');
@@ -358,87 +353,91 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const selectedRole = deviceRoles.find(r => r.id?.toString() === formData.device_role_id);
+      const selectedRole = deviceRoles.find(r => r.id != null && r.id.toString() === formData.device_role_id);
       const isDonorRole = selectedRole?.name.toLowerCase() === 'donor';
 
-      let devicePayload: Record<string, unknown> = {
+      // Build a strongly-typed payload matching the live case_devices schema.
+      const basePayload: CaseDeviceInsert = {
         case_id: caseId,
-        device_role_id: formData.device_role_id ? parseInt(formData.device_role_id) : null,
-        device_password: formData.device_password || null,
+        tenant_id: profile?.tenant_id ?? '',
+        device_role_id: formData.device_role_id ? Number(formData.device_role_id) : null,
+        password: formData.password || null,
         is_primary: formData.is_primary,
-        parent_device_id: formData.parent_device_id || null,
         role_notes: formData.role_notes || null,
       };
+
+      let devicePayload: CaseDeviceInsert;
 
       if (isDonorRole && selectedDonorInventoryId) {
         const donor = donorInventory.find(d => d.id === selectedDonorInventoryId);
         if (donor) {
           devicePayload = {
-            ...devicePayload,
-            device_type_id: donor.device_type_id || null,
-            brand_id: donor.brand_id || null,
-            model: donor.model || null,
-            serial_no: donor.serial_number || null,
-            capacity_id: donor.capacity_id || null,
-            inventory_item_id: donor.id,
+            ...basePayload,
+            brand_id: donor.brand_id ?? null,
+            model: donor.model ?? null,
+            serial_number: donor.serial_number ?? null,
+            capacity_id: donor.capacity_id ?? null,
           };
+        } else {
+          devicePayload = basePayload;
         }
       } else {
         devicePayload = {
-          ...devicePayload,
+          ...basePayload,
           device_type_id: formData.device_type_id || null,
           brand_id: formData.brand_id || null,
           model: formData.model || null,
-          serial_no: formData.serial_no || null,
+          serial_number: formData.serial_number || null,
           capacity_id: formData.capacity_id || null,
-          condition_id: formData.condition_id ? parseInt(formData.condition_id) : null,
+          condition_id: formData.condition_id || null,
           accessories: formData.accessories.length > 0 ? formData.accessories : null,
-          device_problem: formData.device_problem || null,
-          recovery_requirements: formData.recovery_requirements || null,
-          encryption_type_id: formData.encryption_type_id || null,
+          symptoms: formData.symptoms || null,
+          notes: formData.recovery_notes || null,
+          encryption_id: formData.encryption_id || null,
         };
       }
 
-      let deviceId = deviceData?.id;
+      let deviceId: string | undefined = deviceData?.id;
 
-      if (isEditMode) {
+      if (isEditMode && deviceData?.id) {
+        const updatePayload: CaseDeviceUpdate = { ...devicePayload };
         const { error } = await supabase
           .from('case_devices')
-          .update(devicePayload)
+          .update(updatePayload)
           .eq('id', deviceData.id);
 
         if (error) throw error;
       } else {
+        const insertPayload: CaseDeviceInsert = {
+          ...devicePayload,
+          created_by: profile?.id ?? null,
+        };
         const { data: insertedDevice, error } = await supabase
           .from('case_devices')
-          .insert([{
-            ...devicePayload,
-            created_by: profile?.id || null,
-          }])
+          .insert([insertPayload])
           .select('id')
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
-        deviceId = insertedDevice.id;
+        deviceId = insertedDevice?.id;
       }
 
       if (isDonorRole && selectedDonorInventoryId && deviceId) {
         const donor = donorInventory.find(d => d.id === selectedDonorInventoryId);
         if (donor) {
           const { error: assignmentError } = await supabase
-            .from('inventory_assignments')
+            .from('inventory_case_assignments')
             .insert([{
-              inventory_item_id: selectedDonorInventoryId,
+              tenant_id: profile?.tenant_id ?? '',
+              item_id: selectedDonorInventoryId,
               case_id: caseId,
-              patient_device_id: formData.parent_device_id || null,
-              quantity_assigned: 1,
-              unit_cost_at_assignment: donor.unit_cost || 0,
-              total_cost: donor.unit_cost || 0,
-              status: 'assigned',
+              assigned_by: profile?.id ?? null,
+              purpose: 'donor_part',
+              notes: `Donor for case device ${deviceId}`,
             }]);
 
           if (assignmentError) {
-            logger.error('Error creating inventory assignment:', assignmentError);
+            logger.error('Error creating inventory case assignment:', assignmentError);
           }
         }
       }
@@ -446,27 +445,28 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       // Save diagnostics data if patient role and diagnostics section has data
       if (isPatientRole && deviceId && hasDiagnosticsData()) {
         try {
+          const category = diagnosticsFormData.device_type_category || 'other';
           await diagnosticsService.upsertDeviceDiagnostics({
             case_device_id: deviceId,
-            device_type_category: diagnosticsFormData.device_type_category as 'hdd' | 'ssd' | 'flash' | 'raid' | 'other',
-            heads_status: diagnosticsFormData.heads_status || null,
-            pcb_status: diagnosticsFormData.pcb_status || null,
-            pcb_notes: diagnosticsFormData.pcb_notes || null,
-            motor_status: diagnosticsFormData.motor_status || null,
-            surface_status: diagnosticsFormData.surface_status || null,
+            device_type_category: category as 'hdd' | 'ssd' | 'hybrid' | 'other',
+            heads_status: diagnosticsFormData.heads_status || undefined,
+            pcb_status: diagnosticsFormData.pcb_status || undefined,
+            pcb_notes: diagnosticsFormData.pcb_notes || undefined,
+            motor_status: diagnosticsFormData.motor_status || undefined,
+            surface_status: diagnosticsFormData.surface_status || undefined,
             sa_access: diagnosticsFormData.sa_access,
-            platter_condition: diagnosticsFormData.platter_condition || null,
-            controller_status: diagnosticsFormData.controller_status || null,
-            controller_model: diagnosticsFormData.controller_model || null,
-            memory_chips_status: diagnosticsFormData.memory_chips_status || null,
-            nand_type: diagnosticsFormData.nand_type || null,
+            platter_condition: diagnosticsFormData.platter_condition || undefined,
+            controller_status: diagnosticsFormData.controller_status || undefined,
+            controller_model: diagnosticsFormData.controller_model || undefined,
+            memory_chips_status: diagnosticsFormData.memory_chips_status || undefined,
+            nand_type: diagnosticsFormData.nand_type || undefined,
             firmware_corruption: diagnosticsFormData.firmware_corruption,
             trim_support: diagnosticsFormData.trim_support,
-            wear_leveling_count: diagnosticsFormData.wear_leveling_count ? parseInt(diagnosticsFormData.wear_leveling_count) : null,
-            firmware_version: diagnosticsFormData.firmware_version || null,
-            rom_version: diagnosticsFormData.rom_version || null,
-            physical_damage_notes: diagnosticsFormData.physical_damage_notes || null,
-            technical_notes: diagnosticsFormData.technical_notes || null,
+            wear_leveling_count: diagnosticsFormData.wear_leveling_count ? parseInt(diagnosticsFormData.wear_leveling_count) : undefined,
+            firmware_version: diagnosticsFormData.firmware_version || undefined,
+            rom_version: diagnosticsFormData.rom_version || undefined,
+            physical_damage_notes: diagnosticsFormData.physical_damage_notes || undefined,
+            technical_notes: diagnosticsFormData.technical_notes || undefined,
           });
         } catch (error) {
           logger.error('Error saving diagnostics:', error);
@@ -485,11 +485,12 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   };
 
   const handleDelete = async () => {
+    if (!deviceData?.id) return;
     setIsSubmitting(true);
     try {
       const { error } = await supabase
         .from('case_devices')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', deviceData.id);
 
       if (error) throw error;
@@ -505,18 +506,15 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     }
   };
 
-  const selectedRole = deviceRoles.find(r => r.id?.toString() === formData.device_role_id);
+  const selectedRole = deviceRoles.find(r => r.id != null && r.id.toString() === formData.device_role_id);
   const roleName = selectedRole?.name.toLowerCase() || '';
   const isPatientRole = roleName === 'patient';
-  const isBackupRole = roleName === 'backup';
   const isDonorRole = roleName === 'donor';
-  const isLinkedRole = selectedRole && ['backup', 'donor'].includes(roleName);
-  const showParentDeviceSelector = isLinkedRole && patientDevices.length > 0;
 
   const availableDeviceRoles = deviceRoles.filter(r => r.name.toLowerCase() !== 'clone');
 
   const isFormValid = formData.device_role_id && (
-    isDonorRole ? !!selectedDonorInventoryId : (formData.device_type_id || formData.serial_no)
+    isDonorRole ? !!selectedDonorInventoryId : (formData.device_type_id || formData.serial_number)
   );
 
   const handleDonorSelect = (donorId: string) => {
@@ -525,11 +523,11 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     if (donor) {
       setFormData({
         ...formData,
-        device_type_id: donor.device_type_id || '',
-        brand_id: donor.brand_id || '',
-        model: donor.model || '',
-        serial_no: donor.serial_number || '',
-        capacity_id: donor.capacity_id || '',
+        // inventory_items no longer carries device_type_id; leave caller value.
+        brand_id: donor.brand_id ?? '',
+        model: donor.model ?? '',
+        serial_number: donor.serial_number ?? '',
+        capacity_id: donor.capacity_id ?? '',
       });
     }
   };
@@ -556,15 +554,15 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 label="Device Role"
                 value={formData.device_role_id}
                 onChange={(value) => {
-                  const role = deviceRoles.find(r => r.id?.toString() === value);
+                  const role = deviceRoles.find(r => r.id != null && r.id.toString() === value);
                   const newRoleName = role?.name.toLowerCase() || '';
 
                   setFormData({
                     ...formData,
                     device_role_id: value,
                     is_primary: newRoleName === 'patient' ? formData.is_primary : false,
-                    device_problem: newRoleName === 'backup' ? '' : formData.device_problem,
-                    recovery_requirements: newRoleName === 'backup' ? '' : formData.recovery_requirements,
+                    symptoms: newRoleName === 'backup' ? '' : formData.symptoms,
+                    recovery_notes: newRoleName === 'backup' ? '' : formData.recovery_notes,
                   });
 
                   if (newRoleName === 'donor') {
@@ -586,7 +584,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                   onChange={handleDonorSelect}
                   options={donorInventory.map(d => ({
                     id: d.id,
-                    name: `${d.name} - ${d.device_types?.name || 'Unknown'} ${d.serial_number ? `(S/N: ${d.serial_number})` : ''} - Available: ${d.quantity_available}`,
+                    name: `${d.name}${d.model ? ` - ${d.model}` : ''}${d.serial_number ? ` (S/N: ${d.serial_number})` : ''} - Available: ${d.quantity}`,
                   }))}
                   placeholder="Select donor device from inventory..."
                   required
@@ -624,8 +622,8 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
 
                 <Input
                   label="Serial Number"
-                  value={formData.serial_no}
-                  onChange={(e) => setFormData({ ...formData, serial_no: e.target.value })}
+                  value={formData.serial_number}
+                  onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
                   placeholder="Serial number..."
                 />
 
@@ -642,7 +640,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                   label="Condition"
                   value={formData.condition_id}
                   onChange={(value) => setFormData({ ...formData, condition_id: value })}
-                  options={deviceConditions.map(dc => ({ id: dc.id.toString(), name: dc.name }))}
+                  options={deviceConditions.map(dc => ({ id: dc.id, name: dc.name }))}
                   placeholder="Select condition..."
                   clearable={false}
                 />
@@ -697,8 +695,8 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                   <div className="flex items-center gap-2">
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      value={formData.device_password}
-                      onChange={(e) => setFormData({ ...formData, device_password: e.target.value })}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       placeholder="Enter device password if applicable..."
                       className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
@@ -716,32 +714,12 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                   <div className="col-span-3">
                     <SearchableSelect
                       label="Encryption Type"
-                      value={formData.encryption_type_id}
-                      onChange={(value) => setFormData({ ...formData, encryption_type_id: value })}
+                      value={formData.encryption_id}
+                      onChange={(value) => setFormData({ ...formData, encryption_id: value })}
                       options={encryptionTypes.map(et => ({ id: et.id, name: et.name }))}
                       placeholder="Select encryption type (if applicable)..."
                       clearable={true}
                     />
-                  </div>
-                )}
-
-                {showParentDeviceSelector && (
-                  <div className="col-span-3">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Link to Patient Device (Optional)
-                    </label>
-                    <select
-                      value={formData.parent_device_id}
-                      onChange={(e) => setFormData({ ...formData, parent_device_id: e.target.value })}
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                      <option value="">No link</option>
-                      {patientDevices.map((pd: { id: string; device_type?: { name?: string }; serial_no?: string; model?: string }) => (
-                        <option key={pd.id} value={pd.id}>
-                          {pd.device_type?.name || 'Device'} {pd.serial_no ? `- ${pd.serial_no}` : ''} {pd.model ? `(${pd.model})` : ''}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                 )}
 
@@ -752,8 +730,8 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                         Problem Description
                       </label>
                       <textarea
-                        value={formData.device_problem}
-                        onChange={(e) => setFormData({ ...formData, device_problem: e.target.value })}
+                        value={formData.symptoms}
+                        onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
                         placeholder="Describe the device problem or symptoms..."
                         rows={2}
                         className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -765,8 +743,8 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                         Recovery Requirements
                       </label>
                       <textarea
-                        value={formData.recovery_requirements}
-                        onChange={(e) => setFormData({ ...formData, recovery_requirements: e.target.value })}
+                        value={formData.recovery_notes}
+                        onChange={(e) => setFormData({ ...formData, recovery_notes: e.target.value })}
                         placeholder="Specify what data needs to be recovered..."
                         rows={2}
                         className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
