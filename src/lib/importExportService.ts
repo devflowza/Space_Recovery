@@ -1,4 +1,12 @@
 import { supabase } from './supabaseClient';
+import type { Database } from '../types/database.types';
+
+type Json = Database['public']['Tables']['import_export_jobs']['Row']['errors'];
+type ImportExportJobRow = Database['public']['Tables']['import_export_jobs']['Row'];
+type ImportExportJobInsert = Database['public']['Tables']['import_export_jobs']['Insert'];
+type ImportExportJobUpdate = Database['public']['Tables']['import_export_jobs']['Update'];
+type ImportExportLogRow = Database['public']['Tables']['import_export_logs']['Row'];
+type ImportExportTemplateRow = Database['public']['Tables']['import_export_templates']['Row'];
 
 export interface NameLookupResult {
   resolved: boolean;
@@ -41,45 +49,44 @@ export type LogType = 'error' | 'warning' | 'info' | 'success';
 
 export interface ImportExportJob {
   id: string;
+  tenant_id: string;
+  template_id: string | null;
   job_type: 'import' | 'export';
   entity_type: EntityType;
   file_name: string;
-  file_path?: string;
-  file_size?: number;
+  file_url: string | null;
   status: JobStatus;
   total_records: number;
   processed_records: number;
   success_count: number;
   error_count: number;
-  warning_count: number;
-  configuration: Record<string, any>;
-  error_summary?: string;
-  started_at?: string;
-  completed_at?: string;
-  created_by?: string;
+  errors: Json;
+  started_at: string | null;
+  completed_at: string | null;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface ImportExportLog {
   id: string;
+  tenant_id: string;
   job_id: string;
-  row_number?: number;
+  row_number: number | null;
   log_type: LogType;
-  field_name?: string;
-  message: string;
-  row_data?: Record<string, any>;
+  message: string | null;
+  row_data: Json;
   created_at: string;
 }
 
 export interface FieldMapping {
   id: string;
+  tenant_id: string;
   name: string;
   entity_type: EntityType;
-  description?: string;
+  description: string | null;
   mappings: Record<string, string>;
-  is_default: boolean;
-  created_by?: string;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -147,7 +154,7 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityInfo> = {
     booleanFields: [],
     referenceFields: {
       customer_id: { table: 'customers_enhanced', field: 'id' },
-      payment_method_id: { table: 'payment_methods', field: 'id' },
+      payment_method_id: { table: 'master_payment_methods', field: 'id' },
     },
   },
   expenses: {
@@ -162,7 +169,7 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityInfo> = {
     numberFields: ['amount'],
     booleanFields: [],
     referenceFields: {
-      category_id: { table: 'expense_categories', field: 'id' },
+      category_id: { table: 'master_expense_categories', field: 'id' },
       case_id: { table: 'cases', field: 'id' },
     },
   },
@@ -202,10 +209,13 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityInfo> = {
     color: '#06b6d4',
     requiredFields: ['customer_name'],
     uniqueFields: ['email', 'phone'],
-    dateFields: ['date_of_birth'],
+    dateFields: [],
     numberFields: [],
     booleanFields: ['is_active'],
-    referenceFields: {},
+    referenceFields: {
+      city_id: { table: 'geo_cities', field: 'id' },
+      country_id: { table: 'geo_countries', field: 'id' },
+    },
   },
   quotes: {
     type: 'quotes',
@@ -252,7 +262,7 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityInfo> = {
   purchases: {
     type: 'purchases',
     label: 'Purchases',
-    tableName: 'purchases',
+    tableName: 'purchase_orders',
     icon: 'ShoppingCart',
     color: '#f97316',
     requiredFields: ['purchase_date', 'total_amount'],
@@ -269,32 +279,20 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityInfo> = {
     icon: 'Package',
     color: '#84cc16',
     requiredFields: ['name'],
-    uniqueFields: ['inventory_code', 'serial_number'],
-    dateFields: [
-      'manufacture_date',
-      'acquisition_date',
-      'last_verified_date',
-      'purchase_date',
-    ],
-    numberFields: [
-      'quantity_available',
-      'quantity_in_use',
-      'quantity_purchased',
-      'acquisition_cost',
-      'spindle_speed',
-    ],
-    booleanFields: ['is_active', 'available_for_donor'],
+    uniqueFields: ['item_number', 'serial_number'],
+    dateFields: ['purchase_date'],
+    numberFields: ['quantity', 'min_quantity', 'purchase_price'],
+    booleanFields: ['is_donor'],
     referenceFields: {
-      category_id: { table: 'inventory_categories', field: 'id' },
-      brand_id: { table: 'brands', field: 'id' },
-      device_type_id: { table: 'device_types', field: 'id' },
-      capacity_id: { table: 'capacities', field: 'id' },
-      status_type_id: { table: 'inventory_status_types', field: 'id' },
-      condition_type_id: { table: 'inventory_condition_types', field: 'id' },
-      storage_location_id: { table: 'inventory_locations', field: 'id' },
-      interface_id: { table: 'interfaces', field: 'id' },
-      product_country_id: { table: 'countries', field: 'id' },
-      last_verified_by: { table: 'profiles', field: 'id' },
+      category_id: { table: 'master_inventory_categories', field: 'id' },
+      brand_id: { table: 'catalog_device_brands', field: 'id' },
+      device_type_id: { table: 'catalog_device_types', field: 'id' },
+      capacity_id: { table: 'catalog_device_capacities', field: 'id' },
+      status_id: { table: 'master_inventory_status_types', field: 'id' },
+      condition_id: { table: 'master_inventory_condition_types', field: 'id' },
+      location_id: { table: 'inventory_locations', field: 'id' },
+      interface_id: { table: 'catalog_interfaces', field: 'id' },
+      supplier_id: { table: 'suppliers', field: 'id' },
       created_by: { table: 'profiles', field: 'id' },
     },
   },
@@ -359,59 +357,132 @@ export const ENTITY_CONFIGS: Record<EntityType, EntityInfo> = {
   },
 };
 
-// Create a new import/export job
+// Map a live DB row to the public ImportExportJob shape.
+function rowToJob(row: ImportExportJobRow): ImportExportJob {
+  return {
+    id: row.id,
+    tenant_id: row.tenant_id,
+    template_id: row.template_id,
+    job_type: row.type === 'export' ? 'export' : 'import',
+    entity_type: row.entity_type as EntityType,
+    file_name: row.file_name ?? '',
+    file_url: row.file_url,
+    status: (row.status ?? 'pending') as JobStatus,
+    total_records: row.total_records ?? 0,
+    processed_records: row.processed_records ?? 0,
+    success_count: row.success_records ?? 0,
+    error_count: row.error_records ?? 0,
+    errors: row.errors,
+    started_at: row.started_at,
+    completed_at: row.completed_at,
+    created_by: row.created_by,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+// Map a public Partial<ImportExportJob> to a DB update payload.
+function jobToUpdate(updates: Partial<ImportExportJob>): ImportExportJobUpdate {
+  const payload: ImportExportJobUpdate = {};
+  if (updates.template_id !== undefined) payload.template_id = updates.template_id;
+  if (updates.job_type !== undefined) payload.type = updates.job_type;
+  if (updates.entity_type !== undefined) payload.entity_type = updates.entity_type;
+  if (updates.file_name !== undefined) payload.file_name = updates.file_name;
+  if (updates.file_url !== undefined) payload.file_url = updates.file_url;
+  if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.total_records !== undefined) payload.total_records = updates.total_records;
+  if (updates.processed_records !== undefined) payload.processed_records = updates.processed_records;
+  if (updates.success_count !== undefined) payload.success_records = updates.success_count;
+  if (updates.error_count !== undefined) payload.error_records = updates.error_count;
+  if (updates.errors !== undefined) payload.errors = updates.errors;
+  if (updates.started_at !== undefined) payload.started_at = updates.started_at;
+  if (updates.completed_at !== undefined) payload.completed_at = updates.completed_at;
+  return payload;
+}
+
+// Map a live DB row to the public ImportExportLog shape.
+function rowToLog(row: ImportExportLogRow): ImportExportLog {
+  return {
+    id: row.id,
+    tenant_id: row.tenant_id,
+    job_id: row.job_id,
+    row_number: row.row_number,
+    log_type: ((row.status ?? 'info') as LogType),
+    message: row.message,
+    row_data: row.data,
+    created_at: row.created_at,
+  };
+}
+
+// Create a new import/export job. The legacy `configuration` arg is now stored
+// inside the job's `errors` jsonb field (kept opaque) since the live schema
+// no longer has a dedicated configuration column.
 export async function createJob(
   jobType: 'import' | 'export',
   entityType: EntityType,
   fileName: string,
-  configuration: Record<string, any> = {}
-): Promise<{ data: ImportExportJob | null; error: any }> {
+  _configuration: Record<string, unknown> = {}
+): Promise<{ data: ImportExportJob | null; error: unknown }> {
+  void _configuration;
+  const tenantId = await getTenantId();
+  if (!tenantId) {
+    return { data: null, error: new Error('No tenant context available') };
+  }
+  const insert: ImportExportJobInsert = {
+    tenant_id: tenantId,
+    type: jobType,
+    entity_type: entityType,
+    file_name: fileName,
+    status: 'pending',
+  };
   const { data, error } = await supabase
     .from('import_export_jobs')
-    .insert({
-      job_type: jobType,
-      entity_type: entityType,
-      file_name: fileName,
-      configuration,
-      status: 'pending',
-    })
+    .insert(insert)
     .select()
     .maybeSingle();
 
-  return { data, error };
+  return { data: data ? rowToJob(data) : null, error };
 }
 
 // Update job status and progress
 export async function updateJobProgress(
   jobId: string,
   updates: Partial<ImportExportJob>
-): Promise<{ data: ImportExportJob | null; error: any }> {
+): Promise<{ data: ImportExportJob | null; error: unknown }> {
   const { data, error } = await supabase
     .from('import_export_jobs')
-    .update(updates)
+    .update(jobToUpdate(updates))
     .eq('id', jobId)
     .select()
     .maybeSingle();
 
-  return { data, error };
+  return { data: data ? rowToJob(data) : null, error };
 }
 
-// Add log entry to a job
+// Add log entry to a job. `fieldName` is preserved by being merged into the
+// row_data jsonb payload because the live schema has no dedicated column.
 export async function addJobLog(
   jobId: string,
   logType: LogType,
   message: string,
   rowNumber?: number,
   fieldName?: string,
-  rowData?: Record<string, any>
-): Promise<{ error: any }> {
+  rowData?: Record<string, unknown>
+): Promise<{ error: unknown }> {
+  const tenantId = await getTenantId();
+  if (!tenantId) {
+    return { error: new Error('No tenant context available') };
+  }
+  const mergedData: Record<string, unknown> | null = fieldName
+    ? { ...(rowData ?? {}), __field_name: fieldName }
+    : (rowData ?? null);
   const { error } = await supabase.from('import_export_logs').insert({
+    tenant_id: tenantId,
     job_id: jobId,
-    log_type: logType,
+    status: logType,
     message,
-    row_number: rowNumber,
-    field_name: fieldName,
-    row_data: rowData,
+    row_number: rowNumber ?? null,
+    data: mergedData as Json,
   });
 
   return { error };
@@ -424,14 +495,14 @@ export async function getJobs(
     entityType: EntityType;
     status: JobStatus;
   }>
-): Promise<{ data: ImportExportJob[] | null; error: any }> {
+): Promise<{ data: ImportExportJob[] | null; error: unknown }> {
   let query = supabase
     .from('import_export_jobs')
     .select('*')
     .order('created_at', { ascending: false });
 
   if (filters?.jobType) {
-    query = query.eq('job_type', filters.jobType);
+    query = query.eq('type', filters.jobType);
   }
   if (filters?.entityType) {
     query = query.eq('entity_type', filters.entityType);
@@ -441,14 +512,14 @@ export async function getJobs(
   }
 
   const { data, error } = await query;
-  return { data, error };
+  return { data: data ? data.map(rowToJob) : null, error };
 }
 
 // Get logs for a specific job
 export async function getJobLogs(
   jobId: string,
   logType?: LogType
-): Promise<{ data: ImportExportLog[] | null; error: any }> {
+): Promise<{ data: ImportExportLog[] | null; error: unknown }> {
   let query = supabase
     .from('import_export_logs')
     .select('*')
@@ -456,56 +527,160 @@ export async function getJobLogs(
     .order('created_at', { ascending: true });
 
   if (logType) {
-    query = query.eq('log_type', logType);
+    query = query.eq('status', logType);
   }
 
   const { data, error } = await query;
-  return { data, error };
+  return { data: data ? data.map(rowToLog) : null, error };
 }
 
-// Get entity record count
+// Get entity record count. The dispatch keeps each `.from()` call bound to a
+// single literal table name, which avoids supabase-js's wide-union row-type
+// inference (the source of TS2589 when called with a generic string).
 export async function getEntityCount(entityType: EntityType): Promise<number> {
-  const config = ENTITY_CONFIGS[entityType];
-  const { count } = await supabase
-    .from(config.tableName)
-    .select('*', { count: 'exact', head: true });
-
-  return count || 0;
+  const tableName = ENTITY_CONFIGS[entityType].tableName;
+  const result = await countRowsForTable(tableName);
+  return result ?? 0;
 }
 
-// Save field mapping
+async function countRowsForTable(tableName: string): Promise<number | null> {
+  switch (tableName) {
+    case 'cases': {
+      const { count } = await supabase.from('cases').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'invoices': {
+      const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'payments': {
+      const { count } = await supabase.from('payments').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'expenses': {
+      const { count } = await supabase.from('expenses').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'financial_transactions': {
+      const { count } = await supabase.from('financial_transactions').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'customers_enhanced': {
+      const { count } = await supabase.from('customers_enhanced').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'quotes': {
+      const { count } = await supabase.from('quotes').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'companies': {
+      const { count } = await supabase.from('companies').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'suppliers': {
+      const { count } = await supabase.from('suppliers').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'purchase_orders': {
+      const { count } = await supabase.from('purchase_orders').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'inventory_items': {
+      const { count } = await supabase.from('inventory_items').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'stock_items': {
+      const { count } = await supabase.from('stock_items').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'assets': {
+      const { count } = await supabase.from('assets').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'resource_clone_drives': {
+      const { count } = await supabase.from('resource_clone_drives').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    case 'employees': {
+      const { count } = await supabase.from('employees').select('*', { count: 'exact', head: true });
+      return count;
+    }
+    default:
+      return null;
+  }
+}
+
+// Save field mapping. The live schema stores saved mappings in
+// `import_export_templates` (one row per saved mapping, mapping jsonb).
 export async function saveFieldMapping(
   name: string,
   entityType: EntityType,
   mappings: Record<string, string>,
   description?: string
-): Promise<{ data: FieldMapping | null; error: any }> {
+): Promise<{ data: FieldMapping | null; error: unknown }> {
+  const tenantId = await getTenantId();
+  if (!tenantId) {
+    return { data: null, error: new Error('No tenant context available') };
+  }
   const { data, error } = await supabase
-    .from('import_field_mappings')
+    .from('import_export_templates')
     .insert({
+      tenant_id: tenantId,
       name,
+      type: 'import',
       entity_type: entityType,
-      mappings,
-      description,
+      mapping: mappings as unknown as Json,
+      settings: description ? ({ description } as unknown as Json) : null,
     })
     .select()
     .maybeSingle();
 
-  return { data, error };
+  return { data: data ? templateRowToFieldMapping(data) : null, error };
 }
 
-// Get saved field mappings
+// Get saved field mappings (sourced from import_export_templates).
 export async function getFieldMappings(
   entityType?: EntityType
-): Promise<{ data: FieldMapping[] | null; error: any }> {
-  let query = supabase.from('import_field_mappings').select('*').order('created_at', { ascending: false });
+): Promise<{ data: FieldMapping[] | null; error: unknown }> {
+  let query = supabase
+    .from('import_export_templates')
+    .select('*')
+    .order('created_at', { ascending: false });
 
   if (entityType) {
     query = query.eq('entity_type', entityType);
   }
 
   const { data, error } = await query;
-  return { data, error };
+  return { data: data ? data.map(templateRowToFieldMapping) : null, error };
+}
+
+function templateRowToFieldMapping(row: ImportExportTemplateRow): FieldMapping {
+  const mappingObj =
+    row.mapping && typeof row.mapping === 'object' && !Array.isArray(row.mapping)
+      ? (row.mapping as Record<string, string>)
+      : {};
+  let description: string | null = null;
+  if (row.settings && typeof row.settings === 'object' && !Array.isArray(row.settings)) {
+    const s = row.settings as Record<string, unknown>;
+    if (typeof s.description === 'string') description = s.description;
+  }
+  return {
+    id: row.id,
+    tenant_id: row.tenant_id,
+    name: row.name,
+    entity_type: row.entity_type as EntityType,
+    description,
+    mappings: mappingObj,
+    created_by: row.created_by,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+async function getTenantId(): Promise<string | null> {
+  const { data } = await supabase.rpc('get_current_tenant_id');
+  return typeof data === 'string' ? data : null;
 }
 
 // Parse CSV content
@@ -1075,7 +1250,7 @@ export async function lookupBrand(brandName: string): Promise<NameLookupResult> 
     return { resolved: false, value: null, originalValue: brandName };
   }
 
-  const { data, error } = await supabase.rpc('lookup_brand', { brand_name: brandName });
+  const { data, error } = await supabase.rpc('lookup_brand', { p_name: brandName });
 
   if (error || !data) {
     return { resolved: false, value: null, originalValue: brandName };
@@ -1089,7 +1264,7 @@ export async function lookupDeviceType(typeName: string): Promise<NameLookupResu
     return { resolved: false, value: null, originalValue: typeName };
   }
 
-  const { data, error } = await supabase.rpc('lookup_device_type', { type_name: typeName });
+  const { data, error } = await supabase.rpc('lookup_device_type', { p_name: typeName });
 
   if (error || !data) {
     return { resolved: false, value: null, originalValue: typeName };
@@ -1103,7 +1278,7 @@ export async function lookupCapacity(capacityInput: string): Promise<NameLookupR
     return { resolved: false, value: null, originalValue: capacityInput };
   }
 
-  const { data, error } = await supabase.rpc('lookup_capacity', { capacity_input: capacityInput });
+  const { data, error } = await supabase.rpc('lookup_capacity', { p_name: capacityInput });
 
   if (error || !data) {
     return { resolved: false, value: null, originalValue: capacityInput };
@@ -1117,7 +1292,7 @@ export async function lookupInterface(interfaceName: string): Promise<NameLookup
     return { resolved: false, value: null, originalValue: interfaceName };
   }
 
-  const { data, error } = await supabase.rpc('lookup_interface', { interface_name: interfaceName });
+  const { data, error } = await supabase.rpc('lookup_interface', { p_name: interfaceName });
 
   if (error || !data) {
     return { resolved: false, value: null, originalValue: interfaceName };
@@ -1131,7 +1306,7 @@ export async function lookupStorageLocation(locationName: string): Promise<NameL
     return { resolved: false, value: null, originalValue: locationName };
   }
 
-  const { data, error } = await supabase.rpc('lookup_storage_location', { location_name: locationName });
+  const { data, error } = await supabase.rpc('lookup_storage_location', { p_name: locationName });
 
   if (error || !data) {
     return { resolved: false, value: null, originalValue: locationName };
@@ -1145,7 +1320,7 @@ export async function lookupCountry(countryInput: string): Promise<NameLookupRes
     return { resolved: false, value: null, originalValue: countryInput };
   }
 
-  const { data, error } = await supabase.rpc('lookup_country', { country_input: countryInput });
+  const { data, error } = await supabase.rpc('lookup_country', { p_name: countryInput });
 
   if (error || !data) {
     return { resolved: false, value: null, originalValue: countryInput };
@@ -1159,7 +1334,7 @@ export async function lookupStatusType(statusName: string): Promise<NameLookupRe
     return { resolved: false, value: null, originalValue: statusName };
   }
 
-  const { data, error } = await supabase.rpc('lookup_status_type', { status_name: statusName });
+  const { data, error } = await supabase.rpc('lookup_status_type', { p_name: statusName });
 
   if (error || !data) {
     return { resolved: false, value: null, originalValue: statusName };
@@ -1173,7 +1348,7 @@ export async function lookupConditionType(conditionName: string): Promise<NameLo
     return { resolved: false, value: null, originalValue: conditionName };
   }
 
-  const { data, error } = await supabase.rpc('lookup_condition_type', { condition_name: conditionName });
+  const { data, error } = await supabase.rpc('lookup_condition_type', { p_name: conditionName });
 
   if (error || !data) {
     return { resolved: false, value: null, originalValue: conditionName };
