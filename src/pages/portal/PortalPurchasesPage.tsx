@@ -4,27 +4,19 @@ import { usePortalAuth } from '../../contexts/PortalAuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { ShoppingBag, Shield, Hash, Package, Calendar, DollarSign, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ShoppingBag, Hash, Package, Calendar, DollarSign } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 }
 
-function getDaysRemaining(dateStr: string | null): number | null {
-  if (!dateStr) return null;
-  const end = new Date(dateStr);
-  const now = new Date();
-  return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function getWarrantyStatus(daysRemaining: number | null): { label: string; color: 'success' | 'warning' | 'danger'; icon: React.ElementType } {
-  if (daysRemaining === null) return { label: 'No Warranty', color: 'danger', icon: AlertTriangle };
-  if (daysRemaining <= 0) return { label: 'Expired', color: 'danger', icon: AlertTriangle };
-  if (daysRemaining <= 30) return { label: `${daysRemaining}d left`, color: 'danger', icon: AlertTriangle };
-  if (daysRemaining <= 90) return { label: `${daysRemaining}d left`, color: 'warning', icon: AlertTriangle };
-  return { label: `${daysRemaining}d left`, color: 'success', icon: CheckCircle };
-}
+type StockItemEmbed = {
+  id: string;
+  name: string | null;
+  brand: string | null;
+  sku: string | null;
+} | null;
 
 export const PortalPurchasesPage: React.FC = () => {
   const { customer } = usePortalAuth();
@@ -45,10 +37,10 @@ export const PortalPurchasesPage: React.FC = () => {
       const { data, error } = await supabase
         .from('stock_sales')
         .select(`
-          id, sale_number, created_at, total_amount, payment_method, payment_status,
+          id, sale_number, created_at, total_amount, status,
           stock_sale_items (
-            id, quantity, unit_price, total_price, warranty_end_date,
-            stock_items ( id, name, brand, model, sku )
+            id, quantity, unit_price, total,
+            stock_items ( id, name, brand, sku )
           )
         `)
         .eq('customer_id', customer.id)
@@ -60,54 +52,21 @@ export const PortalPurchasesPage: React.FC = () => {
     enabled: !!customer?.id,
   });
 
-  const {
-    data: serialNumbers,
-    isLoading: loadingSerials,
-    isError: serialsError,
-    refetch: refetchSerials,
-  } = useQuery({
-    queryKey: ['portal_serials', customer?.id],
-    queryFn: async () => {
-      if (!customer?.id) return [];
-      const { data, error } = await supabase
-        .from('stock_serial_numbers')
-        .select(`
-          id, serial_number, status, warranty_end_date,
-          stock_items ( id, name, brand, model )
-        `)
-        .eq('sold_to_customer_id', customer.id)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!customer?.id,
-  });
-
-  const activeWarranties = (purchases ?? []).flatMap((sale) =>
-    (sale.stock_sale_items ?? []).filter((item) => {
-      if (!item.warranty_end_date) return false;
-      const days = getDaysRemaining(item.warranty_end_date);
-      return days !== null && days > 0;
-    }).map((item) => ({ ...item, sale_number: sale.sale_number, sale_id: sale.id }))
-  );
-
   const totalSpent = (purchases ?? []).reduce((sum, s) => sum + (s.total_amount ?? 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">My Purchases</h1>
-        <p className="text-slate-500 mt-1">View your purchased devices, warranties, and serial numbers.</p>
+        <p className="text-slate-500 mt-1">View your purchased devices and order history.</p>
       </div>
 
-      {(purchasesError || serialsError) && (
+      {purchasesError && (
         <div role="alert" className="rounded-lg border border-danger/30 bg-danger-muted p-4 text-sm">
           <p className="text-danger">Some purchase data failed to load. Please try again.</p>
           <button
             onClick={() => {
-              if (purchasesError) refetchPurchases();
-              if (serialsError) refetchSerials();
+              refetchPurchases();
             }}
             className="mt-2 text-primary underline"
           >
@@ -116,7 +75,7 @@ export const PortalPurchasesPage: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="p-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-info-muted rounded-lg flex items-center justify-center">
@@ -125,17 +84,6 @@ export const PortalPurchasesPage: React.FC = () => {
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Total Orders</p>
               <p className="text-2xl font-bold text-slate-900">{purchases?.length ?? 0}</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-success-muted rounded-lg flex items-center justify-center">
-              <Shield className="w-5 h-5 text-success" aria-hidden="true" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Active Warranties</p>
-              <p className="text-2xl font-bold text-slate-900">{activeWarranties.length}</p>
             </div>
           </div>
         </Card>
@@ -173,25 +121,21 @@ export const PortalPurchasesPage: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="font-semibold text-slate-900 text-sm">{sale.sale_number ?? `Sale #${sale.id.slice(0, 8)}`}</span>
-                      <Badge color={sale.payment_status === 'paid' ? 'success' : sale.payment_status === 'partial' ? 'warning' : 'default'}>
-                        {sale.payment_status ?? 'pending'}
-                      </Badge>
+                      {sale.status && (
+                        <Badge color={sale.status === 'completed' ? 'success' : sale.status === 'pending' ? 'warning' : 'default'}>
+                          {sale.status}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-4 text-xs text-slate-500 mb-3">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" />
                         {formatDate(sale.created_at)}
                       </span>
-                      {sale.payment_method && (
-                        <span className="capitalize">{sale.payment_method.replace('_', ' ')}</span>
-                      )}
                     </div>
                     <div className="space-y-1.5">
                       {(sale.stock_sale_items ?? []).map((item) => {
-                        const si = item.stock_items as { id: string; name: string; brand: string | null; model: string | null } | null;
-                        const days = getDaysRemaining(item.warranty_end_date ?? null);
-                        const ws = getWarrantyStatus(item.warranty_end_date ? days : null);
-                        const WarrantyIcon = ws.icon;
+                        const si = item.stock_items as StockItemEmbed;
                         return (
                           <div key={item.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2">
                             <div className="flex items-center gap-2">
@@ -200,21 +144,12 @@ export const PortalPurchasesPage: React.FC = () => {
                                 <span className="text-sm font-medium text-slate-800">
                                   {si?.brand ? `${si.brand} ` : ''}{si?.name ?? 'Device'}
                                 </span>
-                                {si?.model && <span className="text-xs text-slate-500 ml-1">({si.model})</span>}
+                                {si?.sku && <span className="text-xs text-slate-500 ml-1">({si.sku})</span>}
                                 <span className="text-xs text-slate-500 ml-2">× {item.quantity}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-3 text-xs">
-                              {item.warranty_end_date && (
-                                <span className={`flex items-center gap-1 font-medium ${
-                                  ws.color === 'success' ? 'text-success' :
-                                  ws.color === 'warning' ? 'text-warning' : 'text-danger'
-                                }`}>
-                                  <WarrantyIcon className="w-3.5 h-3.5" />
-                                  Warranty: {ws.label}
-                                </span>
-                              )}
-                              <span className="font-semibold text-slate-900">{formatCurrency(item.total_price ?? 0)}</span>
+                              <span className="font-semibold text-slate-900">{formatCurrency(item.total ?? 0)}</span>
                             </div>
                           </div>
                         );
@@ -230,91 +165,6 @@ export const PortalPurchasesPage: React.FC = () => {
           </div>
         )}
       </Card>
-
-      {activeWarranties.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-success" />
-            <h2 className="text-lg font-semibold text-slate-900">Active Warranties</h2>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {activeWarranties.map((item) => {
-              const si = item.stock_items as { id: string; name: string; brand: string | null; model: string | null } | null;
-              const days = getDaysRemaining(item.warranty_end_date ?? null);
-              const ws = getWarrantyStatus(days);
-              const WarrantyIcon = ws.icon;
-              return (
-                <div key={item.id} className="px-6 py-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      ws.color === 'success' ? 'bg-success-muted' :
-                      ws.color === 'warning' ? 'bg-warning-muted' : 'bg-danger-muted'
-                    }`}>
-                      <WarrantyIcon className={`w-4 h-4 ${
-                        ws.color === 'success' ? 'text-success' :
-                        ws.color === 'warning' ? 'text-warning' : 'text-danger'
-                      }`} />
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm">
-                        {si?.brand ? `${si.brand} ` : ''}{si?.name ?? 'Device'}
-                        {si?.model && <span className="text-slate-500 ml-1">({si.model})</span>}
-                      </p>
-                      <p className="text-xs text-slate-500">From order {item.sale_number}</p>
-                    </div>
-                  </div>
-                  <div className="text-right text-sm">
-                    <p className="text-slate-500 text-xs">Expires</p>
-                    <p className="font-medium text-slate-900">{formatDate(item.warranty_end_date!)}</p>
-                    <Badge color={ws.color} className="mt-1">{ws.label}</Badge>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      )}
-
-      {serialNumbers && serialNumbers.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-            <Hash className="w-5 h-5 text-slate-600" />
-            <h2 className="text-lg font-semibold text-slate-900">Serial Numbers</h2>
-          </div>
-          {loadingSerials ? (
-            <div className="p-8 text-center text-slate-500">Loading...</div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {serialNumbers.map((sn) => {
-                const si = sn.stock_items as { id: string; name: string; brand: string | null; model: string | null } | null;
-                return (
-                  <div key={sn.id} className="px-6 py-3 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <Hash className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-slate-900">{sn.serial_number}</p>
-                        {si && (
-                          <p className="text-xs text-slate-500">
-                            {si.brand ? `${si.brand} ` : ''}{si.name}{si.model ? ` (${si.model})` : ''}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {sn.warranty_end_date && (() => {
-                        const days = getDaysRemaining(sn.warranty_end_date);
-                        const ws = getWarrantyStatus(days);
-                        return <Badge color={ws.color}>Warranty: {ws.label}</Badge>;
-                      })()}
-                      <Badge color={sn.status === 'sold' ? 'success' : 'default'}>{sn.status}</Badge>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
-      )}
     </div>
   );
 };
