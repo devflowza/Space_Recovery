@@ -8,62 +8,84 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
-import { DataTable } from '../../components/shared/DataTable';
+import { DataTable, type Column } from '../../components/shared/DataTable';
 import SupplierFormModal from '../../components/suppliers/SupplierFormModal';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 import { format } from 'date-fns';
 import { logger } from '../../lib/logger';
+import type { Database } from '../../types/database.types';
 
 type TabType = 'overview' | 'contacts' | 'communications' | 'documents' | 'performance' | 'orders' | 'audit';
+
+type SupplierRow = Database['public']['Tables']['suppliers']['Row'];
+type SupplierContactRow = Database['public']['Tables']['supplier_contacts']['Row'];
+type SupplierCommunicationRow = Database['public']['Tables']['supplier_communications']['Row'];
+type SupplierDocumentRow = Database['public']['Tables']['supplier_documents']['Row'];
+type SupplierPerformanceMetricRow = Database['public']['Tables']['supplier_performance_metrics']['Row'];
+type SupplierAuditTrailRow = Database['public']['Tables']['supplier_audit_trail']['Row'];
+type PurchaseOrderRow = Database['public']['Tables']['purchase_orders']['Row'];
+type SupplierCategoryRow = Database['public']['Tables']['master_supplier_categories']['Row'];
+type SupplierPaymentTermRow = Database['public']['Tables']['master_supplier_payment_terms']['Row'];
+type PurchaseOrderStatusRow = Database['public']['Tables']['master_purchase_order_statuses']['Row'];
+
+type SupplierWithRelations = SupplierRow & {
+  category: Pick<SupplierCategoryRow, 'name'> | null;
+  payment_terms: Pick<SupplierPaymentTermRow, 'name' | 'days'> | null;
+};
+
+type PurchaseOrderWithStatus = PurchaseOrderRow & {
+  status: Pick<PurchaseOrderStatusRow, 'name' | 'color'> | null;
+};
 
 export default function SupplierProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { showToast } = useToast();
-  const [supplier, setSupplier] = useState<any>(null);
+  const { error: showError } = useToast();
+  const [supplier, setSupplier] = useState<SupplierWithRelations | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showEditModal, setShowEditModal] = useState(false);
-  const [contacts, setContacts] = useState<any[]>([]);
-  const [communications, setCommunications] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [performance, setPerformance] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [auditTrail, setAuditTrail] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<SupplierContactRow[]>([]);
+  const [communications, setCommunications] = useState<SupplierCommunicationRow[]>([]);
+  const [documents, setDocuments] = useState<SupplierDocumentRow[]>([]);
+  const [performance, setPerformance] = useState<SupplierPerformanceMetricRow[]>([]);
+  const [orders, setOrders] = useState<PurchaseOrderWithStatus[]>([]);
+  const [auditTrail, setAuditTrail] = useState<SupplierAuditTrailRow[]>([]);
 
   useEffect(() => {
     if (id) {
       loadSupplier();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
     if (id) {
       loadTabData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, id]);
 
   const loadSupplier = async () => {
+    if (!id) return;
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('suppliers')
         .select(`
           *,
-          category:supplier_categories(name),
-          payment_terms:supplier_payment_terms(name, days),
-          created_by_user:auth.users!suppliers_created_by_fkey(email),
-          updated_by_user:auth.users!suppliers_updated_by_fkey(email)
+          category:master_supplier_categories(name),
+          payment_terms:master_supplier_payment_terms(name, days)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setSupplier(data);
-    } catch (error: unknown) {
-      logger.error('Error loading supplier:', error);
-      showToast(error instanceof Error ? error.message : 'Failed to load supplier', 'error');
+      setSupplier(data as SupplierWithRelations | null);
+    } catch (err: unknown) {
+      logger.error('Error loading supplier:', err);
+      showError(err instanceof Error ? err.message : 'Failed to load supplier');
       navigate('/suppliers');
     } finally {
       setLoading(false);
@@ -94,63 +116,69 @@ export default function SupplierProfilePage() {
           await loadAuditTrail();
           break;
       }
-    } catch (error) {
-      logger.error('Error loading tab data:', error);
+    } catch (err) {
+      logger.error('Error loading tab data:', err);
     }
   };
 
   const loadContacts = async () => {
+    if (!id) return;
     const { data } = await supabase
       .from('supplier_contacts')
       .select('*')
       .eq('supplier_id', id)
       .order('is_primary', { ascending: false });
-    setContacts(data || []);
+    setContacts(data ?? []);
   };
 
   const loadCommunications = async () => {
+    if (!id) return;
     const { data } = await supabase
       .from('supplier_communications')
-      .select('*, created_by_user:auth.users(email)')
+      .select('*')
       .eq('supplier_id', id)
       .order('created_at', { ascending: false });
-    setCommunications(data || []);
+    setCommunications(data ?? []);
   };
 
   const loadDocuments = async () => {
+    if (!id) return;
     const { data } = await supabase
       .from('supplier_documents')
-      .select('*, uploaded_by_user:auth.users(email)')
+      .select('*')
       .eq('supplier_id', id)
-      .order('uploaded_at', { ascending: false });
-    setDocuments(data || []);
+      .order('created_at', { ascending: false });
+    setDocuments(data ?? []);
   };
 
   const loadPerformance = async () => {
+    if (!id) return;
     const { data } = await supabase
       .from('supplier_performance_metrics')
       .select('*')
       .eq('supplier_id', id)
-      .order('evaluation_date', { ascending: false });
-    setPerformance(data || []);
+      .order('period_end', { ascending: false });
+    setPerformance(data ?? []);
   };
 
   const loadOrders = async () => {
+    if (!id) return;
     const { data } = await supabase
       .from('purchase_orders')
-      .select('*, status:purchase_order_statuses(name, color)')
+      .select('*, status:master_purchase_order_statuses(name, color)')
       .eq('supplier_id', id)
       .order('created_at', { ascending: false });
-    setOrders(data || []);
+    setOrders((data ?? []) as PurchaseOrderWithStatus[]);
   };
 
   const loadAuditTrail = async () => {
+    if (!id) return;
     const { data } = await supabase
       .from('supplier_audit_trail')
-      .select('*, user:auth.users(email)')
+      .select('*')
       .eq('supplier_id', id)
       .order('created_at', { ascending: false });
-    setAuditTrail(data || []);
+    setAuditTrail(data ?? []);
   };
 
   if (loading) {
@@ -179,23 +207,22 @@ export default function SupplierProfilePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/suppliers')}>
+          <Button variant="secondary" onClick={() => navigate('/suppliers')}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900">{supplier.name}</h1>
-              {supplier.is_approved && (
-                <Badge variant="success">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Approved
-                </Badge>
-              )}
               <Badge variant={supplier.is_active ? 'success' : 'default'}>
-                {supplier.is_active ? 'Active' : 'Inactive'}
+                {supplier.is_active ? (
+                  <>
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Active
+                  </>
+                ) : 'Inactive'}
               </Badge>
             </div>
-            <p className="text-gray-500 mt-1">{supplier.supplier_number}</p>
+            <p className="text-gray-500 mt-1">{supplier.supplier_number ?? ''}</p>
           </div>
         </div>
         <Button onClick={() => setShowEditModal(true)}>
@@ -237,11 +264,11 @@ export default function SupplierProfilePage() {
 
       <div className="mt-6">
         {activeTab === 'overview' && <OverviewTab supplier={supplier} />}
-        {activeTab === 'contacts' && <ContactsTab contacts={contacts} supplierId={id!} onUpdate={loadContacts} />}
-        {activeTab === 'communications' && <CommunicationsTab communications={communications} supplierId={id!} onUpdate={loadCommunications} />}
-        {activeTab === 'documents' && <DocumentsTab documents={documents} supplierId={id!} onUpdate={loadDocuments} />}
+        {activeTab === 'contacts' && <ContactsTab contacts={contacts} />}
+        {activeTab === 'communications' && <CommunicationsTab communications={communications} />}
+        {activeTab === 'documents' && <DocumentsTab documents={documents} />}
         {activeTab === 'performance' && <PerformanceTab supplier={supplier} performance={performance} />}
-        {activeTab === 'orders' && <OrdersTab orders={orders} supplierId={id!} />}
+        {activeTab === 'orders' && <OrdersTab orders={orders} supplierId={id ?? ''} />}
         {activeTab === 'audit' && <AuditTab auditTrail={auditTrail} />}
       </div>
 
@@ -253,14 +280,25 @@ export default function SupplierProfilePage() {
             loadSupplier();
             setShowEditModal(false);
           }}
-          supplier={supplier}
+          supplier={{
+            id: supplier.id,
+            name: supplier.name,
+            supplier_number: supplier.supplier_number ?? undefined,
+            email: supplier.email ?? undefined,
+            phone: supplier.phone ?? undefined,
+            address: supplier.address ?? undefined,
+            website: supplier.website ?? undefined,
+            category_id: supplier.category_id ?? undefined,
+            payment_terms_id: supplier.payment_terms_id ?? undefined,
+            is_active: supplier.is_active ?? undefined,
+          }}
         />
       )}
     </div>
   );
 }
 
-function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name: string; category?: { name?: string }; payment_terms?: { name?: string }; supplier_number?: string; contact_person?: string; email?: string; phone?: string; address?: string; city?: string; country?: string; currency?: string; tax_number?: string; notes?: string; is_active?: boolean; is_approved?: boolean; website?: string } }) {
+function OverviewTab({ supplier }: { supplier: SupplierWithRelations }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
@@ -270,15 +308,15 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-gray-500">Category</label>
-                <p className="font-medium">{supplier.category?.name || '-'}</p>
+                <p className="font-medium">{supplier.category?.name ?? '-'}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-500">Payment Terms</label>
-                <p className="font-medium">{supplier.payment_terms?.name || '-'}</p>
+                <p className="font-medium">{supplier.payment_terms?.name ?? '-'}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Tax ID / VAT</label>
-                <p className="font-medium">{supplier.tax_id || '-'}</p>
+                <label className="text-sm text-gray-500">Tax Number / VAT</label>
+                <p className="font-medium">{supplier.tax_number ?? '-'}</p>
               </div>
               <div>
                 <label className="text-sm text-gray-500">Website</label>
@@ -291,11 +329,19 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
                   <p className="font-medium">-</p>
                 )}
               </div>
+              <div>
+                <label className="text-sm text-gray-500">Registration Number</label>
+                <p className="font-medium">{supplier.registration_number ?? '-'}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Rating</label>
+                <p className="font-medium">{supplier.rating != null ? `${supplier.rating}/5` : '-'}</p>
+              </div>
             </div>
-            {supplier.description && (
+            {supplier.notes && (
               <div className="mt-4">
-                <label className="text-sm text-gray-500">Description</label>
-                <p className="mt-1 text-gray-700">{supplier.description}</p>
+                <label className="text-sm text-gray-500">Notes</label>
+                <p className="mt-1 text-gray-700">{supplier.notes}</p>
               </div>
             )}
           </div>
@@ -309,58 +355,43 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
                 <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
                   <label className="text-sm text-gray-500">Email</label>
-                  <p className="font-medium">{supplier.email || '-'}</p>
+                  <p className="font-medium">{supplier.email ?? '-'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
                   <label className="text-sm text-gray-500">Phone</label>
-                  <p className="font-medium">{supplier.phone || '-'}</p>
+                  <p className="font-medium">{supplier.phone ?? '-'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
                   <label className="text-sm text-gray-500">Address</label>
-                  <p className="font-medium">
-                    {supplier.address && (
-                      <>
-                        {supplier.address}
-                        {supplier.city && `, ${supplier.city}`}
-                        {supplier.state && `, ${supplier.state}`}
-                        {supplier.zip_code && ` ${supplier.zip_code}`}
-                        {supplier.country && `, ${supplier.country}`}
-                      </>
-                    )}
-                    {!supplier.address && '-'}
-                  </p>
+                  <p className="font-medium">{supplier.address ?? '-'}</p>
                 </div>
               </div>
             </div>
           </div>
         </Card>
 
-        {(supplier.primary_contact_name || supplier.primary_contact_email) && (
+        {(supplier.contact_person || supplier.contact_email) && (
           <Card>
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Primary Contact</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-gray-500">Name</label>
-                  <p className="font-medium">{supplier.primary_contact_name || '-'}</p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-500">Position</label>
-                  <p className="font-medium">{supplier.primary_contact_position || '-'}</p>
+                  <p className="font-medium">{supplier.contact_person ?? '-'}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Email</label>
-                  <p className="font-medium">{supplier.primary_contact_email || '-'}</p>
+                  <p className="font-medium">{supplier.contact_email ?? '-'}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Phone</label>
-                  <p className="font-medium">{supplier.primary_contact_phone || '-'}</p>
+                  <p className="font-medium">{supplier.contact_phone ?? '-'}</p>
                 </div>
               </div>
             </div>
@@ -371,55 +402,23 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
       <div className="space-y-6">
         <Card>
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Scores</h3>
-            <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Financial</h3>
+            <div className="space-y-3">
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-gray-600">On-Time Delivery</span>
-                  <span className="font-semibold">{supplier.on_time_delivery_rate || 0}/5</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-success h-2 rounded-full"
-                    style={{ width: `${((supplier.on_time_delivery_rate || 0) / 5) * 100}%` }}
-                  />
-                </div>
+                <label className="text-sm text-gray-500">Credit Limit</label>
+                <p className="font-medium">{supplier.credit_limit != null ? supplier.credit_limit.toLocaleString() : '-'}</p>
               </div>
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-gray-600">Quality Score</span>
-                  <span className="font-semibold">{supplier.quality_score || 0}/5</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-info h-2 rounded-full"
-                    style={{ width: `${((supplier.quality_score || 0) / 5) * 100}%` }}
-                  />
-                </div>
+                <label className="text-sm text-gray-500">Outstanding Balance</label>
+                <p className="font-medium">{supplier.outstanding_balance != null ? supplier.outstanding_balance.toLocaleString() : '-'}</p>
               </div>
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-gray-600">Pricing Score</span>
-                  <span className="font-semibold">{supplier.pricing_score || 0}/5</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-warning h-2 rounded-full"
-                    style={{ width: `${((supplier.pricing_score || 0) / 5) * 100}%` }}
-                  />
-                </div>
+                <label className="text-sm text-gray-500">Bank</label>
+                <p className="font-medium">{supplier.bank_name ?? '-'}</p>
               </div>
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-gray-600">Reliability</span>
-                  <span className="font-semibold">{supplier.reliability_score || 0}/5</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-accent h-2 rounded-full"
-                    style={{ width: `${((supplier.reliability_score || 0) / 5) * 100}%` }}
-                  />
-                </div>
+                <label className="text-sm text-gray-500">Account</label>
+                <p className="font-medium">{supplier.bank_account ?? '-'}</p>
               </div>
             </div>
           </div>
@@ -429,14 +428,6 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
           <div className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Info</h3>
             <div className="space-y-3">
-              <div>
-                <label className="text-sm text-gray-500">Preferred Shipping</label>
-                <p className="font-medium">{supplier.preferred_shipping_method || '-'}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Response Time</label>
-                <p className="font-medium">{supplier.response_time_hours ? `${supplier.response_time_hours} hours` : '-'}</p>
-              </div>
               <div>
                 <label className="text-sm text-gray-500">Created</label>
                 <p className="font-medium">{format(new Date(supplier.created_at), 'MMM dd, yyyy')}</p>
@@ -455,7 +446,7 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
   );
 }
 
-function ContactsTab({ contacts, supplierId: _supplierId, onUpdate: _onUpdate }: { contacts: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
+function ContactsTab({ contacts }: { contacts: SupplierContactRow[] }) {
   return (
     <Card>
       <div className="p-6">
@@ -482,7 +473,9 @@ function ContactsTab({ contacts, supplierId: _supplierId, onUpdate: _onUpdate }:
                         <Badge variant="info" size="sm">Primary</Badge>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{contact.position}</p>
+                    {contact.title && (
+                      <p className="text-sm text-gray-600 mt-1">{contact.title}</p>
+                    )}
                     <div className="mt-3 space-y-1">
                       {contact.email && (
                         <p className="text-sm text-gray-600">
@@ -511,7 +504,7 @@ function ContactsTab({ contacts, supplierId: _supplierId, onUpdate: _onUpdate }:
   );
 }
 
-function CommunicationsTab({ communications, supplierId: _supplierId, onUpdate: _onUpdate }: { communications: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
+function CommunicationsTab({ communications }: { communications: SupplierCommunicationRow[] }) {
   return (
     <Card>
       <div className="p-6">
@@ -538,8 +531,12 @@ function CommunicationsTab({ communications, supplierId: _supplierId, onUpdate: 
                       </Badge>
                       <span className="text-sm text-gray-500">{format(new Date(comm.created_at), 'MMM dd, yyyy HH:mm')}</span>
                     </div>
-                    <h4 className="font-semibold text-gray-900 mt-2">{comm.subject}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{comm.notes}</p>
+                    {comm.subject && (
+                      <h4 className="font-semibold text-gray-900 mt-2">{comm.subject}</h4>
+                    )}
+                    {comm.content && (
+                      <p className="text-sm text-gray-600 mt-1">{comm.content}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -551,7 +548,7 @@ function CommunicationsTab({ communications, supplierId: _supplierId, onUpdate: 
   );
 }
 
-function DocumentsTab({ documents, supplierId: _supplierId, onUpdate: _onUpdate }: { documents: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
+function DocumentsTab({ documents }: { documents: SupplierDocumentRow[] }) {
   return (
     <Card>
       <div className="p-6">
@@ -573,10 +570,12 @@ function DocumentsTab({ documents, supplierId: _supplierId, onUpdate: _onUpdate 
                 <div className="flex items-start gap-3">
                   <FileText className="w-8 h-8 text-primary" />
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 truncate">{doc.file_name}</h4>
-                    <p className="text-sm text-gray-500 mt-1">{doc.document_type}</p>
+                    <h4 className="font-medium text-gray-900 truncate">{doc.name}</h4>
+                    {doc.file_type && (
+                      <p className="text-sm text-gray-500 mt-1">{doc.file_type}</p>
+                    )}
                     <p className="text-xs text-gray-400 mt-1">
-                      Uploaded {format(new Date(doc.uploaded_at), 'MMM dd, yyyy')}
+                      Uploaded {format(new Date(doc.created_at), 'MMM dd, yyyy')}
                     </p>
                   </div>
                 </div>
@@ -589,7 +588,7 @@ function DocumentsTab({ documents, supplierId: _supplierId, onUpdate: _onUpdate 
   );
 }
 
-function PerformanceTab({ supplier, performance }: { supplier: Record<string, unknown>; performance: Record<string, unknown>[] }) {
+function PerformanceTab({ supplier, performance }: { supplier: SupplierWithRelations; performance: SupplierPerformanceMetricRow[] }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -597,36 +596,36 @@ function PerformanceTab({ supplier, performance }: { supplier: Record<string, un
           <div className="p-4">
             <div className="flex items-center gap-2 text-gray-600 mb-2">
               <TrendingUp className="w-4 h-4" />
-              <span className="text-sm">On-Time Delivery</span>
+              <span className="text-sm">Rating</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{supplier.on_time_delivery_rate || 0}/5</div>
+            <div className="text-2xl font-bold text-gray-900">{supplier.rating != null ? `${supplier.rating}/5` : '-'}</div>
           </div>
         </Card>
         <Card>
           <div className="p-4">
             <div className="flex items-center gap-2 text-gray-600 mb-2">
               <Star className="w-4 h-4" />
-              <span className="text-sm">Quality Score</span>
+              <span className="text-sm">Metrics Tracked</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{supplier.quality_score || 0}/5</div>
+            <div className="text-2xl font-bold text-gray-900">{performance.length}</div>
           </div>
         </Card>
         <Card>
           <div className="p-4">
             <div className="flex items-center gap-2 text-gray-600 mb-2">
               <DollarSign className="w-4 h-4" />
-              <span className="text-sm">Pricing Score</span>
+              <span className="text-sm">Credit Limit</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{supplier.pricing_score || 0}/5</div>
+            <div className="text-2xl font-bold text-gray-900">{supplier.credit_limit != null ? supplier.credit_limit.toLocaleString() : '-'}</div>
           </div>
         </Card>
         <Card>
           <div className="p-4">
             <div className="flex items-center gap-2 text-gray-600 mb-2">
               <CheckCircle className="w-4 h-4" />
-              <span className="text-sm">Reliability</span>
+              <span className="text-sm">Outstanding</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{supplier.reliability_score || 0}/5</div>
+            <div className="text-2xl font-bold text-gray-900">{supplier.outstanding_balance != null ? supplier.outstanding_balance.toLocaleString() : '-'}</div>
           </div>
         </Card>
       </div>
@@ -644,26 +643,20 @@ function PerformanceTab({ supplier, performance }: { supplier: Record<string, un
                 <div key={perf.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-gray-900">
-                      {format(new Date(perf.evaluation_date), 'MMM dd, yyyy')}
+                      {perf.period_end ? format(new Date(perf.period_end), 'MMM dd, yyyy') : '-'}
                     </span>
-                    <Badge variant="info">{perf.period}</Badge>
+                    <Badge variant="info">{perf.metric_type}</Badge>
                   </div>
-                  <div className="grid grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">On-Time:</span>
-                      <span className="ml-1 font-medium">{perf.on_time_delivery_rate}/5</span>
+                      <span className="text-gray-500">Value:</span>
+                      <span className="ml-1 font-medium">{perf.value ?? '-'}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Quality:</span>
-                      <span className="ml-1 font-medium">{perf.quality_rating}/5</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Pricing:</span>
-                      <span className="ml-1 font-medium">{perf.pricing_consistency_score}/5</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Reliability:</span>
-                      <span className="ml-1 font-medium">{perf.reliability_score}/5</span>
+                      <span className="text-gray-500">Period Start:</span>
+                      <span className="ml-1 font-medium">
+                        {perf.period_start ? format(new Date(perf.period_start), 'MMM dd, yyyy') : '-'}
+                      </span>
                     </div>
                   </div>
                   {perf.notes && (
@@ -679,43 +672,43 @@ function PerformanceTab({ supplier, performance }: { supplier: Record<string, un
   );
 }
 
-function OrdersTab({ orders, supplierId }: { orders: Record<string, unknown>[]; supplierId: string }) {
+function OrdersTab({ orders, supplierId }: { orders: PurchaseOrderWithStatus[]; supplierId: string }) {
   const navigate = useNavigate();
 
-  const columns = [
+  const columns: Column<PurchaseOrderWithStatus>[] = [
     {
       key: 'po_number',
-      label: 'PO Number',
-      render: (order: Record<string, unknown>) => (
+      header: 'PO Number',
+      render: (order) => (
         <button
           onClick={() => navigate(`/purchase-orders/${order.id}`)}
           className="text-primary hover:text-primary/80 font-medium"
         >
-          {order.po_number}
+          {order.po_number ?? '-'}
         </button>
       ),
     },
     {
       key: 'order_date',
-      label: 'Order Date',
-      render: (order: Record<string, unknown>) => format(new Date(order.order_date), 'MMM dd, yyyy'),
+      header: 'Order Date',
+      render: (order) => order.order_date ? format(new Date(order.order_date), 'MMM dd, yyyy') : '-',
     },
     {
-      key: 'expected_delivery',
-      label: 'Expected Delivery',
-      render: (order: Record<string, unknown>) => order.expected_delivery ? format(new Date(order.expected_delivery), 'MMM dd, yyyy') : '-',
+      key: 'expected_delivery_date',
+      header: 'Expected Delivery',
+      render: (order) => order.expected_delivery_date ? format(new Date(order.expected_delivery_date), 'MMM dd, yyyy') : '-',
     },
     {
       key: 'total_amount',
-      label: 'Amount',
-      render: (order: Record<string, unknown>) => `$${order.total_amount?.toLocaleString() || '0.00'}`,
+      header: 'Amount',
+      render: (order) => order.total_amount != null ? order.total_amount.toLocaleString() : '0.00',
     },
     {
       key: 'status',
-      label: 'Status',
-      render: (order: Record<string, unknown>) => (
-        <Badge style={{ backgroundColor: order.status?.color || '#3b82f6' }}>
-          {order.status?.name || 'Unknown'}
+      header: 'Status',
+      render: (order) => (
+        <Badge variant="custom" color={order.status?.color ?? '#3b82f6'}>
+          {order.status?.name ?? 'Unknown'}
         </Badge>
       ),
     },
@@ -743,7 +736,7 @@ function OrdersTab({ orders, supplierId }: { orders: Record<string, unknown>[]; 
   );
 }
 
-function AuditTab({ auditTrail }: { auditTrail: Record<string, unknown>[] }) {
+function AuditTab({ auditTrail }: { auditTrail: SupplierAuditTrailRow[] }) {
   return (
     <Card>
       <div className="p-6">
@@ -764,10 +757,11 @@ function AuditTab({ auditTrail }: { auditTrail: Record<string, unknown>[] }) {
                       {format(new Date(audit.created_at), 'MMM dd, yyyy HH:mm')}
                     </span>
                   </div>
-                  {audit.changes && (
-                    <p className="text-sm text-gray-600 mt-1">{audit.changes}</p>
+                  {audit.details != null && (
+                    <pre className="text-xs text-gray-600 mt-1 whitespace-pre-wrap font-sans">
+                      {typeof audit.details === 'string' ? audit.details : JSON.stringify(audit.details, null, 2)}
+                    </pre>
                   )}
-                  <p className="text-xs text-gray-500 mt-1">by {audit.user?.email || 'Unknown'}</p>
                 </div>
               </div>
             ))}
