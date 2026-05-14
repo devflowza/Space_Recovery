@@ -352,12 +352,12 @@ class ReportPDFService {
       .from('case_devices')
       .select(`
         id,
-        device_types!device_type_id(name),
-        brands!brand_id(name),
+        catalog_device_types!device_type_id(name),
+        catalog_device_brands!brand_id(name),
         model,
-        capacities!capacity_id(name),
-        serial_no,
-        device_conditions!condition_id(name),
+        catalog_device_capacities!capacity_id(name),
+        serial_number,
+        catalog_device_conditions!condition_id(name),
         device_role_id,
         is_primary
       `)
@@ -381,12 +381,12 @@ class ReportPDFService {
     if (devices && devices.length > 0) {
       const device = devices[0];
       deviceData = {
-        device_type: (device.device_types as any)?.name,
-        brand: (device.brands as any)?.name,
+        device_type: (device.catalog_device_types as any)?.name,
+        brand: (device.catalog_device_brands as any)?.name,
         model: device.model,
-        capacity: (device.capacities as any)?.name,
-        serial_number: device.serial_no,
-        condition: (device.device_conditions as any)?.name,
+        capacity: (device.catalog_device_capacities as any)?.name,
+        serial_number: device.serial_number,
+        condition: (device.catalog_device_conditions as any)?.name,
       };
 
       // Load diagnostics

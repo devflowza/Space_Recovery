@@ -240,6 +240,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         const { error: relError } = await supabase
           .from('customer_company_relationships')
           .insert({
+            tenant_id: newCustomer.tenant_id,
             customer_id: newCustomer.id,
             company_id: customer.company_id,
             is_primary: false,

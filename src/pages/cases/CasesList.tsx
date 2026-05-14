@@ -164,9 +164,9 @@ export const CasesList: React.FC = () => {
             .from('case_devices')
             .select(`
               id,
-              serial_no,
+              serial_number,
               device_type_id,
-              device_types (id, name)
+              catalog_device_types (id, name)
             `)
             .eq('case_id', caseItem.id)
             .order('created_at');
@@ -174,8 +174,8 @@ export const CasesList: React.FC = () => {
           if (devicesData) {
             devices = devicesData.map(device => ({
               id: device.id,
-              serial_no: device.serial_no,
-              device_type: device.device_types
+              serial_no: device.serial_number,
+              device_type: device.catalog_device_types
             }));
           }
 
