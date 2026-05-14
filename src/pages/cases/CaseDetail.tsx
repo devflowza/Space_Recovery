@@ -517,7 +517,6 @@ export const CaseDetail: React.FC = () => {
           {activeTab === 'quotes' && (
             <CaseFinancesTab
               caseId={id!}
-              caseData={caseData}
               quotes={quotes || []}
               invoices={invoices || []}
               caseFinancialSummary={caseFinancialSummary}
