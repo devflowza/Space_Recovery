@@ -271,7 +271,8 @@ export async function updateStockItem(id: string, data: StockItemUpdate): Promis
     .select()
     .maybeSingle();
   if (error) throw error;
-  return result as StockItem;
+  if (!result) throw new Error('Stock item not found or not accessible');
+  return result;
 }
 
 export async function deleteStockItem(id: string): Promise<void> {
@@ -364,7 +365,8 @@ export async function recordStockReceipt(
 
   const current = item.current_quantity ?? 0;
   const newQty = current + quantity;
-  const unitCost = options?.cost ?? item.cost_price ?? 0;
+  // Preserve NULL when no cost is known so downstream COGS/valuation reports stay honest.
+  const unitCost = options?.cost ?? item.cost_price ?? null;
 
   const { error: updateError } = await supabase
     .from('stock_items')
@@ -381,7 +383,7 @@ export async function recordStockReceipt(
     reference_type: options?.poId ? 'purchase_order' : null,
     reference_id: options?.poId ?? null,
     unit_cost: unitCost,
-    total_cost: unitCost * quantity,
+    total_cost: unitCost !== null ? unitCost * quantity : null,
     notes: options?.notes ?? null,
   });
 
@@ -412,7 +414,8 @@ export async function recordStockUsage(
   if (current < quantity) throw new Error('Insufficient stock');
 
   const newQty = current - quantity;
-  const unitCost = item.cost_price ?? 0;
+  // Preserve NULL when no cost is known so downstream COGS/valuation reports stay honest.
+  const unitCost = item.cost_price ?? null;
 
   const { error: updateError } = await supabase
     .from('stock_items')
@@ -428,7 +431,7 @@ export async function recordStockUsage(
     reference_type: 'case',
     reference_id: caseId,
     unit_cost: unitCost,
-    total_cost: unitCost * quantity,
+    total_cost: unitCost !== null ? unitCost * quantity : null,
     notes: notes ?? null,
   });
 }
@@ -569,7 +572,8 @@ export async function createStockSale(data: StockSaleCreateData): Promise<StockS
       .update({ current_quantity: Math.max(0, newQty), updated_at: new Date().toISOString() })
       .eq('id', item.stock_item_id);
 
-    const unitCost = item.cost_price ?? stockItem.cost_price ?? 0;
+    // Preserve NULL when no cost is known so downstream COGS/valuation reports stay honest.
+    const unitCost = item.cost_price ?? stockItem.cost_price ?? null;
     await supabase.from('stock_transactions').insert({
       tenant_id: tenantId,
       item_id: item.stock_item_id,
@@ -578,7 +582,7 @@ export async function createStockSale(data: StockSaleCreateData): Promise<StockS
       reference_type: 'sale',
       reference_id: sale.id,
       unit_cost: unitCost,
-      total_cost: unitCost * item.quantity,
+      total_cost: unitCost !== null ? unitCost * item.quantity : null,
     });
 
     if (item.serial_number) {
@@ -655,16 +659,17 @@ export async function cancelStockSale(id: string): Promise<void> {
     .eq('id', id);
 }
 
-export async function addSaleToInvoice(saleId: string, _invoiceId: string): Promise<void> {
+export async function addSaleToInvoice(_saleId: string, _invoiceId: string): Promise<StockSale> {
   // NOTE: stock_sales v1.0.0 has no invoice_id or payment_method columns. Sale↔invoice linkage
   // happens through invoice_line_items referencing the sale, not the other way around.
-  // TODO(B8): rewire AddStockSaleToInvoiceModal to insert invoice_line_items rows referencing
-  // this sale rather than mutating the sale itself.
-  const { error } = await supabase
-    .from('stock_sales')
-    .update({ status: 'pending', updated_at: new Date().toISOString() })
-    .eq('id', saleId);
-  if (error) throw error;
+  // Throw instead of silently flipping status — otherwise the modal shows a success toast
+  // when no linkage was actually made, misleading the user.
+  throw new Error(
+    'addSaleToInvoice: not implemented in v1.0.0 schema. ' +
+    'TODO(B8): rewire AddStockSaleToInvoiceModal to insert invoice_line_items rows ' +
+    'and link via stock_sale_items.invoice_line_item_id (when added). ' +
+    'See stockService.ts.'
+  );
 }
 
 // ============================================================
