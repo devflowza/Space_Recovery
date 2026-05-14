@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Archive, X, Info, HardDrive, FolderOpen, Calendar, Shield, AlertCircle } from 'lucide-react';
+import { Archive, X, Info, HardDrive, FolderOpen, Shield, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { formatDate } from '../../lib/format';

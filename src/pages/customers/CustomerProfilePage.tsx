@@ -13,7 +13,7 @@ import { CustomerAvatar } from '../../components/ui/CustomerAvatar';
 import { ImageUpload } from '../../components/ui/ImageUpload';
 import { PhotoViewerModal } from '../../components/ui/PhotoViewerModal';
 import {
-  ChevronLeft, User, Mail, Phone, MapPin, Building2, Globe,
+  ChevronLeft, User, Mail, Phone, MapPin, Building2,
   Calendar, FileText, DollarSign, MessageSquare, Eye, Link as LinkIcon,
   Copy, RefreshCw, Ban, Check, AlertTriangle, ShoppingBag
 } from 'lucide-react';

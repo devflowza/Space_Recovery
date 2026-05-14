@@ -163,7 +163,7 @@ export const RecruitmentPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'jobs' | 'pipeline'>('jobs');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedJob, setSelectedJob] = useState<JobWithDetails | null>(null);
+  const [_selectedJob, _setSelectedJob] = useState<JobWithDetails | null>(null);
   const [pipelineJob, setPipelineJob] = useState<JobWithDetails | null>(null);
 
   const [showJobModal, setShowJobModal] = useState(false);

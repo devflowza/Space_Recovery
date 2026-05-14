@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { Database, Download, Upload, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Database, Download, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { logger } from '../../lib/logger';
 

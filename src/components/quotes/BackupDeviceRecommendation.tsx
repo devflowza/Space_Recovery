@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { HardDrive, ChevronDown, ChevronUp, CheckSquare, Square, Package } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { getRecommendedDevices, type StockItemWithCategory } from '../../lib/stockService';
+import { getRecommendedDevices } from '../../lib/stockService';
 import { useCurrency } from '../../hooks/useCurrency';
 
 interface BackupDeviceRecommendationProps {

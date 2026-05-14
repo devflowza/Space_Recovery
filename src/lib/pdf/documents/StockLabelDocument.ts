@@ -12,7 +12,7 @@ export interface StockLabelData {
   copies?: number;
 }
 
-function buildSingleLabel(data: StockLabelData, fontFamily: string): Content[] {
+function buildSingleLabel(data: StockLabelData, _fontFamily: string): Content[] {
   const { item, locationName, companyName, showPrice } = data;
 
   const labelContent: Content[] = [

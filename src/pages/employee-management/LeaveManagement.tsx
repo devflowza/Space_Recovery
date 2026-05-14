@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { CalendarDays, Plus, RefreshCw, Search, Check, X, Trash2, ChevronDown, Users, Clock, CalendarCheck, CalendarX, CreditCard as Edit2, Calendar, AlertCircle, FileText } from 'lucide-react';
+import { CalendarDays, Plus, RefreshCw, Search, Check, X, Trash2, Users, Clock, CalendarCheck, CalendarX, CreditCard as Edit2, Calendar, FileText } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format, differenceInCalendarDays, parseISO, addDays } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { leaveService } from '../../lib/leaveService';
 import type { LeaveRequestWithDetails, LeaveBalanceWithDetails } from '../../lib/leaveService';
 import { leaveKeys } from '../../lib/queryKeys';
@@ -60,7 +60,7 @@ const RequestLeaveModal: React.FC<RequestLeaveModalProps> = ({
   onClose,
   employees,
   leaveTypes,
-  currentUserId,
+  currentUserId: _currentUserId,
   isAdmin,
   onSuccess,
 }) => {
@@ -594,12 +594,12 @@ export const LeaveManagement: React.FC = () => {
     year: yearFilter,
   };
 
-  const { data: requests = [], isLoading: requestsLoading, refetch: refetchRequests } = useQuery({
+  const { data: requests = [], isLoading: requestsLoading } = useQuery({
     queryKey: leaveKeys.requests(requestFilters),
     queryFn: () => leaveService.getLeaveRequests(requestFilters),
   });
 
-  const { data: balances = [], isLoading: balancesLoading, refetch: refetchBalances } = useQuery({
+  const { data: balances = [], isLoading: balancesLoading } = useQuery({
     queryKey: leaveKeys.balances({ year: yearFilter, employeeId: employeeFilter !== 'all' ? employeeFilter : undefined }),
     queryFn: () => leaveService.getLeaveBalances({
       year: yearFilter,

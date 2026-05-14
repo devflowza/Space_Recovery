@@ -10,7 +10,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   User,
   Mail,
-  Phone,
   Building2,
   MapPin,
   Settings,
@@ -211,9 +210,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     mutationFn: async (customer: typeof formData) => {
       const { data: customerNumber, error: numberError } = await supabase.rpc('get_next_customer_number');
       if (numberError) throw numberError;
-
-      const selectedCountry = countries.find((c) => c.id === customer.country_id);
-      const selectedCity = cities.find((c) => c.id === customer.city_id);
 
       const { data: newCustomer, error: createError } = await supabase
         .from('customers_enhanced')

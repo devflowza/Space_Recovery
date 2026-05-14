@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Truck, UserCheck, Clock, Users, Mail, Phone, MapPin, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { Plus, Search, Filter, Truck, UserCheck, Users, Mail, Phone, MapPin, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -172,13 +172,6 @@ export default function SuppliersListPage() {
   const startIndex = (currentPage - 1) * SUPPLIERS_PER_PAGE;
   const endIndex = Math.min(startIndex + SUPPLIERS_PER_PAGE, filteredSuppliers.length);
   const paginatedSuppliers = filteredSuppliers.slice(startIndex, endIndex);
-
-  const recentSuppliers = suppliers.filter((s) => {
-    const createdDate = new Date(s.created_at);
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    return createdDate >= thirtyDaysAgo;
-  });
 
   return (
     <div className="p-6 max-w-[1800px] mx-auto">

@@ -6,7 +6,7 @@ import { PageHeader } from '../../components/shared/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { StockTransferModal } from '../../components/stock/StockTransferModal';
-import { getStockTransfers, type StockTransferWithDetails } from '../../lib/stockService';
+import { getStockTransfers } from '../../lib/stockService';
 import { stockKeys } from '../../lib/queryKeys';
 
 const statusConfig: Record<string, { label: string; variant: 'warning' | 'success' | 'danger' | 'info' | 'secondary' }> = {

@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Fingerprint, Shield, CheckCircle2, XCircle, AlertTriangle, Package } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { SearchableSelect } from '../ui/SearchableSelect';
-import { supabase } from '../../lib/supabaseClient';
 import {
   performIntegrityCheck,
   IntegrityCheckResult,
-  generateHash,
 } from '../../lib/chainOfCustodyService';
 import { useAuth } from '../../contexts/AuthContext';
 

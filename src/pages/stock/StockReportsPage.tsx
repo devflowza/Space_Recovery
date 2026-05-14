@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   BarChart2,
   TrendingUp,
-  TrendingDown,
   Download,
   AlertTriangle,
   DollarSign,
@@ -133,8 +132,6 @@ export const StockReportsPage: React.FC = () => {
     (salesReport?.totalRevenue ?? 0) > 0
       ? (((salesReport?.totalProfit ?? 0) / (salesReport?.totalRevenue ?? 1)) * 100)
       : 0;
-
-  const maxRevenue = topItems.reduce((m, i) => Math.max(m, i.totalRevenue), 0);
 
   const handleExportValuation = () => {
     const rows: string[][] = [

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Building2, Mail, Phone, MapPin, FileText, User, Truck, CheckCircle } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, FileText, User, Truck, CheckCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';

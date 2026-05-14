@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Package, ShoppingCart, Wrench, ExternalLink, HardDrive, AlertCircle } from 'lucide-react';
+import { Package, ShoppingCart, Wrench, ExternalLink, HardDrive } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -12,7 +12,6 @@ import {
   getSalesByCase,
   getStockUsageByCase,
   getRecommendedDevices,
-  getStockItem,
   type StockItemWithCategory,
 } from '../../lib/stockService';
 import { formatDate } from '../../lib/format';
@@ -28,7 +27,7 @@ interface CaseBackupDevicesTabProps {
 export const CaseBackupDevicesTab: React.FC<CaseBackupDevicesTabProps> = ({
   caseId,
   customerId,
-  companyId,
+  companyId: _companyId,
   recoveredDataSizeGB,
 }) => {
   const navigate = useNavigate();
@@ -80,14 +79,6 @@ export const CaseBackupDevicesTab: React.FC<CaseBackupDevicesTabProps> = ({
     setSelectedItems((prev) =>
       prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id]
     );
-  };
-
-  const handleOpenUsageForItem = async (itemId: string) => {
-    const item = await getStockItem(itemId);
-    if (item) {
-      setUsageItem(item);
-      setShowUsageModal(true);
-    }
   };
 
   return (

@@ -1,22 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Edit, Save, X, Package, MapPin, History, TrendingUp, Info, Briefcase, CheckCircle2, XCircle, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { Edit, Package, MapPin, History, TrendingUp, Info, Briefcase, CheckCircle2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
-import { Input } from '../ui/Input';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import {
   getInventoryItemById,
   getInventoryStatusHistory,
   getInventoryTransactions,
-  updateInventoryItem,
-  getInventoryCategories,
-  getInventoryStatusTypes,
-  getInventoryConditionTypes,
-  type InventoryItemCategory,
-  type InventoryStatusType,
-  type InventoryConditionType,
 } from '../../lib/inventoryService';
 import {
   getInventoryItemAssignments,
@@ -27,10 +19,8 @@ import {
   type AssignmentWithDetails,
   type CaseOption,
 } from '../../lib/inventoryCaseAssignmentService';
-import { AssignToCaseModal } from './AssignToCaseModal';
 import { MarkDefectiveModal } from './MarkDefectiveModal';
 import { CompleteAssignmentModal } from './CompleteAssignmentModal';
-import { supabase } from '../../lib/supabaseClient';
 import { format } from 'date-fns';
 import { useCurrency } from '../../hooks/useCurrency';
 import { logger } from '../../lib/logger';
@@ -50,10 +40,10 @@ export default function InventoryDetailModal({
   onUpdate,
   onEdit,
 }: InventoryDetailModalProps) {
-  const { formatCurrency } = useCurrency();
+  useCurrency();
   const [item, setItem] = useState<Record<string, unknown> | null>(null);
-  const [statusHistory, setStatusHistory] = useState<Record<string, unknown>[]>([]);
-  const [transactions, setTransactions] = useState<Record<string, unknown>[]>([]);
+  const [, setStatusHistory] = useState<Record<string, unknown>[]>([]);
+  const [, setTransactions] = useState<Record<string, unknown>[]>([]);
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
   const [activeAssignment, setActiveAssignment] = useState<AssignmentWithDetails | null>(null);
   const [loading, setLoading] = useState(true);

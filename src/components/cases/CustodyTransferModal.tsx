@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRightLeft, User, FileText, Package, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowRightLeft, Package, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -36,7 +36,7 @@ export const CustodyTransferModal: React.FC<CustodyTransferModalProps> = ({
 
   const [transferReason, setTransferReason] = useState('');
   const [selectedRecipient, setSelectedRecipient] = useState<string>('');
-  const [recipientName, setRecipientName] = useState('');
+  const [, setRecipientName] = useState('');
   const [transferMethod, setTransferMethod] = useState('');
   const [transferLocation, setTransferLocation] = useState('');
   const [conditionBefore, setConditionBefore] = useState('');

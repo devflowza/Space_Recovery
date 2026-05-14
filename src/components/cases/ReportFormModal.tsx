@@ -323,7 +323,6 @@ export default function ReportFormModal({
                 >
                   <option value="">Choose the type of report to create...</option>
                   {Object.values(REPORT_TYPES).map((type) => {
-                    const Icon = type.icon;
                     return (
                       <option key={type.key} value={type.key}>
                         {type.name}

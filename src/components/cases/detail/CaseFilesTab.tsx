@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { FileText, Upload, Download, Trash2, FileStack, FileImage, FileArchive, File, AlertCircle } from 'lucide-react';
+import { FileText, Upload, Download, Trash2, FileStack, FileImage, FileArchive, File } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { supabase } from '@/lib/supabaseClient';

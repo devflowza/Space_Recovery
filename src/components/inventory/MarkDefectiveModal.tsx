@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Badge } from '../ui/Badge';
 import { AlertTriangle, XCircle } from 'lucide-react';
 import {
   markAssignmentAsDefective,

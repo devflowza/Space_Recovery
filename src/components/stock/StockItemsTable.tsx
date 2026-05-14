@@ -1,6 +1,5 @@
 import { Eye, Pencil, Trash2, PackagePlus, PackageMinus } from 'lucide-react';
 import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
 import { StockItemWithCategory } from '../../lib/stockService';
 
 interface StockItemsTableProps {

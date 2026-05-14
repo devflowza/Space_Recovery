@@ -97,7 +97,7 @@ export const GeneralSettings: React.FC = () => {
   const toast = useToast();
   const [formData, setFormData] = useState<Partial<CompanySettings> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+  const [_uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [openSections, setOpenSections] = useState<Set<string>>(() => {
@@ -398,7 +398,7 @@ export const GeneralSettings: React.FC = () => {
 
   const handleLogoUpload = async (
     file: File | null,
-    previewUrl: string | null,
+    _previewUrl: string | null,
     type: 'primary' | 'light' | 'favicon'
   ) => {
     if (!file || !formData) return;
@@ -469,7 +469,7 @@ export const GeneralSettings: React.FC = () => {
 
   const handleQRCodeUpload = async (
     file: File | null,
-    previewUrl: string | null,
+    _previewUrl: string | null,
     type: 'invoice' | 'quote' | 'label' | 'general'
   ) => {
     if (!file || !formData) return;

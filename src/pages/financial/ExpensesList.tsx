@@ -29,7 +29,6 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
-  Download,
   FileText,
   Filter,
   Check,
@@ -47,7 +46,7 @@ export const ExpensesList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
-  const [selectedExpense, setSelectedExpense] = useState<any>(null);
+  const [_selectedExpense, setSelectedExpense] = useState<any>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [expenseToReject, setExpenseToReject] = useState<string | null>(null);

@@ -344,7 +344,7 @@ export async function cancelPayPalSubscription(
 
 export async function cancelSubscription(
   tenantId: string,
-  cancelImmediately = false,
+  _cancelImmediately = false,
   reason?: string
 ): Promise<void> {
   return cancelPayPalSubscription(tenantId, reason);

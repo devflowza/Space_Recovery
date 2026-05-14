@@ -37,7 +37,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     setZoom(zoom);
   };
 
-  const onCropCompleteInternal = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+  const onCropCompleteInternal = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 

@@ -4,7 +4,6 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import {
   rolePermissionsService,
-  Module,
   ModulesByCategory,
 } from '../../lib/rolePermissionsService';
 import { useToast } from '../../hooks/useToast';
@@ -15,7 +14,6 @@ import {
   XCircle,
   Save,
   RotateCcw,
-  AlertCircle,
   Info,
 } from 'lucide-react';
 
@@ -174,10 +172,6 @@ export const RolePermissions: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    return modulesByCategory[category]?.[0]?.icon || 'Shield';
   };
 
   if (loading) {

@@ -7,7 +7,7 @@ import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
-import { Plus, Search, Filter, Mail, Phone, Globe, Building2, MapPin, Eye, Users, Pencil, UserCheck, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Filter, Mail, Phone, Building2, MapPin, Users, UserCheck, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 import { useAuth } from '../../contexts/AuthContext';
 import { logger } from '../../lib/logger';
@@ -300,23 +300,6 @@ export const CompaniesListPage: React.FC = () => {
     if (editingCompanyId) {
       updateMutation.mutate({ id: editingCompanyId, data: formData });
     }
-  };
-
-  const handleOpenEditModal = (company: Company) => {
-    setEditingCompanyId(company.id);
-    setFormData({
-      company_name: company.name || company.company_name || '',
-      tax_number: company.tax_number || '',
-      industry_id: company.industry_id || '',
-      email: company.email || '',
-      phone: company.phone || '',
-      website: company.website || '',
-      country_id: company.country_id || '',
-      city_id: company.city_id || '',
-      address: company.address || '',
-      notes: company.notes || '',
-    });
-    setIsEditModalOpen(true);
   };
 
   const filteredCompanies = companies.filter((company) => {

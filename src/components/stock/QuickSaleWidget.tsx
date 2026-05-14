@@ -48,7 +48,7 @@ export const QuickSaleWidget: React.FC<QuickSaleWidgetProps> = ({
     enabled: !!caseId,
   });
 
-  const handleSaleCreated = (saleId: string) => {
+  const handleSaleCreated = (_saleId: string) => {
     refetch();
     onSaleCreated();
   };

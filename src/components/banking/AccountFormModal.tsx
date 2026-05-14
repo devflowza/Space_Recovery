@@ -195,17 +195,6 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
     }
   };
 
-  const getAccountTypeIcon = () => {
-    switch (formData.account_type) {
-      case 'bank':
-        return <Building className="w-5 h-5 text-primary" />;
-      case 'cash':
-        return <Wallet className="w-5 h-5 text-success" />;
-      case 'mobile':
-        return <Smartphone className="w-5 h-5 text-orange-600" />;
-    }
-  };
-
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={initialData ? 'Edit Account' : 'Add New Account'} size="large">
       <form onSubmit={handleSubmit} className="space-y-6">

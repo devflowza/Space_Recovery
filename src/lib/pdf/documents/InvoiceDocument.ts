@@ -443,7 +443,7 @@ export function buildInvoiceDocument(
       financialSummarySection,
       ...termsAndBankSection,
     ],
-    footer: (currentPage: number, pageCount: number) => {
+    footer: (_currentPage: number, _pageCount: number) => {
       if (qrCodeBase64) {
         const footerStack: any[] = [];
 

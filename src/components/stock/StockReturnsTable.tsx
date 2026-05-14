@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { RotateCcw, Search, Filter } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { getStockReturns, getStockReturn, type StockReturnWithDetails } from '../../lib/stockService';
+import { getStockReturns, getStockReturn } from '../../lib/stockService';
 import { stockKeys } from '../../lib/queryKeys';
 import { ProcessReturnModal } from './ProcessReturnModal';
 import { useCurrency } from '../../hooks/useCurrency';

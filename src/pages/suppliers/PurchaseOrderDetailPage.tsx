@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard as Edit, Package, Calendar, Truck, DollarSign, FileText, CheckCircle, User, Building2, MapPin, Clock, PackageCheck } from 'lucide-react';
+import { ArrowLeft, CreditCard as Edit, Package, Calendar, Truck, FileText, CheckCircle, Building2, MapPin, Clock, PackageCheck } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';

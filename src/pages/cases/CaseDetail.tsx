@@ -19,7 +19,6 @@ import { DeviceFormModal } from '../../components/cases/DeviceFormModal';
 import { MarkAsDeliveredModal } from '../../components/cases/MarkAsDeliveredModal';
 import { PreserveLongTermModal } from '../../components/cases/PreserveLongTermModal';
 import { ChainOfCustodyTab } from '../../components/cases/ChainOfCustodyTab';
-import { RecordPaymentModal } from '../../components/financial/RecordPaymentModal';
 import { ReportTypeSelectionModal } from '../../components/cases/ReportTypeSelectionModal';
 import { StreamlinedReportEditor } from '../../components/cases/StreamlinedReportEditor';
 import ReportViewModal from '../../components/cases/ReportViewModal';
@@ -69,7 +68,7 @@ export const CaseDetail: React.FC = () => {
     caseData, isLoading, caseError,
     caseStatuses, devices, cloneDrives, attachments,
     quotes, invoices, caseFinancialSummary, reports,
-    caseEngineers, portalSettings, notes, history,
+    caseEngineers, portalSettings, notes,
   } = useCaseQueries(id, {
     reportTypeFilter: modals.reportTypeFilter,
     reportStatusFilter: modals.reportStatusFilter,
@@ -79,7 +78,7 @@ export const CaseDetail: React.FC = () => {
 
   const {
     addNoteMutation, updateCaseStatusMutation, updateCasePriorityMutation,
-    updateAssignedEngineerMutation, createPaymentMutation, updateCaseInfoMutation,
+    updateAssignedEngineerMutation, updateCaseInfoMutation,
     updateDeviceInfoMutation, updateCustomerInfoMutation, markAsDeliveredMutation,
     preserveLongTermMutation, duplicateCaseMutation, deleteCaseMutation,
     queryClient, navigate, profile, toast,
@@ -125,7 +124,7 @@ export const CaseDetail: React.FC = () => {
     modals.setShowPDFPreviewModal(true);
   };
 
-  const handleSendEmailFromPreview = (blobUrl: string, blob: Blob, filename: string) => {
+  const handleSendEmailFromPreview = (_blobUrl: string, blob: Blob, filename: string) => {
     modals.setEmailPdfBlob(blob);
     modals.setEmailPdfFilename(filename);
     modals.setShowEmailModal(true);
@@ -145,27 +144,6 @@ export const CaseDetail: React.FC = () => {
     const fullInvoice = await invoiceService.fetchInvoiceById(invoice.id);
     modals.setSelectedInvoiceForPayment(fullInvoice);
     modals.setShowRecordPaymentModal(true);
-  };
-
-  const handleConvertProforma = async () => {
-    if (!modals.convertingInvoice) return;
-
-    try {
-      await invoiceService.convertProformaToTaxInvoice(modals.convertingInvoice.id);
-
-      // Close modal
-      modals.setShowConvertProformaModal(false);
-      modals.setConvertingInvoice(null);
-
-      // Refresh the invoices list to show the new tax invoice
-      queryClient.invalidateQueries({ queryKey: ['invoices', 'case', id] });
-      queryClient.invalidateQueries({ queryKey: ['case', id] });
-      queryClient.invalidateQueries({ queryKey: ['case-financial-summary', id] });
-      toast.success('Proforma invoice successfully converted to Tax Invoice');
-    } catch (error: unknown) {
-      logger.error('Error converting invoice:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to convert invoice');
-    }
   };
 
   const handleDuplicateCase = () => {

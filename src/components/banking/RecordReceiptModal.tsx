@@ -131,7 +131,7 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
     enabled: isOpen,
   });
 
-  const { data: invoices = [], refetch: refetchInvoices } = useQuery({
+  const { data: invoices = [] } = useQuery({
     queryKey: ['invoices_by_case', formData.case_id],
     queryFn: async () => {
       if (!formData.case_id) return [];

@@ -5,7 +5,6 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import {
-  HardDrive,
   Plus,
   Trash2,
   Copy,
@@ -40,7 +39,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
   onClose,
   onSaveDrives,
   existingDrives = [],
-  defaultDeviceTypeId,
+  defaultDeviceTypeId: _defaultDeviceTypeId,
 }) => {
   const [drives, setDrives] = useState<BulkDriveRow[]>([]);
   const [smartFillEnabled, setSmartFillEnabled] = useState(true);
@@ -277,7 +276,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
     onClose();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, driveId: string, field: string, index: number) => {
+  const handleKeyDown = (e: React.KeyboardEvent, _driveId: string, field: string, index: number) => {
     if (e.key === 'Tab' && !e.shiftKey) {
       if (field === 'capacity') {
         e.preventDefault();

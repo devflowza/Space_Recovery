@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import {
   getPortalSettings,
@@ -12,13 +12,11 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection';
-import { Badge } from '../../components/ui/Badge';
 import {
   ArrowLeft,
   Save,
   CheckCircle2,
   Shield,
-  Link as LinkIcon,
   Settings as SettingsIcon,
   AlertCircle,
   ExternalLink,
@@ -30,7 +28,6 @@ import {
   Clock,
   Mail,
   FileText,
-  Upload,
   Users,
 } from 'lucide-react';
 
@@ -195,7 +192,7 @@ export const ClientPortalSettings: React.FC = () => {
 
     try {
       const testUrl = `${formData.portal_base_url}${formData.portal_link_format}`;
-      const response = await fetch(testUrl, { method: 'HEAD', mode: 'no-cors' });
+      await fetch(testUrl, { method: 'HEAD', mode: 'no-cors' });
 
       setTestUrlResult({
         success: true,

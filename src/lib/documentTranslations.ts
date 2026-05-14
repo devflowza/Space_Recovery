@@ -1426,7 +1426,7 @@ export function isRTLLanguage(languageCode: LanguageCode | null): boolean {
 export function formatBilingualText(
   englishText: string,
   translatedText: string | null,
-  isRTL: boolean = false
+  _isRTL: boolean = false
 ): string {
   if (!translatedText) return englishText;
   return `${englishText} | ${translatedText}`;

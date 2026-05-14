@@ -9,7 +9,6 @@ import {
   AlertCircle,
   RefreshCw,
   FileText,
-  X,
 } from 'lucide-react';
 import { generatePDFAsBlob, type PDFBlobResult } from '../../lib/pdf/pdfService';
 import type { DocumentType } from '../../lib/pdf/types';
@@ -41,7 +40,7 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
   documentId,
   documentNumber,
   documentType,
-  customerEmail,
+  customerEmail: _customerEmail,
   onSendEmail,
 }) => {
   const [isLoading, setIsLoading] = useState(true);

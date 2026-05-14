@@ -10,7 +10,6 @@ import {
   Calendar,
   Briefcase,
   FileText,
-  DollarSign,
   Building2,
   Hash,
   CheckCircle,

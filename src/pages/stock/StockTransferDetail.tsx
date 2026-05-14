@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -10,7 +10,6 @@ import {
   Package,
   Hash,
   Calendar,
-  User,
 } from 'lucide-react';
 import { PageHeader } from '../../components/shared/PageHeader';
 import { Button } from '../../components/ui/Button';
@@ -20,7 +19,6 @@ import {
   getStockTransfer,
   completeStockTransfer,
   cancelStockTransfer,
-  type StockTransferWithDetails,
 } from '../../lib/stockService';
 import { stockKeys } from '../../lib/queryKeys';
 import { useAuth } from '../../contexts/AuthContext';

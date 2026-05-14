@@ -3,12 +3,10 @@ import { Plus, Search, Package, Zap, Edit2, Trash2, RefreshCw, Filter, HardDrive
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import AddInventoryModal from '../../components/inventory/AddInventoryModal';
 import InventoryDetailModal from '../../components/inventory/InventoryDetailModal';
 import DeleteInventoryConfirmationModal from '../../components/inventory/DeleteInventoryConfirmationModal';
-import { InventoryInsightsHeader } from '../../components/inventory/InventoryInsightsHeader';
 import { BulkInventoryImportModal } from '../../components/importExport/BulkInventoryImportModal';
 import {
   getInventoryItems,
@@ -22,7 +20,6 @@ import {
   type InventoryStatusType,
   type InventoryInsights,
 } from '../../lib/inventoryService';
-import { supabase } from '../../lib/supabaseClient';
 import { format } from 'date-fns';
 import { logger } from '../../lib/logger';
 

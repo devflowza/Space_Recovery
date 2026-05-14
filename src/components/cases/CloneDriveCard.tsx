@@ -8,7 +8,6 @@ import {
   MapPin,
   Calendar,
   User,
-  Server,
   FolderOpen,
   CheckCircle2,
   Archive,

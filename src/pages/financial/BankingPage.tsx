@@ -24,7 +24,6 @@ import {
   CheckCircle2,
   Clock,
   Search,
-  Filter,
   Edit,
   Trash2,
   AlertTriangle,
@@ -176,7 +175,6 @@ export const BankingPage: React.FC = () => {
   const mobileAccounts = activeAccounts.filter(a => a.account_type === 'mobile');
 
   const selectedAccountData = accounts.find(acc => acc.id === selectedAccount);
-  const unreconciledTransactions = bankTransactions.filter((t: { is_reconciled?: boolean }) => !t.is_reconciled);
 
   const getAccountTypeIcon = (type: string) => {
     switch (type) {

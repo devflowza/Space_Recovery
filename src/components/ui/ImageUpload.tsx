@@ -24,14 +24,14 @@ interface ImageUploadProps {
 export const ImageUpload: React.FC<ImageUploadProps> = ({
   value,
   onChange,
-  onUploadComplete,
+  onUploadComplete: _onUploadComplete,
   maxSizeMB = 5,
   acceptedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'],
   label,
   description,
   aspectRatio,
   recommendedDimensions,
-  bucketName = 'company-assets',
+  bucketName: _bucketName = 'company-assets',
   className = '',
   enableCrop = false,
   cropAspectRatio = 1,
@@ -40,7 +40,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(value || null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, _setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [fileMetadata, setFileMetadata] = useState<{
     name: string;

@@ -91,7 +91,7 @@ interface CompanySettings {
 
 export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
   caseId,
-  caseNumber,
+  caseNumber: _caseNumber,
 }) => {
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);

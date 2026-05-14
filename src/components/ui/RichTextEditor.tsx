@@ -16,7 +16,6 @@ import {
   Zap,
   AlertTriangle,
 } from 'lucide-react';
-import { Button } from './Button';
 
 interface RichTextEditorProps {
   value: string;

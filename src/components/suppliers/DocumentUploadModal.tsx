@@ -58,7 +58,6 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${supplierId}/${Date.now()}_${selectedFile.name}`;
       const filePath = `supplier-documents/${fileName}`;
 

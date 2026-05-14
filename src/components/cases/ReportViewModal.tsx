@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, Edit, FileText, CheckCircle, Send, AlertCircle, Mail, Printer } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Download, Edit, FileText, CheckCircle, Send, AlertCircle, Mail, Printer } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -35,7 +35,7 @@ export default function ReportViewModal({
   onSend,
 }: ReportViewModalProps) {
   const [report, setReport] = useState<Report | null>(null);
-  const [sections, setSections] = useState<ReportSectionData[]>([]);
+  const [, setSections] = useState<ReportSectionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);

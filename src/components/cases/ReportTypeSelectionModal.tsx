@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, FileText, Wrench, Server, Shield, Scale, Trash2, AlertTriangle } from 'lucide-react';
+import { X, FileText } from 'lucide-react';
 import { REPORT_TYPES, type ReportType } from '../../lib/reportTypes';
 
 interface ReportTypeSelectionModalProps {

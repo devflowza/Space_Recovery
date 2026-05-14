@@ -149,7 +149,6 @@ export const TenantSignup = () => {
               </Card>
             ))}
             {!plansLoading && plans.map((plan) => {
-              const features = plan.features as Record<string, any> || {};
               const limits = plan.limits as Record<string, any> || {};
               const isSelected = selectedPlanId === plan.id;
 

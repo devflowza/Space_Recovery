@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Upload,
   FileText,
@@ -14,7 +14,6 @@ import { Button } from '../ui/Button';
 import {
   EntityType,
   ENTITY_CONFIGS,
-  createJob,
   parseCSV,
   csvToObjects,
   suggestFieldMapping,

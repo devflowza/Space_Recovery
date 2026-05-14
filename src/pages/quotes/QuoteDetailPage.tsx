@@ -53,7 +53,7 @@ export const QuoteDetailPage: React.FC = () => {
     isLoadingTranslations,
     t,
   } = usePDFDownload();
-  const { profile } = useAuth();
+  const { profile: _profile } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -129,17 +129,6 @@ export const QuoteDetailPage: React.FC = () => {
 
   const handleEditQuote = async (quoteData: Record<string, unknown> & { title: string; status: string; valid_until: string; client_reference?: string; tax_rate: number; discount_amount: number; discount_type: string; terms_and_conditions?: string; bank_account_id?: string }, items: Array<{ description: string; quantity: number; unit_price: number; tax_rate?: number; discount_percent?: number; sort_order?: number }>) => {
     try {
-      const subtotal = items.reduce(
-        (sum, item) => sum + item.quantity * item.unit_price,
-        0
-      );
-      const taxAmount = (subtotal * quoteData.tax_rate) / 100;
-      const discountValue =
-        quoteData.discount_type === 'percentage'
-          ? (subtotal * quoteData.discount_amount) / 100
-          : quoteData.discount_amount;
-      const total = subtotal + taxAmount - discountValue;
-
       await updateQuote(id!, {
         title: quoteData.title,
         status: quoteData.status,

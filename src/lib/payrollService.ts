@@ -283,10 +283,6 @@ export const payrollService = {
     const workingDaysPerMonth = settings.working_days_per_month || 22;
     const workingHoursPerDay = settings.working_hours_per_day || 8;
 
-    const pendingAdjustments = options.includePendingAdjustments
-      ? await this.getPendingAdjustments()
-      : [];
-
     const records = [];
     for (const employee of employees || []) {
       const salaryStructure = Array.isArray(employee.salary_structure)
@@ -778,7 +774,7 @@ export const payrollService = {
   async getDashboardStats(): Promise<PayrollDashboardStats> {
     const currentPeriod = await this.getCurrentPayrollPeriod();
 
-    const { data: employees, count: employeeCount } = await supabase
+    const { count: employeeCount } = await supabase
       .from('employees')
       .select('*', { count: 'exact', head: true })
       .eq('employment_status', 'active');

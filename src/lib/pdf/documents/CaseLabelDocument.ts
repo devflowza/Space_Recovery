@@ -1,6 +1,6 @@
 import type { TDocumentDefinitions, Content } from 'pdfmake/interfaces';
 import type { ReceiptData, TranslationContext } from '../types';
-import { PDF_STYLES, PDF_COLORS, getPriorityColor, getStylesWithFont } from '../styles';
+import { PDF_COLORS, getPriorityColor, getStylesWithFont } from '../styles';
 import { formatDate, safeString } from '../utils';
 import { getDeviceIconSvg } from '../../deviceIconMapper';
 

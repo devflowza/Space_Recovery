@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle, Clock, XCircle, DollarSign, Calendar, TrendingUp } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, DollarSign, Calendar, TrendingUp } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { payrollService } from '../../lib/payrollService';
 import { payrollKeys } from '../../lib/queryKeys';

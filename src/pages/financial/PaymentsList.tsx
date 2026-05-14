@@ -20,7 +20,6 @@ import {
   Calendar,
   DollarSign,
   User,
-  Filter,
   Eye,
   Receipt,
   XCircle,
@@ -30,7 +29,6 @@ import {
   Download,
   MoreVertical,
   Printer,
-  Mail,
   ExternalLink,
   TrendingUp,
   BarChart3,
@@ -44,7 +42,7 @@ export const PaymentsList: React.FC = () => {
   const [dateFilter, setDateFilter] = useState<string>('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all');
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [_selectedPayment, _setSelectedPayment] = useState<any>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [fullPaymentData, setFullPaymentData] = useState<any>(null);
@@ -64,7 +62,7 @@ export const PaymentsList: React.FC = () => {
     },
   });
 
-  const { data: payments = [], isLoading, refetch } = useQuery({
+  const { data: payments = [], isLoading } = useQuery({
     queryKey: ['payments', searchTerm, statusFilter, dateFilter, paymentMethodFilter],
     queryFn: async () => {
       let query = supabase

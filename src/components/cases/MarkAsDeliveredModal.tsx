@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Truck, X, Info, HardDrive, FolderOpen, Calendar, CheckCircle2, Clock } from 'lucide-react';
+import { Truck, X, Info, HardDrive, FolderOpen, CheckCircle2, Clock } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { formatDate } from '../../lib/format';

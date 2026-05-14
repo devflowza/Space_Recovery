@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Printer, Tag, Eye, Download, X, Plus, Minus } from 'lucide-react';
+import { Printer, Download, X, Plus, Minus } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { useToast } from '../../hooks/useToast';

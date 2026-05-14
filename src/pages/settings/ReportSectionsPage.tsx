@@ -9,8 +9,6 @@ import {
   ArrowLeft,
   Layers,
   Info,
-  Check,
-  X,
   AlertCircle,
 } from 'lucide-react';
 import { reportSectionService, type ReportSection, type SectionPreset } from '../../lib/reportSectionService';
@@ -35,13 +33,13 @@ const CATEGORY_CONFIG = {
 
 export const ReportSectionsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  useTranslation();
   const [sections, setSections] = useState<ReportSection[]>([]);
   const [filteredSections, setFilteredSections] = useState<ReportSection[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showSectionModal, setShowSectionModal] = useState(false);
+  const [, setShowSectionModal] = useState(false);
   const [showPresetsModal, setShowPresetsModal] = useState(false);
   const [selectedSection, setSelectedSection] = useState<ReportSection | null>(null);
   const [presets, setPresets] = useState<SectionPreset[]>([]);
@@ -361,7 +359,7 @@ export const ReportSectionsPage: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {presets.map((preset, index) => (
+                {presets.map((preset) => (
                   <Card key={preset.id} className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-medium text-slate-900">{preset.preset_name}</h4>

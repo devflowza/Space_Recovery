@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Ticket, Search, AlertCircle } from 'lucide-react';
+import { Ticket, Search } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { StatsCard } from '../../components/ui/StatsCard';
 import { Table } from '../../components/ui/Table';
