@@ -34,20 +34,20 @@ export const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
   const getItemStyle = () => {
     if (isActive) {
       return {
-        background: '#ffffff',
-        boxShadow: '0 1px 4px rgb(var(--color-primary) / 0.1)',
-        borderLeft: '3px solid rgb(var(--color-primary))',
+        background: 'rgb(var(--color-primary) / 0.10)',
+        boxShadow: '0 1px 4px rgb(var(--color-primary) / 0.15)',
+        borderLeft: '4px solid rgb(var(--color-primary))',
       };
     }
     if (isHovered) {
       return {
-        background: '#E8ECF2',
-        borderLeft: '3px solid rgb(var(--color-primary) / 0.4)',
+        background: 'rgb(var(--color-primary) / 0.04)',
+        borderLeft: '4px solid rgb(var(--color-primary) / 0.4)',
       };
     }
     return {
       background: 'transparent',
-      borderLeft: '3px solid transparent',
+      borderLeft: '4px solid transparent',
     };
   };
 
@@ -116,7 +116,7 @@ export const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
       {!isCollapsed && (
         <>
           <span
-            className="font-medium flex-1 tracking-tight transition-colors duration-[180ms]"
+            className={`${isActive ? 'font-semibold' : 'font-medium'} flex-1 tracking-tight transition-colors duration-[180ms]`}
             style={{ fontSize: '13.5px', color: getLabelColor() }}
           >
             {label}

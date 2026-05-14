@@ -147,8 +147,8 @@ export const Sidebar: React.FC = () => {
         relative
       `}
       style={{
-        background: '#F4F6F9',
-        borderRight: '1px solid #E0E6ED',
+        background: 'rgb(var(--color-primary) / 0.05)',
+        borderRight: '1px solid rgb(var(--color-primary) / 0.15)',
         fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
       }}
     >
@@ -157,7 +157,7 @@ export const Sidebar: React.FC = () => {
         {/* Brand Header */}
         <div
           className={`${isCollapsed ? 'px-3 py-4' : 'px-5 py-5'} relative`}
-          style={{ borderBottom: '1px solid #D8DEE6' }}
+          style={{ borderBottom: '1px solid rgb(var(--color-primary) / 0.15)' }}
         >
           <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3.5'}`}>
             <div
@@ -531,7 +531,7 @@ export const Sidebar: React.FC = () => {
         </nav>
 
         {/* Footer */}
-        <div style={{ borderTop: '1px solid #D8DEE6' }}>
+        <div style={{ borderTop: '1px solid rgb(var(--color-primary) / 0.15)' }}>
           {/* Help button */}
           <div className={`${isCollapsed ? 'px-2 py-2' : 'px-3 py-2'}`}>
             {isCollapsed ? (

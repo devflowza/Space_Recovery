@@ -97,7 +97,7 @@ export const AppLayout: React.FC = () => {
           className="flex-shrink-0 flex items-center px-6 h-14"
           style={{
             background: '#ffffff',
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: '1px solid rgb(var(--color-primary) / 0.15)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
           }}
         >
