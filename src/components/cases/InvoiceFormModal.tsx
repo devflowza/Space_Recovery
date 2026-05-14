@@ -12,10 +12,9 @@ import { logger } from '../../lib/logger';
 interface LineItemTemplate {
   id: string;
   name: string;
-  description: string;
-  unit_of_measure: string;
-  default_price: number;
-  item_category: string;
+  description: string | null;
+  default_price: number | null;
+  item_category: string | null;
 }
 
 interface InvoiceLineItem {
@@ -26,6 +25,30 @@ interface InvoiceLineItem {
   unit?: string;
 }
 
+interface InvoiceInitialData {
+  invoice_type?: string;
+  title?: string;
+  invoice_date?: string;
+  due_date?: string;
+  status?: string;
+  terms_and_conditions?: string;
+  notes?: string;
+  discount_amount?: number;
+  discount_type?: string;
+  tax_rate?: number;
+  client_reference?: string;
+  bank_account_id?: string | null;
+  invoice_number?: string;
+  invoice_line_items?: InvoiceLineItem[];
+}
+
+interface QuoteOption {
+  id: string;
+  quote_number: string | null;
+  title?: string | null;
+  total_amount: number | null;
+}
+
 interface InvoiceFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,16 +56,16 @@ interface InvoiceFormModalProps {
   caseId?: string;
   customerId?: string | null;
   companyId?: string | null;
-  initialData?: Record<string, unknown>;
-  quotes?: Record<string, unknown>[];
+  initialData?: InvoiceInitialData;
+  quotes?: QuoteOption[];
   clientReference?: string;
 }
 
 interface InvoiceTermsTemplate {
   id: string;
   name: string;
-  content: string;
-  is_default: boolean;
+  content: string | null;
+  is_default: boolean | null;
 }
 
 interface BankAccount {
@@ -128,27 +151,24 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     }
   }, [initialData]);
 
-  const { data: lineItemTemplates = [], isLoading: catalogLoading } = useQuery({
+  const { data: lineItemTemplates = [], isLoading: catalogLoading } = useQuery<LineItemTemplate[]>({
     queryKey: ['invoice_line_item_templates'],
     queryFn: async () => {
-      const { data: typeData, error: typeError } = await supabase
-        .from('master_template_types')
-        .select('id')
-        .eq('code', 'invoice_line_items')
-        .maybeSingle();
-
-      if (typeError || !typeData) return [];
-
       const { data, error } = await supabase
-        .from('document_templates')
-        .select('id, name, description, unit_of_measure, default_price, item_category')
-        .eq('template_type_id', typeData.id)
+        .from('catalog_service_line_items')
+        .select('id, name, description, default_price, catalog_service_categories(name)')
         .eq('is_active', true)
-        .order('item_category')
+        .order('sort_order')
         .order('name');
 
       if (error) throw error;
-      return data as LineItemTemplate[];
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        default_price: row.default_price,
+        item_category: row.catalog_service_categories?.name ?? null,
+      }));
     },
     enabled: isOpen,
   });
@@ -239,17 +259,16 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
         if (activeCaseId) {
           const { data } = await supabase
             .from('cases')
-            .select('case_no, customer_id, company_id, client_reference, title, service_types(name)')
+            .select('case_no, customer_id, company_id, client_reference, title, catalog_service_types(name)')
             .eq('id', activeCaseId)
             .maybeSingle();
           if (data) {
-            setCaseNumber(data.case_no);
+            setCaseNumber(data.case_no ?? '');
             if (data.client_reference && !initialData?.client_reference) {
-              setInvoiceData(prev => ({ ...prev, client_reference: data.client_reference }));
+              setInvoiceData(prev => ({ ...prev, client_reference: data.client_reference ?? '' }));
             }
-            // Auto-populate title if not editing and no title is set
             if (!initialData && !invoiceData.title) {
-              const serviceTypeName = (data as Record<string, unknown> & { service_types?: { name?: string } }).service_types?.name;
+              const serviceTypeName = data.catalog_service_types?.name;
               const autoTitle = serviceTypeName || data.title || 'Invoice';
               setInvoiceData(prev => ({ ...prev, title: autoTitle }));
             }
@@ -285,17 +304,17 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
         quote_items (*)
       `)
       .eq('id', quoteId)
-      .single();
+      .maybeSingle();
 
-    if (error) {
-      logger.error('Error fetching quote:', error);
+    if (error || !quoteData) {
+      if (error) logger.error('Error fetching quote:', error);
       return;
     }
 
     if (quoteData.quote_items && quoteData.quote_items.length > 0) {
-      const items = quoteData.quote_items.map((item: { description: string; quantity: number; unit_price: number }) => ({
+      const items = quoteData.quote_items.map((item) => ({
         description: item.description,
-        quantity: item.quantity,
+        quantity: item.quantity ?? 1,
         unit_price: item.unit_price,
         unit: 'Service',
       }));
@@ -305,8 +324,8 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     setInvoiceData((prev) => ({
       ...prev,
       notes: quoteData.notes || prev.notes,
-      terms_and_conditions: quoteData.terms_and_conditions || prev.terms_and_conditions,
-      discount_amount: quoteData.discount_amount || 0,
+      terms_and_conditions: quoteData.terms || prev.terms_and_conditions,
+      discount_amount: quoteData.discount_amount ?? 0,
     }));
   };
 
@@ -330,8 +349,8 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     const newItem: InvoiceLineItem = {
       description: `${template.name}${template.description ? ' - ' + template.description : ''}`,
       quantity: 1,
-      unit_price: template.default_price,
-      unit: template.unit_of_measure,
+      unit_price: template.default_price ?? 0,
+      unit: 'Service',
     };
     setLineItems([...lineItems, newItem]);
     setShowCatalog(false);
@@ -349,9 +368,9 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
         .maybeSingle();
 
       if (data) {
-        setCaseNumber(data.case_no);
+        setCaseNumber(data.case_no ?? '');
         if (data.client_reference) {
-          setInvoiceData(prev => ({ ...prev, client_reference: data.client_reference }));
+          setInvoiceData(prev => ({ ...prev, client_reference: data.client_reference ?? '' }));
         }
       }
     }
@@ -363,30 +382,10 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     return (div.textContent || '').trim();
   };
 
-  const applyTermsTemplate = async (template: InvoiceTermsTemplate) => {
-    const plainText = stripHtmlTags(template.content);
+  const applyTermsTemplate = (template: InvoiceTermsTemplate) => {
+    const plainText = stripHtmlTags(template.content ?? '');
     setInvoiceData(prev => ({ ...prev, terms_and_conditions: plainText }));
     setShowTermsTemplates(false);
-
-    try {
-      const { data: currentTemplate } = await supabase
-        .from('document_templates')
-        .select('usage_count')
-        .eq('id', template.id)
-        .single();
-
-      if (currentTemplate) {
-        await supabase
-          .from('document_templates')
-          .update({
-            usage_count: (currentTemplate.usage_count || 0) + 1,
-            last_used_at: new Date().toISOString(),
-          })
-          .eq('id', template.id);
-      }
-    } catch (error) {
-      logger.error('Error updating template usage:', error);
-    }
   };
 
   const subtotal = lineItems.reduce((sum, item) => {
@@ -967,7 +966,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 placeholder="Search services, descriptions, or categories..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                icon={<Search className="w-4 h-4" />}
+                leftIcon={<Search className="w-4 h-4" />}
               />
             </div>
             <div className="flex-1 overflow-y-auto px-4 pb-4">
@@ -993,18 +992,17 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                             <div className="text-sm text-slate-600 mb-2">{item.description}</div>
                           )}
                           <div className="flex items-center gap-2">
-                            <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded">
-                              {item.item_category}
-                            </span>
-                            <span className="text-xs text-slate-500">
-                              {item.unit_of_measure}
-                            </span>
+                            {item.item_category && (
+                              <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded">
+                                {item.item_category}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className="text-right ml-4">
                           <div className="font-bold text-lg text-primary">
                             {currencyFormat.currencySymbol}
-                            {item.default_price.toFixed(2)}
+                            {(item.default_price ?? 0).toFixed(2)}
                           </div>
                         </div>
                       </div>
