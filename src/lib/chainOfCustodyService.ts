@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { logger } from './logger';
+import type { Database } from '../types/database.types';
 
 export type ActionCategory =
   | 'creation'
@@ -15,6 +16,22 @@ export type ActionCategory =
 export type TransferStatus = 'initiated' | 'pending_acceptance' | 'accepted' | 'rejected' | 'cancelled';
 
 export type IntegrityCheckResult = 'passed' | 'failed' | 'warning' | 'not_applicable';
+
+// TODO(B8): the rich Chain-of-Custody UX (witnesses, signatures, before/after
+// values, hash algorithm, digital signatures, separate evidence references,
+// entry numbering, physical inspection fields, supervisor approvals) is
+// not yet persisted by the live `chain_of_custody*` tables. The DB tracks a
+// leaner shape: `action`, `description`, `actor_name`, `actor_role`,
+// `actor_id`, `device_id`, `location`, `custody_status`, `evidence_hash`,
+// `metadata`, `created_at`. Fields below that are not backed by columns are
+// derived from `metadata` or synthesized (e.g. `entry_number` from row index).
+// Restore real columns + RPC params via migration before treating these as
+// authoritative for legal/forensic export.
+
+type ChainOfCustodyRow = Database['public']['Tables']['chain_of_custody']['Row'];
+type CustodyTransferRow = Database['public']['Tables']['chain_of_custody_transfers']['Row'];
+type AccessLogRow = Database['public']['Tables']['chain_of_custody_access_log']['Row'];
+type IntegrityCheckRow = Database['public']['Tables']['chain_of_custody_integrity_checks']['Row'];
 
 export interface ChainOfCustodyEntry {
   id: string;
@@ -130,6 +147,182 @@ export interface IntegrityCheck {
   created_at: string;
 }
 
+function asJsonRecord(value: unknown): Record<string, any> | undefined {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, any>;
+  }
+  return undefined;
+}
+
+function mapChainOfCustodyRow(row: ChainOfCustodyRow, indexFromEnd: number): ChainOfCustodyEntry {
+  const meta = asJsonRecord(row.metadata) ?? {};
+  return {
+    id: row.id,
+    case_id: row.case_id,
+    // TODO(B8): no entry_number column; derive sequential number from query order
+    entry_number: indexFromEnd,
+    action_category: row.action_category as ActionCategory,
+    // DB column is `action`; legacy interface used both action_type + action_description
+    action_type: row.action,
+    action_description: row.description ?? row.action,
+    actor_id: row.actor_id ?? undefined,
+    actor_name: row.actor_name,
+    actor_role: row.actor_role ?? undefined,
+    // TODO(B8): no actor_ip_address / actor_user_agent columns — surface via metadata
+    actor_ip_address: typeof meta.actor_ip_address === 'string' ? meta.actor_ip_address : undefined,
+    actor_user_agent: typeof meta.actor_user_agent === 'string' ? meta.actor_user_agent : undefined,
+    device_id: row.device_id ?? undefined,
+    // TODO(B8): no evidence_reference / hash_algorithm / digital_signature columns
+    evidence_reference: typeof meta.evidence_reference === 'string' ? meta.evidence_reference : undefined,
+    evidence_description: typeof meta.evidence_description === 'string' ? meta.evidence_description : undefined,
+    location_facility: row.location ?? undefined,
+    location_details: typeof meta.location_details === 'string' ? meta.location_details : undefined,
+    hash_algorithm: typeof meta.hash_algorithm === 'string' ? meta.hash_algorithm : undefined,
+    hash_value: row.evidence_hash ?? undefined,
+    previous_hash: typeof meta.previous_hash === 'string' ? meta.previous_hash : undefined,
+    digital_signature: typeof meta.digital_signature === 'string' ? meta.digital_signature : undefined,
+    before_values: asJsonRecord(meta.before_values),
+    after_values: asJsonRecord(meta.after_values),
+    metadata: meta,
+    witness_id: typeof meta.witness_id === 'string' ? meta.witness_id : undefined,
+    witness_name: typeof meta.witness_name === 'string' ? meta.witness_name : undefined,
+    supervisor_id: typeof meta.supervisor_id === 'string' ? meta.supervisor_id : undefined,
+    supervisor_approved_at:
+      typeof meta.supervisor_approved_at === 'string' ? meta.supervisor_approved_at : undefined,
+    // DB has no occurred_at; fall back to created_at
+    occurred_at: row.created_at,
+    created_at: row.created_at,
+  };
+}
+
+function mapCustodyTransferRow(row: CustodyTransferRow): CustodyTransfer {
+  // Extra UI-only fields (method/location/conditions/seal/signatures) are
+  // packed into `notes` as JSON when they exist — see initiateCustodyTransfer.
+  let parsedNotes: Record<string, any> = {};
+  if (row.notes) {
+    try {
+      const candidate = JSON.parse(row.notes);
+      if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+        parsedNotes = candidate as Record<string, any>;
+      }
+    } catch {
+      parsedNotes = { _raw: row.notes };
+    }
+  }
+  const transferStatus = (row.transfer_status ?? 'initiated') as TransferStatus;
+  return {
+    id: row.id,
+    case_id: row.case_id,
+    custody_entry_id: typeof parsedNotes.custody_entry_id === 'string' ? parsedNotes.custody_entry_id : undefined,
+    transfer_reason: row.transfer_reason,
+    transfer_method: typeof parsedNotes.transfer_method === 'string' ? parsedNotes.transfer_method : undefined,
+    transfer_location:
+      typeof parsedNotes.transfer_location === 'string'
+        ? parsedNotes.transfer_location
+        : row.from_location ?? row.to_location ?? undefined,
+    from_custodian_id: row.from_person_id ?? undefined,
+    from_custodian_name: row.from_person_name,
+    to_custodian_id: row.to_person_id ?? undefined,
+    to_custodian_name: row.to_person_name,
+    condition_before: typeof parsedNotes.condition_before === 'string' ? parsedNotes.condition_before : undefined,
+    condition_after: typeof parsedNotes.condition_after === 'string' ? parsedNotes.condition_after : undefined,
+    condition_verified: parsedNotes.condition_verified === true,
+    seal_number: typeof parsedNotes.seal_number === 'string' ? parsedNotes.seal_number : undefined,
+    new_seal_number: typeof parsedNotes.new_seal_number === 'string' ? parsedNotes.new_seal_number : undefined,
+    seal_intact: typeof parsedNotes.seal_intact === 'boolean' ? parsedNotes.seal_intact : undefined,
+    transfer_status: transferStatus,
+    // DB has no initiated_at column; created_at is the closest equivalent
+    initiated_at: row.created_at,
+    accepted_at: row.accepted_at ?? undefined,
+    rejected_at: row.rejected_at ?? undefined,
+    rejection_reason: row.rejection_reason ?? undefined,
+    from_signature: typeof parsedNotes.from_signature === 'string' ? parsedNotes.from_signature : undefined,
+    to_signature: typeof parsedNotes.to_signature === 'string' ? parsedNotes.to_signature : undefined,
+    metadata: asJsonRecord(parsedNotes.metadata),
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+function mapAccessLogRow(row: AccessLogRow): AccessLogEntry {
+  return {
+    id: row.id,
+    case_id: row.case_id,
+    custody_entry_id: row.custody_entry_id ?? undefined,
+    device_id: row.device_id ?? undefined,
+    access_type: row.access_type,
+    access_purpose: row.access_purpose,
+    access_method: row.access_method ?? undefined,
+    tools_used: row.tools_used ?? undefined,
+    accessor_id: row.accessor_id ?? undefined,
+    accessor_name: row.accessor_name,
+    supervisor_id: row.supervisor_id ?? undefined,
+    supervisor_approved: row.supervisor_approved ?? false,
+    // DB allows null but the interface expects string; default to created_at
+    access_started_at: row.access_started_at ?? row.created_at ?? new Date().toISOString(),
+    access_ended_at: row.access_ended_at ?? undefined,
+    access_location: row.access_location ?? undefined,
+    notes: row.notes ?? undefined,
+    findings: row.findings ?? undefined,
+    metadata: asJsonRecord(row.metadata),
+    created_at: row.created_at ?? new Date().toISOString(),
+  };
+}
+
+function mapIntegrityCheckRow(row: IntegrityCheckRow): IntegrityCheck {
+  // Extra UI-only fields (hash_algorithm, hash_match, physical_*, seal_*,
+  // inspector_name, anomalies, findings, metadata) are packed into `details`
+  // as JSON when they exist — see performIntegrityCheck.
+  let parsedDetails: Record<string, any> = {};
+  if (row.details) {
+    try {
+      const candidate = JSON.parse(row.details);
+      if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+        parsedDetails = candidate as Record<string, any>;
+      }
+    } catch {
+      parsedDetails = { _raw: row.details };
+    }
+  }
+  return {
+    id: row.id,
+    case_id: row.case_id,
+    device_id: row.device_id ?? undefined,
+    custody_entry_id: typeof parsedDetails.custody_entry_id === 'string' ? parsedDetails.custody_entry_id : undefined,
+    check_type: row.check_type,
+    check_reason: typeof parsedDetails.check_reason === 'string' ? parsedDetails.check_reason : undefined,
+    scheduled_check: parsedDetails.scheduled_check === true,
+    expected_hash: row.expected_hash ?? undefined,
+    actual_hash: row.actual_hash ?? undefined,
+    hash_algorithm: typeof parsedDetails.hash_algorithm === 'string' ? parsedDetails.hash_algorithm : undefined,
+    hash_match: typeof parsedDetails.hash_match === 'boolean' ? parsedDetails.hash_match : undefined,
+    physical_inspection_performed: parsedDetails.physical_inspection_performed === true,
+    physical_condition:
+      typeof parsedDetails.physical_condition === 'string' ? parsedDetails.physical_condition : undefined,
+    seal_number: typeof parsedDetails.seal_number === 'string' ? parsedDetails.seal_number : undefined,
+    seal_intact: typeof parsedDetails.seal_intact === 'boolean' ? parsedDetails.seal_intact : undefined,
+    overall_result: row.result as IntegrityCheckResult,
+    findings: typeof parsedDetails.findings === 'string' ? parsedDetails.findings : undefined,
+    anomalies: Array.isArray(parsedDetails.anomalies)
+      ? (parsedDetails.anomalies as unknown[]).filter((a): a is string => typeof a === 'string')
+      : undefined,
+    photo_urls: Array.isArray(parsedDetails.photo_urls)
+      ? (parsedDetails.photo_urls as unknown[]).filter((a): a is string => typeof a === 'string')
+      : undefined,
+    document_urls: Array.isArray(parsedDetails.document_urls)
+      ? (parsedDetails.document_urls as unknown[]).filter((a): a is string => typeof a === 'string')
+      : undefined,
+    inspector_id: row.checked_by ?? undefined,
+    inspector_name:
+      typeof parsedDetails.inspector_name === 'string' ? parsedDetails.inspector_name : 'Unknown',
+    witness_id: typeof parsedDetails.witness_id === 'string' ? parsedDetails.witness_id : undefined,
+    checked_at: row.checked_at ?? row.created_at,
+    next_check_due: typeof parsedDetails.next_check_due === 'string' ? parsedDetails.next_check_due : undefined,
+    metadata: asJsonRecord(parsedDetails.metadata),
+    created_at: row.created_at,
+  };
+}
+
 export async function getChainOfCustody(
   caseId: string,
   options?: {
@@ -175,7 +368,9 @@ export async function getChainOfCustody(
     throw error;
   }
 
-  return data || [];
+  const rows = data ?? [];
+  // Newest first; assign descending entry_number so older entries have lower numbers.
+  return rows.map((row, idx) => mapChainOfCustodyRow(row, rows.length - idx));
 }
 
 export async function logChainOfCustody(params: {
@@ -189,16 +384,25 @@ export async function logChainOfCustody(params: {
   afterValues?: Record<string, any>;
   metadata?: Record<string, any>;
 }): Promise<string> {
+  // TODO(B8): the RPC signature only supports p_action, p_action_category,
+  // p_case_id, p_custody_status, p_description, p_device_id, p_location,
+  // p_metadata. We fold the rest of the requested fields into p_metadata so
+  // they round-trip through mapChainOfCustodyRow.
+  const mergedMetadata: Record<string, any> = {
+    ...(params.metadata ?? {}),
+    ...(params.evidenceReference ? { evidence_reference: params.evidenceReference } : {}),
+    ...(params.beforeValues ? { before_values: params.beforeValues } : {}),
+    ...(params.afterValues ? { after_values: params.afterValues } : {}),
+    action_type: params.actionType,
+  };
+
   const { data, error } = await supabase.rpc('log_chain_of_custody', {
     p_case_id: params.caseId,
     p_action_category: params.actionCategory,
-    p_action_type: params.actionType,
-    p_action_description: params.actionDescription,
-    p_device_id: params.deviceId || null,
-    p_evidence_reference: params.evidenceReference || null,
-    p_before_values: params.beforeValues || {},
-    p_after_values: params.afterValues || {},
-    p_metadata: params.metadata || {},
+    p_action: params.actionType,
+    p_description: params.actionDescription,
+    p_device_id: params.deviceId ?? '',
+    p_metadata: mergedMetadata,
   });
 
   if (error) {
@@ -206,7 +410,7 @@ export async function logChainOfCustody(params: {
     throw error;
   }
 
-  return data as string;
+  return (data ?? '') as string;
 }
 
 export async function initiateCustodyTransfer(params: {
@@ -224,28 +428,46 @@ export async function initiateCustodyTransfer(params: {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
 
+  // TODO(B8): chain_of_custody_transfers lacks columns for
+  // transfer_method/transfer_location/condition_*/seal_*/signatures.
+  // Persist them through `notes` as JSON for now so the UI can round-trip.
+  const notesPayload = JSON.stringify({
+    transfer_method: params.transferMethod,
+    transfer_location: params.transferLocation,
+    condition_before: params.conditionBefore,
+    seal_number: params.sealNumber,
+    metadata: params.metadata,
+  });
+
+  const insertPayload: Database['public']['Tables']['chain_of_custody_transfers']['Insert'] = {
+    case_id: params.caseId,
+    transfer_reason: params.transferReason,
+    from_person_id: userId ?? null,
+    from_person_name: params.fromCustodianName,
+    to_person_id: params.toCustodianId,
+    to_person_name: params.toCustodianName,
+    from_location: params.transferLocation ?? null,
+    notes: notesPayload,
+    transfer_status: 'pending_acceptance',
+    // tenant_id is required by the table type but is auto-filled by the
+    // set_tenant_and_audit_fields trigger. supabase-js types still demand the
+    // field on Insert, so we use a non-null assertion via the typed payload.
+    tenant_id: undefined as unknown as string,
+  };
+
   const { data, error } = await supabase
     .from('chain_of_custody_transfers')
-    .insert({
-      case_id: params.caseId,
-      transfer_reason: params.transferReason,
-      transfer_method: params.transferMethod,
-      transfer_location: params.transferLocation,
-      from_custodian_id: userId,
-      from_custodian_name: params.fromCustodianName,
-      to_custodian_id: params.toCustodianId,
-      to_custodian_name: params.toCustodianName,
-      condition_before: params.conditionBefore,
-      seal_number: params.sealNumber,
-      transfer_status: 'pending_acceptance',
-      metadata: params.metadata,
-    })
+    .insert(insertPayload)
     .select()
     .maybeSingle();
 
   if (error) {
     logger.error('Error initiating custody transfer:', error);
     throw error;
+  }
+
+  if (!data) {
+    throw new Error('Custody transfer insert returned no row');
   }
 
   await logChainOfCustody({
@@ -259,7 +481,7 @@ export async function initiateCustodyTransfer(params: {
     },
   });
 
-  return data;
+  return mapCustodyTransferRow(data);
 }
 
 export async function acceptCustodyTransfer(params: {
@@ -269,17 +491,46 @@ export async function acceptCustodyTransfer(params: {
   newSealNumber?: string;
   signature?: string;
 }): Promise<CustodyTransfer> {
+  // Fetch existing notes so we merge with rather than overwrite the
+  // packed transfer fields from initiateCustodyTransfer.
+  const { data: existing, error: fetchError } = await supabase
+    .from('chain_of_custody_transfers')
+    .select('notes')
+    .eq('id', params.transferId)
+    .maybeSingle();
+
+  if (fetchError) {
+    logger.error('Error fetching custody transfer for accept:', fetchError);
+    throw fetchError;
+  }
+
+  let mergedNotes: Record<string, any> = {};
+  if (existing?.notes) {
+    try {
+      const parsed = JSON.parse(existing.notes);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        mergedNotes = parsed as Record<string, any>;
+      }
+    } catch {
+      // Preserve legacy free-text notes
+      mergedNotes = { _raw: existing.notes };
+    }
+  }
+  mergedNotes.condition_after = params.conditionAfter;
+  mergedNotes.seal_intact = params.sealIntact;
+  mergedNotes.new_seal_number = params.newSealNumber;
+  mergedNotes.to_signature = params.signature;
+  mergedNotes.condition_verified = true;
+
+  const updatePayload: Database['public']['Tables']['chain_of_custody_transfers']['Update'] = {
+    transfer_status: 'accepted',
+    accepted_at: new Date().toISOString(),
+    notes: JSON.stringify(mergedNotes),
+  };
+
   const { data, error } = await supabase
     .from('chain_of_custody_transfers')
-    .update({
-      transfer_status: 'accepted',
-      accepted_at: new Date().toISOString(),
-      condition_after: params.conditionAfter,
-      seal_intact: params.sealIntact,
-      new_seal_number: params.newSealNumber,
-      to_signature: params.signature,
-      condition_verified: true,
-    })
+    .update(updatePayload)
     .eq('id', params.transferId)
     .select()
     .maybeSingle();
@@ -289,31 +540,37 @@ export async function acceptCustodyTransfer(params: {
     throw error;
   }
 
+  if (!data) {
+    throw new Error(`Custody transfer ${params.transferId} not found`);
+  }
+
   await logChainOfCustody({
     caseId: data.case_id,
     actionCategory: 'transfer',
     actionType: 'CUSTODY_TRANSFER_ACCEPTED',
-    actionDescription: `Custody transfer accepted by ${data.to_custodian_name}`,
+    actionDescription: `Custody transfer accepted by ${data.to_person_name}`,
     metadata: {
       transfer_id: data.id,
       seal_intact: params.sealIntact,
     },
   });
 
-  return data;
+  return mapCustodyTransferRow(data);
 }
 
 export async function rejectCustodyTransfer(params: {
   transferId: string;
   rejectionReason: string;
 }): Promise<CustodyTransfer> {
+  const updatePayload: Database['public']['Tables']['chain_of_custody_transfers']['Update'] = {
+    transfer_status: 'rejected',
+    rejected_at: new Date().toISOString(),
+    rejection_reason: params.rejectionReason,
+  };
+
   const { data, error } = await supabase
     .from('chain_of_custody_transfers')
-    .update({
-      transfer_status: 'rejected',
-      rejected_at: new Date().toISOString(),
-      rejection_reason: params.rejectionReason,
-    })
+    .update(updatePayload)
     .eq('id', params.transferId)
     .select()
     .maybeSingle();
@@ -321,6 +578,10 @@ export async function rejectCustodyTransfer(params: {
   if (error) {
     logger.error('Error rejecting custody transfer:', error);
     throw error;
+  }
+
+  if (!data) {
+    throw new Error(`Custody transfer ${params.transferId} not found`);
   }
 
   await logChainOfCustody({
@@ -334,22 +595,23 @@ export async function rejectCustodyTransfer(params: {
     },
   });
 
-  return data;
+  return mapCustodyTransferRow(data);
 }
 
 export async function getCustodyTransfers(caseId: string): Promise<CustodyTransfer[]> {
+  // DB has no `initiated_at` column; order by created_at instead.
   const { data, error } = await supabase
     .from('chain_of_custody_transfers')
     .select('*')
     .eq('case_id', caseId)
-    .order('initiated_at', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (error) {
     logger.error('Error fetching custody transfers:', error);
     throw error;
   }
 
-  return data || [];
+  return (data ?? []).map(mapCustodyTransferRow);
 }
 
 export async function logAccess(params: {
@@ -367,27 +629,36 @@ export async function logAccess(params: {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
 
+  const insertPayload: Database['public']['Tables']['chain_of_custody_access_log']['Insert'] = {
+    case_id: params.caseId,
+    device_id: params.deviceId ?? null,
+    access_type: params.accessType,
+    access_purpose: params.accessPurpose,
+    access_method: params.accessMethod ?? null,
+    tools_used: params.toolsUsed ?? null,
+    accessor_id: userId ?? null,
+    accessor_name: params.accessorName,
+    access_location: params.accessLocation ?? null,
+    notes: params.notes ?? null,
+    metadata: params.metadata ?? null,
+    access_started_at: new Date().toISOString(),
+    // tenant_id auto-filled by trigger; see initiateCustodyTransfer for context.
+    tenant_id: undefined as unknown as string,
+  };
+
   const { data, error } = await supabase
     .from('chain_of_custody_access_log')
-    .insert({
-      case_id: params.caseId,
-      device_id: params.deviceId,
-      access_type: params.accessType,
-      access_purpose: params.accessPurpose,
-      access_method: params.accessMethod,
-      tools_used: params.toolsUsed,
-      accessor_id: userId,
-      accessor_name: params.accessorName,
-      access_location: params.accessLocation,
-      notes: params.notes,
-      metadata: params.metadata,
-    })
+    .insert(insertPayload)
     .select()
     .maybeSingle();
 
   if (error) {
     logger.error('Error logging access:', error);
     throw error;
+  }
+
+  if (!data) {
+    throw new Error('Access log insert returned no row');
   }
 
   await logChainOfCustody({
@@ -402,19 +673,21 @@ export async function logAccess(params: {
     },
   });
 
-  return data;
+  return mapAccessLogRow(data);
 }
 
 export async function endAccess(params: {
   accessLogId: string;
   findings?: string;
 }): Promise<AccessLogEntry> {
+  const updatePayload: Database['public']['Tables']['chain_of_custody_access_log']['Update'] = {
+    access_ended_at: new Date().toISOString(),
+    findings: params.findings ?? null,
+  };
+
   const { data, error } = await supabase
     .from('chain_of_custody_access_log')
-    .update({
-      access_ended_at: new Date().toISOString(),
-      findings: params.findings,
-    })
+    .update(updatePayload)
     .eq('id', params.accessLogId)
     .select()
     .maybeSingle();
@@ -424,7 +697,11 @@ export async function endAccess(params: {
     throw error;
   }
 
-  return data;
+  if (!data) {
+    throw new Error(`Access log ${params.accessLogId} not found`);
+  }
+
+  return mapAccessLogRow(data);
 }
 
 export async function performIntegrityCheck(params: {
@@ -451,34 +728,50 @@ export async function performIntegrityCheck(params: {
     ? params.expectedHash === params.actualHash
     : undefined;
 
+  // TODO(B8): chain_of_custody_integrity_checks lacks columns for
+  // check_reason/hash_algorithm/hash_match/physical_*/seal_*/findings/
+  // anomalies/inspector_name/metadata — pack into `details` as JSON.
+  const detailsPayload = JSON.stringify({
+    check_reason: params.checkReason,
+    hash_algorithm: params.hashAlgorithm,
+    hash_match: hashMatch,
+    physical_inspection_performed: !!params.physicalCondition,
+    physical_condition: params.physicalCondition,
+    seal_number: params.sealNumber,
+    seal_intact: params.sealIntact,
+    findings: params.findings,
+    anomalies: params.anomalies,
+    inspector_name: params.inspectorName,
+    metadata: params.metadata,
+  });
+
+  const insertPayload: Database['public']['Tables']['chain_of_custody_integrity_checks']['Insert'] = {
+    case_id: params.caseId,
+    device_id: params.deviceId ?? null,
+    check_type: params.checkType,
+    expected_hash: params.expectedHash ?? null,
+    actual_hash: params.actualHash ?? null,
+    result: params.overallResult,
+    details: detailsPayload,
+    checked_by: userId ?? null,
+    checked_at: new Date().toISOString(),
+    // tenant_id auto-filled by trigger; see initiateCustodyTransfer for context.
+    tenant_id: undefined as unknown as string,
+  };
+
   const { data, error } = await supabase
     .from('chain_of_custody_integrity_checks')
-    .insert({
-      case_id: params.caseId,
-      device_id: params.deviceId,
-      check_type: params.checkType,
-      check_reason: params.checkReason,
-      expected_hash: params.expectedHash,
-      actual_hash: params.actualHash,
-      hash_algorithm: params.hashAlgorithm,
-      hash_match: hashMatch,
-      physical_inspection_performed: !!params.physicalCondition,
-      physical_condition: params.physicalCondition,
-      seal_number: params.sealNumber,
-      seal_intact: params.sealIntact,
-      overall_result: params.overallResult,
-      findings: params.findings,
-      anomalies: params.anomalies,
-      inspector_id: userId,
-      inspector_name: params.inspectorName,
-      metadata: params.metadata,
-    })
+    .insert(insertPayload)
     .select()
     .maybeSingle();
 
   if (error) {
     logger.error('Error performing integrity check:', error);
     throw error;
+  }
+
+  if (!data) {
+    throw new Error('Integrity check insert returned no row');
   }
 
   await logChainOfCustody({
@@ -494,7 +787,7 @@ export async function performIntegrityCheck(params: {
     },
   });
 
-  return data;
+  return mapIntegrityCheckRow(data);
 }
 
 export async function getIntegrityChecks(caseId: string): Promise<IntegrityCheck[]> {
@@ -509,7 +802,7 @@ export async function getIntegrityChecks(caseId: string): Promise<IntegrityCheck
     throw error;
   }
 
-  return data || [];
+  return (data ?? []).map(mapIntegrityCheckRow);
 }
 
 export async function searchChainOfCustody(params: {
@@ -550,7 +843,8 @@ export async function searchChainOfCustody(params: {
     throw error;
   }
 
-  let results = data || [];
+  const rows = data ?? [];
+  let results = rows.map((row, idx) => mapChainOfCustodyRow(row, rows.length - idx));
 
   if (params.searchTerm) {
     const term = params.searchTerm.toLowerCase();
@@ -558,7 +852,7 @@ export async function searchChainOfCustody(params: {
       entry.action_description.toLowerCase().includes(term) ||
       entry.action_type.toLowerCase().includes(term) ||
       entry.actor_name.toLowerCase().includes(term) ||
-      (entry.evidence_reference && entry.evidence_reference.toLowerCase().includes(term))
+      (entry.evidence_reference !== undefined && entry.evidence_reference.toLowerCase().includes(term))
     );
   }
 
