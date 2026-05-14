@@ -23,7 +23,10 @@
       "Bash(ls node_modules/.bin/ts*)",
       "Bash(npm ls:*)",
       "Bash(npx vite:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(git cherry-pick *)",
+      "Bash(bash scripts/check-tsc.sh)",
+      "Bash(git checkout *)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -1,15 +1,15 @@
 import { supabase } from './supabaseClient';
-import type { Database } from '../types/database.types';
+import type { Database, Json } from '../types/database.types';
 
 type PayrollPeriod = Database['public']['Tables']['payroll_periods']['Row'];
 type PayrollPeriodInsert = Database['public']['Tables']['payroll_periods']['Insert'];
-type PayrollRecord = Database['public']['Tables']['payroll_records']['Row'];
 type PayrollAdjustment = Database['public']['Tables']['payroll_adjustments']['Row'];
 type PayrollAdjustmentInsert = Database['public']['Tables']['payroll_adjustments']['Insert'];
 type EmployeeLoan = Database['public']['Tables']['employee_loans']['Row'];
 type EmployeeLoanInsert = Database['public']['Tables']['employee_loans']['Insert'];
 type LoanRepayment = Database['public']['Tables']['loan_repayments']['Row'];
 type PayrollSettings = Database['public']['Tables']['payroll_settings']['Row'];
+type PayrollRecordInsert = Database['public']['Tables']['payroll_records']['Insert'];
 type EmployeeSalaryStructure = Database['public']['Tables']['employee_salary_structures']['Row'];
 type EmployeeSalaryStructureInsert = Database['public']['Tables']['employee_salary_structures']['Insert'];
 
@@ -25,6 +25,55 @@ export interface PayrollDashboardStats {
 export interface ProcessPayrollOptions {
   employeeIds?: string[];
   includePendingAdjustments?: boolean;
+}
+
+interface PayrollSettingsValues {
+  working_days_per_month: number;
+  working_hours_per_day: number;
+  overtime_rate_multiplier: { regular: number; weekend: number; holiday: number };
+  currency: { code: string; symbol: string; decimals: number };
+  payment_day: number;
+}
+
+const DEFAULT_PAYROLL_SETTINGS: PayrollSettingsValues = {
+  working_days_per_month: 22,
+  working_hours_per_day: 8,
+  overtime_rate_multiplier: { regular: 1.25, weekend: 1.5, holiday: 2.0 },
+  currency: { code: 'USD', symbol: '$', decimals: 2 },
+  payment_day: 28,
+};
+
+function parsePayrollSettings(row: PayrollSettings | null): PayrollSettingsValues {
+  if (!row) return DEFAULT_PAYROLL_SETTINGS;
+  const raw = (row.settings ?? {}) as Record<string, unknown>;
+  const overtimeRaw = raw.overtime_rate_multiplier as
+    | { regular?: number; weekend?: number; holiday?: number }
+    | undefined;
+  const currencyRaw = raw.currency as
+    | { code?: string; symbol?: string; decimals?: number }
+    | undefined;
+  return {
+    working_days_per_month:
+      typeof raw.working_days_per_month === 'number'
+        ? raw.working_days_per_month
+        : DEFAULT_PAYROLL_SETTINGS.working_days_per_month,
+    working_hours_per_day:
+      typeof raw.working_hours_per_day === 'number'
+        ? raw.working_hours_per_day
+        : DEFAULT_PAYROLL_SETTINGS.working_hours_per_day,
+    overtime_rate_multiplier: {
+      regular: overtimeRaw?.regular ?? DEFAULT_PAYROLL_SETTINGS.overtime_rate_multiplier.regular,
+      weekend: overtimeRaw?.weekend ?? DEFAULT_PAYROLL_SETTINGS.overtime_rate_multiplier.weekend,
+      holiday: overtimeRaw?.holiday ?? DEFAULT_PAYROLL_SETTINGS.overtime_rate_multiplier.holiday,
+    },
+    currency: {
+      code: currencyRaw?.code ?? DEFAULT_PAYROLL_SETTINGS.currency.code,
+      symbol: currencyRaw?.symbol ?? DEFAULT_PAYROLL_SETTINGS.currency.symbol,
+      decimals: currencyRaw?.decimals ?? DEFAULT_PAYROLL_SETTINGS.currency.decimals,
+    },
+    payment_day:
+      typeof raw.payment_day === 'number' ? raw.payment_day : DEFAULT_PAYROLL_SETTINGS.payment_day,
+  };
 }
 
 export const payrollService = {
@@ -200,7 +249,7 @@ export const payrollService = {
       .from('payroll_records')
       .select(`
         *,
-        employee:employees(id, first_name, last_name, employee_number, department:departments(name))
+        employee:employees(id, first_name, last_name, employee_number, bank_name, bank_account_number)
       `)
       .eq('period_id', periodId)
       .is('deleted_at', null)
@@ -245,9 +294,9 @@ export const payrollService = {
     const { data, error } = await supabase
       .from('payroll_record_items')
       .select('*')
-      .eq('payroll_record_id', recordId)
+      .eq('record_id', recordId)
       .order('component_type')
-      .order('component_code');
+      .order('sort_order');
 
     if (error) throw error;
     return data;
@@ -267,8 +316,7 @@ export const payrollService = {
       .select(`
         *,
         department:departments(name),
-        position:positions(title),
-        salary_structure:employee_salary_structures(base_salary, payment_frequency, bank_name, bank_account_number, iban)
+        position:positions(title)
       `)
       .eq('employment_status', 'active');
 
@@ -283,17 +331,21 @@ export const payrollService = {
     const workingDaysPerMonth = settings.working_days_per_month || 22;
     const workingHoursPerDay = settings.working_hours_per_day || 8;
 
-    const records = [];
+    if (options.includePendingAdjustments) {
+      await this.getPendingAdjustments();
+    }
+
+    const records: PayrollRecordInsert[] = [];
+    const tenantId = employees && employees.length > 0 ? employees[0].tenant_id : null;
+
     for (const employee of employees || []) {
-      const salaryStructure = Array.isArray(employee.salary_structure)
-        ? employee.salary_structure[0]
-        : employee.salary_structure;
+      const basicSalary = Number(employee.basic_salary || 0);
+      if (!basicSalary) continue;
 
-      if (!salaryStructure?.base_salary) continue;
-
-      const baseSalary = salaryStructure.base_salary;
-      const dailyRate = baseSalary / workingDaysPerMonth;
+      const dailyRate = basicSalary / workingDaysPerMonth;
       const hourlyRate = dailyRate / workingHoursPerDay;
+      void dailyRate;
+      void hourlyRate;
 
       const attendance = await this.getEmployeeAttendance(
         employee.id,
@@ -307,38 +359,24 @@ export const payrollService = {
         0
       );
 
-      const grossEarnings = baseSalary;
-      const socialSecurityDeduction = baseSalary * 0.07;
+      const totalEarnings = basicSalary;
+      const socialSecurityDeduction = basicSalary * 0.07;
       const totalDeductions = socialSecurityDeduction + loanDeductions;
-      const netSalary = grossEarnings - totalDeductions;
+      const netSalary = totalEarnings - totalDeductions;
 
-      const record = {
+      records.push({
+        tenant_id: employee.tenant_id,
         period_id: periodId,
         employee_id: employee.id,
-        employee_number: employee.employee_number,
-        employee_name: `${employee.first_name} ${employee.last_name}`,
-        department_name: employee.department?.name,
-        position_title: employee.position?.title,
+        basic_salary: basicSalary,
         working_days: workingDaysPerMonth,
-        days_worked: attendance.daysWorked,
-        days_absent: attendance.daysAbsent,
-        days_leave: attendance.daysLeave,
-        regular_hours: attendance.regularHours,
+        hours_worked: attendance.regularHours,
         overtime_hours: attendance.overtimeHours,
-        base_salary: baseSalary,
-        daily_rate: dailyRate,
-        hourly_rate: hourlyRate,
-        gross_earnings: grossEarnings,
+        total_earnings: totalEarnings,
         total_deductions: totalDeductions,
         net_salary: netSalary,
-        bank_name: salaryStructure.bank_name,
-        bank_account_number: salaryStructure.bank_account_number,
-        iban: salaryStructure.iban,
-        payment_method: 'bank_transfer',
         status: 'calculated',
-      };
-
-      records.push(record);
+      });
 
       for (const loan of activeLoans) {
         await this.recordLoanRepayment({
@@ -351,6 +389,8 @@ export const payrollService = {
       }
     }
 
+    void tenantId;
+
     if (records.length > 0) {
       const { data: createdRecords, error: recordError } = await supabase
         .from('payroll_records')
@@ -359,9 +399,12 @@ export const payrollService = {
 
       if (recordError) throw recordError;
 
-      const totalGross = records.reduce((sum, r) => sum + r.gross_earnings, 0);
-      const totalDeductions = records.reduce((sum, r) => sum + r.total_deductions, 0);
-      const totalNet = records.reduce((sum, r) => sum + r.net_salary, 0);
+      const totalGross = records.reduce((sum, r) => sum + Number(r.total_earnings ?? 0), 0);
+      const totalDeductions = records.reduce(
+        (sum, r) => sum + Number(r.total_deductions ?? 0),
+        0
+      );
+      const totalNet = records.reduce((sum, r) => sum + Number(r.net_salary ?? 0), 0);
 
       await this.updatePayrollPeriod(periodId, {
         status: 'processing',
@@ -373,7 +416,7 @@ export const payrollService = {
 
       return {
         success: true,
-        recordsCreated: createdRecords.length,
+        recordsCreated: createdRecords?.length ?? 0,
         totalGross,
         totalNet,
       };
@@ -558,7 +601,7 @@ export const payrollService = {
       p_scope: 'loan',
     });
 
-    const loanData = {
+    const loanData: EmployeeLoanInsert = {
       ...data,
       loan_number: nextNumber || `LOAN-${Date.now()}`,
     };
@@ -594,7 +637,7 @@ export const payrollService = {
       .from('loan_repayments')
       .select('*')
       .eq('loan_id', loanId)
-      .order('payment_date', { ascending: false });
+      .order('repayment_date', { ascending: false });
 
     if (error) throw error;
     return data as LoanRepayment[];
@@ -610,29 +653,32 @@ export const payrollService = {
     const loan = await this.getEmployeeLoan(repayment.loan_id);
     if (!loan) throw new Error('Loan not found');
 
+    const repaymentInsert: Database['public']['Tables']['loan_repayments']['Insert'] = {
+      tenant_id: loan.tenant_id,
+      loan_id: repayment.loan_id,
+      amount: repayment.amount,
+      repayment_date: repayment.payment_date,
+      payment_method: repayment.payment_method || 'payroll_deduction',
+      notes: repayment.notes,
+    };
+
     const { data, error } = await supabase
       .from('loan_repayments')
-      .insert({
-        loan_id: repayment.loan_id,
-        amount: repayment.amount,
-        payment_date: repayment.payment_date,
-        payment_method: repayment.payment_method || 'payroll_deduction',
-        notes: repayment.notes,
-      })
+      .insert(repaymentInsert)
       .select()
       .maybeSingle();
 
     if (error) throw error;
 
-    const newRemainingBalance = Number(loan.remaining_balance) - repayment.amount;
-    const newInstallmentsPaid = (loan.installments_paid || 0) + 1;
-    const isCompleted = newInstallmentsPaid >= loan.installments_count;
+    const newRemainingAmount = Number(loan.remaining_amount ?? loan.total_amount) - repayment.amount;
+    const newPaidInstallments = (loan.paid_installments || 0) + 1;
+    const isCompleted = newPaidInstallments >= loan.installments;
 
     const { error: updateError } = await supabase
       .from('employee_loans')
       .update({
-        remaining_balance: newRemainingBalance,
-        installments_paid: newInstallmentsPaid,
+        remaining_amount: newRemainingAmount,
+        paid_installments: newPaidInstallments,
         status: isCompleted ? 'completed' : loan.status,
         end_date: isCompleted ? new Date().toISOString().split('T')[0] : loan.end_date,
       })
@@ -652,7 +698,7 @@ export const payrollService = {
       .from('employee_salary_structures')
       .select('*')
       .eq('employee_id', employeeId)
-      .eq('is_active', true)
+      .eq('is_current', true)
       .is('deleted_at', null)
       .order('effective_date', { ascending: false })
       .limit(1)
@@ -665,13 +711,13 @@ export const payrollService = {
   async createEmployeeSalaryStructure(data: EmployeeSalaryStructureInsert) {
     await supabase
       .from('employee_salary_structures')
-      .update({ is_active: false })
+      .update({ is_current: false })
       .eq('employee_id', data.employee_id)
-      .eq('is_active', true);
+      .eq('is_current', true);
 
     const { data: structure, error } = await supabase
       .from('employee_salary_structures')
-      .insert({ ...data, is_active: true })
+      .insert({ ...data, is_current: true })
       .select()
       .maybeSingle();
 
@@ -683,74 +729,49 @@ export const payrollService = {
   // SETTINGS
   // ============================================================================
 
-  async getPayrollSettings() {
+  async getPayrollSettings(): Promise<PayrollSettingsValues> {
     const { data, error } = await supabase
       .from('payroll_settings')
-      .select('*');
+      .select('*')
+      .is('deleted_at', null)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (error) throw error;
-
-    const settings: Record<string, any> = {};
-    data?.forEach((setting: PayrollSettings) => {
-      settings[setting.setting_key] = setting.setting_value;
-    });
-
-    return {
-      working_days_per_month: settings.working_days_per_month?.value || 22,
-      working_hours_per_day: settings.working_hours_per_day?.value || 8,
-      overtime_rate_multiplier: settings.overtime_rate_multiplier || {
-        regular: 1.25,
-        weekend: 1.5,
-        holiday: 2.0,
-      },
-      currency: settings.currency || { code: 'USD', symbol: '$', decimals: 2 },
-      payment_day: settings.payment_day?.value || 28,
-    };
+    return parsePayrollSettings(data as PayrollSettings | null);
   },
 
-  async updatePayrollSettings(settings: {
-    working_days_per_month: number;
-    working_hours_per_day: number;
-    overtime_rate_multiplier: { regular: number; weekend: number; holiday: number };
-    currency: { code: string; symbol: string; decimals: number };
-    payment_day: number;
-  }) {
-    const updates = [
-      {
-        setting_key: 'working_days_per_month',
-        setting_value: { value: settings.working_days_per_month },
-        description: 'Number of working days per month',
-      },
-      {
-        setting_key: 'working_hours_per_day',
-        setting_value: { value: settings.working_hours_per_day },
-        description: 'Number of working hours per day',
-      },
-      {
-        setting_key: 'overtime_rate_multiplier',
-        setting_value: settings.overtime_rate_multiplier,
-        description: 'Overtime rate multipliers',
-      },
-      {
-        setting_key: 'currency',
-        setting_value: settings.currency,
-        description: 'Currency settings',
-      },
-      {
-        setting_key: 'payment_day',
-        setting_value: { value: settings.payment_day },
-        description: 'Default payment day of month',
-      },
-    ];
+  async updatePayrollSettings(settings: PayrollSettingsValues) {
+    const { data: existing, error: fetchError } = await supabase
+      .from('payroll_settings')
+      .select('id, settings')
+      .is('deleted_at', null)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    for (const update of updates) {
+    if (fetchError) throw fetchError;
+
+    const merged = {
+      ...((existing?.settings ?? {}) as Record<string, unknown>),
+      working_days_per_month: settings.working_days_per_month,
+      working_hours_per_day: settings.working_hours_per_day,
+      overtime_rate_multiplier: settings.overtime_rate_multiplier,
+      currency: settings.currency,
+      payment_day: settings.payment_day,
+    } as Json;
+
+    if (existing?.id) {
       const { error } = await supabase
         .from('payroll_settings')
-        .upsert(
-          { ...update },
-          { onConflict: 'setting_key' }
-        );
-
+        .update({ settings: merged, updated_at: new Date().toISOString() })
+        .eq('id', existing.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('payroll_settings')
+        .insert({ settings: merged } as Database['public']['Tables']['payroll_settings']['Insert']);
       if (error) throw error;
     }
 
@@ -824,35 +845,39 @@ export const payrollService = {
     });
 
     const fileContent = this.generateWPSFileContent(records);
+    const fileName = `${nextNumber || `PBF-${Date.now()}`}.txt`;
 
     const { data: bankFile, error } = await supabase
       .from('payroll_bank_files')
       .insert({
-        file_number: nextNumber || `PBF-${Date.now()}`,
-        payroll_period_id: periodId,
-        bank_name: 'Bank Muscat',
+        file_name: fileName,
+        period_id: periodId,
         file_format: format,
         total_amount: period.total_net,
         record_count: records.length,
-        file_content: fileContent,
         status: 'generated',
-      })
+      } as Database['public']['Tables']['payroll_bank_files']['Insert'])
       .select()
       .maybeSingle();
 
     if (error) throw error;
-    return bankFile;
+    return { ...bankFile, file_content: fileContent, file_number: nextNumber || fileName };
   },
 
-  generateWPSFileContent(records: any[]): string {
+  generateWPSFileContent(records: Array<Record<string, unknown>>): string {
     const lines = records.map((record) => {
+      const employee = record.employee as
+        | { employee_number?: string | null; first_name?: string; last_name?: string; bank_name?: string | null; bank_account_number?: string | null }
+        | null
+        | undefined;
+      const netSalary = typeof record.net_salary === 'number' ? record.net_salary : Number(record.net_salary ?? 0);
       return [
-        record.employee_number || '',
-        record.employee_name || '',
-        record.iban || record.bank_account_number || '',
-        record.net_salary?.toFixed(2) || '0.00',
-        record.currency_code || 'USD',
-        record.bank_name || 'Bank Muscat',
+        employee?.employee_number || '',
+        employee ? `${employee.first_name ?? ''} ${employee.last_name ?? ''}`.trim() : '',
+        employee?.bank_account_number || '',
+        netSalary.toFixed(2),
+        'USD',
+        employee?.bank_name || 'Bank Muscat',
       ].join('|');
     });
 
