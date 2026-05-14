@@ -140,22 +140,24 @@ export async function getChainOfCustody(
     limit?: number;
   }
 ): Promise<ChainOfCustodyEntry[]> {
+  // chain_of_custody schema has no entry_number or occurred_at column.
+  // Order by created_at instead; filter date ranges via created_at.
   let query = supabase
     .from('chain_of_custody')
     .select('*')
     .eq('case_id', caseId)
-    .order('entry_number', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (options?.category) {
     query = query.eq('action_category', options.category);
   }
 
   if (options?.startDate) {
-    query = query.gte('occurred_at', options.startDate.toISOString());
+    query = query.gte('created_at', options.startDate.toISOString());
   }
 
   if (options?.endDate) {
-    query = query.lte('occurred_at', options.endDate.toISOString());
+    query = query.lte('created_at', options.endDate.toISOString());
   }
 
   if (options?.actorId) {
@@ -528,18 +530,18 @@ export async function searchChainOfCustody(params: {
   }
 
   if (params.startDate) {
-    query = query.gte('occurred_at', params.startDate.toISOString());
+    query = query.gte('created_at', params.startDate.toISOString());
   }
 
   if (params.endDate) {
-    query = query.lte('occurred_at', params.endDate.toISOString());
+    query = query.lte('created_at', params.endDate.toISOString());
   }
 
   if (params.actorId) {
     query = query.eq('actor_id', params.actorId);
   }
 
-  query = query.order('entry_number', { ascending: false });
+  query = query.order('created_at', { ascending: false });
 
   const { data, error } = await query;
 

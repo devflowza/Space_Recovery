@@ -23,21 +23,30 @@ export async function logPDFGeneration(data: PDFGenerationLogData): Promise<void
       return;
     }
 
+    // Best-effort logging. Schema: id, tenant_id, document_type, document_id,
+    // file_name, file_url, file_size, generation_time_ms, status,
+    // error_message, generated_by, created_at, deleted_at. No case_id or
+    // metadata columns; we store caseId as document_id.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!profile?.tenant_id) {
+      return;
+    }
+
     const { error } = await supabase
       .from('pdf_generation_logs')
       .insert({
+        tenant_id: profile.tenant_id,
         generated_by: user.id,
-        case_id: data.caseId,
+        document_id: data.caseId,
         document_type: data.documentType,
-        generation_status: data.success ? 'completed' : 'failed',
+        status: data.success ? 'completed' : 'failed',
         generation_time_ms: data.durationMs,
         error_message: data.errorMessage,
-        metadata: {
-          language_code: data.languageCode,
-          mode: data.mode,
-          error_code: data.errorCode,
-          font_source: data.fontSource,
-        },
       });
 
     if (error) {
@@ -66,7 +75,7 @@ export async function getPDFGenerationStats(
 
     let query = supabase
       .from('pdf_generation_logs')
-      .select('generation_status, generation_time_ms')
+      .select('status, generation_time_ms')
       .gte('created_at', startDate.toISOString());
 
     if (documentType) {
@@ -87,7 +96,7 @@ export async function getPDFGenerationStats(
     }
 
     const totalGenerations = data.length;
-    const successfulGenerations = data.filter(log => log.generation_status === 'completed').length;
+    const successfulGenerations = data.filter(log => log.status === 'completed').length;
     const failedGenerations = totalGenerations - successfulGenerations;
     const avgDurationMs = data.length > 0
       ? data.reduce((sum, log) => sum + (log.generation_time_ms || 0), 0) / data.length
@@ -120,7 +129,7 @@ export async function getRecentFailures(limit: number = 10): Promise<any[]> {
     const { data, error } = await supabase
       .from('pdf_generation_logs')
       .select('*')
-      .eq('generation_status', 'failed')
+      .eq('status', 'failed')
       .order('created_at', { ascending: false })
       .limit(limit);
 

@@ -199,6 +199,7 @@ export async function getStockItem(id: string): Promise<StockItemWithCategory | 
 }
 
 export async function getSaleableItems(): Promise<StockItemWithCategory[]> {
+  // is_featured column dropped from stock_items schema; order by name only.
   const { data, error } = await supabase
     .from('stock_items')
     .select('*, stock_categories(*)')
@@ -206,7 +207,6 @@ export async function getSaleableItems(): Promise<StockItemWithCategory[]> {
     .is('deleted_at', null)
     .eq('is_active', true)
     .gt('current_quantity', 0)
-    .order('is_featured', { ascending: false })
     .order('name', { ascending: true });
   if (error) throw error;
   return (data ?? []) as StockItemWithCategory[];
@@ -947,13 +947,15 @@ export interface StockTransactionWithItem extends StockTransaction {
 }
 
 export async function getStockUsageByCase(caseId: string): Promise<StockTransactionWithItem[]> {
+  // stock_transactions schema: no case_id column (use reference_type/reference_id),
+  // no transaction_date (use created_at), no deleted_at.
   const { data, error } = await supabase
     .from('stock_transactions')
     .select('*, stock_items(id, name, brand, sku)')
-    .eq('case_id', caseId)
+    .eq('reference_type', 'case')
+    .eq('reference_id', caseId)
     .eq('transaction_type', 'used')
-    .is('deleted_at', null)
-    .order('transaction_date', { ascending: false });
+    .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as unknown as StockTransactionWithItem[];
 }
