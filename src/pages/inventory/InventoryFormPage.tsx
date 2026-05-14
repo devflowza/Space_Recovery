@@ -16,31 +16,34 @@ import {
 } from '../../lib/inventoryService';
 import { supabase } from '../../lib/supabaseClient';
 import { logger } from '../../lib/logger';
+import type { Database } from '../../types/database.types';
+
+type BrandRow = Pick<Database['public']['Tables']['catalog_device_brands']['Row'], 'id' | 'name'>;
+type CapacityRow = Pick<
+  Database['public']['Tables']['catalog_device_capacities']['Row'],
+  'id' | 'name' | 'gb_value'
+>;
+type LocationRow = Pick<Database['public']['Tables']['inventory_locations']['Row'], 'id' | 'name'>;
 
 export default function InventoryFormPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<InventoryItemCategory[]>([]);
   const [statusTypes, setStatusTypes] = useState<InventoryStatusType[]>([]);
   const [conditionTypes, setConditionTypes] = useState<InventoryConditionType[]>([]);
-  const [brands, setBrands] = useState<any[]>([]);
-  const [deviceTypes, setDeviceTypes] = useState<any[]>([]);
-  const [capacities, setCapacities] = useState<any[]>([]);
-  const [locations, setLocations] = useState<any[]>([]);
+  const [brands, setBrands] = useState<BrandRow[]>([]);
+  const [capacities, setCapacities] = useState<CapacityRow[]>([]);
+  const [locations, setLocations] = useState<LocationRow[]>([]);
 
   const [formData, setFormData] = useState<Partial<InventoryItem>>({
     name: '',
     category_id: null,
-    item_type: 'donor_part',
-    status_type_id: null,
-    condition_type_id: null,
-    quantity_available: 0,
-    quantity_in_use: 0,
-    acquisition_cost: 0,
-    is_active: true,
+    status_id: null,
+    condition_id: null,
+    quantity: 0,
+    purchase_price: 0,
   });
 
   useEffect(() => {
@@ -54,26 +57,35 @@ export default function InventoryFormPage() {
         statusTypesData,
         conditionTypesData,
         brandsData,
-        deviceTypesData,
         capacitiesData,
         locationsData,
       ] = await Promise.all([
         getInventoryCategories(),
         getInventoryStatusTypes(),
         getInventoryConditionTypes(),
-        supabase.from('catalog_device_brands').select('*').eq('is_active', true).order('name'),
-        supabase.from('catalog_device_types').select('*').eq('is_active', true).order('name'),
-        supabase.from('catalog_device_capacities').select('*').eq('is_active', true).order('gb_value'),
-        supabase.from('inventory_locations').select('*').eq('is_active', true).order('name'),
+        supabase
+          .from('catalog_device_brands')
+          .select('id, name')
+          .eq('is_active', true)
+          .order('name'),
+        supabase
+          .from('catalog_device_capacities')
+          .select('id, name, gb_value')
+          .eq('is_active', true)
+          .order('gb_value'),
+        supabase
+          .from('inventory_locations')
+          .select('id, name')
+          .eq('is_active', true)
+          .order('name'),
       ]);
 
       setCategories(categoriesData);
       setStatusTypes(statusTypesData);
       setConditionTypes(conditionTypesData);
-      setBrands(brandsData.data || []);
-      setDeviceTypes(deviceTypesData.data || []);
-      setCapacities(capacitiesData.data || []);
-      setLocations(locationsData.data || []);
+      setBrands(brandsData.data ?? []);
+      setCapacities(capacitiesData.data ?? []);
+      setLocations(locationsData.data ?? []);
     } catch (error) {
       logger.error('Error loading master data:', error);
     }
@@ -87,10 +99,12 @@ export default function InventoryFormPage() {
     try {
       const { data: user } = await supabase.auth.getUser();
 
-      await createInventoryItem({
+      const payload: Partial<InventoryItem> = {
         ...formData,
-        created_by: user?.user?.id,
-      });
+        created_by: user?.user?.id ?? null,
+      };
+
+      await createInventoryItem(payload);
 
       toast.success('Item saved successfully');
       navigate('/inventory');
@@ -102,20 +116,12 @@ export default function InventoryFormPage() {
     }
   };
 
-  const handleChange = (
-    field: keyof InventoryItem,
-    value: string | number | boolean | null
+  const handleChange = <K extends keyof InventoryItem>(
+    field: K,
+    value: InventoryItem[K]
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -160,7 +166,7 @@ export default function InventoryFormPage() {
               <select
                 value={formData.category_id || ''}
                 onChange={(e) =>
-                  handleChange('category_id', e.target.value ? Number(e.target.value) : null)
+                  handleChange('category_id', e.target.value || null)
                 }
                 required
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -176,30 +182,12 @@ export default function InventoryFormPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Item Type
-              </label>
-              <select
-                value={formData.item_type || 'donor_part'}
-                onChange={(e) => handleChange('item_type', e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="donor_part">Donor Part</option>
-                <option value="clone_drive">Clone Drive</option>
-                <option value="spare_device">Spare Device</option>
-                <option value="tool">Tool</option>
-                <option value="supply">Supply</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Status
               </label>
               <select
-                value={formData.status_type_id || ''}
+                value={formData.status_id || ''}
                 onChange={(e) =>
-                  handleChange('status_type_id', e.target.value ? Number(e.target.value) : null)
+                  handleChange('status_id', e.target.value || null)
                 }
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
@@ -217,9 +205,9 @@ export default function InventoryFormPage() {
                 Condition
               </label>
               <select
-                value={formData.condition_type_id || ''}
+                value={formData.condition_id || ''}
                 onChange={(e) =>
-                  handleChange('condition_type_id', e.target.value ? Number(e.target.value) : null)
+                  handleChange('condition_id', e.target.value || null)
                 }
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
@@ -273,24 +261,6 @@ export default function InventoryFormPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Device Type
-              </label>
-              <select
-                value={formData.device_type_id || ''}
-                onChange={(e) => handleChange('device_type_id', e.target.value || null)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="">Select Device Type</option>
-                {deviceTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Model
               </label>
               <Input
@@ -333,13 +303,13 @@ export default function InventoryFormPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                SKU / Part Number
+                Item Number
               </label>
               <Input
                 type="text"
-                value={formData.sku_code || ''}
-                onChange={(e) => handleChange('sku_code', e.target.value)}
-                placeholder="Enter SKU or part number"
+                value={formData.item_number || ''}
+                onChange={(e) => handleChange('item_number', e.target.value)}
+                placeholder="Enter item number"
               />
             </div>
 
@@ -366,29 +336,6 @@ export default function InventoryFormPage() {
                 placeholder="Enter PCB number"
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Manufacture Date
-              </label>
-              <Input
-                type="date"
-                value={formData.manufacture_date || ''}
-                onChange={(e) => handleChange('manufacture_date', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Barcode
-              </label>
-              <Input
-                type="text"
-                value={formData.barcode || ''}
-                onChange={(e) => handleChange('barcode', e.target.value)}
-                placeholder="Enter barcode"
-              />
-            </div>
           </div>
         </div>
 
@@ -400,36 +347,35 @@ export default function InventoryFormPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Quantity Available
+                Quantity
               </label>
               <Input
                 type="number"
-                value={formData.quantity_available || 0}
-                onChange={(e) => handleChange('quantity_available', Number(e.target.value))}
+                value={formData.quantity ?? 0}
+                onChange={(e) => handleChange('quantity', Number(e.target.value))}
                 min="0"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Quantity In Use
+                Minimum Quantity
               </label>
               <Input
                 type="number"
-                value={formData.quantity_in_use || 0}
-                onChange={(e) => handleChange('quantity_in_use', Number(e.target.value))}
+                value={formData.min_quantity ?? 0}
+                onChange={(e) => handleChange('min_quantity', Number(e.target.value))}
                 min="0"
-                disabled
               />
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Storage Location
               </label>
               <select
-                value={formData.storage_location_id || ''}
-                onChange={(e) => handleChange('storage_location_id', e.target.value || null)}
+                value={formData.location_id || ''}
+                onChange={(e) => handleChange('location_id', e.target.value || null)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Select Location</option>
@@ -439,19 +385,6 @@ export default function InventoryFormPage() {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Storage Notes
-              </label>
-              <textarea
-                value={formData.storage_notes || ''}
-                onChange={(e) => handleChange('storage_notes', e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Enter storage notes or location details"
-              />
             </div>
           </div>
         </div>
@@ -464,72 +397,25 @@ export default function InventoryFormPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Supplier Name
-              </label>
-              <Input
-                type="text"
-                value={formData.supplier_name || ''}
-                onChange={(e) => handleChange('supplier_name', e.target.value)}
-                placeholder="Enter supplier name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Supplier Contact
-              </label>
-              <Input
-                type="text"
-                value={formData.supplier_contact || ''}
-                onChange={(e) => handleChange('supplier_contact', e.target.value)}
-                placeholder="Enter supplier contact"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Acquisition Cost
+                Purchase Price
               </label>
               <Input
                 type="number"
                 step="0.01"
-                value={formData.acquisition_cost || 0}
-                onChange={(e) => handleChange('acquisition_cost', Number(e.target.value))}
+                value={formData.purchase_price ?? 0}
+                onChange={(e) => handleChange('purchase_price', Number(e.target.value))}
                 min="0"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Acquisition Date
+                Purchase Date
               </label>
               <Input
                 type="date"
-                value={formData.acquisition_date || ''}
-                onChange={(e) => handleChange('acquisition_date', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Purchase Order Number
-              </label>
-              <Input
-                type="text"
-                value={formData.purchase_order_number || ''}
-                onChange={(e) => handleChange('purchase_order_number', e.target.value)}
-                placeholder="Enter PO number"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Warranty Expiry
-              </label>
-              <Input
-                type="date"
-                value={formData.warranty_expiry || ''}
-                onChange={(e) => handleChange('warranty_expiry', e.target.value)}
+                value={formData.purchase_date || ''}
+                onChange={(e) => handleChange('purchase_date', e.target.value)}
               />
             </div>
           </div>
@@ -553,19 +439,6 @@ export default function InventoryFormPage() {
                 placeholder="Enter any additional notes or information"
               />
             </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="is_active"
-                checked={formData.is_active || false}
-                onChange={(e) => handleChange('is_active', e.target.checked)}
-                className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
-              />
-              <label htmlFor="is_active" className="ml-2 text-sm text-slate-700">
-                Active Item
-              </label>
-            </div>
           </div>
         </div>
 
@@ -573,7 +446,7 @@ export default function InventoryFormPage() {
         <div className="flex justify-end space-x-4">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={() => navigate('/inventory')}
             disabled={saving}
           >
