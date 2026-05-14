@@ -52,8 +52,11 @@ interface CurrencyFormat {
   decimalPlaces: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LooseQuoteData = Record<string, any>;
+
 interface QuoteDocumentProps {
-  quote: Record<string, unknown>;
+  quote: LooseQuoteData;
   companySettings: CompanySettings | null;
   currencyFormat: CurrencyFormat;
   t: (key: string, fallback: string) => string;
@@ -370,25 +373,25 @@ export const QuoteDocument: React.FC<QuoteDocumentProps> = ({
                   {(quote.bank_accounts?.account_name || companySettings?.banking_info?.account_name) && (
                     <div className="flex">
                       <span className="font-semibold text-slate-700 w-28 flex-shrink-0">Account Name:</span>
-                      <span className="text-slate-900 flex-1">{quote.bank_accounts?.account_name || companySettings.banking_info.account_name}</span>
+                      <span className="text-slate-900 flex-1">{quote.bank_accounts?.account_name || companySettings?.banking_info?.account_name}</span>
                     </div>
                   )}
                   {(quote.bank_accounts?.account_number || companySettings?.banking_info?.account_number) && (
                     <div className="flex">
                       <span className="font-semibold text-slate-700 w-28 flex-shrink-0">Account No:</span>
-                      <span className="text-slate-900 font-mono flex-1">{quote.bank_accounts?.account_number || companySettings.banking_info.account_number}</span>
+                      <span className="text-slate-900 font-mono flex-1">{quote.bank_accounts?.account_number || companySettings?.banking_info?.account_number}</span>
                     </div>
                   )}
                   {(quote.bank_accounts?.bank_name || companySettings?.banking_info?.bank_name) && (
                     <div className="flex">
                       <span className="font-semibold text-slate-700 w-28 flex-shrink-0">Bank Name:</span>
-                      <span className="text-slate-900 flex-1">{quote.bank_accounts?.bank_name || companySettings.banking_info.bank_name}</span>
+                      <span className="text-slate-900 flex-1">{quote.bank_accounts?.bank_name || companySettings?.banking_info?.bank_name}</span>
                     </div>
                   )}
                   {(quote.bank_accounts?.iban || companySettings?.banking_info?.iban) && (
                     <div className="flex">
                       <span className="font-semibold text-slate-700 w-28 flex-shrink-0">IBAN:</span>
-                      <span className="text-slate-900 font-mono flex-1 break-words">{cleanBankFieldValue(quote.bank_accounts?.iban || companySettings.banking_info.iban)}</span>
+                      <span className="text-slate-900 font-mono flex-1 break-words">{cleanBankFieldValue(quote.bank_accounts?.iban || companySettings?.banking_info?.iban)}</span>
                     </div>
                   )}
                   {quote.bank_accounts?.swift_code && (
