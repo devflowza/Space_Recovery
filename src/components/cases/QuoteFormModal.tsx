@@ -37,6 +37,13 @@ interface QuoteFormModalProps {
   clientReference?: string;
 }
 
+const asString = (v: unknown): string | undefined =>
+  typeof v === 'string' ? v : undefined;
+const asNumber = (v: unknown): number | undefined =>
+  typeof v === 'number' ? v : undefined;
+const asLineItems = (v: unknown): QuoteLineItem[] | undefined =>
+  Array.isArray(v) ? (v as QuoteLineItem[]) : undefined;
+
 interface QuoteTermsTemplate {
   id: string;
   name: string;
@@ -79,30 +86,42 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
     return date.toISOString().split('T')[0];
   };
 
-  const [quoteData, setQuoteData] = useState({
-    title: initialData?.title || '',
-    status: initialData?.status || 'draft',
-    valid_until: initialData?.valid_until || getDefaultValidUntil(),
-    client_reference: initialData?.client_reference || clientReference || '',
-    tax_rate: initialData?.tax_rate || 5,
-    discount_amount: initialData?.discount_amount || 0,
-    discount_type: initialData?.discount_type || 'fixed',
-    terms_and_conditions: initialData?.terms_and_conditions || '',
-    bank_account_id: initialData?.bank_account_id || null,
+  interface QuoteFormState {
+    title: string;
+    status: string;
+    valid_until: string;
+    client_reference: string;
+    tax_rate: number;
+    discount_amount: number;
+    discount_type: string;
+    terms_and_conditions: string;
+    bank_account_id: string | null;
+  }
+
+  const [quoteData, setQuoteData] = useState<QuoteFormState>({
+    title: asString(initialData?.title) ?? '',
+    status: asString(initialData?.status) ?? 'draft',
+    valid_until: asString(initialData?.valid_until) ?? getDefaultValidUntil(),
+    client_reference: asString(initialData?.client_reference) ?? clientReference ?? '',
+    tax_rate: asNumber(initialData?.tax_rate) ?? 5,
+    discount_amount: asNumber(initialData?.discount_amount) ?? 0,
+    discount_type: asString(initialData?.discount_type) ?? 'fixed',
+    terms_and_conditions: asString(initialData?.terms_and_conditions) ?? '',
+    bank_account_id: asString(initialData?.bank_account_id) ?? null,
   });
 
   useEffect(() => {
     if (initialData) {
       setQuoteData({
-        title: initialData.title || '',
-        status: initialData.status || 'draft',
-        valid_until: initialData.valid_until || getDefaultValidUntil(),
-        client_reference: initialData.client_reference || clientReference || '',
-        tax_rate: initialData.tax_rate || 5,
-        discount_amount: initialData.discount_amount || 0,
-        discount_type: initialData.discount_type || 'fixed',
-        terms_and_conditions: initialData.terms_and_conditions || '',
-        bank_account_id: initialData.bank_account_id || null,
+        title: asString(initialData.title) ?? '',
+        status: asString(initialData.status) ?? 'draft',
+        valid_until: asString(initialData.valid_until) ?? getDefaultValidUntil(),
+        client_reference: asString(initialData.client_reference) ?? clientReference ?? '',
+        tax_rate: asNumber(initialData.tax_rate) ?? 5,
+        discount_amount: asNumber(initialData.discount_amount) ?? 0,
+        discount_type: asString(initialData.discount_type) ?? 'fixed',
+        terms_and_conditions: asString(initialData.terms_and_conditions) ?? '',
+        bank_account_id: asString(initialData.bank_account_id) ?? null,
       });
     } else if (clientReference) {
       setQuoteData(prev => ({ ...prev, client_reference: clientReference }));
@@ -112,15 +131,16 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
   useEffect(() => {
     const fetchMetadata = async () => {
       if (isOpen) {
-        if (initialData?.quote_number) {
-          setQuoteNumber(initialData.quote_number);
+        const existingQuoteNumber = asString(initialData?.quote_number);
+        if (existingQuoteNumber) {
+          setQuoteNumber(existingQuoteNumber);
         } else {
           // Fetch the next quote number from the system
           try {
             const { data: nextNumber, error } = await supabase
               .rpc('get_next_number', { p_scope: 'quote' });
 
-            if (!error && nextNumber) {
+            if (!error && typeof nextNumber === 'string' && nextNumber) {
               setQuoteNumber(nextNumber);
             } else {
               setQuoteNumber('QT-000001');
@@ -139,7 +159,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
             .eq('id', activeCaseId)
             .maybeSingle();
           if (data) {
-            setCaseNumber(data.case_no);
+            setCaseNumber(data.case_no ?? '');
 
             // Auto-populate quote title from service type for new quotes
             if (!initialData && data.service_type_id) {
@@ -161,40 +181,27 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
   }, [isOpen, caseId, selectedCaseId, initialData]);
 
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>(
-    initialData?.quote_items || [
+    asLineItems(initialData?.quote_items) ?? [
       { description: '', quantity: 1, unit_price: 0, unit: 'Service' },
     ]
   );
 
   useEffect(() => {
-    if (initialData?.quote_items) {
-      setLineItems(initialData.quote_items);
+    const items = asLineItems(initialData?.quote_items);
+    if (items) {
+      setLineItems(items);
     } else {
       setLineItems([{ description: '', quantity: 1, unit_price: 0, unit: 'Service' }]);
     }
   }, [initialData]);
 
-  const { data: lineItemTemplates = [], isLoading: catalogLoading } = useQuery({
+  const { data: lineItemTemplates = [], isLoading: catalogLoading } = useQuery<LineItemTemplate[]>({
     queryKey: ['quote_line_item_templates'],
     queryFn: async () => {
-      const { data: typeData, error: typeError } = await supabase
-        .from('master_template_types')
-        .select('id')
-        .eq('code', 'quote_line_items')
-        .maybeSingle();
-
-      if (typeError || !typeData) return [];
-
-      const { data, error } = await supabase
-        .from('document_templates')
-        .select('id, name, description, unit_of_measure, default_price, item_category')
-        .eq('template_type_id', typeData.id)
-        .eq('is_active', true)
-        .order('item_category')
-        .order('name');
-
-      if (error) throw error;
-      return data as LineItemTemplate[];
+      // Schema drift: document_templates no longer carries unit_of_measure /
+      // default_price / item_category. Quick Add catalog is disabled until a
+      // replacement source (e.g. catalog_service_line_items) is wired in.
+      return [];
     },
     enabled: isOpen,
   });
@@ -304,30 +311,12 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
     return (div.textContent || '').trim();
   };
 
-  const applyTermsTemplate = async (template: QuoteTermsTemplate) => {
+  const applyTermsTemplate = (template: QuoteTermsTemplate) => {
     const plainText = stripHtmlTags(template.content);
     setQuoteData(prev => ({ ...prev, terms_and_conditions: plainText }));
     setShowTermsTemplates(false);
-
-    try {
-      const { data: currentTemplate } = await supabase
-        .from('document_templates')
-        .select('usage_count')
-        .eq('id', template.id)
-        .single();
-
-      if (currentTemplate) {
-        await supabase
-          .from('document_templates')
-          .update({
-            usage_count: (currentTemplate.usage_count || 0) + 1,
-            last_used_at: new Date().toISOString(),
-          })
-          .eq('id', template.id);
-      }
-    } catch (error) {
-      logger.error('Error updating template usage:', error);
-    }
+    // Schema drift: document_templates.usage_count / last_used_at no longer
+    // exist, so per-template usage telemetry is dropped.
   };
 
   const subtotal = lineItems.reduce((sum, item) => {
@@ -835,7 +824,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                 placeholder="Search services, descriptions, or categories..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                icon={<Search className="w-4 h-4" />}
+                leftIcon={<Search className="w-4 h-4" />}
               />
             </div>
             <div className="flex-1 overflow-y-auto px-4 pb-4">
