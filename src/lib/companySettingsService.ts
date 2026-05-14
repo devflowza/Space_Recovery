@@ -277,8 +277,8 @@ export async function updateCompanySettings(updates: Partial<CompanySettings>): 
       throw new Error('User profile not found. Please contact your administrator.');
     }
 
-    if (userProfile.role !== 'admin') {
-      throw new Error(`You do not have permission to update settings. Admin role required. Current role: ${userProfile.role || 'none'}`);
+    if (!['owner', 'admin'].includes(userProfile.role)) {
+      throw new Error(`You do not have permission to update settings. Owner or admin role required. Current role: ${userProfile.role || 'none'}`);
     }
 
     if (!userProfile.is_active) {

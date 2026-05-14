@@ -304,8 +304,8 @@ export const GeneralSettings: React.FC = () => {
         throw new Error('User profile not found. Please contact your administrator.');
       }
 
-      if (userProfile.role !== 'admin') {
-        throw new Error('You do not have permission to update settings. Admin role required.');
+      if (!['owner', 'admin'].includes(userProfile.role)) {
+        throw new Error('You do not have permission to update settings. Owner or admin role required.');
       }
 
       if (!userProfile.is_active) {
