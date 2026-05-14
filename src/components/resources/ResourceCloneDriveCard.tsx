@@ -5,17 +5,20 @@ import {
   HardDrive,
   MapPin,
   Activity,
-  Calendar,
-  DollarSign,
   Copy,
-  AlertCircle,
-  CheckCircle,
-  Clock,
 } from 'lucide-react';
-import { formatDate } from '../../lib/format';
+import type { Database } from '../../types/database.types';
+
+type ResourceCloneDriveRow = Database['public']['Tables']['resource_clone_drives']['Row'];
+
+export interface ResourceCloneDriveWithRelations extends ResourceCloneDriveRow {
+  brand?: { name: string } | null;
+  capacity_ref?: { name: string; gb_value: number | null } | null;
+  interface_ref?: { name: string } | null;
+}
 
 interface ResourceCloneDriveCardProps {
-  drive: Record<string, unknown>;
+  drive: ResourceCloneDriveWithRelations;
   onEdit: () => void;
   onViewHistory?: () => void;
 }
@@ -25,7 +28,7 @@ export const ResourceCloneDriveCard: React.FC<ResourceCloneDriveCardProps> = ({
   onEdit,
   onViewHistory,
 }) => {
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'available':
         return '#10b981';
@@ -43,24 +46,34 @@ export const ResourceCloneDriveCard: React.FC<ResourceCloneDriveCardProps> = ({
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string | null) => {
+    if (!status) return 'Unknown';
     return status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
-  const getConditionColor = (rating: number) => {
-    if (rating >= 5) return '#10b981';
-    if (rating >= 4) return '#3b82f6';
-    if (rating >= 3) return '#f59e0b';
-    return '#ef4444';
+  const getConditionColor = (condition: string | null) => {
+    switch (condition) {
+      case 'excellent':
+        return '#10b981';
+      case 'good':
+        return '#3b82f6';
+      case 'fair':
+        return '#f59e0b';
+      case 'poor':
+        return '#ef4444';
+      default:
+        return '#64748b';
+    }
   };
 
-  const getConditionLabel = (rating: number) => {
-    if (rating >= 5) return 'Excellent';
-    if (rating >= 4) return 'Good';
-    if (rating >= 3) return 'Fair';
-    if (rating >= 2) return 'Poor';
-    return 'Critical';
+  const getConditionLabel = (condition: string | null) => {
+    if (!condition) return 'Unknown';
+    return condition.charAt(0).toUpperCase() + condition.slice(1);
   };
+
+  const brandName = drive.brand?.name ?? 'Unknown Brand';
+  const capacityName = drive.capacity_ref?.name ?? null;
+  const interfaceName = drive.interface_ref?.name ?? null;
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -75,14 +88,14 @@ export const ResourceCloneDriveCard: React.FC<ResourceCloneDriveCardProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg font-bold text-slate-900">{drive.clone_id}</h3>
+                <h3 className="text-lg font-bold text-slate-900">{drive.label}</h3>
                 <Badge variant="custom" color={getStatusColor(drive.status)} size="sm">
                   {getStatusLabel(drive.status)}
                 </Badge>
               </div>
               <p className="text-sm text-slate-600">
-                {drive.brand_name || drive.brand || 'Unknown Brand'} {drive.model || ''}
-                {(drive.capacity_name || drive.capacity) && ` - ${drive.capacity_name || drive.capacity}`}
+                {brandName}
+                {capacityName && ` - ${capacityName}`}
               </p>
             </div>
           </div>
@@ -121,22 +134,19 @@ export const ResourceCloneDriveCard: React.FC<ResourceCloneDriveCardProps> = ({
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="text-xs text-slate-500 uppercase tracking-wide">Type & Interface</p>
+                <p className="text-xs text-slate-500 uppercase tracking-wide">Interface</p>
                 <p className="text-sm text-slate-900">
-                  {drive.device_type_name || drive.drive_type?.toUpperCase() || 'N/A'} / {drive.interface_name || drive.interface_type?.toUpperCase() || 'N/A'}
+                  {interfaceName ?? 'N/A'}
                 </p>
               </div>
             </div>
 
-            {drive.location_name && (
+            {drive.location && (
               <div className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-xs text-slate-500 uppercase tracking-wide">Location</p>
-                  <p className="text-sm text-slate-900">{drive.location_name}</p>
-                  {drive.physical_location_notes && (
-                    <p className="text-xs text-slate-500 mt-0.5">{drive.physical_location_notes}</p>
-                  )}
+                  <p className="text-sm text-slate-900">{drive.location}</p>
                 </div>
               </div>
             )}
@@ -148,79 +158,26 @@ export const ResourceCloneDriveCard: React.FC<ResourceCloneDriveCardProps> = ({
               <div className="flex-1">
                 <p className="text-xs text-slate-500 uppercase tracking-wide">Condition</p>
                 <div className="flex items-center gap-2 mt-1">
-                  {drive.condition_name ? (
-                    <Badge variant="custom" color={getConditionColor(drive.condition_rating || 5)} size="sm">
-                      {drive.condition_name}
-                    </Badge>
-                  ) : (
-                    <>
-                      <Badge variant="custom" color={getConditionColor(drive.condition_rating)} size="sm">
-                        {getConditionLabel(drive.condition_rating)}
-                      </Badge>
-                      <span className="text-xs text-slate-500">
-                        ({drive.condition_rating}/5)
-                      </span>
-                    </>
-                  )}
+                  <Badge variant="custom" color={getConditionColor(drive.condition)} size="sm">
+                    {getConditionLabel(drive.condition)}
+                  </Badge>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-start gap-2">
-              <Copy className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-xs text-slate-500 uppercase tracking-wide">Usage Statistics</p>
-                <p className="text-sm text-slate-900">
-                  {drive.total_assignments || 0} total assignments
-                </p>
-                {drive.capacity_gb > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600">Used:</span>
-                      <span className="font-medium text-primary">
-                        {drive.current_used_gb > 0 ? `${drive.current_used_gb.toFixed(0)} GB` : '0 GB'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600">Available:</span>
-                      <span className="font-medium text-success">
-                        {drive.available_space_gb > 0 ? `${drive.available_space_gb.toFixed(0)} GB` : `${drive.capacity_gb.toFixed(0)} GB`}
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 mt-1">
-                      <div
-                        className="h-1.5 rounded-full transition-all"
-                        style={{
-                          width: `${Math.min((drive.current_used_gb / drive.capacity_gb) * 100, 100)}%`,
-                          backgroundColor: (drive.current_used_gb / drive.capacity_gb) > 0.9 ? '#ef4444' : (drive.current_used_gb / drive.capacity_gb) > 0.7 ? '#f59e0b' : '#3b82f6'
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {drive.last_used_date && (
+            {drive.capacity_ref?.gb_value != null && drive.capacity_ref.gb_value > 0 && (
               <div className="flex items-start gap-2">
-                <Clock className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
+                <Copy className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-xs text-slate-500 uppercase tracking-wide">Last Used</p>
-                  <p className="text-sm text-slate-900">{formatDate(drive.last_used_date)}</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">Capacity</p>
+                  <p className="text-sm text-slate-900">
+                    {drive.capacity_ref.gb_value.toFixed(0)} GB
+                  </p>
                 </div>
               </div>
             )}
           </div>
         </div>
-
-        {drive.health_percentage !== null && drive.health_percentage < 80 && (
-          <div className="flex items-center gap-2 p-3 bg-warning-muted border border-warning/30 rounded-lg">
-            <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
-            <p className="text-sm text-warning">
-              Health: {drive.health_percentage}% - Consider maintenance or replacement
-            </p>
-          </div>
-        )}
 
         {drive.notes && (
           <div className="pt-3 border-t border-slate-200">
