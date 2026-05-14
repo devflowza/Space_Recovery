@@ -9,30 +9,72 @@ import { getCaseExpenses, getCasePayments, type CaseExpense, type CasePayment, t
 import { formatDate } from '@/lib/format';
 import { useNavigate } from 'react-router-dom';
 
+// Row shapes match the live DB schema (quotes / invoices tables) plus the
+// currency_symbol/position/decimal_places fields injected by
+// quotesService.getQuotesByCaseId() / invoiceService.getInvoicesByCaseId().
+// Some legacy fields the UI references (title, converted_to_invoice_id,
+// proforma_invoice_id) do not exist on the live invoices table — they are
+// kept as optional so the existing guards short-circuit cleanly.
+interface CaseQuoteRow {
+  id: string;
+  quote_number: string | null;
+  status: string | null;
+  title?: string | null;
+  total_amount: number | null;
+  valid_until: string | null;
+  created_at: string;
+  currency_symbol?: string;
+  currency_position?: string;
+  decimal_places?: number;
+}
+
+interface CaseInvoiceRow {
+  id: string;
+  invoice_number: string | null;
+  invoice_type: string | null;
+  status: string | null;
+  total_amount: number | null;
+  amount_paid: number | null;
+  balance_due: number | null;
+  due_date: string | null;
+  created_at: string;
+  converted_to_invoice_id?: string | null;
+  proforma_invoice_id?: string | null;
+  currency_symbol?: string;
+  currency_position?: string;
+  decimal_places?: number;
+}
+
+interface QuoteServiceLike {
+  fetchQuoteById: (id: string) => Promise<unknown>;
+}
+
+interface InvoiceServiceLike {
+  fetchInvoiceById: (id: string) => Promise<unknown>;
+}
+
 interface CaseFinancesTabProps {
   caseId: string;
-  caseData: Record<string, unknown>;
-  quotes: Record<string, unknown>[];
-  invoices: Record<string, unknown>[];
+  quotes: CaseQuoteRow[];
+  invoices: CaseInvoiceRow[];
   caseFinancialSummary: CaseFinancialSummary | null | undefined;
   formatCurrency: (amount: number) => string;
   formatCurrencyAmount: (amount: number, symbol: string, position: string, decimals: number) => string;
   onSetShowQuoteModal: (v: boolean) => void;
   onSetShowInvoiceModal: (v: boolean) => void;
-  onSetEditingQuote: (q: Record<string, unknown>) => void;
-  onSetEditingInvoice: (inv: Record<string, unknown>) => void;
-  onSetViewingQuote: (q: Record<string, unknown>) => void;
-  onSetViewingInvoice: (inv: Record<string, unknown>) => void;
-  onHandleRecordPayment: (invoice: Record<string, unknown>) => void;
-  onSetConvertingInvoice: (inv: Record<string, unknown>) => void;
+  onSetEditingQuote: (q: unknown) => void;
+  onSetEditingInvoice: (inv: unknown) => void;
+  onSetViewingQuote: (q: unknown) => void;
+  onSetViewingInvoice: (inv: unknown) => void;
+  onHandleRecordPayment: (invoice: CaseInvoiceRow) => void;
+  onSetConvertingInvoice: (inv: CaseInvoiceRow) => void;
   onSetShowConvertProformaModal: (v: boolean) => void;
-  quotesService: Record<string, unknown>;
-  invoiceService: Record<string, unknown>;
+  quotesService: QuoteServiceLike;
+  invoiceService: InvoiceServiceLike;
 }
 
 export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
   caseId,
-  caseData,
   quotes,
   invoices,
   caseFinancialSummary,
@@ -276,18 +318,18 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                               invoice.decimal_places || 2
                             )}
                           </p>
-                          {invoice.amount_paid > 0 && (
+                          {(invoice.amount_paid ?? 0) > 0 && (
                             <p className="text-sm text-success">
                               Paid: {formatCurrencyAmount(
-                                invoice.amount_paid,
+                                invoice.amount_paid ?? 0,
                                 invoice.currency_symbol || 'USD',
                                 invoice.currency_position || 'after',
                                 invoice.decimal_places || 2
                               )}
-                              {invoice.balance_due > 0 && (
+                              {(invoice.balance_due ?? 0) > 0 && (
                                 <span className="text-warning ml-2">
                                   • Balance: {formatCurrencyAmount(
-                                    invoice.balance_due,
+                                    invoice.balance_due ?? 0,
                                     invoice.currency_symbol || 'USD',
                                     invoice.currency_position || 'after',
                                     invoice.decimal_places || 2
@@ -327,7 +369,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                               <Edit className="w-4 h-4" />
                             </Button>
                           )}
-                          {invoice.invoice_type === 'tax_invoice' && invoice.balance_due > 0 && invoice.status !== 'paid' && invoice.status !== 'void' && (
+                          {invoice.invoice_type === 'tax_invoice' && (invoice.balance_due ?? 0) > 0 && invoice.status !== 'paid' && invoice.status !== 'void' && (
                             <Button
                               variant="secondary"
                               size="sm"
