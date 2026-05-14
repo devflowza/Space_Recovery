@@ -131,7 +131,7 @@ export const onboardingService = {
         service_location_id: null,
         priority_id: null,
         status_id: null,
-        title: 'Demo Data Recovery Case',
+        subject: 'Demo Data Recovery Case',
         description: 'This is a sample case to help you get started. Feel free to delete it.',
       });
 
