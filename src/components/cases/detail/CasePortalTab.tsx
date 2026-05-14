@@ -74,13 +74,19 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
         ? await supabase.from('profiles').select('tenant_id').eq('id', user.id).maybeSingle()
         : { data: null };
       if (!profile?.tenant_id) throw new Error('No active tenant');
+      // visible_fields is text[] in the DB (not jsonb). Encode enabled
+      // boolean flags as a string array of flag names so the upsert payload
+      // matches the column type.
+      const visibleFlagNames = Object.entries(flags as Record<string, unknown>)
+        .filter(([, v]) => v === true)
+        .map(([k]) => k);
       const { error } = await supabase
         .from('case_portal_visibility')
         .upsert({
           tenant_id: profile.tenant_id,
           case_id: caseId,
           is_visible: true,
-          visible_fields: flags,
+          visible_fields: visibleFlagNames,
           custom_message,
         }, { onConflict: 'case_id' });
       if (error) throw error;

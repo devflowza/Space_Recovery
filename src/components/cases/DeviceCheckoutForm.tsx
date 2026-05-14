@@ -37,8 +37,9 @@ interface CaseData {
     device_type: { name: string } | null;
     brand: { name: string } | null;
     capacity: { name: string } | null;
-    serial_no: string | null;
+    serial_number: string | null;
     role: string | null;
+    device_role_id: number | null;
   }>;
   created_by_profile?: {
     full_name: string;
@@ -126,7 +127,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
             : Promise.resolve({ data: null }),
           supabase
             .from('case_devices')
-            .select('id, serial_no, role, device_type_id, brand_id, capacity_id')
+            .select('id, serial_number, device_role_id, device_type_id, brand_id, capacity_id')
             .eq('case_id', caseId),
           caseInfo.created_by
             ? supabase
@@ -139,7 +140,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
 
         const devicesWithDetails = await Promise.all(
           (devicesResult.data || []).map(async (device) => {
-            const [deviceTypeResult, brandResult, capacityResult] = await Promise.all([
+            const [deviceTypeResult, brandResult, capacityResult, roleResult] = await Promise.all([
               device.device_type_id
                 ? supabase.from('catalog_device_types').select('name').eq('id', device.device_type_id).single()
                 : Promise.resolve({ data: null }),
@@ -149,6 +150,9 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
               device.capacity_id
                 ? supabase.from('catalog_device_capacities').select('name').eq('id', device.capacity_id).single()
                 : Promise.resolve({ data: null }),
+              device.device_role_id
+                ? supabase.from('catalog_device_roles').select('name').eq('id', device.device_role_id).single()
+                : Promise.resolve({ data: null }),
             ]);
 
             return {
@@ -156,6 +160,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
               device_type: deviceTypeResult.data,
               brand: brandResult.data,
               capacity: capacityResult.data,
+              role: roleResult.data?.name?.toLowerCase() ?? null,
             };
           })
         );
@@ -330,7 +335,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
                     </div>
                   </td>
                   <td className="border border-slate-200 px-2 py-1.5 text-slate-800">{device.brand?.name || '-'}</td>
-                  <td className="border border-slate-200 px-2 py-1.5 text-slate-800 font-mono">{device.serial_no || '-'}</td>
+                  <td className="border border-slate-200 px-2 py-1.5 text-slate-800 font-mono">{device.serial_number || '-'}</td>
                   <td className="border border-slate-200 px-2 py-1.5">
                     {roleLabel !== '-' ? (
                       <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
