@@ -23,6 +23,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { logger } from '../../lib/logger';
+import type { Database } from '../../types/database.types';
+
+type CasesInsert = Database['public']['Tables']['cases']['Insert'];
 
 interface Device {
   id: string;
@@ -39,7 +42,6 @@ interface Device {
   encryption_type_id: string;
   device_role_id: number | null;
   is_primary: boolean;
-  parent_device_id: string;
 }
 
 interface CreateCaseWizardProps {
@@ -55,7 +57,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdCase, setCreatedCase] = useState<{ id: string; case_no: string } | null>(null);
   const [isBulkDrivesModalOpen, setIsBulkDrivesModalOpen] = useState(false);
-  const [bulkServerDrives, setBulkServerDrives] = useState<{ id: string; brand_id: string; serial_no: string; model: string; capacity_id: string; isValid: boolean }[]>([]);
+  const [bulkServerDrives, setBulkServerDrives] = useState<Device[]>([]);
 
   const [formData, setFormData] = useState({
     customer_id: '',
@@ -84,7 +86,6 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
       encryption_type_id: '',
       device_role_id: null,
       is_primary: true,
-      parent_device_id: '',
     },
   ]);
 
@@ -244,18 +245,6 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     },
   });
 
-  const { data: customerGroups = [] } = useQuery({
-    queryKey: ['customer_groups_for_cases'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('customer_groups')
-        .select('id, name')
-        .order('name');
-      if (error) throw error;
-      return data;
-    },
-  });
-
   useEffect(() => {
     if (serviceTypes.length > 0 && !formData.service_type_id) {
       const dataRecovery = serviceTypes.find(st => st.name.toLowerCase() === 'data recovery');
@@ -317,9 +306,12 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     }
   }, [deviceRoles]);
 
-  const handleCustomerCreated = (newCustomer: { id: string }) => {
+  const handleCustomerCreated = (newCustomer: Record<string, unknown>) => {
     queryClient.invalidateQueries({ queryKey: ['customers_for_cases'] });
-    setFormData({ ...formData, customer_id: newCustomer.id });
+    const newId = typeof newCustomer.id === 'string' ? newCustomer.id : '';
+    if (newId) {
+      setFormData({ ...formData, customer_id: newId });
+    }
   };
 
   const handleBulkDrivesSave = (bulkDrives: { id: string; brand_id: string; serial_no: string; model: string; capacity_id: string; isValid: boolean }[]) => {
@@ -328,7 +320,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     const defaultCondition = deviceConditions.length > 0 ? deviceConditions[0].id.toString() : '';
     const defaultEncryption = deviceEncryption.length > 0 ? deviceEncryption[0].id : '';
 
-    const mappedBulkDrives = bulkDrives.map((drive, index) => ({
+    const mappedBulkDrives: Device[] = bulkDrives.map((drive, index) => ({
       id: `bulk-${Date.now()}-${index}`,
       device_type_id: primaryDevice.device_type_id,
       brand_id: drive.brand_id,
@@ -343,7 +335,6 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
       encryption_type_id: defaultEncryption,
       device_role_id: patientRole?.id || null,
       is_primary: primaryDevice.serial_no ? (index === 0 && devices.length === 1) : false,
-      parent_device_id: '',
     }));
 
     setBulkServerDrives(mappedBulkDrives);
@@ -366,15 +357,15 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
         throw new Error('Failed to generate case number. Please try again or contact support.');
       }
 
-      const primaryDevice = devices[0];
       const customerName = customers.find(c => c.id === formData.customer_id)?.customer_name || 'Customer';
 
       if (!profile?.tenant_id) {
         throw new Error('No active tenant — please sign in again.');
       }
+      const tenantId = profile.tenant_id;
 
-      const caseData = {
-        tenant_id: profile.tenant_id,
+      const caseData: CasesInsert = {
+        tenant_id: tenantId,
         case_number: caseNumber,
         customer_id: formData.customer_id,
         subject: `Case for ${customerName}`,
@@ -419,11 +410,14 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
         .from('cases')
         .insert(caseData)
         .select()
-        .single();
+        .maybeSingle();
 
       if (caseError) {
         logger.error('Error creating case:', caseError);
         throw new Error(`Failed to create case: ${caseError.message}`);
+      }
+      if (!newCase) {
+        throw new Error('Case was created but no row was returned.');
       }
 
       const allDevices = [...devices, ...bulkServerDrives];
@@ -436,7 +430,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
             : null;
 
           return {
-            tenant_id: profile!.tenant_id,
+            tenant_id: tenantId,
             case_id: newCase.id,
             device_type_id: device.device_type_id || null,
             brand_id: device.brand_id || null,
@@ -470,7 +464,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
     },
     onSuccess: (newCase) => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
-      setCreatedCase({ id: newCase.id, case_no: newCase.case_no });
+      setCreatedCase({ id: newCase.id, case_no: newCase.case_no ?? newCase.case_number ?? '' });
       setShowSuccessModal(true);
     },
     onError: (error) => {
@@ -503,7 +497,6 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
         encryption_type_id: '',
         device_role_id: deviceRoles.find(r => r.name.toLowerCase() === 'patient')?.id || (deviceRoles.length > 0 ? deviceRoles[0].id : null),
         is_primary: false,
-        parent_device_id: '',
       },
     ]);
   };
@@ -824,38 +817,6 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                             )}
                           </div>
                         </div>
-
-                        {device.device_role_id && (() => {
-                          const role = deviceRoles.find(r => r.id === device.device_role_id);
-                          const isLinkedRole = role && ['backup', 'clone', 'donor'].includes(role.name.toLowerCase());
-                          const patientDevices = devices.filter((d, idx) => {
-                            const deviceRole = deviceRoles.find(r => r.id === d.device_role_id);
-                            return deviceRole && deviceRole.name.toLowerCase() === 'patient' && idx !== index;
-                          });
-
-                          if (isLinkedRole && patientDevices.length > 0) {
-                            return (
-                              <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                  Link to Patient Device
-                                </label>
-                                <select
-                                  value={device.parent_device_id}
-                                  onChange={(e) => updateDevice(device.id, 'parent_device_id', e.target.value)}
-                                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                                >
-                                  <option value="">No link (optional)</option>
-                                  {patientDevices.map((pd, pdIdx) => (
-                                    <option key={pd.id} value={pd.id}>
-                                      Device {devices.indexOf(pd) + 1} - {deviceTypes.find(dt => dt.id === pd.device_type_id)?.name || 'Unknown'}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            );
-                          }
-                          return null;
-                        })()}
 
                         <div className="grid grid-cols-2 gap-2">
                           <Input
