@@ -21,7 +21,7 @@ interface CaseData {
   };
   devices?: Array<{
     device_type: { name: string } | null;
-    serial_no: string | null;
+    serial_number: string | null;
   }>;
 }
 
@@ -68,7 +68,7 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
             : Promise.resolve({ data: null }),
           supabase
             .from('case_devices')
-            .select('device_type_id, serial_no')
+            .select('device_type_id, serial_number')
             .eq('case_id', caseId),
         ]);
 
@@ -173,8 +173,8 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
                 <div className="font-semibold">
                   {device.device_type?.name || 'Unknown Device'} {index === 0 && '(Patient)'}
                 </div>
-                {device.serial_no && (
-                  <div className="text-xs font-mono text-slate-700">S/N: {device.serial_no}</div>
+                {device.serial_number && (
+                  <div className="text-xs font-mono text-slate-700">S/N: {device.serial_number}</div>
                 )}
               </div>
             ))}

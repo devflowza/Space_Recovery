@@ -63,10 +63,26 @@ export const CasePortalTab: React.FC<CasePortalTabProps> = ({ caseId, portalSett
 
   const saveMutation = useMutation({
     mutationFn: async (data: PortalSettings) => {
-      const { id, ...upsertData } = data;
+      // case_portal_visibility schema only has: is_visible, visible_fields
+      // (jsonb), show_diagnostics, show_timeline, custom_message. None of
+      // the UI's show_* booleans exist as columns; stuff them into
+      // visible_fields jsonb so the save round-trips without 400ing.
+      // Proper schema/UI alignment is part of the schema-drift sprint.
+      const { id: _id, case_id: _cid, custom_message, ...flags } = data;
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = user
+        ? await supabase.from('profiles').select('tenant_id').eq('id', user.id).maybeSingle()
+        : { data: null };
+      if (!profile?.tenant_id) throw new Error('No active tenant');
       const { error } = await supabase
         .from('case_portal_visibility')
-        .upsert({ ...upsertData, case_id: caseId }, { onConflict: 'case_id' });
+        .upsert({
+          tenant_id: profile.tenant_id,
+          case_id: caseId,
+          is_visible: true,
+          visible_fields: flags,
+          custom_message,
+        }, { onConflict: 'case_id' });
       if (error) throw error;
     },
     onSuccess: () => {
