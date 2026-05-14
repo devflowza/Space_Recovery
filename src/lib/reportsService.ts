@@ -1,7 +1,139 @@
 import { supabase } from './supabaseClient';
-import type { Report, ReportType, ReportStatus, ReportTemplate, ReportSectionData } from './reportTypes';
+import type { Database, Json } from '../types/database.types';
+import type {
+  Report,
+  ReportType,
+  ReportStatus,
+  ReportTemplate,
+  ReportSection,
+  ReportSectionData,
+} from './reportTypes';
 import { isValidUuid } from './postgrestSanitizer';
 import { logger } from './logger';
+
+type TemplateRow = Database['public']['Tables']['master_case_report_templates']['Row'];
+type CaseReportRow = Database['public']['Tables']['case_reports']['Row'];
+type CaseReportInsert = Database['public']['Tables']['case_reports']['Insert'];
+type CaseReportSectionRow = Database['public']['Tables']['case_report_sections']['Row'];
+type CaseReportSectionInsert = Database['public']['Tables']['case_report_sections']['Insert'];
+
+type ProfileEmbed = { full_name: string | null } | null;
+
+type CaseReportRowWithProfiles = CaseReportRow & {
+  created_by_profile?: ProfileEmbed;
+  reviewed_by_profile?: ProfileEmbed;
+  approved_by_profile?: ProfileEmbed;
+};
+
+type JsonObject = { [k: string]: Json | undefined };
+
+function isJsonObject(value: Json | null | undefined): value is JsonObject {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function readString(obj: JsonObject | null, key: string): string | undefined {
+  const v = obj?.[key];
+  return typeof v === 'string' ? v : undefined;
+}
+
+function readBool(obj: JsonObject | null, key: string): boolean | undefined {
+  const v = obj?.[key];
+  return typeof v === 'boolean' ? v : undefined;
+}
+
+function readNumber(obj: JsonObject | null, key: string): number | undefined {
+  const v = obj?.[key];
+  return typeof v === 'number' ? v : undefined;
+}
+
+function mapTemplateRow(row: TemplateRow): ReportTemplate {
+  const data = isJsonObject(row.template_data) ? row.template_data : null;
+  const structure = isJsonObject(data?.['template_structure'] as Json | null | undefined)
+    ? (data!['template_structure'] as JsonObject)
+    : null;
+  const sectionsArr = Array.isArray(structure?.['sections']) ? (structure!['sections'] as Json[]) : [];
+
+  return {
+    id: row.id,
+    template_name: row.name,
+    report_type: (readString(data, 'report_type') as ReportType) ?? ('evaluation' as ReportType),
+    description: row.description ?? '',
+    template_structure: {
+      sections: sectionsArr as unknown as ReportSection[],
+    },
+    is_active: row.is_active ?? true,
+    is_default: readBool(data, 'is_default') ?? false,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+function mapReportRow(row: CaseReportRowWithProfiles): Report {
+  const content = isJsonObject(row.content) ? row.content : null;
+
+  return {
+    id: row.id,
+    case_id: row.case_id,
+    report_number: row.report_number ?? '',
+    report_type:
+      (readString(content, 'report_type') as ReportType) ?? ('evaluation' as ReportType),
+    title: row.title,
+    content: readString(content, 'body'),
+    status: (row.status as ReportStatus) ?? 'draft',
+    findings: readString(content, 'findings'),
+    recommendations: readString(content, 'recommendations'),
+    visible_to_customer: readBool(content, 'visible_to_customer') ?? false,
+    pdf_file_path: readString(content, 'pdf_file_path'),
+    version_number: readNumber(content, 'version_number') ?? 1,
+    parent_report_id: readString(content, 'parent_report_id'),
+    is_latest_version: readBool(content, 'is_latest_version') ?? true,
+    version_notes: readString(content, 'version_notes'),
+    report_template_id: row.template_id ?? undefined,
+    template_sections: content?.['template_sections'] ?? undefined,
+    forensic_chain_of_custody_id: readString(content, 'forensic_chain_of_custody_id'),
+    approved_by: readString(content, 'approved_by'),
+    approved_at: readString(content, 'approved_at'),
+    created_by: row.created_by ?? undefined,
+    reviewed_by: readString(content, 'reviewed_by'),
+    reviewed_at: readString(content, 'reviewed_at'),
+    sent_to_customer_at: readString(content, 'sent_to_customer_at'),
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    created_by_profile: row.created_by_profile
+      ? { full_name: row.created_by_profile.full_name ?? '' }
+      : undefined,
+    reviewed_by_profile: row.reviewed_by_profile
+      ? { full_name: row.reviewed_by_profile.full_name ?? '' }
+      : undefined,
+    approved_by_profile: row.approved_by_profile
+      ? { full_name: row.approved_by_profile.full_name ?? '' }
+      : undefined,
+  };
+}
+
+function mapSectionRow(row: CaseReportSectionRow): ReportSectionData {
+  return {
+    id: row.id,
+    report_id: row.report_id,
+    section_key: row.section_type ?? '',
+    section_title: row.title ?? '',
+    section_content: row.content ?? '',
+    section_order: row.sort_order ?? 0,
+    is_required: false,
+    metadata: undefined,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+function mergeContent(existing: Json | null | undefined, updates: JsonObject): Json {
+  const base: JsonObject = isJsonObject(existing) ? { ...existing } : {};
+  for (const [k, v] of Object.entries(updates)) {
+    if (v === undefined) continue;
+    base[k] = v;
+  }
+  return base as Json;
+}
 
 export const reportsService = {
   /**
@@ -12,11 +144,10 @@ export const reportsService = {
       .from('master_case_report_templates')
       .select('*')
       .eq('is_active', true)
-      .order('report_type')
-      .order('template_name');
+      .order('name');
 
     if (reportType) {
-      query = query.eq('report_type', reportType);
+      query = query.contains('template_data', { report_type: reportType });
     }
 
     const { data, error } = await query;
@@ -26,7 +157,7 @@ export const reportsService = {
       throw error;
     }
 
-    return data || [];
+    return (data ?? []).map(mapTemplateRow);
   },
 
   /**
@@ -36,8 +167,7 @@ export const reportsService = {
     const { data, error } = await supabase
       .from('master_case_report_templates')
       .select('*')
-      .eq('report_type', reportType)
-      .eq('is_default', true)
+      .contains('template_data', { report_type: reportType, is_default: true })
       .eq('is_active', true)
       .maybeSingle();
 
@@ -46,7 +176,7 @@ export const reportsService = {
       throw error;
     }
 
-    return data;
+    return data ? mapTemplateRow(data) : null;
   },
 
   /**
@@ -56,17 +186,16 @@ export const reportsService = {
     const { data, error } = await supabase
       .from('master_case_report_templates')
       .select('*')
-      .eq('report_type', reportType)
+      .contains('template_data', { report_type: reportType })
       .eq('is_active', true)
-      .order('is_default', { ascending: false })
-      .order('template_name');
+      .order('name');
 
     if (error) {
       logger.error('Error fetching templates:', error);
       throw error;
     }
 
-    return data || [];
+    return (data ?? []).map(mapTemplateRow);
   },
 
   /**
@@ -76,7 +205,7 @@ export const reportsService = {
     const sequenceScope = `report_${reportType}`;
 
     const { data, error } = await supabase.rpc('get_next_number', {
-      p_scope: sequenceScope
+      p_scope: sequenceScope,
     });
 
     if (error) {
@@ -98,31 +227,38 @@ export const reportsService = {
     sections: Array<{ key: string; title: string; content: string; order: number; required: boolean }>,
     forensicChainOfCustodyId?: string
   ): Promise<Report> {
-    // Generate report number
     const reportNumber = await this.generateReportNumber(reportType);
 
-    // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    // Create the report
+    const content: JsonObject = {
+      report_type: reportType,
+      version_number: 1,
+      is_latest_version: true,
+      visible_to_customer: false,
+    };
+    if (forensicChainOfCustodyId) {
+      content.forensic_chain_of_custody_id = forensicChainOfCustodyId;
+    }
+
+    const insertPayload: CaseReportInsert = {
+      case_id: caseId,
+      report_number: reportNumber,
+      title,
+      status: 'draft',
+      template_id: templateId,
+      created_by: user.id,
+      content: content as Json,
+      // tenant_id is set via trigger / RLS context
+      tenant_id: undefined as unknown as string,
+    };
+
     const { data: report, error: reportError } = await supabase
       .from('case_reports')
-      .insert({
-        case_id: caseId,
-        report_number: reportNumber,
-        report_type: reportType,
-        title: title,
-        status: 'draft',
-        version_number: 1,
-        is_latest_version: true,
-        report_template_id: templateId,
-        chain_of_custody_id: forensicChainOfCustodyId || null,
-        visible_to_customer: false,
-        created_by: user.id,
-      })
+      .insert(insertPayload)
       .select()
       .maybeSingle();
 
@@ -131,15 +267,18 @@ export const reportsService = {
       throw reportError;
     }
 
-    // Create report sections
+    if (!report) {
+      throw new Error('Failed to create report');
+    }
+
     if (sections && sections.length > 0) {
-      const sectionsData = sections.map(section => ({
+      const sectionsData: CaseReportSectionInsert[] = sections.map((section) => ({
         report_id: report.id,
-        section_key: section.key,
-        section_title: section.title,
-        section_content: section.content || '',
-        section_order: section.order,
-        is_required: section.required,
+        section_type: section.key,
+        title: section.title,
+        content: section.content || '',
+        sort_order: section.order,
+        tenant_id: report.tenant_id,
       }));
 
       const { error: sectionsError } = await supabase
@@ -152,7 +291,7 @@ export const reportsService = {
       }
     }
 
-    return report;
+    return mapReportRow(report);
   },
 
   /**
@@ -163,24 +302,32 @@ export const reportsService = {
     versionNotes: string,
     updatedSections: Array<{ key: string; title: string; content: string; order: number; required: boolean }>
   ): Promise<Report> {
-    // Get the original report
     const originalReport = await this.getReportById(originalReportId);
     if (!originalReport) {
       throw new Error('Original report not found');
     }
 
-    // Determine version number
     const parentReportId = originalReport.parent_report_id || originalReport.id;
     const newVersionNumber = originalReport.version_number + 1;
 
-    // Generate version report number (e.g., REP-0001-v2)
     const baseNumber = originalReport.report_number.split('-v')[0];
     const versionedReportNumber = `${baseNumber}-v${newVersionNumber}`;
 
-    // Set previous version to not latest
+    // Set previous version to not latest (merge into content JSONB)
+    const { data: prevRow, error: prevFetchError } = await supabase
+      .from('case_reports')
+      .select('content')
+      .eq('id', originalReportId)
+      .maybeSingle();
+
+    if (prevFetchError) {
+      logger.error('Error fetching previous report content:', prevFetchError);
+      throw prevFetchError;
+    }
+
     const { error: updateError } = await supabase
       .from('case_reports')
-      .update({ is_latest_version: false })
+      .update({ content: mergeContent(prevRow?.content, { is_latest_version: false }) })
       .eq('id', originalReportId);
 
     if (updateError) {
@@ -188,23 +335,31 @@ export const reportsService = {
       throw updateError;
     }
 
-    // Create new version
+    const newContent: JsonObject = {
+      report_type: originalReport.report_type,
+      version_number: newVersionNumber,
+      parent_report_id: parentReportId,
+      is_latest_version: true,
+      version_notes: versionNotes,
+      visible_to_customer: false,
+    };
+    if (originalReport.forensic_chain_of_custody_id) {
+      newContent.forensic_chain_of_custody_id = originalReport.forensic_chain_of_custody_id;
+    }
+
+    const insertPayload: CaseReportInsert = {
+      case_id: originalReport.case_id,
+      report_number: versionedReportNumber,
+      title: originalReport.title,
+      status: 'draft',
+      template_id: originalReport.report_template_id ?? null,
+      content: newContent as Json,
+      tenant_id: undefined as unknown as string,
+    };
+
     const { data: newReport, error: createError } = await supabase
       .from('case_reports')
-      .insert({
-        case_id: originalReport.case_id,
-        report_number: versionedReportNumber,
-        report_type: originalReport.report_type,
-        title: originalReport.title,
-        status: 'draft',
-        version_number: newVersionNumber,
-        parent_report_id: parentReportId,
-        is_latest_version: true,
-        version_notes: versionNotes,
-        report_template_id: originalReport.report_template_id,
-        forensic_chain_of_custody_id: originalReport.forensic_chain_of_custody_id,
-        visible_to_customer: false,
-      })
+      .insert(insertPayload)
       .select()
       .maybeSingle();
 
@@ -213,15 +368,18 @@ export const reportsService = {
       throw createError;
     }
 
-    // Create sections for new version
+    if (!newReport) {
+      throw new Error('Failed to create report version');
+    }
+
     if (updatedSections && updatedSections.length > 0) {
-      const sectionsData = updatedSections.map(section => ({
+      const sectionsData: CaseReportSectionInsert[] = updatedSections.map((section) => ({
         report_id: newReport.id,
-        section_key: section.key,
-        section_title: section.title,
-        section_content: section.content || '',
-        section_order: section.order,
-        is_required: section.required,
+        section_type: section.key,
+        title: section.title,
+        content: section.content || '',
+        sort_order: section.order,
+        tenant_id: newReport.tenant_id,
       }));
 
       const { error: sectionsError } = await supabase
@@ -234,7 +392,7 @@ export const reportsService = {
       }
     }
 
-    return newReport;
+    return mapReportRow(newReport);
   },
 
   /**
@@ -245,9 +403,7 @@ export const reportsService = {
       .from('case_reports')
       .select(`
         *,
-        created_by_profile:profiles!created_by(full_name),
-        reviewed_by_profile:profiles!reviewed_by(full_name),
-        approved_by_profile:profiles!approved_by(full_name)
+        created_by_profile:profiles!created_by(full_name)
       `)
       .eq('id', reportId)
       .maybeSingle();
@@ -257,7 +413,7 @@ export const reportsService = {
       throw error;
     }
 
-    return data;
+    return data ? mapReportRow(data as unknown as CaseReportRowWithProfiles) : null;
   },
 
   /**
@@ -268,24 +424,27 @@ export const reportsService = {
       .from('case_report_sections')
       .select('*')
       .eq('report_id', reportId)
-      .order('section_order');
+      .order('sort_order');
 
     if (error) {
       logger.error('Error fetching report sections:', error);
       throw error;
     }
 
-    return data || [];
+    return (data ?? []).map(mapSectionRow);
   },
 
   /**
    * Get all reports for a case
    */
-  async getReportsByCaseId(caseId: string, filters?: {
-    reportType?: ReportType;
-    status?: ReportStatus;
-    latestOnly?: boolean;
-  }): Promise<Report[]> {
+  async getReportsByCaseId(
+    caseId: string,
+    filters?: {
+      reportType?: ReportType;
+      status?: ReportStatus;
+      latestOnly?: boolean;
+    }
+  ): Promise<Report[]> {
     let query = supabase
       .from('case_reports')
       .select(`
@@ -296,7 +455,7 @@ export const reportsService = {
       .order('created_at', { ascending: false });
 
     if (filters?.reportType) {
-      query = query.eq('report_type', filters.reportType);
+      query = query.contains('content', { report_type: filters.reportType });
     }
 
     if (filters?.status) {
@@ -304,7 +463,7 @@ export const reportsService = {
     }
 
     if (filters?.latestOnly) {
-      query = query.eq('is_latest_version', true);
+      query = query.contains('content', { is_latest_version: true });
     }
 
     const { data, error } = await query;
@@ -314,14 +473,13 @@ export const reportsService = {
       throw error;
     }
 
-    return data || [];
+    return ((data ?? []) as unknown as CaseReportRowWithProfiles[]).map(mapReportRow);
   },
 
   /**
    * Get version history for a report
    */
   async getReportVersionHistory(reportId: string): Promise<Report[]> {
-    // Get the report to find the parent
     const report = await this.getReportById(reportId);
     if (!report) {
       throw new Error('Report not found');
@@ -329,22 +487,25 @@ export const reportsService = {
 
     const parentId = report.parent_report_id || report.id;
 
-    // Get all versions
     const { data, error } = await supabase
       .from('case_reports')
       .select(`
         *,
         created_by_profile:profiles!created_by(full_name)
       `)
-      .or(isValidUuid(parentId) ? `id.eq.${parentId},parent_report_id.eq.${parentId}` : 'id.eq.00000000-0000-0000-0000-000000000000')
-      .order('version_number', { ascending: false });
+      .or(
+        isValidUuid(parentId)
+          ? `id.eq.${parentId},content->>parent_report_id.eq.${parentId}`
+          : 'id.eq.00000000-0000-0000-0000-000000000000'
+      )
+      .order('created_at', { ascending: false });
 
     if (error) {
       logger.error('Error fetching version history:', error);
       throw error;
     }
 
-    return data || [];
+    return ((data ?? []) as unknown as CaseReportRowWithProfiles[]).map(mapReportRow);
   },
 
   /**
@@ -354,7 +515,21 @@ export const reportsService = {
     reportId: string,
     sections: Array<{ id?: string; key: string; title: string; content: string; order: number; required: boolean }>
   ): Promise<void> {
-    // Delete existing sections
+    // Fetch tenant_id for the parent report so we can stamp on inserts
+    const { data: reportRow, error: reportFetchError } = await supabase
+      .from('case_reports')
+      .select('tenant_id')
+      .eq('id', reportId)
+      .maybeSingle();
+
+    if (reportFetchError) {
+      logger.error('Error fetching report tenant for section update:', reportFetchError);
+      throw reportFetchError;
+    }
+    if (!reportRow) {
+      throw new Error('Report not found');
+    }
+
     const { error: deleteError } = await supabase
       .from('case_report_sections')
       .update({ deleted_at: new Date().toISOString() })
@@ -365,14 +540,13 @@ export const reportsService = {
       throw deleteError;
     }
 
-    // Insert updated sections
-    const sectionsData = sections.map(section => ({
+    const sectionsData: CaseReportSectionInsert[] = sections.map((section) => ({
       report_id: reportId,
-      section_key: section.key,
-      section_title: section.title,
-      section_content: section.content || '',
-      section_order: section.order,
-      is_required: section.required,
+      section_type: section.key,
+      title: section.title,
+      content: section.content || '',
+      sort_order: section.order,
+      tenant_id: reportRow.tenant_id,
     }));
 
     const { error: insertError } = await supabase
@@ -398,9 +572,33 @@ export const reportsService = {
       recommendations?: string;
     }
   ): Promise<Report> {
+    const contentUpdates: JsonObject = {};
+    if (updates.visible_to_customer !== undefined) contentUpdates.visible_to_customer = updates.visible_to_customer;
+    if (updates.findings !== undefined) contentUpdates.findings = updates.findings;
+    if (updates.recommendations !== undefined) contentUpdates.recommendations = updates.recommendations;
+
+    const dbUpdates: Database['public']['Tables']['case_reports']['Update'] = {};
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+
+    if (Object.keys(contentUpdates).length > 0) {
+      const { data: existing, error: fetchError } = await supabase
+        .from('case_reports')
+        .select('content')
+        .eq('id', reportId)
+        .maybeSingle();
+
+      if (fetchError) {
+        logger.error('Error fetching report content for update:', fetchError);
+        throw fetchError;
+      }
+
+      dbUpdates.content = mergeContent(existing?.content, contentUpdates);
+    }
+
     const { data, error } = await supabase
       .from('case_reports')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', reportId)
       .select()
       .maybeSingle();
@@ -410,20 +608,36 @@ export const reportsService = {
       throw error;
     }
 
-    return data;
+    if (!data) {
+      throw new Error('Report not found');
+    }
+
+    return mapReportRow(data);
   },
 
   /**
    * Approve a report
    */
   async approveReport(reportId: string, approverId: string): Promise<Report> {
+    const { data: existing, error: fetchError } = await supabase
+      .from('case_reports')
+      .select('content')
+      .eq('id', reportId)
+      .maybeSingle();
+
+    if (fetchError) {
+      logger.error('Error fetching report content for approval:', fetchError);
+      throw fetchError;
+    }
+
+    const mergedContent = mergeContent(existing?.content, {
+      approved_by: approverId,
+      approved_at: new Date().toISOString(),
+    });
+
     const { data, error } = await supabase
       .from('case_reports')
-      .update({
-        status: 'approved',
-        approved_by: approverId,
-        approved_at: new Date().toISOString(),
-      })
+      .update({ status: 'approved', content: mergedContent })
       .eq('id', reportId)
       .select()
       .maybeSingle();
@@ -433,20 +647,36 @@ export const reportsService = {
       throw error;
     }
 
-    return data;
+    if (!data) {
+      throw new Error('Report not found');
+    }
+
+    return mapReportRow(data);
   },
 
   /**
    * Send report to customer
    */
   async sendReportToCustomer(reportId: string): Promise<Report> {
+    const { data: existing, error: fetchError } = await supabase
+      .from('case_reports')
+      .select('content')
+      .eq('id', reportId)
+      .maybeSingle();
+
+    if (fetchError) {
+      logger.error('Error fetching report content for send:', fetchError);
+      throw fetchError;
+    }
+
+    const mergedContent = mergeContent(existing?.content, {
+      sent_to_customer_at: new Date().toISOString(),
+      visible_to_customer: true,
+    });
+
     const { data, error } = await supabase
       .from('case_reports')
-      .update({
-        status: 'sent',
-        sent_to_customer_at: new Date().toISOString(),
-        visible_to_customer: true,
-      })
+      .update({ status: 'sent', content: mergedContent })
       .eq('id', reportId)
       .select()
       .maybeSingle();
@@ -456,7 +686,11 @@ export const reportsService = {
       throw error;
     }
 
-    return data;
+    if (!data) {
+      throw new Error('Report not found');
+    }
+
+    return mapReportRow(data);
   },
 
   /**
@@ -477,22 +711,25 @@ export const reportsService = {
   /**
    * Get chain of custody events for forensic report
    */
-  async getChainOfCustodyForReport(caseId: string): Promise<any[]> {
+  async getChainOfCustodyForReport(caseId: string): Promise<Array<Database['public']['Tables']['chain_of_custody']['Row'] & {
+    actor: { full_name: string | null } | null;
+  }>> {
     const { data, error } = await supabase
-      .from('chain_of_custody_events')
+      .from('chain_of_custody')
       .select(`
         *,
-        actor:profiles!chain_of_custody_events_actor_id_fkey(full_name),
-        location:inventory_locations(name)
+        actor:profiles!actor_id(full_name)
       `)
       .eq('case_id', caseId)
-      .order('event_timestamp', { ascending: true });
+      .order('created_at', { ascending: true });
 
     if (error) {
       logger.error('Error fetching chain of custody:', error);
       throw error;
     }
 
-    return data || [];
+    return (data ?? []) as unknown as Array<Database['public']['Tables']['chain_of_custody']['Row'] & {
+      actor: { full_name: string | null } | null;
+    }>;
   },
 };
