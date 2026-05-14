@@ -22,24 +22,20 @@ export function useCaseQueries(
         .select(`
           id,
           case_no,
+          case_number,
           title,
+          subject,
           priority,
           status,
           client_reference,
           created_at,
           updated_at,
-          due_date,
-          summary,
-          important_data,
-          accessories,
           customer_id,
           contact_id,
           service_type_id,
           created_by,
-          checkout_date,
-          checkout_collector_name,
-          recovery_outcome,
           assigned_engineer_id,
+          assigned_to,
           company_id
         `)
         .eq('id', id)
@@ -118,7 +114,6 @@ export function useCaseQueries(
 
       const result = {
         ...caseRecord,
-        case_number: caseRecord.case_no,
         customer: customerData.data,
         contact: contactData.data,
         service_type: serviceTypeData.data,
@@ -154,16 +149,15 @@ export function useCaseQueries(
         .select(`
           id,
           model,
-          serial_no,
-          device_problem,
-          recovery_requirements,
-          device_password,
+          serial_number,
+          symptoms,
+          notes,
+          password,
           device_type_id,
           capacity_id,
           accessories,
           device_role_id,
           is_primary,
-          parent_device_id,
           role_notes,
           created_at,
           created_by,
@@ -193,40 +187,18 @@ export function useCaseQueries(
         .select(`
           id,
           case_id,
-          patient_device_id,
-          resource_clone_drive_id,
-          physical_drive_serial,
-          physical_drive_brand,
-          physical_drive_model,
-          physical_drive_capacity,
-          storage_path,
-          storage_server,
-          storage_type,
-          physical_location_id,
-          image_format,
-          image_size_gb,
-          clone_date,
-          cloned_by,
+          device_id,
+          drive_label,
+          serial_number,
+          capacity,
           status,
-          extracted_date,
-          extracted_by,
-          backup_device_id,
-          extraction_notes,
-          retention_days,
+          assigned_to,
           notes,
-          physical_location:inventory_locations(name),
-          cloned_by_user:profiles!clone_drives_cloned_by_fkey(full_name),
-          resource_clone_drive:resource_clone_drives(
-            clone_id,
-            physical_drive_brand,
-            physical_drive_model,
-            physical_drive_capacity_gb,
-            physical_drive_serial,
-            storage_type
-          )
+          created_at,
+          updated_at
         `)
         .eq('case_id', id)
-        .order('clone_date', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data;
@@ -242,13 +214,13 @@ export function useCaseQueries(
         .select(`
           id,
           file_name,
-          file_path,
+          file_url,
           file_size,
-          mime_type,
+          file_type,
           category,
           description,
           created_at,
-          uploaded_by:profiles(full_name)
+          uploaded_by_profile:profiles!uploaded_by(full_name)
         `)
         .eq('case_id', id)
         .order('created_at', { ascending: false });
@@ -294,29 +266,16 @@ export function useCaseQueries(
         .select(`
           id,
           report_number,
-          report_type,
           title,
           status,
-          visible_to_customer,
-          version_number,
-          is_latest_version,
           created_at,
-          approved_at,
-          sent_to_customer_at,
+          generated_at,
           created_by_profile:profiles!created_by(full_name)
         `)
         .eq('case_id', id);
 
-      if (filters.reportTypeFilter !== 'all') {
-        query = query.eq('report_type', filters.reportTypeFilter);
-      }
-
       if (filters.reportStatusFilter !== 'all') {
         query = query.eq('status', filters.reportStatusFilter);
-      }
-
-      if (filters.showLatestOnly) {
-        query = query.eq('is_latest_version', true);
       }
 
       query = query.order('created_at', { ascending: false });
@@ -338,7 +297,7 @@ export function useCaseQueries(
           id,
           role_text,
           created_at,
-          engineer:profiles(id, full_name, role)
+          engineer:profiles!user_id(id, full_name, role)
         `)
         .eq('case_id', id)
         .order('created_at');
@@ -371,10 +330,9 @@ export function useCaseQueries(
         .from('case_internal_notes')
         .select(`
           id,
-          note_text,
-          private,
+          content,
           created_at,
-          author:profiles(full_name)
+          author:profiles!created_by(full_name)
         `)
         .eq('case_id', id)
         .order('created_at', { ascending: false });
@@ -393,9 +351,9 @@ export function useCaseQueries(
         .select(`
           id,
           action,
-          details_json,
+          details,
           created_at,
-          actor:profiles(full_name)
+          actor:profiles!performed_by(full_name)
         `)
         .eq('case_id', id)
         .order('created_at', { ascending: false });
