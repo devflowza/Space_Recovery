@@ -22,8 +22,20 @@ import {
 import { MarkDefectiveModal } from './MarkDefectiveModal';
 import { CompleteAssignmentModal } from './CompleteAssignmentModal';
 import { format } from 'date-fns';
-import { useCurrency } from '../../hooks/useCurrency';
 import { logger } from '../../lib/logger';
+import type { Database } from '../../types/database.types';
+
+type InventoryItemRow = Database['public']['Tables']['inventory_items']['Row'];
+
+interface InventoryItemWithRelations extends InventoryItemRow {
+  category?: { id: string; name: string; color_code: string } | null;
+  status_type?: { id: string; name: string; color_code: string } | null;
+  condition_type?: { id: string; rating: number; name: string; color_code: string } | null;
+  brand?: { id: string; name: string } | null;
+  capacity?: { id: string; name: string; gb_value: number | null } | null;
+  storage_location?: { id: string; name: string } | null;
+  interface?: { id: string; name: string } | null;
+}
 
 interface InventoryDetailModalProps {
   isOpen: boolean;
@@ -40,10 +52,7 @@ export default function InventoryDetailModal({
   onUpdate,
   onEdit,
 }: InventoryDetailModalProps) {
-  useCurrency();
-  const [item, setItem] = useState<Record<string, unknown> | null>(null);
-  const [, setStatusHistory] = useState<Record<string, unknown>[]>([]);
-  const [, setTransactions] = useState<Record<string, unknown>[]>([]);
+  const [item, setItem] = useState<InventoryItemWithRelations | null>(null);
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
   const [activeAssignment, setActiveAssignment] = useState<AssignmentWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,7 +86,7 @@ export default function InventoryDetailModal({
   const loadData = async () => {
     try {
       setLoading(true);
-      const [itemData, historyData, transactionsData, assignmentsData, activeAssignmentData, casesData, availabilityData] = await Promise.all([
+      const [itemData, , , assignmentsData, activeAssignmentData, casesData, availabilityData] = await Promise.all([
         getInventoryItemById(itemId),
         getInventoryStatusHistory(itemId).catch(() => []),
         getInventoryTransactions(itemId).catch(() => []),
@@ -93,9 +102,7 @@ export default function InventoryDetailModal({
         return;
       }
 
-      setItem(itemData);
-      setStatusHistory(historyData || []);
-      setTransactions(transactionsData || []);
+      setItem(itemData as InventoryItemWithRelations);
       setAssignments(assignmentsData || []);
       setActiveAssignment(activeAssignmentData);
       setCases(casesData || []);
@@ -132,8 +139,8 @@ export default function InventoryDetailModal({
     );
   }
 
-  const getItemDisplayName = () => {
-    const parts = [];
+  const getItemDisplayName = (): string => {
+    const parts: string[] = [];
     if (item.brand?.name) parts.push(item.brand.name);
     if (item.model) parts.push(item.model);
     return parts.join(' ') || item.name || 'Inventory Item';
@@ -173,7 +180,7 @@ export default function InventoryDetailModal({
         maxWidth="4xl"
         headerAction={
           onEdit && (
-            <Button onClick={() => onEdit(itemId)} variant="outline" size="sm">
+            <Button onClick={() => onEdit(itemId)} variant="ghost" size="sm">
               <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button>
@@ -234,7 +241,7 @@ export default function InventoryDetailModal({
                   <div className="flex space-x-2">
                     <Button
                       onClick={() => setShowDefectiveModal(true)}
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       className="flex-1 border-danger/30 text-danger hover:bg-danger-muted text-xs"
                     >
@@ -325,8 +332,8 @@ export default function InventoryDetailModal({
               <div className="flex items-center space-x-2">
                 <Package className="w-6 h-6 text-primary" />
                 <div>
-                  <p className="text-xs text-slate-500">Available</p>
-                  <p className="text-lg font-bold text-slate-900">{item.quantity_available || 0}</p>
+                  <p className="text-xs text-slate-500">Quantity</p>
+                  <p className="text-lg font-bold text-slate-900">{item.quantity ?? 0}</p>
                 </div>
               </div>
             </Card>
@@ -334,8 +341,8 @@ export default function InventoryDetailModal({
               <div className="flex items-center space-x-2">
                 <TrendingUp className="w-6 h-6 text-success" />
                 <div>
-                  <p className="text-xs text-slate-500">In Use</p>
-                  <p className="text-lg font-bold text-slate-900">{item.quantity_in_use || 0}</p>
+                  <p className="text-xs text-slate-500">Min Quantity</p>
+                  <p className="text-lg font-bold text-slate-900">{item.min_quantity ?? 0}</p>
                 </div>
               </div>
             </Card>
@@ -362,7 +369,7 @@ export default function InventoryDetailModal({
                   <History className="w-4 h-4 text-slate-500 mr-1" />
                   <h3 className="text-xs font-semibold text-slate-900">History</h3>
                 </div>
-                <Badge variant="outline" className="text-xs">{assignments.length}</Badge>
+                <Badge variant="secondary" className="text-xs">{assignments.length}</Badge>
               </div>
               <div className="space-y-2 max-h-32 overflow-y-auto">
                 {assignments.slice(0, 3).map((assignment) => (
@@ -455,12 +462,6 @@ export default function InventoryDetailModal({
                       <dd className="text-xs font-medium text-slate-900 mt-0.5">{item.pcb_number}</dd>
                     </div>
                   )}
-                  {item.dcm && (
-                    <div>
-                      <dt className="text-xs text-slate-500">DCM/MLC</dt>
-                      <dd className="text-xs font-medium text-slate-900 mt-0.5">{item.dcm}</dd>
-                    </div>
-                  )}
                   {item.head_map && (
                     <div>
                       <dt className="text-xs text-slate-500">Head Map</dt>
@@ -478,10 +479,10 @@ export default function InventoryDetailModal({
                 </div>
 
                 <dl className="space-y-3">
-                  {item.inventory_code && (
+                  {item.item_number && (
                     <div className="col-span-2 bg-info-muted border-2 border-info/30 rounded-lg p-3">
                       <dt className="text-xs font-semibold text-info uppercase tracking-wider mb-1.5">Inventory ID</dt>
-                      <dd className="text-lg font-bold text-info font-mono tracking-wide">{item.inventory_code}</dd>
+                      <dd className="text-lg font-bold text-info font-mono tracking-wide">{item.item_number}</dd>
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -511,11 +512,11 @@ export default function InventoryDetailModal({
                         </dd>
                       </div>
                     )}
-                    {item.acquisition_date && (
+                    {item.purchase_date && (
                       <div>
                         <dt className="text-xs text-slate-500">Acquired On</dt>
                         <dd className="text-xs font-medium text-slate-900 mt-0.5">
-                          {format(new Date(item.acquisition_date), 'MMM d, yyyy')}
+                          {format(new Date(item.purchase_date), 'MMM d, yyyy')}
                         </dd>
                       </div>
                     )}
