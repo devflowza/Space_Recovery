@@ -1,11 +1,21 @@
 import { supabase } from './supabaseClient';
+import type { Database } from '../types/database.types';
 import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
 import { logAuditTrail } from './auditTrailService';
 import { sanitizeUuidFields as sanitizeUuids } from './dataValidation';
 import { sanitizeFilterValue } from './postgrestSanitizer';
 
-const INVOICE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'template_id', 'accounting_locale_id', 'converted_from_quote_id', 'currency_id'];
-const sanitizeUuidFields = (data: any) => sanitizeUuids(data, INVOICE_UUID_FIELDS);
+type InvoiceInsert = Database['public']['Tables']['invoices']['Insert'];
+type InvoiceUpdate = Database['public']['Tables']['invoices']['Update'];
+type InvoiceLineItemRow = Database['public']['Tables']['invoice_line_items']['Row'];
+type InvoiceLineItemInsert = Database['public']['Tables']['invoice_line_items']['Insert'];
+
+// FK-safe UUID fields. `template_id`, `accounting_locale_id`, `currency_id` removed from invoices
+// schema in v1.0.0 — kept here only because callers may still pass them via Partial<Invoice>.
+// They will be stripped in pickInvoicePersistFields() before any DB write.
+const INVOICE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'bank_account_id', 'converted_from_quote_id'];
+const sanitizeUuidFields = <T extends Record<string, unknown>>(data: T): T =>
+  sanitizeUuids(data, INVOICE_UUID_FIELDS) as T;
 
 export interface InvoiceItem {
   id?: string;
@@ -18,6 +28,10 @@ export interface InvoiceItem {
   sort_order?: number;
 }
 
+// Caller-facing Invoice shape. Several fields (title, client_reference, terms_and_conditions,
+// discount_type, template_id, accounting_locale_id, currency_id, internal_notes, payment_terms,
+// quote_id) no longer exist in the DB but are still consumed by InvoiceFormModal etc.
+// TODO(B8): migrate callers off these fields, then drop them from this interface.
 export interface Invoice {
   id?: string;
   invoice_number?: string;
@@ -25,30 +39,44 @@ export interface Invoice {
   customer_id?: string | null;
   company_id?: string | null;
   invoice_type: 'proforma' | 'tax_invoice';
-  title: string;
+  /** @deprecated TODO(B8): not persisted — invoices table has no `title` column */
+  title?: string;
   invoice_date: string;
   due_date: string;
   status: string;
+  /** @deprecated TODO(B8): not persisted — invoices table has no `client_reference` column */
   client_reference?: string;
   subtotal?: number;
   tax_rate?: number;
   tax_amount?: number;
+  /** @deprecated TODO(B8): not persisted — invoices table has no `discount_type` column */
   discount_type?: 'fixed' | 'percentage';
   discount_amount?: number;
   total_amount?: number;
   amount_paid?: number;
   balance_due?: number;
+  /** @deprecated TODO(B8): not persisted — invoices table has no `currency_id` column (use `currency` text) */
   currency_id?: string | null;
+  currency?: string | null;
+  /** @deprecated TODO(B8): not persisted — invoices table column is `terms`, not `terms_and_conditions` */
   terms_and_conditions?: string;
   notes?: string;
+  /** @deprecated TODO(B8): not persisted — invoices table has no `internal_notes` column */
   internal_notes?: string;
+  /** @deprecated TODO(B8): not persisted — invoices table has no `payment_terms` column */
   payment_terms?: string;
   sent_at?: string | null;
   created_by?: string;
+  /** @deprecated TODO(B8): not persisted — invoices table has no `template_id` column */
   template_id?: string | null;
+  /** @deprecated TODO(B8): not persisted — invoices table has no `accounting_locale_id` column */
   accounting_locale_id?: string | null;
   bank_account_id?: string | null;
+  /** @deprecated TODO(B8): not persisted — DB column is `converted_from_quote_id` */
   quote_id?: string | null;
+  converted_from_quote_id?: string | null;
+  terms?: string | null;
+  footer?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -99,6 +127,43 @@ export interface InvoiceWithDetails extends Invoice {
 
 const DEFAULT_PAGE_SIZE = 100;
 
+/** Whitelist Invoice fields → real `invoices` columns. Strips dead/deprecated fields. */
+const pickInvoicePersistFields = (input: Partial<Invoice>): InvoiceUpdate => {
+  const out: InvoiceUpdate = {};
+  if (input.invoice_number !== undefined) out.invoice_number = input.invoice_number;
+  if (input.case_id !== undefined) out.case_id = input.case_id;
+  if (input.customer_id !== undefined) out.customer_id = input.customer_id;
+  if (input.company_id !== undefined) out.company_id = input.company_id;
+  if (input.invoice_type !== undefined) out.invoice_type = input.invoice_type;
+  if (input.invoice_date !== undefined) out.invoice_date = input.invoice_date;
+  if (input.due_date !== undefined) out.due_date = input.due_date;
+  if (input.status !== undefined) out.status = input.status;
+  if (input.subtotal !== undefined) out.subtotal = input.subtotal;
+  if (input.tax_rate !== undefined) out.tax_rate = input.tax_rate;
+  if (input.tax_amount !== undefined) out.tax_amount = input.tax_amount;
+  if (input.discount_amount !== undefined) out.discount_amount = input.discount_amount;
+  if (input.total_amount !== undefined) out.total_amount = input.total_amount;
+  if (input.amount_paid !== undefined) out.amount_paid = input.amount_paid;
+  if (input.balance_due !== undefined) out.balance_due = input.balance_due;
+  if (input.notes !== undefined) out.notes = input.notes;
+  if (input.bank_account_id !== undefined) out.bank_account_id = input.bank_account_id;
+  if (input.currency !== undefined) out.currency = input.currency;
+  if (input.terms !== undefined) out.terms = input.terms;
+  if (input.footer !== undefined) out.footer = input.footer;
+  if (input.sent_at !== undefined) out.sent_at = input.sent_at;
+  if (input.created_by !== undefined) out.created_by = input.created_by;
+  if (input.converted_from_quote_id !== undefined) {
+    out.converted_from_quote_id = input.converted_from_quote_id;
+  } else if (input.quote_id !== undefined) {
+    out.converted_from_quote_id = input.quote_id;
+  }
+  // terms_and_conditions → terms (compat for legacy callers)
+  if (input.terms_and_conditions !== undefined && input.terms === undefined) {
+    out.terms = input.terms_and_conditions;
+  }
+  return out;
+};
+
 export const fetchInvoices = async (filters?: {
   status?: string;
   invoiceType?: string;
@@ -108,7 +173,7 @@ export const fetchInvoices = async (filters?: {
   companyId?: string;
   page?: number;
   pageSize?: number;
-}) => {
+}): Promise<InvoiceWithDetails[]> => {
   let query = supabase
     .from('invoices')
     .select(`
@@ -167,10 +232,10 @@ export const fetchInvoices = async (filters?: {
   const { data, error } = await query;
 
   if (error) throw error;
-  return data as InvoiceWithDetails[];
+  return (data ?? []) as unknown as InvoiceWithDetails[];
 };
 
-export const fetchInvoiceById = async (id: string) => {
+export const fetchInvoiceById = async (id: string): Promise<InvoiceWithDetails | null> => {
   const { data, error } = await supabase
     .from('invoices')
     .select(`
@@ -222,7 +287,7 @@ export const fetchInvoiceById = async (id: string) => {
   if (error) throw error;
   if (!data) return null;
 
-  let customerAssociatedCompany = null;
+  let customerAssociatedCompany: { id: string; name: string; company_name: string | null } | null = null;
   if (data.customer_id) {
     const { data: relationshipData } = await supabase
       .from('customer_company_relationships')
@@ -233,8 +298,13 @@ export const fetchInvoiceById = async (id: string) => {
       .eq('is_primary', true)
       .maybeSingle();
 
-    if (relationshipData && relationshipData.companies) {
-      customerAssociatedCompany = relationshipData.companies;
+    if (relationshipData?.companies) {
+      const co = relationshipData.companies as unknown as {
+        id: string;
+        name: string;
+        company_name: string | null;
+      };
+      customerAssociatedCompany = co;
     }
   }
 
@@ -246,33 +316,41 @@ export const fetchInvoiceById = async (id: string) => {
 
   if (itemsError) throw itemsError;
 
+  // Map DB columns (discount, total) → caller-facing InvoiceItem (discount_percent, line_total)
+  const mappedItems: InvoiceItem[] = (items ?? []).map((it: InvoiceLineItemRow) => ({
+    id: it.id,
+    description: it.description,
+    quantity: it.quantity ?? 0,
+    unit_price: it.unit_price,
+    tax_rate: it.tax_rate ?? 0,
+    discount_percent: it.discount ?? 0,
+    line_total: it.total,
+    sort_order: it.sort_order ?? 0,
+  }));
+
   return {
     ...data,
-    invoice_line_items: items || [],
+    invoice_line_items: mappedItems,
     customer_associated_company: customerAssociatedCompany,
-  } as InvoiceWithDetails;
+  } as unknown as InvoiceWithDetails;
 };
 
-export const getNextInvoiceNumber = async (invoiceType: 'proforma' | 'tax_invoice') => {
-  const { data, error } = await supabase.rpc('get_next_invoice_number', {
-    invoice_type_param: invoiceType,
-  });
+export const getNextInvoiceNumber = async (_invoiceType?: 'proforma' | 'tax_invoice'): Promise<string> => {
+  // Live function signature: get_next_invoice_number() — takes no args.
+  // _invoiceType retained for API compatibility but ignored.
+  const { data, error } = await supabase.rpc('get_next_invoice_number');
 
   if (error) throw error;
-  return data as string;
+  return (data ?? '') as string;
 };
 
 export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceItem[]) => {
-  const invoiceTitle = invoice.title;
-  if (!invoiceTitle || invoiceTitle.trim() === '') {
-    throw new Error('Invoice title is required');
-  }
-
   if (!invoice.case_id) {
     throw new Error('Case ID is required for invoice');
   }
 
-  const invoiceNumber = await getNextInvoiceNumber(invoice.invoice_type);
+  const invoiceType: 'proforma' | 'tax_invoice' = invoice.invoice_type ?? 'tax_invoice';
+  const invoiceNumber = await getNextInvoiceNumber(invoiceType);
 
   const subtotal = items.reduce((sum, item) => {
     const itemSubtotal = Math.round(item.quantity * item.unit_price * 100) / 100;
@@ -286,30 +364,24 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
   const totalAmount = Math.round((discountedSubtotal + taxAmount) * 100) / 100;
   const amountDue = Math.round((totalAmount - (invoice.amount_paid || 0)) * 100) / 100;
 
-  const invoiceToInsert = {
-    title: invoiceTitle,
+  const persistFields = pickInvoicePersistFields(invoice);
+  const invoiceToInsert: InvoiceInsert = {
+    ...persistFields,
+    // tenant_id is auto-populated by the set_tenant_and_audit_fields trigger;
+    // cast keeps the Insert type happy (tenant_id is declared NOT NULL in Insert).
+    tenant_id: persistFields.tenant_id ?? ('' as string),
     invoice_number: invoiceNumber,
-    invoice_type: invoice.invoice_type || 'tax_invoice',
+    invoice_type: invoiceType,
+    is_proforma: invoiceType === 'proforma',
     case_id: invoice.case_id,
-    customer_id: invoice.customer_id || null,
-    company_id: invoice.company_id || null,
-    converted_from_quote_id: invoice.quote_id || null,
-    invoice_date: invoice.invoice_date,
-    due_date: invoice.due_date,
     status: invoice.status || 'draft',
-    client_reference: invoice.client_reference || null,
     subtotal,
     tax_rate: invoiceTaxRate,
     tax_amount: taxAmount,
-    discount_type: invoice.discount_type || 'fixed',
-    discount_amount: invoice.discount_amount || 0,
+    discount_amount: invoice.discount_amount ?? 0,
     total_amount: totalAmount,
-    amount_paid: invoice.amount_paid || 0,
+    amount_paid: invoice.amount_paid ?? 0,
     balance_due: amountDue,
-    terms_and_conditions: invoice.terms_and_conditions || null,
-    notes: invoice.notes || null,
-    bank_account_id: invoice.bank_account_id || null,
-    accounting_locale_id: invoice.accounting_locale_id || null,
   };
 
   const sanitizedInvoice = sanitizeUuidFields(invoiceToInsert);
@@ -321,22 +393,27 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
     .maybeSingle();
 
   if (invoiceError) throw invoiceError;
+  if (!invoiceData) throw new Error('Invoice insert returned no row');
 
-  const itemsWithInvoiceId = items.map((item, index) => {
+  const itemsWithInvoiceId: InvoiceLineItemInsert[] = items.map((item, index) => {
     const itemSubtotal = item.quantity * item.unit_price;
-    const discount = itemSubtotal * ((item.discount_percent || 0) / 100);
+    const discountPct = item.discount_percent || 0;
+    const discount = itemSubtotal * (discountPct / 100);
     const taxableAmount = itemSubtotal - discount;
     const itemTax = taxableAmount * (invoiceTaxRate / 100);
     const lineTotal = taxableAmount + itemTax;
 
     return {
+      // tenant_id auto-set by trigger; same workaround as above
+      tenant_id: '' as string,
       invoice_id: invoiceData.id,
       description: item.description,
       quantity: item.quantity,
       unit_price: item.unit_price,
       tax_rate: invoiceTaxRate,
-      discount_percent: item.discount_percent || 0,
-      line_total: lineTotal,
+      tax_amount: itemTax,
+      discount: discountPct,
+      total: lineTotal,
       sort_order: index,
     };
   });
@@ -353,7 +430,7 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
 };
 
 export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items?: InvoiceItem[]) => {
-  let updateData: any = sanitizeUuidFields({ ...invoice });
+  let updateData: InvoiceUpdate = sanitizeUuidFields(pickInvoicePersistFields(invoice));
 
   if (items) {
     const subtotal = items.reduce((sum, item) => {
@@ -382,21 +459,24 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
 
     await supabase.from('invoice_line_items').update({ deleted_at: new Date().toISOString() }).eq('invoice_id', id);
 
-    const itemsWithInvoiceId = items.map((item, index) => {
+    const itemsWithInvoiceId: InvoiceLineItemInsert[] = items.map((item, index) => {
       const itemSubtotal = item.quantity * item.unit_price;
-      const discount = itemSubtotal * ((item.discount_percent || 0) / 100);
+      const discountPct = item.discount_percent || 0;
+      const discount = itemSubtotal * (discountPct / 100);
       const taxableAmount = itemSubtotal - discount;
       const itemTax = taxableAmount * (invoiceTaxRate / 100);
       const lineTotal = taxableAmount + itemTax;
 
       return {
+        tenant_id: '' as string,
         invoice_id: id,
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
         tax_rate: invoiceTaxRate,
-        discount_percent: item.discount_percent || 0,
-        line_total: lineTotal,
+        tax_amount: itemTax,
+        discount: discountPct,
+        total: lineTotal,
         sort_order: index,
       };
     });
@@ -417,7 +497,7 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
 
   if (error) throw error;
 
-  await logAuditTrail('update', 'invoices', id, {}, updateData);
+  await logAuditTrail('update', 'invoices', id, {}, updateData as Record<string, unknown>);
 
   return data;
 };
@@ -432,19 +512,22 @@ export const updateInvoiceStatus = async (
   status: string,
   additionalData?: Partial<Invoice>
 ) => {
+  const persistAdditional = additionalData ? pickInvoicePersistFields(additionalData) : {};
+  const updatePayload: InvoiceUpdate = {
+    status,
+    ...persistAdditional,
+  };
+
   const { data, error } = await supabase
     .from('invoices')
-    .update({
-      status,
-      ...additionalData,
-    })
+    .update(updatePayload)
     .eq('id', id)
     .select()
     .maybeSingle();
 
   if (error) throw error;
 
-  await logAuditTrail('update', 'invoices', id, {}, { status, ...additionalData });
+  await logAuditTrail('update', 'invoices', id, {}, updatePayload as Record<string, unknown>);
 
   return data;
 };
@@ -460,18 +543,20 @@ export const getInvoiceStats = async (filters?: { caseId?: string }) => {
 
   if (error) throw error;
 
+  const rows = invoices ?? [];
+
   const stats = {
-    total: invoices.length,
-    draft: invoices.filter((i) => i.status === 'draft').length,
-    sent: invoices.filter((i) => i.status === 'sent').length,
-    paid: invoices.filter((i) => i.status === 'paid').length,
-    partial: invoices.filter((i) => i.status === 'partial').length,
-    overdue: invoices.filter((i) => i.status === 'overdue').length,
-    proforma: invoices.filter((i) => i.invoice_type === 'proforma').length,
-    taxInvoice: invoices.filter((i) => i.invoice_type === 'tax_invoice').length,
-    totalValue: invoices.reduce((sum, i) => sum + (i.total_amount || 0), 0),
-    totalPaid: invoices.reduce((sum, i) => sum + (i.amount_paid || 0), 0),
-    totalOutstanding: invoices.reduce((sum, i) => sum + (i.balance_due || 0), 0),
+    total: rows.length,
+    draft: rows.filter((i) => i.status === 'draft').length,
+    sent: rows.filter((i) => i.status === 'sent').length,
+    paid: rows.filter((i) => i.status === 'paid').length,
+    partial: rows.filter((i) => i.status === 'partial').length,
+    overdue: rows.filter((i) => i.status === 'overdue').length,
+    proforma: rows.filter((i) => i.invoice_type === 'proforma').length,
+    taxInvoice: rows.filter((i) => i.invoice_type === 'tax_invoice').length,
+    totalValue: rows.reduce((sum, i) => sum + (i.total_amount || 0), 0),
+    totalPaid: rows.reduce((sum, i) => sum + (i.amount_paid || 0), 0),
+    totalOutstanding: rows.reduce((sum, i) => sum + (i.balance_due || 0), 0),
   };
 
   return stats;
@@ -499,29 +584,29 @@ export const convertQuoteToInvoice = async (
     throw new Error('Quote must be linked to a case to convert to invoice');
   }
 
-  const newInvoice: Invoice = {
+  // Note: `title`, `terms_and_conditions`, `template_id`, `accounting_locale_id` no longer
+  // exist on `quotes`. We map `quote.terms` → `notes` (best-effort) and skip the rest.
+  // TODO(B8): once callers handle the cleaner shape, drop the deprecated Invoice fields entirely.
+  const newInvoice: Partial<Invoice> = {
     case_id: quote.case_id,
     customer_id: quote.customer_id,
     company_id: quote.company_id,
     invoice_type: invoiceType,
-    title: quote.title || 'Invoice',
     invoice_date: new Date().toISOString().split('T')[0],
     due_date: dueDate,
     status: 'draft',
-    discount_amount: quote.discount_amount || 0,
-    terms_and_conditions: quote.terms_and_conditions || '',
-    notes: quote.notes || '',
+    discount_amount: quote.discount_amount ?? 0,
+    terms: quote.terms ?? '',
+    notes: quote.notes ?? '',
     converted_from_quote_id: quote.id,
-    template_id: quote.template_id,
-    accounting_locale_id: quote.accounting_locale_id,
     ...additionalData,
   };
 
-  const items: InvoiceItem[] = (quote.quote_items || []).map((item: any) => ({
+  const items: InvoiceItem[] = (quote.quote_items ?? []).map((item) => ({
     description: item.description,
-    quantity: item.quantity,
+    quantity: item.quantity ?? 0,
     unit_price: item.unit_price,
-    tax_rate: quote.tax_rate || 0,
+    tax_rate: quote.tax_rate ?? 0,
   }));
 
   const createdInvoice = await createInvoice(newInvoice, items);
@@ -530,7 +615,6 @@ export const convertQuoteToInvoice = async (
     .from('quotes')
     .update({
       status: 'converted',
-      converted_to_case_id: quote.case_id,
     })
     .eq('id', quoteId)
     .neq('status', 'converted');
@@ -543,7 +627,9 @@ export const convertQuoteToInvoice = async (
 };
 
 export const getInvoicesByCaseId = async (caseId: string) => {
-  // FK join to accounting_locales dropped (no FK constraint exists).
+  // FK join to accounting_locales dropped (no FK constraint exists on invoices).
+  // We surface tenant default currency formatting on each row for callers
+  // (CaseFinancesTab consumes currency_symbol/position/decimal_places).
   const { data, error } = await supabase
     .from('invoices')
     .select('*')
@@ -563,11 +649,11 @@ export const getInvoicesByCaseId = async (caseId: string) => {
   const defaultCurrencyPosition = defaultLocale?.currency_position || 'before';
   const defaultDecimalPlaces = defaultLocale?.decimal_places || 2;
 
-  return data.map(invoice => ({
+  return (data ?? []).map((invoice) => ({
     ...invoice,
-    currency_symbol: invoice.accounting_locales?.currency_symbol || defaultCurrencySymbol,
-    currency_position: invoice.accounting_locales?.currency_position || defaultCurrencyPosition,
-    decimal_places: invoice.accounting_locales?.decimal_places || defaultDecimalPlaces,
+    currency_symbol: defaultCurrencySymbol,
+    currency_position: defaultCurrencyPosition,
+    decimal_places: defaultDecimalPlaces,
   }));
 };
 
@@ -583,7 +669,7 @@ export const recordPayment = async (
 ) => {
   const { data: invoice, error: fetchError } = await supabase
     .from('invoices')
-    .select('total_amount, amount_paid, invoice_type')
+    .select('total_amount, amount_paid, invoice_type, customer_id')
     .eq('id', invoiceId)
     .maybeSingle();
 
@@ -595,8 +681,10 @@ export const recordPayment = async (
     throw new Error('Payments can only be recorded against Tax Invoices, not Proforma Invoices.');
   }
 
-  const newAmountPaid = (invoice.amount_paid || 0) + paymentData.amount;
-  const newBalanceDue = invoice.total_amount - newAmountPaid;
+  const totalAmount = invoice.total_amount ?? 0;
+  const previousPaid = invoice.amount_paid ?? 0;
+  const newAmountPaid = previousPaid + paymentData.amount;
+  const newBalanceDue = totalAmount - newAmountPaid;
 
   let newStatus = 'partial';
   if (newBalanceDue <= 0) {
@@ -605,16 +693,23 @@ export const recordPayment = async (
     newStatus = 'sent';
   }
 
+  // payment_method here is the master_payment_methods UUID (caller already passes the FK).
+  // The legacy `reference_number` arg maps to the `reference` column.
+  // TODO(B8): the caller-facing parameter names still reference _number; update callers to
+  //          send (payment_method_id, reference) and rename here.
   const { data: payment, error: paymentError } = await supabase
-    .from('invoice_payments')
+    .from('payments')
     .insert([
       {
+        tenant_id: '' as string, // auto-set by trigger
         invoice_id: invoiceId,
+        customer_id: invoice.customer_id,
         amount: paymentData.amount,
-        payment_method: paymentData.payment_method,
+        payment_method_id: paymentData.payment_method,
         payment_date: paymentData.payment_date,
-        reference_number: paymentData.reference_number,
+        reference: paymentData.reference_number,
         notes: paymentData.notes,
+        status: 'completed',
       },
     ])
     .select()
@@ -637,51 +732,43 @@ export const recordPayment = async (
 };
 
 export const getPaymentHistory = async (invoiceId: string) => {
+  // payments has no FK to profiles, so the legacy embed has been removed.
+  // TODO(B8): if a recorded-by profile is required for UI, do a separate fetch.
   const { data, error } = await supabase
-    .from('invoice_payments')
-    .select(`
-      *,
-      recorded_by_profile:profiles!invoice_payments_recorded_by_fkey (
-        id,
-        full_name
-      )
-    `)
+    .from('payments')
+    .select('*')
     .eq('invoice_id', invoiceId)
     .order('payment_date', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 };
 
 export const convertProformaToTaxInvoice = async (
   proformaId: string,
-  dueDate?: string,
-  notes?: string
+  _dueDate?: string,
+  _notes?: string
 ) => {
   const rl = checkRateLimit(RATE_LIMITS.INVOICE_CONVERSION);
   if (!rl.allowed) {
     throw new Error(rl.message);
   }
 
+  // Live RPC signature: convert_proforma_to_tax_invoice(p_quote_id uuid) returns uuid.
+  // _dueDate / _notes kept for API back-compat but ignored — TODO(B8) update callers.
   const { data, error } = await supabase.rpc('convert_proforma_to_tax_invoice', {
-    p_proforma_id: proformaId,
-    p_due_date: dueDate || null,
-    p_notes: notes || null,
+    p_quote_id: proformaId,
   });
 
   if (error) throw error;
   return data;
 };
 
-export const getConversionHistory = async (proformaId: string) => {
-  const { data, error } = await supabase
-    .from('invoice_conversion_history')
-    .select('*')
-    .eq('proforma_id', proformaId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
+export const getConversionHistory = async (_proformaId: string) => {
+  // TODO(B8): `invoice_conversion_history` table was removed in v1.0.0. Reconstruct from
+  // `converted_from_quote_id` chain when callers actually need history. For now return null
+  // so InvoiceDetailPage can render an empty state without crashing.
+  return null;
 };
 
 import { generateInvoice, generateInvoiceAsBlob } from './pdf/pdfService';
