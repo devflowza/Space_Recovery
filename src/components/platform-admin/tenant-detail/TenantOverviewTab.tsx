@@ -1,16 +1,18 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Mail, Phone, Building2, MapPin, CreditCard, Calendar, Activity, Users as UsersIcon, Briefcase, HardDrive } from 'lucide-react';
+import { Mail, Building2, MapPin, CreditCard, Calendar, Activity, Users as UsersIcon, Briefcase, HardDrive } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { getHealthMetricsHistory } from '@/lib/platformAdminService';
 import { platformAdminKeys } from '@/lib/queryKeys';
 import { formatDistanceToNow } from 'date-fns';
-import type { Database } from '@/types/database.types';
+import type { Database, Json } from '@/types/database.types';
 
 type Tenant = Database['public']['Tables']['tenants']['Row'];
 type TenantSubscription = Database['public']['Tables']['tenant_subscriptions']['Row'];
 type TenantHealthMetric = Database['public']['Tables']['tenant_health_metrics']['Row'];
+
+type BadgeVariant = 'default' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'custom';
 
 interface TenantOverviewTabProps {
   tenant: Tenant;
@@ -18,7 +20,28 @@ interface TenantOverviewTabProps {
   health?: TenantHealthMetric;
   userCount?: number;
   caseCount?: number;
+  storageUsedGb?: number;
 }
+
+const readJsonNumber = (source: Json | null | undefined, key: string): number => {
+  if (source && typeof source === 'object' && !Array.isArray(source)) {
+    const value = (source as { [k: string]: Json | undefined })[key];
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return 0;
+};
+
+const readJsonString = (source: Json | null | undefined, key: string): string | null => {
+  if (source && typeof source === 'object' && !Array.isArray(source)) {
+    const value = (source as { [k: string]: Json | undefined })[key];
+    if (typeof value === 'string' && value.trim().length > 0) return value;
+  }
+  return null;
+};
 
 export const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({
   tenant,
@@ -26,37 +49,47 @@ export const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({
   health,
   userCount = 0,
   caseCount = 0,
+  storageUsedGb = 0,
 }) => {
   const { data: healthHistory = [] } = useQuery({
     queryKey: platformAdminKeys.tenantHealthHistory(tenant.id),
     queryFn: () => getHealthMetricsHistory(tenant.id, 30),
   });
 
-  const getChurnRiskColor = (risk?: string) => {
+  const getChurnRiskColor = (risk: string | null | undefined): BadgeVariant => {
     switch (risk) {
       case 'low': return 'success';
       case 'medium': return 'warning';
-      case 'high': return 'error';
-      case 'critical': return 'error';
+      case 'high': return 'danger';
+      case 'critical': return 'danger';
       default: return 'default';
     }
   };
 
-  const getEngagementColor = (level?: string) => {
+  const getEngagementColor = (level: string | null | undefined): BadgeVariant => {
     switch (level) {
       case 'very_high':
       case 'high': return 'success';
       case 'moderate': return 'info';
       case 'low': return 'warning';
-      case 'inactive': return 'error';
+      case 'inactive': return 'danger';
       default: return 'default';
     }
   };
 
-  const userLimit = subscription?.user_limit || 0;
-  const caseLimit = subscription?.case_limit || 0;
-  const storageLimit = subscription?.storage_limit_gb || 0;
-  const storageUsed = tenant.storage_used_gb || 0;
+  const userLimit = readJsonNumber(tenant.limits, 'users');
+  const caseLimit = readJsonNumber(tenant.limits, 'cases');
+  const storageLimit = readJsonNumber(tenant.limits, 'storage_gb');
+  const storageUsed = storageUsedGb;
+
+  const contactEmail = subscription?.billing_email ?? readJsonString(tenant.metadata, 'contact_email');
+  const contactPhone = readJsonString(tenant.metadata, 'contact_phone');
+  const contactAddress =
+    readJsonString(subscription?.billing_address, 'line1') ??
+    readJsonString(tenant.metadata, 'address');
+  const planLabel = subscription?.paypal_plan_id ?? subscription?.plan_id ?? null;
+  const mrrAmount = subscription?.last_payment_amount ?? 0;
+  const lastRecordedAt = health?.recorded_at ?? health?.created_at ?? null;
 
   const userPercentage = userLimit > 0 ? (userCount / userLimit) * 100 : 0;
   const casePercentage = caseLimit > 0 ? (caseCount / caseLimit) * 100 : 0;
@@ -73,35 +106,37 @@ export const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-slate-900 mb-4">Contact Information</h3>
         <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <Mail className="w-5 h-5 text-slate-400 mt-0.5" />
-            <div>
-              <p className="text-sm text-slate-500">Email</p>
-              <p className="text-sm font-medium text-slate-900">{tenant.email}</p>
-            </div>
-          </div>
-          {tenant.phone && (
+          {contactEmail && (
             <div className="flex items-start gap-3">
-              <Phone className="w-5 h-5 text-slate-400 mt-0.5" />
+              <Mail className="w-5 h-5 text-slate-400 mt-0.5" />
+              <div>
+                <p className="text-sm text-slate-500">Email</p>
+                <p className="text-sm font-medium text-slate-900">{contactEmail}</p>
+              </div>
+            </div>
+          )}
+          {contactPhone && (
+            <div className="flex items-start gap-3">
+              <Building2 className="w-5 h-5 text-slate-400 mt-0.5" />
               <div>
                 <p className="text-sm text-slate-500">Phone</p>
-                <p className="text-sm font-medium text-slate-900">{tenant.phone}</p>
+                <p className="text-sm font-medium text-slate-900">{contactPhone}</p>
               </div>
             </div>
           )}
           <div className="flex items-start gap-3">
             <Building2 className="w-5 h-5 text-slate-400 mt-0.5" />
             <div>
-              <p className="text-sm text-slate-500">Company</p>
-              <p className="text-sm font-medium text-slate-900">{tenant.company_name}</p>
+              <p className="text-sm text-slate-500">Tenant</p>
+              <p className="text-sm font-medium text-slate-900">{tenant.name}</p>
             </div>
           </div>
-          {tenant.address && (
+          {contactAddress && (
             <div className="flex items-start gap-3">
               <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
               <div>
                 <p className="text-sm text-slate-500">Address</p>
-                <p className="text-sm font-medium text-slate-900">{tenant.address}</p>
+                <p className="text-sm font-medium text-slate-900">{contactAddress}</p>
               </div>
             </div>
           )}
@@ -114,7 +149,7 @@ export const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-500">Plan</span>
             <Badge variant="info">
-              {subscription?.plan_code?.toUpperCase() || 'None'}
+              {planLabel ? planLabel.toUpperCase() : 'None'}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
@@ -147,7 +182,7 @@ export const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({
                 <div className="flex-1">
                   <p className="text-sm text-slate-500">MRR</p>
                   <p className="text-sm font-medium text-slate-900">
-                    ${subscription.amount || 0}
+                    ${mrrAmount}
                   </p>
                 </div>
               </div>
@@ -222,18 +257,18 @@ export const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Activity className="w-5 h-5 text-slate-400" />
-                <span className="text-4xl font-bold text-slate-900">{health.health_score}</span>
+                <span className="text-4xl font-bold text-slate-900">{health.health_score ?? 0}</span>
                 <span className="text-sm text-slate-500">/100</span>
               </div>
               <Badge variant={getChurnRiskColor(health.churn_risk)}>
-                {health.churn_risk?.toUpperCase()} Risk
+                {health.churn_risk?.toUpperCase() ?? 'UNKNOWN'} Risk
               </Badge>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">Engagement Level</span>
               <Badge variant={getEngagementColor(health.engagement_level)}>
-                {health.engagement_level?.replace('_', ' ').toUpperCase()}
+                {health.engagement_level?.replace('_', ' ').toUpperCase() ?? 'UNKNOWN'}
               </Badge>
             </div>
 
@@ -242,13 +277,15 @@ export const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({
                 <p className="text-xs text-slate-500 mb-2">30-Day Trend</p>
                 <div className="flex items-end gap-1 h-16">
                   {healthHistory.map((metric, i) => {
-                    const height = (metric.health_score / 100) * 100;
+                    const score = metric.health_score ?? 0;
+                    const height = (score / 100) * 100;
+                    const recordedAt = metric.recorded_at ?? metric.created_at;
                     return (
                       <div
                         key={i}
                         className="flex-1 bg-primary rounded-t"
                         style={{ height: `${height}%` }}
-                        title={`${metric.health_score} on ${new Date(metric.recorded_at).toLocaleDateString()}`}
+                        title={`${score} on ${new Date(recordedAt).toLocaleDateString()}`}
                       />
                     );
                   })}
@@ -256,9 +293,11 @@ export const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({
               </div>
             )}
 
-            <div className="text-xs text-slate-500 mt-2">
-              Last updated {formatDistanceToNow(new Date(health.recorded_at))} ago
-            </div>
+            {lastRecordedAt && (
+              <div className="text-xs text-slate-500 mt-2">
+                Last updated {formatDistanceToNow(new Date(lastRecordedAt))} ago
+              </div>
+            )}
           </div>
         ) : (
           <p className="text-sm text-slate-500">No health data available</p>
