@@ -1,6 +1,5 @@
 import React from 'react';
 import { Copy } from 'lucide-react';
-import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { CloneDriveCard } from '../CloneDriveCard';
 
@@ -8,7 +7,6 @@ interface CaseCloneDrivesTabProps {
   caseData: Record<string, unknown>;
   devices: Record<string, unknown>[];
   cloneDrives: Record<string, unknown>[];
-  onSetShowCloneDriveModal: (v: boolean) => void;
   onSetViewCloneModal: (clone: Record<string, unknown>) => void;
   onSetSelectedClone: (clone: Record<string, unknown>) => void;
   onSetShowMarkAsDeliveredModal: (v: boolean) => void;
@@ -19,7 +17,6 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
   caseData,
   devices,
   cloneDrives,
-  onSetShowCloneDriveModal,
   onSetViewCloneModal,
   onSetSelectedClone,
   onSetShowMarkAsDeliveredModal,
@@ -37,14 +34,6 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
               </h2>
               <p className="text-sm text-slate-600 mt-1">Track disk images and clone storage locations for data recovery</p>
             </div>
-            <Button
-              onClick={() => onSetShowCloneDriveModal(true)}
-              style={{ backgroundColor: 'rgb(var(--color-primary))' }}
-              size="sm"
-            >
-              <Copy className="w-4 h-4 mr-2" />
-              Add Clone Drive
-            </Button>
           </div>
 
           {cloneDrives.length === 0 ? (
