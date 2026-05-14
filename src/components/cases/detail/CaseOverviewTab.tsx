@@ -9,20 +9,117 @@ import { MultiSelectDropdown } from '../../ui/MultiSelectDropdown';
 import { EngineerSelector } from '../EngineerSelector';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
+import type { Database } from '../../../types/database.types';
+
+type CaseRow = Database['public']['Tables']['cases']['Row'];
+type CaseDeviceRow = Database['public']['Tables']['case_devices']['Row'];
+
+type GeoNameEmbed = { name: string | null } | null;
+type NamedRefEmbed = { id: string; name: string | null } | null;
+
+interface CustomerEmbed {
+  id: string;
+  customer_number?: string | null;
+  customer_name: string | null;
+  email?: string | null;
+  mobile_number?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  country_id?: string | null;
+  city_id?: string | null;
+  geo_countries?: GeoNameEmbed;
+  geo_cities?: GeoNameEmbed;
+}
+
+interface CompanyEmbed {
+  id: string;
+  company_number?: string | null;
+  name?: string | null;
+  company_name: string | null;
+  email?: string | null;
+  phone?: string | null;
+  tax_number?: string | null;
+  geo_countries?: GeoNameEmbed;
+  geo_cities?: GeoNameEmbed;
+}
+
+interface ProfileEmbed {
+  id: string;
+  full_name: string | null;
+}
+
+interface CaseDeviceWithEmbeds {
+  id: string;
+  case_id?: string;
+  model: string | null;
+  serial_number: string | null;
+  symptoms: string | null;
+  notes: string | null;
+  password: string | null;
+  device_type_id: string | null;
+  capacity_id: string | null;
+  accessories: string[] | null;
+  device_role_id: number | null;
+  is_primary: boolean | null;
+  role_notes: string | null;
+  created_at?: string;
+  created_by?: string | null;
+  device_type?: NamedRefEmbed;
+  brand?: { name: string | null } | null;
+  capacity?: NamedRefEmbed;
+  condition?: { name: string | null } | null;
+  encryption_type?: { name: string | null } | null;
+  device_role?: { id: number; name: string | null } | null;
+}
+
+interface CaseWithEmbeds {
+  id: string;
+  case_no: string | null;
+  case_number?: string | null;
+  title?: string | null;
+  subject?: string | null;
+  priority: string | null;
+  status: string | null;
+  client_reference: string | null;
+  created_at?: string;
+  updated_at?: string;
+  customer_id?: string | null;
+  contact_id?: string | null;
+  service_type_id: string | null;
+  created_by?: string | null;
+  assigned_engineer_id: string | null;
+  assigned_to?: string | null;
+  company_id?: string | null;
+  customer?: CustomerEmbed | null;
+  contact?: { id: string; customer_name: string | null; email?: string | null; mobile_number?: string | null; phone?: string | null } | null;
+  service_type?: NamedRefEmbed;
+  created_by_profile?: ProfileEmbed | null;
+  assigned_engineer?: ProfileEmbed | null;
+  company?: CompanyEmbed | null;
+  important_data?: string | null;
+  accessories?: string[] | null;
+}
+
+interface OverviewProfile {
+  role?: string | null;
+  case_access_level?: string | null;
+}
+
+type DeviceUpdates = Partial<CaseDeviceRow> & { device_password?: string | null };
 
 interface CaseOverviewTabProps {
-  caseData: Record<string, unknown>;
-  devices: Record<string, unknown>[];
+  caseData: CaseWithEmbeds;
+  devices: CaseDeviceWithEmbeds[];
   isSavingCaseInfo: boolean;
   isSavingDeviceInfo: boolean;
   isSavingClientInfo: boolean;
-  onSaveCaseInfo: (updates: Record<string, unknown>) => void;
-  onSaveDeviceInfo: (deviceId: string, updates: Record<string, unknown>) => void;
-  onSaveClientInfo: (customerUpdates: Record<string, unknown>, deviceUpdates: Record<string, unknown>) => void;
+  onSaveCaseInfo: (updates: Partial<CaseRow>) => void;
+  onSaveDeviceInfo: (deviceId: string, updates: Partial<CaseDeviceRow>) => void;
+  onSaveClientInfo: (customerUpdates: Record<string, unknown>, deviceUpdates: DeviceUpdates) => void;
   onUpdateStatus: (newStatus: string) => void;
   onUpdatePriority: (newPriority: string) => void;
   onUpdateEngineer: (engineerId: string | null) => void;
-  profile: Record<string, unknown>;
+  profile: OverviewProfile | null;
 }
 
 export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
@@ -40,8 +137,8 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   profile,
 }) => {
   const [editingSection, setEditingSection] = useState<string | null>(null);
-  const [editedCaseData, setEditedCaseData] = useState<Record<string, unknown>>({});
-  const [editedDeviceData, setEditedDeviceData] = useState<Record<string, unknown>>({});
+  const [editedCaseData, setEditedCaseData] = useState<Partial<CaseRow>>({});
+  const [editedDeviceData, setEditedDeviceData] = useState<Partial<CaseDeviceRow>>({});
   const [editedClientData, setEditedClientData] = useState<Record<string, unknown>>({});
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingPriority, setIsEditingPriority] = useState(false);
@@ -125,18 +222,21 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getStatusColor = (statusName: string) => {
+  const getStatusColor = (statusName: string | null | undefined) => {
+    if (!statusName) return '#6b7280';
     const status = caseStatuses.find(s => s.name === statusName);
     return status?.color || '#6b7280';
   };
 
-  const getStatusDisplayName = (statusName: string) => {
+  const getStatusDisplayName = (statusName: string | null | undefined) => {
+    if (!statusName) return '';
     const status = caseStatuses.find(s => s.name === statusName);
     return status?.name || statusName;
   };
 
-  const getPriorityColor = (priorityName: string) => {
-    const priority = casePriorities.find(p => p.name.toLowerCase() === priorityName?.toLowerCase());
+  const getPriorityColor = (priorityName: string | null | undefined) => {
+    if (!priorityName) return '#6b7280';
+    const priority = casePriorities.find(p => p.name.toLowerCase() === priorityName.toLowerCase());
     return priority?.color || '#6b7280';
   };
 
@@ -186,7 +286,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
     setEditingSection(null);
   };
 
-  const handleDeviceFieldChange = (field: string, value: unknown) => {
+  const handleDeviceFieldChange = <K extends keyof CaseDeviceRow>(field: K, value: CaseDeviceRow[K]) => {
     setEditedDeviceData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -265,7 +365,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                   </div>
                 ) : (
                   <select
-                    value={caseData.status}
+                    value={caseData.status ?? ''}
                     onChange={(e) => { onUpdateStatus(e.target.value); setIsEditingStatus(false); }}
                     className="text-xs px-2 py-1 border border-primary/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-primary"
                     autoFocus
@@ -291,7 +391,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                   </div>
                 ) : (
                   <select
-                    value={caseData.priority}
+                    value={caseData.priority ?? ''}
                     onChange={(e) => { onUpdatePriority(e.target.value); setIsEditingPriority(false); }}
                     className="text-xs px-2 py-1 border border-warning/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-warning"
                     autoFocus
@@ -552,9 +652,9 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                 <Phone className="w-3.5 h-3.5 text-slate-400" />
                 Mobile Number
               </label>
-              {(caseData.customer?.mobile_number || caseData.customer?.phone_number) ? (
-                <a href={`tel:${caseData.customer.mobile_number || caseData.customer.phone_number}`} className="text-sm text-primary hover:text-primary/80 text-right">
-                  {caseData.customer.mobile_number || caseData.customer.phone_number}
+              {(caseData.customer?.mobile_number || caseData.customer?.phone) ? (
+                <a href={`tel:${caseData.customer.mobile_number || caseData.customer.phone}`} className="text-sm text-primary hover:text-primary/80 text-right">
+                  {caseData.customer.mobile_number || caseData.customer.phone}
                 </a>
               ) : (
                 <p className="text-sm text-slate-900 font-medium text-right">-</p>
@@ -566,9 +666,12 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                 Location
               </label>
               <p className="text-sm text-slate-900 font-medium text-right">
-                {caseData.customer?.city && caseData.customer?.country
-                  ? `${caseData.customer.city}, ${caseData.customer.country}`
-                  : caseData.customer?.city || caseData.customer?.country || '-'}
+                {(() => {
+                  const cityName = caseData.customer?.geo_cities?.name ?? null;
+                  const countryName = caseData.customer?.geo_countries?.name ?? null;
+                  if (cityName && countryName) return `${cityName}, ${countryName}`;
+                  return cityName || countryName || '-';
+                })()}
               </p>
             </div>
             <div className="flex items-center justify-between py-3">
