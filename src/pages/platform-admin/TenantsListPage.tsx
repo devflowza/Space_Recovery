@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Users, AlertTriangle } from 'lucide-react';
+import { Search, Filter, Users } from 'lucide-react';
 import { getTenantsList, suspendTenant, reactivateTenant } from '../../lib/platformAdminService';
 import { platformAdminKeys } from '../../lib/queryKeys';
 import { Badge } from '../../components/ui/Badge';

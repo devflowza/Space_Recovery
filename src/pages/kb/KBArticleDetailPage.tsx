@@ -10,7 +10,6 @@ import {
   getKBArticleVersions,
   updateKBArticle,
   incrementViewCount,
-  type KBArticleWithDetails,
   type KBArticleVersion,
 } from '../../lib/kbService';
 import { kbKeys } from '../../lib/queryKeys';

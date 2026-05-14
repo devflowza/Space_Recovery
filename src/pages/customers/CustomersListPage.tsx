@@ -9,7 +9,7 @@ import { Badge } from '../../components/ui/Badge';
 import { PhoneInput } from '../../components/ui/PhoneInput';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { CustomerAvatar } from '../../components/ui/CustomerAvatar';
-import { Plus, Search, Filter, Mail, Phone, Building2, User, MapPin, Eye, Pencil, Users, UserCheck, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Filter, Mail, Phone, Building2, MapPin, Users, UserCheck, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -214,9 +214,6 @@ export const CustomersListPage: React.FC = () => {
 
       if (numberError) throw numberError;
 
-      const selectedCountry = countries.find((c) => c.id === customer.country_id);
-      const selectedCity = cities.find((c) => c.id === customer.city_id);
-
       const { data: newCustomer, error: createError } = await supabase
         .from('customers_enhanced')
         .insert({
@@ -358,27 +355,6 @@ export const CustomersListPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate(formData);
-  };
-
-  const handleOpenEditModal = (customer: Customer) => {
-    setEditingCustomer(customer);
-
-    const customerCountry = countries.find((c) => c.name === customer.country);
-    const customerCity = cities.find((c) => c.name === customer.city);
-
-    setEditFormData({
-      customer_name: customer.customer_name,
-      email: customer.email || '',
-      mobile_number: customer.mobile_number || '',
-      phone_number: customer.phone_number || '',
-      customer_group_id: customer.customer_group_id || '',
-      country_id: customerCountry?.id || '',
-      city_id: customerCity?.id || '',
-      address_line1: customer.address_line1 || '',
-      portal_enabled: customer.portal_enabled,
-      notes: customer.notes || '',
-    });
-    setIsEditModalOpen(true);
   };
 
   const handleSubmitEdit = (e: React.FormEvent) => {

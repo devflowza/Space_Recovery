@@ -1,4 +1,4 @@
-import { initializePDFFonts, getFontFamily, areFontsLoaded, createPdfWithFonts } from './fonts';
+import { initializePDFFonts, getFontFamily, createPdfWithFonts } from './fonts';
 import { fetchReceiptData, fetchQuoteData, fetchInvoiceData, fetchPaymentReceiptData, fetchPayslipData, fetchChainOfCustodyData } from './dataFetcher';
 import { buildOfficeReceiptDocument } from './documents/OfficeReceiptDocument';
 import { buildCustomerCopyDocument } from './documents/CustomerCopyDocument';

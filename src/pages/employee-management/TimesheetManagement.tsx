@@ -332,7 +332,7 @@ export function TimesheetManagement() {
   const isAdmin = profile?.role === 'admin' || profile?.role === 'hr';
 
   const [activeTab, setActiveTab] = useState<TabId>('entries');
-  const [filters, setFilters] = useState<TimesheetFilters>({});
+  const [_filters, _setFilters] = useState<TimesheetFilters>({});
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchText, setSearchText] = useState('');
   const [employeeFilter, setEmployeeFilter] = useState('');

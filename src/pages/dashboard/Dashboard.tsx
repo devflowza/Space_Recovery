@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
-  Briefcase, Clock, CheckCircle2, AlertCircle,
+  Briefcase, Clock, CheckCircle2,
   TrendingUp, Users, HardDrive, BarChart2
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -41,7 +41,7 @@ const QuickStat: React.FC<QuickStatProps> = ({ label, value, icon: Icon, color, 
 export const Dashboard: React.FC = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const { hasAccess: hasAdvancedReports } = useFeature('advanced_reports');
+  const { hasAccess: _hasAdvancedReports } = useFeature('advanced_reports');
   const [showUpgradeBanner, setShowUpgradeBanner] = useState(true);
   const [planCode, setPlanCode] = useState<string>('');
 

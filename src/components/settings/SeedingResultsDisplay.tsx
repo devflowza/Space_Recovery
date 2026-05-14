@@ -1,6 +1,5 @@
 import React from 'react';
-import { CheckCircle, AlertCircle, Info, XCircle, X } from 'lucide-react';
-import { Button } from '../ui/Button';
+import { CheckCircle, Info, XCircle, X } from 'lucide-react';
 
 interface TableSeedResult {
   tableName: string;

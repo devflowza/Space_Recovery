@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { getAllCoupons, softDeleteCoupon, updateCoupon } from '../../lib/billingService';
+import { getAllCoupons, softDeleteCoupon } from '../../lib/billingService';
 import { platformAdminKeys } from '../../lib/queryKeys';
 import { CouponFormModal } from '../../components/platform-admin/coupons/CouponFormModal';
 import toast from 'react-hot-toast';
@@ -35,16 +35,6 @@ export const CouponsManagementPage: React.FC = () => {
       toast.success('Coupon deleted');
     },
     onError: () => toast.error('Failed to delete coupon'),
-  });
-
-  const toggleActiveMutation = useMutation({
-    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
-      updateCoupon(id, { is_active }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: platformAdminKeys.coupons() });
-      toast.success('Coupon updated');
-    },
-    onError: () => toast.error('Failed to update coupon'),
   });
 
   const now = new Date();

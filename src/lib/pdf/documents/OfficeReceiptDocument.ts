@@ -3,11 +3,9 @@ import type { ReceiptData, TranslationContext } from '../types';
 import {
   PDF_COLORS,
   getStylesWithFont,
-  createJobIdBadge,
   createBilingualInfoBox,
   createBilingualSectionHeader,
   createTermsBox,
-  createRegisteredByLine,
   createBilingualSignatureBlock,
   createSocialFooter,
   getRoleBadgeColors,
@@ -54,7 +52,7 @@ export function buildOfficeReceiptDocument(
           stack: [
             { text: legalName, fontSize: 14, bold: true, color: PDF_COLORS.text, alignment: 'right' },
             { text: companyAddress, fontSize: 8, color: PDF_COLORS.textLight, alignment: 'right', margin: [0, 2, 0, 0], lineHeight: 1.1 },
-            ...contactLines.map((line, index) => ({
+            ...contactLines.map((line) => ({
               text: line,
               fontSize: 8,
               color: PDF_COLORS.textLight,
@@ -73,7 +71,7 @@ export function buildOfficeReceiptDocument(
       stack: [
         { text: legalName, fontSize: 14, bold: true, color: PDF_COLORS.text, alignment: 'center' },
         { text: companyAddress, fontSize: 8, color: PDF_COLORS.textLight, alignment: 'center', margin: [0, 2, 0, 0], lineHeight: 1.1 },
-        ...contactLines.map((line, index) => ({
+        ...contactLines.map((line) => ({
           text: line,
           fontSize: 8,
           color: PDF_COLORS.textLight,
@@ -315,7 +313,7 @@ export function buildOfficeReceiptDocument(
       registeredBySection,
       signatureSection,
     ],
-    footer: (currentPage: number, pageCount: number) => {
+    footer: (_currentPage: number, _pageCount: number) => {
       if (qrCodeBase64) {
         const footerStack: any[] = [];
 

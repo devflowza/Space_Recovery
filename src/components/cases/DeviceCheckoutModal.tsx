@@ -30,7 +30,7 @@ export const DeviceCheckoutModal: React.FC<DeviceCheckoutModalProps> = ({
   isOpen,
   onClose,
   caseId,
-  caseNumber,
+  caseNumber: _caseNumber,
   devices,
   customerName,
   customerMobileNumber,

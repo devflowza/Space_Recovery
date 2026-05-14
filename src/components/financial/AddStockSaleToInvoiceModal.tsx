@@ -4,7 +4,7 @@ import { ShoppingBag, Package, CheckSquare, Square } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { getStockSales, addSaleToInvoice, type StockSaleWithDetails } from '../../lib/stockService';
+import { getStockSales, addSaleToInvoice } from '../../lib/stockService';
 import { formatDate } from '../../lib/format';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useToast } from '../../hooks/useToast';

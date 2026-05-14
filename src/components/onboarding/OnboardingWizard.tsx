@@ -15,7 +15,6 @@ interface OnboardingWizardProps {
 export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const toast = useToast();
 
   const currentStep = ONBOARDING_STEPS[currentStepIndex];
@@ -146,7 +145,7 @@ interface StepContentProps {
   loading: boolean;
 }
 
-const StepContent = ({ stepId, tenantId, onNext, onSkip, loading }: StepContentProps) => {
+const StepContent = ({ stepId, tenantId, onNext, onSkip: _onSkip, loading }: StepContentProps) => {
   const navigate = useNavigate();
   const toast = useToast();
   const [loadingSampleData, setLoadingSampleData] = useState(false);

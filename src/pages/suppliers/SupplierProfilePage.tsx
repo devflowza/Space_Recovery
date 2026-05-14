@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Building2, Mail, Phone, MapPin, Globe, FileText, Edit, ArrowLeft,
   User, MessageSquare, FileStack, TrendingUp, Package, Activity,
-  CheckCircle, XCircle, Star, Clock, DollarSign
+  CheckCircle, Star, DollarSign
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -455,7 +455,7 @@ function OverviewTab({ supplier }: { supplier: Record<string, unknown> & { name:
   );
 }
 
-function ContactsTab({ contacts, supplierId, onUpdate }: { contacts: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
+function ContactsTab({ contacts, supplierId: _supplierId, onUpdate: _onUpdate }: { contacts: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
   return (
     <Card>
       <div className="p-6">
@@ -511,7 +511,7 @@ function ContactsTab({ contacts, supplierId, onUpdate }: { contacts: Record<stri
   );
 }
 
-function CommunicationsTab({ communications, supplierId, onUpdate }: { communications: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
+function CommunicationsTab({ communications, supplierId: _supplierId, onUpdate: _onUpdate }: { communications: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
   return (
     <Card>
       <div className="p-6">
@@ -551,7 +551,7 @@ function CommunicationsTab({ communications, supplierId, onUpdate }: { communica
   );
 }
 
-function DocumentsTab({ documents, supplierId, onUpdate }: { documents: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
+function DocumentsTab({ documents, supplierId: _supplierId, onUpdate: _onUpdate }: { documents: Record<string, unknown>[]; supplierId: string; onUpdate: () => void }) {
   return (
     <Card>
       <div className="p-6">

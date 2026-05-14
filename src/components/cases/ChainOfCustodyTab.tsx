@@ -7,24 +7,17 @@ import {
   Download,
   Clock,
   User,
-  MapPin,
   FileText,
   ChevronDown,
   ChevronUp,
   CheckCircle2,
   AlertTriangle,
   Eye,
-  Package,
-  MessageCircle,
   DollarSign,
   ArrowRightLeft,
-  Edit,
-  Plus,
   Activity,
-  Hash,
   Lock,
   Fingerprint,
-  Calendar,
   Upload,
   Trash2,
   X,
@@ -53,18 +46,6 @@ interface ChainOfCustodyTabProps {
   caseId: string;
   caseNumber: string;
 }
-
-const categoryIcons: Record<ActionCategory, React.ElementType> = {
-  creation: Plus,
-  modification: Edit,
-  access: Eye,
-  transfer: ArrowRightLeft,
-  verification: CheckCircle2,
-  communication: MessageCircle,
-  evidence_handling: Package,
-  financial: DollarSign,
-  critical_event: AlertTriangle,
-};
 
 const getActionTypeIcon = (actionType: string): React.ElementType => {
   if (actionType.includes('QUOTE')) return FileText;

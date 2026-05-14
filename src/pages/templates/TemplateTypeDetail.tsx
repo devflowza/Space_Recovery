@@ -7,7 +7,6 @@ import {
   Copy,
   Trash2,
   Eye,
-  MoreVertical,
   Star,
   Calendar,
   DollarSign,

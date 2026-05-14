@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Mail, Phone, Building2, MapPin, CreditCard, Calendar, TrendingUp, Activity, Users as UsersIcon, Briefcase, HardDrive } from 'lucide-react';
+import { Mail, Phone, Building2, MapPin, CreditCard, Calendar, Activity, Users as UsersIcon, Briefcase, HardDrive } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { getHealthMetricsHistory } from '@/lib/platformAdminService';

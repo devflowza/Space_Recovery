@@ -3,7 +3,7 @@ import { Upload, Download, CheckCircle, AlertTriangle, Loader, FileText, ArrowRi
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { BulkInventoryImporter, ImportProgress, downloadErrorReport } from '../../lib/bulkImportService';
-import { parseCSV, csvToObjects, suggestFieldMapping, ENTITY_CONFIGS } from '../../lib/importExportService';
+import { parseCSV, csvToObjects, suggestFieldMapping } from '../../lib/importExportService';
 import { logger } from '../../lib/logger';
 
 interface BulkInventoryImportModalProps {
@@ -27,7 +27,6 @@ export const BulkInventoryImportModal: React.FC<BulkInventoryImportModalProps> =
   const [isImporting, setIsImporting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const config = ENTITY_CONFIGS.inventory;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];

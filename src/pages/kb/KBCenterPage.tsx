@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Search, Plus, FolderOpen, Star, Eye, Clock, Tag, ChevronRight, FileText, Layers, CheckCircle, CreditCard as Edit3, Filter } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
 import { ArticleEditorModal } from '../../components/kb/ArticleEditorModal';
 import { CategoryManagerModal } from '../../components/kb/CategoryManagerModal';
 import {
@@ -11,7 +10,6 @@ import {
   getKBCategories,
   getKBStats,
   type KBArticleWithDetails,
-  type KBCategoryWithCount,
 } from '../../lib/kbService';
 import { kbKeys } from '../../lib/queryKeys';
 import { formatDate } from '../../lib/format';

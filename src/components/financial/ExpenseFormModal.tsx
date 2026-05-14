@@ -14,7 +14,6 @@ import {
   Briefcase,
   Save,
   Upload,
-  X,
 } from 'lucide-react';
 import { logger } from '../../lib/logger';
 

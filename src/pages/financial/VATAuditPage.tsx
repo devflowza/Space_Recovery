@@ -102,7 +102,7 @@ export const VATAuditPage: React.FC = () => {
     },
   });
 
-  const { data: vatReturns = [], refetch: refetchReturns } = useQuery({
+  const { data: vatReturns = [] } = useQuery({
     queryKey: ['vat_returns'],
     queryFn: async () => {
       const data = await fetchVATReturns();
@@ -110,7 +110,7 @@ export const VATAuditPage: React.FC = () => {
     },
   });
 
-  const { data: vatStats } = useQuery({
+  const { data: _vatStats } = useQuery({
     queryKey: ['vat_stats'],
     queryFn: () => getVATStats(),
   });

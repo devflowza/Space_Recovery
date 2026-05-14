@@ -81,7 +81,7 @@ export const TransactionsList: React.FC = () => {
     return startDate.toISOString().split('T')[0];
   };
 
-  const { data: transactions = [], isLoading, refetch } = useQuery({
+  const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['financial_transactions', searchTerm, typeFilter, dateRange],
     queryFn: async () => {
       const data = await fetchTransactions({
@@ -145,17 +145,6 @@ export const TransactionsList: React.FC = () => {
   const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
   const totalExpense = expenseTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
   const netCashFlow = totalIncome - totalExpense;
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'income':
-        return <TrendingUp className="w-4 h-4" />;
-      case 'expense':
-        return <TrendingDown className="w-4 h-4" />;
-      default:
-        return <ArrowLeftRight className="w-4 h-4" />;
-    }
-  };
 
   const getTypeColor = (type: string) => {
     switch (type) {

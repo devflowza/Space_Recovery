@@ -36,7 +36,7 @@ interface CompanySettings {
   };
 }
 
-export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
+export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber: _caseNumber }) => {
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
   const [casePriorities, setCasePriorities] = useState<Array<{ name: string; color: string }>>([]);

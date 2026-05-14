@@ -108,8 +108,6 @@ export function AssignToCaseModal({
     }
   };
 
-  const selectedCase = cases.find((c) => c.id === selectedCaseId);
-
   const caseOptions = cases.map((c) => ({
     value: c.id,
     label: `${c.case_no} - ${c.title}${c.customer_name ? ` (${c.customer_name})` : ''}`,

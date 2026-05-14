@@ -4,7 +4,7 @@ import { usePortalAuth } from '../../contexts/PortalAuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { ShoppingBag, Hash, Package, Calendar, DollarSign } from 'lucide-react';
+import { ShoppingBag, Package, Calendar, DollarSign } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 
 function formatCurrency(amount: number) {

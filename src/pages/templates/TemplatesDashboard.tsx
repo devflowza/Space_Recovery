@@ -8,7 +8,6 @@ import {
   Shield,
   Plus,
   Search,
-  Filter,
   LayoutGrid,
   List as ListIcon,
   Sparkles,

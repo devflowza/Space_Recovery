@@ -22,7 +22,6 @@ import {
   CreditCard,
   Download,
   AlertTriangle,
-  CheckCircle,
   Sparkles,
   Users,
   Briefcase,

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
 import { CheckCircle2, RefreshCw } from 'lucide-react';
 import {
   markAssignmentAsWorking,

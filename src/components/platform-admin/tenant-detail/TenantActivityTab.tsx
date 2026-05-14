@@ -76,7 +76,7 @@ export const TenantActivityTab: React.FC<TenantActivityTabProps> = ({ tenantId }
             <div className="relative">
               <div className="absolute left-6 top-0 bottom-0 w-px bg-slate-200" />
               <div className="space-y-6">
-                {filteredActivities.map((activity, index) => {
+                {filteredActivities.map((activity) => {
                   const Icon = activityTypeIcons[activity.activity_type] || activityTypeIcons.default;
                   const activityData = activity.activity_data as Record<string, unknown> | null;
 

@@ -5,7 +5,6 @@ import {
   AlertCircle,
   Layers,
   User,
-  Briefcase,
   HardDrive,
   Sparkles,
   Clock,
@@ -17,7 +16,6 @@ import {
 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
 import { RichTextEditor } from '../ui/RichTextEditor';
 import { Badge } from '../ui/Badge';
 import { reportsService } from '../../lib/reportsService';

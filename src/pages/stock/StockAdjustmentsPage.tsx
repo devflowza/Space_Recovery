@@ -20,8 +20,6 @@ import {
   createStockAdjustment,
   approveStockAdjustment,
   getStockItems,
-  deleteStockCategory,
-  type StockAdjustmentSession,
   type StockItemWithCategory,
 } from '../../lib/stockService';
 import { stockKeys } from '../../lib/queryKeys';

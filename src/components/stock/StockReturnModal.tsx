@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { RotateCcw, AlertCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
 import { useToast } from '../../hooks/useToast';
 import { createStockReturn, type StockSaleWithDetails } from '../../lib/stockService';
 import { stockKeys } from '../../lib/queryKeys';

@@ -10,7 +10,6 @@ import {
   FileText,
   Shield,
   AlertTriangle,
-  TrendingUp,
   Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';

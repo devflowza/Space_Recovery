@@ -46,7 +46,7 @@ interface Case {
 
 export const CasesList: React.FC = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile: _profile } = useAuth();
   const { usage: caseUsage } = useUsageLimit('max_cases_per_month');
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

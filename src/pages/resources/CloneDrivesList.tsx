@@ -256,14 +256,6 @@ export const CloneDrivesList: React.FC = () => {
     return '#10b981';
   };
 
-  const getCapacityStatus = (availableGb: number, totalGb: number) => {
-    if (totalGb === 0) return 'Unknown';
-    const availablePercentage = (availableGb / totalGb) * 100;
-
-    if (availablePercentage < 20) return 'Critical';
-    if (availablePercentage < 50) return 'Moderate';
-    return 'Healthy';
-  };
 
   const clearFilters = () => {
     setSearchTerm('');

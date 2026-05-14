@@ -147,7 +147,7 @@ export const userManagementService = {
   },
 
   async changePassword(
-    currentPassword: string,
+    _currentPassword: string,
     newPassword: string
   ): Promise<{ success: boolean; error?: string }> {
     try {

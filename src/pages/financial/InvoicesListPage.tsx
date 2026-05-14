@@ -20,12 +20,10 @@ import {
   CheckCircle,
   User,
   Building2,
-  Calendar,
   Eye,
   Edit,
   DollarSign,
   AlertCircle,
-  RefreshCw,
   ArrowRight,
   ExternalLink,
   Lock,
@@ -54,7 +52,7 @@ export const InvoicesListPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats } = useQuery({
     queryKey: ['invoice_stats'],
     queryFn: () => getInvoiceStats(),
     staleTime: 30000,
@@ -100,7 +98,7 @@ export const InvoicesListPage: React.FC = () => {
     return 'N/A';
   };
 
-  const { draftInvoices, sentInvoices, paidInvoices, overdueInvoices } = useMemo(
+  const { sentInvoices, paidInvoices, overdueInvoices } = useMemo(
     () => ({
       draftInvoices: invoices.filter((i) => i.status === 'draft'),
       sentInvoices: invoices.filter((i) => i.status === 'sent'),

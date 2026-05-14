@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { ChevronUp, ChevronDown, Search } from 'lucide-react';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
 
 export interface Column<T> {
   key: string;

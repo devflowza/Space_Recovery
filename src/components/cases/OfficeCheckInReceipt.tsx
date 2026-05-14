@@ -90,7 +90,7 @@ interface CompanySettings {
 
 export const OfficeCheckInReceipt: React.FC<OfficeCheckInReceiptProps> = ({
   caseId,
-  caseNumber,
+  caseNumber: _caseNumber,
 }) => {
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);

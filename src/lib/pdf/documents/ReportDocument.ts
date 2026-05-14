@@ -6,7 +6,7 @@ import {
   createBilingualInfoBox,
   createBilingualSectionHeader,
 } from '../styles';
-import { formatDate, buildCompanyAddress, buildCompanyAddressLines, safeString } from '../utils';
+import { formatDate, buildCompanyAddressLines, safeString } from '../utils';
 import { getGeneralIconSvg } from '../../deviceIconMapper';
 
 export interface ReportData {
@@ -506,7 +506,7 @@ export function buildReportDocument(
       ...headerContent,
       ...bodyContent,
     ],
-    footer: (currentPage: number, pageCount: number) => {
+    footer: (_currentPage: number, _pageCount: number) => {
       if (qrCodeBase64) {
         const footerStack: any[] = [];
 
@@ -639,7 +639,7 @@ function createInfoRow(label: string, value: string | undefined | null, labelWid
   };
 }
 
-function getReportTypeTitle(reportType: string, t: (key: string, fallback: string) => string, isBilingual: boolean): string {
+function getReportTypeTitle(reportType: string, _t: (key: string, fallback: string) => string, isBilingual: boolean): string {
   const translationMap: Record<string, { key: string, fallback: string, arabic: string }> = {
     evaluation: { key: 'evaluationReport', fallback: 'EVALUATION REPORT', arabic: 'تقرير التقييم' },
     service: { key: 'serviceReport', fallback: 'SERVICE REPORT', arabic: 'تقرير الخدمة' },
@@ -660,7 +660,7 @@ function getReportTypeTitle(reportType: string, t: (key: string, fallback: strin
   return mapping.fallback;
 }
 
-function getSectionTitle(sectionKey: string, defaultTitle: string, t: (key: string, fallback: string) => string, isBilingual: boolean): string {
+function getSectionTitle(sectionKey: string, defaultTitle: string, _t: (key: string, fallback: string) => string, isBilingual: boolean): string {
   const translationMap: Record<string, { key: string, arabic: string }> = {
     diagnostic_findings: { key: 'diagnosticFindings', arabic: 'نتائج التشخيص' },
     proposed_solutions: { key: 'proposedSolutions', arabic: 'الحلول المقترحة' },
@@ -685,16 +685,6 @@ function getSectionTitle(sectionKey: string, defaultTitle: string, t: (key: stri
   }
 
   return defaultTitle;
-}
-
-function getStatusLabel(status: string): string {
-  const statusMap: Record<string, string> = {
-    draft: 'Draft',
-    review: 'Under Review',
-    approved: 'Approved',
-    sent: 'Sent to Customer',
-  };
-  return statusMap[status] || status;
 }
 
 function stripHtmlTags(html: string): string {

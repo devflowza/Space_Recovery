@@ -25,7 +25,6 @@ import {
 } from '../../lib/stockService';
 import { PageHeader } from '../../components/shared/PageHeader';
 import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
 import { StockItemsTable } from '../../components/stock/StockItemsTable';
 import { StockItemFormModal } from '../../components/stock/StockItemFormModal';
 import { StockTransactionModal } from '../../components/stock/StockTransactionModal';
@@ -49,7 +48,7 @@ const formatCurrency = (value: number): string =>
 
 export const StockListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const toast = useToast();
 

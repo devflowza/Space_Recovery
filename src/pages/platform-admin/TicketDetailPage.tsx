@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Send, Building2, Calendar, AlertCircle, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { TicketStatusBadge } from '../../components/platform-admin/tickets/TicketStatusBadge';
 import { TicketPriorityBadge } from '../../components/platform-admin/tickets/TicketPriorityBadge';
@@ -14,7 +13,6 @@ import {
   getTicketMessages,
   addTicketMessage,
   updateTicketStatus,
-  assignTicket,
 } from '../../lib/platformAdminService';
 import { platformAdminKeys } from '../../lib/queryKeys';
 import { usePlatformAdmin } from '../../contexts/PlatformAdminContext';
@@ -76,18 +74,6 @@ export const TicketDetailPage: React.FC = () => {
     },
     onError: () => {
       showError('Failed to update status');
-    },
-  });
-
-  const assignMutation = useMutation({
-    mutationFn: (adminId: string | null) => assignTicket(id!, adminId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: platformAdminKeys.ticketDetail(id!) });
-      queryClient.invalidateQueries({ queryKey: platformAdminKeys.ticketsList() });
-      showSuccess('Ticket assignment updated');
-    },
-    onError: () => {
-      showError('Failed to update assignment');
     },
   });
 

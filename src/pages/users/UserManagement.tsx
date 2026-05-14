@@ -11,7 +11,7 @@ import { userManagementService } from '../../lib/userManagementService';
 import { useToast } from '../../hooks/useToast';
 import { useUsageLimit } from '../../hooks/useFeatureGate';
 import { canPerformAction } from '../../lib/featureGateService';
-import { UserPlus, Search, CreditCard as Edit, Trash2, Lock, Unlock, Mail, Phone, Calendar, Shield, AlertCircle, CheckCircle, XCircle, UserCheck } from 'lucide-react';
+import { UserPlus, Search, CreditCard as Edit, Lock, Unlock, Mail, Phone, Calendar, Shield, AlertCircle, CheckCircle, XCircle, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { logger } from '../../lib/logger';
 
@@ -189,27 +189,6 @@ export const UserManagement: React.FC = () => {
         return 'teal';
       default:
         return 'gray';
-    }
-  };
-
-  const handleApproveUser = async (userId: string, role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr', caseAccessLevel?: 'restricted' | 'full') => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          role,
-          is_active: true,
-          case_access_level: role === 'technician' ? (caseAccessLevel || 'restricted') : null
-        })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      toast.success('User approved successfully');
-      fetchUsers();
-    } catch (error) {
-      logger.error('Error approving user:', error);
-      toast.error('Failed to approve user. Please try again.');
     }
   };
 

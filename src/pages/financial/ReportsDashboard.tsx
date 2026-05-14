@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -30,7 +30,6 @@ import {
   Receipt,
   Wallet,
   AlertCircle,
-  X,
 } from 'lucide-react';
 
 interface ReportData {

@@ -446,7 +446,6 @@ export function StreamlinedReportEditor({
             </div>
             <div className="flex-1 overflow-y-auto p-2">
               {sectionConfigs.map((config) => {
-                const Icon = config.icon;
                 const hasContent = sections[config.key]?.trim().length > 0;
                 const isActive = activeSection === config.key;
 

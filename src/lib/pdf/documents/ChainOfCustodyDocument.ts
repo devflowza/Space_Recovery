@@ -197,7 +197,7 @@ function buildEntriesTable(
   data: ChainOfCustodyDocumentData,
   ctx: TranslationContext
 ): Content {
-  const { entries, options } = data;
+  const { entries, options: _options } = data;
   const { isBilingual, t } = ctx;
 
   const chainEntriesArabic = isBilingual ? (t('chainOfCustodyEntries', '').split(' | ')[1] || null) : null;

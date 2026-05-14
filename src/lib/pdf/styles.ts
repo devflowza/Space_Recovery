@@ -495,8 +495,6 @@ export function createBilingualInfoBox(
   content: object[],
   iconSvg?: string
 ): object {
-  const headerText = arabicTitle ? `${englishTitle}     ${arabicTitle}` : englishTitle;
-
   return {
     table: {
       widths: ['*'],

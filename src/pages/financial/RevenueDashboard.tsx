@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
-import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { FinancialModuleHeader } from '../../components/financial/FinancialModuleHeader';
 import { FinancialStatsCard } from '../../components/financial/FinancialStatsCard';
@@ -12,14 +11,14 @@ import {
   generateRevenueByCustomerReport,
   generateRevenueByCaseReport,
 } from '../../lib/financialReportsService';
-import { TrendingUp, DollarSign, PieChart, BarChart3, Plus, Search, Filter, Users, Briefcase } from 'lucide-react';
+import { TrendingUp, DollarSign, PieChart, BarChart3, Plus, Search, Users, Briefcase } from 'lucide-react';
 
 export const RevenueDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { formatCurrency } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<string>('month');
-  const [showFilters, setShowFilters] = useState(false);
+  const [_showFilters, _setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'invoices' | 'customers' | 'cases'>('invoices');
 
   const getDateRange = () => {

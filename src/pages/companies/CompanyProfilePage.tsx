@@ -10,7 +10,7 @@ import { Input } from '../../components/ui/Input';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import {
   ChevronLeft, Building2, Mail, Phone, MapPin, Globe, Users,
-  Calendar, FileText, DollarSign, MessageSquare, Eye, User, TrendingUp, Briefcase
+  Calendar, FileText, DollarSign, MessageSquare, Eye, Briefcase
 } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 import { logger } from '../../lib/logger';

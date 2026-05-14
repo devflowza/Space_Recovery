@@ -19,11 +19,9 @@ import {
   CheckCircle,
   User,
   Building2,
-  Calendar,
   Eye,
   Edit,
   Send,
-  Copy,
   Trash2,
 } from 'lucide-react';
 import { formatDate } from '../../lib/format';
@@ -49,7 +47,7 @@ export const QuotesListPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['quote_stats'],
     queryFn: getQuoteStats,
     staleTime: 30000,
@@ -91,7 +89,7 @@ export const QuotesListPage: React.FC = () => {
     return 'N/A';
   };
 
-  const { draftQuotes, sentQuotes, acceptedQuotes, rejectedQuotes, expiredQuotes, convertedQuotes } = useMemo(() => ({
+  const { sentQuotes, acceptedQuotes, expiredQuotes } = useMemo(() => ({
     draftQuotes: quotes.filter((q) => q.status === 'draft'),
     sentQuotes: quotes.filter((q) => q.status === 'sent'),
     acceptedQuotes: quotes.filter((q) => q.status === 'accepted'),
