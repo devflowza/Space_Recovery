@@ -1,6 +1,12 @@
-import { supabase } from './supabaseClient';
+import { supabase, getTenantId } from './supabaseClient';
 import type { Database } from '../types/database.types';
 import { sanitizeFilterValue, isValidUuid } from './postgrestSanitizer';
+
+function requireTenantId(): string {
+  const tid = getTenantId();
+  if (!tid) throw new Error('No tenant context — cannot perform stock mutation');
+  return tid;
+}
 
 type StockItem = Database['public']['Tables']['stock_items']['Row'];
 type StockItemInsert = Database['public']['Tables']['stock_items']['Insert'];
@@ -8,11 +14,9 @@ type StockItemUpdate = Database['public']['Tables']['stock_items']['Update'];
 type StockCategory = Database['public']['Tables']['stock_categories']['Row'];
 type StockCategoryInsert = Database['public']['Tables']['stock_categories']['Insert'];
 type StockTransaction = Database['public']['Tables']['stock_transactions']['Row'];
-type StockTransactionInsert = Database['public']['Tables']['stock_transactions']['Insert'];
 type StockSale = Database['public']['Tables']['stock_sales']['Row'];
 type StockSaleInsert = Database['public']['Tables']['stock_sales']['Insert'];
 type StockSaleItem = Database['public']['Tables']['stock_sale_items']['Row'];
-type StockSaleItemInsert = Database['public']['Tables']['stock_sale_items']['Insert'];
 type StockSerialNumber = Database['public']['Tables']['stock_serial_numbers']['Row'];
 type StockAdjustmentSession = Database['public']['Tables']['stock_adjustment_sessions']['Row'];
 type StockAdjustmentSessionInsert = Database['public']['Tables']['stock_adjustment_sessions']['Insert'];
@@ -99,19 +103,17 @@ export interface SalesFilters {
 // Stock Categories
 // ============================================================
 
-export async function getStockCategories(type?: 'internal' | 'saleable'): Promise<StockCategory[]> {
-  let query = supabase
+export async function getStockCategories(_type?: 'internal' | 'saleable'): Promise<StockCategory[]> {
+  // NOTE: stock_categories.category_type was removed from live schema in v1.0.0.
+  // The `type` parameter is retained for API compatibility but is currently a no-op.
+  // TODO(B8): drop the parameter from consumers in StockCategoriesPage and remove here.
+  const { data, error } = await supabase
     .from('stock_categories')
     .select('*')
     .is('deleted_at', null)
     .order('sort_order', { ascending: true })
     .order('name', { ascending: true });
 
-  if (type) {
-    query = query.eq('category_type', type);
-  }
-
-  const { data, error } = await query;
   if (error) throw error;
   return data ?? [];
 }
@@ -123,6 +125,7 @@ export async function createStockCategory(data: StockCategoryInsert): Promise<St
     .select()
     .maybeSingle();
   if (error) throw error;
+  if (!result) throw new Error('Failed to create stock category');
   return result;
 }
 
@@ -134,6 +137,7 @@ export async function updateStockCategory(id: string, data: Partial<StockCategor
     .select()
     .maybeSingle();
   if (error) throw error;
+  if (!result) throw new Error('Stock category not found');
   return result;
 }
 
@@ -168,8 +172,9 @@ export async function getStockItems(filters?: StockFilters): Promise<StockItemWi
   }
   if (filters?.search) {
     const s = sanitizeFilterValue(filters.search);
+    // NOTE: stock_items.model was removed from live schema in v1.0.0; search on name/brand/sku only.
     query = query.or(
-      `name.ilike.%${s}%,brand.ilike.%${s}%,sku.ilike.%${s}%,model.ilike.%${s}%`
+      `name.ilike.%${s}%,brand.ilike.%${s}%,sku.ilike.%${s}%`
     );
   }
 
@@ -180,7 +185,7 @@ export async function getStockItems(filters?: StockFilters): Promise<StockItemWi
 
   if (filters?.lowStock) {
     items = items.filter(
-      (item) => item.current_quantity <= item.minimum_quantity
+      (item) => (item.current_quantity ?? 0) <= (item.minimum_quantity ?? 0)
     );
   }
 
@@ -221,7 +226,7 @@ export async function getLowStockItems(): Promise<StockItemWithCategory[]> {
   if (error) throw error;
 
   const items = (data ?? []) as StockItemWithCategory[];
-  return items.filter((item) => item.current_quantity <= item.minimum_quantity);
+  return items.filter((item) => (item.current_quantity ?? 0) <= (item.minimum_quantity ?? 0));
 }
 
 export async function createStockItem(data: StockItemInsert): Promise<StockItem> {
@@ -233,6 +238,7 @@ export async function createStockItem(data: StockItemInsert): Promise<StockItem>
     .select()
     .maybeSingle();
   if (error) throw error;
+  if (!result) throw new Error('Failed to create stock item');
   return result;
 }
 
@@ -243,34 +249,18 @@ export async function updateStockItem(id: string, data: StockItemUpdate): Promis
     existing &&
     (data.cost_price !== undefined || data.selling_price !== undefined)
   ) {
-    const priceChanges: Array<{
-      stock_item_id: string;
-      price_type: string;
-      old_price: number | null;
-      new_price: number | null;
-      effective_date: string;
-    }> = [];
+    const costChanged = data.cost_price !== undefined && data.cost_price !== existing.cost_price;
+    const sellingChanged = data.selling_price !== undefined && data.selling_price !== existing.selling_price;
 
-    if (data.cost_price !== undefined && data.cost_price !== existing.cost_price) {
-      priceChanges.push({
-        stock_item_id: id,
-        price_type: 'cost',
-        old_price: existing.cost_price,
-        new_price: data.cost_price,
-        effective_date: new Date().toISOString(),
+    if (costChanged || sellingChanged) {
+      await supabase.from('stock_price_history').insert({
+        tenant_id: requireTenantId(),
+        item_id: id,
+        old_cost_price: costChanged ? existing.cost_price : null,
+        new_cost_price: costChanged ? (data.cost_price ?? null) : null,
+        old_selling_price: sellingChanged ? existing.selling_price : null,
+        new_selling_price: sellingChanged ? (data.selling_price ?? null) : null,
       });
-    }
-    if (data.selling_price !== undefined && data.selling_price !== existing.selling_price) {
-      priceChanges.push({
-        stock_item_id: id,
-        price_type: 'selling',
-        old_price: existing.selling_price,
-        new_price: data.selling_price,
-        effective_date: new Date().toISOString(),
-      });
-    }
-    if (priceChanges.length > 0) {
-      await supabase.from('stock_price_history').insert(priceChanges);
     }
   }
 
@@ -281,7 +271,7 @@ export async function updateStockItem(id: string, data: StockItemUpdate): Promis
     .select()
     .maybeSingle();
   if (error) throw error;
-  return result;
+  return result as StockItem;
 }
 
 export async function deleteStockItem(id: string): Promise<void> {
@@ -296,23 +286,24 @@ export async function reserveStock(itemId: string, quantity: number, caseId?: st
   const item = await getStockItem(itemId);
   if (!item) throw new Error('Stock item not found');
 
-  const available = item.current_quantity - item.reserved_quantity;
+  const current = item.current_quantity ?? 0;
+  const reserved = item.quantity_reserved ?? 0;
+  const available = current - reserved;
   if (available < quantity) throw new Error('Insufficient stock available to reserve');
 
   const { error: updateError } = await supabase
     .from('stock_items')
-    .update({ reserved_quantity: item.reserved_quantity + quantity })
+    .update({ quantity_reserved: reserved + quantity })
     .eq('id', itemId);
   if (updateError) throw updateError;
 
   await supabase.from('stock_transactions').insert({
-    stock_item_id: itemId,
+    tenant_id: requireTenantId(),
+    item_id: itemId,
     transaction_type: 'reserved',
     quantity,
-    previous_quantity: item.current_quantity,
-    new_quantity: item.current_quantity,
-    case_id: caseId ?? null,
-    transaction_date: new Date().toISOString(),
+    reference_type: caseId ? 'case' : null,
+    reference_id: caseId ?? null,
   });
 }
 
@@ -320,21 +311,20 @@ export async function releaseReservedStock(itemId: string, quantity: number): Pr
   const item = await getStockItem(itemId);
   if (!item) throw new Error('Stock item not found');
 
-  const newReserved = Math.max(0, item.reserved_quantity - quantity);
+  const reserved = item.quantity_reserved ?? 0;
+  const newReserved = Math.max(0, reserved - quantity);
 
   const { error } = await supabase
     .from('stock_items')
-    .update({ reserved_quantity: newReserved })
+    .update({ quantity_reserved: newReserved })
     .eq('id', itemId);
   if (error) throw error;
 
   await supabase.from('stock_transactions').insert({
-    stock_item_id: itemId,
+    tenant_id: requireTenantId(),
+    item_id: itemId,
     transaction_type: 'released',
     quantity,
-    previous_quantity: item.current_quantity,
-    new_quantity: item.current_quantity,
-    transaction_date: new Date().toISOString(),
   });
 }
 
@@ -343,16 +333,16 @@ export async function releaseReservedStock(itemId: string, quantity: number): Pr
 // ============================================================
 
 export async function getStockTransactions(filters?: StockTransactionFilters): Promise<StockTransaction[]> {
+  // NOTE: stock_transactions has no deleted_at or transaction_date columns in live schema; use created_at.
   let query = supabase
     .from('stock_transactions')
     .select('*')
-    .is('deleted_at', null)
-    .order('transaction_date', { ascending: false });
+    .order('created_at', { ascending: false });
 
-  if (filters?.itemId) query = query.eq('stock_item_id', filters.itemId);
+  if (filters?.itemId) query = query.eq('item_id', filters.itemId);
   if (filters?.type) query = query.eq('transaction_type', filters.type);
-  if (filters?.startDate) query = query.gte('transaction_date', filters.startDate);
-  if (filters?.endDate) query = query.lte('transaction_date', filters.endDate);
+  if (filters?.startDate) query = query.gte('created_at', filters.startDate);
+  if (filters?.endDate) query = query.lte('created_at', filters.endDate);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -372,7 +362,9 @@ export async function recordStockReceipt(
   const item = await getStockItem(itemId);
   if (!item) throw new Error('Stock item not found');
 
-  const newQty = item.current_quantity + quantity;
+  const current = item.current_quantity ?? 0;
+  const newQty = current + quantity;
+  const unitCost = options?.cost ?? item.cost_price ?? 0;
 
   const { error: updateError } = await supabase
     .from('stock_items')
@@ -380,26 +372,28 @@ export async function recordStockReceipt(
     .eq('id', itemId);
   if (updateError) throw updateError;
 
+  const tenantId = requireTenantId();
   await supabase.from('stock_transactions').insert({
-    stock_item_id: itemId,
+    tenant_id: tenantId,
+    item_id: itemId,
     transaction_type: 'received',
     quantity,
-    previous_quantity: item.current_quantity,
-    new_quantity: newQty,
-    purchase_order_id: options?.poId ?? null,
-    unit_cost: options?.cost ?? item.cost_price,
+    reference_type: options?.poId ? 'purchase_order' : null,
+    reference_id: options?.poId ?? null,
+    unit_cost: unitCost,
+    total_cost: unitCost * quantity,
     notes: options?.notes ?? null,
-    transaction_date: new Date().toISOString(),
   });
 
   if (options?.serialNumbers && options.serialNumbers.length > 0) {
+    // NOTE: stock_serial_numbers schema v1.0.0 does not carry purchase_order_id, purchase_date,
+    // purchase_cost. Those facts are derivable from the linked PO. TODO(B8): if needed, add
+    // those columns via migration or join through purchase_order_items.
     const serials = options.serialNumbers.map((sn) => ({
-      stock_item_id: itemId,
+      tenant_id: tenantId,
+      item_id: itemId,
       serial_number: sn,
       status: 'in_stock' as const,
-      purchase_order_id: options.poId ?? null,
-      purchase_date: new Date().toISOString().split('T')[0],
-      purchase_cost: options.cost ?? null,
     }));
     await supabase.from('stock_serial_numbers').insert(serials);
   }
@@ -413,9 +407,12 @@ export async function recordStockUsage(
 ): Promise<void> {
   const item = await getStockItem(itemId);
   if (!item) throw new Error('Stock item not found');
-  if (item.current_quantity < quantity) throw new Error('Insufficient stock');
 
-  const newQty = item.current_quantity - quantity;
+  const current = item.current_quantity ?? 0;
+  if (current < quantity) throw new Error('Insufficient stock');
+
+  const newQty = current - quantity;
+  const unitCost = item.cost_price ?? 0;
 
   const { error: updateError } = await supabase
     .from('stock_items')
@@ -424,15 +421,15 @@ export async function recordStockUsage(
   if (updateError) throw updateError;
 
   await supabase.from('stock_transactions').insert({
-    stock_item_id: itemId,
+    tenant_id: requireTenantId(),
+    item_id: itemId,
     transaction_type: 'used',
     quantity: -quantity,
-    previous_quantity: item.current_quantity,
-    new_quantity: newQty,
-    case_id: caseId,
-    unit_cost: item.cost_price,
+    reference_type: 'case',
+    reference_id: caseId,
+    unit_cost: unitCost,
+    total_cost: unitCost * quantity,
     notes: notes ?? null,
-    transaction_date: new Date().toISOString(),
   });
 }
 
@@ -452,7 +449,8 @@ export async function getStockSales(filters?: SalesFilters): Promise<StockSaleWi
     .is('deleted_at', null)
     .order('sale_date', { ascending: false });
 
-  if (filters?.status) query = query.eq('payment_status', filters.status);
+  // NOTE: stock_sales.payment_status was unified into stock_sales.status in v1.0.0.
+  if (filters?.status) query = query.eq('status', filters.status);
   if (filters?.customer_id) query = query.eq('customer_id', filters.customer_id);
   if (filters?.case_id) query = query.eq('case_id', filters.case_id);
   if (filters?.startDate) query = query.gte('sale_date', filters.startDate);
@@ -492,7 +490,7 @@ export async function createStockSale(data: StockSaleCreateData): Promise<StockS
   const saleNumber = saleNumberResult.data;
 
   let subtotal = 0;
-  let taxAmount = 0;
+  const taxAmount = 0;
   const itemsWithTotals = data.items.map((item) => {
     const lineTotal = item.quantity * item.unit_price;
     subtotal += lineTotal;
@@ -508,20 +506,22 @@ export async function createStockSale(data: StockSaleCreateData): Promise<StockS
 
   const totalAmount = subtotal - discountAmount + taxAmount;
 
+  // NOTE: stock_sales v1.0.0 dropped company_id, payment_method, discount_type/value,
+  // payment_status, invoice_id. Status field replaces payment_status.
+  // TODO(B8): if a sale needs to record payment_method/discount_type, those need a migration
+  // or to be persisted in notes.
+  const tenantId = requireTenantId();
   const saleInsert: StockSaleInsert = {
+    tenant_id: tenantId,
     sale_number: saleNumber,
     customer_id: data.customer_id,
     case_id: data.case_id ?? null,
-    company_id: data.company_id ?? null,
-    payment_method: data.payment_method ?? null,
     notes: data.notes ?? null,
-    discount_type: data.discount_type ?? null,
-    discount_value: data.discount_value ?? null,
     subtotal,
     tax_amount: taxAmount,
     discount_amount: discountAmount,
     total_amount: totalAmount,
-    payment_status: data.payment_method === 'added_to_invoice' ? 'pending' : 'paid',
+    status: data.payment_method === 'added_to_invoice' ? 'pending' : 'paid',
   };
 
   const { data: sale, error: saleError } = await supabase
@@ -530,19 +530,21 @@ export async function createStockSale(data: StockSaleCreateData): Promise<StockS
     .select()
     .maybeSingle();
   if (saleError) throw saleError;
+  if (!sale) throw new Error('Failed to create stock sale');
 
-  const saleItemsInsert: StockSaleItemInsert[] = itemsWithTotals.map((item) => ({
+  // NOTE: stock_sale_items v1.0.0 schema: item_id (not stock_item_id), discount (not discount_amount),
+  // total (not line_total). No cost_price, serial_number, or warranty_* columns.
+  // TODO(B8): cost_price/serial_number/warranty tracking on sale lines needs migration or
+  // alternative storage (e.g. link through stock_serial_numbers, derive cost from stock_items).
+  const saleItemsInsert = itemsWithTotals.map((item) => ({
+    tenant_id: tenantId,
     sale_id: sale.id,
-    stock_item_id: item.stock_item_id,
+    item_id: item.stock_item_id,
     quantity: item.quantity,
     unit_price: item.unit_price,
-    cost_price: item.cost_price ?? null,
-    discount_amount: 0,
+    discount: 0,
     tax_amount: 0,
-    line_total: item.line_total,
-    serial_number: item.serial_number ?? null,
-    warranty_start_date: item.warranty_start_date ?? null,
-    warranty_end_date: item.warranty_end_date ?? null,
+    total: item.line_total,
   }));
 
   const { error: itemsError } = await supabase.from('stock_sale_items').insert(saleItemsInsert);
@@ -560,36 +562,33 @@ export async function createStockSale(data: StockSaleCreateData): Promise<StockS
     const stockItem = stockItemsMap.get(item.stock_item_id);
     if (!stockItem) continue;
 
-    const newQty = stockItem.current_quantity - item.quantity;
+    const currentQty = stockItem.current_quantity ?? 0;
+    const newQty = currentQty - item.quantity;
     await supabase
       .from('stock_items')
       .update({ current_quantity: Math.max(0, newQty), updated_at: new Date().toISOString() })
       .eq('id', item.stock_item_id);
 
+    const unitCost = item.cost_price ?? stockItem.cost_price ?? 0;
     await supabase.from('stock_transactions').insert({
-      stock_item_id: item.stock_item_id,
+      tenant_id: tenantId,
+      item_id: item.stock_item_id,
       transaction_type: 'sold',
       quantity: -item.quantity,
-      previous_quantity: stockItem.current_quantity,
-      new_quantity: Math.max(0, newQty),
-      sale_id: sale.id,
-      customer_id: data.customer_id,
-      case_id: data.case_id ?? null,
-      unit_cost: item.cost_price ?? stockItem.cost_price,
-      unit_price: item.unit_price,
-      transaction_date: new Date().toISOString(),
+      reference_type: 'sale',
+      reference_id: sale.id,
+      unit_cost: unitCost,
+      total_cost: unitCost * item.quantity,
     });
 
     if (item.serial_number) {
+      // NOTE: stock_serial_numbers v1.0.0 schema lacks sale_id, sold_to_customer_id, sold_date.
+      // Just flip status — sale linkage can be reconstructed via stock_sale_items + transactions.
+      // TODO(B8): if sold_to_customer_id is product needed, add via migration.
       await supabase
         .from('stock_serial_numbers')
-        .update({
-          status: 'sold',
-          sale_id: sale.id,
-          sold_to_customer_id: data.customer_id,
-          sold_date: new Date().toISOString().split('T')[0],
-        })
-        .eq('stock_item_id', item.stock_item_id)
+        .update({ status: 'sold' })
+        .eq('item_id', item.stock_item_id)
         .eq('serial_number', item.serial_number);
     }
   }
@@ -605,6 +604,7 @@ export async function updateStockSale(id: string, data: Partial<StockSaleInsert>
     .select()
     .maybeSingle();
   if (error) throw error;
+  if (!result) throw new Error('Stock sale not found');
   return result;
 }
 
@@ -613,7 +613,8 @@ export async function cancelStockSale(id: string): Promise<void> {
   if (!sale) throw new Error('Sale not found');
 
   if (sale.stock_sale_items) {
-    const cancelItemIds = sale.stock_sale_items.map((item: StockSaleItem) => item.stock_item_id);
+    // stock_sale_items.item_id in live schema (not stock_item_id)
+    const cancelItemIds = sale.stock_sale_items.map((item) => item.item_id);
     const { data: cancelStockItemsData } = await supabase
       .from('stock_items')
       .select('*')
@@ -622,46 +623,46 @@ export async function cancelStockSale(id: string): Promise<void> {
     const cancelStockItemsMap = new Map((cancelStockItemsData ?? []).map((si) => [si.id, si]));
 
     for (const item of sale.stock_sale_items) {
-      const stockItem = cancelStockItemsMap.get(item.stock_item_id);
+      const stockItem = cancelStockItemsMap.get(item.item_id);
       if (!stockItem) continue;
 
-      const newQty = stockItem.current_quantity + item.quantity;
+      const currentQty = stockItem.current_quantity ?? 0;
+      const newQty = currentQty + item.quantity;
       await supabase
         .from('stock_items')
         .update({ current_quantity: newQty, updated_at: new Date().toISOString() })
-        .eq('id', item.stock_item_id);
+        .eq('id', item.item_id);
 
       await supabase.from('stock_transactions').insert({
-        stock_item_id: item.stock_item_id,
+        tenant_id: requireTenantId(),
+        item_id: item.item_id,
         transaction_type: 'returned',
         quantity: item.quantity,
-        previous_quantity: stockItem.current_quantity,
-        new_quantity: newQty,
-        sale_id: id,
+        reference_type: 'sale',
+        reference_id: id,
         notes: `Returned from cancelled sale ${sale.sale_number}`,
-        transaction_date: new Date().toISOString(),
       });
 
-      if (item.serial_number) {
-        await supabase
-          .from('stock_serial_numbers')
-          .update({ status: 'in_stock', sale_id: null, sold_to_customer_id: null, sold_date: null })
-          .eq('stock_item_id', item.stock_item_id)
-          .eq('serial_number', item.serial_number);
-      }
+      // Serial number relinking on cancel:
+      // stock_sale_items v1.0.0 does not carry serial_number, so we cannot revert serial state
+      // without a sale-line→serial bridge. TODO(B8): if needed, link via a separate bridge table.
     }
   }
 
   await supabase
     .from('stock_sales')
-    .update({ payment_status: 'refunded', deleted_at: new Date().toISOString() })
+    .update({ status: 'refunded', deleted_at: new Date().toISOString() })
     .eq('id', id);
 }
 
-export async function addSaleToInvoice(saleId: string, invoiceId: string): Promise<void> {
+export async function addSaleToInvoice(saleId: string, _invoiceId: string): Promise<void> {
+  // NOTE: stock_sales v1.0.0 has no invoice_id or payment_method columns. Sale↔invoice linkage
+  // happens through invoice_line_items referencing the sale, not the other way around.
+  // TODO(B8): rewire AddStockSaleToInvoiceModal to insert invoice_line_items rows referencing
+  // this sale rather than mutating the sale itself.
   const { error } = await supabase
     .from('stock_sales')
-    .update({ invoice_id: invoiceId, payment_method: 'added_to_invoice', updated_at: new Date().toISOString() })
+    .update({ status: 'pending', updated_at: new Date().toISOString() })
     .eq('id', saleId);
   if (error) throw error;
 }
@@ -674,7 +675,7 @@ export async function getSerialNumbers(itemId: string): Promise<StockSerialNumbe
   const { data, error } = await supabase
     .from('stock_serial_numbers')
     .select('*')
-    .eq('stock_item_id', itemId)
+    .eq('item_id', itemId)
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -685,7 +686,7 @@ export async function getAvailableSerialNumbers(itemId: string): Promise<StockSe
   const { data, error } = await supabase
     .from('stock_serial_numbers')
     .select('*')
-    .eq('stock_item_id', itemId)
+    .eq('item_id', itemId)
     .eq('status', 'in_stock')
     .is('deleted_at', null)
     .order('created_at', { ascending: true });
@@ -694,8 +695,10 @@ export async function getAvailableSerialNumbers(itemId: string): Promise<StockSe
 }
 
 export async function addSerialNumbers(itemId: string, serialNumbers: string[]): Promise<void> {
+  const tenantId = requireTenantId();
   const inserts = serialNumbers.map((sn) => ({
-    stock_item_id: itemId,
+    tenant_id: tenantId,
+    item_id: itemId,
     serial_number: sn,
     status: 'in_stock' as const,
   }));
@@ -705,17 +708,15 @@ export async function addSerialNumbers(itemId: string, serialNumbers: string[]):
 
 export async function markSerialAsSold(
   serialNumber: string,
-  saleId: string,
-  customerId: string
+  _saleId: string,
+  _customerId: string
 ): Promise<void> {
+  // NOTE: stock_serial_numbers v1.0.0 schema lacks sale_id, sold_to_customer_id, sold_date.
+  // We can only mark status; sale↔serial linkage must be reconstructed via stock_sale_items.
+  // TODO(B8): add a serial→sale bridge or link via item_id+sale_id pair if business needs it.
   const { error } = await supabase
     .from('stock_serial_numbers')
-    .update({
-      status: 'sold',
-      sale_id: saleId,
-      sold_to_customer_id: customerId,
-      sold_date: new Date().toISOString().split('T')[0],
-    })
+    .update({ status: 'sold' })
     .eq('serial_number', serialNumber);
   if (error) throw error;
 }
@@ -756,18 +757,25 @@ export async function createStockAdjustment(
 ): Promise<StockAdjustmentSession> {
   const numberResult = await supabase.rpc('get_next_number', { p_scope: 'stock_adjustment' });
 
+  // NOTE: stock_adjustment_sessions v1.0.0 uses session_number, not adjustment_number.
+  const tenantId = requireTenantId();
+  const { items: _items, ...sessionFields } = data;
   const { data: session, error: sessionError } = await supabase
     .from('stock_adjustment_sessions')
-    .insert({ ...data, adjustment_number: numberResult.data })
+    .insert({ ...sessionFields, tenant_id: tenantId, session_number: numberResult.data })
     .select()
     .maybeSingle();
   if (sessionError) throw sessionError;
+  if (!session) throw new Error('Failed to create stock adjustment session');
 
   if (data.items && data.items.length > 0) {
+    // NOTE: stock_adjustment_session_items v1.0.0 uses item_id and expected_quantity
+    // (not stock_item_id and system_quantity).
     const itemInserts = data.items.map((item) => ({
+      tenant_id: tenantId,
       session_id: session.id,
-      stock_item_id: item.stock_item_id,
-      system_quantity: item.system_quantity,
+      item_id: item.stock_item_id,
+      expected_quantity: item.system_quantity,
       counted_quantity: item.counted_quantity,
       notes: item.notes ?? null,
     }));
@@ -785,36 +793,38 @@ export async function approveStockAdjustment(id: string, approvedBy: string): Pr
   if (!adjustment) throw new Error('Adjustment not found');
 
   for (const item of adjustment.items) {
-    if (item.counted_quantity === null || item.system_quantity === null) continue;
-    const variance = item.counted_quantity - item.system_quantity;
+    if (item.counted_quantity === null || item.expected_quantity === null) continue;
+    const variance = item.counted_quantity - item.expected_quantity;
     if (variance === 0) continue;
 
-    const stockItem = await getStockItem(item.stock_item_id);
+    const stockItem = await getStockItem(item.item_id);
     if (!stockItem) continue;
 
-    const newQty = stockItem.current_quantity + variance;
+    const currentQty = stockItem.current_quantity ?? 0;
+    const newQty = currentQty + variance;
     await supabase
       .from('stock_items')
       .update({ current_quantity: Math.max(0, newQty), updated_at: new Date().toISOString() })
-      .eq('id', item.stock_item_id);
+      .eq('id', item.item_id);
 
     await supabase.from('stock_transactions').insert({
-      stock_item_id: item.stock_item_id,
+      tenant_id: requireTenantId(),
+      item_id: item.item_id,
       transaction_type: 'adjusted',
       quantity: variance,
-      previous_quantity: stockItem.current_quantity,
-      new_quantity: Math.max(0, newQty),
-      notes: `Adjustment #${adjustment.adjustment_number}: ${adjustment.reason ?? ''}`,
-      transaction_date: new Date().toISOString(),
+      reference_type: 'adjustment',
+      reference_id: id,
+      notes: `Adjustment #${adjustment.session_number}: ${adjustment.reason ?? ''}`,
     });
   }
 
+  // NOTE: stock_adjustment_sessions v1.0.0 has completed_by/completed_at, not approved_by/approved_at.
   await supabase
     .from('stock_adjustment_sessions')
     .update({
       status: 'approved',
-      approved_by: approvedBy,
-      approved_at: new Date().toISOString(),
+      completed_by: approvedBy,
+      completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq('id', id);
@@ -841,15 +851,15 @@ export async function getStockStats(): Promise<StockStats> {
   const internalItems = items.filter((i) => i.item_type === 'internal' || i.item_type === 'both');
 
   const stockValue = items.reduce(
-    (sum, i) => sum + (i.current_quantity * (i.cost_price ?? 0)),
+    (sum, i) => sum + ((i.current_quantity ?? 0) * (i.cost_price ?? 0)),
     0
   );
   const saleableValue = saleableItems.reduce(
-    (sum, i) => sum + (i.current_quantity * (i.selling_price ?? 0)),
+    (sum, i) => sum + ((i.current_quantity ?? 0) * (i.selling_price ?? 0)),
     0
   );
-  const lowStockCount = items.filter((i) => i.current_quantity <= i.minimum_quantity && i.current_quantity > 0).length;
-  const outOfStockCount = items.filter((i) => i.current_quantity === 0).length;
+  const lowStockCount = items.filter((i) => (i.current_quantity ?? 0) <= (i.minimum_quantity ?? 0) && (i.current_quantity ?? 0) > 0).length;
+  const outOfStockCount = items.filter((i) => (i.current_quantity ?? 0) === 0).length;
   const revenueToday = salesToday.reduce((sum, s) => sum + (s.total_amount ?? 0), 0);
 
   return {
@@ -868,8 +878,9 @@ export async function getStockStats(): Promise<StockStats> {
 export async function getStockValuation(): Promise<Array<{ item: StockItem; costValue: number; sellValue: number; margin: number }>> {
   const items = await getStockItems();
   return items.map((item) => {
-    const costValue = item.current_quantity * (item.cost_price ?? 0);
-    const sellValue = item.current_quantity * (item.selling_price ?? item.cost_price ?? 0);
+    const qty = item.current_quantity ?? 0;
+    const costValue = qty * (item.cost_price ?? 0);
+    const sellValue = qty * (item.selling_price ?? item.cost_price ?? 0);
     const margin = item.cost_price && item.selling_price
       ? ((item.selling_price - item.cost_price) / item.selling_price) * 100
       : 0;
@@ -878,9 +889,13 @@ export async function getStockValuation(): Promise<Array<{ item: StockItem; cost
 }
 
 export async function getSalesReport(startDate: string, endDate: string) {
+  // NOTE: stock_sale_items v1.0.0 has no cost_price or line_total columns. Cost basis must be
+  // derived from stock_items.cost_price at sale time, which is not perfectly accurate for
+  // post-sale price changes. TODO(B8): add cost_price + line_total back via migration if
+  // accurate margin reporting is product-required.
   const { data, error } = await supabase
     .from('stock_sales')
-    .select('*, stock_sale_items(quantity, unit_price, cost_price, line_total)')
+    .select('*, stock_sale_items(quantity, unit_price, total, item_id, stock_items(cost_price))')
     .is('deleted_at', null)
     .gte('sale_date', startDate)
     .lte('sale_date', endDate)
@@ -890,38 +905,42 @@ export async function getSalesReport(startDate: string, endDate: string) {
   const sales = data ?? [];
   const totalRevenue = sales.reduce((sum, s) => sum + (s.total_amount ?? 0), 0);
   const totalCost = sales.reduce((sum, s) => {
-    const items = (s as unknown as { stock_sale_items?: Array<{ quantity: number; cost_price: number | null }> }).stock_sale_items ?? [];
-    return sum + items.reduce((si, i) => si + (i.quantity * (i.cost_price ?? 0)), 0);
+    const items = (s as unknown as {
+      stock_sale_items?: Array<{ quantity: number; stock_items?: { cost_price: number | null } | null }>;
+    }).stock_sale_items ?? [];
+    return sum + items.reduce((si, i) => si + (i.quantity * (i.stock_items?.cost_price ?? 0)), 0);
   }, 0);
 
   return { sales, totalRevenue, totalCost, totalProfit: totalRevenue - totalCost };
 }
 
-export async function getTopSellingItems(startDate: string, endDate: string, limit = 10) {
+export async function getTopSellingItems(_startDate: string, _endDate: string, limit = 10) {
+  // NOTE: stock_sale_items v1.0.0 has no deleted_at or line_total columns; use total instead.
+  // Date filtering would have to happen via the parent stock_sales.sale_date join — not supported
+  // by the current implementation. TODO(B8): filter by sale_date once needed.
   const { data, error } = await supabase
     .from('stock_sale_items')
-    .select('stock_item_id, quantity, line_total, stock_items(id, name, brand, sku)')
-    .is('deleted_at', null);
+    .select('item_id, quantity, total, stock_items(id, name, brand, sku)');
   if (error) throw error;
 
   const map = new Map<string, { name: string; brand: string | null; sku: string | null; totalQty: number; totalRevenue: number }>();
   for (const item of data ?? []) {
     const si = item as unknown as {
-      stock_item_id: string; quantity: number; line_total: number;
+      item_id: string; quantity: number; total: number;
       stock_items?: { id: string; name: string; brand: string | null; sku: string | null } | null;
     };
-    const key = si.stock_item_id;
+    const key = si.item_id;
     const existing = map.get(key);
     if (existing) {
       existing.totalQty += si.quantity;
-      existing.totalRevenue += si.line_total;
+      existing.totalRevenue += si.total;
     } else {
       map.set(key, {
         name: si.stock_items?.name ?? '',
         brand: si.stock_items?.brand ?? null,
         sku: si.stock_items?.sku ?? null,
         totalQty: si.quantity,
-        totalRevenue: si.line_total,
+        totalRevenue: si.total,
       });
     }
   }
@@ -964,14 +983,16 @@ export async function getRecommendedDevices(dataSizeGB: number): Promise<StockIt
   const items = await getSaleableItems();
   if (dataSizeGB <= 0) return items.slice(0, 6);
 
+  // NOTE: stock_items v1.0.0 has no capacity column. Heuristically extract capacity from
+  // the item name (e.g. "WD Blue 2TB"). TODO(B8): if capacity-based recommendation is product
+  // critical, add a normalized capacity_gb numeric column via migration.
   const scored = items.map((item) => {
-    const capacityStr = (item.capacity ?? '').toLowerCase();
+    const haystack = `${item.name ?? ''} ${item.description ?? ''}`.toLowerCase();
     let capacityGB = 0;
-    if (capacityStr.includes('tb')) {
-      capacityGB = parseFloat(capacityStr) * 1024;
-    } else if (capacityStr.includes('gb')) {
-      capacityGB = parseFloat(capacityStr);
-    }
+    const tbMatch = haystack.match(/(\d+(?:\.\d+)?)\s*tb/);
+    const gbMatch = haystack.match(/(\d+(?:\.\d+)?)\s*gb/);
+    if (tbMatch) capacityGB = parseFloat(tbMatch[1]) * 1024;
+    else if (gbMatch) capacityGB = parseFloat(gbMatch[1]);
     const overhead = dataSizeGB * 1.2;
     const fits = capacityGB > 0 && capacityGB >= overhead;
     const diff = capacityGB > 0 ? Math.abs(capacityGB - overhead * 1.5) : Infinity;
@@ -984,42 +1005,25 @@ export async function getRecommendedDevices(dataSizeGB: number): Promise<StockIt
 }
 
 export interface StockSaleItemWithWarranty extends StockSaleItem {
-  stock_items?: Pick<StockItem, 'id' | 'name' | 'brand' | 'model'> | null;
+  stock_items?: Pick<StockItem, 'id' | 'name' | 'brand'> | null;
   daysRemaining?: number;
+  warranty_end_date?: string | null;
+  warranty_start_date?: string | null;
 }
 
-export async function getCustomerWarranties(customerId: string): Promise<StockSaleItemWithWarranty[]> {
-  const today = new Date().toISOString().split('T')[0];
-  const { data, error } = await supabase
-    .from('stock_sale_items')
-    .select(`
-      *,
-      stock_items(id, name, brand, model),
-      stock_sales!inner(customer_id)
-    `)
-    .is('deleted_at', null)
-    .gte('warranty_end_date', today);
-  if (error) throw error;
-
-  const items = (data ?? []) as unknown as Array<StockSaleItemWithWarranty & { stock_sales?: { customer_id: string } }>;
-  const filtered = items.filter((i) => i.stock_sales?.customer_id === customerId);
-
-  return filtered.map((item) => {
-    const end = item.warranty_end_date ? new Date(item.warranty_end_date) : null;
-    const daysRemaining = end ? Math.ceil((end.getTime() - Date.now()) / 86400000) : undefined;
-    return { ...item, daysRemaining };
-  });
+export async function getCustomerWarranties(_customerId: string): Promise<StockSaleItemWithWarranty[]> {
+  // NOTE: stock_sale_items v1.0.0 has no warranty_start_date/warranty_end_date columns and no
+  // deleted_at. Warranty tracking is not supported in the current schema.
+  // TODO(B8): if warranty tracking is product needed, restore via migration or add a dedicated
+  // warranties table. For now return empty so callers degrade gracefully.
+  return [];
 }
 
-export async function getCustomerSerialNumbers(customerId: string): Promise<StockSerialNumber[]> {
-  const { data, error } = await supabase
-    .from('stock_serial_numbers')
-    .select('*, stock_items(id, name, brand, model)')
-    .eq('sold_to_customer_id', customerId)
-    .is('deleted_at', null)
-    .order('sold_date', { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as unknown as StockSerialNumber[];
+export async function getCustomerSerialNumbers(_customerId: string): Promise<StockSerialNumber[]> {
+  // NOTE: stock_serial_numbers v1.0.0 has no sold_to_customer_id or sold_date columns.
+  // Customer↔serial linkage must traverse stock_sale_items → stock_sales.customer_id.
+  // TODO(B8): rewrite this to join through stock_sale_items if needed. Returning empty for now.
+  return [];
 }
 
 export interface TodaysSalesSummary {
@@ -1063,7 +1067,7 @@ export async function getStockValuationSummary(): Promise<StockValuationSummary>
   let saleableValue = 0;
 
   for (const item of items) {
-    const val = item.current_quantity * (item.cost_price ?? 0);
+    const val = (item.current_quantity ?? 0) * (item.cost_price ?? 0);
     totalValue += val;
     if (item.item_type === 'internal') internalValue += val;
     else if (item.item_type === 'saleable') saleableValue += val;
@@ -1097,13 +1101,13 @@ export async function receiveStockFromPO(data: ReceiveStockFromPOData): Promise<
       serialNumbers: item.serialNumbers,
     });
 
+    // NOTE: purchase_order_items has stock_item_id + received_quantity but no received_at column.
     await supabase
       .from('purchase_order_items')
       .update({
         stock_item_id: item.stockItemId,
         received_quantity: item.quantity,
-        received_at: new Date().toISOString(),
-      } as Record<string, unknown>)
+      })
       .eq('id', item.poItemId);
   }
 }
@@ -1192,149 +1196,35 @@ export interface StockReturnFilters {
   endDate?: string;
 }
 
-export async function getStockReturns(filters?: StockReturnFilters): Promise<StockReturnWithDetails[]> {
-  let query = supabase
-    .from('stock_returns')
-    .select(`
-      *,
-      customers_enhanced(id, customer_name, email),
-      stock_sales(id, sale_number),
-      stock_return_items(*, stock_items(id, name, brand, sku))
-    `)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
+// NOTE: stock_returns / stock_return_items tables do not exist in the v1.0.0 live schema.
+// The TS surface is kept so consumer screens compile; runtime calls throw a structured error.
+// TODO(B8): either add a migration creating these tables OR delete the entire returns flow
+// (4 components, 1 page) along with the routes in App.tsx.
+const RETURNS_DISABLED = 'Stock returns are not available in the current schema (tables removed in v1.0.0). See TODO(B8) in stockService.ts.';
 
-  if (filters?.status) query = query.eq('status', filters.status);
-  if (filters?.customer_id) query = query.eq('customer_id', filters.customer_id);
-  if (filters?.sale_id) query = query.eq('sale_id', filters.sale_id);
-  if (filters?.startDate) query = query.gte('return_date', filters.startDate);
-  if (filters?.endDate) query = query.lte('return_date', filters.endDate);
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []) as unknown as StockReturnWithDetails[];
+export async function getStockReturns(_filters?: StockReturnFilters): Promise<StockReturnWithDetails[]> {
+  return [];
 }
 
-export async function getStockReturn(id: string): Promise<StockReturnWithDetails | null> {
-  const { data, error } = await supabase
-    .from('stock_returns')
-    .select(`
-      *,
-      customers_enhanced(id, customer_name, email),
-      stock_sales(id, sale_number),
-      stock_return_items(*, stock_items(id, name, brand, sku))
-    `)
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle();
-  if (error) throw error;
-  return data as unknown as StockReturnWithDetails | null;
+export async function getStockReturn(_id: string): Promise<StockReturnWithDetails | null> {
+  return null;
 }
 
-export async function createStockReturn(data: CreateStockReturnInput): Promise<StockReturn> {
-  const numberResult = await supabase.rpc('get_next_number', { p_scope: 'SRET' });
-  const returnNumber = numberResult.data ?? `SRET-${Date.now()}`;
-
-  const totalRefund = data.items.reduce((sum, item) => sum + (item.refund_amount ?? 0), 0);
-
-  const { data: returnRecord, error: returnError } = await supabase
-    .from('stock_returns')
-    .insert({
-      return_number: returnNumber,
-      sale_id: data.sale_id,
-      customer_id: data.customer_id,
-      reason: data.reason,
-      status: 'pending',
-      refund_amount: totalRefund > 0 ? totalRefund : null,
-      refund_method: data.refund_method ?? null,
-      restock_items: data.restock_items ?? true,
-      notes: data.notes ?? null,
-    })
-    .select()
-    .maybeSingle();
-  if (returnError) throw returnError;
-
-  if (data.items.length > 0) {
-    const itemInserts = data.items.map((item) => ({
-      return_id: returnRecord.id,
-      sale_item_id: item.sale_item_id,
-      stock_item_id: item.stock_item_id,
-      quantity: item.quantity,
-      serial_number: item.serial_number ?? null,
-      condition: item.condition ?? 'good',
-      restock: item.restock ?? true,
-      refund_amount: item.refund_amount ?? null,
-      notes: item.notes ?? null,
-    }));
-    const { error: itemsError } = await supabase.from('stock_return_items').insert(itemInserts);
-    if (itemsError) throw itemsError;
-  }
-
-  return returnRecord as unknown as StockReturn;
+export async function createStockReturn(_data: CreateStockReturnInput): Promise<StockReturn> {
+  throw new Error(RETURNS_DISABLED);
 }
 
 export async function processStockReturn(
-  id: string,
-  action: 'approve' | 'reject',
-  processedBy: string,
-  notes?: string
+  _id: string,
+  _action: 'approve' | 'reject',
+  _processedBy: string,
+  _notes?: string
 ): Promise<void> {
-  const { error } = await supabase
-    .from('stock_returns')
-    .update({
-      status: action === 'approve' ? 'approved' : 'rejected',
-      processed_by: processedBy,
-      processed_at: new Date().toISOString(),
-      notes: notes ?? null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id);
-  if (error) throw error;
+  throw new Error(RETURNS_DISABLED);
 }
 
-export async function completeStockReturn(id: string): Promise<void> {
-  const returnRecord = await getStockReturn(id);
-  if (!returnRecord) throw new Error('Return not found');
-  if (returnRecord.status !== 'approved') throw new Error('Return must be approved before completing');
-
-  const items = returnRecord.stock_return_items ?? [];
-
-  for (const item of items) {
-    if (!item.restock) continue;
-
-    const stockItem = await getStockItem(item.stock_item_id);
-    if (!stockItem) continue;
-
-    const newQty = stockItem.current_quantity + item.quantity;
-    await supabase
-      .from('stock_items')
-      .update({ current_quantity: newQty, updated_at: new Date().toISOString() })
-      .eq('id', item.stock_item_id);
-
-    await supabase.from('stock_transactions').insert({
-      stock_item_id: item.stock_item_id,
-      transaction_type: 'returned',
-      quantity: item.quantity,
-      previous_quantity: stockItem.current_quantity,
-      new_quantity: newQty,
-      sale_id: returnRecord.sale_id,
-      notes: `Return #${returnRecord.return_number}`,
-      transaction_date: new Date().toISOString(),
-    });
-
-    if (item.serial_number) {
-      await supabase
-        .from('stock_serial_numbers')
-        .update({ status: 'in_stock', sale_id: null, sold_to_customer_id: null, sold_date: null })
-        .eq('stock_item_id', item.stock_item_id)
-        .eq('serial_number', item.serial_number);
-    }
-  }
-
-  await supabase
-    .from('stock_returns')
-    .update({ status: 'completed', updated_at: new Date().toISOString() })
-    .eq('id', id);
+export async function completeStockReturn(_id: string): Promise<void> {
+  throw new Error(RETURNS_DISABLED);
 }
 
 // ============================================================
@@ -1372,141 +1262,42 @@ export interface CreateReservationInput {
   reserved_by?: string | null;
 }
 
-export async function createReservation(data: CreateReservationInput): Promise<StockReservation> {
-  const item = await getStockItem(data.stock_item_id);
-  if (!item) throw new Error('Stock item not found');
+// NOTE: stock_reservations table does not exist in v1.0.0 live schema. The simpler
+// quantity_reserved column on stock_items is used instead (see reserveStock above).
+// TS surface preserved for consumer compatibility; full reservation tracking with
+// expiry/fulfillment requires a migration to add stock_reservations.
+// TODO(B8): create stock_reservations table OR rewire consumers (BackupDeviceRecommendation,
+// quote reservation flow) to use simple quantity_reserved on stock_items.
+const RESERVATIONS_DISABLED = 'Detailed stock reservations are not available in the current schema. Use reserveStock/releaseReservedStock instead. See TODO(B8) in stockService.ts.';
 
-  const available = item.current_quantity - item.reserved_quantity;
-  if (available < data.quantity) throw new Error('Insufficient stock available to reserve');
-
-  const { error: updateError } = await supabase
-    .from('stock_items')
-    .update({ reserved_quantity: item.reserved_quantity + data.quantity })
-    .eq('id', data.stock_item_id);
-  if (updateError) throw updateError;
-
-  const { data: reservation, error } = await supabase
-    .from('stock_reservations')
-    .insert({
-      stock_item_id: data.stock_item_id,
-      quantity: data.quantity,
-      reservation_type: data.reservation_type,
-      reference_id: data.reference_id ?? null,
-      reference_type: data.reference_type ?? null,
-      status: 'active',
-      expires_at: data.expires_at ?? null,
-      notes: data.notes ?? null,
-      reserved_by: data.reserved_by ?? null,
-    })
-    .select()
-    .maybeSingle();
-  if (error) throw error;
-  return reservation as unknown as StockReservation;
+export async function createReservation(_data: CreateReservationInput): Promise<StockReservation> {
+  throw new Error(RESERVATIONS_DISABLED);
 }
 
-export async function releaseReservation(id: string): Promise<void> {
-  const { data: reservation, error: fetchError } = await supabase
-    .from('stock_reservations')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-  if (fetchError) throw fetchError;
-  if (!reservation) throw new Error('Reservation not found');
-
-  const item = await getStockItem(reservation.stock_item_id);
-  if (item) {
-    const newReserved = Math.max(0, item.reserved_quantity - reservation.quantity);
-    await supabase
-      .from('stock_items')
-      .update({ reserved_quantity: newReserved })
-      .eq('id', reservation.stock_item_id);
-  }
-
-  const { error } = await supabase
-    .from('stock_reservations')
-    .update({ status: 'released', updated_at: new Date().toISOString() })
-    .eq('id', id);
-  if (error) throw error;
+export async function releaseReservation(_id: string): Promise<void> {
+  throw new Error(RESERVATIONS_DISABLED);
 }
 
-export async function fulfillReservation(id: string, saleId: string): Promise<void> {
-  const { data: reservation, error: fetchError } = await supabase
-    .from('stock_reservations')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-  if (fetchError) throw fetchError;
-  if (!reservation) throw new Error('Reservation not found');
-
-  const item = await getStockItem(reservation.stock_item_id);
-  if (item) {
-    const newReserved = Math.max(0, item.reserved_quantity - reservation.quantity);
-    await supabase
-      .from('stock_items')
-      .update({ reserved_quantity: newReserved })
-      .eq('id', reservation.stock_item_id);
-  }
-
-  const { error } = await supabase
-    .from('stock_reservations')
-    .update({
-      status: 'fulfilled',
-      reference_id: saleId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id);
-  if (error) throw error;
+export async function fulfillReservation(_id: string, _saleId: string): Promise<void> {
+  throw new Error(RESERVATIONS_DISABLED);
 }
 
-export async function getReservationsForItem(stockItemId: string): Promise<StockReservation[]> {
-  const { data, error } = await supabase
-    .from('stock_reservations')
-    .select('*')
-    .eq('stock_item_id', stockItemId)
-    .eq('status', 'active')
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as unknown as StockReservation[];
+export async function getReservationsForItem(_stockItemId: string): Promise<StockReservation[]> {
+  return [];
 }
 
-export async function getReservationsForQuote(quoteId: string): Promise<StockReservationWithItem[]> {
-  const { data, error } = await supabase
-    .from('stock_reservations')
-    .select('*, stock_items(id, name, brand, sku)')
-    .eq('reference_type', 'quote')
-    .eq('reference_id', quoteId)
-    .eq('status', 'active')
-    .is('deleted_at', null);
-  if (error) throw error;
-  return (data ?? []) as unknown as StockReservationWithItem[];
+export async function getReservationsForQuote(_quoteId: string): Promise<StockReservationWithItem[]> {
+  return [];
 }
 
 export async function getAvailableQuantity(stockItemId: string): Promise<number> {
   const item = await getStockItem(stockItemId);
   if (!item) return 0;
-  return Math.max(0, item.current_quantity - item.reserved_quantity);
+  return Math.max(0, (item.current_quantity ?? 0) - (item.quantity_reserved ?? 0));
 }
 
 export async function expireOldReservations(): Promise<number> {
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from('stock_reservations')
-    .select('id, stock_item_id, quantity')
-    .eq('status', 'active')
-    .lt('expires_at', now)
-    .is('deleted_at', null);
-  if (error) throw error;
-
-  const reservations = data ?? [];
-  for (const r of reservations) {
-    await releaseReservation(r.id);
-    await supabase
-      .from('stock_reservations')
-      .update({ status: 'expired', updated_at: now })
-      .eq('id', r.id);
-  }
-  return reservations.length;
+  return 0;
 }
 
 // ============================================================
@@ -1593,27 +1384,27 @@ export async function generateLowStockAlerts(): Promise<number> {
   let count = 0;
 
   for (const item of lowItems) {
-    const isOut = item.current_quantity === 0;
+    const isOut = (item.current_quantity ?? 0) === 0;
     const alertType = isOut ? 'out_of_stock' : 'low_stock';
-    const severity = isOut ? 'critical' : 'warning';
     const message = isOut
       ? `${item.name} is out of stock`
-      : `${item.name} is low on stock (${item.current_quantity} remaining, minimum: ${item.minimum_quantity})`;
+      : `${item.name} is low on stock (${item.current_quantity ?? 0} remaining, minimum: ${item.minimum_quantity ?? 0})`;
 
     const { data: existing } = await supabase
       .from('stock_alerts')
       .select('id')
-      .eq('stock_item_id', item.id)
+      .eq('item_id', item.id)
       .eq('alert_type', alertType)
       .eq('is_dismissed', false)
       .maybeSingle();
 
     if (!existing) {
+      // NOTE: stock_alerts v1.0.0 has no severity column; severity intent encoded via alert_type.
       await supabase.from('stock_alerts').insert({
+        tenant_id: requireTenantId(),
         alert_type: alertType,
-        stock_item_id: item.id,
+        item_id: item.id,
         message,
-        severity,
         is_read: false,
         is_dismissed: false,
       });
@@ -1623,56 +1414,13 @@ export async function generateLowStockAlerts(): Promise<number> {
   return count;
 }
 
-export async function generateWarrantyExpiryAlerts(daysAhead = 30): Promise<number> {
-  const futureDate = new Date();
-  futureDate.setDate(futureDate.getDate() + daysAhead);
-  const today = new Date().toISOString().split('T')[0];
-  const future = futureDate.toISOString().split('T')[0];
-
-  const { data, error } = await supabase
-    .from('stock_serial_numbers')
-    .select('id, stock_item_id, serial_number, warranty_end_date, stock_items(id, name, brand)')
-    .is('deleted_at', null)
-    .eq('status', 'sold')
-    .gte('warranty_end_date', today)
-    .lte('warranty_end_date', future);
-
-  if (error) throw error;
-  const items = (data ?? []) as unknown as Array<{
-    id: string;
-    stock_item_id: string;
-    serial_number: string;
-    warranty_end_date: string;
-    stock_items?: { id: string; name: string; brand: string | null } | null;
-  }>;
-
-  let count = 0;
-  for (const serial of items) {
-    const daysLeft = Math.ceil(
-      (new Date(serial.warranty_end_date).getTime() - Date.now()) / 86400000
-    );
-    const { data: existing } = await supabase
-      .from('stock_alerts')
-      .select('id')
-      .eq('serial_number_id', serial.id)
-      .eq('alert_type', 'warranty_expiring')
-      .eq('is_dismissed', false)
-      .maybeSingle();
-
-    if (!existing) {
-      await supabase.from('stock_alerts').insert({
-        alert_type: 'warranty_expiring',
-        stock_item_id: serial.stock_item_id,
-        serial_number_id: serial.id,
-        message: `Warranty for ${serial.stock_items?.name ?? 'item'} (S/N: ${serial.serial_number}) expires in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`,
-        severity: daysLeft <= 7 ? 'critical' : 'warning',
-        is_read: false,
-        is_dismissed: false,
-      });
-      count++;
-    }
-  }
-  return count;
+export async function generateWarrantyExpiryAlerts(_daysAhead = 30): Promise<number> {
+  // NOTE: stock_serial_numbers v1.0.0 has no warranty_end_date column, and stock_alerts has no
+  // serial_number_id or severity columns. Warranty expiry alerting is not supported by the current
+  // schema.
+  // TODO(B8): add warranty_end_date to stock_serial_numbers + serial_number_id/severity to
+  // stock_alerts via migration, then restore this function.
+  return 0;
 }
 
 export async function getUnreadAlertCount(): Promise<number> {
@@ -1689,20 +1437,25 @@ export async function getUnreadAlertCount(): Promise<number> {
 // Stock Locations
 // ============================================================
 
+// NOTE: stock_locations v1.0.0 schema does not include is_default or sort_order columns.
+// Keeping them optional here lets the StockLocationsPage form compile, but they will be
+// silently dropped on insert/update. TODO(B8): add via migration or remove from UI.
 export interface StockLocation {
   id: string;
   name: string;
-  code: string;
+  code: string | null;
   description: string | null;
   address: string | null;
   is_active: boolean | null;
-  is_default: boolean | null;
-  sort_order: number | null;
+  is_default?: boolean | null;
+  sort_order?: number | null;
   created_at: string | null;
   updated_at: string | null;
   deleted_at: string | null;
 }
 
+// NOTE: stock_item_locations table does not exist in v1.0.0 live schema. Type retained
+// for consumer compatibility; runtime functions return empty / throw.
 export interface StockItemLocation {
   id: string;
   stock_item_id: string;
@@ -1772,173 +1525,73 @@ export async function getStockLocations(): Promise<StockLocation[]> {
 }
 
 export async function createStockLocation(data: Omit<StockLocation, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>): Promise<StockLocation> {
+  // NOTE: stock_locations v1.0.0 has no is_default or sort_order columns; strip those before insert.
+  const { is_default: _is_default, sort_order: _sort_order, ...insertData } = data;
   const { data: result, error } = await supabase
     .from('stock_locations')
-    .insert(data)
+    .insert({ ...insertData, tenant_id: requireTenantId() })
     .select()
     .maybeSingle();
   if (error) throw error;
+  if (!result) throw new Error('Failed to create stock location');
   return result as unknown as StockLocation;
 }
 
 export async function updateStockLocation(id: string, data: Partial<StockLocation>): Promise<StockLocation> {
+  // Strip server-managed and drift fields before update.
+  const {
+    is_default: _is_default,
+    sort_order: _sort_order,
+    id: _id,
+    created_at: _created_at,
+    deleted_at: _deleted_at,
+    updated_at: _updated_at,
+    ...updateData
+  } = data;
   const { data: result, error } = await supabase
     .from('stock_locations')
-    .update({ ...data, updated_at: new Date().toISOString() })
+    .update({ ...updateData, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .maybeSingle();
   if (error) throw error;
+  if (!result) throw new Error('Stock location not found');
   return result as unknown as StockLocation;
 }
 
-export async function getItemLocations(stockItemId: string): Promise<StockItemLocation[]> {
-  const { data, error } = await supabase
-    .from('stock_item_locations')
-    .select('*, stock_locations(*)')
-    .eq('stock_item_id', stockItemId)
-    .order('quantity', { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as unknown as StockItemLocation[];
+// NOTE: stock_item_locations, stock_transfers, stock_transfer_items tables do not exist in
+// v1.0.0 live schema. Multi-location inventory and inter-location transfers are not supported.
+// Type surface preserved so consumer screens compile. Runtime calls throw / return empty.
+// TODO(B8): either create these tables via migration or delete the entire transfer/location-bin
+// flow (StockTransfersPage, StockTransferDetail, StockTransferModal, StockLocationSelect, and
+// 3 routes in App.tsx).
+const TRANSFERS_DISABLED = 'Stock transfers/locations are not available in the current schema. See TODO(B8) in stockService.ts.';
+
+export async function getItemLocations(_stockItemId: string): Promise<StockItemLocation[]> {
+  // unused import guard: keep isValidUuid in surface so removal of transfer filter logic
+  // doesn't make the helper appear unused in other call sites.
+  void isValidUuid;
+  return [];
 }
 
-export async function getStockTransfers(filters?: { status?: string; location_id?: string }): Promise<StockTransferWithDetails[]> {
-  let query = supabase
-    .from('stock_transfers')
-    .select(`
-      *,
-      from_location:stock_locations!from_location_id(*),
-      to_location:stock_locations!to_location_id(*),
-      stock_transfer_items(*, stock_items(id, name, brand, sku))
-    `)
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false });
-
-  if (filters?.status) query = query.eq('status', filters.status);
-  if (filters?.location_id) {
-    if (isValidUuid(filters.location_id)) {
-      query = query.or(`from_location_id.eq.${filters.location_id},to_location_id.eq.${filters.location_id}`);
-    }
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data ?? []) as unknown as StockTransferWithDetails[];
+export async function getStockTransfers(_filters?: { status?: string; location_id?: string }): Promise<StockTransferWithDetails[]> {
+  return [];
 }
 
-export async function getStockTransfer(id: string): Promise<StockTransferWithDetails | null> {
-  const { data, error } = await supabase
-    .from('stock_transfers')
-    .select(`
-      *,
-      from_location:stock_locations!from_location_id(*),
-      to_location:stock_locations!to_location_id(*),
-      stock_transfer_items(*, stock_items(id, name, brand, sku))
-    `)
-    .eq('id', id)
-    .is('deleted_at', null)
-    .maybeSingle();
-  if (error) throw error;
-  return data as unknown as StockTransferWithDetails | null;
+export async function getStockTransfer(_id: string): Promise<StockTransferWithDetails | null> {
+  return null;
 }
 
-export async function createStockTransfer(data: CreateTransferInput): Promise<StockTransfer> {
-  const numberResult = await supabase.rpc('get_next_number', { p_scope: 'STFR' });
-  const transferNumber = numberResult.data ?? `STFR-${Date.now()}`;
-
-  const { data: transfer, error: transferError } = await supabase
-    .from('stock_transfers')
-    .insert({
-      transfer_number: transferNumber,
-      from_location_id: data.from_location_id,
-      to_location_id: data.to_location_id,
-      status: 'draft',
-      notes: data.notes ?? null,
-      created_by: data.created_by ?? null,
-    })
-    .select()
-    .maybeSingle();
-  if (transferError) throw transferError;
-
-  if (data.items.length > 0) {
-    const itemInserts = data.items.map((item) => ({
-      transfer_id: transfer.id,
-      stock_item_id: item.stock_item_id,
-      quantity: item.quantity,
-      serial_numbers: item.serial_numbers ?? null,
-      notes: item.notes ?? null,
-    }));
-    const { error: itemsError } = await supabase.from('stock_transfer_items').insert(itemInserts);
-    if (itemsError) throw itemsError;
-  }
-
-  return transfer as unknown as StockTransfer;
+export async function createStockTransfer(_data: CreateTransferInput): Promise<StockTransfer> {
+  throw new Error(TRANSFERS_DISABLED);
 }
 
-export async function completeStockTransfer(id: string, completedBy: string): Promise<void> {
-  const transfer = await getStockTransfer(id);
-  if (!transfer) throw new Error('Transfer not found');
-
-  const items = transfer.stock_transfer_items ?? [];
-
-  for (const item of items) {
-    const { data: fromLoc } = await supabase
-      .from('stock_item_locations')
-      .select('*')
-      .eq('stock_item_id', item.stock_item_id)
-      .eq('location_id', transfer.from_location_id)
-      .maybeSingle();
-
-    if (fromLoc) {
-      const newFromQty = Math.max(0, (fromLoc.quantity as number) - item.quantity);
-      await supabase
-        .from('stock_item_locations')
-        .update({ quantity: newFromQty, updated_at: new Date().toISOString() })
-        .eq('id', fromLoc.id);
-    }
-
-    const { data: toLoc } = await supabase
-      .from('stock_item_locations')
-      .select('*')
-      .eq('stock_item_id', item.stock_item_id)
-      .eq('location_id', transfer.to_location_id)
-      .maybeSingle();
-
-    if (toLoc) {
-      await supabase
-        .from('stock_item_locations')
-        .update({
-          quantity: (toLoc.quantity as number) + item.quantity,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', toLoc.id);
-    } else {
-      await supabase.from('stock_item_locations').insert({
-        stock_item_id: item.stock_item_id,
-        location_id: transfer.to_location_id,
-        quantity: item.quantity,
-      });
-    }
-  }
-
-  await supabase
-    .from('stock_transfers')
-    .update({
-      status: 'completed',
-      completed_by: completedBy,
-      completed_at: new Date().toISOString(),
-      transfer_date: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id);
+export async function completeStockTransfer(_id: string, _completedBy: string): Promise<void> {
+  throw new Error(TRANSFERS_DISABLED);
 }
 
-export async function cancelStockTransfer(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('stock_transfers')
-    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-    .eq('id', id);
-  if (error) throw error;
+export async function cancelStockTransfer(_id: string): Promise<void> {
+  throw new Error(TRANSFERS_DISABLED);
 }
 
 // ============================================================
@@ -1963,11 +1616,13 @@ export async function bulkAdjustQuantities(
   adjustments: Array<{ id: string; newQuantity: number; reason: string }>
 ): Promise<number> {
   let count = 0;
+  const tenantId = requireTenantId();
   for (const adj of adjustments) {
     const item = await getStockItem(adj.id);
     if (!item) continue;
 
-    const variance = adj.newQuantity - item.current_quantity;
+    const currentQty = item.current_quantity ?? 0;
+    const variance = adj.newQuantity - currentQty;
     await supabase
       .from('stock_items')
       .update({ current_quantity: adj.newQuantity, updated_at: new Date().toISOString() })
@@ -1975,13 +1630,11 @@ export async function bulkAdjustQuantities(
 
     if (variance !== 0) {
       await supabase.from('stock_transactions').insert({
-        stock_item_id: adj.id,
+        tenant_id: tenantId,
+        item_id: adj.id,
         transaction_type: 'adjusted',
         quantity: variance,
-        previous_quantity: item.current_quantity,
-        new_quantity: adj.newQuantity,
         notes: adj.reason,
-        transaction_date: new Date().toISOString(),
       });
     }
     count++;
@@ -1990,22 +1643,25 @@ export async function bulkAdjustQuantities(
 }
 
 export function exportStockItemsCSV(items: StockItemWithCategory[]): string {
+  // NOTE: model, capacity, warranty_months, reserved_quantity columns do not exist on
+  // stock_items in v1.0.0. CSV export retains them as empty fields for backward
+  // compatibility with downstream tooling expecting these headers.
   const headers = ['SKU', 'Name', 'Brand', 'Model', 'Category', 'Type', 'Barcode', 'Cost Price', 'Selling Price', 'Current Qty', 'Reserved Qty', 'Min Qty', 'Capacity', 'Warranty Months'];
   const rows = items.map((item) => [
     item.sku ?? '',
     item.name,
     item.brand ?? '',
-    item.model ?? '',
+    '', // model not in schema
     item.stock_categories?.name ?? '',
     item.item_type ?? '',
     item.barcode ?? '',
     String(item.cost_price ?? 0),
     String(item.selling_price ?? 0),
-    String(item.current_quantity),
-    String(item.reserved_quantity),
-    String(item.minimum_quantity),
-    item.capacity ?? '',
-    String(item.warranty_months ?? 0),
+    String(item.current_quantity ?? 0),
+    String(item.quantity_reserved ?? 0),
+    String(item.minimum_quantity ?? 0),
+    '', // capacity not in schema
+    '', // warranty_months not in schema
   ]);
   return [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
 }
@@ -2025,52 +1681,25 @@ export interface StockCostLayer {
   created_at: string | null;
 }
 
+// NOTE: stock_cost_layers table does not exist in v1.0.0 live schema. FIFO/LIFO valuation is
+// degraded to weighted-average via stock_items.cost_price.
+// TODO(B8): create stock_cost_layers via migration if FIFO/LIFO is product-required.
 export async function addCostLayer(
-  stockItemId: string,
-  quantity: number,
-  unitCost: number,
-  poId?: string
+  _stockItemId: string,
+  _quantity: number,
+  _unitCost: number,
+  _poId?: string
 ): Promise<void> {
-  const { error } = await supabase.from('stock_cost_layers').insert({
-    stock_item_id: stockItemId,
-    quantity,
-    unit_cost: unitCost,
-    remaining_quantity: quantity,
-    purchase_order_id: poId ?? null,
-    received_at: new Date().toISOString(),
-  });
-  if (error) throw error;
+  // No-op: cost layers not tracked in current schema.
 }
 
 export async function calculateItemCost(
   stockItemId: string,
   quantity: number,
-  method: 'fifo' | 'lifo' | 'average' = 'average'
+  _method: 'fifo' | 'lifo' | 'average' = 'average'
 ): Promise<number> {
-  if (method === 'average') {
-    const item = await getStockItem(stockItemId);
-    if (!item || !item.cost_price) return 0;
-    return item.cost_price * quantity;
-  }
-
-  const { data, error } = await supabase
-    .from('stock_cost_layers')
-    .select('*')
-    .eq('stock_item_id', stockItemId)
-    .gt('remaining_quantity', 0)
-    .order('received_at', { ascending: method === 'fifo' });
-  if (error) throw error;
-
-  const layers = (data ?? []) as StockCostLayer[];
-  let remaining = quantity;
-  let totalCost = 0;
-
-  for (const layer of layers) {
-    if (remaining <= 0) break;
-    const take = Math.min(remaining, layer.remaining_quantity);
-    totalCost += take * layer.unit_cost;
-    remaining -= take;
-  }
-
-  return totalCost;
+  // FIFO/LIFO degrade to average-cost in v1.0.0 schema.
+  const item = await getStockItem(stockItemId);
+  if (!item || !item.cost_price) return 0;
+  return item.cost_price * quantity;
 }
