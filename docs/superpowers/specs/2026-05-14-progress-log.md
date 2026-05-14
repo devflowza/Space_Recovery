@@ -10,3 +10,4 @@ Each cleanup PR appends a row after merge. The baseline starts at 3138 and ratch
 | 2026-05-14 | 2 | CloneDriveModal + 3 consumer files | 3085 |
 | 2026-05-14 | 2 | DeviceRoleSelector (B7 sweep, zero importers) | 3084 |
 | 2026-05-14 | 3 | App.tsx lazy-import (B1) | 2999 |
+| 2026-05-14 | 3 | Document component types — B1 cluster (5 files: InvoiceDocument.tsx, QuoteDocument.tsx, ReportDocument.tsx, PaymentReceiptDocument.tsx, pdf/PaymentReceiptDocument.ts) | 2783 |
