@@ -6,14 +6,50 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { HardDrive, AlertCircle } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import type { Database } from '../../types/database.types';
+
+type ResourceCloneDriveRow = Database['public']['Tables']['resource_clone_drives']['Row'];
+type ResourceCloneDriveInsert = Database['public']['Tables']['resource_clone_drives']['Insert'];
+
+type EditingDrive = Partial<ResourceCloneDriveRow> & {
+  id?: string;
+  clone_id?: string | null;
+  label?: string | null;
+};
 
 interface ResourceCloneDriveModalProps {
   isOpen: boolean;
   onClose: () => void;
-  editingDrive?: Record<string, unknown>;
+  editingDrive?: EditingDrive | null;
   onSuccess?: () => void;
 }
+
+interface FormState {
+  label: string;
+  serial_number: string;
+  brand_id: string;
+  capacity_id: string;
+  interface_id: string;
+  status: string;
+  condition: string;
+  location: string;
+  notes: string;
+}
+
+const EMPTY_FORM: FormState = {
+  label: '',
+  serial_number: '',
+  brand_id: '',
+  capacity_id: '',
+  interface_id: '',
+  status: 'available',
+  condition: '',
+  location: '',
+  notes: '',
+};
+
+const toFormString = (value: unknown): string =>
+  typeof value === 'string' ? value : value == null ? '' : String(value);
 
 export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = ({
   isOpen,
@@ -22,137 +58,136 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
   onSuccess,
 }) => {
   const queryClient = useQueryClient();
-  const { profile } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    serial_number: editingDrive?.serial_number || '',
-    brand_id: editingDrive?.brand_id || '',
-    model: editingDrive?.model || '',
-    capacity_id: editingDrive?.capacity_id || '',
-    device_type_id: editingDrive?.device_type_id || '',
-    interface_id: editingDrive?.interface_id || '',
-    purchase_date: editingDrive?.purchase_date || '',
-    purchase_cost: editingDrive?.purchase_cost || '',
-    vendor: editingDrive?.vendor || '',
-    warranty_expiry: editingDrive?.warranty_expiry || '',
-    status: editingDrive?.status || 'available',
-    condition_id: editingDrive?.condition_id || '',
-    storage_location_id: editingDrive?.storage_location_id || '',
-    physical_location_notes: editingDrive?.physical_location_notes || '',
-    notes: editingDrive?.notes || '',
-  });
+  const editingId: string | null = typeof editingDrive?.id === 'string' ? editingDrive.id : null;
+  const cloneIdLabel: string = toFormString(editingDrive?.clone_id ?? editingDrive?.label);
 
-  const { data: inventoryLocations = [] } = useQuery({
-    queryKey: ['inventory_locations'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('inventory_locations')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('sort_order');
-      if (error) throw error;
-      return data;
-    },
-  });
+  const [formData, setFormData] = useState<FormState>(() => ({
+    label: toFormString(editingDrive?.label ?? editingDrive?.clone_id),
+    serial_number: toFormString(editingDrive?.serial_number),
+    brand_id: toFormString(editingDrive?.brand_id),
+    capacity_id: toFormString(editingDrive?.capacity_id),
+    interface_id: toFormString(editingDrive?.interface_id),
+    status: toFormString(editingDrive?.status) || 'available',
+    condition: toFormString(editingDrive?.condition),
+    location: toFormString(editingDrive?.location),
+    notes: toFormString(editingDrive?.notes),
+  }));
 
   const { data: brands = [] } = useQuery({
-    queryKey: ['brands'],
+    queryKey: ['catalog_device_brands'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error: queryError } = await supabase
         .from('catalog_device_brands')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
-      if (error) throw error;
-      return data;
+      if (queryError) throw queryError;
+      return data ?? [];
     },
   });
 
   const { data: capacities = [] } = useQuery({
-    queryKey: ['capacities'],
+    queryKey: ['catalog_device_capacities'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error: queryError } = await supabase
         .from('catalog_device_capacities')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
-      if (error) throw error;
-      return data;
+      if (queryError) throw queryError;
+      return data ?? [];
     },
   });
 
-  const { data: deviceTypes = [] } = useQuery({
-    queryKey: ['device_types'],
+  const { data: interfaces = [] } = useQuery({
+    queryKey: ['catalog_interfaces'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('catalog_device_types')
+      const { data, error: queryError } = await supabase
+        .from('catalog_interfaces')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
-      if (error) throw error;
-      return data;
+      if (queryError) throw queryError;
+      return data ?? [];
     },
   });
 
-  const { data: deviceInterfaces = [] } = useQuery({
-    queryKey: ['device_interfaces'],
+  const { data: conditions = [] } = useQuery({
+    queryKey: ['catalog_device_conditions'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('catalog_device_interfaces')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('sort_order');
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: deviceConditions = [] } = useQuery({
-    queryKey: ['device_conditions'],
-    queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error: queryError } = await supabase
         .from('catalog_device_conditions')
         .select('id, name')
         .eq('is_active', true)
         .order('sort_order');
-      if (error) throw error;
-      return data;
+      if (queryError) throw queryError;
+      return data ?? [];
+    },
+  });
+
+  const { data: locations = [] } = useQuery({
+    queryKey: ['inventory_locations_for_clone_drives'],
+    queryFn: async () => {
+      const { data, error: queryError } = await supabase
+        .from('inventory_locations')
+        .select('id, name')
+        .eq('is_active', true)
+        .is('deleted_at', null)
+        .order('name');
+      if (queryError) throw queryError;
+      return data ?? [];
     },
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const payload = {
-        serial_number: data.serial_number || null,
+    mutationFn: async (data: FormState) => {
+      const payload: Omit<ResourceCloneDriveInsert, 'tenant_id'> = {
+        label: data.label.trim(),
+        serial_number: data.serial_number.trim() || null,
         brand_id: data.brand_id || null,
-        model: data.model || null,
         capacity_id: data.capacity_id || null,
-        device_type_id: data.device_type_id || null,
         interface_id: data.interface_id || null,
-        purchase_date: data.purchase_date || null,
-        purchase_cost: data.purchase_cost ? parseFloat(data.purchase_cost) : 0,
-        vendor: data.vendor || null,
-        warranty_expiry: data.warranty_expiry || null,
-        status: data.status,
-        condition_id: data.condition_id || null,
-        storage_location_id: data.storage_location_id || null,
-        physical_location_notes: data.physical_location_notes || null,
-        notes: data.notes || null,
-        created_by: profile?.id,
+        status: data.status || null,
+        condition: data.condition.trim() || null,
+        location: data.location.trim() || null,
+        notes: data.notes.trim() || null,
       };
 
-      if (editingDrive) {
-        const { error } = await supabase
+      if (editingId) {
+        const { error: updateError } = await supabase
           .from('resource_clone_drives')
           .update(payload)
-          .eq('id', editingDrive.id);
-        if (error) throw error;
+          .eq('id', editingId);
+        if (updateError) throw updateError;
       } else {
-        const { error } = await supabase
+        const {
+          data: profileData,
+          error: profileError,
+        } = await supabase.auth.getUser();
+        if (profileError) throw profileError;
+        const userId = profileData.user?.id;
+        if (!userId) throw new Error('Not authenticated');
+
+        const { data: profileRow, error: profileLookupError } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', userId)
+          .maybeSingle();
+        if (profileLookupError) throw profileLookupError;
+        const tenantId = profileRow?.tenant_id;
+        if (!tenantId) throw new Error('No tenant associated with this user');
+
+        const insertPayload: ResourceCloneDriveInsert = {
+          ...payload,
+          tenant_id: tenantId,
+        };
+
+        const { error: insertError } = await supabase
           .from('resource_clone_drives')
-          .insert([payload]);
-        if (error) throw error;
+          .insert(insertPayload);
+        if (insertError) throw insertError;
       }
     },
     onSuccess: () => {
@@ -169,8 +204,8 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
     e.preventDefault();
     setError(null);
 
-    if (!formData.brand_id && !formData.model && !formData.serial_number) {
-      setError('Please provide at least Brand, Model, or Serial Number');
+    if (!formData.label.trim()) {
+      setError('Please provide a Clone ID / Label');
       return;
     }
 
@@ -178,23 +213,7 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
   };
 
   const handleClose = () => {
-    setFormData({
-      serial_number: '',
-      brand_id: '',
-      model: '',
-      capacity_id: '',
-      device_type_id: '',
-      interface_id: '',
-      purchase_date: '',
-      purchase_cost: '',
-      vendor: '',
-      warranty_expiry: '',
-      status: 'available',
-      condition_id: '',
-      storage_location_id: '',
-      physical_location_notes: '',
-      notes: '',
-    });
+    setFormData(EMPTY_FORM);
     setError(null);
     onClose();
   };
@@ -203,7 +222,7 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={editingDrive ? `Edit Clone Drive ${editingDrive.clone_id}` : 'Add Clone Drive to Resources'}
+      title={editingId ? `Edit Clone Drive ${cloneIdLabel}` : 'Add Clone Drive to Resources'}
       icon={HardDrive}
       maxWidth="4xl"
     >
@@ -218,12 +237,12 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
           </div>
         )}
 
-        {editingDrive && (
+        {editingId && cloneIdLabel && (
           <div className="bg-info-muted border border-info/30 rounded-lg p-4">
             <div className="flex items-center gap-2">
               <HardDrive className="w-5 h-5 text-primary" />
               <span className="text-sm font-semibold text-info">
-                Clone ID: {editingDrive.clone_id}
+                Clone ID: {cloneIdLabel}
               </span>
             </div>
           </div>
@@ -236,6 +255,14 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
             </h3>
 
             <Input
+              label="Clone ID / Label"
+              value={formData.label}
+              onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+              placeholder="e.g., CLONE-001"
+              required
+            />
+
+            <Input
               label="Serial Number"
               value={formData.serial_number}
               onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
@@ -245,7 +272,7 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
             <SearchableSelect
               label="Brand"
               options={brands.map((brand) => ({
-                id: brand.id.toString(),
+                id: brand.id,
                 name: brand.name,
               }))}
               value={formData.brand_id}
@@ -253,17 +280,10 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
               placeholder="Select brand"
             />
 
-            <Input
-              label="Model"
-              value={formData.model}
-              onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-              placeholder="e.g., WD10EZEX"
-            />
-
             <SearchableSelect
               label="Capacity"
               options={capacities.map((cap) => ({
-                id: cap.id.toString(),
+                id: cap.id,
                 name: cap.name,
               }))}
               value={formData.capacity_id}
@@ -271,29 +291,16 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
               placeholder="Select capacity"
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <SearchableSelect
-                label="Device Type"
-                options={deviceTypes.map((type) => ({
-                  id: type.id.toString(),
-                  name: type.name,
-                }))}
-                value={formData.device_type_id}
-                onChange={(value) => setFormData({ ...formData, device_type_id: value })}
-                placeholder="Select device type"
-              />
-
-              <SearchableSelect
-                label="Interface"
-                options={deviceInterfaces.map((iface) => ({
-                  id: iface.id.toString(),
-                  name: iface.name,
-                }))}
-                value={formData.interface_id}
-                onChange={(value) => setFormData({ ...formData, interface_id: value })}
-                placeholder="Select interface"
-              />
-            </div>
+            <SearchableSelect
+              label="Interface"
+              options={interfaces.map((iface) => ({
+                id: iface.id,
+                name: iface.name,
+              }))}
+              value={formData.interface_id}
+              onChange={(value) => setFormData({ ...formData, interface_id: value })}
+              placeholder="Select interface"
+            />
           </div>
 
           <div className="space-y-4">
@@ -301,88 +308,44 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
               Status & Location
             </h3>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="available">Available</option>
-                  <option value="in_use">In Use</option>
-                  <option value="maintenance">Maintenance</option>
-                  <option value="retired">Retired</option>
-                  <option value="lost">Lost</option>
-                  <option value="damaged">Damaged</option>
-                </select>
-              </div>
-
-              <SearchableSelect
-                label="Condition Rating"
-                options={deviceConditions.map((condition) => ({
-                  id: condition.id.toString(),
-                  name: condition.name,
-                }))}
-                value={formData.condition_id}
-                onChange={(value) => setFormData({ ...formData, condition_id: value })}
-                placeholder="Select condition"
-              />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Status
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="available">Available</option>
+                <option value="in_use">In Use</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="retired">Retired</option>
+                <option value="lost">Lost</option>
+                <option value="damaged">Damaged</option>
+              </select>
             </div>
 
             <SearchableSelect
+              label="Condition"
+              options={conditions.map((condition) => ({
+                id: condition.name,
+                name: condition.name,
+              }))}
+              value={formData.condition}
+              onChange={(value) => setFormData({ ...formData, condition: value })}
+              placeholder="Select condition"
+            />
+
+            <SearchableSelect
               label="Storage Location"
-              options={inventoryLocations.map((loc) => ({
-                id: loc.id,
+              options={locations.map((loc) => ({
+                id: loc.name,
                 name: loc.name,
               }))}
-              value={formData.storage_location_id}
-              onChange={(value) => setFormData({ ...formData, storage_location_id: value })}
+              value={formData.location}
+              onChange={(value) => setFormData({ ...formData, location: value })}
               placeholder="Select physical location"
-            />
-
-            <Input
-              label="Location Notes"
-              value={formData.physical_location_notes}
-              onChange={(e) => setFormData({ ...formData, physical_location_notes: e.target.value })}
-              placeholder="e.g., Shelf A3, Bay 5"
-            />
-
-            <h3 className="text-sm font-semibold text-slate-900 border-b pb-2 pt-4">
-              Purchase Information
-            </h3>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Purchase Date"
-                type="date"
-                value={formData.purchase_date}
-                onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
-              />
-              <Input
-                label="Purchase Cost"
-                type="number"
-                step="0.01"
-                value={formData.purchase_cost}
-                onChange={(e) => setFormData({ ...formData, purchase_cost: e.target.value })}
-                placeholder="0.00"
-              />
-            </div>
-
-            <Input
-              label="Vendor"
-              value={formData.vendor}
-              onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-              placeholder="e.g., Tech Supplier Inc."
-            />
-
-            <Input
-              label="Warranty Expiry"
-              type="date"
-              value={formData.warranty_expiry}
-              onChange={(e) => setFormData({ ...formData, warranty_expiry: e.target.value })}
             />
           </div>
         </div>
@@ -404,8 +367,8 @@ export const ResourceCloneDriveModal: React.FC<ResourceCloneDriveModalProps> = (
           </Button>
           <Button type="submit" variant="primary" disabled={saveMutation.isPending}>
             {saveMutation.isPending
-              ? editingDrive ? 'Updating...' : 'Adding...'
-              : editingDrive ? 'Update Drive' : 'Add Drive'}
+              ? editingId ? 'Updating...' : 'Adding...'
+              : editingId ? 'Update Drive' : 'Add Drive'}
           </Button>
         </div>
       </form>
