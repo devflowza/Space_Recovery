@@ -6,7 +6,6 @@ export function useCaseModals() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showCloneDriveModal, setShowCloneDriveModal] = useState(false);
   const [viewCloneModal, setViewCloneModal] = useState<any>(null);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
   const [showMarkAsDeliveredModal, setShowMarkAsDeliveredModal] = useState(false);
@@ -56,7 +55,6 @@ export function useCaseModals() {
     showCheckoutModal, setShowCheckoutModal,
     showDuplicateModal, setShowDuplicateModal,
     showDeleteModal, setShowDeleteModal,
-    showCloneDriveModal, setShowCloneDriveModal,
     viewCloneModal, setViewCloneModal,
     showDeviceModal, setShowDeviceModal,
     showMarkAsDeliveredModal, setShowMarkAsDeliveredModal,
