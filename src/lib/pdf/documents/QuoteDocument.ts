@@ -124,26 +124,28 @@ export function buildQuoteDocument(
   const customerEmail = quoteData.customer?.email || quoteData.cases?.contact_email || quoteData.company?.email || 'N/A';
   const customerPhone = quoteData.customer?.mobile_number || quoteData.customer?.phone_number || quoteData.cases?.contact_phone || quoteData.company?.phone_number || 'N/A';
 
+  const labelWidth = isBilingual ? 140 : 85;
+
   const customerDetailsContent: object[] = [
-    createInfoRow('Name:', customerName),
-    createInfoRow('Company:', companyNameDisplay),
-    createInfoRow('Phone:', customerPhone),
-    createInfoRow('Email:', customerEmail),
-    createInfoRow('Reference:', quoteData.client_reference),
+    createInfoRow(t('nameLabel', 'Name:'), customerName, labelWidth),
+    createInfoRow(t('companyLabel', 'Company:'), companyNameDisplay, labelWidth),
+    createInfoRow(t('phoneLabel', 'Phone:'), customerPhone, labelWidth),
+    createInfoRow(t('emailLabel', 'Email:'), customerEmail, labelWidth),
+    createInfoRow(t('referenceLabel', 'Reference:'), quoteData.client_reference, labelWidth),
   ];
 
   const quoteDetailsContent: object[] = [
-    createInfoRow('Quote No:', quoteData.quote_number || 'Draft'),
-    createInfoRow('Created Date:', formatDate(quoteData.created_at, 'dd MMM yyyy')),
-    ...(quoteData.valid_until ? [createInfoRow('Expiry Date:', formatDate(quoteData.valid_until, 'dd MMM yyyy'))] : []),
-    ...(quoteData.cases?.case_no ? [createInfoRow('Job ID:', quoteData.cases.case_no)] : []),
+    createInfoRow(t('quoteNoLabel', 'Quote No:'), quoteData.quote_number || 'Draft', labelWidth),
+    createInfoRow(t('createdDateLabel', 'Created Date:'), formatDate(quoteData.created_at, 'dd MMM yyyy'), labelWidth),
+    ...(quoteData.valid_until ? [createInfoRow(t('expiryDateLabel', 'Expiry Date:'), formatDate(quoteData.valid_until, 'dd MMM yyyy'), labelWidth)] : []),
+    ...(quoteData.cases?.case_no ? [createInfoRow(t('jobIdLabel', 'Job ID:'), quoteData.cases.case_no, labelWidth)] : []),
   ];
 
   const customerInfoTitle = isBilingual
-    ? `Customer Information | معلومات العميل`
+    ? `Customer Information | ${t('customerInformation', '').split(' | ')[1] || 'معلومات العميل'}`
     : 'Customer Information';
   const quoteDetailsTitle = isBilingual
-    ? `Quote Details | تفاصيل العرض`
+    ? `Quote Details | ${t('quoteDetails', '').split(' | ')[1] || 'تفاصيل العرض'}`
     : 'Quote Details';
 
   const infoBoxesSection: Content = {
@@ -162,7 +164,7 @@ export function buildQuoteDocument(
   };
 
   const lineItemsTitle = isBilingual
-    ? `Line Items | البنود`
+    ? `Line Items | ${t('lineItems', '').split(' | ')[1] || 'البنود'}`
     : 'Line Items';
 
   const lineItemsHeader: Content = createBilingualSectionHeader(lineItemsTitle, null) as Content;
@@ -223,10 +225,17 @@ export function buildQuoteDocument(
   const taxAmount = (discountedSubtotal * taxRate) / 100;
   const totalAmount = discountedSubtotal + taxAmount;
 
+  const subtotalRowLabel = isBilingual ? t('subtotalLabel', 'Subtotal:') : 'Subtotal:';
+  const vatTranslated = isBilingual ? (t('vat', '').split(' | ')[1] || 'ضريبة القيمة المضافة') : null;
+  const vatLabel = isBilingual ? `VAT ${taxRate}% | ${vatTranslated}:` : `VAT ${taxRate}%:`;
+  const totalTranslated = isBilingual ? (t('total', '').split(' | ')[1] || 'الإجمالي') : null;
+  const totalRowLabel = isBilingual ? `Total | ${totalTranslated}:` : 'Total:';
+  const baseDiscountLabel = isBilingual ? t('discountLabel', 'Discount:') : 'Discount:';
+
   const financialSummaryRows: object[] = [
     {
       columns: [
-        { text: 'Subtotal:', fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
+        { text: subtotalRowLabel, fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
         { text: formatCurrency(subtotal), fontSize: 9, bold: true, color: PDF_COLORS.text, width: 100, alignment: 'right' },
       ],
       margin: [0, 2, 0, 2],
@@ -234,10 +243,12 @@ export function buildQuoteDocument(
   ];
 
   if (discountValue > 0) {
-    const discountLabel = discountType === 'percentage' ? `Discount (${discountAmount}%):` : 'Discount:';
+    const discountLabelText = discountType === 'percentage'
+      ? (isBilingual ? `Discount (${discountAmount}%) | الخصم:` : `Discount (${discountAmount}%):`)
+      : baseDiscountLabel;
     financialSummaryRows.push({
       columns: [
-        { text: discountLabel, fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
+        { text: discountLabelText, fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
         { text: `- ${formatCurrency(discountValue)}`, fontSize: 9, bold: true, color: PDF_COLORS.error, width: 100, alignment: 'right' },
       ],
       margin: [0, 2, 0, 2],
@@ -246,7 +257,7 @@ export function buildQuoteDocument(
 
   financialSummaryRows.push({
     columns: [
-      { text: `VAT ${taxRate}% | ضريبة القيمة المضافة:`, fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
+      { text: vatLabel, fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
       { text: formatCurrency(taxAmount), fontSize: 9, bold: true, color: PDF_COLORS.text, width: 100, alignment: 'right' },
     ],
     margin: [0, 2, 0, 2],
@@ -257,7 +268,7 @@ export function buildQuoteDocument(
       widths: ['*', 100],
       body: [
         [
-          { text: 'Total | الإجمالي:', fontSize: 10, bold: true, color: PDF_COLORS.text, alignment: 'right', border: [false, false, false, false], margin: [0, 3, 0, 3] },
+          { text: totalRowLabel, fontSize: 10, bold: true, color: PDF_COLORS.text, alignment: 'right', border: [false, false, false, false], margin: [0, 3, 0, 3] },
           { text: formatCurrency(totalAmount), fontSize: 11, bold: true, color: PDF_COLORS.primary, alignment: 'right', border: [false, false, false, false], margin: [0, 3, 0, 3] },
         ],
       ],
@@ -279,12 +290,21 @@ export function buildQuoteDocument(
 
   const termsAndBankSection: Content[] = [];
 
+  const termsConditionsLabel = isBilingual ? t('termsAndConditions', 'Terms & Conditions') : 'Terms & Conditions';
+  const notesSectionLabel = isBilingual ? t('notes', 'Notes') : 'Notes';
+  const bankAccountSectionLabel = isBilingual ? `${t('bankAccount', 'Bank Account')} | تفاصيل البنك` : 'Bank Account';
+  const accountNameRowLabel = t('accountNameLabel', 'Account Name:');
+  const accountNoRowLabel = t('accountNoLabel', 'Account No:');
+  const bankRowLabel = t('bankLabel', 'Bank:');
+  const ibanRowLabel = t('ibanLabel', 'IBAN:');
+  const swiftRowLabel = t('swiftLabel', 'SWIFT:');
+
   if (quoteData.terms_and_conditions || quoteData.notes) {
     const termsStack: object[] = [];
 
     if (quoteData.terms_and_conditions) {
       termsStack.push(
-        { text: 'Terms & Conditions', fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
+        { text: termsConditionsLabel, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
         { text: quoteData.terms_and_conditions, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.3 }
       );
     }
@@ -294,7 +314,7 @@ export function buildQuoteDocument(
         termsStack.push({ text: '', margin: [0, 4, 0, 0] });
       }
       termsStack.push(
-        { text: 'Notes', fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
+        { text: notesSectionLabel, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
         { text: quoteData.notes, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.3 }
       );
     }
@@ -310,7 +330,7 @@ export function buildQuoteDocument(
           {
             width: '50%',
             stack: [
-              { text: 'Bank Account / تفاصيل البنك', fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
+              { text: bankAccountSectionLabel, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
               {
                 table: {
                   widths: ['*'],
@@ -318,11 +338,11 @@ export function buildQuoteDocument(
                     [
                       {
                         stack: [
-                          ...(quoteData.bank_accounts.account_name ? [{ text: `Account Name: ${quoteData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(quoteData.bank_accounts.account_number ? [{ text: `Account No: ${quoteData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(quoteData.bank_accounts.bank_name ? [{ text: `Bank: ${quoteData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(quoteData.bank_accounts.iban ? [{ text: `IBAN: ${quoteData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(quoteData.bank_accounts.swift_code ? [{ text: `SWIFT: ${quoteData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(quoteData.bank_accounts.account_name ? [{ text: `${accountNameRowLabel} ${quoteData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(quoteData.bank_accounts.account_number ? [{ text: `${accountNoRowLabel} ${quoteData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(quoteData.bank_accounts.bank_name ? [{ text: `${bankRowLabel} ${quoteData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(quoteData.bank_accounts.iban ? [{ text: `${ibanRowLabel} ${quoteData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(quoteData.bank_accounts.swift_code ? [{ text: `${swiftRowLabel} ${quoteData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
                         ],
                         fillColor: PDF_COLORS.background,
                         margin: [6, 4, 6, 4],
@@ -524,10 +544,10 @@ export function buildQuoteDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 85): Content {
   return {
     columns: [
-      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: 85 },
+      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },
       { text: safeString(value), fontSize: 9, color: PDF_COLORS.text, width: '*' },
     ],
     margin: [0, 0, 0, 2],

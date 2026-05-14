@@ -48,8 +48,8 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
                 <span className="truncate">Device {idx + 1}: {device.device_type?.name || 'Unknown Device Type'}</span>
               </h4>
               <p className="text-xs text-slate-600 truncate mb-0.5">{device.brand?.name} {device.model}</p>
-              {device.serial_no && (
-                <p className="text-xs text-slate-500 font-mono">s/n: {device.serial_no}</p>
+              {device.serial_number && (
+                <p className="text-xs text-slate-500 font-mono">s/n: {device.serial_number}</p>
               )}
             </div>
             <div className="flex items-center gap-1 ml-2 flex-shrink-0">
@@ -104,25 +104,25 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
                   </span>
                 </div>
               )}
-              {device.device_problem && (
+              {device.symptoms && (
                 <div>
                   <span className="text-slate-500 text-xs font-medium block mb-1">Problem Description</span>
-                  <p className="text-slate-900 text-xs leading-relaxed">{device.device_problem}</p>
+                  <p className="text-slate-900 text-xs leading-relaxed">{device.symptoms}</p>
                 </div>
               )}
-              {device.recovery_requirements && (
+              {device.notes && (
                 <div>
                   <span className="text-slate-500 text-xs font-medium block mb-1">Recovery Requirements</span>
-                  <p className="text-slate-900 text-xs leading-relaxed">{device.recovery_requirements}</p>
+                  <p className="text-slate-900 text-xs leading-relaxed">{device.notes}</p>
                 </div>
               )}
-              {device.device_password && (
+              {device.password && (
                 <div>
                   <span className="text-slate-500 text-xs font-medium block mb-1.5">Device Password</span>
                   <div className="flex items-center gap-1.5">
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      value={device.device_password}
+                      value={device.password}
                       readOnly
                       className="font-mono text-xs bg-slate-50 px-2 py-1.5 rounded border border-slate-300 flex-1"
                     />
@@ -296,8 +296,8 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
                                 </div>
                                 <p className="text-xs text-slate-600 truncate">
                                   {device.brand?.name} {device.model}
-                                  {device.serial_no && (
-                                    <span className="ml-1.5 font-mono text-xs">S/N: {device.serial_no}</span>
+                                  {device.serial_number && (
+                                    <span className="ml-1.5 font-mono text-xs">S/N: {device.serial_number}</span>
                                   )}
                                 </p>
                                 <div className="mt-1 space-y-0.5">

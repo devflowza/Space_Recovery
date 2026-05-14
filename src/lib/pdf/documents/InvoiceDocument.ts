@@ -127,26 +127,28 @@ export function buildInvoiceDocument(
   const customerEmail = invoiceData.customer?.email || invoiceData.cases?.contact_email || invoiceData.company?.email || 'N/A';
   const customerPhone = invoiceData.customer?.mobile_number || invoiceData.customer?.phone_number || invoiceData.cases?.contact_phone || invoiceData.company?.phone_number || 'N/A';
 
+  const labelWidth = isBilingual ? 150 : 90;
+
   const customerDetailsContent: object[] = [
-    createInfoRow('Name:', customerName),
-    createInfoRow('Company:', companyNameDisplay),
-    createInfoRow('Phone:', customerPhone),
-    createInfoRow('Email:', customerEmail),
-    createInfoRow('Reference:', invoiceData.client_reference),
+    createInfoRow(t('nameLabel', 'Name:'), customerName, labelWidth),
+    createInfoRow(t('companyLabel', 'Company:'), companyNameDisplay, labelWidth),
+    createInfoRow(t('phoneLabel', 'Phone:'), customerPhone, labelWidth),
+    createInfoRow(t('emailLabel', 'Email:'), customerEmail, labelWidth),
+    createInfoRow(t('referenceLabel', 'Reference:'), invoiceData.client_reference, labelWidth),
   ];
 
   const invoiceDetailsContent: object[] = [
-    createInfoRow('Invoice No:', invoiceData.invoice_number || 'Draft'),
-    createInfoRow('Invoice Date:', formatDate(invoiceData.invoice_date, 'dd MMM yyyy')),
-    createInfoRow('Due Date:', formatDate(invoiceData.due_date, 'dd MMM yyyy')),
-    ...(invoiceData.cases?.case_no ? [createInfoRow('Job ID:', invoiceData.cases.case_no)] : []),
+    createInfoRow(t('invoiceNoLabel', 'Invoice No:'), invoiceData.invoice_number || 'Draft', labelWidth),
+    createInfoRow(t('invoiceDateLabel', 'Invoice Date:'), formatDate(invoiceData.invoice_date, 'dd MMM yyyy'), labelWidth),
+    createInfoRow(t('dueDateLabel', 'Due Date:'), formatDate(invoiceData.due_date, 'dd MMM yyyy'), labelWidth),
+    ...(invoiceData.cases?.case_no ? [createInfoRow(t('jobIdLabel', 'Job ID:'), invoiceData.cases.case_no, labelWidth)] : []),
   ];
 
   const customerInfoTitle = isBilingual
-    ? `Customer Information | معلومات العميل`
+    ? `Customer Information | ${t('customerInformation', '').split(' | ')[1] || 'معلومات العميل'}`
     : 'Customer Information';
   const invoiceDetailsTitle = isBilingual
-    ? `Invoice Details | تفاصيل الفاتورة`
+    ? `Invoice Details | ${t('invoiceDetails', '').split(' | ')[1] || 'تفاصيل الفاتورة'}`
     : 'Invoice Details';
 
   const infoBoxesSection: Content = {
@@ -165,7 +167,7 @@ export function buildInvoiceDocument(
   };
 
   const lineItemsTitle = isBilingual
-    ? `Line Items | البنود`
+    ? `Line Items | ${t('lineItems', '').split(' | ')[1] || 'البنود'}`
     : 'Line Items';
 
   const lineItemsHeader: Content = createBilingualSectionHeader(lineItemsTitle, null) as Content;
@@ -226,10 +228,19 @@ export function buildInvoiceDocument(
   const amountPaid = invoiceData.amount_paid || 0;
   const balanceDue = totalAmount - amountPaid;
 
+  const subtotalLabel = isBilingual ? t('subtotalLabel', 'Subtotal:') : 'Subtotal:';
+  const discountLabelTxt = isBilingual ? t('discountLabel', 'Discount:') : 'Discount:';
+  const vatTranslated = isBilingual ? (t('vat', '').split(' | ')[1] || 'ضريبة القيمة المضافة') : null;
+  const vatLabel = isBilingual ? `VAT ${taxRate}% | ${vatTranslated}:` : `VAT ${taxRate}%:`;
+  const totalTranslated = isBilingual ? (t('total', '').split(' | ')[1] || 'الإجمالي') : null;
+  const totalLabel = isBilingual ? `Total | ${totalTranslated}:` : 'Total:';
+  const amountPaidLabel = isBilingual ? t('amountPaidLabel', 'Amount Paid:') : 'Amount Paid:';
+  const balanceDueLabel = isBilingual ? t('balanceDueLabel', 'Balance Due:') : 'Balance Due:';
+
   const financialSummaryRows: object[] = [
     {
       columns: [
-        { text: 'Subtotal:', fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
+        { text: subtotalLabel, fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
         { text: formatCurrency(subtotal), fontSize: 9, bold: true, color: PDF_COLORS.text, width: 100, alignment: 'right' },
       ],
       margin: [0, 2, 0, 2],
@@ -239,7 +250,7 @@ export function buildInvoiceDocument(
   if (discountAmount > 0) {
     financialSummaryRows.push({
       columns: [
-        { text: 'Discount:', fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
+        { text: discountLabelTxt, fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
         { text: `- ${formatCurrency(discountAmount)}`, fontSize: 9, bold: true, color: PDF_COLORS.error, width: 100, alignment: 'right' },
       ],
       margin: [0, 2, 0, 2],
@@ -248,7 +259,7 @@ export function buildInvoiceDocument(
 
   financialSummaryRows.push({
     columns: [
-      { text: `VAT ${taxRate}% | ضريبة القيمة المضافة:`, fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
+      { text: vatLabel, fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
       { text: formatCurrency(taxAmount), fontSize: 9, bold: true, color: PDF_COLORS.text, width: 100, alignment: 'right' },
     ],
     margin: [0, 2, 0, 2],
@@ -259,7 +270,7 @@ export function buildInvoiceDocument(
       widths: ['*', 100],
       body: [
         [
-          { text: 'Total | الإجمالي:', fontSize: 10, bold: true, color: PDF_COLORS.text, alignment: 'right', border: [false, false, false, false], margin: [0, 3, 0, 3] },
+          { text: totalLabel, fontSize: 10, bold: true, color: PDF_COLORS.text, alignment: 'right', border: [false, false, false, false], margin: [0, 3, 0, 3] },
           { text: formatCurrency(totalAmount), fontSize: 11, bold: true, color: PDF_COLORS.primary, alignment: 'right', border: [false, false, false, false], margin: [0, 3, 0, 3] },
         ],
       ],
@@ -279,14 +290,14 @@ export function buildInvoiceDocument(
       { text: '', margin: [0, 4, 0, 0] },
       {
         columns: [
-          { text: 'Amount Paid:', fontSize: 9, color: PDF_COLORS.success, width: '*', alignment: 'right' },
+          { text: amountPaidLabel, fontSize: 9, color: PDF_COLORS.success, width: '*', alignment: 'right' },
           { text: formatCurrency(amountPaid), fontSize: 9, bold: true, color: PDF_COLORS.success, width: 100, alignment: 'right' },
         ],
         margin: [0, 2, 0, 2],
       },
       {
         columns: [
-          { text: 'Balance Due:', fontSize: 9, color: PDF_COLORS.warning, width: '*', alignment: 'right' },
+          { text: balanceDueLabel, fontSize: 9, color: PDF_COLORS.warning, width: '*', alignment: 'right' },
           { text: formatCurrency(balanceDue), fontSize: 10, bold: true, color: PDF_COLORS.warning, width: 100, alignment: 'right' },
         ],
         margin: [0, 2, 0, 2],
@@ -301,12 +312,21 @@ export function buildInvoiceDocument(
 
   const termsAndBankSection: Content[] = [];
 
+  const paymentTermsLabel = isBilingual ? t('paymentTermsTitle', 'Payment Terms') : 'Payment Terms';
+  const notesLabel = isBilingual ? t('notes', 'Notes') : 'Notes';
+  const bankAccountLabel = isBilingual ? t('bankAccount', 'Bank Account') : 'Bank Account';
+  const accountNameRowLabel = t('accountNameLabel', 'Account Name:');
+  const accountNoRowLabel = t('accountNoLabel', 'Account No:');
+  const bankRowLabel = t('bankLabel', 'Bank:');
+  const ibanRowLabel = t('ibanLabel', 'IBAN:');
+  const swiftRowLabel = t('swiftLabel', 'SWIFT:');
+
   if (invoiceData.payment_terms || invoiceData.notes) {
     const termsStack: object[] = [];
 
     if (invoiceData.payment_terms) {
       termsStack.push(
-        { text: 'Payment Terms', fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
+        { text: paymentTermsLabel, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
         { text: invoiceData.payment_terms, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.3 }
       );
     }
@@ -316,7 +336,7 @@ export function buildInvoiceDocument(
         termsStack.push({ text: '', margin: [0, 4, 0, 0] });
       }
       termsStack.push(
-        { text: 'Notes', fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
+        { text: notesLabel, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
         { text: invoiceData.notes, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.3 }
       );
     }
@@ -332,7 +352,7 @@ export function buildInvoiceDocument(
           {
             width: '50%',
             stack: [
-              { text: 'Bank Account / تفاصيل البنك', fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
+              { text: isBilingual ? `${bankAccountLabel} | تفاصيل البنك` : bankAccountLabel, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
               {
                 table: {
                   widths: ['*'],
@@ -340,11 +360,11 @@ export function buildInvoiceDocument(
                     [
                       {
                         stack: [
-                          ...(invoiceData.bank_accounts.account_name ? [{ text: `Account Name: ${invoiceData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(invoiceData.bank_accounts.account_number ? [{ text: `Account No: ${invoiceData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(invoiceData.bank_accounts.bank_name ? [{ text: `Bank: ${invoiceData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(invoiceData.bank_accounts.iban ? [{ text: `IBAN: ${invoiceData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(invoiceData.bank_accounts.swift_code ? [{ text: `SWIFT: ${invoiceData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(invoiceData.bank_accounts.account_name ? [{ text: `${accountNameRowLabel} ${invoiceData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(invoiceData.bank_accounts.account_number ? [{ text: `${accountNoRowLabel} ${invoiceData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(invoiceData.bank_accounts.bank_name ? [{ text: `${bankRowLabel} ${invoiceData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(invoiceData.bank_accounts.iban ? [{ text: `${ibanRowLabel} ${invoiceData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(invoiceData.bank_accounts.swift_code ? [{ text: `${swiftRowLabel} ${invoiceData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
                         ],
                         fillColor: PDF_COLORS.background,
                         margin: [6, 4, 6, 4],
@@ -546,10 +566,10 @@ export function buildInvoiceDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 90): Content {
   return {
     columns: [
-      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: 90 },
+      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },
       { text: safeString(value), fontSize: 9, color: PDF_COLORS.text, width: '*' },
     ],
     margin: [0, 0, 0, 2],

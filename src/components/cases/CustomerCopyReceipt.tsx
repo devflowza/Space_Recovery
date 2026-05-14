@@ -267,7 +267,7 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
                 <span>Tel: {companySettings.contact_info.phone_primary}</span>
               )}
               {companySettings.contact_info?.email_general && (
-                <span> | Email: {companySettings.contact_info.email_general}</span>
+                <span> | {t('emailLabel', 'Email:')} {companySettings.contact_info.email_general}</span>
               )}
             </div>
           </div>
@@ -276,7 +276,7 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
 
       <div className="receipt-title text-center mb-3">
         <h1 className="text-lg font-bold text-sky-500">{t('deviceCheckInReceipt', 'DEVICE CHECK-IN RECEIPT')}</h1>
-        <div className="text-xs text-slate-400">Customer Copy</div>
+        <div className="text-xs text-slate-400">{t('customerCopy', 'Customer Copy')}</div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-3">
@@ -285,11 +285,11 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
             {t('caseDetails', 'Case Details')}
           </h3>
           <div className="space-y-1 text-xs">
-            <div className="flex"><span className="text-slate-500 w-20">Case ID:</span><span className="text-slate-800 font-medium">{caseData.case_no}</span></div>
-            <div className="flex"><span className="text-slate-500 w-20">Date:</span><span className="text-slate-800">{formatDate(caseData.created_at)}</span></div>
-            <div className="flex"><span className="text-slate-500 w-20">Status:</span><span className="text-slate-800">{caseData.status}</span></div>
-            <div className="flex"><span className="text-slate-500 w-20">Priority:</span><span className="text-slate-800 capitalize">{caseData.priority}</span></div>
-            <div className="flex"><span className="text-slate-500 w-20">Service:</span><span className="text-slate-800">{caseData.service_type?.name || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('caseIdLabel', 'Case ID:')}</span><span className="text-slate-800 font-medium">{caseData.case_no}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('dateLabel', 'Date:')}</span><span className="text-slate-800">{formatDate(caseData.created_at)}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('statusLabel', 'Status:')}</span><span className="text-slate-800">{caseData.status}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('priorityLabel', 'Priority:')}</span><span className="text-slate-800 capitalize">{caseData.priority}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('serviceLabel', 'Service:')}</span><span className="text-slate-800">{caseData.service_type?.name || '-'}</span></div>
           </div>
         </div>
 
@@ -298,11 +298,11 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
             {t('customerInformation', 'Customer Information')}
           </h3>
           <div className="space-y-1 text-xs">
-            <div className="flex"><span className="text-slate-500 w-20">Name:</span><span className="text-slate-800">{caseData.customer?.customer_name || '-'}</span></div>
-            <div className="flex"><span className="text-slate-500 w-20">Company:</span><span className="text-slate-800">{caseData.customer?.company_id || '-'}</span></div>
-            <div className="flex"><span className="text-slate-500 w-20">Phone:</span><span className="text-slate-800">{caseData.contact?.mobile_number || caseData.customer?.mobile_number || '-'}</span></div>
-            <div className="flex"><span className="text-slate-500 w-20">Email:</span><span className="text-slate-800 break-all">{caseData.customer?.email || '-'}</span></div>
-            <div className="flex"><span className="text-slate-500 w-20">Client Ref:</span><span className="text-slate-800">{caseData.client_reference || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('nameLabel', 'Name:')}</span><span className="text-slate-800">{caseData.customer?.customer_name || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('companyLabel', 'Company:')}</span><span className="text-slate-800">{caseData.customer?.company_id || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('phoneLabel', 'Phone:')}</span><span className="text-slate-800">{caseData.contact?.mobile_number || caseData.customer?.mobile_number || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('emailLabel', 'Email:')}</span><span className="text-slate-800 break-all">{caseData.customer?.email || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('clientRefLabel', 'Client Ref:')}</span><span className="text-slate-800">{caseData.client_reference || '-'}</span></div>
           </div>
         </div>
       </div>
@@ -341,7 +341,7 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
                   <td className="border border-slate-200 px-2 py-1.5 text-center text-slate-800">{device.capacity?.name || '-'}</td>
                   <td className="border border-slate-200 px-2 py-1.5">
                     {index === 0 ? (
-                      <span className="bg-danger-muted text-danger px-1.5 py-0.5 rounded text-[10px] font-medium">Patient</span>
+                      <span className="bg-danger-muted text-danger px-1.5 py-0.5 rounded text-[10px] font-medium">{t('patient', 'Patient')}</span>
                     ) : (
                       <span className="text-slate-500">-</span>
                     )}
@@ -389,10 +389,10 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
           <div className="flex-1">
             <h3 className="text-sm font-bold text-sky-900 mb-1 flex items-center gap-2">
               <span>🔒</span>
-              <span>Track Your Job Online</span>
+              <span>{t('trackYourJobOnline', 'Track Your Job Online')}</span>
             </h3>
             <p className="text-xs text-slate-700 leading-relaxed">
-              Scan the QR code to see your case progress.
+              {t('scanQRForProgress', 'Scan the QR code to see your case progress.')}
             </p>
           </div>
           {qrCodeUrl && (
@@ -408,8 +408,8 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
       </div>
 
       <div className="receipt-footer pt-2 border-t border-slate-200 text-[10px] text-slate-400 flex justify-between">
-        <span>Generated on {formatDate(new Date())}</span>
-        <span>Registered by: {caseData.created_by_profile?.full_name || 'System'}</span>
+        <span>{t('generatedOn', 'Generated on')} {formatDate(new Date())}</span>
+        <span>{t('registeredByLabel', 'Registered by:')} {caseData.created_by_profile?.full_name || 'System'}</span>
       </div>
 
       <style>{`

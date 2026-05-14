@@ -133,35 +133,37 @@ export function buildCheckoutFormDocument(
     !caseData.checkout_collector_name ||
     caseData.checkout_collector_name.trim() === '';
 
+  const labelWidth = isBilingual ? 130 : 75;
+
   const caseDetailsContent: object[] = [
-    createInfoRow('Case ID:', caseData.case_no),
-    createInfoRow('Customer Name:', caseData.customer_name || caseData.contact_name),
-    createInfoRow('Company:', caseData.company?.company_name),
-    createInfoRow('Service:', caseData.service_type?.name),
-    createInfoRow('Customer Phone:', caseData.customer?.mobile_number || caseData.customer?.phone_number || caseData.contact_phone),
+    createInfoRow(t('caseIdLabel', 'Case ID:'), caseData.case_no, labelWidth),
+    createInfoRow(t('customerNameLabel', 'Customer Name:'), caseData.customer_name || caseData.contact_name, labelWidth),
+    createInfoRow(t('companyLabel', 'Company:'), caseData.company?.company_name, labelWidth),
+    createInfoRow(t('serviceLabel', 'Service:'), caseData.service_type?.name, labelWidth),
+    createInfoRow(t('customerPhoneLabel', 'Customer Phone:'), caseData.customer?.mobile_number || caseData.customer?.phone_number || caseData.contact_phone, labelWidth),
   ];
 
   let collectionInfoContent: object[];
 
   if (isCollectorSameAsCustomer) {
     collectionInfoContent = [
-      createInfoRow('Checkout Date:', formatDate(caseData.checkout_date || new Date().toISOString(), 'dd MMM yyyy, HH:mm')),
-      createInfoRow('Recovery Outcome:', getRecoveryOutcomeLabel(caseData.recovery_outcome)),
-      createInfoRow('Collected By:', caseData.customer_name || caseData.contact_name),
-      createInfoRow('Mobile Number:', caseData.customer?.mobile_number || caseData.customer?.phone_number || caseData.contact_phone),
+      createInfoRow(t('checkoutDateLabel', 'Checkout Date:'), formatDate(caseData.checkout_date || new Date().toISOString(), 'dd MMM yyyy, HH:mm'), labelWidth),
+      createInfoRow(t('recoveryOutcomeLabel', 'Recovery Outcome:'), getRecoveryOutcomeLabel(caseData.recovery_outcome), labelWidth),
+      createInfoRow(t('collectedByLabel', 'Collected By:'), caseData.customer_name || caseData.contact_name, labelWidth),
+      createInfoRow(t('mobileNumberLabel', 'Mobile Number:'), caseData.customer?.mobile_number || caseData.customer?.phone_number || caseData.contact_phone, labelWidth),
     ];
   } else {
     collectionInfoContent = [
-      createInfoRow('Checkout Date:', formatDate(caseData.checkout_date || new Date().toISOString(), 'dd MMM yyyy, HH:mm')),
-      createInfoRow('Recovery Outcome:', getRecoveryOutcomeLabel(caseData.recovery_outcome)),
-      createInfoRow('Collected By:', caseData.checkout_collector_name),
-      createInfoRow('Mobile Number:', caseData.checkout_collector_mobile),
-      createInfoRow('National ID:', caseData.checkout_collector_id),
+      createInfoRow(t('checkoutDateLabel', 'Checkout Date:'), formatDate(caseData.checkout_date || new Date().toISOString(), 'dd MMM yyyy, HH:mm'), labelWidth),
+      createInfoRow(t('recoveryOutcomeLabel', 'Recovery Outcome:'), getRecoveryOutcomeLabel(caseData.recovery_outcome), labelWidth),
+      createInfoRow(t('collectedByLabel', 'Collected By:'), caseData.checkout_collector_name, labelWidth),
+      createInfoRow(t('mobileNumberLabel', 'Mobile Number:'), caseData.checkout_collector_mobile, labelWidth),
+      createInfoRow(t('nationalIdLabel', 'National ID:'), caseData.checkout_collector_id, labelWidth),
     ];
   }
 
   const collectionInfoTitle = isBilingual
-    ? `Collection Information | معلومات الاستلام`
+    ? `Collection Information | ${t('collectionInformation', '').split(' | ')[1] || 'معلومات الاستلام'}`
     : 'Collection Information';
   const caseDetailsTitle = isBilingual
     ? `Case Details | ${t('caseDetails', '').split(' | ')[1] || 'تفاصيل الحالة'}`
@@ -183,7 +185,7 @@ export function buildCheckoutFormDocument(
   };
 
   const devicesTitle = isBilingual
-    ? `Device(s) Returned | الأجهزة المرتجعة`
+    ? `Device(s) Returned | ${t('devicesReturned', '').split(' | ')[1] || 'الأجهزة المرتجعة'}`
     : 'Device(s) Returned';
 
   const devicesHeader: Content = createBilingualSectionHeader(devicesTitle, null) as Content;
@@ -382,7 +384,7 @@ export function buildCheckoutFormDocument(
             margin: [0, 0, 0, 4],
           },
           {
-            text: `Date: ${checkoutDateFormatted}`,
+            text: `${t('dateLabel', 'Date:')} ${checkoutDateFormatted}`,
             fontSize: 8,
             color: PDF_COLORS.textLight,
             alignment: 'center',
@@ -437,7 +439,7 @@ export function buildCheckoutFormDocument(
             margin: [0, 0, 0, 4],
           },
           {
-            text: `Date: ${checkoutDateFormatted}`,
+            text: `${t('dateLabel', 'Date:')} ${checkoutDateFormatted}`,
             fontSize: 8,
             color: PDF_COLORS.textLight,
             alignment: 'center',
@@ -450,7 +452,7 @@ export function buildCheckoutFormDocument(
 
   const creatorName = caseData.created_by_profile?.full_name || caseData.created_by_profile?.email || 'System';
   const registeredBySection: Content = {
-    text: `Registered by: ${creatorName}`,
+    text: `${t('registeredByLabel', 'Registered by:')} ${creatorName}`,
     style: 'registeredBy',
     margin: [0, 8, 0, 6],
   };
@@ -595,10 +597,10 @@ export function buildCheckoutFormDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 75): Content {
   return {
     columns: [
-      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: 75 },
+      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },
       { text: safeString(value), fontSize: 9, color: PDF_COLORS.text, width: '*' },
     ],
     margin: [0, 0, 0, 2],

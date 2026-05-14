@@ -207,10 +207,10 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
 
   const getRecoveryOutcomeText = (outcome: string) => {
     const outcomes: Record<string, string> = {
-      full: 'Full Recovery',
-      partial: 'Partial Recovery',
-      unrecoverable: 'Unrecoverable',
-      declined: 'Declined',
+      full: t('outcomeFullRecovery', 'Full Recovery'),
+      partial: t('outcomePartialRecovery', 'Partial Recovery'),
+      unrecoverable: t('outcomeUnrecoverable', 'Unrecoverable'),
+      declined: t('outcomeDeclined', 'Declined'),
     };
     return outcomes[outcome] || outcome;
   };
@@ -249,7 +249,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
                 <span>Tel: {companySettings.contact_info.phone_primary}</span>
               )}
               {companySettings.contact_info?.email_general && (
-                <span> | Email: {companySettings.contact_info.email_general}</span>
+                <span> | {t('emailLabel', 'Email:')} {companySettings.contact_info.email_general}</span>
               )}
             </div>
           </div>
@@ -257,7 +257,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
       </div>
 
       <div className="receipt-title text-center mb-3">
-        <h1 className="text-lg font-bold text-sky-500">{t('deviceCheckoutReceipt', 'DEVICE CHECKOUT FORM')}</h1>
+        <h1 className="text-lg font-bold text-sky-500">{t('deviceCheckoutForm', 'DEVICE CHECKOUT FORM')}</h1>
         <div className="text-xs text-slate-400">{t('officeCopy', 'Office Copy')}</div>
       </div>
 
@@ -267,32 +267,32 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
             {t('caseDetails', 'Case Details')}
           </h3>
           <div className="space-y-1 text-xs">
-            <div className="flex"><span className="text-slate-500 w-32">Case ID:</span><span className="text-slate-800 font-medium">{caseData.case_no}</span></div>
-            <div className="flex"><span className="text-slate-500 w-32">Customer Name:</span><span className="text-slate-800">{caseData.customer?.customer_name || '-'}</span></div>
-            <div className="flex"><span className="text-slate-500 w-32">Company:</span><span className="text-slate-800">{caseData.company?.name || caseData.company?.company_name || '-'}</span></div>
-            <div className="flex"><span className="text-slate-500 w-32">Service:</span><span className="text-slate-800">{caseData.service_type?.name || '-'}</span></div>
-            <div className="flex"><span className="text-slate-500 w-32">Customer Phone:</span><span className="text-slate-800">{caseData.customer?.mobile_number || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-32">{t('caseIdLabel', 'Case ID:')}</span><span className="text-slate-800 font-medium">{caseData.case_no}</span></div>
+            <div className="flex"><span className="text-slate-500 w-32">{t('customerNameLabel', 'Customer Name:')}</span><span className="text-slate-800">{caseData.customer?.customer_name || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-32">{t('companyLabel', 'Company:')}</span><span className="text-slate-800">{caseData.company?.name || caseData.company?.company_name || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-32">{t('serviceLabel', 'Service:')}</span><span className="text-slate-800">{caseData.service_type?.name || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-32">{t('customerPhoneLabel', 'Customer Phone:')}</span><span className="text-slate-800">{caseData.customer?.mobile_number || '-'}</span></div>
           </div>
         </div>
 
         <div className="collection-info border border-slate-200 rounded p-3">
           <h3 className="text-xs font-bold text-slate-700 mb-2 pb-1 border-b border-slate-100 bg-slate-50 -mx-3 -mt-3 px-3 pt-2 rounded-t">
-            Collection Information | معلومات الاستلام
+            {t('collectionInformation', 'Collection Information')}
           </h3>
           <div className="space-y-1 text-xs">
-            <div className="flex"><span className="text-slate-500 w-32">Checkout Date:</span><span className="text-slate-800">{formatDate(caseData.checkout_date)}</span></div>
-            <div className="flex"><span className="text-slate-500 w-32">Recovery Outcome:</span><span className="text-slate-800">{getRecoveryOutcomeText(caseData.recovery_outcome)}</span></div>
+            <div className="flex"><span className="text-slate-500 w-32">{t('checkoutDateLabel', 'Checkout Date:')}</span><span className="text-slate-800">{formatDate(caseData.checkout_date)}</span></div>
+            <div className="flex"><span className="text-slate-500 w-32">{t('recoveryOutcomeLabel', 'Recovery Outcome:')}</span><span className="text-slate-800">{getRecoveryOutcomeText(caseData.recovery_outcome)}</span></div>
             {isCollectorSameAsCustomer ? (
               <>
-                <div className="flex"><span className="text-slate-500 w-32">Collected By:</span><span className="text-slate-800">{caseData.customer?.customer_name || '-'}</span></div>
-                <div className="flex"><span className="text-slate-500 w-32">Mobile Number:</span><span className="text-slate-800">{caseData.customer?.mobile_number || '-'}</span></div>
+                <div className="flex"><span className="text-slate-500 w-32">{t('collectedByLabel', 'Collected By:')}</span><span className="text-slate-800">{caseData.customer?.customer_name || '-'}</span></div>
+                <div className="flex"><span className="text-slate-500 w-32">{t('mobileNumberLabel', 'Mobile Number:')}</span><span className="text-slate-800">{caseData.customer?.mobile_number || '-'}</span></div>
               </>
             ) : (
               <>
-                <div className="flex"><span className="text-slate-500 w-32">Collected By:</span><span className="text-slate-800">{caseData.checkout_collector_name}</span></div>
-                <div className="flex"><span className="text-slate-500 w-32">Mobile Number:</span><span className="text-slate-800">{caseData.checkout_collector_mobile}</span></div>
+                <div className="flex"><span className="text-slate-500 w-32">{t('collectedByLabel', 'Collected By:')}</span><span className="text-slate-800">{caseData.checkout_collector_name}</span></div>
+                <div className="flex"><span className="text-slate-500 w-32">{t('mobileNumberLabel', 'Mobile Number:')}</span><span className="text-slate-800">{caseData.checkout_collector_mobile}</span></div>
                 {caseData.checkout_collector_id && (
-                  <div className="flex"><span className="text-slate-500 w-32">National ID:</span><span className="text-slate-800 font-mono">{caseData.checkout_collector_id}</span></div>
+                  <div className="flex"><span className="text-slate-500 w-32">{t('nationalIdLabel', 'National ID:')}</span><span className="text-slate-800 font-mono">{caseData.checkout_collector_id}</span></div>
                 )}
               </>
             )}
@@ -319,7 +319,7 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
           <tbody>
             {caseData.devices?.map((device, index) => {
               const DeviceIcon = getDeviceIconComponent(device.device_type?.name);
-              const roleLabel = device.role === 'patient' ? 'Patient' : device.role === 'donor' ? 'Donor' : '-';
+              const roleLabel = device.role === 'patient' ? t('patient', 'Patient') : device.role === 'donor' ? t('donor', 'Donor') : '-';
               return (
                 <tr key={device.id} className="hover:bg-slate-50">
                   <td className="border border-slate-200 px-2 py-1.5 text-center text-slate-600">{index + 1}</td>
@@ -384,8 +384,8 @@ export const DeviceCheckoutForm: React.FC<DeviceCheckoutFormProps> = ({ caseId }
       </div>
 
       <div className="receipt-footer pt-2 border-t border-slate-200 text-[10px] text-slate-400 flex justify-between">
-        <span>Generated on {formatDate(new Date())}</span>
-        <span>Registered by: {caseData.created_by_profile?.full_name || 'System'}</span>
+        <span>{t('generatedOn', 'Generated on')} {formatDate(new Date())}</span>
+        <span>{t('registeredByLabel', 'Registered by:')} {caseData.created_by_profile?.full_name || 'System'}</span>
       </div>
 
       <style>{`

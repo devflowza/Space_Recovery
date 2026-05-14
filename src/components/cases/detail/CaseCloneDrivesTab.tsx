@@ -58,7 +58,7 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
               {cloneDrives.map((clone) => {
                 const patientDevice = devices.find(d => d.id === clone.patient_device_id);
                 const patientDeviceName = patientDevice
-                  ? `${patientDevice.device_type?.name || 'Device'} ${patientDevice.serial_no ? `(${patientDevice.serial_no})` : ''}`
+                  ? `${patientDevice.device_type?.name || 'Device'} ${patientDevice.serial_number ? `(${patientDevice.serial_number})` : ''}`
                   : 'Unknown Device';
 
                 return (

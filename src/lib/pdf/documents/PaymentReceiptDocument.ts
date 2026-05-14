@@ -125,27 +125,29 @@ export function buildPaymentReceiptDocument(
   const customerPhone = paymentData.customer?.mobile_number || paymentData.customer?.phone_number || 'N/A';
   const customerEmail = paymentData.customer?.email || 'N/A';
 
+  const labelWidth = isBilingual ? 150 : 90;
+
   const customerDetailsContent: object[] = [
-    createInfoRow('Name:', customerName),
-    createInfoRow('Company:', companyNameDisplay),
-    createInfoRow('Phone:', customerPhone),
-    createInfoRow('Email:', customerEmail),
+    createInfoRow(t('nameLabel', 'Name:'), customerName, labelWidth),
+    createInfoRow(t('companyLabel', 'Company:'), companyNameDisplay, labelWidth),
+    createInfoRow(t('phoneLabel', 'Phone:'), customerPhone, labelWidth),
+    createInfoRow(t('emailLabel', 'Email:'), customerEmail, labelWidth),
   ];
 
   const paymentDetailsContent: object[] = [
-    createInfoRow('Receipt No:', paymentData.receipt_number || 'Draft'),
-    createInfoRow('Payment Date:', formatDate(paymentData.payment_date, 'dd MMM yyyy')),
-    createInfoRow('Method:', safeString(paymentData.payment_method)),
-    createInfoRow('Reference:', paymentData.reference_number),
-    ...(paymentData.invoice?.invoice_number ? [createInfoRow('Invoice No:', paymentData.invoice.invoice_number)] : []),
-    ...(paymentData.cases?.case_no ? [createInfoRow('Job ID:', paymentData.cases.case_no)] : []),
+    createInfoRow(t('receiptNoLabel', 'Receipt No:'), paymentData.receipt_number || 'Draft', labelWidth),
+    createInfoRow(t('paymentDateLabel', 'Payment Date:'), formatDate(paymentData.payment_date, 'dd MMM yyyy'), labelWidth),
+    createInfoRow(t('methodLabel', 'Method:'), safeString(paymentData.payment_method), labelWidth),
+    createInfoRow(t('referenceLabel', 'Reference:'), paymentData.reference_number, labelWidth),
+    ...(paymentData.invoice?.invoice_number ? [createInfoRow(t('invoiceNoLabel', 'Invoice No:'), paymentData.invoice.invoice_number, labelWidth)] : []),
+    ...(paymentData.cases?.case_no ? [createInfoRow(t('jobIdLabel', 'Job ID:'), paymentData.cases.case_no, labelWidth)] : []),
   ];
 
   const customerInfoTitle = isBilingual
-    ? `Customer Information | معلومات العميل`
+    ? `Customer Information | ${t('customerInformation', '').split(' | ')[1] || 'معلومات العميل'}`
     : 'Customer Information';
   const paymentDetailsTitle = isBilingual
-    ? `Payment Details | تفاصيل الدفع`
+    ? `Payment Details | ${t('paymentDetails', '').split(' | ')[1] || 'تفاصيل الدفع'}`
     : 'Payment Details';
 
   const infoBoxesSection: Content = {
@@ -225,7 +227,7 @@ export function buildPaymentReceiptDocument(
 
   if (paymentData.invoice) {
     const invoiceTitle = isBilingual
-      ? 'Related Invoice | الفاتورة المرتبطة'
+      ? `Related Invoice | ${t('relatedInvoice', '').split(' | ')[1] || 'الفاتورة المرتبطة'}`
       : 'Related Invoice';
 
     const invoiceSectionHeader: Content = createBilingualSectionHeader(invoiceTitle, null) as Content;
@@ -268,12 +270,20 @@ export function buildPaymentReceiptDocument(
 
   const termsAndBankSection: Content[] = [];
 
+  const notesSectionLabel = isBilingual ? t('notes', 'Notes') : 'Notes';
+  const bankAccountSectionLabel = isBilingual ? `${t('bankAccount', 'Bank Account')} | تفاصيل البنك` : 'Bank Account';
+  const accountNameRowLabel = t('accountNameLabel', 'Account Name:');
+  const accountNoRowLabel = t('accountNoLabel', 'Account No:');
+  const bankRowLabel = t('bankLabel', 'Bank:');
+  const ibanRowLabel = t('ibanLabel', 'IBAN:');
+  const swiftRowLabel = t('swiftLabel', 'SWIFT:');
+
   if (paymentData.notes || paymentData.bank_accounts) {
     const notesStack: object[] = [];
 
     if (paymentData.notes) {
       notesStack.push(
-        { text: 'Notes', fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
+        { text: notesSectionLabel, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
         { text: paymentData.notes, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.3 }
       );
     }
@@ -289,7 +299,7 @@ export function buildPaymentReceiptDocument(
           {
             width: '50%',
             stack: [
-              { text: 'Bank Account / تفاصيل البنك', fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
+              { text: bankAccountSectionLabel, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 3] },
               {
                 table: {
                   widths: ['*'],
@@ -297,11 +307,11 @@ export function buildPaymentReceiptDocument(
                     [
                       {
                         stack: [
-                          ...(paymentData.bank_accounts.account_name ? [{ text: `Account Name: ${paymentData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(paymentData.bank_accounts.account_number ? [{ text: `Account No: ${paymentData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(paymentData.bank_accounts.bank_name ? [{ text: `Bank: ${paymentData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(paymentData.bank_accounts.iban ? [{ text: `IBAN: ${paymentData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(paymentData.bank_accounts.swift_code ? [{ text: `SWIFT: ${paymentData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(paymentData.bank_accounts.account_name ? [{ text: `${accountNameRowLabel} ${paymentData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(paymentData.bank_accounts.account_number ? [{ text: `${accountNoRowLabel} ${paymentData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(paymentData.bank_accounts.bank_name ? [{ text: `${bankRowLabel} ${paymentData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(paymentData.bank_accounts.iban ? [{ text: `${ibanRowLabel} ${paymentData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(paymentData.bank_accounts.swift_code ? [{ text: `${swiftRowLabel} ${paymentData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
                         ],
                         fillColor: PDF_COLORS.background,
                         margin: [6, 4, 6, 4],
@@ -366,7 +376,7 @@ export function buildPaymentReceiptDocument(
 
   if (paymentData.created_by_profile?.full_name) {
     termsAndBankSection.push({
-      text: `Received by: ${paymentData.created_by_profile.full_name}`,
+      text: `${t('receivedByLabel', 'Received by:')} ${paymentData.created_by_profile.full_name}`,
       fontSize: 8,
       color: PDF_COLORS.textLight,
       alignment: 'left',
@@ -513,10 +523,10 @@ export function buildPaymentReceiptDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 90): Content {
   return {
     columns: [
-      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: 90 },
+      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },
       { text: safeString(value), fontSize: 9, color: PDF_COLORS.text, width: '*' },
     ],
     margin: [0, 0, 0, 2],

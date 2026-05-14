@@ -29,7 +29,9 @@ function buildHeaderSection(
 ): Content {
   const { isBilingual, t } = ctx;
   const title = 'FORENSIC CHAIN OF CUSTODY REPORT';
-  const arabicTitle = isBilingual ? t('chain_of_custody.title', title) : null;
+  const arabicTitle = isBilingual ? (t('forensicChainOfCustodyReport', '').split(' | ')[1] || null) : null;
+  const caseNumberLabel = t('caseNumber', 'Case Number');
+  const generatedLabel = t('generatedLabel', 'Generated:');
 
   const headerRows: TableCell[][] = [
     [
@@ -42,13 +44,13 @@ function buildHeaderSection(
             color: PDF_COLORS.white,
             margin: [0, 0, 0, isBilingual && arabicTitle ? 2 : 0] as [number, number, number, number],
           },
-          ...(isBilingual && arabicTitle && arabicTitle !== title
+          ...(isBilingual && arabicTitle
             ? [{ text: arabicTitle, fontSize: 12, bold: true, color: PDF_COLORS.white, alignment: 'right' as const }]
             : []),
           {
             columns: [
-              { text: `Case Number: ${data.caseNumber}`, fontSize: 9, color: PDF_COLORS.white },
-              { text: `Generated: ${formatDate(new Date().toISOString(), 'dd/MM/yyyy HH:mm')}`, fontSize: 9, color: PDF_COLORS.white, alignment: 'right' as const },
+              { text: `${caseNumberLabel}: ${data.caseNumber}`, fontSize: 9, color: PDF_COLORS.white },
+              { text: `${generatedLabel} ${formatDate(new Date().toISOString(), 'dd/MM/yyyy HH:mm')}`, fontSize: 9, color: PDF_COLORS.white, alignment: 'right' as const },
             ],
             margin: [0, 4, 0, 0] as [number, number, number, number],
           },
@@ -83,14 +85,15 @@ function buildLegalNotice(ctx: TranslationContext): Content {
     'This Chain of Custody record is maintained for forensic and legal purposes. All entries are immutable ' +
     'and cryptographically secured. Unauthorized modification or tampering with evidence may result in legal consequences.';
 
-  const translatedLegalText = isBilingual ? t('chain_of_custody.legal_notice', legalText) : null;
+  const translatedLegalText = isBilingual ? (t('legalNoticeText', '').split(' | ')[1] || null) : null;
+  const legalNoticeTitle = isBilingual ? (t('legalNotice', '').split(' | ')[1] || null) : null;
 
   const contentStack: Content[] = [
-    { text: 'LEGAL NOTICE', fontSize: 8, bold: true, color: '#78350F', margin: [0, 0, 0, 3] as [number, number, number, number] },
+    { text: isBilingual && legalNoticeTitle ? `LEGAL NOTICE | ${legalNoticeTitle}` : 'LEGAL NOTICE', fontSize: 8, bold: true, color: '#78350F', margin: [0, 0, 0, 3] as [number, number, number, number] },
     { text: legalText, fontSize: 7, color: '#78350F', lineHeight: 1.3 },
   ];
 
-  if (isBilingual && translatedLegalText && translatedLegalText !== legalText) {
+  if (isBilingual && translatedLegalText) {
     contentStack.push({ text: translatedLegalText, fontSize: 7, color: '#78350F', alignment: 'right' as const, margin: [0, 3, 0, 0] as [number, number, number, number], lineHeight: 1.3 });
   }
 
@@ -137,9 +140,15 @@ function buildSummarySection(
     dateRange = `${first} - ${last}`;
   }
 
+  const summaryArabic = isBilingual ? (t('summary', '').split(' | ')[1] || 'ملخص') : null;
   const summaryHeader = isBilingual
-    ? createBilingualSectionHeader('Summary', t('chain_of_custody.summary', 'Summary'))
+    ? createBilingualSectionHeader('Summary', summaryArabic)
     : { text: 'Summary', fontSize: 10, bold: true, color: '#1E40AF', margin: [0, 0, 0, 4] as [number, number, number, number] };
+
+  const totalEntriesLabel = t('totalEntriesLabel', 'Total Entries:');
+  const actionCategoriesLabel = t('actionCategoriesLabel', 'Action Categories:');
+  const uniqueActorsLabel = t('uniqueActorsLabel', 'Unique Actors:');
+  const dateRangeLabel = t('dateRangeLabel', 'Date Range:');
 
   return {
     table: {
@@ -153,15 +162,15 @@ function buildSummarySection(
                 columns: [
                   {
                     stack: [
-                      { text: `Total Entries: ${entries.length}`, fontSize: 9, color: '#334155', margin: [0, 0, 0, 3] as [number, number, number, number] },
-                      { text: `Action Categories: ${categories.length}`, fontSize: 9, color: '#334155' },
+                      { text: `${totalEntriesLabel} ${entries.length}`, fontSize: 9, color: '#334155', margin: [0, 0, 0, 3] as [number, number, number, number] },
+                      { text: `${actionCategoriesLabel} ${categories.length}`, fontSize: 9, color: '#334155' },
                     ],
                     width: '*',
                   },
                   {
                     stack: [
-                      { text: `Unique Actors: ${actors.length}`, fontSize: 9, color: '#334155', margin: [0, 0, 0, 3] as [number, number, number, number] },
-                      { text: `Date Range: ${dateRange}`, fontSize: 9, color: '#334155' },
+                      { text: `${uniqueActorsLabel} ${actors.length}`, fontSize: 9, color: '#334155', margin: [0, 0, 0, 3] as [number, number, number, number] },
+                      { text: `${dateRangeLabel} ${dateRange}`, fontSize: 9, color: '#334155' },
                     ],
                     width: '*',
                   },
@@ -191,20 +200,21 @@ function buildEntriesTable(
   const { entries, options } = data;
   const { isBilingual, t } = ctx;
 
+  const chainEntriesArabic = isBilingual ? (t('chainOfCustodyEntries', '').split(' | ')[1] || null) : null;
   const sectionHeader: Content = isBilingual
     ? (createBilingualSectionHeader(
         'Chain of Custody Entries',
-        t('chain_of_custody.entries', 'Chain of Custody Entries')
+        chainEntriesArabic
       ) as Content)
     : { text: 'Chain of Custody Entries', fontSize: 11, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 6] as [number, number, number, number] };
 
   const headerRow: TableCell[] = [
-    { text: 'Entry #', style: 'tableHeader' },
-    { text: 'Action Type', style: 'tableHeader' },
-    { text: 'Description', style: 'tableHeader' },
-    { text: 'Actor', style: 'tableHeader' },
-    { text: 'Date/Time', style: 'tableHeader' },
-    { text: 'Category', style: 'tableHeader' },
+    { text: isBilingual ? t('entryNum', 'Entry #') : 'Entry #', style: 'tableHeader' },
+    { text: isBilingual ? t('actionType', 'Action Type') : 'Action Type', style: 'tableHeader' },
+    { text: isBilingual ? t('description', 'Description') : 'Description', style: 'tableHeader' },
+    { text: isBilingual ? t('actor', 'Actor') : 'Actor', style: 'tableHeader' },
+    { text: isBilingual ? t('dateTime', 'Date/Time') : 'Date/Time', style: 'tableHeader' },
+    { text: isBilingual ? t('category', 'Category') : 'Category', style: 'tableHeader' },
   ];
 
   const bodyRows: TableCell[][] = entries.map((entry, index) => {
@@ -288,17 +298,18 @@ function buildHashSection(
 
   const { isBilingual, t } = ctx;
 
+  const hashArabic = isBilingual ? (t('hashVerification', '').split(' | ')[1] || null) : null;
   const sectionHeader: Content = isBilingual
     ? (createBilingualSectionHeader(
         'Hash Verification',
-        t('chain_of_custody.hash_verification', 'Hash Verification')
+        hashArabic
       ) as Content)
     : { text: 'Hash Verification', fontSize: 10, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 4] as [number, number, number, number] };
 
   const headerRow: TableCell[] = [
-    { text: 'Entry #', style: 'tableHeader' },
-    { text: 'Algorithm', style: 'tableHeader' },
-    { text: 'Hash Value', style: 'tableHeader' },
+    { text: isBilingual ? t('entryNum', 'Entry #') : 'Entry #', style: 'tableHeader' },
+    { text: isBilingual ? t('algorithm', 'Algorithm') : 'Algorithm', style: 'tableHeader' },
+    { text: isBilingual ? t('hashValue', 'Hash Value') : 'Hash Value', style: 'tableHeader' },
   ];
 
   const bodyRows: TableCell[][] = entriesWithHashes.map(entry => [
@@ -339,10 +350,12 @@ function buildSignatureSection(
 
   const { isBilingual, t } = ctx;
 
+  const digSigArabic = isBilingual ? (t('digitalSignatures', '').split(' | ')[1] || null) : null;
+  const digitallySignedAr = isBilingual ? (t('digitallySigned', '').split(' | ')[1] || null) : null;
   const sectionHeader: Content = isBilingual
     ? (createBilingualSectionHeader(
         'Digital Signatures',
-        t('chain_of_custody.digital_signatures', 'Digital Signatures')
+        digSigArabic
       ) as Content)
     : { text: 'Digital Signatures', fontSize: 10, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 4] as [number, number, number, number] };
 

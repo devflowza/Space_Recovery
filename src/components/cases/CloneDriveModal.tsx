@@ -14,7 +14,7 @@ interface CloneDriveModalProps {
   onClose: () => void;
   caseId: string;
   caseNo: string;
-  patientDevices: Array<{ id: string; name: string; serial_no?: string }>;
+  patientDevices: Array<{ id: string; name: string; serial_number?: string }>;
   onSuccess?: () => void;
 }
 
@@ -282,7 +282,7 @@ export const CloneDriveModal: React.FC<CloneDriveModalProps> = ({
                 label=""
                 options={patientDevices.map((device) => ({
                   id: device.id,
-                  name: `${device.name}${device.serial_no ? ` (SN: ${device.serial_no})` : ''}`,
+                  name: `${device.name}${device.serial_number ? ` (SN: ${device.serial_number})` : ''}`,
                 }))}
                 value={formData.patient_device_id}
                 onChange={(value) =>

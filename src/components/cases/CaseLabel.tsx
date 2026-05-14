@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { formatDate } from '../../lib/format';
+import { useDocumentTranslations } from '../../hooks/useDocumentTranslations';
 import { logger } from '../../lib/logger';
 
 interface CaseLabelProps {
@@ -40,6 +41,7 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
   const [casePriorities, setCasePriorities] = useState<Array<{ name: string; color: string }>>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useDocumentTranslations();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -141,14 +143,14 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
           className="inline-block px-3 py-1 rounded text-xs font-bold text-white uppercase"
           style={{ backgroundColor: getPriorityColor(caseData.priority) }}
         >
-          {caseData.priority} Priority
+          {caseData.priority} {t('priorityWord', 'Priority')}
         </div>
       </div>
 
       <div className="label-body space-y-3">
         <div>
           <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
-            Customer
+            {t('customer', 'Customer')}
           </div>
           <div className="text-base font-bold text-slate-900">
             {caseData.customer?.customer_name || 'N/A'}
@@ -166,12 +168,12 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
         {caseData.devices && caseData.devices.length > 0 && (
           <div>
             <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
-              Device{caseData.devices.length > 1 ? 's' : ''}
+              {t('device', caseData.devices.length > 1 ? 'Devices' : 'Device')}
             </div>
             {caseData.devices.map((device, index) => (
               <div key={index} className="text-sm text-slate-900 mb-1">
                 <div className="font-semibold">
-                  {device.device_type?.name || 'Unknown Device'} {index === 0 && '(Patient)'}
+                  {device.device_type?.name || 'Unknown Device'} {index === 0 && `(${t('patient', 'Patient')})`}
                 </div>
                 {device.serial_number && (
                   <div className="text-xs font-mono text-slate-700">S/N: {device.serial_number}</div>
@@ -183,7 +185,7 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
 
         <div>
           <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
-            Check-In Date
+            {t('checkInDate', 'Check-In Date')}
           </div>
           <div className="text-sm text-slate-900">{formatDate(caseData.created_at)}</div>
         </div>
@@ -196,9 +198,9 @@ export const CaseLabel: React.FC<CaseLabelProps> = ({ caseId, caseNumber }) => {
             alt="QR Code"
             className="w-20 h-20 mx-auto"
           />
-          {(companySettings.branding.qr_code_label_caption || 'Scan to track your case') && (
+          {(companySettings.branding.qr_code_label_caption || t('scanToTrackCase', 'Scan to track your case')) && (
             <p className="text-xs text-slate-600 text-center mt-2 max-w-[100px] mx-auto">
-              {companySettings.branding.qr_code_label_caption || 'Scan to track your case'}
+              {companySettings.branding.qr_code_label_caption || t('scanToTrackCase', 'Scan to track your case')}
             </p>
           )}
         </div>

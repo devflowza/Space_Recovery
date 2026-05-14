@@ -293,19 +293,22 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
       }
 
       if (devices && devices.length > 0) {
+        // Column-name mapping: existing case_devices schema renamed several
+        // columns. Map the source device row to the current schema.
         const devicesToInsert = devices.map(device => ({
+          tenant_id: profile!.tenant_id,
           case_id: newCase.id,
           device_type_id: device.device_type_id,
           brand_id: device.brand_id,
           model: device.model,
-          serial_no: device.serial_no,
+          serial_number: device.serial_no ?? device.serial_number,
           capacity_id: device.capacity_id,
           condition_id: device.condition_id,
           accessories: device.accessories,
-          device_problem: device.device_problem,
-          recovery_requirements: device.recovery_requirements,
-          device_password: device.device_password,
-          encryption_type_id: device.encryption_type_id,
+          symptoms: device.device_problem ?? device.symptoms,
+          notes: device.recovery_requirements ?? device.notes,
+          password: device.device_password ?? device.password,
+          encryption_id: device.encryption_type_id ?? device.encryption_id,
           device_role_id: device.device_role_id,
           is_primary: device.is_primary,
           role_notes: device.role_notes,
@@ -329,27 +332,10 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
           }
         });
 
-        const devicesWithParents = devices.filter(d => d.parent_device_id);
-        if (devicesWithParents.length > 0 && newDevices) {
-          for (let i = 0; i < devices.length; i++) {
-            const oldDevice = devices[i];
-            if (oldDevice.parent_device_id && deviceIdMapping[oldDevice.parent_device_id]) {
-              const newDeviceId = newDevices[i]?.id;
-              const newParentId = deviceIdMapping[oldDevice.parent_device_id];
-
-              if (newDeviceId && newParentId) {
-                const { error: updateError } = await supabase
-                  .from('case_devices')
-                  .update({ parent_device_id: newParentId })
-                  .eq('id', newDeviceId);
-
-                if (updateError) {
-                  logger.error('Error updating parent_device_id:', updateError);
-                }
-              }
-            }
-          }
-        }
+        // parent_device_id column does not exist on the current case_devices
+        // schema; the old device-parent linkage was dropped. Block removed —
+        // duplicates no longer carry over parent relationships.
+        void deviceIdMapping;
       }
 
       return newCase;

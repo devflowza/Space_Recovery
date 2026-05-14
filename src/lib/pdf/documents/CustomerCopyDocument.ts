@@ -122,29 +122,31 @@ export function buildCustomerCopyDocument(
   }
 
   headerContent.push({
-    text: 'Customer Copy',
+    text: t('customerCopy', 'Customer Copy'),
     fontSize: 10,
     color: PDF_COLORS.textLight,
     alignment: 'center',
     margin: [0, 1, 0, 6],
   });
 
+  const labelWidth = isBilingual ? 110 : 55;
+
   const customerInfoContent: object[] = [
-    createInfoRow('Name:', caseData.customer_name || caseData.contact_name),
-    createInfoRow('Company:', caseData.company?.company_name),
-    createInfoRow('Phone:', caseData.customer?.mobile_number || caseData.customer?.phone_number || caseData.contact_phone),
-    createInfoRow('Email:', caseData.customer?.email || caseData.contact_email),
-    createInfoRow('Reference:', caseData.client_reference),
+    createInfoRow(t('nameLabel', 'Name:'), caseData.customer_name || caseData.contact_name, labelWidth),
+    createInfoRow(t('companyLabel', 'Company:'), caseData.company?.company_name, labelWidth),
+    createInfoRow(t('phoneLabel', 'Phone:'), caseData.customer?.mobile_number || caseData.customer?.phone_number || caseData.contact_phone, labelWidth),
+    createInfoRow(t('emailLabel', 'Email:'), caseData.customer?.email || caseData.contact_email, labelWidth),
+    createInfoRow(t('referenceLabel', 'Reference:'), caseData.client_reference, labelWidth),
   ];
 
   const firstDeviceProblem = devices.length > 0 ? devices[0].device_problem : null;
 
   const caseDetailsContent: object[] = [
-    createInfoRow('Case ID:', caseData.case_no),
-    createInfoRow('Service:', caseData.service_type?.name),
-    createInfoRow('Priority:', caseData.priority),
-    createInfoRow('Problem:', firstDeviceProblem || caseData.problem_description),
-    createInfoRow('Date:', formatDate(caseData.created_at, 'dd MMM yyyy, HH:mm')),
+    createInfoRow(t('caseIdLabel', 'Case ID:'), caseData.case_no, labelWidth),
+    createInfoRow(t('serviceLabel', 'Service:'), caseData.service_type?.name, labelWidth),
+    createInfoRow(t('priorityLabel', 'Priority:'), caseData.priority, labelWidth),
+    createInfoRow(t('problemLabel', 'Problem:'), firstDeviceProblem || caseData.problem_description, labelWidth),
+    createInfoRow(t('dateLabel', 'Date:'), formatDate(caseData.created_at, 'dd MMM yyyy, HH:mm'), labelWidth),
   ];
 
   const customerInfoTitle = isBilingual
@@ -269,8 +271,9 @@ export function buildCustomerCopyDocument(
 
   const customerAcknowledgementTextArabic = `بتوقيعي، أؤكد أنني المالك أو الممثل المفوض للجهاز وأفوض ${legalName} (${companyName}) بالمتابعة في الخدمة. أقر بأن الشروط والأحكام تنطبق على هذا التعامل. نسخة مطبوعة من الشروط والأحكام متاحة في الاستقبال عند الطلب.`;
 
+  const englishAcknowledgementTitle = 'Customer Acknowledgement';
   const englishContent: object[] = [
-    { text: 'Customer Acknowledgement', bold: true, fontSize: 9, margin: [0, 0, 0, 3] },
+    { text: englishAcknowledgementTitle, bold: true, fontSize: 9, margin: [0, 0, 0, 3] },
     { text: customerAcknowledgementTextEnglish, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.2 },
   ];
 
@@ -327,7 +330,7 @@ export function buildCustomerCopyDocument(
 
   const creatorName = caseData.created_by_profile?.full_name || caseData.created_by_profile?.email || 'System';
   const registeredBySection: Content = {
-    text: `Registered by: ${creatorName}`,
+    text: `${t('registeredByLabel', 'Registered by:')} ${creatorName}`,
     style: 'registeredBy',
     margin: [0, 8, 0, 6],
   };
@@ -433,10 +436,10 @@ export function buildCustomerCopyDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 55): Content {
   return {
     columns: [
-      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: 55 },
+      { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },
       { text: safeString(value), fontSize: 9, color: PDF_COLORS.text, width: '*' },
     ],
     margin: [0, 0, 0, 2],

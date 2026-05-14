@@ -403,13 +403,13 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                   {editingSection === 'device' ? (
                     <input
                       type="text"
-                      value={editedDeviceData.serial_no ?? devices[0]?.serial_no ?? ''}
-                      onChange={(e) => handleDeviceFieldChange('serial_no', e.target.value)}
+                      value={editedDeviceData.serial_number ?? devices[0]?.serial_number ?? ''}
+                      onChange={(e) => handleDeviceFieldChange('serial_number', e.target.value)}
                       placeholder="Enter serial number..."
                       className="text-sm px-2 py-1 border border-success/40 rounded bg-white font-mono focus:outline-none focus:ring-2 focus:ring-success max-w-[200px]"
                     />
                   ) : (
-                    <p className="text-sm font-mono text-slate-900 font-medium text-right">{devices[0].serial_no || '-'}</p>
+                    <p className="text-sm font-mono text-slate-900 font-medium text-right">{devices[0].serial_number || '-'}</p>
                   )}
                 </div>
                 <div className="flex items-center justify-between py-3 border-b border-slate-100">
@@ -462,8 +462,8 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
               </label>
               {editingSection === 'device' ? (
                 <select
-                  value={editedDeviceData.device_problem ?? devices[0]?.device_problem ?? ''}
-                  onChange={(e) => handleDeviceFieldChange('device_problem', e.target.value)}
+                  value={editedDeviceData.symptoms ?? devices[0]?.symptoms ?? ''}
+                  onChange={(e) => handleDeviceFieldChange('symptoms', e.target.value)}
                   className="text-sm px-2 py-1 border border-success/40 rounded bg-white focus:outline-none focus:ring-2 focus:ring-success max-w-[200px]"
                 >
                   <option value="">Select problem...</option>
@@ -472,7 +472,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                   ))}
                 </select>
               ) : (
-                <p className="text-sm text-slate-900 font-medium text-right">{devices[0]?.device_problem || '-'}</p>
+                <p className="text-sm text-slate-900 font-medium text-right">{devices[0]?.symptoms || '-'}</p>
               )}
             </div>
             {caseData.important_data && (
@@ -580,8 +580,8 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                 <div className="flex items-center gap-2">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    value={editedDeviceData.device_password ?? devices[0]?.device_password ?? ''}
-                    onChange={(e) => setEditedDeviceData((prev) => ({ ...prev, device_password: e.target.value }))}
+                    value={editedDeviceData.password ?? devices[0]?.password ?? ''}
+                    onChange={(e) => setEditedDeviceData((prev) => ({ ...prev, password: e.target.value }))}
                     placeholder="Enter password..."
                     className="font-mono text-xs bg-white px-2 py-1 rounded border border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent w-24"
                   />
@@ -593,7 +593,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                 <div className="flex items-center gap-2">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    value={devices[0]?.device_password || ''}
+                    value={devices[0]?.password || ''}
                     readOnly
                     className="font-mono text-xs bg-white px-2 py-1 rounded border border-slate-300 w-24"
                   />
