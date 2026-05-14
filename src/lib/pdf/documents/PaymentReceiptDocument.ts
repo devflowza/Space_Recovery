@@ -1,5 +1,5 @@
 import type { TDocumentDefinitions, Content, TableCell } from 'pdfmake/interfaces';
-import type { PaymentReceiptDocumentData, TranslationContext } from '../types';
+import type { PaymentReceiptData, PaymentReceiptDocumentData, TranslationContext } from '../types';
 import {
   PDF_COLORS,
   getStylesWithFont,
@@ -163,7 +163,7 @@ export function buildPaymentReceiptDocument(
       },
     ],
     margin: [0, 0, 0, 8],
-  };
+  } as Content;
 
   const currencySymbol = paymentData.accounting_locales?.currency_symbol || 'USD';
   const decimalPlaces = paymentData.accounting_locales?.decimal_places || 2;
@@ -288,13 +288,14 @@ export function buildPaymentReceiptDocument(
       );
     }
 
+    const bankAccounts = paymentData.bank_accounts;
     termsAndBankSection.push({
       columns: [
         {
-          width: paymentData.bank_accounts ? '50%' : '100%',
+          width: bankAccounts ? '50%' : '100%',
           stack: notesStack,
         },
-        ...(paymentData.bank_accounts ? [
+        ...(bankAccounts ? [
           { width: 8, text: '' },
           {
             width: '50%',
@@ -307,11 +308,11 @@ export function buildPaymentReceiptDocument(
                     [
                       {
                         stack: [
-                          ...(paymentData.bank_accounts.account_name ? [{ text: `${accountNameRowLabel} ${paymentData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(paymentData.bank_accounts.account_number ? [{ text: `${accountNoRowLabel} ${paymentData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(paymentData.bank_accounts.bank_name ? [{ text: `${bankRowLabel} ${paymentData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(paymentData.bank_accounts.iban ? [{ text: `${ibanRowLabel} ${paymentData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                          ...(paymentData.bank_accounts.swift_code ? [{ text: `${swiftRowLabel} ${paymentData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(bankAccounts.account_name ? [{ text: `${accountNameRowLabel} ${bankAccounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(bankAccounts.account_number ? [{ text: `${accountNoRowLabel} ${bankAccounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(bankAccounts.bank_name ? [{ text: `${bankRowLabel} ${bankAccounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(bankAccounts.iban ? [{ text: `${ibanRowLabel} ${bankAccounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                          ...(bankAccounts.swift_code ? [{ text: `${swiftRowLabel} ${bankAccounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
                         ],
                         fillColor: PDF_COLORS.background,
                         margin: [6, 4, 6, 4],
@@ -331,8 +332,11 @@ export function buildPaymentReceiptDocument(
         ] : []),
       ],
       margin: [0, 8, 0, 0],
-    });
+    } as Content);
   } else if (paymentData.bank_accounts) {
+    // The prior `if (notes || bank_accounts)` narrows bank_accounts to never in this branch.
+    // Cast back to the source-of-truth type so property access works.
+    const bankAccounts = paymentData.bank_accounts as NonNullable<PaymentReceiptData['bank_accounts']>;
     termsAndBankSection.push({
       columns: [
         { width: '50%', text: '' },
@@ -348,11 +352,11 @@ export function buildPaymentReceiptDocument(
                   [
                     {
                       stack: [
-                        ...(paymentData.bank_accounts.account_name ? [{ text: `${accountNameRowLabel} ${paymentData.bank_accounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(paymentData.bank_accounts.account_number ? [{ text: `${accountNoRowLabel} ${paymentData.bank_accounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(paymentData.bank_accounts.bank_name ? [{ text: `${bankRowLabel} ${paymentData.bank_accounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(paymentData.bank_accounts.iban ? [{ text: `${ibanRowLabel} ${paymentData.bank_accounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
-                        ...(paymentData.bank_accounts.swift_code ? [{ text: `${swiftRowLabel} ${paymentData.bank_accounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(bankAccounts.account_name ? [{ text: `${accountNameRowLabel} ${bankAccounts.account_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(bankAccounts.account_number ? [{ text: `${accountNoRowLabel} ${bankAccounts.account_number}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(bankAccounts.bank_name ? [{ text: `${bankRowLabel} ${bankAccounts.bank_name}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(bankAccounts.iban ? [{ text: `${ibanRowLabel} ${bankAccounts.iban}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
+                        ...(bankAccounts.swift_code ? [{ text: `${swiftRowLabel} ${bankAccounts.swift_code}`, fontSize: 7, color: PDF_COLORS.text, margin: [0, 1, 0, 1] }] : []),
                       ],
                       fillColor: PDF_COLORS.background,
                       margin: [6, 4, 6, 4],
@@ -371,7 +375,7 @@ export function buildPaymentReceiptDocument(
         },
       ],
       margin: [0, 8, 0, 0],
-    });
+    } as Content);
   }
 
   if (paymentData.created_by_profile?.full_name) {
@@ -400,7 +404,7 @@ export function buildPaymentReceiptDocument(
       ...invoiceDetailsSection,
       ...termsAndBankSection,
     ],
-    footer: (currentPage: number, pageCount: number) => {
+    footer: (_currentPage: number, _pageCount: number) => {
       if (qrCodeBase64) {
         const footerStack: any[] = [];
 
@@ -523,7 +527,7 @@ export function buildPaymentReceiptDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 90): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 90): object {
   return {
     columns: [
       { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },

@@ -45,8 +45,11 @@ interface CurrencyFormat {
   decimalPlaces: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LoosePaymentData = Record<string, any>;
+
 interface PaymentReceiptDocumentProps {
-  payment: Record<string, unknown>;
+  payment: LoosePaymentData;
   companySettings: CompanySettings | null;
   currencyFormat: CurrencyFormat;
   t: (key: string, fallback: string) => string;
@@ -57,7 +60,7 @@ export const PaymentReceiptDocument: React.FC<PaymentReceiptDocumentProps> = ({
   payment,
   companySettings,
   currencyFormat,
-  t,
+  t: _t,
   elementId = 'receipt-print-frame',
 }) => {
   if (!payment) return null;
@@ -318,7 +321,7 @@ export const PaymentReceiptDocument: React.FC<PaymentReceiptDocumentProps> = ({
               </tr>
             </thead>
             <tbody>
-              {payment.allocations.map((allocation: Record<string, unknown> & { amount?: number; invoice?: Record<string, unknown> }, index: number) => (
+              {payment.allocations.map((allocation: LoosePaymentData, index: number) => (
                 <tr key={index} style={{ borderBottom: '1px solid #e2e8f0' }}>
                   <td style={{ padding: '10px 12px', color: '#1e293b' }}>
                     {allocation.invoice?.invoice_number || 'N/A'}

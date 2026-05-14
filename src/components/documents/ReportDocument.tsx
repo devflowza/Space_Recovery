@@ -47,15 +47,18 @@ interface ReportSection {
   section_order: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LooseReportData = Record<string, any>;
+
 interface ReportDocumentProps {
-  report: Record<string, unknown>;
+  report: LooseReportData;
   sections: ReportSection[];
-  caseData?: Record<string, unknown>;
-  customerData?: Record<string, unknown>;
+  caseData?: LooseReportData;
+  customerData?: LooseReportData;
   companySettings: CompanySettings | null;
-  deviceData?: Record<string, unknown>;
-  diagnosticsData?: Record<string, unknown>;
-  chainOfCustodyEvents?: Record<string, unknown>[];
+  deviceData?: LooseReportData;
+  diagnosticsData?: LooseReportData;
+  chainOfCustodyEvents?: LooseReportData[];
   elementId?: string;
   t: (key: string, fallback: string) => string;
 }
@@ -76,7 +79,6 @@ export const ReportDocument: React.FC<ReportDocumentProps> = ({
 
   const typeConfig = getReportTypeConfig(report.report_type);
   const statusConfig = getReportStatusConfig(report.status);
-  const TypeIcon = typeConfig.icon;
 
   const getReportTypeTranslation = (reportType: string): string => {
     const translationMap: Record<string, { key: string; fallback: string }> = {
@@ -100,12 +102,6 @@ export const ReportDocument: React.FC<ReportDocumentProps> = ({
   const customerPhone = customerData?.mobile_number || caseData?.customers_enhanced?.mobile_number || 'N/A';
   const clientReference = caseData?.client_reference || null;
   const preparedByName = caseData?.assigned_engineer?.full_name || caseData?.created_by_profile?.full_name || 'N/A';
-
-  const stripHtml = (html: string) => {
-    const tmp = document.createElement('div');
-    tmp.innerHTML = sanitizeHtml(html);
-    return tmp.textContent || tmp.innerText || '';
-  };
 
   return (
     <div id={elementId}>
