@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Package, Loader2 } from 'lucide-react';
+import { Package, Loader2 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
@@ -7,6 +7,9 @@ import { SearchableSelect } from '../ui/SearchableSelect';
 import { supabase } from '../../lib/supabaseClient';
 import { useCurrency } from '../../hooks/useCurrency';
 import { logger } from '../../lib/logger';
+import type { Database } from '../../types/database.types';
+
+type InventoryItemInsert = Database['public']['Tables']['inventory_items']['Insert'];
 
 interface AddInventoryModalProps {
   isOpen: boolean;
@@ -22,31 +25,22 @@ interface DonorParts {
 }
 
 interface FormData {
-  inventory_type_id: string;
-  status_type_id: string;
-  device_type_id: string;
+  category_id: string;
+  status_id: string;
   brand_id: string;
   model: string;
   serial_number: string;
   capacity_id: string;
-  usable_donor_parts: DonorParts;
+  donor_parts_available: DonorParts;
   interface_id: string;
-  manufacture_date: string;
-  product_country_id: string;
   pcb_number: string;
-  dcm: string;
   head_map: string;
-  preamp: string;
-  part_number: string;
-  platter_heads: string;
   firmware_version: string;
-  mlc: string;
-  purchase_cost: string;
+  purchase_price: string;
   purchase_date: string;
-  condition_type_id: string;
-  quantity_available: number;
-  storage_location_id: string;
-  supplier_name: string;
+  condition_id: string;
+  quantity: number;
+  location_id: string;
 }
 
 const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, onSuccess, itemId }) => {
@@ -58,45 +52,33 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
   const [nextInventoryNumber, setNextInventoryNumber] = useState<string>('');
   const [inventoryCategories, setInventoryCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [statusTypes, setStatusTypes] = useState<Array<{ id: string; name: string }>>([]);
-  const [deviceTypes, setDeviceTypes] = useState<Array<{ id: string; name: string }>>([]);
   const [brands, setBrands] = useState<Array<{ id: string; name: string }>>([]);
   const [capacities, setCapacities] = useState<Array<{ id: string; name: string }>>([]);
   const [interfaces, setInterfaces] = useState<Array<{ id: string; name: string }>>([]);
-  const [countries, setCountries] = useState<Array<{ id: string; name: string }>>([]);
   const [locations, setLocations] = useState<Array<{ id: string; name: string }>>([]);
   const [conditionTypes, setConditionTypes] = useState<Array<{ id: string; name: string; rating: number }>>([]);
-  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
 
   const [formData, setFormData] = useState<FormData>({
-    inventory_type_id: '',
-    status_type_id: '',
-    device_type_id: '',
+    category_id: '',
+    status_id: '',
     brand_id: '',
     model: '',
     serial_number: '',
     capacity_id: '',
-    usable_donor_parts: {
+    donor_parts_available: {
       heads: false,
       pcb: false,
       drive_enclosure: false,
     },
     interface_id: '',
-    manufacture_date: '',
-    product_country_id: '',
     pcb_number: '',
-    dcm: '',
     head_map: '',
-    preamp: '',
-    part_number: '',
-    platter_heads: '',
     firmware_version: '',
-    mlc: '',
-    purchase_cost: '',
+    purchase_price: '',
     purchase_date: '',
-    condition_type_id: '',
-    quantity_available: 1,
-    storage_location_id: '',
-    supplier_name: '',
+    condition_id: '',
+    quantity: 1,
+    location_id: '',
   });
 
   useEffect(() => {
@@ -126,38 +108,30 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
       if (error) throw error;
 
       if (item) {
+        const donorParts = (item.donor_parts_available ?? {}) as Partial<DonorParts>;
         setFormData({
-          inventory_type_id: item.category_id || '',
-          status_type_id: item.status_type_id || '',
-          device_type_id: item.device_type_id || '',
+          category_id: item.category_id || '',
+          status_id: item.status_id || '',
           brand_id: item.brand_id || '',
           model: item.model || '',
           serial_number: item.serial_number || '',
           capacity_id: item.capacity_id || '',
-          usable_donor_parts: item.usable_donor_parts || {
-            heads: false,
-            pcb: false,
-            drive_enclosure: false,
+          donor_parts_available: {
+            heads: donorParts.heads ?? false,
+            pcb: donorParts.pcb ?? false,
+            drive_enclosure: donorParts.drive_enclosure ?? false,
           },
           interface_id: item.interface_id || '',
-          manufacture_date: item.manufacture_date || '',
-          product_country_id: item.product_country_id || '',
           pcb_number: item.pcb_number || '',
-          dcm: item.dcm || '',
           head_map: item.head_map || '',
-          preamp: item.preamp || '',
-          part_number: item.part_number || '',
-          platter_heads: item.platter_heads || '',
           firmware_version: item.firmware_version || '',
-          mlc: '',
-          purchase_cost: item.acquisition_cost ? item.acquisition_cost.toString() : '',
-          purchase_date: item.acquisition_date || '',
-          condition_type_id: item.condition_type_id || '',
-          quantity_available: item.quantity_available || 1,
-          storage_location_id: item.storage_location_id || '',
-          supplier_name: item.supplier_name || '',
+          purchase_price: item.purchase_price != null ? item.purchase_price.toString() : '',
+          purchase_date: item.purchase_date || '',
+          condition_id: item.condition_id || '',
+          quantity: item.quantity ?? 1,
+          location_id: item.location_id || '',
         });
-        setNextInventoryNumber(item.inventory_code || '');
+        setNextInventoryNumber(item.item_number || '');
       }
     } catch (error) {
       logger.error('Error loading item:', error);
@@ -171,14 +145,14 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
     try {
       const { data: sequence } = await supabase
         .from('number_sequences')
-        .select('prefix, last_number, padding')
+        .select('prefix, current_value, padding')
         .eq('scope', 'inventory')
         .maybeSingle();
 
       if (sequence) {
-        const nextNumber = sequence.last_number + 1;
-        const paddedNumber = nextNumber.toString().padStart(sequence.padding, '0');
-        setNextInventoryNumber(`${sequence.prefix}${paddedNumber}`);
+        const nextNumber = (sequence.current_value ?? 0) + 1;
+        const paddedNumber = nextNumber.toString().padStart(sequence.padding ?? 0, '0');
+        setNextInventoryNumber(`${sequence.prefix ?? ''}${paddedNumber}`);
       }
     } catch (error) {
       logger.error('Error fetching next inventory number:', error);
@@ -191,21 +165,17 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
       const [
         inventoryCategoriesRes,
         statusTypesRes,
-        deviceTypesRes,
         brandsRes,
         capacitiesRes,
         interfacesRes,
-        countriesRes,
         locationsRes,
         conditionsRes,
       ] = await Promise.all([
         supabase.from('master_inventory_categories').select('id, name').eq('is_active', true).order('sort_order'),
         supabase.from('master_inventory_status_types').select('id, name').eq('is_active', true).order('sort_order'),
-        supabase.from('catalog_device_types').select('id, name').eq('is_active', true).order('name'),
         supabase.from('catalog_device_brands').select('id, name').eq('is_active', true).order('name'),
         supabase.from('catalog_device_capacities').select('id, name, gb_value').eq('is_active', true).order('gb_value'),
         supabase.from('catalog_interfaces').select('id, name').eq('is_active', true).order('sort_order'),
-        supabase.from('geo_countries').select('id, name').eq('is_active', true).order('name'),
         supabase.from('inventory_locations').select('id, name').eq('is_active', true).order('name'),
         supabase
           .from('master_inventory_condition_types')
@@ -214,30 +184,22 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
           .order('rating', { ascending: false }),
       ]);
 
-      const { data: suppliersData } = await supabase
-        .from('inventory_items')
-        .select('supplier_name')
-        .not('supplier_name', 'is', null)
-        .order('supplier_name');
-
       if (inventoryCategoriesRes.data) {
         setInventoryCategories(inventoryCategoriesRes.data);
       }
       if (statusTypesRes.data) {
         setStatusTypes(statusTypesRes.data);
       }
-      if (deviceTypesRes.data) setDeviceTypes(deviceTypesRes.data);
       if (brandsRes.data) setBrands(brandsRes.data);
       if (capacitiesRes.data) {
         setCapacities(capacitiesRes.data.map(c => ({ id: c.id, name: c.name })));
       }
       if (interfacesRes.data) setInterfaces(interfacesRes.data);
-      if (countriesRes.data) setCountries(countriesRes.data);
       if (locationsRes.data) setLocations(locationsRes.data);
-      if (conditionsRes.data) setConditionTypes(conditionsRes.data);
-      if (suppliersData) {
-        const uniqueSuppliers = Array.from(new Set(suppliersData.map(s => s.supplier_name).filter(Boolean)));
-        setSuppliers(uniqueSuppliers.map(name => ({ id: name, name })));
+      if (conditionsRes.data) {
+        setConditionTypes(
+          conditionsRes.data.map((c) => ({ id: c.id, name: c.name, rating: c.rating ?? 0 }))
+        );
       }
     } catch (error) {
       logger.error('Error fetching dropdown data:', error);
@@ -251,19 +213,19 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
       .from('number_sequences')
       .select('*')
       .eq('scope', 'inventory')
-      .single();
+      .maybeSingle();
 
     if (!sequence) {
       throw new Error('Inventory number sequence not found');
     }
 
-    const nextNumber = sequence.last_number + 1;
-    const paddedNumber = nextNumber.toString().padStart(sequence.padding, '0');
-    const code = `${sequence.prefix}${paddedNumber}`;
+    const nextNumber = (sequence.current_value ?? 0) + 1;
+    const paddedNumber = nextNumber.toString().padStart(sequence.padding ?? 0, '0');
+    const code = `${sequence.prefix ?? ''}${paddedNumber}`;
 
     await supabase
       .from('number_sequences')
-      .update({ last_number: nextNumber })
+      .update({ current_value: nextNumber })
       .eq('scope', 'inventory');
 
     return code;
@@ -272,10 +234,9 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.inventory_type_id) newErrors.inventory_type_id = 'Inventory Category is required';
-    if (!formData.device_type_id) newErrors.device_type_id = 'Device Type is required';
+    if (!formData.category_id) newErrors.category_id = 'Inventory Category is required';
     if (!formData.model.trim()) newErrors.model = 'Model Number is required';
-    if (formData.quantity_available < 0) newErrors.quantity_available = 'Quantity must be 0 or greater';
+    if (formData.quantity < 0) newErrors.quantity = 'Quantity must be 0 or greater';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -290,32 +251,24 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
 
     setSubmitting(true);
     try {
-      const itemData: Record<string, unknown> = {
-        category_id: formData.inventory_type_id || null,
-        status_type_id: formData.status_type_id || null,
-        device_type_id: formData.device_type_id || null,
+      const itemData: InventoryItemInsert = {
+        category_id: formData.category_id || null,
+        status_id: formData.status_id || null,
         brand_id: formData.brand_id || null,
         model: formData.model.trim(),
         serial_number: formData.serial_number.trim() || null,
         capacity_id: formData.capacity_id || null,
         name: formData.model.trim(),
-        usable_donor_parts: formData.usable_donor_parts,
+        donor_parts_available: formData.donor_parts_available,
         interface_id: formData.interface_id || null,
-        manufacture_date: formData.manufacture_date || null,
-        product_country_id: formData.product_country_id || null,
         pcb_number: formData.pcb_number.trim() || null,
-        dcm: formData.dcm.trim() || null,
         head_map: formData.head_map.trim() || null,
-        preamp: formData.preamp.trim() || null,
-        part_number: formData.part_number.trim() || null,
-        platter_heads: formData.platter_heads.trim() || null,
         firmware_version: formData.firmware_version.trim() || null,
-        acquisition_cost: formData.purchase_cost ? parseFloat(formData.purchase_cost) : 0,
-        acquisition_date: formData.purchase_date || null,
-        condition_type_id: formData.condition_type_id || null,
-        quantity_available: formData.quantity_available,
-        storage_location_id: formData.storage_location_id || null,
-        supplier_name: formData.supplier_name.trim() || null,
+        purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : 0,
+        purchase_date: formData.purchase_date || null,
+        condition_id: formData.condition_id || null,
+        quantity: formData.quantity,
+        location_id: formData.location_id || null,
       };
 
       if (itemId) {
@@ -327,9 +280,9 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
         if (error) throw error;
       } else {
         const inventoryCode = await generateInventoryCode();
-        itemData.inventory_code = inventoryCode;
+        const insertPayload: InventoryItemInsert = { ...itemData, item_number: inventoryCode };
 
-        const { error } = await supabase.from('inventory_items').insert([itemData]);
+        const { error } = await supabase.from('inventory_items').insert([insertPayload]);
 
         if (error) throw error;
       }
@@ -350,35 +303,26 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
 
   const resetForm = () => {
     setFormData({
-      inventory_type_id: '',
-      status_type_id: '',
-      device_type_id: '',
+      category_id: '',
+      status_id: '',
       brand_id: '',
       model: '',
       serial_number: '',
       capacity_id: '',
-      usable_donor_parts: {
+      donor_parts_available: {
         heads: false,
         pcb: false,
         drive_enclosure: false,
       },
       interface_id: '',
-      manufacture_date: '',
-      product_country_id: '',
       pcb_number: '',
-      dcm: '',
       head_map: '',
-      preamp: '',
-      part_number: '',
-      platter_heads: '',
       firmware_version: '',
-      mlc: '',
-      purchase_cost: '',
+      purchase_price: '',
       purchase_date: '',
-      condition_type_id: '',
-      quantity_available: 1,
-      storage_location_id: '',
-      supplier_name: '',
+      condition_id: '',
+      quantity: 1,
+      location_id: '',
     });
     setErrors({});
   };
@@ -426,31 +370,15 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                     <SearchableSelect
                       label="Inventory Category"
                       options={inventoryCategories}
-                      value={formData.inventory_type_id}
-                      onChange={(value) => setFormData((prev) => ({ ...prev, inventory_type_id: value }))}
+                      value={formData.category_id}
+                      onChange={(value) => setFormData((prev) => ({ ...prev, category_id: value }))}
                       placeholder="Select inventory category"
                       disabled={submitting}
                       required
                       clearable={false}
                     />
-                    {errors.inventory_type_id && (
-                      <p className="mt-1 text-sm text-danger">{errors.inventory_type_id}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <SearchableSelect
-                      label="Device Type"
-                      options={deviceTypes.map((dt) => ({ id: dt.id, name: dt.name }))}
-                      value={formData.device_type_id}
-                      onChange={(value) => setFormData((prev) => ({ ...prev, device_type_id: value }))}
-                      placeholder="Select device type"
-                      disabled={submitting}
-                      required
-                      clearable={false}
-                    />
-                    {errors.device_type_id && (
-                      <p className="mt-1 text-sm text-danger">{errors.device_type_id}</p>
+                    {errors.category_id && (
+                      <p className="mt-1 text-sm text-danger">{errors.category_id}</p>
                     )}
                   </div>
 
@@ -509,11 +437,11 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                       <label className="flex items-center space-x-2">
                         <input
                           type="checkbox"
-                          checked={formData.usable_donor_parts.heads}
+                          checked={formData.donor_parts_available.heads}
                           onChange={(e) =>
                             setFormData((prev) => ({
                               ...prev,
-                              usable_donor_parts: { ...prev.usable_donor_parts, heads: e.target.checked },
+                              donor_parts_available: { ...prev.donor_parts_available, heads: e.target.checked },
                             }))
                           }
                           disabled={submitting}
@@ -524,11 +452,11 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                       <label className="flex items-center space-x-2">
                         <input
                           type="checkbox"
-                          checked={formData.usable_donor_parts.pcb}
+                          checked={formData.donor_parts_available.pcb}
                           onChange={(e) =>
                             setFormData((prev) => ({
                               ...prev,
-                              usable_donor_parts: { ...prev.usable_donor_parts, pcb: e.target.checked },
+                              donor_parts_available: { ...prev.donor_parts_available, pcb: e.target.checked },
                             }))
                           }
                           disabled={submitting}
@@ -539,12 +467,12 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                       <label className="flex items-center space-x-2">
                         <input
                           type="checkbox"
-                          checked={formData.usable_donor_parts.drive_enclosure}
+                          checked={formData.donor_parts_available.drive_enclosure}
                           onChange={(e) =>
                             setFormData((prev) => ({
                               ...prev,
-                              usable_donor_parts: {
-                                ...prev.usable_donor_parts,
+                              donor_parts_available: {
+                                ...prev.donor_parts_available,
                                 drive_enclosure: e.target.checked,
                               },
                             }))
@@ -575,29 +503,6 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">DOM (Date of Manufacture)</label>
-                    <Input
-                      type="month"
-                      value={formData.manufacture_date}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, manufacture_date: e.target.value }))}
-                      placeholder="Select month"
-                      disabled={submitting}
-                    />
-                  </div>
-
-                  <div>
-                    <SearchableSelect
-                      label="Product Of (Country)"
-                      options={countries.map((c) => ({ id: c.id, name: c.name }))}
-                      value={formData.product_country_id}
-                      onChange={(value) => setFormData((prev) => ({ ...prev, product_country_id: value }))}
-                      placeholder="Select country"
-                      disabled={submitting}
-                      clearable={false}
-                    />
-                  </div>
-
-                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">PCB Number</label>
                     <Input
                       type="text"
@@ -609,56 +514,12 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">DCM/MLC</label>
-                    <Input
-                      type="text"
-                      value={formData.dcm}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, dcm: e.target.value }))}
-                      placeholder="Enter DCM or MLC"
-                      disabled={submitting}
-                    />
-                  </div>
-
-                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Head Map</label>
                     <Input
                       type="text"
                       value={formData.head_map}
                       onChange={(e) => setFormData((prev) => ({ ...prev, head_map: e.target.value }))}
                       placeholder="Enter head map"
-                      disabled={submitting}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Preamp</label>
-                    <Input
-                      type="text"
-                      value={formData.preamp}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, preamp: e.target.value }))}
-                      placeholder="Enter preamp"
-                      disabled={submitting}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Part Number</label>
-                    <Input
-                      type="text"
-                      value={formData.part_number}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, part_number: e.target.value }))}
-                      placeholder="Enter part number"
-                      disabled={submitting}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Platter/Heads</label>
-                    <Input
-                      type="text"
-                      value={formData.platter_heads}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, platter_heads: e.target.value }))}
-                      placeholder="Enter platter/heads"
                       disabled={submitting}
                     />
                   </div>
@@ -694,8 +555,8 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                       type="number"
                       step={`0.${'0'.repeat(Math.max(0, currencyFormat.decimalPlaces - 1))}1`}
                       min="0"
-                      value={formData.purchase_cost}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, purchase_cost: e.target.value }))}
+                      value={formData.purchase_price}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, purchase_price: e.target.value }))}
                       placeholder={`0.${'0'.repeat(currencyFormat.decimalPlaces)}`}
                       disabled={submitting}
                       className={currencyFormat.currencyPosition === 'before' ? 'pl-8' : 'pr-8'}
@@ -722,8 +583,8 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                   <SearchableSelect
                     label="Status"
                     options={statusTypes}
-                    value={formData.status_type_id}
-                    onChange={(value) => setFormData((prev) => ({ ...prev, status_type_id: value }))}
+                    value={formData.status_id}
+                    onChange={(value) => setFormData((prev) => ({ ...prev, status_id: value }))}
                     placeholder="Select status"
                     disabled={submitting}
                     clearable={false}
@@ -737,8 +598,8 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                       id: ct.id,
                       name: formatConditionType(ct),
                     }))}
-                    value={formData.condition_type_id}
-                    onChange={(value) => setFormData((prev) => ({ ...prev, condition_type_id: value }))}
+                    value={formData.condition_id}
+                    onChange={(value) => setFormData((prev) => ({ ...prev, condition_id: value }))}
                     placeholder="Select condition"
                     disabled={submitting}
                     clearable={false}
@@ -752,14 +613,14 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                   <Input
                     type="number"
                     min="0"
-                    value={formData.quantity_available}
+                    value={formData.quantity}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, quantity_available: parseInt(e.target.value) || 0 }))
+                      setFormData((prev) => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))
                     }
                     disabled={submitting}
                   />
-                  {errors.quantity_available && (
-                    <p className="mt-1 text-sm text-danger">{errors.quantity_available}</p>
+                  {errors.quantity && (
+                    <p className="mt-1 text-sm text-danger">{errors.quantity}</p>
                   )}
                 </div>
 
@@ -767,29 +628,12 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
                   <SearchableSelect
                     label="Location"
                     options={locations.map((l) => ({ id: l.id, name: l.name }))}
-                    value={formData.storage_location_id}
-                    onChange={(value) => setFormData((prev) => ({ ...prev, storage_location_id: value }))}
+                    value={formData.location_id}
+                    onChange={(value) => setFormData((prev) => ({ ...prev, location_id: value }))}
                     placeholder="Select location"
                     disabled={submitting}
                     clearable={false}
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
-                  <Input
-                    type="text"
-                    value={formData.supplier_name}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, supplier_name: e.target.value }))}
-                    placeholder="Select or type supplier name"
-                    disabled={submitting}
-                    list="suppliers-list"
-                  />
-                  <datalist id="suppliers-list">
-                    {suppliers.map((supplier) => (
-                      <option key={supplier.id} value={supplier.name} />
-                    ))}
-                  </datalist>
                 </div>
               </div>
             </div>
