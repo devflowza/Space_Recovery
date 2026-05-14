@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, Package, Star, Tag, MapPin, Barcode, Hash, Truck, FileText, AlertTriangle, CreditCard as Edit2, TrendingUp, ArrowDownToLine, Wrench, Calendar, Clock, ExternalLink, Image, BarChart3 } from 'lucide-react';
+import { ChevronLeft, Package, Tag, Barcode, Hash, Truck, FileText, AlertTriangle, CreditCard as Edit2, TrendingUp, ArrowDownToLine, Wrench, Clock, ExternalLink, Image, BarChart3 } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
-import { Card } from '../../components/ui/Card';
 import {
   getStockItem,
   getStockTransactions,
@@ -15,10 +14,6 @@ import {
   recordStockUsage,
   updateStockItem,
   getReservationsForItem,
-  type StockItemWithCategory,
-  type StockTransaction,
-  type StockSerialNumber,
-  type StockReservation,
 } from '../../lib/stockService';
 import { stockKeys } from '../../lib/queryKeys';
 import { useCurrency } from '../../hooks/useCurrency';
@@ -98,7 +93,6 @@ interface EditFormState {
   selling_price: string;
   minimum_quantity: string;
   reorder_quantity: string;
-  location: string;
   notes: string;
 }
 
@@ -147,7 +141,6 @@ export const StockItemDetail: React.FC = () => {
     selling_price: '',
     minimum_quantity: '',
     reorder_quantity: '',
-    location: '',
     notes: '',
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -220,9 +213,8 @@ export const StockItemDetail: React.FC = () => {
       description: item.description ?? '',
       cost_price: item.cost_price != null ? String(item.cost_price) : '',
       selling_price: item.selling_price != null ? String(item.selling_price) : '',
-      minimum_quantity: String(item.minimum_quantity),
+      minimum_quantity: item.minimum_quantity != null ? String(item.minimum_quantity) : '0',
       reorder_quantity: item.reorder_quantity != null ? String(item.reorder_quantity) : '',
-      location: item.location ?? '',
       notes: item.notes ?? '',
     });
     setIsEditOpen(true);
@@ -242,7 +234,6 @@ export const StockItemDetail: React.FC = () => {
         selling_price: editForm.selling_price ? parseFloat(editForm.selling_price) : null,
         minimum_quantity: parseInt(editForm.minimum_quantity, 10) || 0,
         reorder_quantity: editForm.reorder_quantity ? parseInt(editForm.reorder_quantity, 10) : null,
-        location: editForm.location.trim() || null,
         notes: editForm.notes.trim() || null,
       });
     } finally {
@@ -300,20 +291,17 @@ export const StockItemDetail: React.FC = () => {
     );
   }
 
-  const availableQty = item.current_quantity - item.reserved_quantity;
-  const availablePct =
-    item.current_quantity > 0 ? (availableQty / item.current_quantity) * 100 : 0;
-  const isLowStock = item.current_quantity <= item.minimum_quantity;
-  const isOutOfStock = item.current_quantity === 0;
+  const currentQty = item.current_quantity ?? 0;
+  const reservedQty = item.quantity_reserved ?? 0;
+  const minimumQty = item.minimum_quantity ?? 0;
+  const availableQty = currentQty - reservedQty;
+  const availablePct = currentQty > 0 ? (availableQty / currentQty) * 100 : 0;
+  const isLowStock = currentQty <= minimumQty;
+  const isOutOfStock = currentQty === 0;
 
   const costPrice = item.cost_price ?? 0;
   const sellPrice = item.selling_price ?? 0;
   const margin = sellPrice > 0 && costPrice > 0 ? ((sellPrice - costPrice) / sellPrice) * 100 : 0;
-
-  const specifications =
-    item.specifications && typeof item.specifications === 'object' && !Array.isArray(item.specifications)
-      ? (item.specifications as Record<string, unknown>)
-      : null;
 
   const isSaleable = item.item_type === 'saleable' || item.item_type === 'both';
 
@@ -331,9 +319,9 @@ export const StockItemDetail: React.FC = () => {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
           <div className="flex items-start gap-5">
             <div className="w-20 h-20 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center bg-slate-50 flex-shrink-0">
-              {item.image_url ? (
+              {item.photos && item.photos.length > 0 ? (
                 <img
-                  src={item.image_url}
+                  src={item.photos[0]}
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />
@@ -352,24 +340,20 @@ export const StockItemDetail: React.FC = () => {
                         {item.sku}
                       </Badge>
                     )}
-                    <Badge
-                      variant={
-                        item.item_type === 'internal'
-                          ? 'info'
-                          : item.item_type === 'saleable'
-                          ? 'success'
-                          : 'default'
-                      }
-                      size="sm"
-                    >
-                      {item.item_type === 'both'
-                        ? 'Internal & Saleable'
-                        : item.item_type.charAt(0).toUpperCase() + item.item_type.slice(1)}
-                    </Badge>
-                    {item.is_featured && (
-                      <Badge variant="warning" size="sm">
-                        <Star className="w-3 h-3 mr-1 fill-warning" />
-                        Featured
+                    {item.item_type && (
+                      <Badge
+                        variant={
+                          item.item_type === 'internal'
+                            ? 'info'
+                            : item.item_type === 'saleable'
+                            ? 'success'
+                            : 'default'
+                        }
+                        size="sm"
+                      >
+                        {item.item_type === 'both'
+                          ? 'Internal & Saleable'
+                          : item.item_type.charAt(0).toUpperCase() + item.item_type.slice(1)}
                       </Badge>
                     )}
                     {isOutOfStock && (
@@ -389,18 +373,6 @@ export const StockItemDetail: React.FC = () => {
 
                   <div className="flex items-center gap-3 mt-1 text-sm text-slate-500 flex-wrap">
                     {item.brand && <span className="font-medium">{item.brand}</span>}
-                    {item.model && (
-                      <>
-                        <span className="text-slate-300">·</span>
-                        <span>{item.model}</span>
-                      </>
-                    )}
-                    {item.capacity && (
-                      <>
-                        <span className="text-slate-300">·</span>
-                        <span>{item.capacity}</span>
-                      </>
-                    )}
                     {item.stock_categories && (
                       <>
                         <span className="text-slate-300">·</span>
@@ -443,15 +415,10 @@ export const StockItemDetail: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-x-6">
               <div>
-                <InfoRow label="Unit of Measure" value={item.unit_of_measure} icon={BarChart3} />
+                <InfoRow label="Unit" value={item.unit} icon={BarChart3} />
                 <InfoRow label="Barcode" value={item.barcode} icon={Barcode} />
-                <InfoRow label="Location" value={item.location} icon={MapPin} />
-                {item.warranty_months != null && (
-                  <InfoRow
-                    label="Warranty"
-                    value={`${item.warranty_months} month${item.warranty_months !== 1 ? 's' : ''}`}
-                    icon={Calendar}
-                  />
+                {item.dimensions && (
+                  <InfoRow label="Dimensions" value={item.dimensions} icon={Package} />
                 )}
               </div>
               <div>
@@ -470,23 +437,6 @@ export const StockItemDetail: React.FC = () => {
                 />
               </div>
             </div>
-
-            {specifications && Object.keys(specifications).length > 0 && (
-              <div className="mt-4 pt-4 border-t border-slate-100">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  Specifications
-                </p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                  {Object.entries(specifications).map(([key, val]) => (
-                    <InfoRow
-                      key={key}
-                      label={key.replace(/_/g, ' ')}
-                      value={String(val ?? '')}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
@@ -526,10 +476,10 @@ export const StockItemDetail: React.FC = () => {
                 </p>
               </div>
             </div>
-            {item.tax_inclusive && (
+            {item.tax_rate != null && item.tax_rate > 0 && (
               <p className="text-xs text-slate-400 mt-3 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
-                Prices are tax inclusive
+                Tax rate: {item.tax_rate}%
               </p>
             )}
           </div>
@@ -545,11 +495,11 @@ export const StockItemDetail: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">Current Stock</span>
-                <span className="text-lg font-bold text-slate-900">{item.current_quantity}</span>
+                <span className="text-lg font-bold text-slate-900">{currentQty}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">Reserved</span>
-                <span className="font-semibold text-warning">{item.reserved_quantity}</span>
+                <span className="font-semibold text-warning">{reservedQty}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600 font-medium">Available</span>
@@ -585,7 +535,7 @@ export const StockItemDetail: React.FC = () => {
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500">Minimum Qty</span>
                   <span className="font-mono font-medium text-slate-700">
-                    {item.minimum_quantity}
+                    {minimumQty}
                   </span>
                 </div>
                 {item.reorder_quantity != null && (
@@ -609,7 +559,7 @@ export const StockItemDetail: React.FC = () => {
                 <span className="font-medium">
                   {isOutOfStock
                     ? 'This item is out of stock'
-                    : `Stock is below minimum threshold (${item.minimum_quantity})`}
+                    : `Stock is below minimum threshold (${minimumQty})`}
                 </span>
               </div>
             )}
@@ -666,7 +616,7 @@ export const StockItemDetail: React.FC = () => {
               { key: 'transactions', label: 'Transaction History' },
               { key: 'serials', label: 'Serial Numbers' },
               ...(isSaleable ? [{ key: 'sales', label: 'Sales History' }] : []),
-              { key: 'reservations', label: `Reservations${item.reserved_quantity > 0 ? ` (${item.reserved_quantity})` : ''}` },
+              { key: 'reservations', label: `Reservations${reservedQty > 0 ? ` (${reservedQty})` : ''}` },
             ] as { key: TabType; label: string }[]
           ).map(({ key, label }) => (
             <button
@@ -703,71 +653,79 @@ export const StockItemDetail: React.FC = () => {
                       <th className="pb-2.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">
                         Qty
                       </th>
-                      <th className="pb-2.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                        Before
+                      <th className="pb-2.5 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        Unit Cost
                       </th>
-                      <th className="pb-2.5 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                        After
+                      <th className="pb-2.5 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        Total
                       </th>
                       <th className="pb-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                         Notes
                       </th>
                       <th className="pb-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                        Case
+                        Reference
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions.map((tx) => (
-                      <tr
-                        key={tx.id}
-                        className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
-                      >
-                        <td className="py-2.5 text-slate-600">
-                          {formatDateTime(tx.transaction_date)}
-                        </td>
-                        <td className="py-2.5">
-                          <Badge
-                            variant={getTransactionTypeVariant(tx.transaction_type)}
-                            size="sm"
-                          >
-                            {tx.transaction_type}
-                          </Badge>
-                        </td>
-                        <td className="py-2.5 text-center font-mono font-semibold">
-                          <span
-                            className={
-                              tx.quantity > 0 ? 'text-success' : 'text-danger'
-                            }
-                          >
-                            {tx.quantity > 0 ? '+' : ''}
-                            {tx.quantity}
-                          </span>
-                        </td>
-                        <td className="py-2.5 text-center font-mono text-slate-500">
-                          {tx.previous_quantity ?? '—'}
-                        </td>
-                        <td className="py-2.5 text-center font-mono text-slate-700">
-                          {tx.new_quantity ?? '—'}
-                        </td>
-                        <td className="py-2.5 text-slate-500 max-w-xs truncate">
-                          {tx.notes ?? '—'}
-                        </td>
-                        <td className="py-2.5">
-                          {tx.case_id ? (
-                            <Link
-                              to={`/cases/${tx.case_id}`}
-                              className="inline-flex items-center gap-1 text-primary hover:text-primary/80 text-xs font-medium"
+                    {transactions.map((tx) => {
+                      const caseRef =
+                        tx.reference_type === 'case' && tx.reference_id ? tx.reference_id : null;
+                      return (
+                        <tr
+                          key={tx.id}
+                          className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                        >
+                          <td className="py-2.5 text-slate-600">
+                            {formatDateTime(tx.created_at)}
+                          </td>
+                          <td className="py-2.5">
+                            <Badge
+                              variant={getTransactionTypeVariant(tx.transaction_type)}
+                              size="sm"
                             >
-                              View Case
-                              <ExternalLink className="w-3 h-3" />
-                            </Link>
-                          ) : (
-                            <span className="text-slate-300">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                              {tx.transaction_type}
+                            </Badge>
+                          </td>
+                          <td className="py-2.5 text-center font-mono font-semibold">
+                            <span
+                              className={
+                                tx.quantity > 0 ? 'text-success' : 'text-danger'
+                              }
+                            >
+                              {tx.quantity > 0 ? '+' : ''}
+                              {tx.quantity}
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-right font-mono text-slate-500">
+                            {tx.unit_cost != null ? formatCurrency(tx.unit_cost) : '—'}
+                          </td>
+                          <td className="py-2.5 text-right font-mono text-slate-700">
+                            {tx.total_cost != null ? formatCurrency(tx.total_cost) : '—'}
+                          </td>
+                          <td className="py-2.5 text-slate-500 max-w-xs truncate">
+                            {tx.notes ?? '—'}
+                          </td>
+                          <td className="py-2.5">
+                            {caseRef ? (
+                              <Link
+                                to={`/cases/${caseRef}`}
+                                className="inline-flex items-center gap-1 text-primary hover:text-primary/80 text-xs font-medium"
+                              >
+                                View Case
+                                <ExternalLink className="w-3 h-3" />
+                              </Link>
+                            ) : tx.reference_type ? (
+                              <span className="text-xs text-slate-500 capitalize">
+                                {tx.reference_type}
+                              </span>
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}
@@ -791,17 +749,17 @@ export const StockItemDetail: React.FC = () => {
                         <p className="font-mono text-sm font-medium text-slate-900 truncate">
                           {sn.serial_number}
                         </p>
-                        {sn.purchase_date && (
+                        {sn.created_at && (
                           <p className="text-xs text-slate-400 mt-0.5">
-                            {formatDate(sn.purchase_date)}
+                            {formatDate(sn.created_at)}
                           </p>
                         )}
                       </div>
                       <Badge
-                        variant={getSerialStatusVariant(sn.status)}
+                        variant={getSerialStatusVariant(sn.status ?? 'unknown')}
                         size="sm"
                       >
-                        {sn.status.replace('_', ' ')}
+                        {(sn.status ?? 'unknown').replace('_', ' ')}
                       </Badge>
                     </div>
                   ))}
@@ -868,7 +826,7 @@ export const StockItemDetail: React.FC = () => {
         <div className="space-y-4">
           <div className="bg-slate-50 rounded-lg px-4 py-3">
             <p className="text-sm font-medium text-slate-700">{item.name}</p>
-            <p className="text-xs text-slate-500 mt-0.5">Current stock: {item.current_quantity}</p>
+            <p className="text-xs text-slate-500 mt-0.5">Current stock: {currentQty}</p>
           </div>
 
           <Input
@@ -1026,12 +984,6 @@ export const StockItemDetail: React.FC = () => {
               min="0"
               value={editForm.reorder_quantity}
               onChange={(e) => setEditForm((f) => ({ ...f, reorder_quantity: e.target.value }))}
-            />
-            <Input
-              label="Location"
-              value={editForm.location}
-              onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
-              placeholder="e.g. Shelf A-3"
             />
           </div>
 
