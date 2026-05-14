@@ -200,11 +200,11 @@ export const payrollService = {
       .from('payroll_records')
       .select(`
         *,
-        employee:employees(id, first_name, last_name, employee_number)
+        employee:employees(id, first_name, last_name, employee_number, department:departments(name))
       `)
       .eq('period_id', periodId)
       .is('deleted_at', null)
-      .order('employee_name');
+      .order('created_at');
 
     if (error) throw error;
     return data;
