@@ -144,6 +144,8 @@ export function useCaseQueries(
   const { data: devices = [] } = useQuery({
     queryKey: ['case_devices', id],
     queryFn: async () => {
+      // Removed profiles!created_by FK join (no FK constraint exists).
+      // Catalog joins are kept because their FKs are present in the DB.
       const { data, error } = await supabase
         .from('case_devices')
         .select(`
@@ -166,8 +168,7 @@ export function useCaseQueries(
           capacity:catalog_device_capacities(id, name),
           condition:catalog_device_conditions(name),
           encryption_type:catalog_device_encryption(name),
-          device_role:catalog_device_roles(id, name),
-          created_by_profile:profiles!created_by(full_name)
+          device_role:catalog_device_roles(id, name)
         `)
         .eq('case_id', id)
         .order('is_primary', { ascending: false })
@@ -209,6 +210,7 @@ export function useCaseQueries(
   const { data: attachments = [] } = useQuery({
     queryKey: ['case_attachments', id],
     queryFn: async () => {
+      // FK profiles!uploaded_by join removed (no FK constraint).
       const { data, error } = await supabase
         .from('case_attachments')
         .select(`
@@ -219,8 +221,8 @@ export function useCaseQueries(
           file_type,
           category,
           description,
-          created_at,
-          uploaded_by_profile:profiles!uploaded_by(full_name)
+          uploaded_by,
+          created_at
         `)
         .eq('case_id', id)
         .order('created_at', { ascending: false });
@@ -261,6 +263,7 @@ export function useCaseQueries(
   const { data: reports = [] } = useQuery({
     queryKey: ['case_reports', id, filters.reportTypeFilter, filters.reportStatusFilter, filters.showLatestOnly],
     queryFn: async () => {
+      // FK profiles!created_by join removed (no FK constraint).
       let query = supabase
         .from('case_reports')
         .select(`
@@ -270,7 +273,7 @@ export function useCaseQueries(
           status,
           created_at,
           generated_at,
-          created_by_profile:profiles!created_by(full_name)
+          created_by
         `)
         .eq('case_id', id);
 
@@ -291,13 +294,14 @@ export function useCaseQueries(
   const { data: caseEngineers = [] } = useQuery({
     queryKey: ['case_engineers', id],
     queryFn: async () => {
+      // FK profiles!user_id join removed (no FK constraint).
       const { data, error } = await supabase
         .from('case_engineers')
         .select(`
           id,
+          user_id,
           role_text,
-          created_at,
-          engineer:profiles!user_id(id, full_name, role)
+          created_at
         `)
         .eq('case_id', id)
         .order('created_at');
@@ -326,13 +330,14 @@ export function useCaseQueries(
   const { data: notes = [] } = useQuery({
     queryKey: ['case_notes', id],
     queryFn: async () => {
+      // FK profiles!created_by join removed (no FK constraint).
       const { data, error } = await supabase
         .from('case_internal_notes')
         .select(`
           id,
           content,
-          created_at,
-          author:profiles!created_by(full_name)
+          created_by,
+          created_at
         `)
         .eq('case_id', id)
         .order('created_at', { ascending: false });
@@ -346,14 +351,15 @@ export function useCaseQueries(
   const { data: history = [] } = useQuery({
     queryKey: ['case_history', id],
     queryFn: async () => {
+      // FK profiles!performed_by join removed (no FK constraint).
       const { data, error } = await supabase
         .from('case_job_history')
         .select(`
           id,
           action,
           details,
-          created_at,
-          actor:profiles!performed_by(full_name)
+          performed_by,
+          created_at
         `)
         .eq('case_id', id)
         .order('created_at', { ascending: false });

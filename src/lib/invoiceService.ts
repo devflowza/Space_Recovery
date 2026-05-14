@@ -543,16 +543,10 @@ export const convertQuoteToInvoice = async (
 };
 
 export const getInvoicesByCaseId = async (caseId: string) => {
+  // FK join to accounting_locales dropped (no FK constraint exists).
   const { data, error } = await supabase
     .from('invoices')
-    .select(`
-      *,
-      accounting_locales (
-        currency_symbol,
-        currency_position,
-        decimal_places
-      )
-    `)
+    .select('*')
     .eq('case_id', caseId)
     .order('created_at', { ascending: false });
 

@@ -600,29 +600,12 @@ export const duplicateQuote = async (sourceId: string) => {
 };
 
 export const getQuotesByCaseId = async (caseId: string) => {
+  // FK-based joins removed: schema lacks FK constraints from quotes to
+  // accounting_locales and bank_accounts, so PostgREST cannot auto-join.
+  // Schema-drift sprint will either add the FKs or refactor to manual joins.
   const { data, error } = await supabase
     .from('quotes')
-    .select(`
-      *,
-      accounting_locales (
-        currency_symbol,
-        currency_position,
-        decimal_places
-      ),
-      cases!case_id (
-        id,
-        case_no
-      ),
-      bank_accounts (
-        id,
-        account_name:name,
-        bank_name,
-        account_number,
-        iban,
-        swift_code,
-        branch_code
-      )
-    `)
+    .select('*')
     .eq('case_id', caseId)
     .order('created_at', { ascending: false });
 
