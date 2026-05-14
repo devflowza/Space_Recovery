@@ -3,11 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { PasswordChangeModal } from '../../components/users/PasswordChangeModal';
 import { MFAChallenge } from '../../components/auth/MFAChallenge';
-import { AuthLayout } from '../../components/auth/shared/AuthLayout';
-import { BrandShowcase } from './login/BrandShowcase';
-import { LoginForm } from './login/LoginForm';
+import { SignInStage } from './signin/SignInStage';
 
-export const Login: React.FC = () => {
+interface LoginProps {
+  initialMode?: 'signin' | 'signup';
+}
+
+export const Login: React.FC<LoginProps> = ({ initialMode = 'signin' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, passwordResetRequired, profile, profileStatus, mfaPending, completeMFAChallenge, signOut } = useAuth();
@@ -62,15 +64,11 @@ export const Login: React.FC = () => {
 
   return (
     <>
-      <AuthLayout
-        leftContent={<BrandShowcase />}
-        rightContent={
-          <LoginForm
-            onSubmit={handleSubmit}
-            error={error}
-            loading={loading}
-          />
-        }
+      <SignInStage
+        initialMode={initialMode}
+        onSignIn={handleSubmit}
+        signInLoading={loading}
+        signInError={error}
       />
 
       {showPasswordChangeModal && profile && (

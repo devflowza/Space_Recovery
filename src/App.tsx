@@ -30,7 +30,6 @@ function lazyWithRetry(factory: () => Promise<{ default: React.ComponentType<unk
 }
 
 const Login = lazyWithRetry(() => import('./pages/auth/Login').then(m => ({ default: m.Login })));
-const OnboardingWizard = lazyWithRetry(() => import('./pages/auth/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
 const OnboardingPage = lazyWithRetry(() => import('./pages/onboarding/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const Dashboard = lazyWithRetry(() => import('./pages/dashboard/Dashboard').then(m => ({ default: m.Dashboard })));
 const SettingsDashboard = lazyWithRetry(() => import('./pages/settings/SettingsDashboard').then(m => ({ default: m.SettingsDashboard })));
@@ -182,8 +181,8 @@ function App() {
             <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/signup/tenant" element={<OnboardingWizard />} />
-              <Route path="/signup" element={<Navigate to="/signup/tenant" replace />} />
+              <Route path="/signup" element={<Login initialMode="signup" />} />
+              <Route path="/signup/tenant" element={<Login initialMode="signup" />} />
               <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
 
               <Route path="/health" element={

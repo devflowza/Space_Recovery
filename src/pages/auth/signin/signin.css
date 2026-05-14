@@ -1,0 +1,822 @@
+/*
+ * xSuite Sign In — page-scoped styles.
+ * All custom vars (paper/ink/accent/etc.) live under .xsuite-auth-stage so this
+ * page's editorial aesthetic never leaks into the rest of the app's semantic
+ * token system.
+ */
+
+.xsuite-auth-stage {
+  /* Scarlet (default) */
+  --paper: #F5EBD8;
+  --paper-deep: #ECDDC1;
+  --ink: #280B08;
+  --ink-soft: #5C3A33;
+  --primary: #1A0604;
+  --primary-deep: #0A0302;
+  --accent: #FF4B45;
+  --accent-deep: #C92925;
+  --glow: rgba(255, 75, 69, 0.22);
+
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --serif: 'DM Serif Display', 'Iowan Old Style', serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+
+  --swing: cubic-bezier(0.86, 0, 0.07, 1);
+  --swing-fast: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.xsuite-auth-stage[data-theme="royal"] {
+  --primary: #0c1736;
+  --primary-deep: #060B1C;
+  --accent: #6FB6FF;
+  --accent-deep: #3D7CC2;
+  --paper: #F4EFE3;
+  --paper-deep: #EAE2CE;
+  --ink: #162660;
+  --ink-soft: #4A5A8E;
+  --glow: rgba(111, 182, 255, 0.20);
+}
+
+.xsuite-auth-stage[data-theme="burgundy"] {
+  --primary: #3D0B12;
+  --primary-deep: #220609;
+  --accent: #F08896;
+  --accent-deep: #B05E68;
+  --paper: #F6EFE9;
+  --paper-deep: #EBDDD2;
+  --ink: #6C131F;
+  --ink-soft: #8F4754;
+  --glow: rgba(240, 136, 150, 0.20);
+}
+
+.xsuite-auth-stage,
+.xsuite-auth-stage * { box-sizing: border-box; }
+.xsuite-auth-stage button { font-family: inherit; cursor: pointer; }
+.xsuite-auth-stage input,
+.xsuite-auth-stage button { font-family: inherit; }
+
+/* — Stage — */
+.xsuite-auth-stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-height: 720px;
+  overflow: hidden;
+  background: var(--paper);
+  background-image: radial-gradient(rgba(40, 11, 8, 0.04) 1px, transparent 1px);
+  background-size: 3px 3px;
+  font-family: var(--sans);
+  color: var(--ink);
+}
+
+/* — Two forms sit on the paper side-by-side. Promo slides on top. — */
+.xsuite-auth-stage .form-half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 64px;
+  transition: opacity 350ms var(--swing-fast), transform 900ms var(--swing);
+  overflow-y: auto;
+}
+.xsuite-auth-stage .form-half.left { left: 0; }
+.xsuite-auth-stage .form-half.right { right: 0; }
+
+.xsuite-auth-stage[data-mode="signin"] .form-signup { opacity: 0; pointer-events: none; transform: translateX(-12px); }
+.xsuite-auth-stage[data-mode="signup"] .form-signin { opacity: 0; pointer-events: none; transform: translateX(12px); }
+.xsuite-auth-stage[data-mode="signin"] .form-signin { opacity: 1; pointer-events: auto; transform: translateX(0); transition-delay: 380ms, 380ms; }
+.xsuite-auth-stage[data-mode="signup"] .form-signup { opacity: 1; pointer-events: auto; transform: translateX(0); transition-delay: 380ms, 380ms; }
+
+/* — Promo panel (slides) — */
+.xsuite-auth-stage .promo {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background: var(--primary);
+  color: var(--paper);
+  overflow: hidden;
+  transition: left 950ms var(--swing);
+  will-change: left;
+  z-index: 5;
+  box-shadow:
+    -1px 0 0 rgba(0, 0, 0, 0.4),
+    1px 0 0 rgba(0, 0, 0, 0.4),
+    0 30px 100px rgba(0, 0, 0, 0.35);
+}
+.xsuite-auth-stage[data-mode="signin"] .promo { left: 50%; }
+.xsuite-auth-stage[data-mode="signup"] .promo { left: 0%; }
+
+.xsuite-auth-stage .promo-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    radial-gradient(60% 50% at 70% 30%, var(--glow), transparent 70%);
+  background-size: 56px 56px, 56px 56px, 100% 100%;
+  pointer-events: none;
+}
+.xsuite-auth-stage .promo-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: overlay;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    radial-gradient(rgba(0, 0, 0, 0.10) 1px, transparent 1px);
+  background-size: 3px 3px, 5px 5px;
+  background-position: 0 0, 1px 2px;
+}
+
+.xsuite-auth-stage .promo-inner {
+  position: relative;
+  height: 100%;
+  padding: 44px 56px 36px;
+  display: flex;
+  flex-direction: column;
+}
+
+.xsuite-auth-stage .promo-content {
+  position: absolute;
+  inset: 44px 56px 36px;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 280ms ease, transform 280ms ease;
+}
+.xsuite-auth-stage[data-mode="signin"] .promo-content.signin { opacity: 1; transform: translateY(0); transition-delay: 380ms; }
+.xsuite-auth-stage[data-mode="signin"] .promo-content.signup { opacity: 0; transform: translateY(-8px); pointer-events: none; }
+.xsuite-auth-stage[data-mode="signup"] .promo-content.signup { opacity: 1; transform: translateY(0); transition-delay: 380ms; }
+.xsuite-auth-stage[data-mode="signup"] .promo-content.signin { opacity: 0; transform: translateY(8px); pointer-events: none; }
+
+/* — Promo typography — */
+.xsuite-auth-stage .header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+.xsuite-auth-stage .brand { display: flex; align-items: center; gap: 12px; }
+.xsuite-auth-stage .brand-mark {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--serif);
+  font-size: 19px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+.xsuite-auth-stage .brand-name {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--paper);
+}
+.xsuite-auth-stage .brand-by {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(245, 235, 216, 0.5);
+  letter-spacing: 1.3px;
+  margin-left: 10px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.xsuite-auth-stage .status-strip {
+  display: flex;
+  gap: 18px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(245, 235, 216, 0.55);
+  letter-spacing: 1.2px;
+}
+.xsuite-auth-stage .status-strip .dot { color: #7AD68F; }
+
+.xsuite-auth-stage .eyebrow {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 1.6px;
+  color: var(--accent);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 56px;
+}
+.xsuite-auth-stage .eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.xsuite-auth-stage .display {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 76px;
+  line-height: 0.95;
+  letter-spacing: -2.4px;
+  color: var(--paper);
+  margin: 18px 0 0;
+  max-width: 560px;
+}
+.xsuite-auth-stage .display em { font-style: italic; color: var(--accent); }
+
+.xsuite-auth-stage .lede {
+  margin-top: 26px;
+  max-width: 460px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: rgba(245, 235, 216, 0.78);
+}
+.xsuite-auth-stage .lede b { color: var(--paper); font-weight: 600; }
+
+/* — Live ticker — */
+.xsuite-auth-stage .ticker {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  padding-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.xsuite-auth-stage .ticker-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.xsuite-auth-stage .ticker-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  color: var(--accent);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.xsuite-auth-stage .ticker-tag::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #7AD68F;
+  box-shadow: 0 0 8px rgba(122, 214, 143, 0.7);
+  animation: xsuiteAuthHeartbeat 1.6s var(--swing-fast) infinite;
+}
+@keyframes xsuiteAuthHeartbeat {
+  0%, 40%   { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.35); opacity: 0.8; }
+  60%, 100% { transform: scale(1);    opacity: 1; }
+}
+
+.xsuite-auth-stage .ticker-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(245, 235, 216, 0.45);
+  letter-spacing: 1.1px;
+}
+
+.xsuite-auth-stage .ticker-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  max-height: 110px;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 70%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 70%, transparent);
+}
+.xsuite-auth-stage .ticker-roller {
+  display: flex;
+  flex-direction: column;
+  animation: xsuiteAuthRollUp 22s linear infinite;
+}
+.xsuite-auth-stage .ticker-row {
+  display: grid;
+  grid-template-columns: 78px 76px 1fr 46px;
+  gap: 14px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  align-items: baseline;
+}
+.xsuite-auth-stage .ticker-row .t { color: rgba(245, 235, 216, 0.45); }
+.xsuite-auth-stage .ticker-row .c { color: var(--accent); font-weight: 600; }
+.xsuite-auth-stage .ticker-row .msg {
+  color: rgba(245, 235, 216, 0.88);
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.xsuite-auth-stage .ticker-row .stamp {
+  color: rgba(245, 235, 216, 0.4);
+  text-align: right;
+  letter-spacing: 1.2px;
+  font-size: 9.5px;
+}
+@keyframes xsuiteAuthRollUp {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+.xsuite-auth-stage .legal {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: rgba(245, 235, 216, 0.45);
+  letter-spacing: 1.1px;
+}
+
+/* — "What you get" grid (sign-up promo) — */
+.xsuite-auth-stage .perks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin-top: 4px;
+}
+.xsuite-auth-stage .perk {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 8px;
+  padding: 6px 14px 6px 0;
+  font-size: 12px;
+  color: rgba(245, 235, 216, 0.85);
+  line-height: 1.4;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.xsuite-auth-stage .perk-plus { color: var(--accent); font-family: var(--mono); }
+.xsuite-auth-stage .perk-label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: rgba(245, 235, 216, 0.55);
+  letter-spacing: 1.3px;
+  display: block;
+  margin-bottom: 2px;
+}
+.xsuite-auth-stage .perks-tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  box-shadow: 0 0 8px var(--glow);
+}
+
+/* Corner registration marks */
+.xsuite-auth-stage .reg-mark {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  stroke: rgba(245, 235, 216, 0.4);
+  stroke-width: 1;
+  fill: none;
+}
+
+/* — Form styling — */
+.xsuite-auth-stage .form-card { width: 100%; max-width: 460px; }
+.xsuite-auth-stage .form-eyebrow {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink);
+  opacity: 0.55;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.xsuite-auth-stage .form-eyebrow::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+.xsuite-auth-stage .form-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 1.0;
+  letter-spacing: -1.4px;
+  color: var(--ink);
+  margin: 18px 0 0;
+}
+.xsuite-auth-stage .form-title em { font-style: italic; }
+.xsuite-auth-stage .form-half.right .form-card .form-title { font-size: 48px; }
+
+.xsuite-auth-stage .form-sub {
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 380px;
+}
+.xsuite-auth-stage .form-sub b { color: var(--ink); font-weight: 700; }
+
+.xsuite-auth-stage .form-error {
+  margin-top: 16px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-left: 2px solid var(--accent-deep);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.4px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.xsuite-auth-stage .fields {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.xsuite-auth-stage .field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.xsuite-auth-stage .field { position: relative; }
+.xsuite-auth-stage .field-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink);
+  opacity: 0.55;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.xsuite-auth-stage .field-label .hint {
+  color: var(--ink);
+  opacity: 0.85;
+  font-weight: 700;
+  cursor: pointer;
+}
+.xsuite-auth-stage .field-input,
+.xsuite-auth-stage .field-select {
+  width: 100%;
+  appearance: none;
+  outline: none;
+  border: none;
+  border-bottom: 1.5px solid var(--ink);
+  background: transparent;
+  padding: 8px 0;
+  font-family: var(--sans);
+  font-size: 16px;
+  color: var(--ink);
+  letter-spacing: -0.2px;
+  transition: border-color 220ms ease, background 220ms ease, padding 220ms ease;
+  border-radius: 0;
+}
+.xsuite-auth-stage .field-input::placeholder { color: var(--ink); opacity: 0.32; }
+.xsuite-auth-stage .field-input:focus,
+.xsuite-auth-stage .field-select:focus {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  padding: 8px;
+}
+.xsuite-auth-stage .field-input.mono { font-family: var(--mono); font-size: 14.5px; }
+
+.xsuite-auth-stage .field-select {
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: calc(100% - 14px) center, calc(100% - 8px) center;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 28px;
+}
+
+.xsuite-auth-stage .field.with-suffix .field-input { padding-right: 90px; }
+.xsuite-auth-stage .field-suffix {
+  position: absolute;
+  right: 0;
+  bottom: 9px;
+  pointer-events: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  opacity: 0.5;
+  letter-spacing: 0.3px;
+}
+
+.xsuite-auth-stage .reveal-btn {
+  position: absolute;
+  right: 0;
+  bottom: 6px;
+  padding: 4px 6px;
+  background: transparent;
+  border: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink);
+  opacity: 0.7;
+  letter-spacing: 1.2px;
+  cursor: pointer;
+}
+.xsuite-auth-stage .reveal-btn:hover { opacity: 1; }
+
+/* Role chips */
+.xsuite-auth-stage .chips { display: flex; gap: 8px; margin-top: 8px; }
+.xsuite-auth-stage .chip {
+  flex: 1;
+  text-align: center;
+  padding: 9px 8px;
+  border: 1.5px solid color-mix(in srgb, var(--ink) 35%, transparent);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink);
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  background: transparent;
+  cursor: pointer;
+  transition: all 180ms ease;
+  border-radius: 0;
+}
+.xsuite-auth-stage .chip.active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.xsuite-auth-stage .chip:hover:not(.active) {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+/* Plan chips */
+.xsuite-auth-stage .plan-chips {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.xsuite-auth-stage .plan-chip {
+  border: 1.5px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  padding: 10px 10px 12px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: all 180ms ease;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.xsuite-auth-stage .plan-chip.active {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+.xsuite-auth-stage .plan-chip:hover:not(.active) {
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+}
+.xsuite-auth-stage .plan-chip .plan-name {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0.85;
+}
+.xsuite-auth-stage .plan-chip .plan-price {
+  font-family: var(--serif);
+  font-size: 22px;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+}
+.xsuite-auth-stage .plan-chip .plan-per {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.1px;
+  color: var(--ink);
+  opacity: 0.55;
+  text-transform: uppercase;
+}
+
+.xsuite-auth-stage .strength {
+  margin-top: 6px;
+  display: flex;
+  gap: 4px;
+}
+.xsuite-auth-stage .strength-bar {
+  flex: 1;
+  height: 3px;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.xsuite-auth-stage .strength-bar.on { background: var(--accent-deep); }
+
+.xsuite-auth-stage .submit {
+  width: 100%;
+  margin-top: 28px;
+  padding: 16px 18px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  transition: transform 160ms ease, box-shadow 220ms ease, background 220ms ease;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+.xsuite-auth-stage .submit:hover { transform: translateY(-1px); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18); }
+.xsuite-auth-stage .submit:active { transform: translateY(0); }
+.xsuite-auth-stage .submit .arrow { transition: transform 200ms ease; }
+.xsuite-auth-stage .submit:hover .arrow { transform: translateX(4px); }
+.xsuite-auth-stage .submit.loading { background: var(--ink); pointer-events: none; }
+.xsuite-auth-stage .submit .spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(245, 235, 216, 0.3);
+  border-top-color: var(--paper);
+  animation: xsuiteAuthSpin 0.7s linear infinite;
+}
+@keyframes xsuiteAuthSpin { to { transform: rotate(360deg); } }
+
+.xsuite-auth-stage .options-row {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink);
+  opacity: 0.6;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.xsuite-auth-stage .keep { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.xsuite-auth-stage .keep .box {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--ink);
+  position: relative;
+  display: inline-block;
+}
+.xsuite-auth-stage .keep.on .box::after {
+  content: "";
+  position: absolute;
+  inset: 1.5px;
+  background: var(--ink);
+}
+
+.xsuite-auth-stage .swap-bar {
+  margin-top: 56px;
+  padding-top: 22px;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.xsuite-auth-stage .swap-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  opacity: 0.6;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.xsuite-auth-stage .swap-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.2px;
+  position: relative;
+}
+.xsuite-auth-stage .swap-btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1.5px;
+  background: var(--ink);
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+.xsuite-auth-stage .swap-btn:hover .swap-arrow { transform: translateX(4px); }
+.xsuite-auth-stage .form-signup .swap-btn:hover .swap-arrow { transform: translateX(-4px); }
+.xsuite-auth-stage .swap-arrow { display: inline-block; transition: transform 240ms ease; }
+
+/* — Stage header & footer — */
+.xsuite-auth-stage .top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 32px;
+  pointer-events: none;
+}
+.xsuite-auth-stage .top-bar .stamp {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink);
+  opacity: 0.55;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  pointer-events: auto;
+}
+
+.xsuite-auth-stage .bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 32px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink);
+  opacity: 0.5;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+/* — Entrance animation on first load — */
+@keyframes xsuiteAuthRise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.xsuite-auth-stage .form-card > * { animation: xsuiteAuthRise 600ms var(--swing-fast) both; }
+.xsuite-auth-stage .form-card > *:nth-child(2) { animation-delay: 80ms; }
+.xsuite-auth-stage .form-card > *:nth-child(3) { animation-delay: 120ms; }
+.xsuite-auth-stage .form-card > *:nth-child(4) { animation-delay: 160ms; }
+.xsuite-auth-stage .form-card > *:nth-child(5) { animation-delay: 200ms; }
+.xsuite-auth-stage .form-card > *:nth-child(6) { animation-delay: 240ms; }
+
+/* — Mobile: stack the active form full-width, hide the inactive one. — */
+@media (max-width: 900px) {
+  .xsuite-auth-stage {
+    min-height: 100vh;
+    height: auto;
+    overflow-y: auto;
+  }
+  .xsuite-auth-stage .form-half {
+    position: relative;
+    width: 100%;
+    padding: 96px 24px 48px;
+  }
+  .xsuite-auth-stage .form-half.left,
+  .xsuite-auth-stage .form-half.right { left: auto; right: auto; }
+  .xsuite-auth-stage[data-mode="signin"] .form-signup,
+  .xsuite-auth-stage[data-mode="signup"] .form-signin {
+    display: none;
+  }
+  .xsuite-auth-stage .promo { display: none; }
+  .xsuite-auth-stage .display { font-size: 48px; letter-spacing: -1.4px; }
+  .xsuite-auth-stage .form-title { font-size: 40px !important; }
+  .xsuite-auth-stage .swap-bar { flex-wrap: wrap; }
+}
+
+/* — Reduced motion: snap, don't swing. — */
+@media (prefers-reduced-motion: reduce) {
+  .xsuite-auth-stage .promo,
+  .xsuite-auth-stage .form-half,
+  .xsuite-auth-stage .promo-content,
+  .xsuite-auth-stage .submit,
+  .xsuite-auth-stage .submit .arrow,
+  .xsuite-auth-stage .swap-arrow {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  .xsuite-auth-stage .ticker-roller,
+  .xsuite-auth-stage .ticker-tag::before,
+  .xsuite-auth-stage .form-card > * {
+    animation: none !important;
+  }
+  .xsuite-auth-stage .form-card > * { opacity: 1; transform: none; }
+}
