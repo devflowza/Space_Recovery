@@ -369,7 +369,12 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
       const primaryDevice = devices[0];
       const customerName = customers.find(c => c.id === formData.customer_id)?.customer_name || 'Customer';
 
+      if (!profile?.tenant_id) {
+        throw new Error('No active tenant — please sign in again.');
+      }
+
       const caseData = {
+        tenant_id: profile.tenant_id,
         case_number: caseNumber,
         customer_id: formData.customer_id,
         subject: `Case for ${customerName}`,
