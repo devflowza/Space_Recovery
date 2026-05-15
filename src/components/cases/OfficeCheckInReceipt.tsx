@@ -12,28 +12,31 @@ interface OfficeCheckInReceiptProps {
 
 interface CaseData {
   id: string;
-  case_no: string;
-  title: string;
-  priority: string;
-  status: string;
+  case_no: string | null;
+  title: string | null;
+  priority: string | null;
+  status: string | null;
   client_reference: string | null;
   created_at: string;
-  customer_id: string;
+  customer_id: string | null;
   contact_id: string | null;
-  service_type_id: string;
+  service_type_id: string | null;
   customer?: {
     id: string;
-    customer_number: string;
+    customer_number: string | null;
     customer_name: string;
     email: string | null;
     mobile_number: string | null;
-    company_id: string | null;
   };
   contact?: {
     id: string;
     customer_name: string;
     mobile_number: string | null;
     email: string | null;
+  };
+  company?: {
+    name: string;
+    company_name: string | null;
   };
   service_type?: {
     id: string;
@@ -44,8 +47,8 @@ interface CaseData {
     device_type: { name: string } | null;
     brand: { name: string } | null;
     capacity: { name: string } | null;
-    serial_no: string | null;
-    device_problem: string | null;
+    serial_number: string | null;
+    symptoms: string | null;
   }>;
   created_by_profile?: {
     id: string;
@@ -117,29 +120,36 @@ export const OfficeCheckInReceipt: React.FC<OfficeCheckInReceiptProps> = ({
         if (settingsResult.error) throw settingsResult.error;
 
         const caseInfo = caseResult.data;
-        setCompanySettings(settingsResult.data);
+        setCompanySettings((settingsResult.data ?? null) as unknown as CompanySettings | null);
 
-        const [customerResult, serviceTypeResult, devicesResult, createdByResult] = await Promise.all([
+        const [customerResult, companyResult, serviceTypeResult, devicesResult, createdByResult] = await Promise.all([
           caseInfo.customer_id
             ? supabase
                 .from('customers_enhanced')
-                .select('id, customer_number, customer_name, email, mobile_number, company_id')
+                .select('id, customer_number, customer_name, email, mobile_number')
                 .eq('id', caseInfo.customer_id)
-                .single()
+                .maybeSingle()
+            : Promise.resolve({ data: null }),
+          caseInfo.company_id
+            ? supabase
+                .from('companies')
+                .select('name, company_name')
+                .eq('id', caseInfo.company_id)
+                .maybeSingle()
             : Promise.resolve({ data: null }),
           caseInfo.service_type_id
             ? supabase
                 .from('catalog_service_types')
                 .select('id, name')
                 .eq('id', caseInfo.service_type_id)
-                .single()
+                .maybeSingle()
             : Promise.resolve({ data: null }),
           supabase
             .from('case_devices')
             .select(`
               id,
-              serial_no,
-              device_problem,
+              serial_number,
+              symptoms,
               device_type_id,
               brand_id,
               capacity_id
@@ -150,31 +160,31 @@ export const OfficeCheckInReceipt: React.FC<OfficeCheckInReceiptProps> = ({
                 .from('profiles')
                 .select('id, full_name')
                 .eq('id', caseInfo.created_by)
-                .single()
+                .maybeSingle()
             : Promise.resolve({ data: null }),
         ]);
 
-        let contact = null;
+        let contact: CaseData['contact'] = undefined;
         if (caseInfo.contact_id) {
           const contactResult = await supabase
             .from('customers_enhanced')
             .select('id, customer_name, mobile_number, email')
             .eq('id', caseInfo.contact_id)
-            .single();
-          contact = contactResult.data;
+            .maybeSingle();
+          contact = contactResult.data ?? undefined;
         }
 
         const devicesWithDetails = await Promise.all(
           (devicesResult.data || []).map(async (device) => {
             const [deviceTypeResult, brandResult, capacityResult] = await Promise.all([
               device.device_type_id
-                ? supabase.from('catalog_device_types').select('name').eq('id', device.device_type_id).single()
+                ? supabase.from('catalog_device_types').select('name').eq('id', device.device_type_id).maybeSingle()
                 : Promise.resolve({ data: null }),
               device.brand_id
-                ? supabase.from('catalog_device_brands').select('name').eq('id', device.brand_id).single()
+                ? supabase.from('catalog_device_brands').select('name').eq('id', device.brand_id).maybeSingle()
                 : Promise.resolve({ data: null }),
               device.capacity_id
-                ? supabase.from('catalog_device_capacities').select('name').eq('id', device.capacity_id).single()
+                ? supabase.from('catalog_device_capacities').select('name').eq('id', device.capacity_id).maybeSingle()
                 : Promise.resolve({ data: null }),
             ]);
 
@@ -189,11 +199,12 @@ export const OfficeCheckInReceipt: React.FC<OfficeCheckInReceiptProps> = ({
 
         setCaseData({
           ...caseInfo,
-          customer: customerResult.data,
+          customer: customerResult.data ?? undefined,
           contact,
-          service_type: serviceTypeResult.data,
+          company: companyResult.data ?? undefined,
+          service_type: serviceTypeResult.data ?? undefined,
           devices: devicesWithDetails,
-          created_by_profile: createdByResult.data,
+          created_by_profile: createdByResult.data ?? undefined,
         });
       } catch (error) {
         logger.error('Error fetching receipt data:', error);
@@ -293,7 +304,7 @@ export const OfficeCheckInReceipt: React.FC<OfficeCheckInReceiptProps> = ({
           </h3>
           <div className="space-y-1 text-xs">
             <div className="flex"><span className="text-slate-500 w-20">{t('nameLabel', 'Name:')}</span><span className="text-slate-800">{caseData.customer?.customer_name || '-'}</span></div>
-            <div className="flex"><span className="text-slate-500 w-20">{t('companyLabel', 'Company:')}</span><span className="text-slate-800">{caseData.customer?.company_id || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('companyLabel', 'Company:')}</span><span className="text-slate-800">{caseData.company?.company_name || caseData.company?.name || '-'}</span></div>
             <div className="flex"><span className="text-slate-500 w-20">{t('phoneLabel', 'Phone:')}</span><span className="text-slate-800">{caseData.contact?.mobile_number || caseData.customer?.mobile_number || '-'}</span></div>
             <div className="flex"><span className="text-slate-500 w-20">{t('emailLabel', 'Email:')}</span><span className="text-slate-800 break-all">{caseData.customer?.email || '-'}</span></div>
             <div className="flex"><span className="text-slate-500 w-20">{t('clientRefLabel', 'Client Ref:')}</span><span className="text-slate-800">{caseData.client_reference || '-'}</span></div>
@@ -331,7 +342,7 @@ export const OfficeCheckInReceipt: React.FC<OfficeCheckInReceiptProps> = ({
                     </div>
                   </td>
                   <td className="border border-slate-200 px-2 py-1.5 text-slate-800">{device.brand?.name || '-'}</td>
-                  <td className="border border-slate-200 px-2 py-1.5 text-slate-800 font-mono">{device.serial_no || '-'}</td>
+                  <td className="border border-slate-200 px-2 py-1.5 text-slate-800 font-mono">{device.serial_number || '-'}</td>
                   <td className="border border-slate-200 px-2 py-1.5 text-center text-slate-800">{device.capacity?.name || '-'}</td>
                   <td className="border border-slate-200 px-2 py-1.5">
                     {index === 0 ? (
