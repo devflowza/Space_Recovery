@@ -13,12 +13,38 @@ import {
 } from '../../lib/financialReportsService';
 import { TrendingUp, DollarSign, PieChart, BarChart3, Plus, Search, Users, Briefcase } from 'lucide-react';
 
+type RevenueInvoiceRow = {
+  id: string;
+  invoice_number: string | null;
+  invoice_date: string | null;
+  total_amount: number | null;
+  amount_paid: number | null;
+  status: string | null;
+  customer: { customer_name: string } | null;
+};
+
+type CustomerRevenueRow = {
+  id: string;
+  name: string;
+  email: string;
+  amount: number;
+  count: number;
+};
+
+type CaseRevenueRow = {
+  id: string;
+  caseNo: string;
+  title: string;
+  revenue: number;
+  expenses: number;
+  profit: number;
+};
+
 export const RevenueDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { formatCurrency } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState<string>('month');
-  const [_showFilters, _setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'invoices' | 'customers' | 'cases'>('invoices');
 
   const getDateRange = () => {
@@ -48,7 +74,7 @@ export const RevenueDashboard: React.FC = () => {
 
   const dateRange = useMemo(() => getDateRange(), [dateFilter]);
 
-  const { data: revenueData = [], isLoading } = useQuery({
+  const { data: revenueData = [], isLoading } = useQuery<RevenueInvoiceRow[]>({
     queryKey: ['revenue_data', dateFilter],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -66,23 +92,23 @@ export const RevenueDashboard: React.FC = () => {
         .order('invoice_date', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as RevenueInvoiceRow[];
     },
   });
 
-  const { data: customerRevenue = [] } = useQuery({
+  const { data: customerRevenue = [] } = useQuery<CustomerRevenueRow[]>({
     queryKey: ['revenue_by_customer', dateFilter],
     queryFn: () => generateRevenueByCustomerReport(dateRange.from, dateRange.to),
     enabled: viewMode === 'customers',
   });
 
-  const { data: caseRevenue = [] } = useQuery({
+  const { data: caseRevenue = [] } = useQuery<CaseRevenueRow[]>({
     queryKey: ['revenue_by_case', dateFilter],
     queryFn: () => generateRevenueByCaseReport(dateRange.from, dateRange.to),
     enabled: viewMode === 'cases',
   });
 
-  const { data: prevPeriodRevenue = 0 } = useQuery({
+  const { data: prevPeriodRevenue = 0 } = useQuery<number>({
     queryKey: ['prev_period_revenue', dateFilter],
     queryFn: async () => {
       const periodLength = dateFilter === 'year' ? 365 : dateFilter === 'month' ? 30 : dateFilter === 'week' ? 7 : 1;
@@ -93,14 +119,14 @@ export const RevenueDashboard: React.FC = () => {
         .select('amount_paid')
         .gte('invoice_date', prevStart.toISOString().split('T')[0])
         .lt('invoice_date', prevEnd.toISOString().split('T')[0]);
-      return (data || []).reduce((sum: number, inv: { amount_paid?: number }) => sum + (inv.amount_paid || 0), 0);
+      return (data || []).reduce<number>((sum, inv) => sum + (inv.amount_paid ?? 0), 0);
     },
   });
 
-  const totalRevenue = revenueData.reduce((sum: number, inv: { amount_paid?: number }) => sum + (inv.amount_paid || 0), 0);
-  const thisMonth = revenueData.filter((inv: { invoice_date: string }) => new Date(inv.invoice_date).getMonth() === new Date().getMonth());
-  const thisMonthRevenue = thisMonth.reduce((sum: number, inv: { amount_paid?: number }) => sum + (inv.amount_paid || 0), 0);
-  const paidInvoices = revenueData.filter((inv: { status?: string }) => inv.status === 'paid');
+  const totalRevenue = revenueData.reduce<number>((sum, inv) => sum + (inv.amount_paid ?? 0), 0);
+  const thisMonth = revenueData.filter((inv) => inv.invoice_date !== null && new Date(inv.invoice_date).getMonth() === new Date().getMonth());
+  const thisMonthRevenue = thisMonth.reduce<number>((sum, inv) => sum + (inv.amount_paid ?? 0), 0);
+  const paidInvoices = revenueData.filter((inv) => inv.status === 'paid');
   const growthRate = prevPeriodRevenue > 0 ? ((totalRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100 : 0;
 
   if (isLoading) {
@@ -282,22 +308,24 @@ export const RevenueDashboard: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {revenueData
-                    .filter((inv: { invoice_number: string; customer?: { customer_name?: string } }) =>
-                      searchTerm === '' ||
-                      inv.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      inv.customer?.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((invoice: { id: string; invoice_number: string; invoice_date: string; customer?: { customer_name?: string }; total_amount?: number; amount_paid?: number; status?: string }) => (
+                    .filter((inv) => {
+                      if (searchTerm === '') return true;
+                      const needle = searchTerm.toLowerCase();
+                      const numberMatches = (inv.invoice_number ?? '').toLowerCase().includes(needle);
+                      const customerMatches = (inv.customer?.customer_name ?? '').toLowerCase().includes(needle);
+                      return numberMatches || customerMatches;
+                    })
+                    .map((invoice) => (
                       <tr key={invoice.id} onClick={() => navigate(`/invoices/${invoice.id}`)} className="hover:bg-slate-50 transition-colors cursor-pointer">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="font-semibold text-primary">{invoice.invoice_number}</span>
+                          <span className="font-semibold text-primary">{invoice.invoice_number ?? '-'}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{formatDate(invoice.invoice_date)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{invoice.invoice_date ? formatDate(invoice.invoice_date) : '-'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{invoice.customer?.customer_name || 'N/A'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 text-right">{formatCurrency(invoice.total_amount || 0)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-success text-right">{formatCurrency(invoice.amount_paid || 0)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 text-right">{formatCurrency(invoice.total_amount ?? 0)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-success text-right">{formatCurrency(invoice.amount_paid ?? 0)}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant={invoice.status === 'paid' ? 'success' : 'secondary'} size="sm">{invoice.status}</Badge>
+                          <Badge variant={invoice.status === 'paid' ? 'success' : 'secondary'} size="sm">{invoice.status ?? '-'}</Badge>
                         </td>
                       </tr>
                     ))}
@@ -333,8 +361,8 @@ export const RevenueDashboard: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  customerRevenue.map((customer: { id: string; name: string; email?: string; count: number; amount: number }) => {
-                    const totalCustomerRevenue = customerRevenue.reduce((sum: number, c: { amount: number }) => sum + c.amount, 0);
+                  customerRevenue.map((customer) => {
+                    const totalCustomerRevenue = customerRevenue.reduce<number>((sum, c) => sum + c.amount, 0);
                     const percentage = totalCustomerRevenue > 0 ? (customer.amount / totalCustomerRevenue) * 100 : 0;
                     return (
                       <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
@@ -392,7 +420,7 @@ export const RevenueDashboard: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  caseRevenue.map((c: { id: string; caseNo: string; title?: string; revenue: number; expenses: number; profit: number }) => (
+                  caseRevenue.map((c) => (
                     <tr key={c.id} onClick={() => navigate(`/cases/${c.id}`)} className="hover:bg-slate-50 transition-colors cursor-pointer">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="font-semibold text-primary">{c.caseNo}</span>
