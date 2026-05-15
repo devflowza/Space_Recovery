@@ -129,7 +129,7 @@ export function buildCustomerCopyDocument(
   const labelWidth = isBilingual ? 110 : 55;
 
   const customerInfoContent: object[] = [
-    createInfoRow(t('nameLabel', 'Name:'), caseData.customer_name || caseData.contact_name, labelWidth),
+    createInfoRow(t('nameLabel', 'Name:'), caseData.customer?.customer_name || caseData.contact_name, labelWidth),
     createInfoRow(t('companyLabel', 'Company:'), caseData.company?.company_name, labelWidth),
     createInfoRow(t('phoneLabel', 'Phone:'), caseData.customer?.mobile_number || caseData.customer?.phone_number || caseData.contact_phone, labelWidth),
     createInfoRow(t('emailLabel', 'Email:'), caseData.customer?.email || caseData.contact_email, labelWidth),
@@ -160,12 +160,12 @@ export function buildCustomerCopyDocument(
     columns: [
       {
         width: '50%',
-        stack: [createBilingualInfoBox(caseDetailsTitle, null, caseDetailsContent, fileIconSvg)],
+        stack: [createBilingualInfoBox(caseDetailsTitle, null, caseDetailsContent, fileIconSvg) as Content],
       },
       { width: 8, text: '' },
       {
         width: '50%',
-        stack: [createBilingualInfoBox(customerInfoTitle, null, customerInfoContent, userIconSvg)],
+        stack: [createBilingualInfoBox(customerInfoTitle, null, customerInfoContent, userIconSvg) as Content],
       },
     ],
     margin: [0, 0, 0, 8],
@@ -269,7 +269,7 @@ export function buildCustomerCopyDocument(
   const customerAcknowledgementTextArabic = `بتوقيعي، أؤكد أنني المالك أو الممثل المفوض للجهاز وأفوض ${legalName} (${companyName}) بالمتابعة في الخدمة. أقر بأن الشروط والأحكام تنطبق على هذا التعامل. نسخة مطبوعة من الشروط والأحكام متاحة في الاستقبال عند الطلب.`;
 
   const englishAcknowledgementTitle = 'Customer Acknowledgement';
-  const englishContent: object[] = [
+  const englishContent: Content[] = [
     { text: englishAcknowledgementTitle, bold: true, fontSize: 9, margin: [0, 0, 0, 3] },
     { text: customerAcknowledgementTextEnglish, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.2 },
   ];
@@ -281,14 +281,14 @@ export function buildCustomerCopyDocument(
       color: PDF_COLORS.primary,
       link: termsConditionsUrl,
       margin: [0, 3, 0, 0],
-    } as object);
+    });
   }
 
   const translatedAcknowledgementTitle = isBilingual
     ? (t('customerAcknowledgement', '').split(' | ')[1] || null)
     : null;
 
-  const arabicContent: object[] = isBilingual && translatedAcknowledgementTitle ? [
+  const arabicContent: Content[] = isBilingual && translatedAcknowledgementTitle ? [
     { text: translatedAcknowledgementTitle, bold: true, fontSize: 9, alignment: 'right', margin: [0, 0, 0, 3] },
     { text: customerAcknowledgementTextArabic, fontSize: 7, color: PDF_COLORS.textLight, alignment: 'right', lineHeight: 1.2 },
   ] : [];
@@ -301,7 +301,7 @@ export function buildCustomerCopyDocument(
       link: termsConditionsUrl,
       alignment: 'right',
       margin: [0, 3, 0, 0],
-    } as object);
+    });
   }
 
   const customerAcknowledgementSection: Content = {
@@ -332,7 +332,7 @@ export function buildCustomerCopyDocument(
     margin: [0, 8, 0, 6],
   };
 
-  const tagline = companySettings.branding?.brand_tagline || null;
+  const tagline = companySettings.branding?.brand_tagline || undefined;
 
   return {
     pageSize: 'A4',
@@ -424,8 +424,9 @@ export function buildCustomerCopyDocument(
           margin: [35, 0, 35, 25],
         };
       } else {
+        const socialFooter = createSocialFooter(companySettings.online_presence, tagline) as { stack: Content[]; margin: [number, number, number, number] };
         return {
-          stack: createSocialFooter(companySettings.online_presence, tagline).stack,
+          stack: socialFooter.stack,
           margin: [35, 10, 35, 25],
         };
       }
@@ -433,7 +434,7 @@ export function buildCustomerCopyDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 55): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 55): object {
   return {
     columns: [
       { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },
