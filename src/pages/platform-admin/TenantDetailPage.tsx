@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, AlertCircle, Clock } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Clock, Activity } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -31,7 +31,7 @@ export const TenantDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { showSuccess, showError } = useToast();
+  const { success: showSuccess, error: showError } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
   const [showReactivateDialog, setShowReactivateDialog] = useState(false);
@@ -91,7 +91,7 @@ export const TenantDetailPage: React.FC = () => {
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'active': return 'success';
-      case 'suspended': return 'error';
+      case 'suspended': return 'danger';
       case 'pending_approval': return 'warning';
       default: return 'default';
     }
@@ -101,24 +101,24 @@ export const TenantDetailPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/platform-admin/tenants')}>
+          <Button variant="ghost" onClick={() => navigate('/platform-admin/tenants')}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">{tenant.company_name}</h1>
+            <h1 className="text-3xl font-bold text-slate-900">{tenant.name}</h1>
             <div className="flex items-center gap-3 mt-2">
               <Badge variant={getStatusBadgeVariant(tenant.status)}>
-                {tenant.status?.replace('_', ' ').toUpperCase()}
+                {tenant.status.replace('_', ' ').toUpperCase()}
               </Badge>
               {tenant.health && (
                 <span className="text-sm text-slate-500 flex items-center gap-1">
                   <Activity className="w-4 h-4" />
-                  Health Score: {tenant.health.health_score}
+                  Health Score: {tenant.health.health_score ?? 0}
                 </span>
               )}
               <span className="text-sm text-slate-500 flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                Last active {tenant.last_activity_at ? formatDistanceToNow(new Date(tenant.last_activity_at)) : 'never'} ago
+                Last active {formatDistanceToNow(new Date(tenant.updated_at))} ago
               </span>
             </div>
           </div>
@@ -127,17 +127,17 @@ export const TenantDetailPage: React.FC = () => {
         <div className="flex items-center gap-2">
           {tenant.status === 'active' ? (
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setShowSuspendDialog(true)}
-              className="border-danger/40 text-danger hover:bg-danger-muted"
+              className="border border-danger/40 text-danger hover:bg-danger-muted"
             >
               Suspend Tenant
             </Button>
           ) : tenant.status === 'suspended' ? (
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setShowReactivateDialog(true)}
-              className="border-success/40 text-success hover:bg-success-muted"
+              className="border border-success/40 text-success hover:bg-success-muted"
             >
               Reactivate Tenant
             </Button>
@@ -187,7 +187,7 @@ export const TenantDetailPage: React.FC = () => {
         onClose={() => setShowSuspendDialog(false)}
         onConfirm={() => suspendMutation.mutate()}
         title="Suspend Tenant"
-        message={`Are you sure you want to suspend ${tenant.company_name}? This will immediately revoke access to the platform.`}
+        message={`Are you sure you want to suspend ${tenant.name}? This will immediately revoke access to the platform.`}
         confirmText="Suspend"
         variant="danger"
       />
@@ -197,9 +197,9 @@ export const TenantDetailPage: React.FC = () => {
         onClose={() => setShowReactivateDialog(false)}
         onConfirm={() => reactivateMutation.mutate()}
         title="Reactivate Tenant"
-        message={`Are you sure you want to reactivate ${tenant.company_name}? This will restore full access to the platform.`}
+        message={`Are you sure you want to reactivate ${tenant.name}? This will restore full access to the platform.`}
         confirmText="Reactivate"
-        variant="success"
+        variant="info"
       />
     </div>
   );
