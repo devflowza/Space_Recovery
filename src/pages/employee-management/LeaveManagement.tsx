@@ -3,7 +3,7 @@ import { CalendarDays, Plus, RefreshCw, Search, Check, X, Trash2, Users, Clock, 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO, addDays } from 'date-fns';
 import { leaveService } from '../../lib/leaveService';
-import type { LeaveRequestWithDetails, LeaveBalanceWithDetails } from '../../lib/leaveService';
+import type { LeaveRequestWithDetails } from '../../lib/leaveService';
 import { leaveKeys } from '../../lib/queryKeys';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -50,7 +50,7 @@ interface RequestLeaveModalProps {
   onClose: () => void;
   employees: Employee[];
   leaveTypes: LeaveType[];
-  currentUserId: string;
+  tenantId: string;
   isAdmin: boolean;
   onSuccess: () => void;
 }
@@ -60,11 +60,11 @@ const RequestLeaveModal: React.FC<RequestLeaveModalProps> = ({
   onClose,
   employees,
   leaveTypes,
-  currentUserId: _currentUserId,
+  tenantId,
   isAdmin,
   onSuccess,
 }) => {
-  const { addToast } = useToast();
+  const toast = useToast();
   const [form, setForm] = useState({
     employee_id: '',
     leave_type_id: '',
@@ -82,26 +82,31 @@ const RequestLeaveModal: React.FC<RequestLeaveModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.employee_id || !form.leave_type_id || !form.start_date || !form.end_date) {
-      addToast({ type: 'error', message: 'Please fill in all required fields' });
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    if (!tenantId) {
+      toast.error('Tenant context missing — please reload');
       return;
     }
     setSubmitting(true);
     try {
       await leaveService.createLeaveRequest({
+        tenant_id: tenantId,
         employee_id: form.employee_id,
         leave_type_id: form.leave_type_id,
         start_date: form.start_date,
         end_date: form.end_date,
-        days_requested: daysRequested,
+        days: daysRequested,
         reason: form.reason || null,
         status: 'pending',
       });
-      addToast({ type: 'success', message: 'Leave request submitted successfully' });
+      toast.success('Leave request submitted successfully');
       setForm({ employee_id: '', leave_type_id: '', start_date: '', end_date: '', reason: '' });
       onSuccess();
       onClose();
     } catch {
-      addToast({ type: 'error', message: 'Failed to submit leave request' });
+      toast.error('Failed to submit leave request');
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +145,7 @@ const RequestLeaveModal: React.FC<RequestLeaveModalProps> = ({
             <option value="">Select leave type...</option>
             {leaveTypes.map(lt => (
               <option key={lt.id} value={lt.id}>
-                {lt.name} {lt.is_paid ? '(Paid)' : '(Unpaid)'} — {lt.days_per_year ?? 0} days/year
+                {lt.name} {lt.is_paid ? '(Paid)' : '(Unpaid)'} — {lt.default_days ?? 0} days/year
               </option>
             ))}
           </select>
@@ -220,7 +225,7 @@ const ApproveRejectModal: React.FC<ApproveRejectModalProps> = ({
   currentUserId,
   onSuccess,
 }) => {
-  const { addToast } = useToast();
+  const toast = useToast();
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -231,16 +236,16 @@ const ApproveRejectModal: React.FC<ApproveRejectModalProps> = ({
     try {
       if (action === 'approve') {
         await leaveService.approveLeaveRequest(request.id, currentUserId, notes || undefined);
-        addToast({ type: 'success', message: 'Leave request approved' });
+        toast.success('Leave request approved');
       } else {
         await leaveService.rejectLeaveRequest(request.id, currentUserId, notes || undefined);
-        addToast({ type: 'success', message: 'Leave request rejected' });
+        toast.success('Leave request rejected');
       }
       setNotes('');
       onSuccess();
       onClose();
     } catch {
-      addToast({ type: 'error', message: `Failed to ${action} request` });
+      toast.error(`Failed to ${action} request`);
     } finally {
       setSubmitting(false);
     }
@@ -261,7 +266,7 @@ const ApproveRejectModal: React.FC<ApproveRejectModalProps> = ({
               {request.employee?.first_name} {request.employee?.last_name}
             </p>
             <p className="text-sm text-slate-600 mt-1">
-              {request.leave_type?.name} — {request.days_requested} day{(request.days_requested ?? 0) !== 1 ? 's' : ''}
+              {request.leave_type?.name} — {request.days} day{(request.days ?? 0) !== 1 ? 's' : ''}
             </p>
             <p className="text-xs text-slate-500 mt-1">
               {request.start_date} to {request.end_date}
@@ -307,11 +312,11 @@ interface LeaveTypeFormModalProps {
 }
 
 const LeaveTypeFormModal: React.FC<LeaveTypeFormModalProps> = ({ isOpen, onClose, editingType, onSuccess }) => {
-  const { addToast } = useToast();
+  const toast = useToast();
   const [form, setForm] = useState({
     name: editingType?.name ?? '',
     description: editingType?.description ?? '',
-    days_per_year: editingType?.days_per_year ?? 0,
+    default_days: editingType?.default_days ?? 0,
     is_paid: editingType?.is_paid ?? true,
     is_active: editingType?.is_active ?? true,
   });
@@ -321,7 +326,7 @@ const LeaveTypeFormModal: React.FC<LeaveTypeFormModalProps> = ({ isOpen, onClose
     setForm({
       name: editingType?.name ?? '',
       description: editingType?.description ?? '',
-      days_per_year: editingType?.days_per_year ?? 0,
+      default_days: editingType?.default_days ?? 0,
       is_paid: editingType?.is_paid ?? true,
       is_active: editingType?.is_active ?? true,
     });
@@ -330,22 +335,22 @@ const LeaveTypeFormModal: React.FC<LeaveTypeFormModalProps> = ({ isOpen, onClose
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      addToast({ type: 'error', message: 'Name is required' });
+      toast.error('Name is required');
       return;
     }
     setSubmitting(true);
     try {
       if (editingType) {
         await leaveService.updateLeaveType(editingType.id, form);
-        addToast({ type: 'success', message: 'Leave type updated' });
+        toast.success('Leave type updated');
       } else {
         await leaveService.createLeaveType(form);
-        addToast({ type: 'success', message: 'Leave type created' });
+        toast.success('Leave type created');
       }
       onSuccess();
       onClose();
     } catch {
-      addToast({ type: 'error', message: 'Failed to save leave type' });
+      toast.error('Failed to save leave type');
     } finally {
       setSubmitting(false);
     }
@@ -381,8 +386,8 @@ const LeaveTypeFormModal: React.FC<LeaveTypeFormModalProps> = ({ isOpen, onClose
           <label className="block text-sm font-medium text-slate-700 mb-1">Days Per Year</label>
           <input
             type="number"
-            value={form.days_per_year}
-            onChange={e => setForm(p => ({ ...p, days_per_year: Number(e.target.value) }))}
+            value={form.default_days}
+            onChange={e => setForm(p => ({ ...p, default_days: Number(e.target.value) }))}
             min={0}
             max={365}
             className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -432,6 +437,7 @@ interface AllocateBalanceModalProps {
   onClose: () => void;
   employees: Employee[];
   leaveTypes: LeaveType[];
+  tenantId: string;
   onSuccess: () => void;
 }
 
@@ -440,39 +446,45 @@ const AllocateBalanceModal: React.FC<AllocateBalanceModalProps> = ({
   onClose,
   employees,
   leaveTypes,
+  tenantId,
   onSuccess,
 }) => {
-  const { addToast } = useToast();
+  const toast = useToast();
   const [form, setForm] = useState({
     employee_id: '',
     leave_type_id: '',
     year: CURRENT_YEAR,
-    allocated_days: 0,
+    total_days: 0,
   });
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.employee_id || !form.leave_type_id) {
-      addToast({ type: 'error', message: 'Please select employee and leave type' });
+      toast.error('Please select employee and leave type');
+      return;
+    }
+    if (!tenantId) {
+      toast.error('Tenant context missing — please reload');
       return;
     }
     setSubmitting(true);
     try {
       await leaveService.upsertLeaveBalance({
+        tenant_id: tenantId,
         employee_id: form.employee_id,
         leave_type_id: form.leave_type_id,
         year: form.year,
-        allocated_days: form.allocated_days,
+        total_days: form.total_days,
         used_days: 0,
-        remaining_days: form.allocated_days,
+        remaining_days: form.total_days,
       });
-      addToast({ type: 'success', message: 'Leave balance allocated' });
-      setForm({ employee_id: '', leave_type_id: '', year: CURRENT_YEAR, allocated_days: 0 });
+      toast.success('Leave balance allocated');
+      setForm({ employee_id: '', leave_type_id: '', year: CURRENT_YEAR, total_days: 0 });
       onSuccess();
       onClose();
     } catch {
-      addToast({ type: 'error', message: 'Failed to allocate balance' });
+      toast.error('Failed to allocate balance');
     } finally {
       setSubmitting(false);
     }
@@ -529,8 +541,8 @@ const AllocateBalanceModal: React.FC<AllocateBalanceModalProps> = ({
             <label className="block text-sm font-medium text-slate-700 mb-1">Days Allocated</label>
             <input
               type="number"
-              value={form.allocated_days}
-              onChange={e => setForm(p => ({ ...p, allocated_days: Number(e.target.value) }))}
+              value={form.total_days}
+              onChange={e => setForm(p => ({ ...p, total_days: Number(e.target.value) }))}
               min={0}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
@@ -552,7 +564,7 @@ type TabId = 'requests' | 'balances' | 'types';
 
 export const LeaveManagement: React.FC = () => {
   const { profile } = useAuth();
-  const { addToast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const isAdmin = profile?.role === 'admin' || profile?.role === 'hr';
 
@@ -610,12 +622,12 @@ export const LeaveManagement: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => leaveService.deleteLeaveRequest(id),
     onSuccess: () => {
-      addToast({ type: 'success', message: 'Leave request deleted' });
+      toast.success('Leave request deleted');
       queryClient.invalidateQueries({ queryKey: leaveKeys.all });
       setDeleteConfirmId(null);
     },
     onError: () => {
-      addToast({ type: 'error', message: 'Failed to delete request' });
+      toast.error('Failed to delete request');
     },
   });
 
@@ -930,8 +942,8 @@ export const LeaveManagement: React.FC = () => {
                             <div className="text-xs text-slate-400">to {req.end_date}</div>
                           </td>
                           <td className="py-3 px-4">
-                            <span className="font-semibold text-slate-900">{req.days_requested ?? 0}</span>
-                            <span className="text-slate-500 text-xs ml-1">day{(req.days_requested ?? 0) !== 1 ? 's' : ''}</span>
+                            <span className="font-semibold text-slate-900">{req.days ?? 0}</span>
+                            <span className="text-slate-500 text-xs ml-1">day{(req.days ?? 0) !== 1 ? 's' : ''}</span>
                           </td>
                           <td className="py-3 px-4 max-w-[180px]">
                             <span className="text-slate-600 truncate block" title={req.reason ?? ''}>
@@ -1037,7 +1049,7 @@ export const LeaveManagement: React.FC = () => {
                     </thead>
                     <tbody>
                       {filteredBalances.map(bal => {
-                        const allocated = bal.allocated_days ?? 0;
+                        const allocated = bal.total_days ?? 0;
                         const used = bal.used_days ?? 0;
                         const remaining = bal.remaining_days ?? (allocated - used);
                         const pct = allocated > 0 ? Math.min(100, Math.round((used / allocated) * 100)) : 0;
@@ -1150,7 +1162,7 @@ export const LeaveManagement: React.FC = () => {
                       )}
                       <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
                         <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-sm font-semibold text-slate-800">{lt.days_per_year ?? 0}</span>
+                        <span className="text-sm font-semibold text-slate-800">{lt.default_days ?? 0}</span>
                         <span className="text-xs text-slate-500">days per year</span>
                       </div>
                     </div>
@@ -1167,7 +1179,7 @@ export const LeaveManagement: React.FC = () => {
         onClose={() => setShowRequestModal(false)}
         employees={employees}
         leaveTypes={activeLeaveTypes}
-        currentUserId={profile?.id ?? ''}
+        tenantId={profile?.tenant_id ?? ''}
         isAdmin={isAdmin}
         onSuccess={invalidateAll}
       />
@@ -1193,6 +1205,7 @@ export const LeaveManagement: React.FC = () => {
         onClose={() => setShowAllocateModal(false)}
         employees={employees}
         leaveTypes={leaveTypes}
+        tenantId={profile?.tenant_id ?? ''}
         onSuccess={invalidateAll}
       />
     </div>
