@@ -20,64 +20,60 @@ import {
 import { formatDate } from '../../lib/format';
 import { uploadCustomerProfilePhoto, deleteCustomerProfilePhoto } from '../../lib/fileStorageService';
 import { generatePortalLoginUrl, generateCustomerPortalCredentialsText } from '../../lib/portalUrlService';
-import { useAuth } from '../../contexts/AuthContext';
+import { generateSecurePassword } from '../../lib/passwordUtils';
 import { CustomerPurchasesTab } from '../../components/customers/CustomerPurchasesTab';
+
+type TabId = 'overview' | 'cases' | 'financial' | 'communications' | 'purchases';
 
 interface Customer {
   id: string;
-  customer_number: string;
+  customer_number: string | null;
   customer_name: string;
   email: string | null;
   mobile_number: string | null;
-  phone_number: string | null;
+  phone: string | null;
   customer_group_id: string | null;
-  country: string | null;
-  city: string | null;
-  address_line1: string | null;
-  address_line2: string | null;
-  postal_code: string | null;
-  portal_enabled: boolean;
-  portal_token: string;
-  portal_token_generated_at: string | null;
+  country_id: string | null;
+  city_id: string | null;
+  address: string | null;
+  portal_enabled: boolean | null;
   portal_last_login: string | null;
   profile_photo_url: string | null;
   notes: string | null;
-  is_active: boolean;
+  is_active: boolean | null;
   created_at: string;
-  customer_groups: { id: string; name: string; } | null;
+  customer_groups: { id: string; name: string } | null;
+  geo_countries: { id: string; name: string } | null;
+  geo_cities: { id: string; name: string } | null;
 }
 
 interface CompanyRelationship {
   id: string;
-  is_primary: boolean;
-  job_title: string | null;
-  department: string | null;
+  is_primary: boolean | null;
+  role: string | null;
   companies: {
     id: string;
-    company_number: string;
-    company_name: string;
-  };
+    company_number: string | null;
+    company_name: string | null;
+    name: string;
+  } | null;
 }
 
 interface Communication {
   id: string;
-  communication_type: string;
+  type: string;
   subject: string | null;
   content: string | null;
   direction: string | null;
   created_at: string;
-  created_by: string | null;
-  profiles: {
-    full_name: string;
-  } | null;
+  sent_by: string | null;
 }
 
 export const CustomerProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'cases' | 'financial' | 'communications' | 'purchases'>('overview');
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [showGeneratePasswordModal, setShowGeneratePasswordModal] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
@@ -93,11 +89,11 @@ export const CustomerProfilePage: React.FC = () => {
     customer_name: '',
     email: '',
     mobile_number: '',
-    phone_number: '',
+    phone: '',
     customer_group_id: '',
     country_id: '',
     city_id: '',
-    address_line1: '',
+    address: '',
     portal_enabled: false,
     notes: '',
     profile_photo_url: '',
@@ -106,17 +102,20 @@ export const CustomerProfilePage: React.FC = () => {
   const { data: customer, isLoading } = useQuery({
     queryKey: ['customer', id],
     queryFn: async () => {
+      if (!id) throw new Error('Missing customer ID');
       const { data, error } = await supabase
         .from('customers_enhanced')
         .select(`
           *,
-          customer_groups (id, name)
+          customer_groups (id, name),
+          geo_countries (id, name),
+          geo_cities (id, name)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as Customer;
+      return data as unknown as Customer | null;
     },
     enabled: !!id,
   });
@@ -124,16 +123,17 @@ export const CustomerProfilePage: React.FC = () => {
   const { data: companies = [] } = useQuery({
     queryKey: ['customer_companies', id],
     queryFn: async () => {
+      if (!id) throw new Error('Missing customer ID');
       const { data, error } = await supabase
         .from('customer_company_relationships')
         .select(`
           *,
-          companies (id, company_number, company_name)
+          companies (id, company_number, company_name, name)
         `)
         .eq('customer_id', id);
 
       if (error) throw error;
-      return data as CompanyRelationship[];
+      return (data ?? []) as unknown as CompanyRelationship[];
     },
     enabled: !!id,
   });
@@ -141,17 +141,15 @@ export const CustomerProfilePage: React.FC = () => {
   const { data: communications = [] } = useQuery({
     queryKey: ['customer_communications', id],
     queryFn: async () => {
+      if (!id) throw new Error('Missing customer ID');
       const { data, error } = await supabase
         .from('customer_communications')
-        .select(`
-          *,
-          profiles (full_name)
-        `)
+        .select('id, type, subject, content, direction, created_at, sent_by')
         .eq('customer_id', id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Communication[];
+      return (data ?? []) as Communication[];
     },
     enabled: !!id,
   });
@@ -211,12 +209,11 @@ export const CustomerProfilePage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async (updatedData: typeof editFormData) => {
-      const selectedCountry = countries.find((c: { id: string; name: string }) => c.id === updatedData.country_id);
-      const selectedCity = cities.find((c: { id: string; name: string }) => c.id === updatedData.city_id);
+      if (!id) throw new Error('Missing customer ID');
 
       let photoUrl = updatedData.profile_photo_url;
 
-      if (photoFile && id) {
+      if (photoFile) {
         setUploadingPhoto(true);
         const uploadResult = await uploadCustomerProfilePhoto(photoFile, id);
 
@@ -237,18 +234,18 @@ export const CustomerProfilePage: React.FC = () => {
           customer_name: updatedData.customer_name,
           email: updatedData.email || null,
           mobile_number: updatedData.mobile_number || null,
-          phone_number: updatedData.phone_number || null,
+          phone: updatedData.phone || null,
           customer_group_id: updatedData.customer_group_id || null,
-          country: selectedCountry?.name || null,
-          city: selectedCity?.name || null,
-          address_line1: updatedData.address_line1 || null,
+          country_id: updatedData.country_id || null,
+          city_id: updatedData.city_id || null,
+          address: updatedData.address || null,
           portal_enabled: updatedData.portal_enabled,
           notes: updatedData.notes || null,
           profile_photo_url: photoUrl || null,
         })
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -264,19 +261,16 @@ export const CustomerProfilePage: React.FC = () => {
   const handleOpenEditModal = () => {
     if (!customer) return;
 
-    const customerCountry = countries.find((c: { id: string; name: string }) => c.name === customer.country);
-    const customerCity = cities.find((c: { id: string; name: string }) => c.name === customer.city);
-
     setEditFormData({
       customer_name: customer.customer_name,
       email: customer.email || '',
       mobile_number: customer.mobile_number || '',
-      phone_number: customer.phone_number || '',
+      phone: customer.phone || '',
       customer_group_id: customer.customer_group_id || '',
-      country_id: customerCountry?.id || '',
-      city_id: customerCity?.id || '',
-      address_line1: customer.address_line1 || '',
-      portal_enabled: customer.portal_enabled,
+      country_id: customer.country_id || '',
+      city_id: customer.city_id || '',
+      address: customer.address || '',
+      portal_enabled: customer.portal_enabled ?? false,
       notes: customer.notes || '',
       profile_photo_url: customer.profile_photo_url || '',
     });
@@ -288,13 +282,15 @@ export const CustomerProfilePage: React.FC = () => {
     mutationFn: async () => {
       if (!id) throw new Error('Missing customer ID');
 
-      const { data, error } = await supabase.rpc('set_customer_portal_password', {
+      const newPassword = generateSecurePassword(12);
+
+      const { error } = await supabase.rpc('set_portal_password', {
         p_customer_id: id,
-        p_password: null,
+        p_new_password: newPassword,
       });
 
       if (error) throw error;
-      return data as { password: string; email: string };
+      return { password: newPassword };
     },
     onSuccess: (data) => {
       setGeneratedPassword(data.password);
@@ -304,15 +300,13 @@ export const CustomerProfilePage: React.FC = () => {
 
   const disablePortalAccessMutation = useMutation({
     mutationFn: async () => {
-      if (!id || !profile?.id) throw new Error('Missing required IDs');
+      if (!id) throw new Error('Missing customer ID');
 
-      const { data, error } = await supabase.rpc('disable_customer_portal_access', {
+      const { error } = await supabase.rpc('disable_customer_portal_access', {
         p_customer_id: id,
-        p_disabled_by: profile.id,
       });
 
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customer', id] });
@@ -469,10 +463,10 @@ export const CustomerProfilePage: React.FC = () => {
                       </a>
                     </div>
                   )}
-                  {(customer.city || customer.country) && (
+                  {(customer.geo_cities?.name || customer.geo_countries?.name) && (
                     <div className="flex items-center gap-2 text-sm text-slate-600">
                       <MapPin className="w-4 h-4 text-slate-400" />
-                      <span>{[customer.city, customer.country].filter(Boolean).join(', ')}</span>
+                      <span>{[customer.geo_cities?.name, customer.geo_countries?.name].filter(Boolean).join(', ')}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -481,11 +475,9 @@ export const CustomerProfilePage: React.FC = () => {
                   </div>
                 </div>
 
-                {customer.address_line1 && (
+                {customer.address && (
                   <div className="mt-3 text-sm text-slate-600">
-                    <p>{customer.address_line1}</p>
-                    {customer.address_line2 && <p>{customer.address_line2}</p>}
-                    {customer.postal_code && <p>{customer.postal_code}</p>}
+                    <p>{customer.address}</p>
                   </div>
                 )}
               </div>
@@ -503,34 +495,41 @@ export const CustomerProfilePage: React.FC = () => {
                 Associated Companies
               </h3>
               <div className="space-y-3">
-                {companies.map((rel) => (
-                  <div
-                    key={rel.id}
-                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-primary/40 cursor-pointer transition-all"
-                    onClick={() => navigate(`/companies/${rel.companies.id}`)}
-                  >
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
-                        {rel.companies.company_name.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-slate-900 text-sm truncate">{rel.companies.company_name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-slate-500">{rel.companies.company_number}</span>
-                          {rel.is_primary && (
-                            <Badge variant="success" size="sm">
-                              Primary
-                            </Badge>
+                {companies.map((rel) => {
+                  if (!rel.companies) return null;
+                  const company = rel.companies;
+                  const displayName = company.company_name || company.name;
+                  return (
+                    <div
+                      key={rel.id}
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-primary/40 cursor-pointer transition-all"
+                      onClick={() => navigate(`/companies/${company.id}`)}
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                          {displayName.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-slate-900 text-sm truncate">{displayName}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {company.company_number && (
+                              <span className="text-xs text-slate-500">{company.company_number}</span>
+                            )}
+                            {rel.is_primary && (
+                              <Badge variant="success" size="sm">
+                                Primary
+                              </Badge>
+                            )}
+                          </div>
+                          {rel.role && (
+                            <p className="text-xs text-slate-600 mt-0.5 truncate">{rel.role}</p>
                           )}
                         </div>
-                        {rel.job_title && (
-                          <p className="text-xs text-slate-600 mt-0.5 truncate">{rel.job_title}</p>
-                        )}
                       </div>
+                      <Eye className="w-4 h-4 text-slate-400 flex-shrink-0" />
                     </div>
-                    <Eye className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           )}
@@ -559,7 +558,7 @@ export const CustomerProfilePage: React.FC = () => {
                         {customer.email}
                       </div>
                       <button
-                        onClick={() => handleCopyEmail(customer.email!)}
+                        onClick={() => customer.email && handleCopyEmail(customer.email)}
                         className="p-2 hover:bg-white/60 rounded-lg transition-colors flex-shrink-0"
                         title="Copy email"
                       >
@@ -628,14 +627,6 @@ export const CustomerProfilePage: React.FC = () => {
               </div>
 
               <div className="pt-4 border-t border-slate-200 space-y-2 text-xs">
-                {customer.portal_token_generated_at && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Password Generated:</span>
-                    <span className="text-slate-700 font-medium">
-                      {formatDate(customer.portal_token_generated_at)}
-                    </span>
-                  </div>
-                )}
                 {customer.portal_last_login && (
                   <div className="flex justify-between">
                     <span className="text-slate-500">Last Login:</span>
@@ -671,16 +662,16 @@ export const CustomerProfilePage: React.FC = () => {
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200">
         <div className="border-b border-slate-200">
           <div className="flex gap-1 p-2">
-            {[
+            {([
               { id: 'overview', label: 'Overview', icon: User },
               { id: 'cases', label: 'Cases', icon: FileText },
               { id: 'financial', label: 'Financial', icon: DollarSign },
               { id: 'communications', label: 'Communications', icon: MessageSquare },
               { id: 'purchases', label: 'Purchases', icon: ShoppingBag },
-            ].map((tab) => (
+            ] as const).map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
                   activeTab === tab.id
                     ? 'bg-primary/10 text-primary shadow-sm'
@@ -720,10 +711,10 @@ export const CustomerProfilePage: React.FC = () => {
                       {customer.mobile_number || 'Not provided'}
                     </p>
                   </div>
-                  {customer.phone_number && (
+                  {customer.phone && (
                     <div>
                       <p className="text-sm text-slate-500 mb-1">Alternative Phone</p>
-                      <p className="font-medium text-slate-900">{customer.phone_number}</p>
+                      <p className="font-medium text-slate-900">{customer.phone}</p>
                     </div>
                   )}
                   <div>
@@ -782,18 +773,18 @@ export const CustomerProfilePage: React.FC = () => {
                       <div className="flex items-start gap-3">
                         <div
                           className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
-                          style={{ backgroundColor: getCommunicationColor(comm.communication_type) }}
+                          style={{ backgroundColor: getCommunicationColor(comm.type) }}
                         >
-                          {getCommunicationIcon(comm.communication_type)}
+                          {getCommunicationIcon(comm.type)}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <Badge
                               variant="custom"
-                              color={getCommunicationColor(comm.communication_type)}
+                              color={getCommunicationColor(comm.type)}
                               size="sm"
                             >
-                              {comm.communication_type}
+                              {comm.type}
                             </Badge>
                             {comm.direction && (
                               <Badge variant="default" size="sm">
@@ -809,11 +800,6 @@ export const CustomerProfilePage: React.FC = () => {
                           )}
                           {comm.content && (
                             <p className="text-sm text-slate-600">{comm.content}</p>
-                          )}
-                          {comm.profiles && (
-                            <p className="text-xs text-slate-500 mt-2">
-                              Logged by {comm.profiles.full_name}
-                            </p>
                           )}
                         </div>
                       </div>
@@ -995,8 +981,8 @@ export const CustomerProfilePage: React.FC = () => {
 
           <PhoneInput
             label="Phone Number (Alternative)"
-            value={editFormData.phone_number}
-            onChange={(val) => setEditFormData({ ...editFormData, phone_number: val })}
+            value={editFormData.phone}
+            onChange={(val) => setEditFormData({ ...editFormData, phone: val })}
             countries={countries as Array<{ id: string; name: string; code: string; phone_code: string | null }>}
             selectedCountryId={editFormData.country_id}
           />
@@ -1031,8 +1017,8 @@ export const CustomerProfilePage: React.FC = () => {
 
           <Input
             label="Address"
-            value={editFormData.address_line1}
-            onChange={(e) => setEditFormData({ ...editFormData, address_line1: e.target.value })}
+            value={editFormData.address}
+            onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
           />
 
           <div>
