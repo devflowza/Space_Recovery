@@ -155,12 +155,12 @@ export function buildInvoiceDocument(
     columns: [
       {
         width: '50%',
-        stack: [createBilingualInfoBox(customerInfoTitle, null, customerDetailsContent, userIconSvg)],
+        stack: [createBilingualInfoBox(customerInfoTitle, null, customerDetailsContent, userIconSvg) as Content],
       },
       { width: 8, text: '' },
       {
         width: '50%',
-        stack: [createBilingualInfoBox(invoiceDetailsTitle, null, invoiceDetailsContent, fileIconSvg)],
+        stack: [createBilingualInfoBox(invoiceDetailsTitle, null, invoiceDetailsContent, fileIconSvg) as Content],
       },
     ],
     margin: [0, 0, 0, 8],
@@ -308,7 +308,7 @@ export function buildInvoiceDocument(
   const financialSummarySection: Content = {
     stack: financialSummaryRows,
     margin: [280, 8, 0, 8],
-  };
+  } as Content;
 
   const termsAndBankSection: Content[] = [];
 
@@ -384,7 +384,7 @@ export function buildInvoiceDocument(
         ] : []),
       ],
       margin: [0, 8, 0, 0],
-    });
+    } as Content);
   } else if (invoiceData.bank_accounts) {
     termsAndBankSection.push({
       columns: [
@@ -424,7 +424,7 @@ export function buildInvoiceDocument(
         },
       ],
       margin: [0, 8, 0, 0],
-    });
+    } as Content);
   }
 
   const tagline = companySettings.branding?.brand_tagline || null;
@@ -566,7 +566,7 @@ export function buildInvoiceDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 90): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 90): object {
   return {
     columns: [
       { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },

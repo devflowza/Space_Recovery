@@ -1,4 +1,4 @@
-import type { TDocumentDefinitions, Content, TableCell } from 'pdfmake/interfaces';
+import type { TDocumentDefinitions, Content } from 'pdfmake/interfaces';
 import type { TranslationContext } from '../types';
 import {
   PDF_COLORS,
@@ -284,12 +284,12 @@ export function buildReportDocument(
     columns: [
       {
         width: '50%',
-        stack: [createBilingualInfoBox(customerInfoTitle, null, customerInfoContent, userIconSvg)],
+        stack: [createBilingualInfoBox(customerInfoTitle, null, customerInfoContent, userIconSvg) as Content],
       },
       { width: 8, text: '' },
       {
         width: '50%',
-        stack: [createBilingualInfoBox(reportDetailsTitle, null, reportDetailsContent, fileIconSvg)],
+        stack: [createBilingualInfoBox(reportDetailsTitle, null, reportDetailsContent, fileIconSvg) as Content],
       },
     ],
     margin: [0, 0, 0, 8],
@@ -303,7 +303,7 @@ export function buildReportDocument(
       ? `Media Details | ${t('mediaDetails', '').split(' | ')[1] || 'تفاصيل الوسائط'}`
       : 'Media Details';
 
-    const hardDriveIconSvg = getGeneralIconSvg('hardDrive');
+    const hardDriveIconSvg = getGeneralIconSvg('fileText');
     const mediaDetailsHeader: Content = createBilingualSectionHeader(mediaDetailsTitle, null, hardDriveIconSvg) as Content;
 
     const typeLabel = isBilingual ? (t('type', '').split(' | ')[1] ? `Type | ${t('type', '').split(' | ')[1]}` : 'Type') : 'Type';
@@ -434,11 +434,11 @@ export function buildReportDocument(
               margin: [0, 0, 0, 2],
             },
             { text: event.event_description || '-', fontSize: 8, color: PDF_COLORS.text, margin: [0, 0, 0, 1] },
-            event.actor ? { text: `By: ${event.actor.full_name || 'Unknown'}`, fontSize: 7, color: PDF_COLORS.textLight, margin: [0, 1, 0, 0] } : {},
+            event.actor ? { text: `By: ${event.actor.full_name || 'Unknown'}`, fontSize: 7, color: PDF_COLORS.textLight, margin: [0, 1, 0, 0] } : { text: '' },
           ],
           fillColor: PDF_COLORS.background,
           margin: [6, 4, 6, 4],
-        });
+        } as Content);
       });
 
       bodyContent.push({
@@ -630,7 +630,7 @@ export function buildReportDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 70): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 70): object {
   return {
     columns: [
       { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },

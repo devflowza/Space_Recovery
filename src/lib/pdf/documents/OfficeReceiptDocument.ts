@@ -162,12 +162,12 @@ export function buildOfficeReceiptDocument(
     columns: [
       {
         width: '50%',
-        stack: [createBilingualInfoBox(customerInfoTitle, null, customerInfoContent, userIconSvg)],
+        stack: [createBilingualInfoBox(customerInfoTitle, null, customerInfoContent, userIconSvg) as Content],
       },
       { width: 8, text: '' },
       {
         width: '50%',
-        stack: [createBilingualInfoBox(caseDetailsTitle, null, caseDetailsContent, fileIconSvg)],
+        stack: [createBilingualInfoBox(caseDetailsTitle, null, caseDetailsContent, fileIconSvg) as Content],
       },
     ],
     margin: [0, 0, 0, 8],
@@ -289,14 +289,14 @@ export function buildOfficeReceiptDocument(
 
   const signatureSection: Content = {
     columns: [
-      createBilingualSignatureBlock('Customer Signature', arabicCustomerSig),
+      createBilingualSignatureBlock('Customer Signature', arabicCustomerSig) as Content,
       { text: '', width: '*' },
-      createBilingualSignatureBlock('Company Representative', arabicCompanySig),
+      createBilingualSignatureBlock('Company Representative', arabicCompanySig) as Content,
     ],
     margin: [0, 0, 0, 0],
   };
 
-  const tagline = companySettings.branding?.brand_tagline || null;
+  const tagline = companySettings.branding?.brand_tagline || undefined;
 
   return {
     pageSize: 'A4',
@@ -389,8 +389,9 @@ export function buildOfficeReceiptDocument(
           margin: [35, 0, 35, 25],
         };
       } else {
+        const socialFooter = createSocialFooter(companySettings.online_presence, tagline) as { stack: Content[]; margin: [number, number, number, number] };
         return {
-          stack: createSocialFooter(companySettings.online_presence, tagline).stack,
+          stack: socialFooter.stack,
           margin: [35, 10, 35, 25],
         };
       }
@@ -398,7 +399,7 @@ export function buildOfficeReceiptDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 55): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 55): object {
   return {
     columns: [
       { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },
