@@ -8,7 +8,6 @@ type TenantHealthMetric = Database['public']['Tables']['tenant_health_metrics'][
 type SupportTicket = Database['public']['Tables']['support_tickets']['Row'];
 type SupportTicketMessage = Database['public']['Tables']['support_ticket_messages']['Row'];
 type PlatformAnnouncement = Database['public']['Tables']['platform_announcements']['Row'];
-type PlatformMetric = Database['public']['Tables']['platform_metrics']['Row'];
 
 export interface DashboardStats {
   totalTenants: number;
@@ -48,11 +47,11 @@ export interface TicketWithDetails extends SupportTicket {
 export async function getDashboardStats(): Promise<DashboardStats> {
   const [tenantsRes, subscriptionsRes, usersRes, activeUsersRes, ticketsRes] = await Promise.all([
     supabase.from('tenants').select('id, status', { count: 'exact', head: true }),
-    supabase.from('tenant_subscriptions').select('status, plan_code'),
+    supabase.from('tenant_subscriptions').select('status'),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('user_activity_sessions')
       .select('id', { count: 'exact', head: true })
-      .gte('last_activity_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+      .gte('session_start', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
     supabase.from('support_tickets')
       .select('id', { count: 'exact', head: true })
       .in('status', ['open', 'in_progress'])
@@ -65,18 +64,24 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   const mrrCalc = await supabase
     .from('tenant_subscriptions')
-    .select('amount')
+    .select('subscription_plans(price_monthly)')
     .eq('status', 'active')
     .eq('billing_interval', 'monthly');
 
   const annualCalc = await supabase
     .from('tenant_subscriptions')
-    .select('amount')
+    .select('subscription_plans(price_yearly)')
     .eq('status', 'active')
     .eq('billing_interval', 'annual');
 
-  const mrr = (mrrCalc.data || []).reduce((sum, sub) => sum + (parseFloat(sub.amount as any) || 0), 0);
-  const annualMrr = (annualCalc.data || []).reduce((sum, sub) => sum + (parseFloat(sub.amount as any) || 0), 0) / 12;
+  const mrr = (mrrCalc.data || []).reduce(
+    (sum, sub) => sum + (sub.subscription_plans?.price_monthly ?? 0),
+    0,
+  );
+  const annualMrr = (annualCalc.data || []).reduce(
+    (sum, sub) => sum + (sub.subscription_plans?.price_yearly ?? 0),
+    0,
+  ) / 12;
 
   return {
     totalTenants: tenantsRes.count || 0,
@@ -106,12 +111,12 @@ export async function getMRRTrend(days: number = 30): Promise<Array<{ date: stri
 export async function getPlanDistribution(): Promise<Array<{ plan: string; count: number }>> {
   const { data } = await supabase
     .from('tenant_subscriptions')
-    .select('plan_code')
+    .select('subscription_plans(code)')
     .eq('status', 'active');
 
   const distribution: Record<string, number> = {};
   (data || []).forEach(sub => {
-    const plan = sub.plan_code || 'unknown';
+    const plan = sub.subscription_plans?.code || 'unknown';
     distribution[plan] = (distribution[plan] || 0) + 1;
   });
 
@@ -233,11 +238,11 @@ export async function calculateHealthScore(tenantId: string): Promise<{
   engagementLevel: 'inactive' | 'low' | 'moderate' | 'high' | 'very_high';
 }> {
   const [usersRes, activeUsersRes, casesRes, paymentsRes, ticketsRes] = await Promise.all([
-    supabase.from('profiles').select('id, last_sign_in_at').eq('tenant_id', tenantId),
+    supabase.from('profiles').select('id, last_login_at').eq('tenant_id', tenantId),
     supabase
       .from('user_activity_sessions')
       .select('user_id')
-      .gte('last_activity_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+      .gte('session_start', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
     supabase
       .from('cases')
       .select('id', { count: 'exact', head: true })
@@ -258,12 +263,12 @@ export async function calculateHealthScore(tenantId: string): Promise<{
   const totalUsers = usersRes.data?.length || 0;
   const activeUsers = activeUsersRes.data?.length || 0;
   const casesLast30d = casesRes.count || 0;
-  const revenue = (paymentsRes.data || []).reduce((sum, p) => sum + (parseFloat(p.amount as any) || 0), 0);
+  const revenue = (paymentsRes.data || []).reduce((sum, p) => sum + (p.amount ?? 0), 0);
   const openTickets = ticketsRes.count || 0;
 
   const lastLoginDate = usersRes.data
-    ?.map(u => u.last_sign_in_at)
-    .filter(Boolean)
+    ?.map(u => u.last_login_at)
+    .filter((value): value is string => value !== null)
     .sort()
     .reverse()[0];
   const daysSinceLogin = lastLoginDate
@@ -318,7 +323,7 @@ export async function recordHealthMetrics(tenantId: string): Promise<void> {
       .is('deleted_at', null),
   ]);
 
-  const revenue = (revenueRes.data || []).reduce((sum, p) => sum + (parseFloat(p.amount as any) || 0), 0);
+  const revenue = (revenueRes.data || []).reduce((sum, p) => sum + (p.amount ?? 0), 0);
 
   await supabase.from('tenant_health_metrics').insert({
     tenant_id: tenantId,
@@ -427,6 +432,7 @@ export async function createTicket(ticket: {
   priority?: string;
 }): Promise<SupportTicket> {
   const { data: ticketNumber } = await supabase.rpc('get_next_ticket_number');
+  if (!ticketNumber) throw new Error('Failed to generate ticket number');
 
   const { data: newTicket, error } = await supabase
     .from('support_tickets')
@@ -591,11 +597,20 @@ export async function getCurrentPlatformAdmin(): Promise<{
 
   const { data } = await supabase
     .from('platform_admins')
-    .select('*')
+    .select('id, user_id, full_name, email, role, created_at')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  return data;
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    user_id: data.user_id,
+    name: data.full_name,
+    email: data.email,
+    role: data.role,
+    created_at: data.created_at,
+  };
 }
 
 export async function getTenantUsers(tenantId: string) {
@@ -660,7 +675,7 @@ export async function addTenantNote(
   await supabase.from('tenant_activity_log').insert({
     tenant_id: tenantId,
     activity_type: 'internal_note',
-    activity_data: {
+    activity_details: {
       note,
       admin_id: adminId,
       admin_name: adminName,
@@ -730,7 +745,6 @@ export async function duplicateAnnouncement(id: string): Promise<PlatformAnnounc
       show_as_banner: original.show_as_banner,
       is_dismissible: original.is_dismissible,
       show_in_app: original.show_in_app,
-      send_email_notification: original.send_email_notification,
       is_active: false,
       start_date: new Date().toISOString(),
       end_date: original.end_date,
