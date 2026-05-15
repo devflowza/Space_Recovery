@@ -117,7 +117,13 @@ export default function PlansPage() {
           const yearlyTotal = Number(plan.price_yearly);
 
           const features = plan.plan_features || [];
-          const displayFeatures = features.slice(0, 4);
+          const limitFeatures = new Map(features.map((f) => [f.feature_key, f]));
+          const maxUsersLimit = limitFeatures.get('max_users')?.limit_value ?? null;
+          const maxCasesLimit = limitFeatures.get('max_cases_per_month')?.limit_value ?? null;
+          const storageGbLimit = limitFeatures.get('storage_gb')?.limit_value ?? null;
+          const displayFeatures = features
+            .filter((f) => !['max_users', 'max_cases_per_month', 'storage_gb'].includes(f.feature_key))
+            .slice(0, 4);
 
           return (
             <Card
@@ -166,31 +172,27 @@ export default function PlansPage() {
 
                 <div className="space-y-3">
                   <div className="text-sm font-medium text-gray-700">Key Features:</div>
-                  {plan.max_users && (
+                  {maxUsersLimit !== null && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span>
-                        {plan.max_users === 999999 ? 'Unlimited' : plan.max_users} team members
+                        {maxUsersLimit === 999999 ? 'Unlimited' : maxUsersLimit} team members
                       </span>
                     </div>
                   )}
-                  {plan.max_cases_per_month && (
+                  {maxCasesLimit !== null && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span>
-                        {plan.max_cases_per_month === 999999
-                          ? 'Unlimited'
-                          : plan.max_cases_per_month}{' '}
-                        cases/month
+                        {maxCasesLimit === 999999 ? 'Unlimited' : maxCasesLimit} cases/month
                       </span>
                     </div>
                   )}
-                  {plan.max_storage_gb && (
+                  {storageGbLimit !== null && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span>
-                        {plan.max_storage_gb === 999999 ? 'Unlimited' : `${plan.max_storage_gb}GB`}{' '}
-                        storage
+                        {storageGbLimit === 999999 ? 'Unlimited' : `${storageGbLimit}GB`} storage
                       </span>
                     </div>
                   )}
@@ -198,7 +200,7 @@ export default function PlansPage() {
                     <div key={feature.id} className="flex items-center gap-2 text-sm text-gray-600">
                       <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span className={feature.is_highlighted ? 'font-medium' : ''}>
-                        {feature.display_name}
+                        {feature.feature_name}
                       </span>
                     </div>
                   ))}
