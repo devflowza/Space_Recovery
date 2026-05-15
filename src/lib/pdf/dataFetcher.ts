@@ -109,10 +109,13 @@ async function fetchCaseDevices(caseId: string): Promise<DeviceData[]> {
 
   if (!data) return [];
 
-  const deviceTypeIds = data.map(d => d.device_type_id).filter(Boolean);
-  const brandIds = data.map(d => d.brand_id).filter(Boolean);
-  const capacityIds = data.map(d => d.capacity_id).filter(Boolean);
-  const deviceRoleIds = data.map(d => d.device_role_id).filter(Boolean);
+  const isNonNullString = (v: string | null): v is string => v != null;
+  const isNonNullNumber = (v: number | null): v is number => v != null;
+
+  const deviceTypeIds = data.map(d => d.device_type_id).filter(isNonNullString);
+  const brandIds = data.map(d => d.brand_id).filter(isNonNullString);
+  const capacityIds = data.map(d => d.capacity_id).filter(isNonNullString);
+  const deviceRoleIds = data.map(d => d.device_role_id).filter(isNonNullNumber);
 
   const [deviceTypes, brands, capacities, deviceRoles] = await Promise.all([
     deviceTypeIds.length > 0
@@ -136,16 +139,16 @@ async function fetchCaseDevices(caseId: string): Promise<DeviceData[]> {
 
   return data.map(device => ({
     id: device.id,
-    device_type: device.device_type_id ? deviceTypeMap.get(device.device_type_id) || device.media_type : device.media_type,
-    brand: device.brand_id ? brandMap.get(device.brand_id) || device.brand : device.brand,
-    model: device.model,
-    serial_number: device.serial_no,
-    capacity: device.capacity_id ? capacityMap.get(device.capacity_id) : (device.capacity_gb ? `${device.capacity_gb} GB` : null),
-    condition: device.condition_text,
-    role: device.device_role_id ? roleMap.get(device.device_role_id) : null,
-    notes: device.device_problem || device.accessories,
-    device_problem: device.device_problem,
-  })) as DeviceData[];
+    device_type: device.device_type_id ? deviceTypeMap.get(device.device_type_id) ?? undefined : undefined,
+    brand: device.brand_id ? brandMap.get(device.brand_id) ?? undefined : undefined,
+    model: device.model ?? undefined,
+    serial_number: device.serial_number ?? undefined,
+    capacity: device.capacity_id ? capacityMap.get(device.capacity_id) ?? undefined : undefined,
+    condition: undefined,
+    role: device.device_role_id ? roleMap.get(device.device_role_id) ?? undefined : undefined,
+    notes: device.symptoms ?? (device.accessories ? device.accessories.join(', ') : undefined),
+    device_problem: device.symptoms ?? undefined,
+  }));
 }
 
 async function fetchCompanySettings(): Promise<CompanySettingsData> {
@@ -197,13 +200,10 @@ async function fetchQuoteDetails(quoteId: string): Promise<QuoteData> {
     .from('quotes')
     .select(`
       *,
-      cases!case_id (
+      cases:case_id (
         id,
         case_no,
-        title,
-        contact_name,
-        contact_email,
-        contact_phone
+        title
       ),
       customers:customers_enhanced (
         id,
@@ -237,11 +237,6 @@ async function fetchQuoteDetails(quoteId: string): Promise<QuoteData> {
         iban,
         swift_code,
         branch_code
-      ),
-      accounting_locales (
-        currency_symbol,
-        currency_position,
-        decimal_places
       )
     `)
     .eq('id', quoteId)
@@ -289,14 +284,16 @@ async function fetchQuoteDetails(quoteId: string): Promise<QuoteData> {
 
   return {
     ...quoteData,
+    terms_and_conditions: quoteData.terms ?? undefined,
+    title: undefined,
     quote_items: items || [],
     customer_associated_company: customerAssociatedCompany,
-    accounting_locales: quoteData.accounting_locales || defaultLocale || {
+    accounting_locales: defaultLocale || {
       currency_symbol: 'USD',
       currency_position: 'before',
       decimal_places: 2,
     },
-  } as QuoteData;
+  } as unknown as QuoteData;
 }
 
 export async function fetchInvoiceData(invoiceId: string): Promise<InvoiceDocumentData> {
@@ -319,10 +316,7 @@ async function fetchInvoiceDetails(invoiceId: string): Promise<InvoiceData> {
       cases (
         id,
         case_no,
-        title,
-        contact_name,
-        contact_email,
-        contact_phone
+        title
       ),
       customers:customers_enhanced (
         id,
@@ -356,11 +350,6 @@ async function fetchInvoiceDetails(invoiceId: string): Promise<InvoiceData> {
         iban,
         swift_code,
         branch_code
-      ),
-      accounting_locales (
-        currency_symbol,
-        currency_position,
-        decimal_places
       )
     `)
     .eq('id', invoiceId)
@@ -410,12 +399,12 @@ async function fetchInvoiceDetails(invoiceId: string): Promise<InvoiceData> {
     ...invoiceData,
     invoice_line_items: items || [],
     customer_associated_company: customerAssociatedCompany,
-    accounting_locales: invoiceData.accounting_locales || defaultLocale || {
+    accounting_locales: defaultLocale || {
       currency_symbol: 'USD',
       currency_position: 'before',
       decimal_places: 2,
     },
-  } as InvoiceData;
+  } as unknown as InvoiceData;
 }
 
 export async function fetchPaymentReceiptData(paymentId: string): Promise<PaymentReceiptDocumentData> {
@@ -448,11 +437,6 @@ async function fetchPaymentDetails(paymentId: string): Promise<PaymentReceiptDat
         mobile_number,
         phone
       ),
-      companies (
-        id,
-        name,
-        company_name
-      ),
       bank_accounts (
         id,
         account_name:name,
@@ -460,11 +444,6 @@ async function fetchPaymentDetails(paymentId: string): Promise<PaymentReceiptDat
         account_number,
         iban,
         swift_code
-      ),
-      accounting_locales (
-        currency_symbol,
-        currency_position,
-        decimal_places
       )
     `)
     .eq('id', paymentId)
@@ -503,12 +482,12 @@ async function fetchPaymentDetails(paymentId: string): Promise<PaymentReceiptDat
     invoice: paymentData.invoices,
     customer: paymentData.customers,
     cases: caseInfo,
-    accounting_locales: paymentData.accounting_locales || defaultLocale || {
+    accounting_locales: defaultLocale || {
       currency_symbol: 'USD',
       currency_position: 'before',
       decimal_places: 2,
     },
-  } as PaymentReceiptData;
+  } as unknown as PaymentReceiptData;
 }
 
 export async function fetchPayslipData(recordId: string): Promise<PayslipDocumentData> {
@@ -553,8 +532,8 @@ async function fetchPayslipDetails(recordId: string): Promise<PayslipData> {
 
   const { data: items } = await supabase
     .from('payroll_record_items')
-    .select('component_code, component_name, component_type, amount, calculation_basis')
-    .eq('payroll_record_id', recordId)
+    .select('component_id, component_name, component_type, amount')
+    .eq('record_id', recordId)
     .order('sort_order', { ascending: true });
 
   const { data: defaultLocale } = await supabase
@@ -564,15 +543,22 @@ async function fetchPayslipDetails(recordId: string): Promise<PayslipData> {
     .eq('is_active', true)
     .maybeSingle();
 
+  const mappedItems = (items || []).map(item => ({
+    component_code: item.component_id ?? '',
+    component_name: item.component_name,
+    component_type: item.component_type,
+    amount: item.amount,
+  }));
+
   return {
     ...recordData,
-    items: items || [],
+    items: mappedItems,
     accounting_locales: defaultLocale || {
       currency_symbol: 'USD',
       currency_position: 'before',
       decimal_places: 2,
     },
-  } as PayslipData;
+  } as unknown as PayslipData;
 }
 
 export async function fetchChainOfCustodyData(
@@ -596,14 +582,40 @@ export async function fetchChainOfCustodyData(
 async function fetchChainOfCustodyEntries(caseId: string): Promise<ChainOfCustodyEntryData[]> {
   const { data, error } = await supabase
     .from('chain_of_custody')
-    .select('entry_number, action_category, action_type, action_description, actor_name, actor_role, occurred_at, evidence_reference, hash_algorithm, hash_value, digital_signature')
+    .select('id, action, action_category, actor_name, actor_role, created_at, description, evidence_hash, metadata')
     .eq('case_id', caseId)
-    .order('entry_number', { ascending: false });
+    .order('created_at', { ascending: true });
 
   if (error) {
     console.error('Error fetching chain of custody entries:', error);
     return [];
   }
 
-  return (data || []) as ChainOfCustodyEntryData[];
+  return (data || []).map((row, index): ChainOfCustodyEntryData => {
+    const metadata = (row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata))
+      ? (row.metadata as Record<string, unknown>)
+      : {};
+    const pickString = (key: string): string | undefined => {
+      const value = metadata[key];
+      return typeof value === 'string' ? value : undefined;
+    };
+    const pickNumber = (key: string): number | undefined => {
+      const value = metadata[key];
+      return typeof value === 'number' ? value : undefined;
+    };
+
+    return {
+      entry_number: pickNumber('entry_number') ?? index + 1,
+      action_category: row.action_category,
+      action_type: row.action,
+      action_description: row.description ?? '',
+      actor_name: row.actor_name,
+      actor_role: row.actor_role ?? undefined,
+      occurred_at: pickString('occurred_at') ?? row.created_at,
+      evidence_reference: pickString('evidence_reference'),
+      hash_algorithm: pickString('hash_algorithm'),
+      hash_value: pickString('hash_value') ?? row.evidence_hash ?? undefined,
+      digital_signature: pickString('digital_signature'),
+    };
+  });
 }
