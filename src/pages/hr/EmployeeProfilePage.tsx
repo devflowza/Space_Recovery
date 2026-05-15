@@ -106,14 +106,12 @@ export const EmployeeProfilePage: React.FC = () => {
             <DollarSign className="h-5 w-5 text-gray-400" />
           </div>
           <p className="text-2xl font-bold text-gray-900">
-            {salaryStructure?.base_salary
-              ? formatCurrency(Number(salaryStructure.base_salary))
+            {employee.basic_salary != null
+              ? formatCurrency(Number(employee.basic_salary))
               : 'Not Set'}
           </p>
-          {salaryStructure?.payment_frequency && (
-            <p className="text-xs text-gray-500 mt-1">
-              {salaryStructure.payment_frequency === 'monthly' ? 'Monthly' : 'Bi-weekly'}
-            </p>
+          {employee.salary_currency && (
+            <p className="text-xs text-gray-500 mt-1">{employee.salary_currency}</p>
           )}
         </Card>
 
@@ -160,15 +158,33 @@ export const EmployeeProfilePage: React.FC = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-sm text-gray-600">Base Salary</span>
+                  <span className="text-sm text-gray-600">Structure Name</span>
                   <p className="text-lg font-semibold text-gray-900 mt-1">
-                    {formatCurrency(Number(salaryStructure.base_salary))}
+                    {salaryStructure.name}
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Payment Frequency</span>
-                  <p className="text-lg font-semibold text-gray-900 mt-1 capitalize">
-                    {salaryStructure.payment_frequency}
+                  <span className="text-sm text-gray-600">Net Salary</span>
+                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                    {salaryStructure.net_salary != null
+                      ? formatCurrency(Number(salaryStructure.net_salary))
+                      : '-'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-600">Total Earnings</span>
+                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                    {salaryStructure.total_earnings != null
+                      ? formatCurrency(Number(salaryStructure.total_earnings))
+                      : '-'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-600">Total Deductions</span>
+                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                    {salaryStructure.total_deductions != null
+                      ? formatCurrency(Number(salaryStructure.total_deductions))
+                      : '-'}
                   </p>
                 </div>
                 <div>
@@ -182,14 +198,14 @@ export const EmployeeProfilePage: React.FC = () => {
                 <div>
                   <span className="text-sm text-gray-600">Status</span>
                   <p className="mt-1">
-                    <Badge color={salaryStructure.is_active ? 'green' : 'gray'}>
-                      {salaryStructure.is_active ? 'Active' : 'Inactive'}
+                    <Badge color={salaryStructure.is_current ? 'green' : 'gray'}>
+                      {salaryStructure.is_current ? 'Active' : 'Inactive'}
                     </Badge>
                   </p>
                 </div>
               </div>
 
-              {salaryStructure.bank_name && (
+              {employee.bank_name && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <h3 className="text-sm font-semibold text-gray-900 mb-4">
                     Bank Details
@@ -198,20 +214,20 @@ export const EmployeeProfilePage: React.FC = () => {
                     <div>
                       <span className="text-sm text-gray-600">Bank Name</span>
                       <p className="text-sm font-medium text-gray-900 mt-1">
-                        {salaryStructure.bank_name}
+                        {employee.bank_name}
                       </p>
                     </div>
                     <div>
                       <span className="text-sm text-gray-600">Account Number</span>
                       <p className="text-sm font-medium text-gray-900 mt-1">
-                        {salaryStructure.bank_account_number || '-'}
+                        {employee.bank_account_number || '-'}
                       </p>
                     </div>
-                    {salaryStructure.iban && (
+                    {employee.bank_branch && (
                       <div className="col-span-2">
-                        <span className="text-sm text-gray-600">IBAN</span>
+                        <span className="text-sm text-gray-600">Branch</span>
                         <p className="text-sm font-medium text-gray-900 mt-1">
-                          {salaryStructure.iban}
+                          {employee.bank_branch}
                         </p>
                       </div>
                     )}
@@ -248,7 +264,7 @@ export const EmployeeProfilePage: React.FC = () => {
                     <div>
                       <p className="font-medium text-gray-900">{loan.loan_number}</p>
                       <p className="text-sm text-gray-600">
-                        {loan.loan_type
+                        {(loan.loan_type ?? '')
                           .split('_')
                           .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
                           .join(' ')}
@@ -256,10 +272,10 @@ export const EmployeeProfilePage: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">
-                        {formatCurrency(Number(loan.remaining_balance))}
+                        {formatCurrency(Number(loan.remaining_amount ?? 0))}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {loan.installments_paid || 0}/{loan.installments_count} paid
+                        {loan.paid_installments || 0}/{loan.installments} paid
                       </p>
                     </div>
                   </div>
@@ -284,7 +300,7 @@ export const EmployeeProfilePage: React.FC = () => {
             <div>
               <span className="text-sm text-gray-600">Phone</span>
               <p className="text-sm font-medium text-gray-900 mt-1">
-                {employee.phone_number || '-'}
+                {employee.phone || employee.mobile || '-'}
               </p>
             </div>
             {employee.address && (
