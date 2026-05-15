@@ -5,6 +5,7 @@ import { loadImageAsBase64 } from './pdf/utils';
 import { logPDFGeneration } from './pdf/loggingService';
 import type { TranslationContext } from './pdf/types';
 import { logger } from './logger';
+import type { Database, Json } from '../types/database.types';
 import {
   getTranslation,
   isRTLLanguage,
@@ -12,6 +13,124 @@ import {
   type LanguageCode,
   type TranslationKey,
 } from './documentTranslations';
+
+type CaseReportRow = Database['public']['Tables']['case_reports']['Row'];
+type CaseReportSectionRow = Database['public']['Tables']['case_report_sections']['Row'];
+type DeviceDiagnosticsRow = Database['public']['Tables']['device_diagnostics']['Row'];
+type ChainOfCustodyRow = Database['public']['Tables']['chain_of_custody']['Row'];
+type CompanySettingsRow = Database['public']['Tables']['company_settings']['Row'];
+
+type JsonObject = { [k: string]: Json | undefined };
+
+function isJsonObject(value: Json | null | undefined): value is JsonObject {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function readString(obj: JsonObject | null, key: string): string | undefined {
+  const v = obj?.[key];
+  return typeof v === 'string' ? v : undefined;
+}
+
+function readNumber(obj: JsonObject | null, key: string): number | undefined {
+  const v = obj?.[key];
+  return typeof v === 'number' ? v : undefined;
+}
+
+function mapDiagnosticsRow(row: DeviceDiagnosticsRow): ReportData['diagnosticsData'] {
+  const result: JsonObject | null = isJsonObject(row.result) ? row.result : null;
+  return {
+    device_type_category: readString(result, 'device_type_category'),
+    heads_status: readString(result, 'heads_status'),
+    pcb_status: readString(result, 'pcb_status'),
+    motor_status: readString(result, 'motor_status'),
+    surface_status: readString(result, 'surface_status'),
+    controller_status: readString(result, 'controller_status'),
+    memory_chips_status: readString(result, 'memory_chips_status'),
+    controller_model: readString(result, 'controller_model'),
+    nand_type: readString(result, 'nand_type'),
+    physical_damage_notes: readString(result, 'physical_damage_notes') ?? row.notes ?? undefined,
+  };
+}
+
+function readJsonObject(value: Json | null | undefined): JsonObject | null {
+  return isJsonObject(value) ? value : null;
+}
+
+function mapCompanySettingsRow(row: CompanySettingsRow): ReportData['companySettings'] {
+  const basicInfo = readJsonObject(row.basic_info);
+  const location = readJsonObject(row.location);
+  const contactInfo = readJsonObject(row.contact_info);
+  const branding = readJsonObject(row.branding);
+  const onlinePresence = readJsonObject(row.online_presence);
+  const legalCompliance = readJsonObject(row.legal_compliance);
+  const localization = readJsonObject(row.localization);
+
+  const langSettingsRaw = localization?.['document_language_settings'];
+  const langSettings = isJsonObject(langSettingsRaw) ? langSettingsRaw : null;
+  const modeValue = readString(langSettings, 'mode');
+  const mode: 'english_only' | 'bilingual' =
+    modeValue === 'bilingual' ? 'bilingual' : 'english_only';
+
+  return {
+    basic_info: basicInfo
+      ? {
+          company_name: readString(basicInfo, 'company_name'),
+          legal_name: readString(basicInfo, 'legal_name'),
+          registration_number: readString(basicInfo, 'registration_number'),
+          vat_number: readString(basicInfo, 'vat_number'),
+        }
+      : undefined,
+    location: location
+      ? {
+          address_line1: readString(location, 'address_line1'),
+          address_line2: readString(location, 'address_line2'),
+          city: readString(location, 'city'),
+          state: readString(location, 'state'),
+          postal_code: readString(location, 'postal_code'),
+          country: readString(location, 'country'),
+          building_name: readString(location, 'building_name'),
+          unit_number: readString(location, 'unit_number'),
+        }
+      : undefined,
+    contact_info: contactInfo
+      ? {
+          phone_primary: readString(contactInfo, 'phone_primary'),
+          email_general: readString(contactInfo, 'email_general'),
+        }
+      : undefined,
+    branding: branding
+      ? {
+          logo_url: readString(branding, 'logo_url'),
+          brand_tagline: readString(branding, 'brand_tagline'),
+          qr_code_general_url: readString(branding, 'qr_code_general_url'),
+          qr_code_general_caption: readString(branding, 'qr_code_general_caption'),
+        }
+      : undefined,
+    online_presence: onlinePresence
+      ? {
+          website: readString(onlinePresence, 'website'),
+          facebook: readString(onlinePresence, 'facebook'),
+          twitter: readString(onlinePresence, 'twitter'),
+          linkedin: readString(onlinePresence, 'linkedin'),
+          instagram: readString(onlinePresence, 'instagram'),
+        }
+      : undefined,
+    legal_compliance: legalCompliance
+      ? {
+          terms_conditions_url: readString(legalCompliance, 'terms_conditions_url'),
+        }
+      : undefined,
+    localization: langSettings
+      ? {
+          document_language_settings: {
+            mode,
+            secondary_language: readString(langSettings, 'secondary_language') ?? null,
+            language_name: readString(langSettings, 'language_name') ?? null,
+          },
+        }
+      : undefined,
+  };
+}
 
 const PDF_GENERATION_TIMEOUT = 45000; // 45 seconds
 
@@ -300,31 +419,82 @@ class ReportPDFService {
   }
 
   private async fetchReportData(reportId: string): Promise<ReportData> {
-    const { data: report, error: reportError } = await supabase
+    type ReportProfileEmbed = { full_name: string | null; email: string | null } | null;
+    type CaseReportRowWithProfile = CaseReportRow & {
+      created_by_profile?: ReportProfileEmbed;
+    };
+
+    const { data: reportRaw, error: reportError } = await supabase
       .from('case_reports')
       .select(`
         *,
         created_by_profile:profiles!case_reports_created_by_fkey(full_name, email)
       `)
       .eq('id', reportId)
-      .maybeSingle();
+      .maybeSingle<CaseReportRowWithProfile>();
 
-    if (reportError || !report) {
+    if (reportError || !reportRaw) {
       throw new Error('Failed to fetch report');
     }
+
+    const reportContent: JsonObject | null = isJsonObject(reportRaw.content) ? reportRaw.content : null;
+    const mappedReport: ReportData['report'] = {
+      id: reportRaw.id,
+      case_id: reportRaw.case_id,
+      report_number: reportRaw.report_number ?? '',
+      report_type: readString(reportContent, 'report_type') ?? 'evaluation',
+      title: reportRaw.title,
+      status: reportRaw.status ?? 'draft',
+      version_number: readNumber(reportContent, 'version_number') ?? 1,
+      created_at: reportRaw.created_at,
+      created_by: reportRaw.created_by ?? undefined,
+      approved_by: readString(reportContent, 'approved_by'),
+      approved_at: readString(reportContent, 'approved_at'),
+      version_notes: readString(reportContent, 'version_notes'),
+    };
+    const forensicChainOfCustodyId = readString(reportContent, 'forensic_chain_of_custody_id');
 
     const { data: sections } = await supabase
       .from('case_report_sections')
       .select('*')
       .eq('report_id', reportId)
-      .order('section_order');
+      .order('sort_order');
 
-    const { data: caseData, error: caseError } = await supabase
+    const mappedSections: ReportData['sections'] = (sections ?? []).map((row: CaseReportSectionRow) => ({
+      id: row.id,
+      section_key: row.section_type ?? '',
+      section_title: row.title ?? '',
+      section_content: row.content ?? '',
+      section_order: row.sort_order ?? 0,
+    }));
+
+    type CatalogNameEmbed = { name: string | null } | null;
+    type ProfileNameEmbed = { full_name: string | null } | null;
+    type CustomerEmbed = {
+      customer_name: string | null;
+      email: string | null;
+      mobile_number: string | null;
+    } | null;
+    type CompanyEmbed = { company_name: string | null } | null;
+    type CaseRowWithEmbeds = {
+      case_no: string | null;
+      title: string | null;
+      catalog_service_types: CatalogNameEmbed;
+      priority: string | null;
+      status: string | null;
+      created_at: string;
+      client_reference: string | null;
+      customers_enhanced: CustomerEmbed;
+      companies: CompanyEmbed;
+      profiles: ProfileNameEmbed;
+    };
+
+    const { data: caseDataRaw, error: caseError } = await supabase
       .from('cases')
       .select(`
         case_no,
         title,
-        service_types!service_type_id(name),
+        catalog_service_types!service_type_id(name),
         priority,
         status,
         created_at,
@@ -333,8 +503,8 @@ class ReportPDFService {
         companies!company_id(company_name),
         profiles!assigned_engineer_id(full_name)
       `)
-      .eq('id', report.case_id)
-      .maybeSingle();
+      .eq('id', reportRaw.case_id)
+      .maybeSingle<CaseRowWithEmbeds>();
 
     if (caseError) {
       logger.error('[Report PDF Service] Error fetching case data:', caseError);
@@ -347,8 +517,20 @@ class ReportPDFService {
       .eq('name', 'Patient')
       .maybeSingle();
 
+    type CaseDeviceWithEmbeds = {
+      id: string;
+      catalog_device_types: CatalogNameEmbed;
+      catalog_device_brands: CatalogNameEmbed;
+      model: string | null;
+      catalog_device_capacities: CatalogNameEmbed;
+      serial_number: string | null;
+      catalog_device_conditions: CatalogNameEmbed;
+      device_role_id: number | null;
+      is_primary: boolean | null;
+    };
+
     // Get device data - filter by Patient role
-    const deviceQuery = supabase
+    let deviceQuery = supabase
       .from('case_devices')
       .select(`
         id,
@@ -361,43 +543,44 @@ class ReportPDFService {
         device_role_id,
         is_primary
       `)
-      .eq('case_id', report.case_id);
+      .eq('case_id', reportRaw.case_id);
 
     if (patientRole?.id) {
-      deviceQuery.eq('device_role_id', patientRole.id);
+      deviceQuery = deviceQuery.eq('device_role_id', patientRole.id);
     }
 
-    const { data: devices, error: deviceError } = await deviceQuery
+    const { data: devicesRaw, error: deviceError } = await deviceQuery
       .order('is_primary', { ascending: false })
-      .limit(1);
+      .limit(1)
+      .overrideTypes<CaseDeviceWithEmbeds[]>();
 
     if (deviceError) {
       logger.error('[Report PDF Service] Error fetching device data:', deviceError);
     }
 
-    let deviceData = null;
-    let diagnosticsData = null;
+    let deviceData: ReportData['deviceData'] = undefined;
+    let diagnosticsData: ReportData['diagnosticsData'] = undefined;
 
-    if (devices && devices.length > 0) {
-      const device = devices[0];
+    if (devicesRaw && devicesRaw.length > 0) {
+      const device = devicesRaw[0];
       deviceData = {
-        device_type: (device.catalog_device_types as any)?.name,
-        brand: (device.catalog_device_brands as any)?.name,
-        model: device.model,
-        capacity: (device.catalog_device_capacities as any)?.name,
-        serial_number: device.serial_number,
-        condition: (device.catalog_device_conditions as any)?.name,
+        device_type: device.catalog_device_types?.name ?? undefined,
+        brand: device.catalog_device_brands?.name ?? undefined,
+        model: device.model ?? undefined,
+        capacity: device.catalog_device_capacities?.name ?? undefined,
+        serial_number: device.serial_number ?? undefined,
+        condition: device.catalog_device_conditions?.name ?? undefined,
       };
 
-      // Load diagnostics
+      // Load diagnostics — device_diagnostics.device_id references case_devices.id
       const { data: diagnostics } = await supabase
         .from('device_diagnostics')
         .select('*')
-        .eq('case_device_id', device.id)
+        .eq('device_id', device.id)
         .maybeSingle();
 
       if (diagnostics) {
-        diagnosticsData = diagnostics;
+        diagnosticsData = mapDiagnosticsRow(diagnostics);
       }
     }
 
@@ -406,64 +589,97 @@ class ReportPDFService {
       .select('*')
       .maybeSingle();
 
-    let chainOfCustodyEvents: any[] = [];
-    if (report.report_type === 'forensic' && report.forensic_chain_of_custody_id) {
+    let chainOfCustodyEvents: ReportData['chainOfCustodyEvents'] = [];
+    if (mappedReport.report_type === 'forensic' && forensicChainOfCustodyId) {
+      type ChainOfCustodyRowWithActor = ChainOfCustodyRow & {
+        actor?: ProfileNameEmbed;
+      };
+
       const { data: cocEvents } = await supabase
-        .from('forensic_chain_of_custody_events')
+        .from('chain_of_custody')
         .select(`
           *,
-          actor:profiles!forensic_chain_of_custody_events_actor_id_fkey(full_name)
+          actor:profiles!actor_id(full_name)
         `)
-        .eq('chain_of_custody_id', report.forensic_chain_of_custody_id)
-        .order('event_date', { ascending: true });
+        .eq('case_id', reportRaw.case_id)
+        .order('created_at', { ascending: true })
+        .overrideTypes<ChainOfCustodyRowWithActor[]>();
 
-      chainOfCustodyEvents = cocEvents || [];
+      chainOfCustodyEvents = (cocEvents ?? []).map((row): NonNullable<ReportData['chainOfCustodyEvents']>[number] => {
+        const metadata: JsonObject | null = isJsonObject(row.metadata) ? row.metadata : null;
+        return {
+          event_type: row.action,
+          event_date: row.created_at,
+          event_timestamp: row.created_at,
+          event_description: row.description ?? undefined,
+          from_party: readString(metadata, 'from_party'),
+          to_party: readString(metadata, 'to_party'),
+          location: row.location ?? undefined,
+          notes: readString(metadata, 'notes'),
+          actor: row.actor ? { full_name: row.actor.full_name ?? undefined } : undefined,
+        };
+      });
     }
 
-    const customer = caseData?.customers_enhanced as any;
-    const company = caseData?.companies as any;
-    const preparedByName = (report.created_by_profile as any)?.full_name || (report.created_by_profile as any)?.email || 'N/A';
+    const customer = caseDataRaw?.customers_enhanced ?? null;
+    const company = caseDataRaw?.companies ?? null;
+    const preparedByName =
+      reportRaw.created_by_profile?.full_name ||
+      reportRaw.created_by_profile?.email ||
+      'N/A';
+
+    const mappedCaseData: ReportData['caseData'] = caseDataRaw
+      ? {
+          case_number: caseDataRaw.case_no ?? '',
+          case_no: caseDataRaw.case_no ?? undefined,
+          customer_name: customer?.customer_name ?? 'Unknown',
+          customer_email: customer?.email ?? undefined,
+          customer_phone: customer?.mobile_number ?? undefined,
+          customer_company: company?.company_name ?? undefined,
+          company_name: company?.company_name ?? undefined,
+          client_reference: caseDataRaw.client_reference ?? undefined,
+          service_type: caseDataRaw.catalog_service_types?.name ?? undefined,
+          assigned_engineer: caseDataRaw.profiles?.full_name ?? undefined,
+          created_at: caseDataRaw.created_at,
+        }
+      : undefined;
+
+    const mappedCustomerData: ReportData['customerData'] = customer
+      ? {
+          customer_name: customer.customer_name ?? 'Unknown',
+          email: customer.email ?? undefined,
+          mobile_number: customer.mobile_number ?? undefined,
+          company_name: company?.company_name ?? undefined,
+        }
+      : undefined;
+
+    const mappedCompanySettings: ReportData['companySettings'] = companySettings
+      ? mapCompanySettingsRow(companySettings)
+      : {
+          basic_info: { company_name: 'Company Name' },
+          location: {},
+          contact_info: {},
+          branding: {},
+          online_presence: {},
+          legal_compliance: {},
+          localization: {
+            document_language_settings: {
+              mode: 'english_only',
+              secondary_language: null,
+              language_name: null,
+            },
+          },
+        };
 
     return {
-      report,
-      sections: sections || [],
-      caseData: caseData ? {
-        case_number: caseData.case_no,
-        case_no: caseData.case_no,
-        customer_name: customer ? customer.customer_name : 'Unknown',
-        customer_email: customer?.email,
-        customer_phone: customer?.mobile_number,
-        customer_company: company?.company_name,
-        company_name: company?.company_name,
-        client_reference: caseData.client_reference,
-        service_type: (caseData.service_types as any)?.name,
-        assigned_engineer: (caseData.profiles as any)?.full_name,
-        created_at: caseData.created_at
-      } : undefined,
-      customerData: customer ? {
-        customer_name: customer.customer_name,
-        email: customer.email,
-        mobile_number: customer.mobile_number,
-        company_name: company?.company_name,
-      } : undefined,
+      report: mappedReport,
+      sections: mappedSections,
+      caseData: mappedCaseData,
+      customerData: mappedCustomerData,
       deviceData,
       diagnosticsData,
       chainOfCustodyEvents,
-      companySettings: companySettings || {
-        basic_info: { company_name: 'Company Name' },
-        location: {},
-        contact_info: {},
-        branding: {},
-        online_presence: {},
-        legal_compliance: {},
-        localization: {
-          document_language_settings: {
-            mode: 'english_only',
-            secondary_language: null,
-            language_name: null,
-          },
-        },
-      },
+      companySettings: mappedCompanySettings,
       preparedByName,
     };
   }
