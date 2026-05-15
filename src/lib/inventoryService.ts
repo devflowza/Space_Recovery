@@ -1,108 +1,18 @@
 import { supabase } from './supabaseClient';
 import { logger } from './logger';
+import type { Database } from '../types/database.types';
 
-export interface InventoryItemCategory {
-  id: string;
-  name: string;
-  description: string | null;
-  parent_id: string | null;
-  color_code: string;
-  sort_order: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface InventoryStatusType {
-  id: string;
-  name: string;
-  description: string | null;
-  color_code: string;
-  is_available_status: boolean;
-  sort_order: number;
-  is_active: boolean;
-  created_at: string;
-}
-
-export interface InventoryConditionType {
-  id: string;
-  rating: number;
-  name: string;
-  description: string | null;
-  color_code: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface InventoryItem {
-  id: string;
-  category_id: string | null;
-  item_category_id: string | null;
-  item_number: string | null;
-  brand_id: string | null;
-  model: string | null;
-  serial_number: string | null;
-  capacity_id: string | null;
-  interface_id: string | null;
-  name: string;
-  description: string | null;
-  firmware_version: string | null;
-  pcb_number: string | null;
-  head_map: string | null;
-  supplier_id: string | null;
-  purchase_date: string | null;
-  purchase_price: number;
-  quantity: number;
-  min_quantity: number;
-  location_id: string | null;
-  status_id: string | null;
-  condition_id: string | null;
-  notes: string | null;
-  photos: string[] | null;
-  is_donor: boolean;
-  donor_parts_available: Record<string, unknown> | null;
-  created_by: string | null;
-  updated_by: string | null;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-}
-
-export interface InventoryStatusHistory {
-  id: string;
-  item_id: string;
-  old_status_id: string | null;
-  new_status_id: string | null;
-  changed_by: string | null;
-  notes: string | null;
-  created_at: string;
-}
-
-export interface InventoryTransaction {
-  id: string;
-  item_id: string;
-  transaction_type: string;
-  quantity: number;
-  reference_type: string | null;
-  reference_id: string | null;
-  performed_by: string | null;
-  notes: string | null;
-  created_at: string;
-}
-
-export interface InventoryPhoto {
-  id: string;
-  inventory_item_id: string;
-  file_path: string;
-  file_name: string;
-  file_size: number | null;
-  mime_type: string | null;
-  description: string | null;
-  is_primary: boolean;
-  uploaded_by: string | null;
-  created_at: string;
-}
+export type InventoryItemCategory = Database['public']['Tables']['master_inventory_categories']['Row'];
+export type InventoryStatusType = Database['public']['Tables']['master_inventory_status_types']['Row'];
+export type InventoryConditionType = Database['public']['Tables']['master_inventory_condition_types']['Row'];
+export type InventoryItem = Database['public']['Tables']['inventory_items']['Row'];
+export type InventoryItemInsert = Database['public']['Tables']['inventory_items']['Insert'];
+export type InventoryItemUpdate = Database['public']['Tables']['inventory_items']['Update'];
+export type InventoryStatusHistory = Database['public']['Tables']['inventory_status_history']['Row'];
+export type InventoryTransaction = Database['public']['Tables']['inventory_transactions']['Row'];
+export type InventoryTransactionInsert = Database['public']['Tables']['inventory_transactions']['Insert'];
+export type InventoryPhoto = Database['public']['Tables']['inventory_photos']['Row'];
+export type InventoryPhotoInsert = Database['public']['Tables']['inventory_photos']['Insert'];
 
 export async function getInventoryCategories() {
   const { data, error } = await supabase
@@ -115,7 +25,7 @@ export async function getInventoryCategories() {
     logger.error('Error fetching inventory categories:', error);
     throw error;
   }
-  return data as InventoryItemCategory[];
+  return (data ?? []) as InventoryItemCategory[];
 }
 
 export async function getInventoryStatusTypes() {
@@ -129,7 +39,7 @@ export async function getInventoryStatusTypes() {
     logger.error('Error fetching inventory status types:', error);
     throw error;
   }
-  return data as InventoryStatusType[];
+  return (data ?? []) as InventoryStatusType[];
 }
 
 export async function getInventoryConditionTypes() {
@@ -140,7 +50,7 @@ export async function getInventoryConditionTypes() {
     .order('rating', { ascending: false });
 
   if (error) throw error;
-  return data as InventoryConditionType[];
+  return (data ?? []) as InventoryConditionType[];
 }
 
 export async function getInventoryItems(filters?: {
@@ -197,16 +107,22 @@ export async function getInventoryItems(filters?: {
     throw error;
   }
 
-  const items = data || [];
+  const items = data ?? [];
   return await enrichItemsWithStockCount(items);
 }
 
-export async function enrichItemsWithStockCount(items: any[]) {
-  if (items.length === 0) return items;
+type EnrichableItem = { model: string | null; [key: string]: unknown };
+type StockCountRow = {
+  model: string | null;
+  status_type: { name: string | null; is_available_status: boolean | null } | null;
+};
+
+export async function enrichItemsWithStockCount<T extends EnrichableItem>(items: T[]) {
+  if (items.length === 0) return items.map(item => ({ ...item, similarCount: 0 }));
 
   const modelNumbers = items
     .map(item => item.model)
-    .filter(model => model && model.trim() !== '');
+    .filter((model): model is string => Boolean(model && model.trim() !== ''));
 
   if (modelNumbers.length === 0) {
     return items.map(item => ({ ...item, similarCount: 0 }));
@@ -225,18 +141,19 @@ export async function enrichItemsWithStockCount(items: any[]) {
 
   const stockCounts: Record<string, number> = {};
 
-  availableItems?.forEach((item: any) => {
-    const statusName = item.status_type?.name?.toLowerCase() || '';
+  const rows = (availableItems ?? []) as unknown as StockCountRow[];
+  rows.forEach((row) => {
+    const statusName = row.status_type?.name?.toLowerCase() ?? '';
     const isExcluded = statusName.includes('disposed') || statusName.includes('defective');
 
-    if (item.model && !isExcluded) {
-      stockCounts[item.model] = (stockCounts[item.model] || 0) + 1;
+    if (row.model && !isExcluded) {
+      stockCounts[row.model] = (stockCounts[row.model] ?? 0) + 1;
     }
   });
 
   return items.map(item => ({
     ...item,
-    similarCount: item.model ? (stockCounts[item.model] || 0) : 0
+    similarCount: item.model ? (stockCounts[item.model] ?? 0) : 0
   }));
 }
 
@@ -263,7 +180,7 @@ export async function getInventoryItemById(id: string) {
   return data;
 }
 
-export async function createInventoryItem(item: Partial<InventoryItem>) {
+export async function createInventoryItem(item: InventoryItemInsert) {
   const { data, error } = await supabase
     .from('inventory_items')
     .insert([item])
@@ -274,7 +191,7 @@ export async function createInventoryItem(item: Partial<InventoryItem>) {
   return data;
 }
 
-export async function updateInventoryItem(id: string, updates: Partial<InventoryItem>) {
+export async function updateInventoryItem(id: string, updates: InventoryItemUpdate) {
   const { data, error } = await supabase
     .from('inventory_items')
     .update(updates)
@@ -310,7 +227,7 @@ export async function getInventoryStatusHistory(itemId: string) {
     logger.error('Error fetching inventory status history:', error);
     return [];
   }
-  return data || [];
+  return data ?? [];
 }
 
 export async function getInventoryTransactions(itemId: string) {
@@ -324,10 +241,10 @@ export async function getInventoryTransactions(itemId: string) {
     logger.error('Error fetching inventory transactions:', error);
     return [];
   }
-  return data || [];
+  return data ?? [];
 }
 
-export async function createInventoryTransaction(transaction: Partial<InventoryTransaction>) {
+export async function createInventoryTransaction(transaction: InventoryTransactionInsert) {
   const { data, error } = await supabase
     .from('inventory_transactions')
     .insert([transaction])
@@ -347,23 +264,25 @@ export async function adjustInventoryQuantity(
 ) {
   const { data: item, error: fetchError } = await supabase
     .from('inventory_items')
-    .select('quantity')
+    .select('quantity, tenant_id')
     .eq('id', itemId)
     .maybeSingle();
 
   if (fetchError) throw fetchError;
+  if (!item) throw new Error(`Inventory item ${itemId} not found`);
 
-  const quantityBefore = item?.quantity || 0;
+  const quantityBefore = item.quantity ?? 0;
   const quantityAfter = quantityBefore + quantityChange;
 
   const { data: user } = await supabase.auth.getUser();
 
   await createInventoryTransaction({
     item_id: itemId,
+    tenant_id: item.tenant_id,
     transaction_type: transactionType,
     quantity: quantityChange,
     reference_type: 'manual',
-    performed_by: user?.user?.id,
+    performed_by: user?.user?.id ?? null,
     notes: [reason, notes].filter(Boolean).join(' - '),
   });
 
@@ -382,15 +301,16 @@ export async function getInventoryPhotos(itemId: string) {
   const { data, error } = await supabase
     .from('inventory_photos')
     .select('*')
-    .eq('inventory_item_id', itemId)
-    .order('is_primary', { ascending: false })
+    .eq('item_id', itemId)
+    .is('deleted_at', null)
+    .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data as InventoryPhoto[];
+  return (data ?? []) as InventoryPhoto[];
 }
 
-export async function addInventoryPhoto(photo: Partial<InventoryPhoto>) {
+export async function addInventoryPhoto(photo: InventoryPhotoInsert) {
   const { data, error } = await supabase
     .from('inventory_photos')
     .insert([photo])
@@ -398,7 +318,7 @@ export async function addInventoryPhoto(photo: Partial<InventoryPhoto>) {
     .maybeSingle();
 
   if (error) throw error;
-  return data as InventoryPhoto;
+  return data as InventoryPhoto | null;
 }
 
 export async function deleteInventoryPhoto(photoId: string) {
@@ -412,18 +332,53 @@ export async function deleteInventoryPhoto(photoId: string) {
 
 export async function getInventoryValueByCategory() {
   const { data, error } = await supabase
-    .from('inventory_value_by_category')
-    .select('*');
+    .from('inventory_items')
+    .select(`
+      quantity,
+      purchase_price,
+      category:master_inventory_categories(id, name)
+    `)
+    .is('deleted_at', null);
 
   if (error) throw error;
-  return data;
+
+  const rows = (data ?? []) as Array<{
+    quantity: number | null;
+    purchase_price: number | null;
+    category: { id: string; name: string } | null;
+  }>;
+
+  const grouped = new Map<string, { category_id: string; category_name: string; total_value: number; total_quantity: number }>();
+  rows.forEach((row) => {
+    const id = row.category?.id ?? 'uncategorized';
+    const name = row.category?.name ?? 'Uncategorized';
+    const value = (row.purchase_price ?? 0) * (row.quantity ?? 0);
+    const existing = grouped.get(id);
+    if (existing) {
+      existing.total_value += value;
+      existing.total_quantity += row.quantity ?? 0;
+    } else {
+      grouped.set(id, {
+        category_id: id,
+        category_name: name,
+        total_value: value,
+        total_quantity: row.quantity ?? 0,
+      });
+    }
+  });
+  return Array.from(grouped.values());
 }
 
 export async function calculateTotalInventoryValue() {
-  const { data, error } = await supabase.rpc('calculate_total_inventory_value');
+  const { data, error } = await supabase
+    .from('inventory_items')
+    .select('quantity, purchase_price')
+    .is('deleted_at', null);
 
   if (error) throw error;
-  return data as number;
+
+  const rows = (data ?? []) as Array<{ quantity: number | null; purchase_price: number | null }>;
+  return rows.reduce((sum, row) => sum + ((row.purchase_price ?? 0) * (row.quantity ?? 0)), 0);
 }
 
 export async function getInventoryStatistics() {
@@ -447,9 +402,9 @@ export async function getInventoryStatistics() {
   }
 
   const totalItems = items.length;
-  const totalInStock = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalInStock = items.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
   const totalValue = items.reduce((sum, item) => {
-    return sum + ((item.purchase_price || 0) * (item.quantity || 0));
+    return sum + ((item.purchase_price ?? 0) * (item.quantity ?? 0));
   }, 0);
 
   return {
@@ -499,10 +454,17 @@ export async function getInventoryInsights(): Promise<InventoryInsights> {
     };
   }
 
-  items.forEach((item: any) => {
-    const categoryName = item.category?.name?.toLowerCase() || '';
-    const quantity = item.quantity || 0;
-    const cost = item.purchase_price || 0;
+  const rows = items as unknown as Array<{
+    id: string;
+    quantity: number | null;
+    purchase_price: number | null;
+    category: { name: string | null } | null;
+  }>;
+
+  rows.forEach((item) => {
+    const categoryName = item.category?.name?.toLowerCase() ?? '';
+    const quantity = item.quantity ?? 0;
+    const cost = item.purchase_price ?? 0;
 
     totalValue += (cost * quantity);
 
