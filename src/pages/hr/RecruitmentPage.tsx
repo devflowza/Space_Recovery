@@ -95,7 +95,7 @@ function CandidateCard({
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-slate-900 text-sm truncate">
-            {candidate.first_name} {candidate.last_name}
+            {candidate.name}
           </h4>
           <StarRating rating={candidate.rating} />
         </div>
@@ -126,10 +126,12 @@ function CandidateCard({
             <span>{candidate.phone}</span>
           </div>
         )}
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <Calendar className="w-3 h-3 flex-shrink-0" />
-          <span>Applied {new Date(candidate.applied_date).toLocaleDateString()}</span>
-        </div>
+        {candidate.applied_date && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Calendar className="w-3 h-3 flex-shrink-0" />
+            <span>Applied {new Date(candidate.applied_date).toLocaleDateString()}</span>
+          </div>
+        )}
       </div>
 
       {candidate.notes && (
@@ -163,7 +165,6 @@ export const RecruitmentPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'jobs' | 'pipeline'>('jobs');
   const [searchTerm, setSearchTerm] = useState('');
-  const [_selectedJob, _setSelectedJob] = useState<JobWithDetails | null>(null);
   const [pipelineJob, setPipelineJob] = useState<JobWithDetails | null>(null);
 
   const [showJobModal, setShowJobModal] = useState(false);
@@ -345,20 +346,16 @@ export const RecruitmentPage: React.FC = () => {
                         {job.location}
                       </div>
                     )}
-                    {(job.salary_range_min || job.salary_range_max) && (
+                    {job.salary_range && (
                       <div className="flex items-center gap-2 text-xs text-slate-500">
                         <DollarSign className="w-3.5 h-3.5 flex-shrink-0" />
-                        {job.salary_range_min && job.salary_range_max
-                          ? `${Number(job.salary_range_min).toLocaleString()} – ${Number(job.salary_range_max).toLocaleString()}`
-                          : job.salary_range_min
-                          ? `From ${Number(job.salary_range_min).toLocaleString()}`
-                          : `Up to ${Number(job.salary_range_max).toLocaleString()}`}
+                        {job.salary_range}
                       </div>
                     )}
-                    {job.closing_date && (
+                    {job.closes_at && (
                       <div className="flex items-center gap-2 text-xs text-slate-500">
                         <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                        Closes {new Date(job.closing_date).toLocaleDateString()}
+                        Closes {new Date(job.closes_at).toLocaleDateString()}
                       </div>
                     )}
                   </div>
