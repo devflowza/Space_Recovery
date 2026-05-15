@@ -152,12 +152,12 @@ export function buildQuoteDocument(
     columns: [
       {
         width: '50%',
-        stack: [createBilingualInfoBox(customerInfoTitle, null, customerDetailsContent, userIconSvg)],
+        stack: [createBilingualInfoBox(customerInfoTitle, null, customerDetailsContent, userIconSvg) as Content],
       },
       { width: 8, text: '' },
       {
         width: '50%',
-        stack: [createBilingualInfoBox(quoteDetailsTitle, null, quoteDetailsContent, fileIconSvg)],
+        stack: [createBilingualInfoBox(quoteDetailsTitle, null, quoteDetailsContent, fileIconSvg) as Content],
       },
     ],
     margin: [0, 0, 0, 8],
@@ -286,7 +286,7 @@ export function buildQuoteDocument(
   const financialSummarySection: Content = {
     stack: financialSummaryRows,
     margin: [280, 8, 0, 8],
-  };
+  } as Content;
 
   const termsAndBankSection: Content[] = [];
 
@@ -362,7 +362,7 @@ export function buildQuoteDocument(
         ] : []),
       ],
       margin: [0, 8, 0, 0],
-    });
+    } as Content);
   } else if (quoteData.bank_accounts) {
     termsAndBankSection.push({
       columns: [
@@ -402,7 +402,7 @@ export function buildQuoteDocument(
         },
       ],
       margin: [0, 8, 0, 0],
-    });
+    } as Content);
   }
 
   const tagline = companySettings.branding?.brand_tagline || null;
@@ -544,7 +544,7 @@ export function buildQuoteDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 85): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 85): object {
   return {
     columns: [
       { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },
