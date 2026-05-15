@@ -12,6 +12,7 @@ import { getGeneralIconSvg } from '../../deviceIconMapper';
 export interface ReportData {
   report: {
     id: string;
+    case_id: string;
     report_number: string;
     report_type: string;
     title: string;
