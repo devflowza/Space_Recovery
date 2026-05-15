@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus, Search, Package, DollarSign, Clock, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/shared/PageHeader';
 import { Button } from '../../components/ui/Button';
-import { DataTable } from '../../components/shared/DataTable';
+import { DataTable, type Column } from '../../components/shared/DataTable';
 import { Badge } from '../../components/ui/Badge';
 import { StatsCard } from '../../components/ui/StatsCard';
 import { Input } from '../../components/ui/Input';
@@ -12,18 +12,36 @@ import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 import { format } from 'date-fns';
 import { logger } from '../../lib/logger';
+import type { Database } from '../../types/database.types';
+
+type PurchaseOrderRow = Database['public']['Tables']['purchase_orders']['Row'];
+type StatusRow = Database['public']['Tables']['master_purchase_order_statuses']['Row'];
+
+type SupplierSummary = {
+  name: string | null;
+  supplier_number: string | null;
+};
+
+type StatusSummary = {
+  name: string | null;
+  color: string | null;
+};
+
+type PurchaseOrderWithJoins = PurchaseOrderRow & {
+  supplier: SupplierSummary | null;
+  status: StatusSummary | null;
+};
 
 export default function PurchaseOrdersListPage() {
   const navigate = useNavigate();
-  const { showToast } = useToast();
-  const [orders, setOrders] = useState<any[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<any[]>([]);
+  const toast = useToast();
+  const [orders, setOrders] = useState<PurchaseOrderWithJoins[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrderWithJoins | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [statuses, setStatuses] = useState<any[]>([]);
+  const [statuses, setStatuses] = useState<StatusRow[]>([]);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -32,12 +50,28 @@ export default function PurchaseOrdersListPage() {
   });
 
   useEffect(() => {
-    loadOrders();
-    loadStatuses();
+    void loadOrders();
+    void loadStatuses();
   }, []);
 
-  useEffect(() => {
-    filterOrders();
+  const filteredOrders = useMemo(() => {
+    let filtered = [...orders];
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (order) =>
+          order.po_number?.toLowerCase().includes(query) ||
+          order.supplier?.name?.toLowerCase().includes(query) ||
+          order.supplier?.supplier_number?.toLowerCase().includes(query)
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((order) => order.status_id === statusFilter);
+    }
+
+    return filtered;
   }, [orders, searchQuery, statusFilter]);
 
   const loadOrders = async () => {
@@ -48,17 +82,19 @@ export default function PurchaseOrdersListPage() {
         .select(`
           *,
           supplier:suppliers(name, supplier_number),
-          status:purchase_order_statuses(name, color)
+          status:master_purchase_order_statuses(name, color)
         `)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setOrders(data || []);
-      calculateStats(data || []);
-    } catch (error: unknown) {
-      logger.error('Error loading purchase orders:', error);
-      showToast(error instanceof Error ? error.message : 'Failed to load purchase orders', 'error');
+      const rows = (data ?? []) as unknown as PurchaseOrderWithJoins[];
+      setOrders(rows);
+      calculateStats(rows);
+    } catch (err: unknown) {
+      logger.error('Error loading purchase orders:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to load purchase orders');
     } finally {
       setLoading(false);
     }
@@ -73,16 +109,16 @@ export default function PurchaseOrdersListPage() {
         .order('sort_order');
 
       if (error) throw error;
-      setStatuses(data || []);
-    } catch (error) {
-      logger.error('Error loading statuses:', error);
+      setStatuses(data ?? []);
+    } catch (err) {
+      logger.error('Error loading statuses:', err);
     }
   };
 
-  const calculateStats = (orderData: Array<Record<string, unknown> & { status?: { name?: string }; total_amount?: number }>) => {
-    const pending = orderData.filter(o => o.status?.name === 'Draft' || o.status?.name === 'Ordered');
-    const approved = orderData.filter(o => o.status?.name === 'Approved' || o.status?.name === 'Received');
-    const totalValue = orderData.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+  const calculateStats = (orderData: PurchaseOrderWithJoins[]) => {
+    const pending = orderData.filter((o) => o.status?.name === 'Draft' || o.status?.name === 'Ordered');
+    const approved = orderData.filter((o) => o.status?.name === 'Approved' || o.status?.name === 'Received');
+    const totalValue = orderData.reduce((sum, o) => sum + (o.total_amount ?? 0), 0);
 
     setStats({
       total: orderData.length,
@@ -92,114 +128,75 @@ export default function PurchaseOrdersListPage() {
     });
   };
 
-  const filterOrders = () => {
-    let filtered = [...orders];
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (order) =>
-          order.po_number?.toLowerCase().includes(query) ||
-          order.supplier?.name?.toLowerCase().includes(query) ||
-          order.supplier?.supplier_number?.toLowerCase().includes(query)
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((order) => order.status_id === parseInt(statusFilter));
-    }
-
-    setFilteredOrders(filtered);
-  };
-
-  const handleEdit = (order: Record<string, unknown>) => {
-    setSelectedOrder(order);
-    setShowAddModal(true);
-  };
-
-  const handleDelete = async (order: { id: string; po_number?: string }) => {
-    if (!confirm(`Are you sure you want to delete purchase order "${order.po_number}"?`)) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('purchase_orders')
-        .delete()
-        .eq('id', order.id);
-
-      if (error) throw error;
-
-      showToast('Purchase order deleted successfully', 'success');
-      loadOrders();
-    } catch (error: unknown) {
-      logger.error('Error deleting purchase order:', error);
-      showToast(error instanceof Error ? error.message : 'Failed to delete purchase order', 'error');
-    }
-  };
-
   const handleModalClose = () => {
     setShowAddModal(false);
     setSelectedOrder(null);
   };
 
   const handleModalSuccess = () => {
-    loadOrders();
+    void loadOrders();
   };
 
-  const columns = [
+  const columns: Column<PurchaseOrderWithJoins>[] = [
     {
       key: 'po_number',
-      label: 'PO Number',
-      render: (order: Record<string, unknown>) => (
+      header: 'PO Number',
+      render: (order) => (
         <button
           onClick={() => navigate(`/purchase-orders/${order.id}`)}
           className="text-primary hover:text-primary/80 font-medium"
         >
-          {order.po_number}
+          {order.po_number ?? '-'}
         </button>
       ),
     },
     {
       key: 'supplier',
-      label: 'Supplier',
-      render: (order: Record<string, unknown>) => (
+      header: 'Supplier',
+      render: (order) => (
         <div>
-          <div className="font-medium">{order.supplier?.name || '-'}</div>
-          <div className="text-sm text-gray-500">{order.supplier?.supplier_number}</div>
+          <div className="font-medium">{order.supplier?.name ?? '-'}</div>
+          <div className="text-sm text-gray-500">{order.supplier?.supplier_number ?? ''}</div>
         </div>
       ),
     },
     {
       key: 'order_date',
-      label: 'Order Date',
-      render: (order: Record<string, unknown>) => format(new Date(order.order_date), 'MMM dd, yyyy'),
+      header: 'Order Date',
+      render: (order) =>
+        order.order_date ? format(new Date(order.order_date), 'MMM dd, yyyy') : '-',
     },
     {
-      key: 'expected_delivery',
-      label: 'Expected Delivery',
-      render: (order: Record<string, unknown>) => order.expected_delivery ? format(new Date(order.expected_delivery), 'MMM dd, yyyy') : '-',
+      key: 'expected_delivery_date',
+      header: 'Expected Delivery',
+      render: (order) =>
+        order.expected_delivery_date ? format(new Date(order.expected_delivery_date), 'MMM dd, yyyy') : '-',
     },
     {
       key: 'total_amount',
-      label: 'Total Amount',
-      render: (order: Record<string, unknown>) => (
-        <span className="font-semibold">${order.total_amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</span>
+      header: 'Total Amount',
+      render: (order) => (
+        <span className="font-semibold">
+          ${(order.total_amount ?? 0).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </span>
       ),
     },
     {
       key: 'status',
-      label: 'Status',
-      render: (order: Record<string, unknown>) => (
-        <Badge style={{ backgroundColor: order.status?.color || '#3b82f6', color: 'white' }}>
-          {order.status?.name || 'Unknown'}
+      header: 'Status',
+      render: (order) => (
+        <Badge style={{ backgroundColor: order.status?.color ?? '#3b82f6', color: 'white' }}>
+          {order.status?.name ?? 'Unknown'}
         </Badge>
       ),
     },
     {
       key: 'created_at',
-      label: 'Created',
-      render: (order: Record<string, unknown>) => format(new Date(order.created_at), 'MMM dd, yyyy'),
+      header: 'Created',
+      render: (order) => format(new Date(order.created_at), 'MMM dd, yyyy'),
     },
   ];
 
@@ -207,8 +204,8 @@ export default function PurchaseOrdersListPage() {
     <div className="space-y-6">
       <PageHeader
         title="Purchase Orders"
-        subtitle="Manage purchase orders and track deliveries"
-        action={
+        description="Manage purchase orders and track deliveries"
+        actions={
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Create Purchase Order
@@ -226,19 +223,19 @@ export default function PurchaseOrdersListPage() {
           title="Pending Orders"
           value={stats.pending.toString()}
           icon={Clock}
-          iconColor="text-warning"
+          color="orange"
         />
         <StatsCard
           title="Approved/Received"
           value={stats.approved.toString()}
           icon={CheckCircle}
-          iconColor="text-success"
+          color="green"
         />
         <StatsCard
           title="Total Value"
           value={`$${stats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           icon={DollarSign}
-          iconColor="text-primary"
+          color="blue"
         />
       </div>
 
@@ -274,14 +271,15 @@ export default function PurchaseOrdersListPage() {
           </div>
         </div>
 
-        <DataTable
-          columns={columns}
-          data={filteredOrders}
-          loading={loading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          emptyMessage="No purchase orders found"
-        />
+        {loading ? (
+          <div className="p-12 text-center text-gray-500">Loading purchase orders…</div>
+        ) : (
+          <DataTable<PurchaseOrderWithJoins>
+            columns={columns}
+            data={filteredOrders}
+            emptyMessage="No purchase orders found"
+          />
+        )}
       </div>
 
       {showAddModal && (
@@ -289,7 +287,20 @@ export default function PurchaseOrdersListPage() {
           isOpen={showAddModal}
           onClose={handleModalClose}
           onSuccess={handleModalSuccess}
-          purchaseOrder={selectedOrder}
+          purchaseOrder={
+            selectedOrder
+              ? {
+                  id: selectedOrder.id,
+                  po_number: selectedOrder.po_number ?? undefined,
+                  supplier_id: selectedOrder.supplier_id,
+                  status_id: selectedOrder.status_id ?? undefined,
+                  order_date: selectedOrder.order_date ?? undefined,
+                  expected_delivery: selectedOrder.expected_delivery_date ?? undefined,
+                  shipping_address: selectedOrder.shipping_address ?? undefined,
+                  notes: selectedOrder.notes ?? undefined,
+                }
+              : null
+          }
         />
       )}
     </div>
