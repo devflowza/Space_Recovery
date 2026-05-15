@@ -30,12 +30,11 @@ export const EmployeeLoansPage: React.FC = () => {
   const [showLoanForm, setShowLoanForm] = useState(false);
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
 
+  const loanFilters = statusFilter !== 'all' ? { status: statusFilter } : undefined;
+
   const { data: loans = [], isLoading } = useQuery({
-    queryKey: payrollKeys.loans(statusFilter !== 'all' ? statusFilter : undefined),
-    queryFn: () =>
-      payrollService.getEmployeeLoans(
-        statusFilter !== 'all' ? { status: statusFilter } : undefined
-      ),
+    queryKey: payrollKeys.loans(loanFilters),
+    queryFn: () => payrollService.getEmployeeLoans(loanFilters),
   });
 
   const filteredLoans = loans.filter((loan) => {
@@ -56,7 +55,7 @@ export const EmployeeLoansPage: React.FC = () => {
     activeLoans: loans.filter((l) => l.status === 'active').length,
     totalOutstanding: loans
       .filter((l) => l.status === 'active')
-      .reduce((sum, l) => sum + Number(l.remaining_balance), 0),
+      .reduce((sum, l) => sum + Number(l.remaining_amount ?? 0), 0),
     monthlyDeductions: loans
       .filter((l) => l.status === 'active')
       .reduce((sum, l) => sum + Number(l.installment_amount), 0),
@@ -98,9 +97,9 @@ export const EmployeeLoansPage: React.FC = () => {
   };
 
   const calculateProgress = (loan: EmployeeLoan) => {
-    const paid = loan.installments_paid || 0;
-    const total = loan.installments_count;
-    const percentage = (paid / total) * 100;
+    const paid = loan.paid_installments || 0;
+    const total = loan.installments;
+    const percentage = total > 0 ? (paid / total) * 100 : 0;
     return { paid, total, percentage };
   };
 
@@ -109,17 +108,18 @@ export const EmployeeLoansPage: React.FC = () => {
       <PageHeader
         title="Employee Loans"
         description="Manage employee loans, advances, and repayment schedules"
-      >
-        <Button onClick={() => setShowLoanForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Loan
-        </Button>
-      </PageHeader>
+        actions={
+          <Button onClick={() => setShowLoanForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Loan
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatsCard
           title="Active Loans"
-          value={stats.activeLoans}
+          value={String(stats.activeLoans)}
           icon={TrendingUp}
           trend={undefined}
         />
@@ -259,7 +259,7 @@ export const EmployeeLoansPage: React.FC = () => {
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                        {formatCurrency(Number(loan.principal_amount))}
+                        {formatCurrency(Number(loan.amount))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="text-sm text-gray-900">
@@ -288,7 +288,7 @@ export const EmployeeLoansPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
-                        {formatCurrency(Number(loan.remaining_balance))}
+                        {formatCurrency(Number(loan.remaining_amount ?? 0))}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Badge variant={getStatusVariant(loan.status || 'pending')}>
