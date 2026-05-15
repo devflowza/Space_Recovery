@@ -5,6 +5,7 @@ import {
   fetchDeletedQuotes,
   restoreQuote,
   permanentDeleteQuote,
+  type QuoteWithDetails,
 } from '../../lib/quotesService';
 import { PageHeader } from '../../components/shared/PageHeader';
 import { Card } from '../../components/ui/Card';
@@ -23,17 +24,22 @@ import {
   User,
 } from 'lucide-react';
 
+type DeletedQuoteRow = QuoteWithDetails & {
+  deleted_at: string | null;
+  deleted_by_profile?: { id: string; full_name: string | null } | null;
+};
+
 export const QuotesRecycleBin: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
-  const [selectedQuote, setSelectedQuote] = useState<any>(null);
+  const [selectedQuote, setSelectedQuote] = useState<DeletedQuoteRow | null>(null);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const { data: deletedQuotes = [], isLoading } = useQuery({
+  const { data: deletedQuotes = [], isLoading } = useQuery<DeletedQuoteRow[]>({
     queryKey: ['deletedQuotes'],
-    queryFn: fetchDeletedQuotes,
+    queryFn: async () => (await fetchDeletedQuotes()) as DeletedQuoteRow[],
   });
 
   const restoreMutation = useMutation({
@@ -63,17 +69,18 @@ export const QuotesRecycleBin: React.FC = () => {
     },
   });
 
-  const handleRestore = (quote: { id: string }) => {
+  const handleRestore = (quote: DeletedQuoteRow) => {
     setSelectedQuote(quote);
     setShowRestoreModal(true);
   };
 
-  const handlePermanentDelete = (quote: { id: string }) => {
+  const handlePermanentDelete = (quote: DeletedQuoteRow) => {
     setSelectedQuote(quote);
     setShowDeleteModal(true);
   };
 
-  const getDaysUntilPurge = (deletedAt: string) => {
+  const getDaysUntilPurge = (deletedAt: string | null) => {
+    if (!deletedAt) return 0;
     const deleted = new Date(deletedAt);
     const purgeDate = new Date(deleted.getTime() + 30 * 24 * 60 * 60 * 1000);
     const now = new Date();
@@ -83,9 +90,9 @@ export const QuotesRecycleBin: React.FC = () => {
 
   const columns = [
     {
+      key: 'quote_number',
       header: 'Quote Number',
-      accessor: 'quote_number' as const,
-      cell: (quote: Record<string, unknown>) => (
+      render: (quote: DeletedQuoteRow) => (
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-slate-400" />
           <span className="font-medium text-slate-900">{quote.quote_number || 'N/A'}</span>
@@ -93,40 +100,40 @@ export const QuotesRecycleBin: React.FC = () => {
       ),
     },
     {
+      key: 'customer_name',
       header: 'Customer',
-      accessor: 'customer_name' as const,
-      cell: (quote: Record<string, unknown>) => (
+      render: (quote: DeletedQuoteRow) => (
         <span className="text-slate-700">
           {quote.customers?.customer_name || quote.companies?.company_name || 'N/A'}
         </span>
       ),
     },
     {
+      key: 'case_no',
       header: 'Case',
-      accessor: 'case_no' as const,
-      cell: (quote: Record<string, unknown>) => (
+      render: (quote: DeletedQuoteRow) => (
         <span className="text-slate-700">{quote.cases?.case_no || 'N/A'}</span>
       ),
     },
     {
+      key: 'total_amount',
       header: 'Amount',
-      accessor: 'total_amount' as const,
-      cell: (quote: Record<string, unknown>) => (
+      render: (quote: DeletedQuoteRow) => (
         <span className="font-medium text-slate-900">
-          {quote.total_amount?.toFixed(2) || '0.00'}
+          {(quote.total_amount ?? 0).toFixed(2)}
         </span>
       ),
     },
     {
+      key: 'deleted_at',
       header: 'Deleted',
-      accessor: 'deleted_at' as const,
-      cell: (quote: Record<string, unknown>) => {
+      render: (quote: DeletedQuoteRow) => {
         const daysLeft = getDaysUntilPurge(quote.deleted_at);
         return (
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <Calendar className="w-3 h-3" />
-              {formatDate(quote.deleted_at)}
+              {quote.deleted_at ? formatDate(quote.deleted_at) : 'N/A'}
             </div>
             <div className="flex items-center gap-2 text-xs text-warning">
               <AlertTriangle className="w-3 h-3" />
@@ -137,9 +144,9 @@ export const QuotesRecycleBin: React.FC = () => {
       },
     },
     {
+      key: 'deleted_by_profile',
       header: 'Deleted By',
-      accessor: 'deleted_by_profile' as const,
-      cell: (quote: Record<string, unknown>) => (
+      render: (quote: DeletedQuoteRow) => (
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <User className="w-3 h-3" />
           {quote.deleted_by_profile?.full_name || 'Unknown'}
@@ -147,9 +154,9 @@ export const QuotesRecycleBin: React.FC = () => {
       ),
     },
     {
+      key: 'actions',
       header: 'Actions',
-      accessor: 'id' as const,
-      cell: (quote: Record<string, unknown>) => (
+      render: (quote: DeletedQuoteRow) => (
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -179,7 +186,7 @@ export const QuotesRecycleBin: React.FC = () => {
         <PageHeader
           title="Quotes Recycle Bin"
           description="Restore or permanently delete quotes. Quotes are auto-purged after 30 days."
-          action={
+          actions={
             <Button variant="secondary" onClick={() => navigate('/quotes')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Quotes
@@ -221,7 +228,7 @@ export const QuotesRecycleBin: React.FC = () => {
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <Table data={deletedQuotes} columns={columns} />
+                <Table<DeletedQuoteRow> data={deletedQuotes} columns={columns} />
               </div>
             </>
           )}
@@ -251,7 +258,7 @@ export const QuotesRecycleBin: React.FC = () => {
                       'N/A'}
                   </p>
                   <p>
-                    <strong>Amount:</strong> {selectedQuote?.total_amount?.toFixed(2) || '0.00'}
+                    <strong>Amount:</strong> {(selectedQuote?.total_amount ?? 0).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -271,9 +278,9 @@ export const QuotesRecycleBin: React.FC = () => {
               Cancel
             </Button>
             <Button
-              onClick={() => restoreMutation.mutate(selectedQuote?.id)}
+              onClick={() => selectedQuote?.id && restoreMutation.mutate(selectedQuote.id)}
               className="bg-success text-success-foreground hover:bg-success/90"
-              disabled={restoreMutation.isPending}
+              disabled={restoreMutation.isPending || !selectedQuote?.id}
             >
               {restoreMutation.isPending ? (
                 <>
@@ -314,7 +321,7 @@ export const QuotesRecycleBin: React.FC = () => {
                       'N/A'}
                   </p>
                   <p>
-                    <strong>Amount:</strong> {selectedQuote?.total_amount?.toFixed(2) || '0.00'}
+                    <strong>Amount:</strong> {(selectedQuote?.total_amount ?? 0).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -335,9 +342,9 @@ export const QuotesRecycleBin: React.FC = () => {
               Cancel
             </Button>
             <Button
-              onClick={() => permanentDeleteMutation.mutate(selectedQuote?.id)}
+              onClick={() => selectedQuote?.id && permanentDeleteMutation.mutate(selectedQuote.id)}
               className="bg-danger text-danger-foreground hover:bg-danger/90"
-              disabled={permanentDeleteMutation.isPending}
+              disabled={permanentDeleteMutation.isPending || !selectedQuote?.id}
             >
               {permanentDeleteMutation.isPending ? (
                 <>
