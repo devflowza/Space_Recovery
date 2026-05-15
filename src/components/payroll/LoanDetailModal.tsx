@@ -3,6 +3,7 @@ import { CheckCircle, Clock, XCircle, DollarSign, Calendar, TrendingUp } from 'l
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { payrollService } from '../../lib/payrollService';
 import { payrollKeys } from '../../lib/queryKeys';
+import { supabase } from '../../lib/supabaseClient';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -23,7 +24,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
   loanId,
 }) => {
   const { formatCurrency } = useCurrency();
-  const { showToast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -41,12 +42,12 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
 
   const cancelLoanMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await payrollService.supabase
+      const { data, error } = await supabase
         .from('employee_loans')
         .update({ status: 'cancelled' })
         .eq('id', loanId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -54,11 +55,11 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: payrollKeys.loans() });
       queryClient.invalidateQueries({ queryKey: ['loan', loanId] });
-      showToast('Loan cancelled successfully', 'success');
+      toast.success('Loan cancelled successfully');
       onClose();
     },
     onError: (error: unknown) => {
-      showToast(error instanceof Error ? error.message : 'Failed to cancel loan', 'error');
+      toast.error(error instanceof Error ? error.message : 'Failed to cancel loan');
     },
   });
 
@@ -67,10 +68,10 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: payrollKeys.loans() });
       queryClient.invalidateQueries({ queryKey: ['loan', loanId] });
-      showToast('Loan approved successfully', 'success');
+      toast.success('Loan approved successfully');
     },
     onError: (error: unknown) => {
-      showToast(error instanceof Error ? error.message : 'Failed to approve loan', 'error');
+      toast.error(error instanceof Error ? error.message : 'Failed to approve loan');
     },
   });
 
@@ -115,16 +116,16 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
   const generateRepaymentSchedule = () => {
     const schedule = [];
     const startDate = new Date(loan.start_date);
-    const installments = loan.installments_count;
+    const installments = loan.installments;
     const installmentAmount = Number(loan.installment_amount);
 
     for (let i = 0; i < installments; i++) {
       const dueDate = new Date(startDate);
       dueDate.setMonth(dueDate.getMonth() + i);
 
-      const isPaid = i < (loan.installments_paid || 0);
+      const isPaid = i < (loan.paid_installments || 0);
       const repayment = repayments.find((r) => {
-        const repaymentDate = new Date(r.payment_date);
+        const repaymentDate = new Date(r.repayment_date);
         return (
           repaymentDate.getMonth() === dueDate.getMonth() &&
           repaymentDate.getFullYear() === dueDate.getFullYear()
@@ -136,7 +137,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
         dueDate,
         amount: installmentAmount,
         status: isPaid ? 'paid' : 'pending',
-        paymentDate: repayment?.payment_date,
+        paymentDate: repayment?.repayment_date,
       });
     }
 
@@ -144,7 +145,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
   };
 
   const schedule = generateRepaymentSchedule();
-  const progress = ((loan.installments_paid || 0) / loan.installments_count) * 100;
+  const progress = ((loan.paid_installments || 0) / loan.installments) * 100;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Loan Details" size="large">
@@ -175,7 +176,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
               <DollarSign className="h-4 w-4 text-gray-400" />
             </div>
             <p className="text-xl font-bold text-gray-900">
-              {formatCurrency(Number(loan.principal_amount))}
+              {formatCurrency(Number(loan.amount))}
             </p>
           </Card>
 
@@ -198,7 +199,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
               <TrendingUp className="h-4 w-4 text-gray-400" />
             </div>
             <p className="text-xl font-bold text-warning">
-              {formatCurrency(Number(loan.remaining_balance))}
+              {formatCurrency(Number(loan.remaining_amount))}
             </p>
           </Card>
 
@@ -222,7 +223,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">Repayment Progress</span>
             <span className="text-sm text-gray-600">
-              {loan.installments_paid || 0} of {loan.installments_count} installments
+              {loan.paid_installments || 0} of {loan.installments} installments
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3">
@@ -234,7 +235,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
           <div className="flex justify-between mt-1">
             <span className="text-xs text-gray-500">
               {formatCurrency(
-                Number(loan.total_amount) - Number(loan.remaining_balance)
+                Number(loan.total_amount) - Number(loan.remaining_amount)
               )}{' '}
               paid
             </span>
@@ -248,10 +249,10 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
             <div>
               <span className="text-gray-600">Loan Type:</span>
               <p className="font-medium text-gray-900 mt-1">
-                {loan.loan_type
+                {(loan.loan_type ?? '')
                   .split('_')
                   .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                  .join(' ')}
+                  .join(' ') || '-'}
               </p>
             </div>
             <div>
@@ -308,7 +309,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
                     className={
                       item.status === 'paid'
                         ? 'bg-success-muted'
-                        : item.installmentNumber === (loan.installments_paid || 0) + 1
+                        : item.installmentNumber === (loan.paid_installments || 0) + 1
                           ? 'bg-info-muted'
                           : ''
                     }
