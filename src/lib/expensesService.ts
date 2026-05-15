@@ -1,6 +1,12 @@
 import { supabase } from './supabaseClient';
 import { sanitizeFilterValue } from './postgrestSanitizer';
 import { logger } from './logger';
+import type { Database } from '../types/database.types';
+
+type ExpenseInsert = Database['public']['Tables']['expenses']['Insert'];
+type ExpenseAttachmentRow = Database['public']['Tables']['expense_attachments']['Row'];
+
+export type ExpenseStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'paid';
 
 export interface Expense {
   id?: string;
@@ -11,7 +17,8 @@ export interface Expense {
   vendor?: string;
   category_id?: string | null;
   case_id?: string | null;
-  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'paid';
+  payment_method_id?: string | null;
+  status: ExpenseStatus;
   created_by?: string;
   approved_by?: string | null;
   approved_at?: string | null;
@@ -41,15 +48,7 @@ export interface ExpenseWithDetails extends Expense {
   attachments?: ExpenseAttachment[];
 }
 
-export interface ExpenseAttachment {
-  id: string;
-  expense_id: string;
-  file_name: string;
-  file_path: string;
-  file_type: string;
-  file_size: number;
-  uploaded_at: string;
-}
+export type ExpenseAttachment = ExpenseAttachmentRow;
 
 export const getNextExpenseNumber = async (): Promise<string> => {
   const { data, error } = await supabase.rpc('get_next_number', {
@@ -114,7 +113,7 @@ export const fetchExpenses = async (filters?: {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data as ExpenseWithDetails[];
+  return (data ?? []) as unknown as ExpenseWithDetails[];
 };
 
 export const fetchExpenseById = async (id: string) => {
@@ -129,17 +128,19 @@ export const fetchExpenseById = async (id: string) => {
     .maybeSingle();
 
   if (error) throw error;
+  if (!expense) return null;
 
   const { data: attachments } = await supabase
     .from('expense_attachments')
     .select('*')
     .eq('expense_id', id)
-    .order('uploaded_at', { ascending: false });
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
 
   return {
     ...expense,
-    attachments: attachments || [],
-  } as ExpenseWithDetails;
+    attachments: attachments ?? [],
+  } as unknown as ExpenseWithDetails;
 };
 
 export const createExpense = async (
@@ -147,12 +148,14 @@ export const createExpense = async (
 ) => {
   const expenseNumber = await getNextExpenseNumber();
 
+  const payload = {
+    ...expense,
+    expense_number: expenseNumber,
+  } as unknown as ExpenseInsert;
+
   const { data, error } = await supabase
     .from('expenses')
-    .insert([{
-      ...expense,
-      expense_number: expenseNumber,
-    }])
+    .insert([payload])
     .select()
     .maybeSingle();
 
@@ -164,9 +167,11 @@ export const updateExpense = async (
   id: string,
   expense: Partial<Expense>
 ) => {
+  const updatePayload = expense as unknown as Database['public']['Tables']['expenses']['Update'];
+
   const { data, error } = await supabase
     .from('expenses')
-    .update(expense)
+    .update(updatePayload)
     .eq('id', id)
     .select()
     .maybeSingle();
@@ -212,6 +217,9 @@ export const approveExpense = async (id: string, approvedBy: string) => {
     .maybeSingle();
 
   if (fetchError) throw fetchError;
+  if (!expense) {
+    throw new Error(`Expense ${id} not found`);
+  }
 
   const { data, error } = await supabase
     .from('expenses')
@@ -229,22 +237,18 @@ export const approveExpense = async (id: string, approvedBy: string) => {
   await createFinancialTransaction({
     transaction_date: new Date().toISOString().split('T')[0],
     amount: expense.amount,
-    type: 'expense',
-    description: `Expense approved: ${expense.description}`,
-    related_expense_id: id,
-    status: 'completed',
+    transaction_type: 'expense',
+    description: `Expense approved: ${expense.description ?? ''}`,
+    reference_type: 'expense',
+    reference_id: id,
   });
 
   if (expense.case_id) {
     await createVATRecord({
-      record_date: new Date().toISOString().split('T')[0],
-      record_type: 'purchase',
-      net_amount: expense.amount,
+      record_type: 'expense',
+      record_id: id,
       vat_amount: 0,
-      gross_amount: expense.amount,
       vat_rate: 0,
-      description: expense.description,
-      expense_id: id,
     });
   }
 
@@ -290,42 +294,61 @@ export const uploadExpenseAttachment = async (
 ): Promise<ExpenseAttachment> => {
   const fileExt = file.name.split('.').pop();
   const fileName = `${expenseId}/${Date.now()}.${fileExt}`;
-  const filePath = `expense-receipts/${fileName}`;
 
-  const { error: uploadError } = await supabase.storage
+  const { data: uploadData, error: uploadError } = await supabase.storage
     .from('expense-receipts')
-    .upload(filePath, file);
+    .upload(fileName, file);
 
   if (uploadError) throw uploadError;
 
+  const { data: tenantRow, error: tenantError } = await supabase
+    .from('expenses')
+    .select('tenant_id')
+    .eq('id', expenseId)
+    .maybeSingle();
+
+  if (tenantError) throw tenantError;
+  if (!tenantRow) {
+    throw new Error(`Expense ${expenseId} not found`);
+  }
+
+  const insertPayload: Database['public']['Tables']['expense_attachments']['Insert'] = {
+    expense_id: expenseId,
+    tenant_id: tenantRow.tenant_id,
+    file_name: file.name,
+    file_url: uploadData.path,
+    file_type: file.type,
+    file_size: file.size,
+  };
+
   const { data, error } = await supabase
     .from('expense_attachments')
-    .insert([{
-      expense_id: expenseId,
-      file_name: file.name,
-      file_path: filePath,
-      file_type: file.type,
-      file_size: file.size,
-    }])
+    .insert([insertPayload])
     .select()
     .maybeSingle();
 
   if (error) throw error;
+  if (!data) {
+    throw new Error('Failed to create expense attachment');
+  }
   return data;
 };
 
 export const deleteExpenseAttachment = async (attachmentId: string) => {
   const { data: attachment, error: fetchError } = await supabase
     .from('expense_attachments')
-    .select('file_path')
+    .select('file_url')
     .eq('id', attachmentId)
     .maybeSingle();
 
   if (fetchError) throw fetchError;
+  if (!attachment) {
+    throw new Error(`Expense attachment ${attachmentId} not found`);
+  }
 
   await supabase.storage
     .from('expense-receipts')
-    .remove([attachment.file_path]);
+    .remove([attachment.file_url]);
 
   const { error } = await supabase
     .from('expense_attachments')
@@ -343,7 +366,7 @@ export const getExpenseCategories = async () => {
     .order('name');
 
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 };
 
 export const getExpensesByCase = async (caseId: string) => {
@@ -357,7 +380,7 @@ export const getExpensesByCase = async (caseId: string) => {
     .order('expense_date', { ascending: false });
 
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 };
 
 export const getExpenseStats = async (filters?: {
@@ -379,21 +402,25 @@ export const getExpenseStats = async (filters?: {
   const { data: expenses, error } = await query;
   if (error) throw error;
 
+  const rows = expenses ?? [];
+
   const thisMonth = new Date();
   thisMonth.setDate(1);
   const thisMonthStart = thisMonth.toISOString().split('T')[0];
 
-  const approvedExpenses = expenses?.filter(e => e.status === 'approved' || e.status === 'paid') || [];
+  const approvedExpenses = rows.filter(e => e.status === 'approved' || e.status === 'paid');
 
   return {
-    total: expenses?.length || 0,
-    pending: expenses?.filter(e => e.status === 'pending').length || 0,
-    approved: expenses?.filter(e => e.status === 'approved').length || 0,
-    rejected: expenses?.filter(e => e.status === 'rejected').length || 0,
-    paid: expenses?.filter(e => e.status === 'paid').length || 0,
+    total: rows.length,
+    pending: rows.filter(e => e.status === 'pending').length,
+    approved: rows.filter(e => e.status === 'approved').length,
+    rejected: rows.filter(e => e.status === 'rejected').length,
+    paid: rows.filter(e => e.status === 'paid').length,
     totalAmount: approvedExpenses.reduce((sum, e) => sum + (e.amount || 0), 0),
-    pendingAmount: expenses?.filter(e => e.status === 'pending').reduce((sum, e) => sum + (e.amount || 0), 0) || 0,
-    thisMonthAmount: approvedExpenses.filter(e => e.expense_date >= thisMonthStart).reduce((sum, e) => sum + (e.amount || 0), 0),
+    pendingAmount: rows.filter(e => e.status === 'pending').reduce((sum, e) => sum + (e.amount || 0), 0),
+    thisMonthAmount: approvedExpenses
+      .filter(e => e.expense_date !== null && e.expense_date >= thisMonthStart)
+      .reduce((sum, e) => sum + (e.amount || 0), 0),
   };
 };
 
@@ -420,9 +447,14 @@ export const getExpensesByCategory = async (filters?: {
   const { data, error } = await query;
   if (error) throw error;
 
+  type CategoryRow = {
+    amount: number;
+    category: { id: string; name: string } | null;
+  };
+
   const categoryTotals: Record<string, { name: string; amount: number }> = {};
 
-  (data || []).forEach((expense: any) => {
+  ((data ?? []) as unknown as CategoryRow[]).forEach((expense) => {
     const categoryName = expense.category?.name || 'Uncategorized';
     const categoryId = expense.category?.id || 'uncategorized';
 
@@ -440,14 +472,23 @@ export const getExpensesByCategory = async (filters?: {
 const createFinancialTransaction = async (transaction: {
   transaction_date: string;
   amount: number;
-  type: string;
+  transaction_type: string;
   description: string;
-  related_expense_id?: string;
-  status: string;
+  reference_type?: string;
+  reference_id?: string;
 }) => {
+  const payload = {
+    transaction_date: transaction.transaction_date,
+    amount: transaction.amount,
+    transaction_type: transaction.transaction_type,
+    description: transaction.description,
+    reference_type: transaction.reference_type,
+    reference_id: transaction.reference_id,
+  } as Database['public']['Tables']['financial_transactions']['Insert'];
+
   const { error } = await supabase
     .from('financial_transactions')
-    .insert([transaction]);
+    .insert([payload]);
 
   if (error) {
     logger.error('Error creating financial transaction:', error);
@@ -455,18 +496,21 @@ const createFinancialTransaction = async (transaction: {
 };
 
 const createVATRecord = async (record: {
-  record_date: string;
   record_type: string;
-  net_amount: number;
+  record_id: string;
   vat_amount: number;
-  gross_amount: number;
   vat_rate: number;
-  description: string;
-  expense_id?: string;
 }) => {
+  const payload = {
+    record_type: record.record_type,
+    record_id: record.record_id,
+    vat_amount: record.vat_amount,
+    vat_rate: record.vat_rate,
+  } as Database['public']['Tables']['vat_records']['Insert'];
+
   const { error } = await supabase
     .from('vat_records')
-    .insert([record]);
+    .insert([payload]);
 
   if (error) {
     logger.error('Error creating VAT record:', error);
