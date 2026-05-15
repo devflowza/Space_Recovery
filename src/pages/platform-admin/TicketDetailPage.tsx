@@ -24,7 +24,7 @@ export const TicketDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { admin } = usePlatformAdmin();
-  const { showSuccess, showError } = useToast();
+  const { success: showSuccess, error: showError } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [replyText, setReplyText] = useState('');
@@ -120,7 +120,7 @@ export const TicketDetailPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-4">
-        <Button variant="outline" onClick={() => navigate('/platform-admin/tickets')}>
+        <Button variant="ghost" onClick={() => navigate('/platform-admin/tickets')}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div className="flex-1">
@@ -128,8 +128,8 @@ export const TicketDetailPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-2xl font-bold text-slate-900">{ticket.ticket_number}</h1>
-                <TicketStatusBadge status={ticket.status} />
-                <TicketPriorityBadge priority={ticket.priority} />
+                <TicketStatusBadge status={ticket.status ?? 'open'} />
+                <TicketPriorityBadge priority={ticket.priority ?? 'medium'} />
               </div>
               <h2 className="text-xl text-slate-700 mb-2">{ticket.subject}</h2>
               <div className="flex items-center gap-4 text-sm text-slate-500">
@@ -160,7 +160,7 @@ export const TicketDetailPage: React.FC = () => {
               ) : messages.length === 0 ? (
                 <p className="text-center text-slate-500 py-8">No messages yet</p>
               ) : (
-                messages.map((message: Record<string, unknown> & { id: string; sender_type: string }) => (
+                messages.map((message) => (
                   <TicketMessage
                     key={message.id}
                     message={{
@@ -218,8 +218,12 @@ export const TicketDetailPage: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
                 <select
-                  value={ticket.status}
-                  onChange={(e) => updateStatusMutation.mutate(e.target.value as any)}
+                  value={ticket.status ?? 'open'}
+                  onChange={(e) =>
+                    updateStatusMutation.mutate(
+                      e.target.value as 'open' | 'in_progress' | 'waiting_customer' | 'resolved' | 'closed'
+                    )
+                  }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="open">Open</option>
@@ -233,7 +237,7 @@ export const TicketDetailPage: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
                 <div className="flex items-center gap-2">
-                  <TicketPriorityBadge priority={ticket.priority} />
+                  <TicketPriorityBadge priority={ticket.priority ?? 'medium'} />
                 </div>
               </div>
 
@@ -301,8 +305,8 @@ export const TicketDetailPage: React.FC = () => {
             <div className="space-y-2">
               {ticket.status !== 'resolved' && ticket.status !== 'closed' && (
                 <Button
-                  variant="outline"
-                  className="w-full justify-start border-success/40 text-success hover:bg-success-muted"
+                  variant="ghost"
+                  className="w-full justify-start border border-success/40 text-success hover:bg-success-muted"
                   onClick={() => setShowResolveDialog(true)}
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
@@ -312,8 +316,8 @@ export const TicketDetailPage: React.FC = () => {
 
               {ticket.status !== 'closed' && (
                 <Button
-                  variant="outline"
-                  className="w-full justify-start border-slate-300 text-slate-600 hover:bg-slate-50"
+                  variant="ghost"
+                  className="w-full justify-start border border-slate-300 text-slate-600 hover:bg-slate-50"
                   onClick={() => setShowCloseDialog(true)}
                 >
                   <XCircle className="w-4 h-4 mr-2" />
@@ -323,8 +327,8 @@ export const TicketDetailPage: React.FC = () => {
 
               {ticket.status === 'closed' && (
                 <Button
-                  variant="outline"
-                  className="w-full justify-start border-primary/40 text-primary hover:bg-info-muted"
+                  variant="ghost"
+                  className="w-full justify-start border border-primary/40 text-primary hover:bg-info-muted"
                   onClick={() => updateStatusMutation.mutate('open')}
                 >
                   <AlertCircle className="w-4 h-4 mr-2" />
@@ -333,8 +337,8 @@ export const TicketDetailPage: React.FC = () => {
               )}
 
               <Button
-                variant="outline"
-                className="w-full justify-start border-danger/40 text-danger hover:bg-danger-muted"
+                variant="ghost"
+                className="w-full justify-start border border-danger/40 text-danger hover:bg-danger-muted"
                 onClick={() => setShowDeleteDialog(true)}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -352,7 +356,7 @@ export const TicketDetailPage: React.FC = () => {
         title="Mark as Resolved"
         message="Are you sure you want to mark this ticket as resolved?"
         confirmText="Resolve"
-        variant="success"
+        variant="info"
       />
 
       <ConfirmDialog
