@@ -18,17 +18,41 @@ import { logger } from '../../lib/logger';
 interface UserProfile {
   id: string;
   full_name: string;
-  role: 'admin' | 'technician' | 'sales' | 'accounts' | 'hr' | null;
+  role: string | null;
   phone: string | null;
   avatar_url: string | null;
   is_active: boolean;
-  last_login: string | null;
+  last_login_at: string | null;
   password_reset_required: boolean;
-  case_access_level?: 'restricted' | 'full';
+  case_access_level: string | null;
   created_at: string;
   updated_at: string;
-  email?: string;
+  email: string;
+  tenant_id: string | null;
 }
+
+type FormRole = 'admin' | 'technician' | 'sales' | 'accounts' | 'hr';
+type FormCaseAccessLevel = 'restricted' | 'full';
+
+const FORM_ROLES: readonly FormRole[] = ['admin', 'technician', 'sales', 'accounts', 'hr'] as const;
+
+const asFormRole = (role: string | null): FormRole =>
+  FORM_ROLES.find((r) => r === role) ?? 'technician';
+
+const asFormCaseAccessLevel = (level: string | null): FormCaseAccessLevel | undefined => {
+  if (level === 'restricted' || level === 'full') return level;
+  return undefined;
+};
+
+const toUserFormModalUser = (user: UserProfile) => ({
+  id: user.id,
+  full_name: user.full_name,
+  role: asFormRole(user.role),
+  phone: user.phone,
+  email: user.email,
+  is_active: user.is_active,
+  case_access_level: asFormCaseAccessLevel(user.case_access_level),
+});
 
 export const UserManagement: React.FC = () => {
   const { profile: currentUser } = useAuth();
@@ -68,14 +92,30 @@ export const UserManagement: React.FC = () => {
 
       if (profilesError) throw profilesError;
 
-      let filteredData = profilesData || [];
+      const mapped: UserProfile[] = (profilesData ?? []).map((row) => ({
+        id: row.id,
+        full_name: row.full_name,
+        role: row.role ?? null,
+        phone: row.phone ?? null,
+        avatar_url: row.avatar_url ?? null,
+        is_active: row.is_active,
+        last_login_at: row.last_login_at ?? null,
+        password_reset_required: row.password_reset_required,
+        case_access_level: row.case_access_level ?? null,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        email: row.email,
+        tenant_id: row.tenant_id ?? null,
+      }));
+
+      let filteredData = mapped;
 
       if (filterStatus === 'active') {
-        filteredData = filteredData.filter((user: UserProfile) => user.is_active && user.role !== null);
+        filteredData = mapped.filter((user) => user.is_active && user.role !== null);
       } else if (filterStatus === 'inactive') {
-        filteredData = filteredData.filter((user: UserProfile) => !user.is_active && user.role !== null);
+        filteredData = mapped.filter((user) => !user.is_active && user.role !== null);
       } else if (filterStatus === 'pending') {
-        filteredData = filteredData.filter((user: UserProfile) => user.role === null);
+        filteredData = mapped.filter((user) => user.role === null);
       }
 
       setUsers(filteredData);
@@ -91,8 +131,8 @@ export const UserManagement: React.FC = () => {
     const searchLower = searchQuery.toLowerCase();
     return (
       user.full_name.toLowerCase().includes(searchLower) ||
-      user.email?.toLowerCase().includes(searchLower) ||
-      user.role.toLowerCase().includes(searchLower)
+      user.email.toLowerCase().includes(searchLower) ||
+      (user.role ?? '').toLowerCase().includes(searchLower)
     );
   });
 
@@ -106,8 +146,8 @@ export const UserManagement: React.FC = () => {
       if (error) throw error;
 
       await supabase.rpc('log_audit_trail', {
-        p_action_type: 'update',
-        p_table_name: 'profiles',
+        p_action: 'update',
+        p_record_type: 'profiles',
         p_record_id: userId,
         p_old_values: { is_active: currentStatus },
         p_new_values: { is_active: !currentStatus },
@@ -128,7 +168,7 @@ export const UserManagement: React.FC = () => {
       role: userData.role,
       phone: userData.phone,
       is_active: userData.is_active,
-      case_access_level: userData.case_access_level,
+      case_access_level: userData.case_access_level ?? 'full',
     });
 
     if (result.success) {
@@ -238,28 +278,28 @@ export const UserManagement: React.FC = () => {
 
           <div className="flex gap-2">
             <Button
-              variant={filterStatus === 'all' ? 'primary' : 'outline'}
+              variant={filterStatus === 'all' ? 'primary' : 'ghost'}
               onClick={() => setFilterStatus('all')}
               className="text-sm"
             >
               All Users
             </Button>
             <Button
-              variant={filterStatus === 'pending' ? 'primary' : 'outline'}
+              variant={filterStatus === 'pending' ? 'primary' : 'ghost'}
               onClick={() => setFilterStatus('pending')}
               className="text-sm"
             >
               Pending Approval
             </Button>
             <Button
-              variant={filterStatus === 'active' ? 'primary' : 'outline'}
+              variant={filterStatus === 'active' ? 'primary' : 'ghost'}
               onClick={() => setFilterStatus('active')}
               className="text-sm"
             >
               Active
             </Button>
             <Button
-              variant={filterStatus === 'inactive' ? 'primary' : 'outline'}
+              variant={filterStatus === 'inactive' ? 'primary' : 'ghost'}
               onClick={() => setFilterStatus('inactive')}
               className="text-sm"
             >
@@ -355,15 +395,17 @@ export const UserManagement: React.FC = () => {
                         </>
                       )}
                       {user.password_reset_required && (
-                        <AlertCircle className="w-4 h-4 text-warning" title="Password reset required" />
+                        <span title="Password reset required" className="inline-flex">
+                          <AlertCircle className="w-4 h-4 text-warning" aria-label="Password reset required" />
+                        </span>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    {user.last_login ? (
+                    {user.last_login_at ? (
                       <div className="flex items-center gap-2 text-sm text-slate-600">
                         <Calendar className="w-3 h-3" />
-                        {format(new Date(user.last_login), 'MMM dd, yyyy HH:mm')}
+                        {format(new Date(user.last_login_at), 'MMM dd, yyyy HH:mm')}
                       </div>
                     ) : (
                       <span className="text-sm text-slate-400">Never</span>
@@ -455,7 +497,7 @@ export const UserManagement: React.FC = () => {
           setSelectedUser(null);
         }}
         onSubmit={handleEditUser}
-        user={selectedUser}
+        user={selectedUser ? toUserFormModalUser(selectedUser) : null}
         mode="edit"
       />
 
@@ -485,7 +527,7 @@ export const UserManagement: React.FC = () => {
                 : 'Are you sure you want to activate this user? They will be able to log in immediately.'}
             </p>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowDeactivateModal(false)}>
+              <Button variant="ghost" onClick={() => setShowDeactivateModal(false)}>
                 Cancel
               </Button>
               <Button
