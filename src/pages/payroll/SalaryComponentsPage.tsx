@@ -14,7 +14,7 @@ import type { Database } from '../../types/database.types';
 type SalaryComponent = Database['public']['Tables']['salary_components']['Row'];
 
 export default function SalaryComponentsPage() {
-  const { showToast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingComponent, setEditingComponent] = useState<SalaryComponent | null>(null);
@@ -30,10 +30,10 @@ export default function SalaryComponentsPage() {
       payrollService.updateSalaryComponent(id, { is_active: isActive }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: payrollKeys.salaryComponents() });
-      showToast('Component status updated', 'success');
+      toast.success('Component status updated');
     },
     onError: (error: Error) => {
-      showToast(error.message || 'Failed to update component', 'error');
+      toast.error(error.message || 'Failed to update component');
     },
   });
 
@@ -41,11 +41,11 @@ export default function SalaryComponentsPage() {
     mutationFn: (id: string) => payrollService.deleteSalaryComponent(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: payrollKeys.salaryComponents() });
-      showToast('Component deleted successfully', 'success');
+      toast.success('Component deleted successfully');
       setDeletingComponent(null);
     },
     onError: (error: Error) => {
-      showToast(error.message || 'Failed to delete component', 'error');
+      toast.error(error.message || 'Failed to delete component');
     },
   });
 
@@ -78,8 +78,8 @@ export default function SalaryComponentsPage() {
     }
   };
 
-  const earningComponents = components.filter((c) => c.component_type === 'earning' || c.component_type === 'allowance' || c.component_type === 'bonus');
-  const deductionComponents = components.filter((c) => c.component_type === 'deduction');
+  const earningComponents = components.filter((c) => c.type === 'earning' || c.type === 'allowance' || c.type === 'bonus');
+  const deductionComponents = components.filter((c) => c.type === 'deduction');
 
   if (isLoading) {
     return (
@@ -127,9 +127,6 @@ export default function SalaryComponentsPage() {
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                      Code
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
                       Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
@@ -139,7 +136,7 @@ export default function SalaryComponentsPage() {
                       Calculation
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                      Default Value
+                      Percentage
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
                       Status
@@ -152,33 +149,20 @@ export default function SalaryComponentsPage() {
                 <tbody className="divide-y divide-slate-200">
                   {earningComponents.map((component) => (
                     <tr key={component.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <code className="text-sm font-mono text-slate-900 bg-slate-100 px-2 py-1 rounded">
-                          {component.code || 'N/A'}
-                        </code>
-                      </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-slate-900">{component.name}</span>
-                          {component.name_ar && (
-                            <span className="text-xs text-slate-500" dir="rtl">{component.name_ar}</span>
-                          )}
-                        </div>
+                        <span className="text-sm font-medium text-slate-900">{component.name}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant="success">{component.component_type}</Badge>
+                        <Badge variant="success">{component.type}</Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm text-slate-700 capitalize">{component.calculation_type}</span>
-                        {component.calculation_type === 'percentage' && component.percentage_of && (
-                          <span className="text-xs text-slate-500 ml-1">of {component.percentage_of}</span>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm text-slate-900">
-                          {component.calculation_type === 'percentage'
-                            ? `${component.default_amount || 0}%`
-                            : `${component.default_amount || 0} OMR`}
+                          {component.calculation_type === 'percentage' && component.percentage != null
+                            ? `${component.percentage}%`
+                            : '—'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -243,9 +227,6 @@ export default function SalaryComponentsPage() {
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                      Code
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
                       Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
@@ -255,7 +236,7 @@ export default function SalaryComponentsPage() {
                       Calculation
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                      Default Value
+                      Percentage
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
                       Status
@@ -268,33 +249,20 @@ export default function SalaryComponentsPage() {
                 <tbody className="divide-y divide-slate-200">
                   {deductionComponents.map((component) => (
                     <tr key={component.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <code className="text-sm font-mono text-slate-900 bg-slate-100 px-2 py-1 rounded">
-                          {component.code || 'N/A'}
-                        </code>
-                      </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-slate-900">{component.name}</span>
-                          {component.name_ar && (
-                            <span className="text-xs text-slate-500" dir="rtl">{component.name_ar}</span>
-                          )}
-                        </div>
+                        <span className="text-sm font-medium text-slate-900">{component.name}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant="danger">{component.component_type}</Badge>
+                        <Badge variant="danger">{component.type}</Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm text-slate-700 capitalize">{component.calculation_type}</span>
-                        {component.calculation_type === 'percentage' && component.percentage_of && (
-                          <span className="text-xs text-slate-500 ml-1">of {component.percentage_of}</span>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm text-slate-900">
-                          {component.calculation_type === 'percentage'
-                            ? `${component.default_amount || 0}%`
-                            : `${component.default_amount || 0} OMR`}
+                          {component.calculation_type === 'percentage' && component.percentage != null
+                            ? `${component.percentage}%`
+                            : '—'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
