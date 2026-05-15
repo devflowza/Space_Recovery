@@ -8,9 +8,16 @@ import { Table } from '../../components/ui/Table';
 import { Input } from '../../components/ui/Input';
 import { TicketStatusBadge } from '../../components/platform-admin/tickets/TicketStatusBadge';
 import { TicketPriorityBadge } from '../../components/platform-admin/tickets/TicketPriorityBadge';
-import { getSupportTickets, getTicketStats } from '../../lib/platformAdminService';
+import { getSupportTickets, getTicketStats, type TicketWithDetails } from '../../lib/platformAdminService';
 import { platformAdminKeys } from '../../lib/queryKeys';
 import { formatDistanceToNow } from 'date-fns';
+
+interface TicketColumn {
+  key: string;
+  header: string;
+  render?: (row: TicketWithDetails) => React.ReactNode;
+  width?: string;
+}
 
 export const SupportTicketsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -47,6 +54,72 @@ export const SupportTicketsPage: React.FC = () => {
     setSearchQuery('');
   };
 
+  const columns: TicketColumn[] = [
+    {
+      key: 'ticket_number',
+      header: 'Ticket #',
+      render: (ticket) => <span className="font-medium">{ticket.ticket_number}</span>,
+    },
+    {
+      key: 'subject',
+      header: 'Subject',
+      render: (ticket) => <span className="text-slate-900">{ticket.subject}</span>,
+    },
+    {
+      key: 'tenant',
+      header: 'Tenant',
+      render: (ticket) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/platform-admin/tenants/${ticket.tenant_id}`);
+          }}
+          className="text-primary hover:text-primary/90 text-sm"
+        >
+          {ticket.tenant?.company_name || 'Unknown'}
+        </button>
+      ),
+    },
+    {
+      key: 'priority',
+      header: 'Priority',
+      render: (ticket) => <TicketPriorityBadge priority={ticket.priority ?? 'medium'} />,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (ticket) => <TicketStatusBadge status={ticket.status ?? 'open'} />,
+    },
+    {
+      key: 'category',
+      header: 'Category',
+      render: (ticket) => (
+        <span className="text-slate-600 capitalize">{ticket.category?.replace('_', ' ') ?? '—'}</span>
+      ),
+    },
+    {
+      key: 'assigned_admin',
+      header: 'Assigned To',
+      render: (ticket) => (
+        <span className="text-slate-600">{ticket.assigned_admin?.full_name || 'Unassigned'}</span>
+      ),
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      render: (ticket) => (
+        <span className="text-slate-600">{new Date(ticket.created_at).toLocaleDateString()}</span>
+      ),
+    },
+    {
+      key: 'updated_at',
+      header: 'Last Update',
+      render: (ticket) => (
+        <span className="text-slate-600">{formatDistanceToNow(new Date(ticket.updated_at))} ago</span>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -56,31 +129,23 @@ export const SupportTicketsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatsCard
           title="Open"
-          value={stats?.open || 0}
+          value={statsLoading ? '—' : String(stats?.open ?? 0)}
           icon={Ticket}
-          trend="neutral"
-          loading={statsLoading}
         />
         <StatsCard
           title="In Progress"
-          value={stats?.inProgress || 0}
+          value={statsLoading ? '—' : String(stats?.inProgress ?? 0)}
           icon={Ticket}
-          trend="neutral"
-          loading={statsLoading}
         />
         <StatsCard
           title="Waiting on Customer"
-          value={stats?.waitingCustomer || 0}
+          value={statsLoading ? '—' : String(stats?.waitingCustomer ?? 0)}
           icon={Ticket}
-          trend="neutral"
-          loading={statsLoading}
         />
         <StatsCard
           title="Resolved Today"
-          value={stats?.resolvedToday || 0}
+          value={statsLoading ? '—' : String(stats?.resolvedToday ?? 0)}
           icon={Ticket}
-          trend="up"
-          loading={statsLoading}
         />
       </div>
 
@@ -193,60 +258,11 @@ export const SupportTicketsPage: React.FC = () => {
             )}
           </div>
         ) : (
-          <Table>
-            <thead>
-              <tr>
-                <th>Ticket #</th>
-                <th>Subject</th>
-                <th>Tenant</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Category</th>
-                <th>Assigned To</th>
-                <th>Created</th>
-                <th>Last Update</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tickets.map((ticket: Record<string, unknown> & { id: string; ticket_number: string; subject: string }) => (
-                <tr
-                  key={ticket.id}
-                  onClick={() => navigate(`/platform-admin/tickets/${ticket.id}`)}
-                  className="cursor-pointer hover:bg-slate-50"
-                >
-                  <td className="font-medium">{ticket.ticket_number}</td>
-                  <td className="text-slate-900">{ticket.subject}</td>
-                  <td>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/platform-admin/tenants/${ticket.tenant_id}`);
-                      }}
-                      className="text-primary hover:text-primary/90 text-sm"
-                    >
-                      {ticket.tenant?.company_name || 'Unknown'}
-                    </button>
-                  </td>
-                  <td>
-                    <TicketPriorityBadge priority={ticket.priority} />
-                  </td>
-                  <td>
-                    <TicketStatusBadge status={ticket.status} />
-                  </td>
-                  <td className="text-slate-600 capitalize">{ticket.category?.replace('_', ' ')}</td>
-                  <td className="text-slate-600">
-                    {ticket.assigned_admin?.full_name || 'Unassigned'}
-                  </td>
-                  <td className="text-slate-600">
-                    {new Date(ticket.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="text-slate-600">
-                    {formatDistanceToNow(new Date(ticket.updated_at))} ago
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+          <Table<TicketWithDetails>
+            data={tickets}
+            columns={columns}
+            onRowClick={(ticket) => navigate(`/platform-admin/tickets/${ticket.id}`)}
+          />
         )}
       </Card>
     </div>
