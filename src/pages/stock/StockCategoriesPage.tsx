@@ -5,7 +5,6 @@ import { PageHeader } from '../../components/shared/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
-import { Badge } from '../../components/ui/Badge';
 import {
   getStockCategories,
   createStockCategory,
@@ -15,22 +14,19 @@ import {
 } from '../../lib/stockService';
 import { stockKeys } from '../../lib/queryKeys';
 import { useToast } from '../../hooks/useToast';
-
-type TabType = 'internal' | 'saleable';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface CategoryFormData {
   name: string;
   description: string;
-  parent_category_id: string;
-  category_type: 'internal' | 'saleable';
+  parent_id: string;
   sort_order: string;
 }
 
 const defaultForm: CategoryFormData = {
   name: '',
   description: '',
-  parent_category_id: '',
-  category_type: 'internal',
+  parent_id: '',
   sort_order: '0',
 };
 
@@ -39,18 +35,19 @@ interface CategoryTreeNode extends StockCategory {
   itemCount: number;
 }
 
-function buildTree(categories: StockCategory[], type: TabType): CategoryTreeNode[] {
-  const filtered = categories.filter((c) => c.category_type === type);
+function buildTree(categories: StockCategory[]): CategoryTreeNode[] {
   const map = new Map<string, CategoryTreeNode>();
 
-  for (const cat of filtered) {
+  for (const cat of categories) {
     map.set(cat.id, { ...cat, children: [], itemCount: 0 });
   }
 
   const roots: CategoryTreeNode[] = [];
-  for (const node of map.values()) {
-    if (node.parent_category_id && map.has(node.parent_category_id)) {
-      map.get(node.parent_category_id)!.children.push(node);
+  for (const node of Array.from(map.values())) {
+    const parentId = node.parent_id;
+    if (parentId && map.has(parentId)) {
+      const parent = map.get(parentId);
+      if (parent) parent.children.push(node);
     } else {
       roots.push(node);
     }
@@ -104,11 +101,6 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-info-muted text-info text-xs font-semibold">
             {node.children.length}
           </span>
-        </td>
-        <td className="px-4 py-3">
-          <Badge variant={node.category_type === 'internal' ? 'info' : 'success'} size="sm">
-            {node.category_type === 'internal' ? 'Internal' : 'Saleable'}
-          </Badge>
         </td>
         <td className="px-4 py-3 text-sm text-slate-500 text-center">
           {node.sort_order ?? 0}
@@ -168,7 +160,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
 export const StockCategoriesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<TabType>('internal');
+  const { profile } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<StockCategory | null>(null);
   const [form, setForm] = useState<CategoryFormData>(defaultForm);
@@ -220,7 +212,7 @@ export const StockCategoriesPage: React.FC = () => {
 
   const openAdd = () => {
     setEditingCategory(null);
-    setForm({ ...defaultForm, category_type: activeTab });
+    setForm(defaultForm);
     setIsModalOpen(true);
   };
 
@@ -229,8 +221,7 @@ export const StockCategoriesPage: React.FC = () => {
     setForm({
       name: cat.name,
       description: cat.description ?? '',
-      parent_category_id: cat.parent_category_id ?? '',
-      category_type: (cat.category_type as 'internal' | 'saleable') ?? 'internal',
+      parent_id: cat.parent_id ?? '',
       sort_order: String(cat.sort_order ?? 0),
     });
     setIsModalOpen(true);
@@ -251,15 +242,18 @@ export const StockCategoriesPage: React.FC = () => {
     const payload = {
       name: form.name.trim(),
       description: form.description.trim() || null,
-      parent_category_id: form.parent_category_id || null,
-      category_type: form.category_type,
+      parent_id: form.parent_id || null,
       sort_order: parseInt(form.sort_order, 10) || 0,
     };
     try {
       if (editingCategory) {
         await updateMutation.mutateAsync({ id: editingCategory.id, data: payload });
       } else {
-        await createMutation.mutateAsync(payload);
+        if (!profile?.tenant_id) {
+          toast.error('Tenant context unavailable');
+          return;
+        }
+        await createMutation.mutateAsync({ ...payload, tenant_id: profile.tenant_id });
       }
     } finally {
       setSaving(false);
@@ -267,17 +261,10 @@ export const StockCategoriesPage: React.FC = () => {
   };
 
   const parentOptions = categories.filter(
-    (c) =>
-      c.category_type === form.category_type &&
-      (!editingCategory || c.id !== editingCategory.id)
+    (c) => !editingCategory || c.id !== editingCategory.id
   );
 
-  const treeRoots = buildTree(categories, activeTab);
-
-  const tabCounts = {
-    internal: categories.filter((c) => c.category_type === 'internal').length,
-    saleable: categories.filter((c) => c.category_type === 'saleable').length,
-  };
+  const treeRoots = buildTree(categories);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -294,31 +281,6 @@ export const StockCategoriesPage: React.FC = () => {
       />
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="border-b border-slate-200 px-4 flex items-center gap-0">
-          {(['internal', 'saleable'] as TabType[]).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-5 py-3.5 text-sm font-medium border-b-2 transition-colors capitalize flex items-center gap-2 ${
-                activeTab === tab
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {tab === 'internal' ? 'Internal Supplies' : 'Backup Devices'}
-              <span
-                className={`inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-                  activeTab === tab
-                    ? 'bg-info-muted text-info'
-                    : 'bg-slate-100 text-slate-500'
-                }`}
-              >
-                {tabCounts[tab]}
-              </span>
-            </button>
-          ))}
-        </div>
-
         {isLoading ? (
           <div className="py-16 flex items-center justify-center">
             <div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -328,7 +290,7 @@ export const StockCategoriesPage: React.FC = () => {
             <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <p className="text-slate-500 font-medium">No categories yet</p>
             <p className="text-slate-400 text-sm mt-1">
-              Add your first {activeTab === 'internal' ? 'internal' : 'saleable'} category
+              Add your first category to get started
             </p>
             <Button onClick={openAdd} size="sm" className="mt-4">
               <Plus className="w-4 h-4 mr-1.5" />
@@ -348,9 +310,6 @@ export const StockCategoriesPage: React.FC = () => {
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-24">
                     Sub-cats
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider w-28">
-                    Type
                   </th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider w-20">
                     Order
@@ -409,32 +368,12 @@ export const StockCategoriesPage: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Category Type <span className="text-danger">*</span>
-            </label>
-            <select
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-white"
-              value={form.category_type}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  category_type: e.target.value as 'internal' | 'saleable',
-                  parent_category_id: '',
-                }))
-              }
-            >
-              <option value="internal">Internal</option>
-              <option value="saleable">Saleable</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
               Parent Category
             </label>
             <select
               className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-white"
-              value={form.parent_category_id}
-              onChange={(e) => setForm((f) => ({ ...f, parent_category_id: e.target.value }))}
+              value={form.parent_id}
+              onChange={(e) => setForm((f) => ({ ...f, parent_id: e.target.value }))}
             >
               <option value="">— None (Top Level) —</option>
               {parentOptions.map((cat) => (
