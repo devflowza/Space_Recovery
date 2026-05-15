@@ -2,6 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchInvoices, getInvoiceStats, createInvoice, updateInvoice } from '../../lib/invoiceService';
+import type { Invoice, InvoiceItem, InvoiceWithDetails } from '../../lib/invoiceService';
+import type { PaymentReceipt } from '../../lib/bankingService';
+
+// Legacy proforma -> tax-invoice linkage. Columns dropped from `invoices` in
+// v1.0.0; surfaced here only so the existing UI buttons compile until the
+// linkage UI is wired to the new converted_from_quote_id chain.
+type InvoiceWithLegacyLinks = InvoiceWithDetails & {
+  converted_to_invoice_id?: string | null;
+  proforma_invoice_id?: string | null;
+};
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { FinancialModuleHeader } from '../../components/financial/FinancialModuleHeader';
@@ -30,7 +40,7 @@ import {
 } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 
-export const InvoicesListPage: React.FC = () => {
+export const InvoicesListPage: React.FC<unknown> = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
@@ -40,9 +50,9 @@ export const InvoicesListPage: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [editingInvoice, setEditingInvoice] = useState<any>(null);
+  const [editingInvoice, setEditingInvoice] = useState<InvoiceWithDetails | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentInvoice, setPaymentInvoice] = useState<any>(null);
+  const [paymentInvoice, setPaymentInvoice] = useState<InvoiceWithDetails | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -88,19 +98,21 @@ export const InvoicesListPage: React.FC = () => {
     return type === 'proforma' ? 'rgb(var(--color-accent))' : '#0ea5e9';
   };
 
-  const getClientName = (invoice: { customers_enhanced?: { customer_name?: string } | null; companies?: { company_name?: string } | null }) => {
+  const getClientName = (invoice: {
+    customers_enhanced?: { customer_name: string } | null;
+    companies?: { company_name: string | null } | null;
+  }) => {
     if (invoice.customers_enhanced) {
       return invoice.customers_enhanced.customer_name;
     }
     if (invoice.companies) {
-      return invoice.companies.company_name;
+      return invoice.companies.company_name ?? 'N/A';
     }
     return 'N/A';
   };
 
   const { sentInvoices, paidInvoices, overdueInvoices } = useMemo(
     () => ({
-      draftInvoices: invoices.filter((i) => i.status === 'draft'),
       sentInvoices: invoices.filter((i) => i.status === 'sent'),
       paidInvoices: invoices.filter((i) => i.status === 'paid'),
       overdueInvoices: invoices.filter((i) => i.status === 'overdue'),
@@ -434,11 +446,14 @@ export const InvoicesListPage: React.FC = () => {
                         <Badge variant="custom" color={getStatusColor(invoice.status)} size="sm">
                           {invoice.status}
                         </Badge>
-                        {invoice.status === 'converted' && invoice.converted_to_invoice_id && (
+                        {invoice.status === 'converted' &&
+                          (invoice as InvoiceWithLegacyLinks).converted_to_invoice_id && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/invoices/${invoice.converted_to_invoice_id}`);
+                              navigate(
+                                `/invoices/${(invoice as InvoiceWithLegacyLinks).converted_to_invoice_id}`
+                              );
                             }}
                             className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                             title="View converted tax invoice"
@@ -447,11 +462,13 @@ export const InvoicesListPage: React.FC = () => {
                             <span>View Tax Invoice</span>
                           </button>
                         )}
-                        {invoice.proforma_invoice_id && (
+                        {(invoice as InvoiceWithLegacyLinks).proforma_invoice_id && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/invoices/${invoice.proforma_invoice_id}`);
+                              navigate(
+                                `/invoices/${(invoice as InvoiceWithLegacyLinks).proforma_invoice_id}`
+                              );
                             }}
                             className="flex items-center gap-1 text-xs text-slate-600 hover:text-slate-800 transition-colors"
                             title="View original proforma"
@@ -477,6 +494,7 @@ export const InvoicesListPage: React.FC = () => {
                         {['draft', 'sent'].includes(invoice.status) && invoice.status !== 'converted' && (
                           <button
                             onClick={async () => {
+                              if (!invoice.id) return;
                               const { data, error } = await supabase
                                 .from('invoices')
                                 .select(`
@@ -484,10 +502,10 @@ export const InvoicesListPage: React.FC = () => {
                                   invoice_line_items (*)
                                 `)
                                 .eq('id', invoice.id)
-                                .single();
+                                .maybeSingle();
 
                               if (!error && data) {
-                                setEditingInvoice(data);
+                                setEditingInvoice(data as unknown as InvoiceWithDetails);
                                 setShowInvoiceModal(true);
                               }
                             }}
@@ -536,33 +554,40 @@ export const InvoicesListPage: React.FC = () => {
             setShowPaymentModal(false);
             setPaymentInvoice(null);
           }}
-          onSave={async (receiptData: Partial<import('../../lib/bankingService').PaymentReceipt>, allocations?: Array<{ invoice_id: string; allocated_amount: number }>) => {
+          onSave={async (receiptData: Record<string, unknown>, allocations?: Array<{ invoice_id: string; allocated_amount: number }>) => {
+            const receiptRow = receiptData as Partial<PaymentReceipt>;
+            if (typeof receiptRow.amount !== 'number') {
+              throw new Error('Receipt amount is required');
+            }
+            // `receipts` is the live tenant table. Caller-facing fields that do
+            // not exist on the live schema (account_id, payment_method_id,
+            // case_id, company_id, reference_number, description, source_type)
+            // exist only on the modal's draft. tenant_id is auto-populated by
+            // the set_tenant_and_audit_fields trigger.
             const { data: receipt, error: receiptError } = await supabase
               .from('receipts')
               .insert({
-                receipt_date: receiptData.receipt_date,
-                account_id: receiptData.account_id,
-                payment_method_id: receiptData.payment_method_id,
-                amount: receiptData.amount,
-                case_id: receiptData.case_id,
-                customer_id: receiptData.customer_id,
-                company_id: receiptData.company_id,
-                reference_number: receiptData.reference_number,
-                description: receiptData.description,
-                notes: receiptData.notes,
-                source_type: receiptData.source_type,
-                status: receiptData.status,
+                tenant_id: '' as string,
+                amount: receiptRow.amount,
+                receipt_date: receiptRow.receipt_date ?? null,
+                customer_id: receiptRow.customer_id ?? null,
+                payment_method: receiptRow.payment_method_id ?? null,
+                reference: receiptRow.reference_number ?? null,
+                notes: receiptRow.notes ?? null,
+                status: receiptRow.status ?? 'completed',
               })
               .select()
-              .single();
+              .maybeSingle();
 
             if (receiptError) throw receiptError;
+            if (!receipt) throw new Error('Receipt insert returned no row');
 
             if (allocations && allocations.length > 0) {
               const allocationRecords = allocations.map((alloc) => ({
+                tenant_id: '' as string,
                 receipt_id: receipt.id,
                 invoice_id: alloc.invoice_id,
-                allocated_amount: alloc.allocated_amount,
+                amount: alloc.allocated_amount,
               }));
 
               const { error: allocError } = await supabase
@@ -574,14 +599,16 @@ export const InvoicesListPage: React.FC = () => {
               for (const alloc of allocations) {
                 const { data: invoice } = await supabase
                   .from('invoices')
-                  .select('total_amount, amount_paid')
+                  .select('total_amount, amount_paid, status')
                   .eq('id', alloc.invoice_id)
-                  .single();
+                  .maybeSingle();
 
                 if (invoice) {
-                  const newAmountPaid = (invoice.amount_paid || 0) + alloc.allocated_amount;
-                  const newAmountDue = invoice.total_amount - newAmountPaid;
-                  const newStatus = newAmountDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : invoice.status;
+                  const totalAmount = invoice.total_amount ?? 0;
+                  const newAmountPaid = (invoice.amount_paid ?? 0) + alloc.allocated_amount;
+                  const newAmountDue = totalAmount - newAmountPaid;
+                  const newStatus =
+                    newAmountDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : invoice.status;
 
                   await supabase
                     .from('invoices')
@@ -595,29 +622,34 @@ export const InvoicesListPage: React.FC = () => {
               }
             }
 
-            const { data: account } = await supabase
-              .from('bank_accounts')
-              .select('current_balance')
-              .eq('id', receiptData.account_id)
-              .single();
-
-            if (account) {
-              await supabase
+            // `account_id` lives on the modal draft only (no FK column on
+            // `receipts`); still useful for updating the bank balance.
+            const accountId = receiptRow.account_id;
+            if (accountId) {
+              const { data: account } = await supabase
                 .from('bank_accounts')
-                .update({
-                  current_balance: (account.current_balance || 0) + receiptData.amount,
-                })
-                .eq('id', receiptData.account_id);
+                .select('current_balance')
+                .eq('id', accountId)
+                .maybeSingle();
+
+              if (account) {
+                await supabase
+                  .from('bank_accounts')
+                  .update({
+                    current_balance: (account.current_balance ?? 0) + receiptRow.amount,
+                  })
+                  .eq('id', accountId);
+              }
             }
 
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
             queryClient.invalidateQueries({ queryKey: ['invoice_stats'] });
           }}
           prefilledData={{
-            customer_id: paymentInvoice.customer_id,
-            company_id: paymentInvoice.company_id,
+            customer_id: paymentInvoice.customer_id ?? undefined,
+            company_id: paymentInvoice.company_id ?? undefined,
             case_id: paymentInvoice.case_id,
-            amount: paymentInvoice.balance_due || paymentInvoice.total_amount,
+            amount: paymentInvoice.balance_due ?? paymentInvoice.total_amount ?? 0,
           }}
         />
       )}
@@ -629,44 +661,45 @@ export const InvoicesListPage: React.FC = () => {
             setShowInvoiceModal(false);
             setEditingInvoice(null);
           }}
-          onSave={async (invoiceData: Partial<import('../../lib/invoiceService').Invoice>, items: import('../../lib/invoiceService').InvoiceItem[]) => {
-            if (editingInvoice) {
+          onSave={async (invoiceData: Record<string, unknown>, items: InvoiceItem[]) => {
+            const invoicePayload = invoiceData as Partial<Invoice>;
+            if (editingInvoice && editingInvoice.id) {
               await updateInvoice(editingInvoice.id, {
-                title: invoiceData.title,
-                invoice_type: invoiceData.invoice_type,
-                invoice_date: invoiceData.invoice_date,
-                due_date: invoiceData.due_date,
-                status: invoiceData.status,
-                payment_terms: invoiceData.payment_terms,
-                notes: invoiceData.notes,
-                internal_notes: invoiceData.internal_notes,
-                discount_amount: invoiceData.discount_amount,
-                discount_type: invoiceData.discount_type,
-                tax_rate: invoiceData.tax_rate,
-                client_reference: invoiceData.client_reference,
-                bank_account_id: invoiceData.bank_account_id,
-                terms_and_conditions: invoiceData.terms_and_conditions,
-                quote_id: invoiceData.quote_id,
+                title: invoicePayload.title,
+                invoice_type: invoicePayload.invoice_type,
+                invoice_date: invoicePayload.invoice_date,
+                due_date: invoicePayload.due_date,
+                status: invoicePayload.status,
+                payment_terms: invoicePayload.payment_terms,
+                notes: invoicePayload.notes,
+                internal_notes: invoicePayload.internal_notes,
+                discount_amount: invoicePayload.discount_amount,
+                discount_type: invoicePayload.discount_type,
+                tax_rate: invoicePayload.tax_rate,
+                client_reference: invoicePayload.client_reference,
+                bank_account_id: invoicePayload.bank_account_id,
+                terms_and_conditions: invoicePayload.terms_and_conditions,
+                quote_id: invoicePayload.quote_id,
               }, items);
             } else {
               await createInvoice({
-                title: invoiceData.title,
-                case_id: invoiceData.case_id,
-                customer_id: invoiceData.customer_id,
-                company_id: invoiceData.company_id,
-                invoice_type: invoiceData.invoice_type,
-                invoice_date: invoiceData.invoice_date,
-                due_date: invoiceData.due_date,
-                status: invoiceData.status,
-                notes: invoiceData.notes,
-                internal_notes: invoiceData.internal_notes,
-                discount_amount: invoiceData.discount_amount,
-                discount_type: invoiceData.discount_type,
-                tax_rate: invoiceData.tax_rate,
-                client_reference: invoiceData.client_reference,
-                bank_account_id: invoiceData.bank_account_id,
-                terms_and_conditions: invoiceData.terms_and_conditions,
-                quote_id: invoiceData.quote_id,
+                title: invoicePayload.title,
+                case_id: invoicePayload.case_id,
+                customer_id: invoicePayload.customer_id,
+                company_id: invoicePayload.company_id,
+                invoice_type: invoicePayload.invoice_type,
+                invoice_date: invoicePayload.invoice_date,
+                due_date: invoicePayload.due_date,
+                status: invoicePayload.status,
+                notes: invoicePayload.notes,
+                internal_notes: invoicePayload.internal_notes,
+                discount_amount: invoicePayload.discount_amount,
+                discount_type: invoicePayload.discount_type,
+                tax_rate: invoicePayload.tax_rate,
+                client_reference: invoicePayload.client_reference,
+                bank_account_id: invoicePayload.bank_account_id,
+                terms_and_conditions: invoicePayload.terms_and_conditions,
+                quote_id: invoicePayload.quote_id,
               }, items);
             }
 
@@ -676,7 +709,7 @@ export const InvoicesListPage: React.FC = () => {
           caseId={editingInvoice?.case_id || ''}
           customerId={editingInvoice?.customer_id}
           companyId={editingInvoice?.company_id}
-          initialData={editingInvoice}
+          initialData={editingInvoice as unknown as Record<string, unknown> | undefined}
           clientReference={editingInvoice?.client_reference}
         />
       )}
