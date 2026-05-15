@@ -7,14 +7,39 @@ import { DollarSign } from 'lucide-react';
 import { useAccountingLocale } from '../../hooks/useAccountingLocale';
 import { logger } from '../../lib/logger';
 
+interface LineItemTemplateFormState {
+  name: string;
+  description: string;
+  content: string;
+  default_price: number;
+  unit_of_measure: string;
+  item_category: string;
+  is_default: boolean;
+  is_active: boolean;
+}
+
+interface LineItemTemplateInitialData {
+  name?: string | null;
+  description?: string | null;
+  content?: string | null;
+  default_price?: number | null;
+  unit_of_measure?: string | null;
+  item_category?: string | null;
+  is_default?: boolean | null;
+  is_active?: boolean | null;
+  [key: string]: unknown;
+}
+
 interface LineItemTemplateFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (templateData: Record<string, unknown>) => Promise<void>;
-  initialData?: Record<string, unknown>;
+  initialData?: LineItemTemplateInitialData;
   templateTypeId: string;
   isLineItemType: boolean;
 }
+
+const DEFAULT_DECIMAL_PLACES = 2;
 
 export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps> = ({
   isOpen,
@@ -26,7 +51,8 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { locale, getCurrencySymbol } = useAccountingLocale();
-  const [formData, setFormData] = useState({
+  const decimalPlaces = locale?.decimal_places ?? DEFAULT_DECIMAL_PLACES;
+  const [formData, setFormData] = useState<LineItemTemplateFormState>({
     name: '',
     description: '',
     content: '',
@@ -40,14 +66,14 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
   useEffect(() => {
     if (initialData) {
       setFormData({
-        name: initialData.name || '',
-        description: initialData.description || '',
-        content: initialData.content || '',
-        default_price: initialData.default_price || 0,
-        unit_of_measure: initialData.unit_of_measure || 'service',
-        item_category: initialData.item_category || '',
-        is_default: initialData.is_default || false,
-        is_active: initialData.is_active !== undefined ? initialData.is_active : true,
+        name: initialData.name ?? '',
+        description: initialData.description ?? '',
+        content: initialData.content ?? '',
+        default_price: initialData.default_price ?? 0,
+        unit_of_measure: initialData.unit_of_measure ?? 'service',
+        item_category: initialData.item_category ?? '',
+        is_default: initialData.is_default ?? false,
+        is_active: initialData.is_active ?? true,
       });
     }
   }, [initialData]);
@@ -66,7 +92,6 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
     }
 
     if (isLineItemType && locale) {
-      const decimalPlaces = locale.decimal_places;
       const factor = Math.pow(10, decimalPlaces);
       const roundedPrice = Math.round(formData.default_price * factor) / factor;
 
@@ -137,14 +162,14 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
                   )}
                   <input
                     type="number"
-                    step={locale ? Math.pow(10, -locale.decimal_places).toFixed(locale.decimal_places) : "0.01"}
+                    step={locale ? Math.pow(10, -decimalPlaces).toFixed(decimalPlaces) : "0.01"}
                     min="0"
                     value={formData.default_price}
                     onChange={(e) =>
                       setFormData({ ...formData, default_price: parseFloat(e.target.value) || 0 })
                     }
                     required
-                    placeholder={locale ? `0.${'0'.repeat(locale.decimal_places)}` : "0.00"}
+                    placeholder={locale ? `0.${'0'.repeat(decimalPlaces)}` : "0.00"}
                     className={`w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
                       locale?.currency_position === 'before' ? 'pl-12' : locale?.currency_position === 'after' ? 'pr-16' : ''
                     }`}
