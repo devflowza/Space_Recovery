@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchQuotes, getQuoteStats } from '../../lib/quotesService';
+import type { QuoteWithDetails } from '../../lib/quotesService';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { FinancialModuleHeader } from '../../components/financial/FinancialModuleHeader';
@@ -10,6 +11,7 @@ import { QuoteFormModal } from '../../components/cases/QuoteFormModal';
 import { useCurrency } from '../../hooks/useCurrency';
 import { supabase } from '../../lib/supabaseClient';
 import { EmptyState } from '../../components/shared/EmptyState';
+import type { Database } from '../../types/database.types';
 import {
   FileText,
   Plus,
@@ -27,6 +29,23 @@ import {
 import { formatDate } from '../../lib/format';
 import { logger } from '../../lib/logger';
 
+type QuoteUpdate = Database['public']['Tables']['quotes']['Update'];
+type QuoteInsert = Database['public']['Tables']['quotes']['Insert'];
+type QuoteItemInsert = Database['public']['Tables']['quote_items']['Insert'];
+
+const toNumber = (value: unknown, fallback = 0): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) {
+    return Number(value);
+  }
+  return fallback;
+};
+
+const toOptionalString = (value: unknown): string | null => {
+  if (typeof value === 'string' && value.trim() !== '') return value;
+  return null;
+};
+
 export const QuotesListPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -36,7 +55,7 @@ export const QuotesListPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
-  const [editingQuote, setEditingQuote] = useState<any>(null);
+  const [editingQuote, setEditingQuote] = useState<QuoteWithDetails | null>(null);
   const [sendingQuoteId, setSendingQuoteId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -79,23 +98,23 @@ export const QuotesListPage: React.FC = () => {
     return colors[status] || '#64748b';
   };
 
-  const getClientName = (quote: { customers?: { name?: string } | null; companies?: { company_name?: string } | null }) => {
-    if (quote?.customers?.name) {
-      return quote.customers.name;
+  const getClientName = (quote: QuoteWithDetails) => {
+    if (quote?.customers?.customer_name) {
+      return quote.customers.customer_name;
     }
     if (quote?.companies?.company_name) {
       return quote.companies.company_name;
+    }
+    if (quote?.companies?.name) {
+      return quote.companies.name;
     }
     return 'N/A';
   };
 
   const { sentQuotes, acceptedQuotes, expiredQuotes } = useMemo(() => ({
-    draftQuotes: quotes.filter((q) => q.status === 'draft'),
     sentQuotes: quotes.filter((q) => q.status === 'sent'),
     acceptedQuotes: quotes.filter((q) => q.status === 'accepted'),
-    rejectedQuotes: quotes.filter((q) => q.status === 'rejected'),
     expiredQuotes: quotes.filter((q) => q.status === 'expired'),
-    convertedQuotes: quotes.filter((q) => q.status === 'converted'),
   }), [quotes]);
 
   if (isLoading || statsLoading) {
@@ -333,7 +352,7 @@ export const QuotesListPage: React.FC = () => {
                     Quote #
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Title
+                    Reference
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Customer
@@ -369,7 +388,7 @@ export const QuotesListPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-slate-900 truncate max-w-xs">
-                        {quote.title}
+                        {quote.cases?.case_no || quote.cases?.title || '-'}
                       </p>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -419,9 +438,10 @@ export const QuotesListPage: React.FC = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {['draft', 'sent'].includes(quote.status) && (
+                        {quote.id && ['draft', 'sent'].includes(quote.status) && (
                           <button
                             onClick={async () => {
+                              if (!quote.id) return;
                               const { data, error } = await supabase
                                 .from('quotes')
                                 .select(`
@@ -429,10 +449,10 @@ export const QuotesListPage: React.FC = () => {
                                   quote_items (*)
                                 `)
                                 .eq('id', quote.id)
-                                .single();
+                                .maybeSingle();
 
                               if (!error && data) {
-                                setEditingQuote(data);
+                                setEditingQuote(data as unknown as QuoteWithDetails);
                                 setShowQuoteModal(true);
                               }
                             }}
@@ -442,19 +462,20 @@ export const QuotesListPage: React.FC = () => {
                             <Edit className="w-4 h-4" />
                           </button>
                         )}
-                        {quote.status === 'draft' && (
+                        {quote.id && quote.status === 'draft' && (
                           <button
                             onClick={async () => {
+                              if (!quote.id) return;
+                              const quoteId = quote.id;
                               if (window.confirm(`Send quote ${quote.quote_number} to ${getClientName(quote)}?`)) {
                                 try {
-                                  setSendingQuoteId(quote.id);
+                                  setSendingQuoteId(quoteId);
                                   const { error } = await supabase
                                     .from('quotes')
                                     .update({
                                       status: 'sent',
-                                      sent_at: new Date().toISOString(),
                                     })
-                                    .eq('id', quote.id);
+                                    .eq('id', quoteId);
 
                                   if (error) throw error;
 
@@ -498,39 +519,55 @@ export const QuotesListPage: React.FC = () => {
             setShowQuoteModal(false);
             setEditingQuote(null);
           }}
-          onSave={async (quoteData: Record<string, unknown>, items: Array<{ description: string; quantity: number; unit_price: number; tax_rate?: number; discount_percent?: number; sort_order?: number }>) => {
-            if (editingQuote) {
+          onSave={async (quoteData, items) => {
+            const taxRate = toNumber(quoteData.tax_rate, 0);
+            const discountAmountInput = toNumber(quoteData.discount_amount, 0);
+            const discountTypeRaw = typeof quoteData.discount_type === 'string'
+              ? quoteData.discount_type
+              : 'fixed';
+            const validUntil = toOptionalString(quoteData.valid_until);
+            const statusRaw = typeof quoteData.status === 'string' ? quoteData.status : 'draft';
+            const termsValue = toOptionalString(quoteData.terms_and_conditions);
+            const notesValue = toOptionalString(quoteData.notes);
+            const caseIdValue = toOptionalString(quoteData.case_id);
+            const customerIdValue = toOptionalString(quoteData.customer_id);
+            const companyIdValue = toOptionalString(quoteData.company_id);
+
+            if (editingQuote && editingQuote.id) {
+              const updatePayload: QuoteUpdate = {
+                status: statusRaw,
+                valid_until: validUntil,
+                tax_rate: taxRate,
+                discount_amount: discountAmountInput,
+                terms: termsValue,
+                notes: notesValue,
+                updated_at: new Date().toISOString(),
+              };
+
               const { error } = await supabase
                 .from('quotes')
-                .update({
-                  title: quoteData.title,
-                  status: quoteData.status,
-                  valid_until: quoteData.valid_until,
-                  client_reference: quoteData.client_reference,
-                  tax_rate: quoteData.tax_rate,
-                  discount_amount: quoteData.discount_amount,
-                  discount_type: quoteData.discount_type,
-                  terms_and_conditions: quoteData.terms_and_conditions,
-                  bank_account_id: quoteData.bank_account_id,
-                  updated_at: new Date().toISOString(),
-                })
+                .update(updatePayload)
                 .eq('id', editingQuote.id);
 
               if (error) throw error;
 
-              await supabase.from('quote_items').delete().eq('quote_id', editingQuote.id);
+              await supabase
+                .from('quote_items')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('quote_id', editingQuote.id);
 
-              const itemsToInsert = items.map((item) => ({
-                quote_id: editingQuote.id,
+              const itemsToInsert: Array<Omit<QuoteItemInsert, 'tenant_id'>> = items.map((item, index) => ({
+                quote_id: editingQuote.id as string,
                 description: item.description,
                 quantity: item.quantity,
                 unit_price: item.unit_price,
-                unit: item.unit,
+                total: Math.round(item.quantity * item.unit_price * 100) / 100,
+                sort_order: index,
               }));
 
               const { error: itemsError } = await supabase
                 .from('quote_items')
-                .insert(itemsToInsert);
+                .insert(itemsToInsert as QuoteItemInsert[]);
 
               if (itemsError) throw itemsError;
             } else {
@@ -542,49 +579,50 @@ export const QuotesListPage: React.FC = () => {
                 (sum, item) => sum + item.quantity * item.unit_price,
                 0
               );
-              const taxAmount = (subtotal * quoteData.tax_rate) / 100;
+              const taxAmount = (subtotal * taxRate) / 100;
               const discountValue =
-                quoteData.discount_type === 'percentage'
-                  ? (subtotal * quoteData.discount_amount) / 100
-                  : quoteData.discount_amount;
+                discountTypeRaw === 'percentage'
+                  ? (subtotal * discountAmountInput) / 100
+                  : discountAmountInput;
               const total = subtotal + taxAmount - discountValue;
+
+              const insertPayload: Omit<QuoteInsert, 'tenant_id'> = {
+                quote_number: typeof nextNumber === 'string' ? nextNumber : null,
+                case_id: caseIdValue,
+                customer_id: customerIdValue,
+                company_id: companyIdValue,
+                status: statusRaw,
+                valid_until: validUntil,
+                subtotal,
+                tax_amount: taxAmount,
+                discount_amount: discountValue,
+                total_amount: total,
+                tax_rate: taxRate,
+                terms: termsValue,
+                notes: notesValue,
+              };
 
               const { data: quote, error } = await supabase
                 .from('quotes')
-                .insert({
-                  quote_number: nextNumber,
-                  case_id: quoteData.case_id,
-                  customer_id: quoteData.customer_id,
-                  company_id: quoteData.company_id,
-                  title: quoteData.title,
-                  status: quoteData.status,
-                  valid_until: quoteData.valid_until,
-                  client_reference: quoteData.client_reference,
-                  subtotal_amount: subtotal,
-                  tax_amount: taxAmount,
-                  discount_amount: discountValue,
-                  total_amount: total,
-                  tax_rate: quoteData.tax_rate,
-                  discount_type: quoteData.discount_type,
-                  terms_and_conditions: quoteData.terms_and_conditions,
-                  bank_account_id: quoteData.bank_account_id,
-                })
+                .insert(insertPayload as QuoteInsert)
                 .select()
-                .single();
+                .maybeSingle();
 
               if (error) throw error;
+              if (!quote) throw new Error('Failed to create quote');
 
-              const itemsToInsert = items.map((item) => ({
+              const itemsToInsert: Array<Omit<QuoteItemInsert, 'tenant_id'>> = items.map((item, index) => ({
                 quote_id: quote.id,
                 description: item.description,
                 quantity: item.quantity,
                 unit_price: item.unit_price,
-                unit: item.unit,
+                total: Math.round(item.quantity * item.unit_price * 100) / 100,
+                sort_order: index,
               }));
 
               const { error: itemsError } = await supabase
                 .from('quote_items')
-                .insert(itemsToInsert);
+                .insert(itemsToInsert as QuoteItemInsert[]);
 
               if (itemsError) throw itemsError;
             }
@@ -595,7 +633,7 @@ export const QuotesListPage: React.FC = () => {
           caseId={editingQuote?.case_id || ''}
           customerId={editingQuote?.customer_id}
           companyId={editingQuote?.company_id}
-          initialData={editingQuote}
+          initialData={editingQuote ? (editingQuote as unknown as Record<string, unknown>) : undefined}
           clientReference={editingQuote?.client_reference}
         />
       )}
