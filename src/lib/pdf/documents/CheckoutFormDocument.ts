@@ -129,7 +129,7 @@ export function buildCheckoutFormDocument(
   const userIconSvg = getGeneralIconSvg('user');
 
   const isCollectorSameAsCustomer =
-    caseData.checkout_collector_name === caseData.customer_name ||
+    caseData.checkout_collector_name === caseData.customer?.customer_name ||
     !caseData.checkout_collector_name ||
     caseData.checkout_collector_name.trim() === '';
 
@@ -137,7 +137,7 @@ export function buildCheckoutFormDocument(
 
   const caseDetailsContent: object[] = [
     createInfoRow(t('caseIdLabel', 'Case ID:'), caseData.case_no, labelWidth),
-    createInfoRow(t('customerNameLabel', 'Customer Name:'), caseData.customer_name || caseData.contact_name, labelWidth),
+    createInfoRow(t('customerNameLabel', 'Customer Name:'), caseData.customer?.customer_name || caseData.contact_name, labelWidth),
     createInfoRow(t('companyLabel', 'Company:'), caseData.company?.company_name, labelWidth),
     createInfoRow(t('serviceLabel', 'Service:'), caseData.service_type?.name, labelWidth),
     createInfoRow(t('customerPhoneLabel', 'Customer Phone:'), caseData.customer?.mobile_number || caseData.customer?.phone_number || caseData.contact_phone, labelWidth),
@@ -149,7 +149,7 @@ export function buildCheckoutFormDocument(
     collectionInfoContent = [
       createInfoRow(t('checkoutDateLabel', 'Checkout Date:'), formatDate(caseData.checkout_date || new Date().toISOString(), 'dd MMM yyyy, HH:mm'), labelWidth),
       createInfoRow(t('recoveryOutcomeLabel', 'Recovery Outcome:'), getRecoveryOutcomeLabel(caseData.recovery_outcome), labelWidth),
-      createInfoRow(t('collectedByLabel', 'Collected By:'), caseData.customer_name || caseData.contact_name, labelWidth),
+      createInfoRow(t('collectedByLabel', 'Collected By:'), caseData.customer?.customer_name || caseData.contact_name, labelWidth),
       createInfoRow(t('mobileNumberLabel', 'Mobile Number:'), caseData.customer?.mobile_number || caseData.customer?.phone_number || caseData.contact_phone, labelWidth),
     ];
   } else {
@@ -173,12 +173,12 @@ export function buildCheckoutFormDocument(
     columns: [
       {
         width: '50%',
-        stack: [createBilingualInfoBox(caseDetailsTitle, null, caseDetailsContent, fileIconSvg)],
+        stack: [createBilingualInfoBox(caseDetailsTitle, null, caseDetailsContent, fileIconSvg) as Content],
       },
       { width: 8, text: '' },
       {
         width: '50%',
-        stack: [createBilingualInfoBox(collectionInfoTitle, null, collectionInfoContent, userIconSvg)],
+        stack: [createBilingualInfoBox(collectionInfoTitle, null, collectionInfoContent, userIconSvg) as Content],
       },
     ],
     margin: [0, 0, 0, 8],
@@ -281,7 +281,7 @@ export function buildCheckoutFormDocument(
 
   const checkoutAcknowledgementTextArabic = `أؤكد استلام جهازي/بياناتي وأقر بأن حالتي قد انتهت (مكتملة، ملغاة، أو غير قابلة للاستعادة). أقبل أن استعادة البيانات تتم على أساس بذل أقصى جهد ممكن وتخضع للشروط والأحكام المتاحة عبر الإنترنت أو في الاستقبال.`;
 
-  const englishContent: object[] = [
+  const englishContent: Content[] = [
     { text: 'Customer Checkout Acknowledgement', bold: true, fontSize: 9, margin: [0, 0, 0, 3] },
     { text: checkoutAcknowledgementTextEnglish, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.2 },
   ];
@@ -293,10 +293,10 @@ export function buildCheckoutFormDocument(
       color: PDF_COLORS.primary,
       link: termsConditionsUrl,
       margin: [0, 3, 0, 0],
-    } as object);
+    });
   }
 
-  const arabicContent: object[] = isBilingual ? [
+  const arabicContent: Content[] = isBilingual ? [
     { text: 'إقرار استلام العميل', bold: true, fontSize: 9, alignment: 'right', margin: [0, 0, 0, 3] },
     { text: checkoutAcknowledgementTextArabic, fontSize: 7, color: PDF_COLORS.textLight, alignment: 'right', lineHeight: 1.2 },
   ] : [];
@@ -309,7 +309,7 @@ export function buildCheckoutFormDocument(
       link: termsConditionsUrl,
       alignment: 'right',
       margin: [0, 3, 0, 0],
-    } as object);
+    });
   }
 
   const customerAcknowledgementSection: Content = {
@@ -597,7 +597,7 @@ export function buildCheckoutFormDocument(
   };
 }
 
-function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 75): Content {
+function createInfoRow(label: string, value: string | undefined | null, labelWidth: number = 75): object {
   return {
     columns: [
       { text: label, fontSize: 8, color: PDF_COLORS.textLight, width: labelWidth },
