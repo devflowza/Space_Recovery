@@ -2,6 +2,11 @@ import { supabase } from './supabaseClient';
 import { logAuditTrail } from './auditTrailService';
 import { sanitizeFilterValue } from './postgrestSanitizer';
 import { logger } from './logger';
+import type { Database } from '../types/database.types';
+
+type PaymentInsert = Database['public']['Tables']['payments']['Insert'];
+type PaymentAllocationInsert = Database['public']['Tables']['payment_allocations']['Insert'];
+type FinancialTransactionInsert = Database['public']['Tables']['financial_transactions']['Insert'];
 
 export interface Payment {
   id?: string;
@@ -66,6 +71,18 @@ export interface PaymentWithDetails extends Payment {
     full_name: string;
   };
 }
+
+const getCurrentTenantId = async (): Promise<string> => {
+  const { data, error } = await supabase.rpc('get_current_tenant_id');
+  if (error) {
+    logger.error('Error fetching current tenant id:', error);
+    throw new Error('Unable to resolve current tenant');
+  }
+  if (!data) {
+    throw new Error('No active tenant for current session');
+  }
+  return data;
+};
 
 export const getNextPaymentNumber = async (): Promise<string> => {
   const { data, error } = await supabase.rpc('get_next_number', {
@@ -134,7 +151,7 @@ export const fetchPayments = async (filters?: {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data as PaymentWithDetails[];
+  return (data ?? []) as unknown as PaymentWithDetails[];
 };
 
 export const fetchPaymentById = async (id: string) => {
@@ -142,7 +159,7 @@ export const fetchPaymentById = async (id: string) => {
     .from('payments')
     .select(`
       *,
-      customer:customers_enhanced(id, customer_name, email, mobile_number, address_line1, city),
+      customer:customers_enhanced(id, customer_name, email, mobile_number, address, city_id),
       payment_method:master_payment_methods(id, name),
       bank_account:bank_accounts(id, account_name:name, bank_name, account_number),
       allocations:payment_allocations(
@@ -161,7 +178,8 @@ export const fetchPaymentById = async (id: string) => {
     .maybeSingle();
 
   if (error) throw error;
-  return data as PaymentWithDetails;
+  if (!data) return null;
+  return data as unknown as PaymentWithDetails;
 };
 
 export const createPayment = async (
@@ -169,17 +187,32 @@ export const createPayment = async (
   allocations?: Array<{ invoice_id: string; amount: number }>
 ) => {
   const paymentNumber = await getNextPaymentNumber();
+  const tenantId = await getCurrentTenantId();
+
+  const insertPayload: PaymentInsert = {
+    tenant_id: tenantId,
+    payment_number: paymentNumber,
+    payment_date: payment.payment_date,
+    amount: payment.amount,
+    customer_id: payment.customer_id ?? null,
+    payment_method_id: payment.payment_method_id ?? null,
+    bank_account_id: payment.bank_account_id ?? null,
+    reference: payment.reference,
+    status: payment.status,
+    notes: payment.notes,
+    created_by: payment.created_by ?? null,
+  };
 
   const { data: paymentData, error: paymentError } = await supabase
     .from('payments')
-    .insert([{
-      ...payment,
-      payment_number: paymentNumber,
-    }])
+    .insert([insertPayload])
     .select()
     .maybeSingle();
 
   if (paymentError) throw paymentError;
+  if (!paymentData) {
+    throw new Error('Failed to create payment record');
+  }
 
   if (allocations && allocations.length > 0) {
     await allocatePaymentToInvoices(paymentData.id, allocations);
@@ -194,7 +227,10 @@ export const allocatePaymentToInvoices = async (
   paymentId: string,
   allocations: Array<{ invoice_id: string; amount: number }>
 ) => {
-  const allocationRecords = allocations.map(alloc => ({
+  const tenantId = await getCurrentTenantId();
+
+  const allocationRecords: PaymentAllocationInsert[] = allocations.map(alloc => ({
+    tenant_id: tenantId,
     payment_id: paymentId,
     invoice_id: alloc.invoice_id,
     amount: alloc.amount,
@@ -218,6 +254,9 @@ export const allocatePaymentToInvoices = async (
         .maybeSingle();
 
       if (fetchError) throw fetchError;
+      if (!invoice) {
+        throw new Error(`Invoice ${alloc.invoice_id} not found`);
+      }
 
       // Save original state for rollback
       updatedInvoices.push({
@@ -255,10 +294,10 @@ export const allocatePaymentToInvoices = async (
     await createFinancialTransaction({
       transaction_date: new Date().toISOString().split('T')[0],
       amount: totalAllocated,
-      type: 'income',
+      transaction_type: 'income',
       description: `Payment received`,
-      related_payment_id: paymentId,
-      status: 'completed',
+      reference_type: 'payment',
+      reference_id: paymentId,
     });
   } catch (error) {
     // Rollback: reverse allocation insert
@@ -318,6 +357,9 @@ export const voidPayment = async (paymentId: string) => {
       .maybeSingle();
 
     if (fetchError) throw fetchError;
+    if (!invoice) {
+      throw new Error(`Invoice ${alloc.invoice_id} not found`);
+    }
 
     const newAmountPaid = Math.max(0, (invoice.amount_paid || 0) - alloc.amount);
     const newAmountDue = (invoice.total_amount || 0) - newAmountPaid;
@@ -452,14 +494,18 @@ export const getPaymentStats = async (filters?: {
   thisMonth.setDate(1);
   const thisMonthStart = thisMonth.toISOString().split('T')[0];
 
+  const rows = payments ?? [];
+
   return {
-    total: payments?.length || 0,
-    completed: payments?.filter(p => p.status === 'completed').length || 0,
-    pending: payments?.filter(p => p.status === 'pending').length || 0,
-    today: payments?.filter(p => p.payment_date === today).length || 0,
-    totalAmount: payments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0,
-    completedAmount: payments?.filter(p => p.status === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0) || 0,
-    thisMonthAmount: payments?.filter(p => p.payment_date >= thisMonthStart).reduce((sum, p) => sum + (p.amount || 0), 0) || 0,
+    total: rows.length,
+    completed: rows.filter(p => p.status === 'completed').length,
+    pending: rows.filter(p => p.status === 'pending').length,
+    today: rows.filter(p => p.payment_date === today).length,
+    totalAmount: rows.reduce((sum, p) => sum + (p.amount || 0), 0),
+    completedAmount: rows.filter(p => p.status === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0),
+    thisMonthAmount: rows
+      .filter(p => p.payment_date !== null && p.payment_date >= thisMonthStart)
+      .reduce((sum, p) => sum + (p.amount || 0), 0),
   };
 };
 
@@ -519,14 +565,26 @@ export const getUnpaidInvoicesByCase = async (caseId: string) => {
 const createFinancialTransaction = async (transaction: {
   transaction_date: string;
   amount: number;
-  type: string;
+  transaction_type: string;
   description: string;
-  related_payment_id?: string;
-  status: string;
+  reference_type?: string;
+  reference_id?: string;
 }) => {
+  const tenantId = await getCurrentTenantId();
+
+  const payload: FinancialTransactionInsert = {
+    tenant_id: tenantId,
+    transaction_date: transaction.transaction_date,
+    amount: transaction.amount,
+    transaction_type: transaction.transaction_type,
+    description: transaction.description,
+    reference_type: transaction.reference_type,
+    reference_id: transaction.reference_id,
+  };
+
   const { error } = await supabase
     .from('financial_transactions')
-    .insert([transaction]);
+    .insert([payload]);
 
   if (error) {
     logger.error('Error creating financial transaction:', error);
