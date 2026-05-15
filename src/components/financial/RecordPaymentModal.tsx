@@ -134,15 +134,16 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
     if (preselectedInvoiceId && unpaidInvoices.length > 0) {
       const invoice = unpaidInvoices.find((inv) => inv.id === preselectedInvoiceId);
       if (invoice && !allocations.find(a => a.invoice_id === invoice.id)) {
+        const balanceDue = invoice.balance_due ?? 0;
         setAllocations([{
           invoice_id: invoice.id,
-          invoice_number: invoice.invoice_number,
-          total_amount: invoice.total_amount,
-          balance_due: invoice.balance_due,
-          allocation_amount: invoice.balance_due,
-          status: invoice.status,
+          invoice_number: invoice.invoice_number ?? '',
+          total_amount: invoice.total_amount ?? 0,
+          balance_due: balanceDue,
+          allocation_amount: balanceDue,
+          status: invoice.status ?? 'draft',
         }]);
-        setTotalAmount(invoice.balance_due);
+        setTotalAmount(balanceDue);
       }
     }
   }, [preselectedInvoiceId, unpaidInvoices]);
@@ -157,13 +158,14 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
     const invoice = unpaidInvoices.find((inv) => inv.id === invoiceId);
     if (!invoice || allocations.find(a => a.invoice_id === invoiceId)) return;
 
+    const balanceDue = invoice.balance_due ?? 0;
     const newAllocation: InvoiceAllocation = {
       invoice_id: invoice.id,
-      invoice_number: invoice.invoice_number,
-      total_amount: invoice.total_amount,
-      balance_due: invoice.balance_due,
-      allocation_amount: invoice.balance_due,
-      status: invoice.status,
+      invoice_number: invoice.invoice_number ?? '',
+      total_amount: invoice.total_amount ?? 0,
+      balance_due: balanceDue,
+      allocation_amount: balanceDue,
+      status: invoice.status ?? 'draft',
     };
 
     setAllocations([...allocations, newAllocation]);
@@ -398,7 +400,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 <option value="">+ Add Invoice</option>
                 {availableInvoices.map((inv) => (
                   <option key={inv.id} value={inv.id}>
-                    {inv.invoice_number} - {formatCurrency(inv.balance_due)} due
+                    {inv.invoice_number} - {formatCurrency(inv.balance_due ?? 0)} due
                   </option>
                 ))}
               </select>
