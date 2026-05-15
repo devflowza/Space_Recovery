@@ -13,45 +13,45 @@ interface CustomerCopyReceiptProps {
 
 interface CaseData {
   id: string;
-  case_no: string;
-  title: string;
-  priority: string;
-  status: string;
+  case_no: string | null;
+  title: string | null;
+  priority: string | null;
+  status: string | null;
   client_reference: string | null;
   created_at: string;
-  customer_id: string;
+  customer_id: string | null;
   contact_id: string | null;
-  service_type_id: string;
+  service_type_id: string | null;
   customer?: {
     id: string;
-    customer_number: string;
+    customer_number: string | null;
     customer_name: string;
     email: string | null;
     mobile_number: string | null;
-    company_id: string | null;
-  };
+    company_name: string | null;
+  } | null;
   contact?: {
     id: string;
     customer_name: string;
     mobile_number: string | null;
     email: string | null;
-  };
+  } | null;
   service_type?: {
     id: string;
     name: string;
-  };
+  } | null;
   devices?: Array<{
     id: string;
     device_type: { name: string } | null;
     brand: { name: string } | null;
     capacity: { name: string } | null;
-    serial_no: string | null;
-    device_problem: string | null;
+    serial_number: string | null;
+    symptoms: string | null;
   }>;
   created_by_profile?: {
     id: string;
     full_name: string;
-  };
+  } | null;
 }
 
 interface CompanySettings {
@@ -119,29 +119,29 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
         if (settingsResult.error) throw settingsResult.error;
 
         const caseInfo = caseResult.data;
-        setCompanySettings(settingsResult.data);
+        setCompanySettings(settingsResult.data as unknown as CompanySettings | null);
 
         const [customerResult, serviceTypeResult, devicesResult, createdByResult] = await Promise.all([
           caseInfo.customer_id
             ? supabase
                 .from('customers_enhanced')
-                .select('id, customer_number, customer_name, email, mobile_number, company_id')
+                .select('id, customer_number, customer_name, email, mobile_number, company_name')
                 .eq('id', caseInfo.customer_id)
-                .single()
+                .maybeSingle()
             : Promise.resolve({ data: null }),
           caseInfo.service_type_id
             ? supabase
                 .from('catalog_service_types')
                 .select('id, name')
                 .eq('id', caseInfo.service_type_id)
-                .single()
+                .maybeSingle()
             : Promise.resolve({ data: null }),
           supabase
             .from('case_devices')
             .select(`
               id,
-              serial_no,
-              device_problem,
+              serial_number,
+              symptoms,
               device_type_id,
               brand_id,
               capacity_id
@@ -152,31 +152,31 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
                 .from('profiles')
                 .select('id, full_name')
                 .eq('id', caseInfo.created_by)
-                .single()
+                .maybeSingle()
             : Promise.resolve({ data: null }),
         ]);
 
-        let contact = null;
+        let contact: CaseData['contact'] = null;
         if (caseInfo.contact_id) {
           const contactResult = await supabase
             .from('customers_enhanced')
             .select('id, customer_name, mobile_number, email')
             .eq('id', caseInfo.contact_id)
-            .single();
+            .maybeSingle();
           contact = contactResult.data;
         }
 
         const devicesWithDetails = await Promise.all(
-          (devicesResult.data || []).map(async (device) => {
+          (devicesResult.data ?? []).map(async (device) => {
             const [deviceTypeResult, brandResult, capacityResult] = await Promise.all([
               device.device_type_id
-                ? supabase.from('catalog_device_types').select('name').eq('id', device.device_type_id).single()
+                ? supabase.from('catalog_device_types').select('name').eq('id', device.device_type_id).maybeSingle()
                 : Promise.resolve({ data: null }),
               device.brand_id
-                ? supabase.from('catalog_device_brands').select('name').eq('id', device.brand_id).single()
+                ? supabase.from('catalog_device_brands').select('name').eq('id', device.brand_id).maybeSingle()
                 : Promise.resolve({ data: null }),
               device.capacity_id
-                ? supabase.from('catalog_device_capacities').select('name').eq('id', device.capacity_id).single()
+                ? supabase.from('catalog_device_capacities').select('name').eq('id', device.capacity_id).maybeSingle()
                 : Promise.resolve({ data: null }),
             ]);
 
@@ -198,7 +198,7 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
           created_by_profile: createdByResult.data,
         });
 
-        const portalUrl = getPortalUrl(caseInfo.case_no);
+        const portalUrl = getPortalUrl(caseInfo.case_no ?? '');
         const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(portalUrl)}`;
         setQrCodeUrl(qrApiUrl);
       } catch (error) {
@@ -299,7 +299,7 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
           </h3>
           <div className="space-y-1 text-xs">
             <div className="flex"><span className="text-slate-500 w-20">{t('nameLabel', 'Name:')}</span><span className="text-slate-800">{caseData.customer?.customer_name || '-'}</span></div>
-            <div className="flex"><span className="text-slate-500 w-20">{t('companyLabel', 'Company:')}</span><span className="text-slate-800">{caseData.customer?.company_id || '-'}</span></div>
+            <div className="flex"><span className="text-slate-500 w-20">{t('companyLabel', 'Company:')}</span><span className="text-slate-800">{caseData.customer?.company_name || '-'}</span></div>
             <div className="flex"><span className="text-slate-500 w-20">{t('phoneLabel', 'Phone:')}</span><span className="text-slate-800">{caseData.contact?.mobile_number || caseData.customer?.mobile_number || '-'}</span></div>
             <div className="flex"><span className="text-slate-500 w-20">{t('emailLabel', 'Email:')}</span><span className="text-slate-800 break-all">{caseData.customer?.email || '-'}</span></div>
             <div className="flex"><span className="text-slate-500 w-20">{t('clientRefLabel', 'Client Ref:')}</span><span className="text-slate-800">{caseData.client_reference || '-'}</span></div>
@@ -337,7 +337,7 @@ export const CustomerCopyReceipt: React.FC<CustomerCopyReceiptProps> = ({
                     </div>
                   </td>
                   <td className="border border-slate-200 px-2 py-1.5 text-slate-800">{device.brand?.name || '-'}</td>
-                  <td className="border border-slate-200 px-2 py-1.5 text-slate-800 font-mono">{device.serial_no || '-'}</td>
+                  <td className="border border-slate-200 px-2 py-1.5 text-slate-800 font-mono">{device.serial_number || '-'}</td>
                   <td className="border border-slate-200 px-2 py-1.5 text-center text-slate-800">{device.capacity?.name || '-'}</td>
                   <td className="border border-slate-200 px-2 py-1.5">
                     {index === 0 ? (
