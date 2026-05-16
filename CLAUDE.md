@@ -148,6 +148,51 @@ All tables use `deleted_at timestamptz DEFAULT NULL`. **Never use hard deletes (
 
 ---
 
+## Schema Discipline (enforced by CI)
+
+Six required-status checks block PRs that re-introduce schema drift. Full design: `docs/superpowers/specs/2026-05-14-schema-discipline-cleanup-design.md`.
+
+### Current cleanup state
+
+- Baseline tsc error count: **762** (locked in `docs/superpowers/specs/tsc-baseline.count`)
+- Ratchet target: tsc count must not increase. CI fails any PR that would raise the count.
+- Long-term goal: drive to 0 via ongoing PRs.
+
+### Naming standards
+
+- **Catalog tables**: `catalog_*` prefix. Banned legacy names: `device_types`, `brands`, `capacities`, `service_types`, etc. — full list in `eslint-rules/banned-tables.js`.
+- **Master tables** (lookups, statuses, categories): `master_*` prefix.
+- **Geo tables**: `geo_*` prefix.
+- **Tenant-scoped tables** must have: `tenant_id NOT NULL`, RLS enabled+forced, RESTRICTIVE isolation policy, `set_<table>_tenant_and_audit` trigger, `idx_<table>_tenant_id` partial index. Asserted by `scripts/check-tenant-table-requirements.sql`.
+
+### Type-import rules
+
+- Import `Database` from `src/types/database.types.ts` only.
+- Never hand-edit `database.types.ts`. Regenerate via `npm run db:types`.
+
+### Migration discipline
+
+Every migration PR must contain:
+1. Migration SQL (applied via `mcp__supabase__apply_migration`).
+2. Regenerated `database.types.ts`.
+3. Every caller updated.
+4. Use `.github/PULL_REQUEST_TEMPLATE/migration.md`.
+
+The schema-drift detector (`scripts/check-schema-drift.sh`) regenerates types and diffs them — any mismatch fails the PR.
+
+### CI gates
+
+| Job | Catches |
+|---|---|
+| `typecheck` | TS errors including stale column reads (TS2339, TS2551) — ratchet at 762 |
+| `schema-drift` | Live DB diverging from `database.types.ts` |
+| `lint` | `.from('<legacy_name>')` and embed names in `.select()` |
+| `tenant-table-requirements` | New tenant-scoped table missing RLS, trigger, or index |
+| `migration-manifest` | Applied migration missing from manifest |
+| `from-table-names` | `.from('<X>')` where X is not a real table |
+
+---
+
 ## Domain Model (222 Tables)
 
 ### Geography (Global)
@@ -398,6 +443,9 @@ type IntegrityCheckResult = 'passed' | 'failed' | 'warning' | 'not_applicable';
 - Do not create `USING(true)` policies on tenant-scoped tables — use RESTRICTIVE tenant isolation
 - Do not use `is_admin()` for platform-level operations — use `is_platform_admin()`
 - Do not hardcode currency symbols, tax labels, or date formats — use `TenantConfigContext`
+- Do not write to a banned legacy table name (see Schema Discipline section)
+- Do not import from `src/types/database.ts` (legacy file; replaced by `database.types.ts`)
+- Do not bypass the migration PR template for schema changes
 
 ---
 
