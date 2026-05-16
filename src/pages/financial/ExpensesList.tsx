@@ -20,6 +20,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { logger } from '../../lib/logger';
+import type { Database } from '../../types/database.types';
 import {
   Plus,
   Search,
@@ -38,6 +39,25 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
+type ExpenseRow = Pick<
+  Database['public']['Tables']['expenses']['Row'],
+  | 'id'
+  | 'expense_number'
+  | 'expense_date'
+  | 'amount'
+  | 'description'
+  | 'vendor'
+  | 'status'
+  | 'case_id'
+  | 'created_by'
+  | 'approved_by'
+  | 'approved_at'
+  | 'notes'
+> & {
+  category: { id: string; name: string } | null;
+  case: { case_no: string | null; title: string | null } | null;
+};
+
 export const ExpensesList: React.FC = () => {
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
@@ -46,7 +66,7 @@ export const ExpensesList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
-  const [_selectedExpense, setSelectedExpense] = useState<any>(null);
+  const [, setSelectedExpense] = useState<ExpenseRow | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [expenseToReject, setExpenseToReject] = useState<string | null>(null);
@@ -55,7 +75,7 @@ export const ExpensesList: React.FC = () => {
 
   const isAccountsRole = profile?.role === 'admin' || profile?.role === 'accounts';
 
-  const { data: expenses = [], isLoading, error, refetch } = useQuery({
+  const { data: expenses = [], isLoading, error, refetch } = useQuery<ExpenseRow[]>({
     queryKey: ['expenses', searchTerm, statusFilter],
     queryFn: async () => {
       try {
@@ -73,6 +93,7 @@ export const ExpensesList: React.FC = () => {
             created_by,
             approved_by,
             approved_at,
+            notes,
             category:master_expense_categories(id, name),
             case:cases(case_no, title)
           `)
@@ -88,7 +109,7 @@ export const ExpensesList: React.FC = () => {
 
         const { data, error } = await query;
         if (error) throw error;
-        return data || [];
+        return (data ?? []) as unknown as ExpenseRow[];
       } catch (err) {
         logger.error('Error loading expenses:', err);
         return [];
@@ -204,10 +225,10 @@ export const ExpensesList: React.FC = () => {
   };
 
   const totalExpenses = expenses
-    .filter((e: { status?: string }) => e.status === 'approved' || e.status === 'paid')
-    .reduce((sum: number, exp: { amount?: number }) => sum + (exp.amount || 0), 0);
-  const pendingExpenses = expenses.filter((e: { status?: string }) => e.status === 'pending');
-  const approvedExpenses = expenses.filter((e: { status?: string }) => e.status === 'approved' || e.status === 'paid');
+    .filter((e) => e.status === 'approved' || e.status === 'paid')
+    .reduce((sum, exp) => sum + (exp.amount ?? 0), 0);
+  const pendingExpenses = expenses.filter((e) => e.status === 'pending');
+  const approvedExpenses = expenses.filter((e) => e.status === 'approved' || e.status === 'paid');
 
   if (isLoading) {
     return (
@@ -367,29 +388,28 @@ export const ExpensesList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {expenses.map((expense: { id: string; expense_date: string; description: string; amount: number; status: string; category?: { name?: string }; case?: { case_no?: string }; payment_method?: { name?: string }; created_by_profile?: { full_name?: string } }) => (
+                {expenses.map((expense) => (
                   <tr
                     key={expense.id}
                     className="hover:bg-slate-50 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-semibold text-primary">{expense.expense_number}</span>
+                      <span className="font-semibold text-primary">{expense.expense_number ?? '-'}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                      {formatDate(expense.expense_date)}
+                      {expense.expense_date ? formatDate(expense.expense_date) : '-'}
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-slate-900 truncate max-w-xs">
-                        {expense.description}
+                        {expense.description ?? '-'}
                       </p>
-                      <p className="text-xs text-slate-500">
-                        By {expense.submitter?.full_name || 'Unknown'}
-                        {expense.case && (
-                          <span className="ml-2 text-primary">
-                            Case: {expense.case.case_no}
+                      {expense.case && (
+                        <p className="text-xs text-slate-500">
+                          <span className="text-primary">
+                            Case: {expense.case.case_no ?? '-'}
                           </span>
-                        )}
-                      </p>
+                        </p>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge variant="secondary" size="sm">
@@ -407,12 +427,12 @@ export const ExpensesList: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
                         variant="custom"
-                        color={getStatusColor(expense.status)}
+                        color={getStatusColor(expense.status ?? '')}
                         size="sm"
                         className="flex items-center gap-1"
                       >
-                        {getStatusIcon(expense.status)}
-                        {expense.status}
+                        {getStatusIcon(expense.status ?? '')}
+                        {expense.status ?? '-'}
                       </Badge>
                       {expense.status === 'rejected' && expense.notes && (
                         <p className="text-xs text-danger mt-1 max-w-[150px] truncate" title={expense.notes}>
