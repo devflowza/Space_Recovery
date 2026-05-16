@@ -38,6 +38,11 @@ export default tseslint.config(
         ],
       }],
       'xsuite/no-banned-embeds-in-select': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+      }],
     },
   }
 );
