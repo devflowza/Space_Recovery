@@ -1,21 +1,36 @@
 import { supabase } from './supabaseClient';
+import type { Database } from '../types/database.types';
 import { logAuditTrail } from './auditTrailService';
 import { sanitizeUuidFields as sanitizeUuids } from './dataValidation';
 import { sanitizeFilterValue } from './postgrestSanitizer';
 import { logger } from './logger';
 
-const QUOTE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'approved_by', 'converted_to_case_id', 'template_id', 'accounting_locale_id', 'bank_account_id'];
-const sanitizeUuidFields = (data: any) => sanitizeUuids(data, QUOTE_UUID_FIELDS);
+type QuoteInsert = Database['public']['Tables']['quotes']['Insert'];
+type QuoteUpdate = Database['public']['Tables']['quotes']['Update'];
+type QuoteItemRow = Database['public']['Tables']['quote_items']['Row'];
+type QuoteItemInsert = Database['public']['Tables']['quote_items']['Insert'];
+
+// FK-safe UUID fields. `template_id`, `accounting_locale_id`, `bank_account_id` were removed
+// from the `quotes` schema in v1.0.0 — kept here only because callers may still pass them
+// via Partial<Quote>. They are stripped in pickQuotePersistFields() before any DB write.
+const QUOTE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'approved_by', 'converted_to_invoice_id'];
+const sanitizeUuidFields = <T extends Record<string, unknown>>(data: T): T =>
+  sanitizeUuids(data, QUOTE_UUID_FIELDS) as T;
 
 export interface QuoteItem {
   id?: string;
   description: string;
   quantity: number;
   unit_price: number;
+  /** Caller-facing alias for `total` (DB column). Maps both ways. */
   line_total?: number;
   sort_order?: number;
 }
 
+// Caller-facing Quote shape. Several fields (title, description, terms_and_conditions,
+// discount_type, template_id, accounting_locale_id, bank_account_id) no longer exist in
+// the DB but are still consumed by QuoteFormModal, QuoteDocument, etc.
+// TODO(B8): migrate callers off these fields, then drop them from this interface.
 export interface Quote {
   id?: string;
   quote_number?: string;
@@ -23,24 +38,36 @@ export interface Quote {
   customer_id: string | null;
   company_id: string | null;
   status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
-  title: string;
+  /** @deprecated TODO(B8): not persisted — quotes table has no `title` column */
+  title?: string;
+  /** @deprecated TODO(B8): not persisted — quotes table has no `description` column */
   description?: string;
   valid_until?: string;
+  /** @deprecated TODO(B8): not persisted — quotes table has no `client_reference` column */
   client_reference?: string;
   subtotal?: number;
   tax_rate?: number;
   tax_amount?: number;
   discount_amount?: number;
-  discount_type?: 'amount' | 'percentage';
+  /** @deprecated TODO(B8): not persisted — quotes table has no `discount_type` column */
+  discount_type?: 'amount' | 'percentage' | 'fixed';
   total_amount?: number;
+  /** @deprecated TODO(B8): not persisted — quotes table column is `terms`, not `terms_and_conditions` */
   terms_and_conditions?: string;
+  terms?: string | null;
   notes?: string;
   created_by?: string;
   approved_by?: string;
+  /** @deprecated TODO(B8): not persisted — quotes table has no `converted_to_case_id` column */
   converted_to_case_id?: string;
+  converted_to_invoice_id?: string | null;
+  /** @deprecated TODO(B8): not persisted — quotes table has no `template_id` column */
   template_id?: string | null;
+  /** @deprecated TODO(B8): not persisted — quotes table has no `accounting_locale_id` column */
   accounting_locale_id?: string | null;
+  /** @deprecated TODO(B8): not persisted — quotes table has no `bank_account_id` column */
   bank_account_id?: string | null;
+  currency?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -87,6 +114,34 @@ export interface QuoteWithDetails extends Quote {
 
 const DEFAULT_PAGE_SIZE = 100;
 
+/** Whitelist Quote fields → real `quotes` columns. Strips dead/deprecated fields. */
+const pickQuotePersistFields = (input: Partial<Quote>): QuoteUpdate => {
+  const out: QuoteUpdate = {};
+  if (input.quote_number !== undefined) out.quote_number = input.quote_number;
+  if (input.case_id !== undefined) out.case_id = input.case_id;
+  if (input.customer_id !== undefined) out.customer_id = input.customer_id;
+  if (input.company_id !== undefined) out.company_id = input.company_id;
+  if (input.status !== undefined) out.status = input.status;
+  if (input.valid_until !== undefined) out.valid_until = input.valid_until;
+  if (input.subtotal !== undefined) out.subtotal = input.subtotal;
+  if (input.tax_rate !== undefined) out.tax_rate = input.tax_rate;
+  if (input.tax_amount !== undefined) out.tax_amount = input.tax_amount;
+  if (input.discount_amount !== undefined) out.discount_amount = input.discount_amount;
+  if (input.total_amount !== undefined) out.total_amount = input.total_amount;
+  if (input.notes !== undefined) out.notes = input.notes;
+  if (input.created_by !== undefined) out.created_by = input.created_by;
+  if (input.approved_by !== undefined) out.approved_by = input.approved_by;
+  if (input.converted_to_invoice_id !== undefined) out.converted_to_invoice_id = input.converted_to_invoice_id;
+  if (input.currency !== undefined) out.currency = input.currency;
+  // terms_and_conditions → terms (compat for legacy callers)
+  if (input.terms !== undefined) {
+    out.terms = input.terms;
+  } else if (input.terms_and_conditions !== undefined) {
+    out.terms = input.terms_and_conditions;
+  }
+  return out;
+};
+
 export const fetchQuotes = async (filters?: {
   status?: string;
   search?: string;
@@ -95,7 +150,7 @@ export const fetchQuotes = async (filters?: {
   caseId?: string;
   page?: number;
   pageSize?: number;
-}) => {
+}): Promise<QuoteWithDetails[]> => {
   try {
     let query = supabase
       .from('quotes')
@@ -155,14 +210,14 @@ export const fetchQuotes = async (filters?: {
       throw new Error(`Failed to fetch quotes: ${error.message}`);
     }
 
-    return (data || []) as QuoteWithDetails[];
-  } catch (error: any) {
+    return (data ?? []) as unknown as QuoteWithDetails[];
+  } catch (error: unknown) {
     logger.error('Fetch quotes failed:', error);
     throw error;
   }
 };
 
-export const fetchQuoteById = async (id: string) => {
+export const fetchQuoteById = async (id: string): Promise<QuoteWithDetails | null> => {
   const { data, error } = await supabase
     .from('quotes')
     .select(`
@@ -210,7 +265,7 @@ export const fetchQuoteById = async (id: string) => {
   if (error) throw error;
   if (!data) return null;
 
-  let customerAssociatedCompany = null;
+  let customerAssociatedCompany: { id: string; name: string; company_name: string | null } | null = null;
   if (data.customer_id) {
     const { data: relationshipData } = await supabase
       .from('customer_company_relationships')
@@ -221,8 +276,13 @@ export const fetchQuoteById = async (id: string) => {
       .eq('is_primary', true)
       .maybeSingle();
 
-    if (relationshipData && relationshipData.companies) {
-      customerAssociatedCompany = relationshipData.companies;
+    if (relationshipData?.companies) {
+      const co = relationshipData.companies as unknown as {
+        id: string;
+        name: string;
+        company_name: string | null;
+      };
+      customerAssociatedCompany = co;
     }
   }
 
@@ -234,11 +294,21 @@ export const fetchQuoteById = async (id: string) => {
 
   if (itemsError) throw itemsError;
 
+  // Map DB column `total` → caller-facing `line_total` (QuoteDocument and other consumers expect this).
+  const mappedItems: QuoteItem[] = (items ?? []).map((it: QuoteItemRow) => ({
+    id: it.id,
+    description: it.description,
+    quantity: it.quantity ?? 0,
+    unit_price: it.unit_price,
+    line_total: it.total,
+    sort_order: it.sort_order ?? 0,
+  }));
+
   return {
     ...data,
-    quote_items: items || [],
+    quote_items: mappedItems,
     customer_associated_company: customerAssociatedCompany,
-  } as QuoteWithDetails;
+  } as unknown as QuoteWithDetails;
 };
 
 export const getNextQuoteNumber = async () => {
@@ -284,10 +354,6 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
       throw new Error('At least one line item is required.');
     }
 
-    if (!quote.title || quote.title.trim() === '') {
-      throw new Error('Quote title is required.');
-    }
-
     const quoteNumber = await getNextQuoteNumber();
     if (!quoteNumber) {
       throw new Error('Failed to generate quote number. Please try again.');
@@ -307,28 +373,27 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
 
     const totalAmount = Math.round((discountedSubtotal + taxAmount) * 100) / 100;
 
-    const quoteToInsert = sanitizeUuidFields({
+    const persistFields = pickQuotePersistFields(quote);
+    const quoteToInsertRaw: QuoteInsert = {
+      ...persistFields,
+      // tenant_id is auto-populated by the set_tenant_and_audit_fields trigger;
+      // cast keeps the Insert type happy (tenant_id is declared NOT NULL in Insert).
+      tenant_id: persistFields.tenant_id ?? ('' as string),
       case_id: quote.case_id,
       customer_id: quote.customer_id || null,
       company_id: quote.company_id || null,
       status: quote.status || 'draft',
-      title: quote.title.trim(),
       valid_until: quote.valid_until || null,
-      client_reference: quote.client_reference || null,
       tax_rate: quote.tax_rate || 0,
       discount_amount: quote.discount_amount || 0,
-      discount_type: quote.discount_type || 'fixed',
-      terms_and_conditions: quote.terms_and_conditions || null,
       notes: quote.notes || null,
       quote_number: quoteNumber,
       subtotal,
       tax_amount: taxAmount,
       total_amount: totalAmount,
       created_by: user.id,
-      bank_account_id: quote.bank_account_id || null,
-      template_id: quote.template_id || null,
-      accounting_locale_id: quote.accounting_locale_id || null,
-    });
+    };
+    const quoteToInsert = sanitizeUuidFields(quoteToInsertRaw as Record<string, unknown>) as QuoteInsert;
 
     const { data: quoteData, error: quoteError } = await supabase
       .from('quotes')
@@ -354,13 +419,19 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
       throw new Error('Quote was not created successfully. Please try again.');
     }
 
-    const itemsWithQuoteId = items.map((item, index) => ({
-      quote_id: quoteData.id,
-      description: item.description.trim(),
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      sort_order: index,
-    }));
+    const itemsWithQuoteId: QuoteItemInsert[] = items.map((item, index) => {
+      const total = Math.round(item.quantity * item.unit_price * 100) / 100;
+      return {
+        // tenant_id auto-set by trigger; same workaround as quotes insert
+        tenant_id: '' as string,
+        quote_id: quoteData.id,
+        description: item.description.trim(),
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total,
+        sort_order: index,
+      };
+    });
 
     const { error: itemsError } = await supabase
       .from('quote_items')
@@ -382,7 +453,9 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
 };
 
 export const updateQuote = async (id: string, quote: Partial<Quote>, items?: QuoteItem[]) => {
-  let updateData: any = sanitizeUuidFields({ ...quote });
+  let updateData: QuoteUpdate = sanitizeUuidFields(
+    pickQuotePersistFields(quote) as Record<string, unknown>
+  ) as QuoteUpdate;
 
   if (items) {
     const subtotal = items.reduce((sum, item) => {
@@ -408,13 +481,18 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
 
     await supabase.from('quote_items').update({ deleted_at: new Date().toISOString() }).eq('quote_id', id);
 
-    const itemsWithQuoteId = items.map((item, index) => ({
-      quote_id: id,
-      description: item.description,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      sort_order: index,
-    }));
+    const itemsWithQuoteId: QuoteItemInsert[] = items.map((item, index) => {
+      const total = Math.round(item.quantity * item.unit_price * 100) / 100;
+      return {
+        tenant_id: '' as string,
+        quote_id: id,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total,
+        sort_order: index,
+      };
+    });
 
     const { error: itemsError } = await supabase
       .from('quote_items')
@@ -432,7 +510,7 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
 
   if (error) throw error;
 
-  await logAuditTrail('update', 'quotes', id, {}, updateData);
+  await logAuditTrail('update', 'quotes', id, {}, updateData as Record<string, unknown>);
 
   return data;
 };
@@ -494,7 +572,7 @@ export const fetchDeletedQuotes = async () => {
     .order('deleted_at', { ascending: false });
 
   if (error) throw error;
-  return (data || []) as QuoteWithDetails[];
+  return (data ?? []) as unknown as QuoteWithDetails[];
 };
 
 export const updateQuoteStatus = async (
@@ -502,19 +580,22 @@ export const updateQuoteStatus = async (
   status: Quote['status'],
   additionalData?: Partial<Quote>
 ) => {
+  const persistAdditional = additionalData ? pickQuotePersistFields(additionalData) : {};
+  const updatePayload: QuoteUpdate = {
+    status,
+    ...persistAdditional,
+  };
+
   const { data, error } = await supabase
     .from('quotes')
-    .update({
-      status,
-      ...additionalData,
-    })
+    .update(updatePayload)
     .eq('id', id)
     .select()
     .maybeSingle();
 
   if (error) throw error;
 
-  await logAuditTrail('update', 'quotes', id, {}, { status, ...additionalData });
+  await logAuditTrail('update', 'quotes', id, {}, updatePayload as Record<string, unknown>);
 
   return data;
 };
@@ -550,7 +631,7 @@ export const getQuoteStats = async () => {
     };
 
     return stats;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Get quote stats failed:', error);
     return {
       total: 0,
@@ -571,22 +652,20 @@ export const duplicateQuote = async (sourceId: string) => {
   const sourceQuote = await fetchQuoteById(sourceId);
   if (!sourceQuote) throw new Error('Source quote not found');
 
+  // Note: title/description/terms_and_conditions/template_id/accounting_locale_id/bank_account_id
+  // are no longer persisted (columns removed in v1.0.0). Carry forward only fields that map to
+  // real `quotes` columns. `terms` is the canonical replacement for `terms_and_conditions`.
   const newQuote: Quote = {
     case_id: sourceQuote.case_id,
     customer_id: sourceQuote.customer_id,
     company_id: sourceQuote.company_id,
     status: 'draft',
-    title: `${sourceQuote.title} (Copy)`,
-    description: sourceQuote.description,
     valid_until: sourceQuote.valid_until,
     tax_rate: sourceQuote.tax_rate,
     discount_amount: sourceQuote.discount_amount,
-    discount_type: sourceQuote.discount_type || 'amount',
-    terms_and_conditions: sourceQuote.terms_and_conditions,
+    terms: sourceQuote.terms ?? sourceQuote.terms_and_conditions ?? null,
     notes: sourceQuote.notes,
-    template_id: sourceQuote.template_id,
-    accounting_locale_id: sourceQuote.accounting_locale_id,
-    bank_account_id: sourceQuote.bank_account_id,
+    currency: sourceQuote.currency,
   };
 
   const items: QuoteItem[] =
@@ -594,15 +673,15 @@ export const duplicateQuote = async (sourceId: string) => {
       description: item.description,
       quantity: item.quantity,
       unit_price: item.unit_price,
-    })) || [];
+    })) ?? [];
 
   return createQuote(newQuote, items);
 };
 
 export const getQuotesByCaseId = async (caseId: string) => {
-  // FK-based joins removed: schema lacks FK constraints from quotes to
-  // accounting_locales and bank_accounts, so PostgREST cannot auto-join.
-  // Schema-drift sprint will either add the FKs or refactor to manual joins.
+  // FK-based joins removed: `quotes` no longer has accounting_locale_id / bank_account_id columns,
+  // and PostgREST cannot auto-join without an FK. We surface tenant default currency formatting
+  // on each row for callers (CaseFinancesTab consumes currency_symbol/position/decimal_places).
   const { data, error } = await supabase
     .from('quotes')
     .select('*')
@@ -622,11 +701,11 @@ export const getQuotesByCaseId = async (caseId: string) => {
   const defaultCurrencyPosition = defaultLocale?.currency_position || 'before';
   const defaultDecimalPlaces = defaultLocale?.decimal_places || 2;
 
-  return data.map(quote => ({
+  return (data ?? []).map((quote) => ({
     ...quote,
-    currency_symbol: quote.accounting_locales?.currency_symbol || defaultCurrencySymbol,
-    currency_position: quote.accounting_locales?.currency_position || defaultCurrencyPosition,
-    decimal_places: quote.accounting_locales?.decimal_places || defaultDecimalPlaces,
+    currency_symbol: defaultCurrencySymbol,
+    currency_position: defaultCurrencyPosition,
+    decimal_places: defaultDecimalPlaces,
   }));
 };
 
