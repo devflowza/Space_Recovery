@@ -15,7 +15,6 @@ import { DeviceCheckoutModal } from '../../components/cases/DeviceCheckoutModal'
 import { DuplicateCaseConfirmationModal } from '../../components/cases/DuplicateCaseConfirmationModal';
 import { DeleteCaseConfirmationModal } from '../../components/cases/DeleteCaseConfirmationModal';
 import { ClientTab } from '../../components/cases/ClientTab';
-import { CloneDriveModal } from '../../components/cases/CloneDriveModal';
 import { DeviceFormModal } from '../../components/cases/DeviceFormModal';
 import { MarkAsDeliveredModal } from '../../components/cases/MarkAsDeliveredModal';
 import { PreserveLongTermModal } from '../../components/cases/PreserveLongTermModal';
@@ -473,7 +472,6 @@ export const CaseDetail: React.FC = () => {
               caseData={caseData}
               devices={devices || []}
               cloneDrives={cloneDrives || []}
-              onSetShowCloneDriveModal={modals.setShowCloneDriveModal}
               onSetViewCloneModal={modals.setViewCloneModal}
               onSetSelectedClone={modals.setSelectedClone}
               onSetShowMarkAsDeliveredModal={modals.setShowMarkAsDeliveredModal}
@@ -620,27 +618,6 @@ export const CaseDetail: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['case_history', id] });
           }}
           onShowCheckoutPreview={handleOpenCheckoutPreview}
-        />
-      )}
-
-      {/* Clone Drive Modal */}
-      {modals.showCloneDriveModal && (
-        <CloneDriveModal
-          isOpen={modals.showCloneDriveModal}
-          onClose={() => modals.setShowCloneDriveModal(false)}
-          caseId={id!}
-          caseNo={caseData.case_no ?? ''}
-          patientDevices={devices
-            .filter(d => d.device_role?.name?.toLowerCase() === 'patient')
-            .map(d => ({
-              id: d.id,
-              name: `${d.device_type?.name || 'Device'} - ${d.brand?.name || ''} ${d.model || ''}`.trim(),
-              serial_number: d.serial_number ?? undefined,
-            }))}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['clone_drives', id] });
-            modals.setShowCloneDriveModal(false);
-          }}
         />
       )}
 
