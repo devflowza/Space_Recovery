@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "check:tsc": "bash scripts/check-tsc.sh",
+    "check:schema-drift": "bash scripts/check-schema-drift.sh",
     "db:types": "supabase gen types typescript --project-id ssmbegiyjivrcwgcqutu > src/types/database.types.ts"
   },
   "dependencies": {

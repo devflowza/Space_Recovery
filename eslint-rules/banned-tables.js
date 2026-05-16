@@ -1,0 +1,14 @@
+export const BANNED_TABLES = [
+  'device_types', 'device_brands', 'brands', 'device_capacities', 'capacities',
+  'device_conditions', 'device_encryption', 'device_form_factors', 'device_made_in',
+  'device_head_counts', 'device_platter_counts', 'device_roles', 'device_component_statuses',
+  'interfaces', 'accessories', 'service_types', 'service_locations', 'service_problems',
+  'service_categories', 'service_line_items', 'donor_compatibility_matrix',
+  'industries', 'currency_codes', 'case_priorities', 'case_statuses', 'case_report_templates',
+  'invoice_statuses', 'quote_statuses', 'purchase_order_statuses', 'payment_methods',
+  'expense_categories', 'transaction_categories', 'leave_types', 'payroll_components',
+  'inventory_categories', 'inventory_condition_types', 'inventory_item_categories',
+  'inventory_status_types', 'supplier_categories', 'supplier_payment_terms',
+  'template_categories', 'template_types', 'template_variables', 'modules',
+  'countries', 'cities',
+];
