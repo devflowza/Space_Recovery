@@ -2422,6 +2422,45 @@ export type Database = {
           },
         ]
       }
+      case_status_transitions: {
+        Row: {
+          allowed_roles: string[]
+          created_at: string
+          description: string | null
+          from_phase: string
+          id: string
+          is_active: boolean
+          requires: string[]
+          sort_order: number
+          to_phase: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_roles?: string[]
+          created_at?: string
+          description?: string | null
+          from_phase: string
+          id?: string
+          is_active?: boolean
+          requires?: string[]
+          sort_order?: number
+          to_phase: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_roles?: string[]
+          created_at?: string
+          description?: string | null
+          from_phase?: string
+          id?: string
+          is_active?: boolean
+          requires?: string[]
+          sort_order?: number
+          to_phase?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cases: {
         Row: {
           actual_completion: string | null
@@ -14541,6 +14580,15 @@ export type Database = {
           passed: boolean
           test_name: string
         }[]
+      }
+      transition_case_status: {
+        Args: {
+          p_case_id: string
+          p_notes?: string
+          p_reason?: string
+          p_to_status_id: string
+        }
+        Returns: Json
       }
       update_number_sequence: {
         Args: {
