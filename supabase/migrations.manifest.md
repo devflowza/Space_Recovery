@@ -19,3 +19,4 @@ Every applied migration must appear here. Verified by `scripts/check-migration-m
 | 20260525024225 | revoke_execute_on_internal_trigger_functions | RLS-only | Phase 6 M6 — REVOKE EXECUTE on set_tenant_and_audit_fields + update_updated_at_column + handle_new_user from anon/authenticated (closes RPC exposure) | |
 | 20260525024232 | convert_security_definer_views_to_security_invoker | RLS-only | Phase 6 M7 — security_invoker=true on public.customers + v_chain_of_custody_timeline (prevents cross-tenant leak via views) | |
 | 20260525024302 | harden_function_search_paths | RLS-only | Phase 6 M9 — SET search_path on 11 functions (closes schema-poisoning vulnerability) | |
+| 20260525030723 | create_supplier_documents_storage_bucket | Additive | CI fix — creates supplier-documents bucket + RLS policies (DocumentUploadModal was targeting non-existent 'documents' bucket) | |

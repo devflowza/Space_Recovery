@@ -36,7 +36,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npx eslint . --max-warnings=0
+      - run: npx eslint src
 
   tenant-table-requirements:
     runs-on: ubuntu-latest

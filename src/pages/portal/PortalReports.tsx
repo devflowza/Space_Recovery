@@ -345,7 +345,6 @@ function PortalReportViewModal({ reportId, onClose }: PortalReportViewModalProps
               <h3 className="text-lg font-medium text-gray-900 mb-2">{section.title ?? 'Section'}</h3>
               <div
                 className="prose max-w-none text-gray-700"
-                /* eslint-disable-next-line react/no-danger */
                 dangerouslySetInnerHTML={{ __html: safeHtml }}
               />
             </div>

@@ -58,11 +58,10 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const fileName = `${supplierId}/${Date.now()}_${selectedFile.name}`;
-      const filePath = `supplier-documents/${fileName}`;
+      const filePath = `${supplierId}/${Date.now()}_${selectedFile.name}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('documents')
+        .from('supplier-documents')
         .upload(filePath, selectedFile, {
           cacheControl: '3600',
           upsert: false,
