@@ -2485,6 +2485,7 @@ export type Database = {
           is_urgent: boolean | null
           is_warranty: boolean | null
           net_amount: number | null
+          phase_entered_at: string | null
           priority: string | null
           priority_id: string | null
           referred_by: string | null
@@ -2525,6 +2526,7 @@ export type Database = {
           is_urgent?: boolean | null
           is_warranty?: boolean | null
           net_amount?: number | null
+          phase_entered_at?: string | null
           priority?: string | null
           priority_id?: string | null
           referred_by?: string | null
@@ -2565,6 +2567,7 @@ export type Database = {
           is_urgent?: boolean | null
           is_warranty?: boolean | null
           net_amount?: number | null
+          phase_entered_at?: string | null
           priority?: string | null
           priority_id?: string | null
           referred_by?: string | null
@@ -3610,51 +3613,133 @@ export type Database = {
       }
       clone_drives: {
         Row: {
+          archived_by: string | null
+          archived_date: string | null
           assigned_to: string | null
+          attributes: Json
           capacity: string | null
           case_id: string | null
+          clone_date: string | null
+          cloned_by: string | null
+          cloned_by_name: string | null
           created_at: string
           deleted_at: string | null
+          delivered_by: string | null
+          delivered_by_name: string | null
+          delivered_date: string | null
+          delivery_notes: string | null
           device_id: string | null
           drive_label: string | null
+          expected_size_gb: number | null
+          extracted_by: string | null
+          extracted_date: string | null
           id: string
+          image_format: string | null
+          image_size_gb: number | null
           notes: string | null
+          physical_location_id: string | null
+          preserve_reason: string | null
+          preserved_by: string | null
+          preserved_date: string | null
+          resource_clone_drive_id: string | null
+          retention_days: number | null
+          retention_deadline: string | null
           serial_number: string | null
           status: string | null
+          storage_path: string | null
+          storage_server: string | null
+          storage_type: string | null
           tenant_id: string
           updated_at: string
         }
         Insert: {
+          archived_by?: string | null
+          archived_date?: string | null
           assigned_to?: string | null
+          attributes?: Json
           capacity?: string | null
           case_id?: string | null
+          clone_date?: string | null
+          cloned_by?: string | null
+          cloned_by_name?: string | null
           created_at?: string
           deleted_at?: string | null
+          delivered_by?: string | null
+          delivered_by_name?: string | null
+          delivered_date?: string | null
+          delivery_notes?: string | null
           device_id?: string | null
           drive_label?: string | null
+          expected_size_gb?: number | null
+          extracted_by?: string | null
+          extracted_date?: string | null
           id?: string
+          image_format?: string | null
+          image_size_gb?: number | null
           notes?: string | null
+          physical_location_id?: string | null
+          preserve_reason?: string | null
+          preserved_by?: string | null
+          preserved_date?: string | null
+          resource_clone_drive_id?: string | null
+          retention_days?: number | null
+          retention_deadline?: string | null
           serial_number?: string | null
           status?: string | null
+          storage_path?: string | null
+          storage_server?: string | null
+          storage_type?: string | null
           tenant_id: string
           updated_at?: string
         }
         Update: {
+          archived_by?: string | null
+          archived_date?: string | null
           assigned_to?: string | null
+          attributes?: Json
           capacity?: string | null
           case_id?: string | null
+          clone_date?: string | null
+          cloned_by?: string | null
+          cloned_by_name?: string | null
           created_at?: string
           deleted_at?: string | null
+          delivered_by?: string | null
+          delivered_by_name?: string | null
+          delivered_date?: string | null
+          delivery_notes?: string | null
           device_id?: string | null
           drive_label?: string | null
+          expected_size_gb?: number | null
+          extracted_by?: string | null
+          extracted_date?: string | null
           id?: string
+          image_format?: string | null
+          image_size_gb?: number | null
           notes?: string | null
+          physical_location_id?: string | null
+          preserve_reason?: string | null
+          preserved_by?: string | null
+          preserved_date?: string | null
+          resource_clone_drive_id?: string | null
+          retention_days?: number | null
+          retention_deadline?: string | null
           serial_number?: string | null
           status?: string | null
+          storage_path?: string | null
+          storage_server?: string | null
+          storage_type?: string | null
           tenant_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "clone_drives_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "clone_drives_case_id_fkey"
             columns: ["case_id"]
@@ -3663,10 +3748,52 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "clone_drives_cloned_by_fkey"
+            columns: ["cloned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clone_drives_delivered_by_fkey"
+            columns: ["delivered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "clone_drives_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "case_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clone_drives_extracted_by_fkey"
+            columns: ["extracted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clone_drives_physical_location_id_fkey"
+            columns: ["physical_location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clone_drives_preserved_by_fkey"
+            columns: ["preserved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clone_drives_resource_clone_drive_id_fkey"
+            columns: ["resource_clone_drive_id"]
+            isOneToOne: false
+            referencedRelation: "resource_clone_drives"
             referencedColumns: ["id"]
           },
           {
@@ -13619,6 +13746,50 @@ export type Database = {
           },
         ]
       }
+      tenant_sla_policies: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          phase: string
+          priority: string
+          target_hours: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          phase: string
+          priority: string
+          target_hours: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          phase?: string
+          priority?: string
+          target_hours?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_sla_policies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_subscriptions: {
         Row: {
           billing_address: Json | null
@@ -14902,6 +15073,7 @@ export type Database = {
       lookup_interface: { Args: { p_name: string }; Returns: string }
       lookup_status_type: { Args: { p_name: string }; Returns: string }
       lookup_storage_location: { Args: { p_name: string }; Returns: string }
+      process_time_based_events: { Args: never; Returns: Json }
       reject_quote: {
         Args: { p_quote_id: string; p_reason?: string }
         Returns: undefined
