@@ -4,7 +4,6 @@ import { PDFDownloadButton } from '../shared/PDFDownloadButton';
 import { PaymentReceiptDocument } from '../documents/PaymentReceiptDocument';
 import { useCurrency } from '../../hooks/useCurrency';
 import { usePDFDownload } from '../../hooks/usePDFDownload';
-import { generatePaymentReceipt } from '../../lib/pdf/pdfService';
 import { logger } from '../../lib/logger';
 
 interface PaymentData {
@@ -44,6 +43,10 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
     if (!payment.id) return;
     setIsGenerating(true);
     try {
+      // Lazy-load pdfService so this modal — which is imported eagerly by
+      // PaymentsList and several other parents — doesn't drag the 2 MB
+      // pdfmake-libs chunk into the parent page's initial load.
+      const { generatePaymentReceipt } = await import('../../lib/pdf/pdfService');
       const result = await generatePaymentReceipt(payment.id);
       if (!result.success) {
         alert(result.error || 'Failed to generate PDF');

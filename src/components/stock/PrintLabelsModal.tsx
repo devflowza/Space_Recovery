@@ -3,8 +3,9 @@ import { Printer, Download, X, Plus, Minus } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { useToast } from '../../hooks/useToast';
-import { initializePDFFonts, createPdfWithFonts } from '../../lib/pdf/fonts';
-import { buildStockLabelDocument } from '../../lib/pdf/documents/StockLabelDocument';
+// pdf/fonts + StockLabelDocument are dynamic-imported inside handlePrint
+// so this modal — mounted by StockListPage — doesn't drag pdfmake into
+// the stock page's initial load.
 import type { StockItemWithCategory } from '../../lib/stockService';
 
 interface PrintLabelsModalProps {
@@ -40,6 +41,10 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({ items, onClo
     if (items.length === 0) return;
     setIsPrinting(true);
     try {
+      const [{ initializePDFFonts, createPdfWithFonts }, { buildStockLabelDocument }] = await Promise.all([
+        import('../../lib/pdf/fonts'),
+        import('../../lib/pdf/documents/StockLabelDocument'),
+      ]);
       await initializePDFFonts();
       for (const item of items) {
         const docDef = buildStockLabelDocument({

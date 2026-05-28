@@ -709,14 +709,18 @@ export const getQuotesByCaseId = async (caseId: string) => {
   }));
 };
 
-import { generateQuote, generateQuoteAsBlob } from './pdf/pdfService';
+// Same lazy boundary as invoiceService — pdfService transitively pulls
+// the 2 MB pdfmake-libs chunk via pdf/fonts. Keeping this import
+// type-only lets QuotesListPage and CaseDetail mount without the cost.
 import type { PDFGenerationResult, PDFBlobResult } from './pdf/pdfService';
 
 export async function generateQuotePDF(quoteId: string, download: boolean = true): Promise<PDFGenerationResult> {
+  const { generateQuote } = await import('./pdf/pdfService');
   return generateQuote(quoteId, download);
 }
 
 export async function generateQuotePDFBlob(quoteId: string): Promise<PDFBlobResult> {
+  const { generateQuoteAsBlob } = await import('./pdf/pdfService');
   return generateQuoteAsBlob(quoteId);
 }
 

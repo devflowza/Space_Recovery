@@ -771,14 +771,20 @@ export const getConversionHistory = async (_proformaId: string) => {
   return null;
 };
 
-import { generateInvoice, generateInvoiceAsBlob } from './pdf/pdfService';
+// Type-only import keeps pdfService.ts out of the static graph — the
+// runtime pdfmake-libs chunk only loads when a user actually clicks
+// "Download Invoice PDF". invoiceService is imported by InvoicesListPage
+// and CaseDetail (transitively), so without this lazy boundary every
+// authenticated user pays the 2 MB pdfmake cost on first navigation.
 import type { PDFGenerationResult, PDFBlobResult } from './pdf/pdfService';
 
 export async function generateInvoicePDF(invoiceId: string, download: boolean = true): Promise<PDFGenerationResult> {
+  const { generateInvoice } = await import('./pdf/pdfService');
   return generateInvoice(invoiceId, download);
 }
 
 export async function generateInvoicePDFBlob(invoiceId: string): Promise<PDFBlobResult> {
+  const { generateInvoiceAsBlob } = await import('./pdf/pdfService');
   return generateInvoiceAsBlob(invoiceId);
 }
 

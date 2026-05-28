@@ -10,9 +10,11 @@ import {
   RefreshCw,
   FileText,
 } from 'lucide-react';
-import { generatePDFAsBlob, type PDFBlobResult } from '../../lib/pdf/pdfService';
+// pdfService + pdf/fonts are dynamic-imported inside the preview-load
+// handler so eagerly importing this modal (CaseDetail mounts it) doesn't
+// drag the 2 MB pdfmake-libs chunk into the case page's initial load.
+import type { PDFBlobResult } from '../../lib/pdf/pdfService';
 import type { DocumentType } from '../../lib/pdf/types';
-import { preloadAllFonts } from '../../lib/pdf/fonts';
 import { logger } from '../../lib/logger';
 
 interface PDFPreviewModalProps {
@@ -74,6 +76,10 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
 
     try {
       setLoadingMessage('Loading fonts and resources...');
+      const [{ preloadAllFonts }, { generatePDFAsBlob }] = await Promise.all([
+        import('../../lib/pdf/fonts'),
+        import('../../lib/pdf/pdfService'),
+      ]);
       await preloadAllFonts();
 
       setLoadingMessage('Fetching document data...');

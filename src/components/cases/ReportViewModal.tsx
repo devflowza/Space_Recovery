@@ -4,7 +4,9 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { reportsService } from '../../lib/reportsService';
-import { reportPDFService } from '../../lib/reportPDFService';
+// reportPDFService is dynamic-imported in generatePDFPreview so this
+// modal — imported eagerly by CaseDetail — doesn't pull the pdfmake
+// chunk into the case page's initial load.
 import {
   getReportTypeConfig,
   getReportStatusConfig,
@@ -87,6 +89,7 @@ export default function ReportViewModal({
   const generatePDFPreview = async () => {
     try {
       setPdfError(null);
+      const { reportPDFService } = await import('../../lib/reportPDFService');
       const result = await reportPDFService.generateReportAsBlob(reportId);
 
       if (result.success && result.blobUrl && result.blob && result.filename) {
@@ -107,6 +110,7 @@ export default function ReportViewModal({
 
     try {
       setDownloadingPDF(true);
+      const { reportPDFService } = await import('../../lib/reportPDFService');
       await reportPDFService.downloadReportPDF(reportId);
     } catch (error) {
       logger.error('Error downloading PDF:', error);

@@ -42,7 +42,8 @@ import {
   exportToCSV,
   exportToJSON,
 } from '../../lib/chainOfCustodyExport';
-import { generateChainOfCustody } from '../../lib/pdf/pdfService';
+// pdfService is dynamic-imported in handleExport so this tab — eagerly
+// loaded by CaseDetail — doesn't pull the 2 MB pdfmake-libs chunk.
 import { useAuth } from '../../contexts/AuthContext';
 import { CustodyTransferModal } from './CustodyTransferModal';
 import { IntegrityCheckModal } from './IntegrityCheckModal';
@@ -237,17 +238,19 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({
 
   const [showExportMenu, setShowExportMenu] = useState(false);
 
-  const handleExport = (format: 'pdf' | 'csv' | 'json') => {
+  const handleExport = async (format: 'pdf' | 'csv' | 'json') => {
     const dataToExport = filteredData.length > 0 ? filteredData : custodyData;
 
     switch (format) {
-      case 'pdf':
-        generateChainOfCustody(caseId, caseNumber, {
+      case 'pdf': {
+        const { generateChainOfCustody } = await import('../../lib/pdf/pdfService');
+        await generateChainOfCustody(caseId, caseNumber, {
           includeMetadata: true,
           includeHashes: true,
           includeSignatures: true,
         });
         break;
+      }
       case 'csv':
         exportToCSV(dataToExport, caseNumber);
         break;
