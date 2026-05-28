@@ -73,6 +73,7 @@ const PlansPage = lazyWithRetry(() => import('./pages/settings/PlansPage').then(
 const SecuritySettingsPage = lazyWithRetry(() => import('./pages/settings/SecuritySettingsPage').then(m => ({ default: m.SecuritySettingsPage as React.ComponentType<unknown> })));
 const GDPRCompliancePage = lazyWithRetry(() => import('./pages/settings/GDPRCompliancePage').then(m => ({ default: m.GDPRCompliancePage as React.ComponentType<unknown> })));
 const NotificationPreferences = lazyWithRetry(() => import('./pages/settings/NotificationPreferences').then(m => ({ default: m.NotificationPreferences as React.ComponentType<unknown> })));
+const NotificationsHistory = lazyWithRetry(() => import('./pages/notifications/NotificationsHistory').then(m => ({ default: m.NotificationsHistory as React.ComponentType<unknown> })));
 
 const PortalLogin = lazyWithRetry(() => import('./pages/portal/PortalLogin').then(m => ({ default: m.PortalLogin as React.ComponentType<unknown> })));
 const PortalDashboard = lazyWithRetry(() => import('./pages/portal/PortalDashboard').then(m => ({ default: m.PortalDashboard as React.ComponentType<unknown> })));
@@ -237,6 +238,7 @@ function App() {
               }
             >
             <Route index element={<Dashboard />} />
+            <Route path="notifications" element={<NotificationsHistory />} />
             <Route path="cases" element={<CasesList />} />
             <Route path="cases/:id" element={<CaseDetail />} />
             <Route path="clients" element={<ClientsList />} />

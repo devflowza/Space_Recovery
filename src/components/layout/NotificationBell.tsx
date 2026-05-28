@@ -66,16 +66,28 @@ export function NotificationBell() {
         <div className="absolute right-0 z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] origin-top-right rounded-lg border border-border bg-surface shadow-lg">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <h3 className="text-sm font-semibold text-slate-900">Notifications</h3>
-            {unreadCount > 0 ? (
+            <div className="flex items-center gap-3">
+              {unreadCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => markAllRead()}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                >
+                  <CheckCheck className="h-3.5 w-3.5" />
+                  Mark all read
+                </button>
+              ) : null}
               <button
                 type="button"
-                onClick={() => markAllRead()}
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                onClick={() => {
+                  navigate('/notifications');
+                  setOpen(false);
+                }}
+                className="text-xs font-medium text-slate-500 hover:text-primary hover:underline"
               >
-                <CheckCheck className="h-3.5 w-3.5" />
-                Mark all read
+                View all
               </button>
-            ) : null}
+            </div>
           </div>
 
           <div className="max-h-96 overflow-y-auto">

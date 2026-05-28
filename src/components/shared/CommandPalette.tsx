@@ -87,6 +87,7 @@ const STATIC_COMMANDS: CommandItem[] = [
   // System
   { id: 'nav-users', kind: 'page', group: 'System', label: 'User Management', icon: Users, to: '/users' },
   { id: 'nav-settings', kind: 'page', group: 'System', label: 'Settings', icon: Settings, to: '/settings' },
+  { id: 'nav-notifications', kind: 'page', group: 'System', label: 'Notifications', icon: Bell, to: '/notifications', keywords: 'history inbox alerts' },
   { id: 'nav-notif-prefs', kind: 'page', group: 'System', label: 'Notification Preferences', icon: Bell, to: '/settings/notifications' },
   { id: 'nav-security', kind: 'page', group: 'System', label: 'Security', icon: Shield, to: '/settings/security' },
   { id: 'nav-appearance', kind: 'page', group: 'System', label: 'Appearance', icon: Settings, to: '/settings/appearance', keywords: 'theme color' },
