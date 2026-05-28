@@ -11,6 +11,7 @@ import { QuoteFormModal } from '../../components/cases/QuoteFormModal';
 import { useCurrency } from '../../hooks/useCurrency';
 import { supabase } from '../../lib/supabaseClient';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { ExportButton } from '../../components/shared/ExportButton';
 import type { Database } from '../../types/database.types';
 import {
   FileText,
@@ -317,6 +318,36 @@ export const QuotesListPage: React.FC = () => {
                 <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
+
+            <ExportButton
+              filename="quotes"
+              columns={[
+                { key: 'quote_number', label: 'Quote #' },
+                { key: 'quote_date', label: 'Date' },
+                { key: 'valid_until', label: 'Valid Until' },
+                {
+                  key: (r) => (r.customers_enhanced as { customer_name?: string } | null)?.customer_name,
+                  label: 'Customer',
+                },
+                { key: 'subtotal', label: 'Subtotal' },
+                { key: 'tax_amount', label: 'Tax' },
+                { key: 'total_amount', label: 'Total' },
+                { key: 'status', label: 'Status' },
+              ]}
+              getRows={async () => {
+                let q = supabase
+                  .from('quotes')
+                  .select('quote_number, quote_date, valid_until, subtotal, tax_amount, total_amount, status, customers_enhanced:customer_id(customer_name)')
+                  .is('deleted_at', null);
+                if (debouncedSearch) {
+                  q = q.ilike('quote_number', `%${debouncedSearch}%`);
+                }
+                if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+                const { data, error } = await q.order('quote_date', { ascending: false, nullsFirst: false });
+                if (error) throw error;
+                return data ?? [];
+              }}
+            />
           </div>
 
           {showFilters && (

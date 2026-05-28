@@ -21,6 +21,7 @@ import { RecordReceiptModal } from '../../components/banking/RecordReceiptModal'
 import { useCurrency } from '../../hooks/useCurrency';
 import { supabase } from '../../lib/supabaseClient';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { ExportButton } from '../../components/shared/ExportButton';
 import {
   FileText,
   Plus,
@@ -291,6 +292,40 @@ export const InvoicesListPage: React.FC<unknown> = () => {
                 <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
+
+            <ExportButton
+              filename="invoices"
+              columns={[
+                { key: 'invoice_number', label: 'Invoice #' },
+                { key: 'invoice_date', label: 'Date' },
+                { key: 'due_date', label: 'Due' },
+                { key: 'invoice_type', label: 'Type' },
+                {
+                  key: (r) => (r.customers_enhanced as { customer_name?: string } | null)?.customer_name,
+                  label: 'Customer',
+                },
+                { key: 'subtotal', label: 'Subtotal' },
+                { key: 'tax_amount', label: 'Tax' },
+                { key: 'total_amount', label: 'Total' },
+                { key: 'amount_paid', label: 'Paid' },
+                { key: 'balance_due', label: 'Balance' },
+                { key: 'status', label: 'Status' },
+              ]}
+              getRows={async () => {
+                let q = supabase
+                  .from('invoices')
+                  .select('invoice_number, invoice_date, due_date, invoice_type, subtotal, tax_amount, total_amount, amount_paid, balance_due, status, customers_enhanced:customer_id(customer_name)')
+                  .is('deleted_at', null);
+                if (debouncedSearch) {
+                  q = q.ilike('invoice_number', `%${debouncedSearch}%`);
+                }
+                if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+                if (typeFilter !== 'all') q = q.eq('invoice_type', typeFilter);
+                const { data, error } = await q.order('invoice_date', { ascending: false, nullsFirst: false });
+                if (error) throw error;
+                return data ?? [];
+              }}
+            />
           </div>
 
           {showFilters && (

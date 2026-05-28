@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Plus, Search, Filter, Briefcase, AlertCircle, CheckCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { ExportButton } from '../../components/shared/ExportButton';
 import { formatDate } from '../../lib/format';
 import { CreateCaseWizard } from '../../components/cases/CreateCaseWizard';
 import { useCasesRealtime } from '../../hooks/useCasesRealtime';
@@ -465,6 +466,43 @@ export const CasesList: React.FC = () => {
                 <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
+
+            {/* Fetches everything matching the active filter — not just
+                the current page — so accountant handoff CSVs aren't
+                truncated to one paginated screen. */}
+            <ExportButton
+              filename="cases"
+              columns={[
+                { key: 'case_no', label: 'Case #' },
+                { key: 'title', label: 'Title' },
+                { key: 'priority', label: 'Priority' },
+                { key: 'status', label: 'Status' },
+                {
+                  key: (r) => (r.customers_enhanced as { customer_name?: string } | null)?.customer_name,
+                  label: 'Customer',
+                },
+                { key: 'client_reference', label: 'Client Ref' },
+                {
+                  key: 'created_at',
+                  label: 'Created',
+                  format: (v) => (v ? new Date(v as string).toISOString().slice(0, 10) : ''),
+                },
+              ]}
+              getRows={async () => {
+                let q = supabase
+                  .from('cases')
+                  .select('case_no, title, priority, status, client_reference, created_at, customers_enhanced:customer_id(customer_name)')
+                  .is('deleted_at', null);
+                if (searchTerm) {
+                  q = q.or(`case_no.ilike.%${searchTerm}%,client_reference.ilike.%${searchTerm}%`);
+                }
+                if (filterStatus !== 'all') q = q.eq('status', filterStatus);
+                if (filterPriority !== 'all') q = q.eq('priority', filterPriority);
+                const { data, error } = await q.order('created_at', { ascending: false });
+                if (error) throw error;
+                return data ?? [];
+              }}
+            />
           </div>
 
           {showFilters && (
