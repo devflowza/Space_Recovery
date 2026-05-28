@@ -22,6 +22,8 @@ import { uploadCustomerProfilePhoto, deleteCustomerProfilePhoto } from '../../li
 import { generatePortalLoginUrl, generateCustomerPortalCredentialsText } from '../../lib/portalUrlService';
 import { generateSecurePassword } from '../../lib/passwordUtils';
 import { CustomerPurchasesTab } from '../../components/customers/CustomerPurchasesTab';
+import { CustomerCasesTab } from '../../components/customers/CustomerCasesTab';
+import { CustomerFinancialTab } from '../../components/customers/CustomerFinancialTab';
 
 type TabId = 'overview' | 'cases' | 'financial' | 'communications' | 'purchases';
 
@@ -737,21 +739,9 @@ export const CustomerProfilePage: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'cases' && (
-            <div className="text-center py-12 text-slate-500">
-              <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-lg">Cases history coming soon</p>
-              <p className="text-sm mt-2">Cases will be linked to customer records</p>
-            </div>
-          )}
+          {activeTab === 'cases' && id && <CustomerCasesTab customerId={id} />}
 
-          {activeTab === 'financial' && (
-            <div className="text-center py-12 text-slate-500">
-              <DollarSign className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-lg">Financial history coming soon</p>
-              <p className="text-sm mt-2">Quotes, invoices, and transactions will appear here</p>
-            </div>
-          )}
+          {activeTab === 'financial' && id && <CustomerFinancialTab customerId={id} />}
 
           {activeTab === 'communications' && (
             <div>

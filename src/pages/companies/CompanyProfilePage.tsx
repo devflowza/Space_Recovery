@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 import { logger } from '../../lib/logger';
+import { CustomerCasesTab } from '../../components/customers/CustomerCasesTab';
+import { CustomerFinancialTab } from '../../components/customers/CustomerFinancialTab';
 
 interface Company {
   id: string;
@@ -766,21 +768,9 @@ export const CompanyProfilePage: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'cases' && (
-            <div className="text-center py-12 text-slate-500">
-              <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-lg">Cases history coming soon</p>
-              <p className="text-sm mt-2">All cases from company contacts will appear here</p>
-            </div>
-          )}
+          {activeTab === 'cases' && id && <CustomerCasesTab companyId={id} />}
 
-          {activeTab === 'financial' && (
-            <div className="text-center py-12 text-slate-500">
-              <DollarSign className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-lg">Financial history coming soon</p>
-              <p className="text-sm mt-2">Aggregated quotes, invoices, and transactions</p>
-            </div>
-          )}
+          {activeTab === 'financial' && id && <CustomerFinancialTab companyId={id} />}
 
           {activeTab === 'communications' && (
             <div>
