@@ -6,6 +6,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { PhoneInput } from '../ui/PhoneInput';
+import { UsageLimitGuard } from '../shared/UsageLimitGuard';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -544,20 +545,22 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               <Button type="button" variant="secondary" size="sm" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Create Customer'
-                )}
-              </Button>
+              <UsageLimitGuard limitKey="max_customers" showToast={true}>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={createMutation.isPending}
+                >
+                  {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Customer'
+                  )}
+                </Button>
+              </UsageLimitGuard>
             </div>
           </div>
         </form>

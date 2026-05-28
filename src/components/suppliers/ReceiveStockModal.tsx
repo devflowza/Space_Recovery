@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PackageCheck, Plus, X } from 'lucide-react';
+import { PackageCheck } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { SearchableSelect } from '../ui/SearchableSelect';
+import { SerialNumberInput } from '../stock/SerialNumberInput';
 import { getStockItems, receiveStockFromPO } from '../../lib/stockService';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../contexts/AuthContext';
@@ -33,7 +34,6 @@ interface ReceiveRow {
   quantity: string;
   unitCost: string;
   serialNumbers: string[];
-  newSerial: string;
 }
 
 export const ReceiveStockModal: React.FC<ReceiveStockModalProps> = ({
@@ -56,7 +56,6 @@ export const ReceiveStockModal: React.FC<ReceiveStockModalProps> = ({
       quantity: String(item.quantity),
       unitCost: String(item.unit_price ?? ''),
       serialNumbers: [],
-      newSerial: '',
     }))
   );
 
@@ -76,22 +75,6 @@ export const ReceiveStockModal: React.FC<ReceiveStockModalProps> = ({
       const next = [...prev];
       next[index] = { ...next[index], ...updates };
       return next;
-    });
-  };
-
-  const addSerial = (index: number) => {
-    const row = rows[index];
-    const serial = row.newSerial.trim();
-    if (!serial || row.serialNumbers.includes(serial)) return;
-    updateRow(index, {
-      serialNumbers: [...row.serialNumbers, serial],
-      newSerial: '',
-    });
-  };
-
-  const removeSerial = (rowIndex: number, serial: string) => {
-    updateRow(rowIndex, {
-      serialNumbers: rows[rowIndex].serialNumbers.filter((s) => s !== serial),
     });
   };
 
@@ -181,44 +164,17 @@ export const ReceiveStockModal: React.FC<ReceiveStockModalProps> = ({
 
               <div>
                 <label className="block text-xs font-medium text-slate-600 mb-1">
-                  Serial Numbers <span className="text-slate-400">(optional)</span>
+                  Serial Numbers <span className="text-slate-400">(optional — cap at received qty)</span>
                 </label>
-                <div className="flex gap-2">
-                  <Input
-                    value={row.newSerial}
-                    onChange={(e) => updateRow(index, { newSerial: e.target.value })}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSerial(index))}
-                    placeholder="Enter serial number and press Enter"
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => addSerial(index)}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-                {row.serialNumbers.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {row.serialNumbers.map((sn) => (
-                      <span
-                        key={sn}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 text-xs rounded-full"
-                      >
-                        {sn}
-                        <button
-                          type="button"
-                          onClick={() => removeSerial(index, sn)}
-                          className="text-slate-400 hover:text-danger transition-colors"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {/* Centralized SerialNumberInput handles Enter/comma to add,
+                    Backspace-on-empty to remove the last chip, and dedup.
+                    maxItems prevents over-tagging beyond the qty received. */}
+                <SerialNumberInput
+                  value={row.serialNumbers}
+                  onChange={(serials) => updateRow(index, { serialNumbers: serials })}
+                  maxItems={Math.max(0, Number(row.quantity) || 0)}
+                  placeholder="Type a serial and press Enter or comma…"
+                />
               </div>
             </div>
           ))}

@@ -8,6 +8,7 @@ import { Card } from '../ui/Card';
 import { SaleableItemsGrid } from '../stock/SaleableItemsGrid';
 import { StockSaleModal } from '../stock/StockSaleModal';
 import { StockTransactionModal } from '../stock/StockTransactionModal';
+import { QuickSaleWidget } from '../stock/QuickSaleWidget';
 import {
   getSalesByCase,
   getStockUsageByCase,
@@ -93,6 +94,19 @@ export const CaseBackupDevicesTab: React.FC<CaseBackupDevicesTabProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* QuickSaleWidget — 1-click sell entry point. Displays recent case
+          sales with payment-status badges and opens StockSaleModal in
+          create-sale mode. Sits above Recommended Backup Devices so
+          engineers can sell without scrolling through the recommendation
+          grid first. */}
+      <QuickSaleWidget
+        caseId={caseId}
+        customerId={customerId}
+        onSaleCreated={() => {
+          queryClient.invalidateQueries({ queryKey: ['stock-sales-case', caseId] });
+        }}
+      />
+
       <Card>
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">

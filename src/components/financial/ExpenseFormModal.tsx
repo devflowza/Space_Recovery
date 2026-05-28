@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { UsageLimitGuard } from '../shared/UsageLimitGuard';
 import { supabase } from '../../lib/supabaseClient';
 import { getExpenseCategories, Expense } from '../../lib/expensesService';
 import { getPaymentMethods } from '../../lib/paymentsService';
@@ -282,24 +283,54 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
           <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isSubmitting || amount <= 0}
-            className="flex items-center gap-2"
-          >
-            <Save className="w-4 h-4" />
-            Save as Draft
-          </Button>
-          <Button
-            type="button"
-            onClick={(e) => handleSubmit(e, true)}
-            disabled={isSubmitting || amount <= 0}
-            className="flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            {isSubmitting ? 'Saving...' : 'Submit for Approval'}
-          </Button>
+          {/* Only gate the create path. When editing an existing expense
+              (initialData provided) the limit doesn't apply — we're not
+              consuming a new slot. */}
+          {initialData ? (
+            <>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isSubmitting || amount <= 0}
+                className="flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                Save as Draft
+              </Button>
+              <Button
+                type="button"
+                onClick={(e) => handleSubmit(e, true)}
+                disabled={isSubmitting || amount <= 0}
+                className="flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                {isSubmitting ? 'Saving...' : 'Submit for Approval'}
+              </Button>
+            </>
+          ) : (
+            <UsageLimitGuard limitKey="max_expenses_per_month" showToast={true}>
+              <div className="flex gap-3">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={isSubmitting || amount <= 0}
+                  className="flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  Save as Draft
+                </Button>
+                <Button
+                  type="button"
+                  onClick={(e) => handleSubmit(e, true)}
+                  disabled={isSubmitting || amount <= 0}
+                  className="flex items-center gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  {isSubmitting ? 'Saving...' : 'Submit for Approval'}
+                </Button>
+              </div>
+            </UsageLimitGuard>
+          )}
         </div>
       </form>
     </Modal>

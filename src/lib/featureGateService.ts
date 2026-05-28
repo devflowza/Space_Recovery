@@ -20,7 +20,9 @@ export type UsageLimitKey =
   | 'max_users'
   | 'max_cases_per_month'
   | 'max_storage_gb'
-  | 'max_branches';
+  | 'max_branches'
+  | 'max_customers'
+  | 'max_expenses_per_month';
 
 export interface FeatureAccess {
   allowed: boolean;
@@ -244,6 +246,32 @@ export async function checkUsageLimit(limitKey: UsageLimitKey): Promise<UsageLim
       limit = branchLimit?.limit || null;
       break;
     }
+
+    case 'max_customers': {
+      const { count } = await supabase
+        .from('customers_enhanced')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .is('deleted_at', null);
+      current = count || 0;
+      limit = planCache?.features.get('max_customers')?.limit ?? null;
+      break;
+    }
+
+    case 'max_expenses_per_month': {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count } = await supabase
+        .from('expenses')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .gte('created_at', startOfMonth.toISOString());
+      current = count || 0;
+      limit = planCache?.features.get('max_expenses_per_month')?.limit ?? null;
+      break;
+    }
   }
 
   const percentage = limit ? Math.round((current / limit) * 100) : 0;
@@ -274,6 +302,8 @@ export async function canPerformAction(
       max_cases_per_month: 'cases this month',
       max_storage_gb: 'storage',
       max_branches: 'branches',
+      max_customers: 'customers',
+      max_expenses_per_month: 'expenses this month',
     };
 
     return {

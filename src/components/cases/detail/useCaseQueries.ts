@@ -203,7 +203,31 @@ export function useCaseQueries(
           assigned_to,
           notes,
           created_at,
-          updated_at
+          updated_at,
+          storage_path,
+          storage_server,
+          storage_type,
+          image_format,
+          image_size_gb,
+          expected_size_gb,
+          clone_date,
+          cloned_by,
+          cloned_by_name,
+          delivered_date,
+          delivered_by,
+          delivered_by_name,
+          delivery_notes,
+          extracted_date,
+          extracted_by,
+          archived_date,
+          archived_by,
+          retention_days,
+          retention_deadline,
+          preserve_reason,
+          preserved_by,
+          preserved_date,
+          resource_clone_drive_id,
+          physical_location_id
         `)
         .eq('case_id', id)
         .order('created_at', { ascending: false });
