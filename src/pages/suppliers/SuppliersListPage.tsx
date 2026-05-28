@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Search, Filter, Truck, UserCheck, Users, Mail, Phone, MapPin, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { ExportButton } from '../../components/shared/ExportButton';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import SupplierFormModal from '../../components/suppliers/SupplierFormModal';
@@ -336,6 +337,47 @@ export default function SuppliersListPage() {
                 <span className="ml-1 w-2 h-2 rounded-full bg-primary"></span>
               )}
             </Button>
+
+            <ExportButton
+              filename="suppliers"
+              columns={[
+                { key: 'supplier_number', label: 'Supplier #' },
+                { key: 'name', label: 'Name' },
+                { key: 'contact_person', label: 'Contact' },
+                { key: 'email', label: 'Email' },
+                { key: 'phone', label: 'Phone' },
+                { key: 'tax_number', label: 'Tax #' },
+                {
+                  key: 'is_active',
+                  label: 'Active',
+                  format: (v) => (v ? 'yes' : 'no'),
+                },
+                {
+                  key: (r) => (r.master_supplier_categories as { name?: string } | null)?.name,
+                  label: 'Category',
+                },
+              ]}
+              getRows={async () => {
+                // Only filters that map to actual columns:
+                //   search → name/email/supplier_number ilike
+                //   statusFilter (active/inactive) → is_active
+                //   categoryFilter → category_id
+                // The approvalFilter is UI-only (no DB column yet); ignore.
+                let q = supabase
+                  .from('suppliers')
+                  .select('supplier_number, name, contact_person, email, phone, tax_number, is_active, master_supplier_categories:category_id(name)')
+                  .is('deleted_at', null);
+                if (searchTerm) {
+                  q = q.or(`name.ilike.%${searchTerm}%,supplier_number.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+                }
+                if (statusFilter === 'active') q = q.eq('is_active', true);
+                if (statusFilter === 'inactive') q = q.eq('is_active', false);
+                if (categoryFilter !== 'all') q = q.eq('category_id', categoryFilter);
+                const { data, error } = await q.order('name', { ascending: true });
+                if (error) throw error;
+                return data ?? [];
+              }}
+            />
           </div>
 
           {showFilters && (

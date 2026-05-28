@@ -20,6 +20,7 @@ import {
 } from '../../lib/expensesService';
 import { useAuth } from '../../contexts/AuthContext';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { ExportButton } from '../../components/shared/ExportButton';
 import { logger } from '../../lib/logger';
 import type { Database } from '../../types/database.types';
 import {
@@ -366,6 +367,38 @@ export const ExpensesList: React.FC = () => {
               <Filter className="w-4 h-4" />
               Refresh
             </Button>
+
+            <ExportButton
+              filename="expenses"
+              columns={[
+                { key: 'expense_number', label: 'Expense #' },
+                { key: 'expense_date', label: 'Date' },
+                { key: 'vendor', label: 'Vendor' },
+                { key: 'description', label: 'Description' },
+                {
+                  key: (r) => (r.master_expense_categories as { name?: string } | null)?.name,
+                  label: 'Category',
+                },
+                { key: 'amount', label: 'Amount' },
+                { key: 'tax_amount', label: 'Tax' },
+                { key: 'currency', label: 'Currency' },
+                { key: 'status', label: 'Status' },
+                { key: 'is_billable', label: 'Billable', format: (v) => (v ? 'yes' : 'no') },
+              ]}
+              getRows={async () => {
+                let q = supabase
+                  .from('expenses')
+                  .select('expense_number, expense_date, vendor, description, amount, tax_amount, currency, status, is_billable, master_expense_categories:category_id(name)')
+                  .is('deleted_at', null);
+                if (searchTerm) {
+                  q = q.or(`expense_number.ilike.%${searchTerm}%,vendor.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+                }
+                if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+                const { data, error } = await q.order('expense_date', { ascending: false, nullsFirst: false });
+                if (error) throw error;
+                return data ?? [];
+              }}
+            />
           </div>
         </div>
       </div>
