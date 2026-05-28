@@ -1,12 +1,18 @@
 import React from 'react';
-import { Copy } from 'lucide-react';
+import { Copy, HardDriveDownload } from 'lucide-react';
 import { Card } from '../../ui/Card';
+import { Button } from '../../ui/Button';
 import { CloneDriveCard } from '../CloneDriveCard';
+import { CreateCloneDriveModal, type CreateCloneDriveFormValues } from '../CreateCloneDriveModal';
+import { ExtractCloneConfirmationModal } from '../ExtractCloneConfirmationModal';
+import { ArchiveCloneConfirmationModal } from '../ArchiveCloneConfirmationModal';
+import { SpaceInsufficientWarningModal } from '../SpaceInsufficientWarningModal';
 
 interface CloneDriveData {
   id: string;
   case_id?: string | null;
   patient_device_id?: string | null;
+  device_id?: string | null;
   storage_path?: string | null;
   clone_date?: string | null;
   status?: string | null;
@@ -23,17 +29,67 @@ interface DeviceData {
   [key: string]: unknown;
 }
 
+interface SpaceWarningInfo {
+  cloneLabel: string;
+  totalCapacity: number;
+  currentUsed: number;
+  availableSpace: number;
+  requiredSpace: number;
+}
+
 interface CaseCloneDrivesTabProps {
+  caseId: string;
   caseData: { case_no?: string | null; [key: string]: unknown };
   devices: DeviceData[];
   cloneDrives: CloneDriveData[];
+
   onSetViewCloneModal: (clone: Record<string, unknown>) => void;
-  onSetSelectedClone: (clone: Record<string, unknown>) => void;
+  onSetSelectedClone: (clone: Record<string, unknown> | null) => void;
   onSetShowMarkAsDeliveredModal: (v: boolean) => void;
   onSetShowPreserveLongTermModal: (v: boolean) => void;
+
+  // Create flow
+  showCreateModal: boolean;
+  onOpenCreateModal: () => void;
+  onCloseCreateModal: () => void;
+  onCreateCloneSubmit: (values: CreateCloneDriveFormValues) => void;
+  onCreateCloneSpaceShort: (info: {
+    values: CreateCloneDriveFormValues;
+    resource: { id: string; label: string; capacity_gb: number; used_gb: number; available_gb: number };
+  }) => boolean;
+  isCreatingClone: boolean;
+
+  // Extract flow
+  showExtractModal: boolean;
+  selectedClone: Record<string, unknown> | null;
+  onCloseExtractModal: () => void;
+  onConfirmExtract: () => void;
+  isExtracting: boolean;
+  onRequestExtract: (clone: Record<string, unknown>) => void;
+
+  // Archive flow
+  showArchiveModal: boolean;
+  onCloseArchiveModal: () => void;
+  onConfirmArchive: () => void;
+  isArchiving: boolean;
+  onRequestArchive: (clone: Record<string, unknown>) => void;
+
+  // Space warning
+  showSpaceWarningModal: boolean;
+  spaceWarningInfo: SpaceWarningInfo | null;
+  onCloseSpaceWarning: () => void;
+  onProceedSpaceWarning: () => void;
 }
 
+const buildDeviceLabel = (device: DeviceData | undefined): string => {
+  if (!device) return 'Unknown Device';
+  const type = device.device_type?.name ?? 'Device';
+  const serial = device.serial_number ? ` (${device.serial_number})` : '';
+  return `${type}${serial}`;
+};
+
 export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
+  caseId,
   caseData,
   devices,
   cloneDrives,
@@ -41,7 +97,38 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
   onSetSelectedClone,
   onSetShowMarkAsDeliveredModal,
   onSetShowPreserveLongTermModal,
+  showCreateModal,
+  onOpenCreateModal,
+  onCloseCreateModal,
+  onCreateCloneSubmit,
+  onCreateCloneSpaceShort,
+  isCreatingClone,
+  showExtractModal,
+  selectedClone,
+  onCloseExtractModal,
+  onConfirmExtract,
+  isExtracting,
+  onRequestExtract,
+  showArchiveModal,
+  onCloseArchiveModal,
+  onConfirmArchive,
+  isArchiving,
+  onRequestArchive,
+  showSpaceWarningModal,
+  spaceWarningInfo,
+  onCloseSpaceWarning,
+  onProceedSpaceWarning,
 }) => {
+  const selectedClonePatientDeviceName = React.useMemo(() => {
+    if (!selectedClone) return undefined;
+    const deviceId = (selectedClone.device_id ?? selectedClone.patient_device_id) as
+      | string
+      | undefined;
+    if (!deviceId) return undefined;
+    const match = devices.find((d) => d.id === deviceId);
+    return buildDeviceLabel(match);
+  }, [selectedClone, devices]);
+
   return (
     <div className="space-y-4">
       <Card>
@@ -54,6 +141,15 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
               </h2>
               <p className="text-sm text-slate-600 mt-1">Track disk images and clone storage locations for data recovery</p>
             </div>
+            <Button
+              onClick={onOpenCreateModal}
+              className="flex items-center gap-2"
+              disabled={devices.length === 0}
+              title={devices.length === 0 ? 'Add a device to the case first' : 'Create new clone drive'}
+            >
+              <HardDriveDownload className="w-4 h-4" />
+              Create Clone Drive
+            </Button>
           </div>
 
           {cloneDrives.length === 0 ? (
@@ -65,10 +161,13 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {cloneDrives.map((clone) => {
-                const patientDevice = devices.find(d => d.id === clone.patient_device_id);
-                const patientDeviceName = patientDevice
-                  ? `${patientDevice.device_type?.name || 'Device'} ${patientDevice.serial_number ? `(${patientDevice.serial_number})` : ''}`
-                  : 'Unknown Device';
+                const deviceId = (clone.device_id ?? clone.patient_device_id) as
+                  | string
+                  | undefined;
+                const patientDevice = deviceId
+                  ? devices.find((d) => d.id === deviceId)
+                  : undefined;
+                const patientDeviceName = buildDeviceLabel(patientDevice);
 
                 const cloneForCard = {
                   ...(clone as unknown as Record<string, unknown>),
@@ -90,6 +189,8 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
                       onSetSelectedClone(c as unknown as Record<string, unknown>);
                       onSetShowPreserveLongTermModal(true);
                     }}
+                    onExtract={(c) => onRequestExtract(c as unknown as Record<string, unknown>)}
+                    onArchive={(c) => onRequestArchive(c as unknown as Record<string, unknown>)}
                   />
                 );
               })}
@@ -131,6 +232,66 @@ export const CaseCloneDrivesTab: React.FC<CaseCloneDrivesTabProps> = ({
             </div>
           </Card>
         </div>
+      )}
+
+      {/* Create Clone Drive Modal */}
+      <CreateCloneDriveModal
+        isOpen={showCreateModal}
+        onClose={onCloseCreateModal}
+        caseId={caseId}
+        caseNo={caseData.case_no ?? undefined}
+        devices={devices}
+        onSubmit={onCreateCloneSubmit}
+        onSpaceShort={onCreateCloneSpaceShort}
+        isLoading={isCreatingClone}
+      />
+
+      {/* Extract Confirmation Modal */}
+      <ExtractCloneConfirmationModal
+        isOpen={showExtractModal}
+        onClose={onCloseExtractModal}
+        onConfirm={onConfirmExtract}
+        clone={
+          selectedClone
+            ? (selectedClone as unknown as React.ComponentProps<
+                typeof ExtractCloneConfirmationModal
+              >['clone'])
+            : null
+        }
+        caseNo={caseData.case_no ?? undefined}
+        patientDeviceName={selectedClonePatientDeviceName}
+        isLoading={isExtracting}
+      />
+
+      {/* Archive Confirmation Modal */}
+      <ArchiveCloneConfirmationModal
+        isOpen={showArchiveModal}
+        onClose={onCloseArchiveModal}
+        onConfirm={onConfirmArchive}
+        clone={
+          selectedClone
+            ? (selectedClone as unknown as React.ComponentProps<
+                typeof ArchiveCloneConfirmationModal
+              >['clone'])
+            : null
+        }
+        caseNo={caseData.case_no ?? undefined}
+        patientDeviceName={selectedClonePatientDeviceName}
+        isLoading={isArchiving}
+      />
+
+      {/* Space Insufficient Warning Modal */}
+      {spaceWarningInfo && (
+        <SpaceInsufficientWarningModal
+          isOpen={showSpaceWarningModal}
+          onClose={onCloseSpaceWarning}
+          onProceed={onProceedSpaceWarning}
+          cloneId={spaceWarningInfo.cloneLabel}
+          totalCapacity={spaceWarningInfo.totalCapacity}
+          currentUsed={spaceWarningInfo.currentUsed}
+          availableSpace={spaceWarningInfo.availableSpace}
+          requiredSpace={spaceWarningInfo.requiredSpace}
+        />
       )}
     </div>
   );

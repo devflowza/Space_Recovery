@@ -8,6 +8,7 @@ import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
 import { CustomerFormModal } from '../customers/CustomerFormModal';
 import { CaseSuccessModal } from './CaseSuccessModal';
 import { ServerBulkDrivesModal } from './ServerBulkDrivesModal';
+import { UsageLimitGuard } from '../shared/UsageLimitGuard';
 import { printReceipt, printLabel } from '../../lib/printUtils';
 import {
   Users,
@@ -991,13 +992,15 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
             Cancel
           </Button>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={!isFormValid || createCaseMutation.isPending}
-            style={{ backgroundColor: 'rgb(var(--color-success))' }}
-          >
-            {createCaseMutation.isPending ? 'Creating Case...' : 'Create Case'}
-          </Button>
+          <UsageLimitGuard limitKey="max_cases_per_month" showToast={true}>
+            <Button
+              onClick={handleSubmit}
+              disabled={!isFormValid || createCaseMutation.isPending}
+              style={{ backgroundColor: 'rgb(var(--color-success))' }}
+            >
+              {createCaseMutation.isPending ? 'Creating Case...' : 'Create Case'}
+            </Button>
+          </UsageLimitGuard>
         </div>
       </div>
 

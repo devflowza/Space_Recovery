@@ -72,6 +72,7 @@ const BillingPage = lazyWithRetry(() => import('./pages/settings/BillingPage').t
 const PlansPage = lazyWithRetry(() => import('./pages/settings/PlansPage').then(m => ({ default: m.default as React.ComponentType<unknown> })));
 const SecuritySettingsPage = lazyWithRetry(() => import('./pages/settings/SecuritySettingsPage').then(m => ({ default: m.SecuritySettingsPage as React.ComponentType<unknown> })));
 const GDPRCompliancePage = lazyWithRetry(() => import('./pages/settings/GDPRCompliancePage').then(m => ({ default: m.GDPRCompliancePage as React.ComponentType<unknown> })));
+const NotificationPreferences = lazyWithRetry(() => import('./pages/settings/NotificationPreferences').then(m => ({ default: m.NotificationPreferences as React.ComponentType<unknown> })));
 
 const PortalLogin = lazyWithRetry(() => import('./pages/portal/PortalLogin').then(m => ({ default: m.PortalLogin as React.ComponentType<unknown> })));
 const PortalDashboard = lazyWithRetry(() => import('./pages/portal/PortalDashboard').then(m => ({ default: m.PortalDashboard as React.ComponentType<unknown> })));
@@ -81,6 +82,7 @@ const PortalReports = lazyWithRetry(() => import('./pages/portal/PortalReports')
 const PortalCommunications = lazyWithRetry(() => import('./pages/portal/PortalCommunications').then(m => ({ default: m.PortalCommunications as React.ComponentType<unknown> })));
 const PortalSettings = lazyWithRetry(() => import('./pages/portal/PortalSettings').then(m => ({ default: m.PortalSettings as React.ComponentType<unknown> })));
 const PortalPurchasesPage = lazyWithRetry(() => import('./pages/portal/PortalPurchasesPage').then(m => ({ default: m.PortalPurchasesPage as React.ComponentType<unknown> })));
+const PortalPayments = lazyWithRetry(() => import('./pages/portal/PortalPayments').then(m => ({ default: m.PortalPayments as React.ComponentType<unknown> })));
 
 const KBCenterPage = lazyWithRetry(() => import('./pages/kb/KBCenterPage').then(m => ({ default: m.KBCenterPage as React.ComponentType<unknown> })));
 const KBArticleDetailPage = lazyWithRetry(() => import('./pages/kb/KBArticleDetailPage').then(m => ({ default: m.KBArticleDetailPage as React.ComponentType<unknown> })));
@@ -146,6 +148,7 @@ const PlatformSettingsPage = lazyWithRetry(() => import('./pages/platform-admin/
 const PlansManagementPage = lazyWithRetry(() => import('./pages/platform-admin/PlansManagementPage').then(m => ({ default: m.PlansManagementPage as React.ComponentType<unknown> })));
 const PlanDetailPage = lazyWithRetry(() => import('./pages/platform-admin/PlanDetailPage').then(m => ({ default: m.PlanDetailPage as React.ComponentType<unknown> })));
 const CouponsManagementPage = lazyWithRetry(() => import('./pages/platform-admin/CouponsManagementPage').then(m => ({ default: m.CouponsManagementPage as React.ComponentType<unknown> })));
+const NotificationDLQ = lazyWithRetry(() => import('./pages/platform-admin/NotificationDLQ').then(m => ({ default: m.NotificationDLQ as React.ComponentType<unknown> })));
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -217,6 +220,7 @@ function App() {
                 <Route path="quotes" element={<PortalQuotes />} />
                 <Route path="reports" element={<PortalReports />} />
                 <Route path="purchases" element={<PortalPurchasesPage />} />
+                <Route path="payments" element={<PortalPayments />} />
                 <Route path="communications" element={<PortalCommunications />} />
                 <Route path="settings" element={<PortalSettings />} />
                 <Route index element={<Navigate to="/portal/dashboard" replace />} />
@@ -645,6 +649,10 @@ function App() {
                 }
               />
               <Route
+                path="notifications"
+                element={<NotificationPreferences />}
+              />
+              <Route
                 path=":categoryId"
                 element={
                   <ProtectedRoute allowedRoles={['owner', 'admin']}>
@@ -728,6 +736,7 @@ function App() {
             <Route path="coupons" element={<CouponsManagementPage />} />
             <Route path="isolation-tests" element={<TenantIsolationTestPage />} />
             <Route path="rate-limits" element={<RateLimitDashboardPage />} />
+            <Route path="notifications/dlq" element={<NotificationDLQ />} />
           </Route>
 
               <Route path="*" element={

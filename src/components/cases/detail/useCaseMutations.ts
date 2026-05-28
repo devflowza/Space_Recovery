@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { logger } from '../../../lib/logger';
 import type { Database } from '@/types/database.types';
+import type { CreateCloneDriveFormValues } from '../CreateCloneDriveModal';
 
 type CaseRow = Database['public']['Tables']['cases']['Row'];
 type CaseInsert = Database['public']['Tables']['cases']['Insert'];
@@ -14,7 +15,20 @@ type CaseUpdate = Database['public']['Tables']['cases']['Update'];
 type CaseDeviceInsert = Database['public']['Tables']['case_devices']['Insert'];
 type CaseDeviceUpdate = Database['public']['Tables']['case_devices']['Update'];
 type CustomerUpdate = Database['public']['Tables']['customers_enhanced']['Update'];
+type CloneDriveInsert = Database['public']['Tables']['clone_drives']['Insert'];
 type CloneDriveUpdate = Database['public']['Tables']['clone_drives']['Update'];
+
+export interface CreateCloneDriveInput {
+  deviceId: string;
+  driveLabel: string;
+  capacity: string;
+  storageServer: string;
+  storagePath: string;
+  storageType: string;
+  imageFormat: string;
+  expectedSizeGb: number | null;
+  resourceCloneDriveId: string | null;
+}
 
 // Shape duplicateCaseMutation reads from each source device row. Keys mirror
 // the case_devices.Row columns the query in useCaseQueries currently selects;
@@ -50,6 +64,11 @@ interface UseCaseMutationsParams {
     setShowPreserveLongTermModal: (v: boolean) => void;
     setShowDuplicateModal: (v: boolean) => void;
     setShowDeleteModal: (v: boolean) => void;
+    setShowCreateCloneModal?: (v: boolean) => void;
+    setShowExtractCloneModal?: (v: boolean) => void;
+    setShowArchiveCloneModal?: (v: boolean) => void;
+    setShowSpaceWarningModal?: (v: boolean) => void;
+    setPendingCloneCreate?: (v: CreateCloneDriveFormValues | null) => void;
   };
 }
 
@@ -63,33 +82,10 @@ const requireTenantId = (tenantId: string | null | undefined): string => {
   return tenantId;
 };
 
-// clone_drives has no dedicated delivery/retention/preserve columns. To avoid
-// losing user-entered metadata we fold it into the existing notes column as a
-// human-readable structured block.
-const buildDeliveryNotes = (params: {
-  retentionDays: number;
-  deliveryDate: Date;
-  retentionDeadline: Date;
-  deliveredByProfileId: string | null | undefined;
-  freeformNotes: string;
-}): string => {
-  const lines = [
-    `Delivered: ${params.deliveryDate.toISOString()}`,
-    `Retention days: ${params.retentionDays}`,
-    `Retention deadline: ${params.retentionDeadline.toISOString()}`,
-  ];
-  if (params.deliveredByProfileId) {
-    lines.push(`Delivered by: ${params.deliveredByProfileId}`);
-  }
-  if (params.freeformNotes) {
-    lines.push(`Notes: ${params.freeformNotes}`);
-  }
-  return lines.join('\n');
-};
-
-const buildPreserveNotes = (preserveReason: string): string => {
-  return `Preserved long-term. Reason: ${preserveReason}`;
-};
+// clone_drives now has dedicated delivery/retention/extract/archive columns
+// (delivered_date, delivered_by, retention_days, retention_deadline,
+// extracted_date/extracted_by, archived_date/archived_by, preserve_reason,
+// preserved_by, preserved_date). Notes is now free-text only.
 
 export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutationsParams) {
   const queryClient = useQueryClient();
@@ -297,14 +293,12 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
 
       const cloneUpdate: CloneDriveUpdate = {
         status: 'delivered',
-        notes: buildDeliveryNotes({
-          retentionDays,
-          deliveryDate,
-          retentionDeadline,
-          deliveredByProfileId: profile?.id,
-          freeformNotes: deliveryNotes,
-        }),
-        updated_at: new Date().toISOString(),
+        delivered_date: deliveryDate.toISOString(),
+        delivered_by: profile?.id ?? null,
+        retention_days: retentionDays,
+        retention_deadline: retentionDeadline.toISOString(),
+        delivery_notes: deliveryNotes || null,
+        updated_at: deliveryDate.toISOString(),
       };
 
       const { error } = await supabase
@@ -344,10 +338,13 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
 
   const preserveLongTermMutation = useMutation({
     mutationFn: async ({ cloneId, preserveReason }: { cloneId: string; preserveReason: string }) => {
+      const now = new Date().toISOString();
       const cloneUpdate: CloneDriveUpdate = {
         status: 'preserved',
-        notes: buildPreserveNotes(preserveReason),
-        updated_at: new Date().toISOString(),
+        preserve_reason: preserveReason,
+        preserved_by: profile?.id ?? null,
+        preserved_date: now,
+        updated_at: now,
       };
 
       const { error } = await supabase
@@ -362,6 +359,118 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
       queryClient.invalidateQueries({ queryKey: ['resource_clone_drives'] });
       modals.setShowPreserveLongTermModal(false);
       modals.setSelectedClone(null);
+    },
+  });
+
+  const createCloneDriveMutation = useMutation({
+    mutationFn: async (input: CreateCloneDriveInput) => {
+      const caseId = requireCaseId(id);
+      const tenantId = requireTenantId(profile?.tenant_id);
+      const now = new Date().toISOString();
+
+      const insertPayload: CloneDriveInsert = {
+        tenant_id: tenantId,
+        case_id: caseId,
+        device_id: input.deviceId || null,
+        drive_label: input.driveLabel || null,
+        capacity: input.capacity || null,
+        storage_server: input.storageServer || null,
+        storage_path: input.storagePath || null,
+        storage_type: input.storageType || null,
+        image_format: input.imageFormat || null,
+        expected_size_gb: input.expectedSizeGb ?? null,
+        resource_clone_drive_id: input.resourceCloneDriveId || null,
+        status: 'active',
+        clone_date: now,
+        cloned_by: profile?.id ?? null,
+      };
+
+      const { data, error } = await supabase
+        .from('clone_drives')
+        .insert(insertPayload)
+        .select()
+        .maybeSingle();
+
+      if (error) {
+        logger.error('Failed to create clone drive', error);
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clone_drives', id] });
+      queryClient.invalidateQueries({ queryKey: ['resource_clone_drives'] });
+      modals.setShowCreateCloneModal?.(false);
+      modals.setPendingCloneCreate?.(null);
+      toast.success('Clone drive created');
+    },
+    onError: (error: Error) => {
+      logger.error('Create clone drive failed:', error);
+      toast.error(`Failed to create clone drive: ${error.message}`);
+    },
+  });
+
+  const extractCloneMutation = useMutation({
+    mutationFn: async ({ cloneId }: { cloneId: string }) => {
+      const now = new Date().toISOString();
+      const update: CloneDriveUpdate = {
+        status: 'extracted',
+        extracted_date: now,
+        extracted_by: profile?.id ?? null,
+        updated_at: now,
+      };
+
+      const { error } = await supabase
+        .from('clone_drives')
+        .update(update)
+        .eq('id', cloneId);
+
+      if (error) {
+        logger.error('Failed to mark clone as extracted', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clone_drives', id] });
+      queryClient.invalidateQueries({ queryKey: ['resource_clone_drives'] });
+      modals.setShowExtractCloneModal?.(false);
+      modals.setSelectedClone(null);
+      toast.success('Clone marked as extracted');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to extract clone: ${error.message}`);
+    },
+  });
+
+  const archiveCloneMutation = useMutation({
+    mutationFn: async ({ cloneId }: { cloneId: string }) => {
+      const now = new Date().toISOString();
+      const update: CloneDriveUpdate = {
+        status: 'archived',
+        archived_date: now,
+        archived_by: profile?.id ?? null,
+        updated_at: now,
+      };
+
+      const { error } = await supabase
+        .from('clone_drives')
+        .update(update)
+        .eq('id', cloneId);
+
+      if (error) {
+        logger.error('Failed to archive clone drive', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clone_drives', id] });
+      queryClient.invalidateQueries({ queryKey: ['resource_clone_drives'] });
+      modals.setShowArchiveCloneModal?.(false);
+      modals.setSelectedClone(null);
+      toast.success('Clone archived');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to archive clone: ${error.message}`);
     },
   });
 
@@ -501,6 +610,9 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
     updateCustomerInfoMutation,
     markAsDeliveredMutation,
     preserveLongTermMutation,
+    createCloneDriveMutation,
+    extractCloneMutation,
+    archiveCloneMutation,
     duplicateCaseMutation,
     deleteCaseMutation,
     queryClient,

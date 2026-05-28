@@ -13,6 +13,13 @@ import {
   Boxes,
   Settings,
   ClipboardList,
+  Scan,
+  SlidersHorizontal,
+  TrendingUp,
+  Printer,
+  CheckSquare,
+  Square,
+  X,
 } from 'lucide-react';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { stockKeys } from '../../lib/queryKeys';
@@ -25,12 +32,17 @@ import {
 } from '../../lib/stockService';
 import { PageHeader } from '../../components/shared/PageHeader';
 import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
 import { StockItemsTable } from '../../components/stock/StockItemsTable';
 import { StockItemFormModal } from '../../components/stock/StockItemFormModal';
 import { StockTransactionModal } from '../../components/stock/StockTransactionModal';
 import { LowStockAlert } from '../../components/stock/LowStockAlert';
 import { StockCategorySelect } from '../../components/stock/StockCategorySelect';
 import { SaleableItemsGrid } from '../../components/stock/SaleableItemsGrid';
+import { BarcodeLookupInput } from '../../components/stock/BarcodeLookupInput';
+import { BulkAdjustmentModal } from '../../components/stock/BulkAdjustmentModal';
+import { BulkPriceUpdateModal } from '../../components/stock/BulkPriceUpdateModal';
+import { PrintLabelsModal } from '../../components/stock/PrintLabelsModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../hooks/useToast';
 
@@ -68,6 +80,13 @@ export const StockListPage: React.FC = () => {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingItem, setDeletingItem] = useState<StockItemWithCategory | null>(null);
+
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [scanModalOpen, setScanModalOpen] = useState(false);
+  const [bulkAdjustOpen, setBulkAdjustOpen] = useState(false);
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
+  const [printLabelsOpen, setPrintLabelsOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('filter') === 'low-stock') {
@@ -155,6 +174,65 @@ export const StockListPage: React.FC = () => {
 
   const showGrid = activeTab === 'saleable' && viewMode === 'grid';
 
+  const selectedItems = useMemo(
+    () => items.filter((item) => selectedIds.has(item.id)),
+    [items, selectedIds]
+  );
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === items.length && items.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map((i) => i.id)));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    clearSelection();
+  };
+
+  const handleBarcodeItemFound = (item: StockItemWithCategory) => {
+    setScanModalOpen(false);
+    toast.success(`Found: ${item.name}`);
+    navigate(`/resources/stock/${item.id}`);
+  };
+
+  const openBulkAdjust = () => {
+    if (selectedIds.size < 2) {
+      toast.error('Select at least 2 items for bulk adjustment');
+      return;
+    }
+    setBulkAdjustOpen(true);
+  };
+
+  const openBulkPrice = () => {
+    if (selectedIds.size < 2) {
+      toast.error('Select at least 2 items for bulk price update');
+      return;
+    }
+    setBulkPriceOpen(true);
+  };
+
+  const openPrintLabels = () => {
+    if (selectedIds.size < 1) {
+      toast.error('Select at least 1 item to print labels');
+      return;
+    }
+    setPrintLabelsOpen(true);
+  };
+
   return (
     <div className="p-6 max-w-[1800px] mx-auto space-y-6">
       <PageHeader
@@ -163,6 +241,27 @@ export const StockListPage: React.FC = () => {
         icon={Package}
         actions={
           <>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-2"
+              onClick={() => setScanModalOpen(true)}
+            >
+              <Scan className="w-4 h-4" />
+              Scan Barcode
+            </Button>
+            <Button
+              variant={selectionMode ? 'primary' : 'secondary'}
+              size="sm"
+              className="gap-2"
+              onClick={() => {
+                if (selectionMode) exitSelectionMode();
+                else setSelectionMode(true);
+              }}
+            >
+              <CheckSquare className="w-4 h-4" />
+              {selectionMode ? 'Exit Select' : 'Bulk Select'}
+            </Button>
             <Link to="/resources/stock/adjustments">
               <Button variant="secondary" size="sm" className="gap-2">
                 <ClipboardList className="w-4 h-4" />
@@ -329,6 +428,65 @@ export const StockListPage: React.FC = () => {
           </div>
         </div>
 
+        {selectionMode && (
+          <div className="px-4 py-3 bg-info-muted/40 border-b border-info/20 flex flex-wrap items-center gap-3">
+            <button
+              onClick={toggleSelectAll}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-primary transition-colors"
+            >
+              {selectedIds.size === items.length && items.length > 0 ? (
+                <CheckSquare className="w-4 h-4 text-primary" />
+              ) : (
+                <Square className="w-4 h-4 text-slate-400" />
+              )}
+              {selectedIds.size === items.length && items.length > 0 ? 'Deselect all' : 'Select all'}
+            </button>
+            <span className="text-sm text-slate-600">
+              <span className="font-semibold text-primary">{selectedIds.size}</span> selected
+            </span>
+            <div className="flex items-center gap-2 ml-auto">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="gap-1.5"
+                onClick={openPrintLabels}
+                disabled={selectedIds.size < 1}
+              >
+                <Printer className="w-4 h-4" />
+                Print Labels
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="gap-1.5"
+                onClick={openBulkAdjust}
+                disabled={selectedIds.size < 2}
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                Bulk Adjust
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="gap-1.5"
+                onClick={openBulkPrice}
+                disabled={selectedIds.size < 2}
+              >
+                <TrendingUp className="w-4 h-4" />
+                Bulk Price
+              </Button>
+              <button
+                onClick={clearSelection}
+                disabled={selectedIds.size === 0}
+                className="p-1 rounded hover:bg-white/60 text-slate-500 hover:text-slate-700 disabled:opacity-40 transition-colors"
+                title="Clear selection"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className={showGrid ? 'p-4' : ''}>
           {!itemsLoading && items.length === 0 ? (
             <EmptyState
@@ -344,9 +502,96 @@ export const StockListPage: React.FC = () => {
           ) : showGrid ? (
             <SaleableItemsGrid
               items={items}
-              onSelect={(item) => handleEdit(item)}
-              selectedIds={[]}
+              onSelect={(item) => (selectionMode ? toggleSelected(item.id) : handleEdit(item))}
+              selectedIds={selectionMode ? Array.from(selectedIds) : []}
             />
+          ) : selectionMode ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left w-10">
+                      <button onClick={toggleSelectAll} className="text-slate-400 hover:text-primary">
+                        {selectedIds.size === items.length && items.length > 0 ? (
+                          <CheckSquare className="w-4 h-4 text-primary" />
+                        ) : (
+                          <Square className="w-4 h-4" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      SKU
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Item
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Qty
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Cost
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Selling
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-slate-100">
+                  {items.map((item, idx) => {
+                    const isSelected = selectedIds.has(item.id);
+                    return (
+                      <tr
+                        key={item.id}
+                        onClick={() => toggleSelected(item.id)}
+                        className={`cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'bg-info-muted/30 hover:bg-info-muted/50'
+                            : idx % 2 === 0
+                            ? 'bg-white hover:bg-slate-50'
+                            : 'bg-slate-50/30 hover:bg-slate-50'
+                        }`}
+                      >
+                        <td className="px-4 py-3">
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-primary" />
+                          ) : (
+                            <Square className="w-4 h-4 text-slate-300" />
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {item.sku ? (
+                            <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                              {item.sku}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-xs">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-slate-900 truncate max-w-[260px]">{item.name}</p>
+                          {item.brand && <p className="text-xs text-slate-500 truncate">{item.brand}</p>}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600">
+                          {item.stock_categories?.name ?? <span className="text-slate-400">—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm tabular-nums text-slate-700">
+                          {item.current_quantity ?? 0}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm tabular-nums text-slate-700">
+                          {item.cost_price != null ? formatCurrency(item.cost_price) : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm tabular-nums text-slate-700">
+                          {item.selling_price != null ? formatCurrency(item.selling_price) : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <StockItemsTable
               items={items}
@@ -397,6 +642,58 @@ export const StockListPage: React.FC = () => {
         variant="danger"
         isLoading={deleteMutation.isPending}
       />
+
+      <Modal
+        isOpen={scanModalOpen}
+        onClose={() => setScanModalOpen(false)}
+        title="Scan or Lookup Barcode"
+        icon={Scan}
+        size="md"
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">
+            Scan a barcode or paste a serial number to jump straight to the item.
+          </p>
+          <BarcodeLookupInput
+            onItemFound={handleBarcodeItemFound}
+            onSerialFound={(_serial, item) => {
+              if (item) {
+                handleBarcodeItemFound(item);
+              } else {
+                toast.error('Serial found but no parent item is linked');
+              }
+            }}
+            placeholder="Scan or type barcode / serial..."
+          />
+        </div>
+      </Modal>
+
+      {bulkAdjustOpen && selectedItems.length > 0 && (
+        <BulkAdjustmentModal
+          selectedItems={selectedItems}
+          onClose={() => {
+            setBulkAdjustOpen(false);
+            clearSelection();
+          }}
+        />
+      )}
+
+      {bulkPriceOpen && selectedItems.length > 0 && (
+        <BulkPriceUpdateModal
+          selectedItems={selectedItems}
+          onClose={() => {
+            setBulkPriceOpen(false);
+            clearSelection();
+          }}
+        />
+      )}
+
+      {printLabelsOpen && selectedItems.length > 0 && (
+        <PrintLabelsModal
+          items={selectedItems}
+          onClose={() => setPrintLabelsOpen(false)}
+        />
+      )}
     </div>
   );
 };

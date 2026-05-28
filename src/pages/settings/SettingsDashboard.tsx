@@ -118,6 +118,8 @@ export const SettingsDashboard: React.FC = () => {
       navigate('/settings/client-portal');
     } else if (categoryId === 'import-export') {
       navigate('/settings/import-export');
+    } else if (categoryId === 'notifications') {
+      navigate('/settings/notifications');
     } else {
       navigate(`/settings/${categoryId}`);
     }

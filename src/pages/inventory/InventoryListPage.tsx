@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Package, Zap, Edit2, Trash2, RefreshCw, Filter, HardDrive, Cpu, TrendingUp, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
+import { Plus, Search, Package, Zap, Edit2, Trash2, RefreshCw, Filter, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import { Button } from '../../components/ui/Button';
@@ -7,6 +7,7 @@ import { Badge } from '../../components/ui/Badge';
 import AddInventoryModal from '../../components/inventory/AddInventoryModal';
 import InventoryDetailModal from '../../components/inventory/InventoryDetailModal';
 import DeleteInventoryConfirmationModal from '../../components/inventory/DeleteInventoryConfirmationModal';
+import { InventoryInsightsHeader } from '../../components/inventory/InventoryInsightsHeader';
 import { BulkInventoryImportModal } from '../../components/importExport/BulkInventoryImportModal';
 import {
   getInventoryItems,
@@ -318,54 +319,16 @@ export default function InventoryListPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Total Items</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{statistics.totalItems}</p>
-            </div>
-            <div className="w-10 h-10 bg-slate-500 rounded-lg flex items-center justify-center">
-              <Package className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-info-muted to-info-muted rounded-xl p-4 border border-info/30">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-info uppercase tracking-wide">Hard Drives</p>
-              <p className="text-2xl font-bold text-info mt-1">{insights.hddCount}</p>
-            </div>
-            <div className="w-10 h-10 bg-info rounded-lg flex items-center justify-center">
-              <HardDrive className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-4 border border-teal-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-teal-600 uppercase tracking-wide">Solid State</p>
-              <p className="text-2xl font-bold text-teal-900 mt-1">{insights.ssdCount}</p>
-            </div>
-            <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
-              <Cpu className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-rose-50 to-rose-100 rounded-xl p-4 border border-rose-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-rose-600 uppercase tracking-wide">In Use</p>
-              <p className="text-2xl font-bold text-rose-900 mt-1">{insights.totalInUse}</p>
-            </div>
-            <div className="w-10 h-10 bg-rose-500 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
+      <div className="mb-6">
+        <InventoryInsightsHeader
+          hddCount={insights.hddCount}
+          ssdCount={insights.ssdCount}
+          pcbCount={insights.pcbCount}
+          totalValue={insights.totalValue}
+          totalItems={statistics.totalItems}
+          inUseCount={insights.totalInUse}
+          loading={loading}
+        />
       </div>
 
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 mb-6">

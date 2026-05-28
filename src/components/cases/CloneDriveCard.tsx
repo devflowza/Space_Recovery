@@ -14,6 +14,7 @@ import {
   Trash2,
   Eye,
   Clock,
+  PackageOpen,
 } from 'lucide-react';
 
 interface CloneDrive {
@@ -32,13 +33,17 @@ interface CloneDrive {
   physical_location_name?: string;
   image_format?: string;
   image_size_gb?: number;
+  expected_size_gb?: number;
   clone_date: string;
   cloned_by_name?: string;
   status: string;
   delivered_date?: string;
   delivered_by_name?: string;
+  delivery_notes?: string;
   retention_deadline?: string;
   retention_days?: number;
+  extracted_date?: string;
+  archived_date?: string;
   preserve_reason?: string;
   notes?: string;
   resource_clone_drive?: {
@@ -59,6 +64,8 @@ interface CloneDriveCardProps {
   onView?: (clone: CloneDrive) => void;
   onMarkAsDelivered?: (clone: CloneDrive) => void;
   onPreserve?: (clone: CloneDrive) => void;
+  onExtract?: (clone: CloneDrive) => void;
+  onArchive?: (clone: CloneDrive) => void;
   onDelete?: (clone: CloneDrive) => void;
 }
 
@@ -67,9 +74,12 @@ type BadgeVariant = 'default' | 'secondary' | 'success' | 'warning' | 'danger' |
 const statusConfig: Record<string, { label: string; color: BadgeVariant }> = {
   active: { label: 'Active', color: 'info' },
   delivered: { label: 'Delivered', color: 'success' },
+  extractable: { label: 'Extractable', color: 'warning' },
+  extracted: { label: 'Extracted', color: 'info' },
   preserved: { label: 'Preserved', color: 'info' },
   archived: { label: 'Archived', color: 'secondary' },
   overwritten: { label: 'Overwritten', color: 'warning' },
+  failed: { label: 'Failed', color: 'danger' },
   deleted: { label: 'Deleted', color: 'danger' },
 };
 
@@ -80,6 +90,8 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
   onView,
   onMarkAsDelivered,
   onPreserve,
+  onExtract,
+  onArchive,
   onDelete,
 }) => {
   const statusInfo = statusConfig[clone.status] || statusConfig.active;
@@ -111,6 +123,10 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
   const ageDays = calculateAge();
   const retentionStatus = calculateRetentionStatus();
   const isOld = ageDays > 180;
+  const isExtractable =
+    clone.status === 'delivered' && retentionStatus !== null && retentionStatus.daysRemaining <= 0;
+  const canArchive =
+    clone.status === 'extracted' || clone.status === 'preserved' || clone.status === 'failed';
 
   const displayBrand = clone.resource_clone_drive?.brand || clone.physical_drive_brand || 'Unknown';
   const displayModel = clone.resource_clone_drive?.model || clone.physical_drive_model || '';
@@ -243,7 +259,26 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
               {clone.delivered_by_name && (
                 <div className="text-xs text-success">by {clone.delivered_by_name}</div>
               )}
+              {clone.delivery_notes && (
+                <div className="text-xs text-success mt-0.5 italic">{clone.delivery_notes}</div>
+              )}
             </div>
+          </div>
+        )}
+
+        {/* Extracted Date */}
+        {clone.extracted_date && (
+          <div className="flex items-center gap-2 text-sm text-info bg-info-muted p-2 rounded">
+            <PackageOpen className="w-4 h-4" />
+            <span>Extracted on {formatDate(clone.extracted_date)}</span>
+          </div>
+        )}
+
+        {/* Archived Date */}
+        {clone.archived_date && (
+          <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-100 p-2 rounded">
+            <Archive className="w-4 h-4" />
+            <span>Archived on {formatDate(clone.archived_date)}</span>
           </div>
         )}
 
@@ -251,7 +286,7 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
         {retentionStatus && clone.status === 'delivered' && (
           <div className={`flex items-center gap-2 text-sm p-2 rounded ${
             retentionStatus.isOverdue
-              ? 'bg-danger-muted text-danger'
+              ? 'bg-warning-muted text-warning'
               : retentionStatus.isWarning
               ? 'bg-warning-muted text-warning'
               : 'bg-info-muted text-info'
@@ -259,10 +294,10 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
             <Clock className="w-4 h-4" />
             <span>
               {retentionStatus.isOverdue
-                ? `Overdue by ${Math.abs(retentionStatus.daysRemaining)} day${Math.abs(retentionStatus.daysRemaining) !== 1 ? 's' : ''}`
+                ? `Retention expired ${Math.abs(retentionStatus.daysRemaining)} day${Math.abs(retentionStatus.daysRemaining) !== 1 ? 's' : ''} ago — ready to extract`
                 : retentionStatus.daysRemaining === 0
-                ? 'Eligible for deletion today'
-                : `Eligible for deletion in ${retentionStatus.daysRemaining} day${retentionStatus.daysRemaining !== 1 ? 's' : ''}`
+                ? 'Retention ends today'
+                : `Retention ends in ${retentionStatus.daysRemaining} day${retentionStatus.daysRemaining !== 1 ? 's' : ''}`
               }
             </span>
           </div>
@@ -284,7 +319,7 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+      <div className="flex items-center gap-2 pt-3 border-t border-slate-100 flex-wrap">
         {onView && (
           <Button size="sm" variant="secondary" onClick={() => onView(clone)}>
             <Eye className="w-4 h-4" />
@@ -302,6 +337,17 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
             Mark as Delivered
           </Button>
         )}
+        {onExtract && isExtractable && (
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => onExtract(clone)}
+            style={{ backgroundColor: 'rgb(var(--color-info))' }}
+          >
+            <PackageOpen className="w-4 h-4" />
+            Extract
+          </Button>
+        )}
         {onPreserve && (clone.status === 'active' || clone.status === 'delivered') && (
           <Button
             size="sm"
@@ -311,6 +357,16 @@ export const CloneDriveCard: React.FC<CloneDriveCardProps> = ({
           >
             <Archive className="w-4 h-4" />
             Preserve
+          </Button>
+        )}
+        {onArchive && canArchive && (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => onArchive(clone)}
+          >
+            <Archive className="w-4 h-4" />
+            Archive
           </Button>
         )}
         {onDelete && (

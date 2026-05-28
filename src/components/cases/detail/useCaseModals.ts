@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { type ReportType, type ReportStatus } from '@/lib/reportTypes';
 import type { DocumentType } from '@/lib/pdf/types';
+import type { CreateCloneDriveFormValues } from '../CreateCloneDriveModal';
 
 export function useCaseModals() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
@@ -10,6 +11,18 @@ export function useCaseModals() {
   const [showDeviceModal, setShowDeviceModal] = useState(false);
   const [showMarkAsDeliveredModal, setShowMarkAsDeliveredModal] = useState(false);
   const [showPreserveLongTermModal, setShowPreserveLongTermModal] = useState(false);
+  const [showCreateCloneModal, setShowCreateCloneModal] = useState(false);
+  const [showExtractCloneModal, setShowExtractCloneModal] = useState(false);
+  const [showArchiveCloneModal, setShowArchiveCloneModal] = useState(false);
+  const [showSpaceWarningModal, setShowSpaceWarningModal] = useState(false);
+  const [spaceWarningInfo, setSpaceWarningInfo] = useState<{
+    cloneLabel: string;
+    totalCapacity: number;
+    currentUsed: number;
+    availableSpace: number;
+    requiredSpace: number;
+  } | null>(null);
+  const [pendingCloneCreate, setPendingCloneCreate] = useState<CreateCloneDriveFormValues | null>(null);
   const [selectedClone, setSelectedClone] = useState<any>(null);
   const [editingDevice, setEditingDevice] = useState<any>(null);
   const [editingReport, setEditingReport] = useState<any>(null);
@@ -59,6 +72,12 @@ export function useCaseModals() {
     showDeviceModal, setShowDeviceModal,
     showMarkAsDeliveredModal, setShowMarkAsDeliveredModal,
     showPreserveLongTermModal, setShowPreserveLongTermModal,
+    showCreateCloneModal, setShowCreateCloneModal,
+    showExtractCloneModal, setShowExtractCloneModal,
+    showArchiveCloneModal, setShowArchiveCloneModal,
+    showSpaceWarningModal, setShowSpaceWarningModal,
+    spaceWarningInfo, setSpaceWarningInfo,
+    pendingCloneCreate, setPendingCloneCreate,
     selectedClone, setSelectedClone,
     editingDevice, setEditingDevice,
     editingReport, setEditingReport,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit, Package, MapPin, History, TrendingUp, Info, Briefcase, CheckCircle2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Edit, Package, MapPin, History, TrendingUp, Info, Briefcase, CheckCircle2, XCircle, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -21,6 +21,7 @@ import {
 } from '../../lib/inventoryCaseAssignmentService';
 import { MarkDefectiveModal } from './MarkDefectiveModal';
 import { CompleteAssignmentModal } from './CompleteAssignmentModal';
+import { AssignToCaseModal } from './AssignToCaseModal';
 import { format } from 'date-fns';
 import { logger } from '../../lib/logger';
 import type { Database } from '../../types/database.types';
@@ -58,6 +59,7 @@ export default function InventoryDetailModal({
   const [loading, setLoading] = useState(true);
   const [showDefectiveModal, setShowDefectiveModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showAssignToCaseModal, setShowAssignToCaseModal] = useState(false);
 
   const [cases, setCases] = useState<CaseOption[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string>('');
@@ -264,6 +266,18 @@ export default function InventoryDetailModal({
                     <div className="bg-danger-muted border border-danger/30 rounded p-2">
                       <p className="text-xs text-danger">{availability.reason}</p>
                     </div>
+                  )}
+
+                  {item.is_donor && (!availability || availability.available) && (
+                    <Button
+                      onClick={() => setShowAssignToCaseModal(true)}
+                      size="sm"
+                      variant="secondary"
+                      className="w-full text-xs border-accent/30 text-accent hover:bg-accent/10"
+                    >
+                      <Zap className="w-3 h-3 mr-1" />
+                      Assign Donor to Case
+                    </Button>
                   )}
 
                   <div>
@@ -542,6 +556,28 @@ export default function InventoryDetailModal({
           onClose={() => setShowCompleteModal(false)}
           assignment={activeAssignment}
           onSuccess={loadData}
+        />
+      )}
+
+      {showAssignToCaseModal && (
+        <AssignToCaseModal
+          isOpen={showAssignToCaseModal}
+          onClose={() => setShowAssignToCaseModal(false)}
+          inventoryItemId={itemId}
+          inventoryItemName={getItemDisplayName()}
+          onSuccess={() => {
+            loadData();
+            if (onUpdate) onUpdate();
+          }}
+          deviceSpecs={{
+            brand: item.brand?.name,
+            model: item.model ?? undefined,
+            serial_number: item.serial_number ?? undefined,
+            capacity: item.capacity?.name,
+            firmware_version: item.firmware_version ?? undefined,
+            pcb_number: item.pcb_number ?? undefined,
+            head_map: item.head_map ?? undefined,
+          }}
         />
       )}
     </>

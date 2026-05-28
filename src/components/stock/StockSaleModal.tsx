@@ -1,23 +1,60 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Search, Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { SaleableItemsGrid } from './SaleableItemsGrid';
+import { BarcodeLookupInput } from './BarcodeLookupInput';
+import { SerialNumberSelect } from './SerialNumberSelect';
 import {
   getSaleableItems,
+  getAvailableSerialNumbers,
   createStockSale,
   type StockItemWithCategory,
   type StockSaleCreateData,
+  type StockSerialNumber,
 } from '../../lib/stockService';
+import { stockKeys } from '../../lib/queryKeys';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
+
+interface SerialLinePickerProps {
+  itemId: string;
+  value: string | null;
+  onChange: (value: string | null) => void;
+}
+
+const SerialLinePicker: React.FC<SerialLinePickerProps> = ({ itemId, value, onChange }) => {
+  const { data: serials = [] } = useQuery({
+    queryKey: stockKeys.serialNumbers(itemId),
+    queryFn: () => getAvailableSerialNumbers(itemId),
+    enabled: !!itemId,
+  });
+
+  if (serials.length === 0) return null;
+
+  return (
+    <div className="pt-1">
+      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+        Serial Number
+      </label>
+      <SerialNumberSelect
+        itemId={itemId}
+        value={value}
+        onChange={onChange}
+        disabled={false}
+      />
+    </div>
+  );
+};
 
 interface CartLine {
   item: StockItemWithCategory;
   quantity: number;
   unit_price: number;
+  serial_number: string | null;
 }
 
 interface CustomerOption {
@@ -139,8 +176,52 @@ export const StockSaleModal: React.FC<StockSaleModalProps> = ({
             : l
         );
       }
-      return [...prev, { item, quantity: 1, unit_price: item.selling_price ?? 0 }];
+      return [
+        ...prev,
+        { item, quantity: 1, unit_price: item.selling_price ?? 0, serial_number: null },
+      ];
     });
+  };
+
+  const handleBarcodeItem = (item: StockItemWithCategory) => {
+    handleSelectItem(item);
+    toast.success(`Added: ${item.name}`);
+  };
+
+  const handleBarcodeSerial = (
+    serial: StockSerialNumber,
+    item: StockItemWithCategory | null | undefined
+  ) => {
+    if (!item) {
+      toast.error('Serial found but no parent item is linked');
+      return;
+    }
+    setCart((prev) => {
+      const existing = prev.find((l) => l.item.id === item.id);
+      if (existing) {
+        return prev.map((l) =>
+          l.item.id === item.id
+            ? { ...l, serial_number: serial.serial_number }
+            : l
+        );
+      }
+      return [
+        ...prev,
+        {
+          item,
+          quantity: 1,
+          unit_price: item.selling_price ?? 0,
+          serial_number: serial.serial_number,
+        },
+      ];
+    });
+    toast.success(`Added serial ${serial.serial_number}`);
+  };
+
+  const handleSerialChange = (itemId: string, serial: string | null) => {
+    setCart((prev) =>
+      prev.map((l) => (l.item.id === itemId ? { ...l, serial_number: serial } : l))
+    );
   };
 
   const handleRemoveLine = (itemId: string) => {
@@ -208,6 +289,7 @@ export const StockSaleModal: React.FC<StockSaleModalProps> = ({
           quantity: l.quantity,
           unit_price: l.unit_price,
           cost_price: l.item.cost_price ?? null,
+          serial_number: l.serial_number ?? null,
         })),
       };
       const sale = await createStockSale(payload);
@@ -236,13 +318,18 @@ export const StockSaleModal: React.FC<StockSaleModalProps> = ({
     >
       <div className="flex flex-col lg:flex-row gap-4 min-h-0" style={{ height: 'calc(80vh - 80px)' }}>
         <div className="flex-1 flex flex-col gap-3 overflow-hidden">
+          <BarcodeLookupInput
+            onItemFound={handleBarcodeItem}
+            onSerialFound={handleBarcodeSerial}
+            placeholder="Scan barcode or serial to add to cart..."
+          />
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, brand, SKU..."
+              placeholder="Or search by name, brand, SKU..."
               className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -332,6 +419,12 @@ export const StockSaleModal: React.FC<StockSaleModalProps> = ({
                           {formatAmount(line.quantity * line.unit_price)}
                         </span>
                       </div>
+
+                      <SerialLinePicker
+                        itemId={line.item.id}
+                        value={line.serial_number}
+                        onChange={(serial) => handleSerialChange(line.item.id, serial)}
+                      />
                     </div>
                   ))}
                 </div>

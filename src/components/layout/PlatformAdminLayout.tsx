@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Ticket, Megaphone, LogOut, Settings, ChevronRight, CreditCard, Tag } from 'lucide-react';
+import { LayoutDashboard, Users, Ticket, Megaphone, LogOut, Settings, ChevronRight, CreditCard, Tag, AlertOctagon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { PlatformAdminProvider } from '../../contexts/PlatformAdminContext';
 
@@ -17,6 +17,7 @@ const navItems: NavItem[] = [
   { path: '/platform-admin/coupons', label: 'Coupons', icon: Tag },
   { path: '/platform-admin/tickets', label: 'Support Tickets', icon: Ticket },
   { path: '/platform-admin/announcements', label: 'Announcements', icon: Megaphone },
+  { path: '/platform-admin/notifications/dlq', label: 'Notification DLQ', icon: AlertOctagon },
   { path: '/platform-admin/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -144,6 +145,11 @@ function getBreadcrumbs(pathname: string): Array<{ label: string; path?: string 
     }
   } else if (parts[1] === 'coupons') {
     breadcrumbs.push({ label: 'Coupons' });
+  } else if (parts[1] === 'notifications') {
+    breadcrumbs.push({ label: 'Notifications', path: '/platform-admin' });
+    if (parts[2] === 'dlq') {
+      breadcrumbs.push({ label: 'Dead Letter Queue' });
+    }
   } else if (parts[1] === 'settings') {
     breadcrumbs.push({ label: 'Platform Settings' });
   }

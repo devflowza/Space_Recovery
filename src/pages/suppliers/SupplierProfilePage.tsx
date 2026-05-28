@@ -10,6 +10,9 @@ import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { DataTable, type Column } from '../../components/shared/DataTable';
 import SupplierFormModal from '../../components/suppliers/SupplierFormModal';
+import CommunicationFormModal from '../../components/suppliers/CommunicationFormModal';
+import ContactFormModal from '../../components/suppliers/ContactFormModal';
+import DocumentUploadModal from '../../components/suppliers/DocumentUploadModal';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 import { format } from 'date-fns';
@@ -46,6 +49,10 @@ export default function SupplierProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCommunicationModal, setShowCommunicationModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [editingContact, setEditingContact] = useState<SupplierContactRow | null>(null);
   const [contacts, setContacts] = useState<SupplierContactRow[]>([]);
   const [communications, setCommunications] = useState<SupplierCommunicationRow[]>([]);
   const [documents, setDocuments] = useState<SupplierDocumentRow[]>([]);
@@ -264,9 +271,31 @@ export default function SupplierProfilePage() {
 
       <div className="mt-6">
         {activeTab === 'overview' && <OverviewTab supplier={supplier} />}
-        {activeTab === 'contacts' && <ContactsTab contacts={contacts} />}
-        {activeTab === 'communications' && <CommunicationsTab communications={communications} />}
-        {activeTab === 'documents' && <DocumentsTab documents={documents} />}
+        {activeTab === 'contacts' && (
+          <ContactsTab
+            contacts={contacts}
+            onAdd={() => {
+              setEditingContact(null);
+              setShowContactModal(true);
+            }}
+            onEdit={(contact) => {
+              setEditingContact(contact);
+              setShowContactModal(true);
+            }}
+          />
+        )}
+        {activeTab === 'communications' && (
+          <CommunicationsTab
+            communications={communications}
+            onAdd={() => setShowCommunicationModal(true)}
+          />
+        )}
+        {activeTab === 'documents' && (
+          <DocumentsTab
+            documents={documents}
+            onAdd={() => setShowDocumentModal(true)}
+          />
+        )}
         {activeTab === 'performance' && <PerformanceTab supplier={supplier} performance={performance} />}
         {activeTab === 'orders' && <OrdersTab orders={orders} supplierId={id ?? ''} />}
         {activeTab === 'audit' && <AuditTab auditTrail={auditTrail} />}
@@ -292,6 +321,56 @@ export default function SupplierProfilePage() {
             payment_terms_id: supplier.payment_terms_id ?? undefined,
             is_active: supplier.is_active ?? undefined,
           }}
+        />
+      )}
+
+      {showCommunicationModal && id && (
+        <CommunicationFormModal
+          isOpen={showCommunicationModal}
+          onClose={() => setShowCommunicationModal(false)}
+          onSuccess={() => {
+            loadCommunications();
+            setShowCommunicationModal(false);
+          }}
+          supplierId={id}
+        />
+      )}
+
+      {showContactModal && id && (
+        <ContactFormModal
+          isOpen={showContactModal}
+          onClose={() => {
+            setShowContactModal(false);
+            setEditingContact(null);
+          }}
+          onSuccess={() => {
+            loadContacts();
+            setShowContactModal(false);
+            setEditingContact(null);
+          }}
+          supplierId={id}
+          contact={editingContact ? {
+            id: editingContact.id,
+            name: editingContact.name,
+            title: editingContact.title ?? undefined,
+            email: editingContact.email ?? undefined,
+            phone: editingContact.phone ?? undefined,
+            mobile: editingContact.mobile ?? undefined,
+            notes: editingContact.notes ?? undefined,
+            is_primary: editingContact.is_primary ?? undefined,
+          } : null}
+        />
+      )}
+
+      {showDocumentModal && id && (
+        <DocumentUploadModal
+          isOpen={showDocumentModal}
+          onClose={() => setShowDocumentModal(false)}
+          onSuccess={() => {
+            loadDocuments();
+            setShowDocumentModal(false);
+          }}
+          supplierId={id}
         />
       )}
     </div>
@@ -446,13 +525,21 @@ function OverviewTab({ supplier }: { supplier: SupplierWithRelations }) {
   );
 }
 
-function ContactsTab({ contacts }: { contacts: SupplierContactRow[] }) {
+function ContactsTab({
+  contacts,
+  onAdd,
+  onEdit,
+}: {
+  contacts: SupplierContactRow[];
+  onAdd: () => void;
+  onEdit: (contact: SupplierContactRow) => void;
+}) {
   return (
     <Card>
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Contacts</h3>
-          <Button size="sm">
+          <Button size="sm" onClick={onAdd}>
             <User className="w-4 h-4 mr-2" />
             Add Contact
           </Button>
@@ -491,7 +578,12 @@ function ContactsTab({ contacts }: { contacts: SupplierContactRow[] }) {
                       )}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(contact)}
+                    aria-label={`Edit ${contact.name}`}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
                 </div>
@@ -504,15 +596,21 @@ function ContactsTab({ contacts }: { contacts: SupplierContactRow[] }) {
   );
 }
 
-function CommunicationsTab({ communications }: { communications: SupplierCommunicationRow[] }) {
+function CommunicationsTab({
+  communications,
+  onAdd,
+}: {
+  communications: SupplierCommunicationRow[];
+  onAdd: () => void;
+}) {
   return (
     <Card>
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Communications</h3>
-          <Button size="sm">
+          <Button size="sm" onClick={onAdd}>
             <MessageSquare className="w-4 h-4 mr-2" />
-            Log Communication
+            Add Communication
           </Button>
         </div>
         {communications.length === 0 ? (
@@ -548,13 +646,19 @@ function CommunicationsTab({ communications }: { communications: SupplierCommuni
   );
 }
 
-function DocumentsTab({ documents }: { documents: SupplierDocumentRow[] }) {
+function DocumentsTab({
+  documents,
+  onAdd,
+}: {
+  documents: SupplierDocumentRow[];
+  onAdd: () => void;
+}) {
   return (
     <Card>
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
-          <Button size="sm">
+          <Button size="sm" onClick={onAdd}>
             <FileStack className="w-4 h-4 mr-2" />
             Upload Document
           </Button>

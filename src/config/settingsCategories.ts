@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   ShieldCheck,
   Palette,
+  Bell,
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
@@ -227,6 +228,16 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     tables: [],
     actionLabel: 'Manage Security',
     description: 'Two-factor authentication, session management, and security policies',
+  },
+  {
+    id: 'notifications',
+    title: 'Notifications',
+    icon: Bell,
+    backgroundColor: '#06b6d4',
+    borderColor: '#06b6d4',
+    tables: [],
+    actionLabel: 'Manage Subscriptions',
+    description: 'Choose which events notify you and on which channels',
   },
 ];
 

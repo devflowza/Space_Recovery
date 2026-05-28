@@ -20,6 +20,7 @@ import { ClientTab } from '../../components/cases/ClientTab';
 import { DeviceFormModal } from '../../components/cases/DeviceFormModal';
 import { MarkAsDeliveredModal } from '../../components/cases/MarkAsDeliveredModal';
 import { PreserveLongTermModal } from '../../components/cases/PreserveLongTermModal';
+import type { CreateCloneDriveFormValues } from '../../components/cases/CreateCloneDriveModal';
 import { ChainOfCustodyTab } from '../../components/cases/ChainOfCustodyTab';
 import { ReportTypeSelectionModal } from '../../components/cases/ReportTypeSelectionModal';
 import { StreamlinedReportEditor } from '../../components/cases/StreamlinedReportEditor';
@@ -91,9 +92,34 @@ export const CaseDetail: React.FC = () => {
     updateAssignedEngineerMutation, updateCaseInfoMutation,
     updateDeviceInfoMutation, updateCustomerInfoMutation, markAsDeliveredMutation,
     preserveLongTermMutation, duplicateCaseMutation, deleteCaseMutation,
+    createCloneDriveMutation, extractCloneMutation, archiveCloneMutation,
     createPaymentMutation,
     queryClient, navigate, profile, toast,
   } = useCaseMutations({ id, caseData, devices, modals });
+
+  // Holds a pending submission while the SpaceInsufficientWarningModal asks
+  // the user to confirm before we INSERT into clone_drives.
+  const handleCreateCloneSubmit = (values: CreateCloneDriveFormValues) => {
+    createCloneDriveMutation.mutate({
+      deviceId: values.deviceId,
+      driveLabel: values.driveLabel,
+      capacity: values.capacity,
+      storageServer: values.storageServer,
+      storagePath: values.storagePath,
+      storageType: values.storageType,
+      imageFormat: values.imageFormat,
+      expectedSizeGb: values.expectedSizeGb,
+      resourceCloneDriveId: values.resourceCloneDriveId,
+    });
+  };
+
+  const handleProceedSpaceWarning = () => {
+    modals.setShowSpaceWarningModal(false);
+    if (modals.pendingCloneCreate) {
+      handleCreateCloneSubmit(modals.pendingCloneCreate);
+      modals.setPendingCloneCreate(null);
+    }
+  };
 
   const [isConvertingProforma, setIsConvertingProforma] = useState(false);
 
@@ -506,6 +532,7 @@ export const CaseDetail: React.FC = () => {
           {/* Clone Drives Tab */}
           {activeTab === 'clones' && (
             <CaseCloneDrivesTab
+              caseId={id!}
               caseData={caseData}
               devices={devices || []}
               cloneDrives={cloneDrives || []}
@@ -513,6 +540,65 @@ export const CaseDetail: React.FC = () => {
               onSetSelectedClone={modals.setSelectedClone}
               onSetShowMarkAsDeliveredModal={modals.setShowMarkAsDeliveredModal}
               onSetShowPreserveLongTermModal={modals.setShowPreserveLongTermModal}
+              showCreateModal={modals.showCreateCloneModal}
+              onOpenCreateModal={() => modals.setShowCreateCloneModal(true)}
+              onCloseCreateModal={() => {
+                modals.setShowCreateCloneModal(false);
+                modals.setPendingCloneCreate(null);
+              }}
+              onCreateCloneSubmit={handleCreateCloneSubmit}
+              onCreateCloneSpaceShort={({ values, resource }) => {
+                modals.setPendingCloneCreate(values);
+                modals.setSpaceWarningInfo({
+                  cloneLabel: resource.label,
+                  totalCapacity: resource.capacity_gb,
+                  currentUsed: resource.used_gb,
+                  availableSpace: resource.available_gb,
+                  requiredSpace: values.expectedSizeGb ?? 0,
+                });
+                modals.setShowSpaceWarningModal(true);
+                return true;
+              }}
+              isCreatingClone={createCloneDriveMutation.isPending}
+              showExtractModal={modals.showExtractCloneModal}
+              selectedClone={modals.selectedClone as Record<string, unknown> | null}
+              onCloseExtractModal={() => {
+                modals.setShowExtractCloneModal(false);
+                modals.setSelectedClone(null);
+              }}
+              onConfirmExtract={() => {
+                if (modals.selectedClone?.id) {
+                  extractCloneMutation.mutate({ cloneId: modals.selectedClone.id });
+                }
+              }}
+              isExtracting={extractCloneMutation.isPending}
+              onRequestExtract={(clone) => {
+                modals.setSelectedClone(clone);
+                modals.setShowExtractCloneModal(true);
+              }}
+              showArchiveModal={modals.showArchiveCloneModal}
+              onCloseArchiveModal={() => {
+                modals.setShowArchiveCloneModal(false);
+                modals.setSelectedClone(null);
+              }}
+              onConfirmArchive={() => {
+                if (modals.selectedClone?.id) {
+                  archiveCloneMutation.mutate({ cloneId: modals.selectedClone.id });
+                }
+              }}
+              isArchiving={archiveCloneMutation.isPending}
+              onRequestArchive={(clone) => {
+                modals.setSelectedClone(clone);
+                modals.setShowArchiveCloneModal(true);
+              }}
+              showSpaceWarningModal={modals.showSpaceWarningModal}
+              spaceWarningInfo={modals.spaceWarningInfo}
+              onCloseSpaceWarning={() => {
+                modals.setShowSpaceWarningModal(false);
+                modals.setSpaceWarningInfo(null);
+                modals.setPendingCloneCreate(null);
+              }}
+              onProceedSpaceWarning={handleProceedSpaceWarning}
             />
           )}
 
@@ -643,7 +729,16 @@ export const CaseDetail: React.FC = () => {
 
           {/* History Tab - Forensic Chain of Custody */}
           {activeTab === 'history' && (
-            <ChainOfCustodyTab caseId={id!} caseNumber={caseData.case_no ?? ''} />
+            <ChainOfCustodyTab
+              caseId={id!}
+              caseNumber={caseData.case_no ?? ''}
+              caseStatus={caseData.status ?? null}
+              caseDevices={(devices ?? []).map((d) => ({
+                id: d.id,
+                model: d.model ?? null,
+                serial_number: d.serial_number ?? null,
+              }))}
+            />
           )}
         </>
       )}

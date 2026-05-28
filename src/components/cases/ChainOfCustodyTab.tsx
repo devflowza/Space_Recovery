@@ -30,8 +30,10 @@ import { Badge } from '../ui/Badge';
 import { Input } from '../ui/Input';
 import {
   getChainOfCustody,
+  getCustodyTransfers,
   ActionCategory,
   ChainOfCustodyEntry,
+  CustodyTransfer,
   getCategoryColor,
   formatActionType,
 } from '../../lib/chainOfCustodyService';
@@ -41,10 +43,45 @@ import {
   exportToJSON,
 } from '../../lib/chainOfCustodyExport';
 import { generateChainOfCustody } from '../../lib/pdf/pdfService';
+import { useAuth } from '../../contexts/AuthContext';
+import { CustodyTransferModal } from './CustodyTransferModal';
+import { IntegrityCheckModal } from './IntegrityCheckModal';
 
 interface ChainOfCustodyTabProps {
   caseId: string;
   caseNumber: string;
+  caseStatus?: string | null;
+  caseDevices?: Array<{
+    id: string;
+    model?: string | null;
+    serial_number?: string | null;
+  }>;
+}
+
+const TERMINAL_CASE_STATUSES = new Set(['delivered', 'cancelled']);
+const TRANSFER_ELIGIBLE_ROLES = new Set(['technician', 'manager', 'admin', 'owner']);
+
+function isTerminalStatus(status?: string | null): boolean {
+  if (!status) return false;
+  return TERMINAL_CASE_STATUSES.has(status.toLowerCase());
+}
+
+function canPerformCustodyActions(role: string | null | undefined): boolean {
+  if (!role) return false;
+  return TRANSFER_ELIGIBLE_ROLES.has(role);
+}
+
+function formatDeviceLabel(device: {
+  id: string;
+  model?: string | null;
+  serial_number?: string | null;
+}): string {
+  const model = device.model?.trim();
+  const serial = device.serial_number?.trim();
+  if (model && serial) return `${model} (${serial})`;
+  if (model) return model;
+  if (serial) return serial;
+  return `Device ${device.id.slice(0, 8)}`;
 }
 
 const getActionTypeIcon = (actionType: string): React.ElementType => {
@@ -70,17 +107,82 @@ const getActionTypeIcon = (actionType: string): React.ElementType => {
   return Activity;
 };
 
-export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, caseNumber }) => {
+export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({
+  caseId,
+  caseNumber,
+  caseStatus,
+  caseDevices = [],
+}) => {
+  const { profile, user } = useAuth();
+  const currentUserId = user?.id ?? null;
+  const currentCustodianName = profile?.full_name ?? 'Current User';
+  const role = profile?.role ?? null;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<ActionCategory[]>([]);
   const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
+
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferMode, setTransferMode] = useState<'initiate' | 'accept' | 'reject'>('initiate');
+  const [activeTransfer, setActiveTransfer] = useState<CustodyTransfer | undefined>(undefined);
+  const [showIntegrityModal, setShowIntegrityModal] = useState(false);
 
   const { data: custodyData = [], isLoading } = useQuery({
     queryKey: ['chain_of_custody', caseId],
     queryFn: () => getChainOfCustody(caseId),
     refetchInterval: 30000,
   });
+
+  const { data: custodyTransfers = [] } = useQuery({
+    queryKey: ['custody_transfers', caseId],
+    queryFn: () => getCustodyTransfers(caseId),
+    refetchInterval: 30000,
+  });
+
+  const pendingTransfersForMe = useMemo(() => {
+    if (!currentUserId) return [];
+    return custodyTransfers.filter(
+      (t) => t.transfer_status === 'pending_acceptance' && t.to_custodian_id === currentUserId
+    );
+  }, [custodyTransfers, currentUserId]);
+
+  const canPerformActions = canPerformCustodyActions(role);
+  const caseIsTerminal = isTerminalStatus(caseStatus);
+  const transferEnabled = canPerformActions && !caseIsTerminal;
+  const integrityEnabled = canPerformActions && caseDevices.length > 0;
+
+  const integrityDevices = useMemo(
+    () =>
+      caseDevices.map((d) => ({
+        id: d.id,
+        name: formatDeviceLabel(d),
+      })),
+    [caseDevices]
+  );
+
+  const openInitiateTransfer = () => {
+    setActiveTransfer(undefined);
+    setTransferMode('initiate');
+    setShowTransferModal(true);
+  };
+
+  const openAcceptTransfer = (transfer: CustodyTransfer) => {
+    setActiveTransfer(transfer);
+    setTransferMode('accept');
+    setShowTransferModal(true);
+  };
+
+  const openRejectTransfer = (transfer: CustodyTransfer) => {
+    setActiveTransfer(transfer);
+    setTransferMode('reject');
+    setShowTransferModal(true);
+  };
+
+  const closeTransferModal = () => {
+    setShowTransferModal(false);
+    setActiveTransfer(undefined);
+  };
 
   const allCategories: ActionCategory[] = [
     'creation',
@@ -270,33 +372,67 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
                 </p>
               </div>
             </div>
-            <div className="relative">
-              <Button onClick={() => setShowExportMenu(!showExportMenu)} variant="ghost" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Export Report
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={openInitiateTransfer}
+                disabled={!transferEnabled}
+                size="sm"
+                title={
+                  !canPerformActions
+                    ? 'Requires technician role or higher'
+                    : caseIsTerminal
+                    ? 'Case is in a terminal phase'
+                    : 'Initiate a custody transfer'
+                }
+              >
+                <ArrowRightLeft className="w-4 h-4 mr-2" />
+                Transfer Custody
               </Button>
-              {showExportMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-10">
-                  <button
-                    onClick={() => handleExport('pdf')}
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50 rounded-t-lg text-sm"
-                  >
-                    Export as PDF
-                  </button>
-                  <button
-                    onClick={() => handleExport('csv')}
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50 text-sm"
-                  >
-                    Export as CSV
-                  </button>
-                  <button
-                    onClick={() => handleExport('json')}
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50 rounded-b-lg text-sm"
-                  >
-                    Export as JSON
-                  </button>
-                </div>
-              )}
+              <Button
+                onClick={() => setShowIntegrityModal(true)}
+                disabled={!integrityEnabled}
+                variant="ghost"
+                size="sm"
+                title={
+                  !canPerformActions
+                    ? 'Requires technician role or higher'
+                    : caseDevices.length === 0
+                    ? 'Add a device to the case first'
+                    : 'Perform an integrity check'
+                }
+              >
+                <Fingerprint className="w-4 h-4 mr-2" />
+                Integrity Check
+              </Button>
+              <div className="relative">
+                <Button onClick={() => setShowExportMenu(!showExportMenu)} variant="ghost" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                  <ChevronDown className="w-4 h-4 ml-1" />
+                </Button>
+                {showExportMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-10">
+                    <button
+                      onClick={() => handleExport('pdf')}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-50 rounded-t-lg text-sm"
+                    >
+                      Export as PDF
+                    </button>
+                    <button
+                      onClick={() => handleExport('csv')}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-50 text-sm"
+                    >
+                      Export as CSV
+                    </button>
+                    <button
+                      onClick={() => handleExport('json')}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-50 rounded-b-lg text-sm"
+                    >
+                      Export as JSON
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -354,6 +490,69 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
             </div>
           )}
         </div>
+
+        {pendingTransfersForMe.length > 0 && (
+          <div className="p-6 border-b border-slate-200 bg-warning-muted/40 space-y-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              <h3 className="text-sm font-semibold text-slate-900">
+                Pending Custody Transfer{pendingTransfersForMe.length > 1 ? 's' : ''} Awaiting Your Action
+              </h3>
+              <Badge className="bg-warning text-warning-foreground">
+                {pendingTransfersForMe.length}
+              </Badge>
+            </div>
+            {pendingTransfersForMe.map((transfer) => (
+              <div
+                key={transfer.id}
+                className="bg-white border border-warning/40 rounded-lg p-4 flex items-start justify-between gap-4"
+              >
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                    <span className="text-slate-500">From:</span>
+                    <span className="font-semibold text-slate-900 truncate">
+                      {transfer.from_custodian_name}
+                    </span>
+                  </div>
+                  <div className="text-sm text-slate-700">
+                    <span className="text-slate-500">Reason: </span>
+                    <span>{transfer.transfer_reason}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Initiated {formatDateTime(transfer.initiated_at)}</span>
+                    {transfer.transfer_location && (
+                      <>
+                        <span>•</span>
+                        <span>{transfer.transfer_location}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button
+                    onClick={() => openAcceptTransfer(transfer)}
+                    size="sm"
+                    className="bg-success hover:bg-success/90"
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                    Accept
+                  </Button>
+                  <Button
+                    onClick={() => openRejectTransfer(transfer)}
+                    size="sm"
+                    variant="ghost"
+                    className="text-danger hover:bg-danger-muted"
+                  >
+                    <X className="w-4 h-4 mr-1.5" />
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="p-6">
           {filteredData.length === 0 ? (
@@ -483,6 +682,28 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({ caseId, ca
           </div>
         </div>
       </Card>
+
+      {showTransferModal && (
+        <CustodyTransferModal
+          isOpen={showTransferModal}
+          onClose={closeTransferModal}
+          caseId={caseId}
+          caseNumber={caseNumber}
+          mode={transferMode}
+          transfer={activeTransfer}
+          currentCustodianName={currentCustodianName}
+        />
+      )}
+
+      {showIntegrityModal && (
+        <IntegrityCheckModal
+          isOpen={showIntegrityModal}
+          onClose={() => setShowIntegrityModal(false)}
+          caseId={caseId}
+          caseNumber={caseNumber}
+          devices={integrityDevices}
+        />
+      )}
     </div>
   );
 };

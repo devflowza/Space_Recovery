@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { usePortalAuth } from '../../contexts/PortalAuthContext';
 import { CustomerAvatar } from '../ui/CustomerAvatar';
-import { FileText, DollarSign, MessageSquare, LogOut, LayoutDashboard, Settings, FileBarChart, ShoppingBag, ChevronDown } from 'lucide-react';
+import { FileText, DollarSign, MessageSquare, LogOut, LayoutDashboard, Settings, FileBarChart, ShoppingBag, ChevronDown, Receipt } from 'lucide-react';
 import { AnnouncementBanner } from '../shared/AnnouncementBanner';
 import { getPortalSettings } from '../../lib/portalUrlService';
 import { logger } from '../../lib/logger';
@@ -89,6 +89,7 @@ export const PortalLayout: React.FC = () => {
     { path: '/portal/quotes', label: 'Quotes', icon: DollarSign },
     { path: '/portal/reports', label: 'Reports', icon: FileBarChart },
     { path: '/portal/purchases', label: 'My Purchases', icon: ShoppingBag },
+    { path: '/portal/payments', label: 'Payments', icon: Receipt },
     { path: '/portal/communications', label: 'Messages', icon: MessageSquare },
     { path: '/portal/settings', label: 'Settings', icon: Settings },
   ];
