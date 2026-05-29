@@ -12,6 +12,11 @@ import { useCurrency } from '../../hooks/useCurrency';
 import { supabase } from '../../lib/supabaseClient';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { ExportButton } from '../../components/shared/ExportButton';
+import { BulkActionsBar, BulkActionButton } from '../../components/shared/BulkActionsBar';
+import { useBulkSelection } from '../../hooks/useBulkSelection';
+import { downloadCSV } from '../../lib/csvExport';
+import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 import type { Database } from '../../types/database.types';
 import {
   FileText,
@@ -26,6 +31,8 @@ import {
   Edit,
   Send,
   Trash2,
+  Archive,
+  Download,
 } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 import { logger } from '../../lib/logger';
@@ -52,6 +59,10 @@ export const QuotesListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
+  const { profile } = useAuth();
+  const selection = useBulkSelection();
+  const canBulkArchive = profile?.role === 'owner' || profile?.role === 'admin';
+  const [isArchiving, setIsArchiving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -128,6 +139,68 @@ export const QuotesListPage: React.FC = () => {
     acceptedQuotes: quotes.filter((q) => q.status === 'accepted'),
     expiredQuotes: quotes.filter((q) => q.status === 'expired'),
   }), [quotes]);
+
+  // Quote.id is `string | undefined` in the service-layer type; filter
+  // to defined ids so the selection APIs (which expect strings) type-check.
+  const visibleIds = quotes.map((q) => q.id).filter((id): id is string => Boolean(id));
+
+  const handleBulkExport = async () => {
+    if (selection.selectedCount === 0) return;
+    const ids = Array.from(selection.selectedIds);
+    const { data, error } = await supabase
+      .from('quotes')
+      .select('quote_number, quote_date, valid_until, subtotal, tax_amount, total_amount, status, customers_enhanced:customer_id(customer_name)')
+      .in('id', ids);
+    if (error) {
+      toast.error('Failed to export selected quotes');
+      return;
+    }
+    downloadCSV(
+      data ?? [],
+      [
+        { key: 'quote_number', label: 'Quote #' },
+        { key: 'quote_date', label: 'Date' },
+        { key: 'valid_until', label: 'Valid Until' },
+        {
+          key: (r) => (r.customers_enhanced as { customer_name?: string } | null)?.customer_name,
+          label: 'Customer',
+        },
+        { key: 'subtotal', label: 'Subtotal' },
+        { key: 'tax_amount', label: 'Tax' },
+        { key: 'total_amount', label: 'Total' },
+        { key: 'status', label: 'Status' },
+      ],
+      'quotes-selected',
+    );
+    toast.success(`Exported ${data?.length ?? 0} quote${data?.length === 1 ? '' : 's'}`);
+  };
+
+  const handleBulkArchive = async () => {
+    if (selection.selectedCount === 0) return;
+    if (!canBulkArchive) {
+      toast.error('Only admins can bulk archive quotes');
+      return;
+    }
+    const n = selection.selectedCount;
+    if (!window.confirm(`Archive ${n} quote${n === 1 ? '' : 's'}? They'll be hidden from lists but recoverable.`)) {
+      return;
+    }
+    setIsArchiving(true);
+    try {
+      const { error } = await supabase
+        .from('quotes')
+        .update({ deleted_at: new Date().toISOString() })
+        .in('id', Array.from(selection.selectedIds));
+      if (error) throw error;
+      toast.success(`Archived ${n} quote${n === 1 ? '' : 's'}`);
+      selection.clear();
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+    } catch (err) {
+      toast.error((err as Error).message || 'Failed to archive quotes');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
 
   if (isLoading || statsLoading) {
     return (
@@ -390,6 +463,21 @@ export const QuotesListPage: React.FC = () => {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
+                  <th className="px-4 py-4 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selection.allSelected(visibleIds)}
+                      ref={(el) => {
+                        if (el) {
+                          el.indeterminate =
+                            !selection.allSelected(visibleIds) && selection.someSelected(visibleIds);
+                        }
+                      }}
+                      onChange={(e) => selection.setMany(visibleIds, e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                      aria-label="Select all on this page"
+                    />
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Quote #
                   </th>
@@ -421,8 +509,23 @@ export const QuotesListPage: React.FC = () => {
                   <tr
                     key={quote.id}
                     onClick={() => navigate(`/quotes/${quote.id}`)}
-                    className="hover:bg-slate-50 transition-colors cursor-pointer"
+                    className={`hover:bg-slate-50 transition-colors cursor-pointer ${
+                      quote.id && selection.isSelected(quote.id) ? 'bg-info-muted/30' : ''
+                    }`}
                   >
+                    <td
+                      className="px-4 py-4 w-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={quote.id ? selection.isSelected(quote.id) : false}
+                        onChange={() => quote.id && selection.toggle(quote.id)}
+                        disabled={!quote.id}
+                        className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer disabled:opacity-30"
+                        aria-label={`Select quote ${quote.quote_number}`}
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-semibold text-primary">
                         {quote.quote_number}
@@ -679,6 +782,28 @@ export const QuotesListPage: React.FC = () => {
           clientReference={editingQuote?.client_reference}
         />
       )}
+
+      <BulkActionsBar
+        count={selection.selectedCount}
+        onClear={selection.clear}
+        itemNoun="quote"
+      >
+        <BulkActionButton
+          variant="ghost"
+          icon={<Download className="w-4 h-4" />}
+          label="Export"
+          onClick={handleBulkExport}
+        />
+        {canBulkArchive && (
+          <BulkActionButton
+            variant="danger"
+            icon={<Archive className="w-4 h-4" />}
+            label={isArchiving ? 'Archiving…' : 'Archive'}
+            onClick={handleBulkArchive}
+            disabled={isArchiving}
+          />
+        )}
+      </BulkActionsBar>
     </div>
   );
 };
