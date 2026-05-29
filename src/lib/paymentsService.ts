@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient';
 import { logAuditTrail } from './auditTrailService';
 import { sanitizeFilterValue } from './postgrestSanitizer';
 import { logger } from './logger';
+import { deriveInvoiceStatus } from './invoiceStatus';
 import type { Database } from '../types/database.types';
 
 type PaymentInsert = Database['public']['Tables']['payments']['Insert'];
@@ -271,12 +272,7 @@ export const allocatePaymentToInvoices = async (
       const newAmountPaid = Math.round(((invoice.amount_paid || 0) + alloc.amount) * 100) / 100;
       const newAmountDue = Math.round(((invoice.total_amount || 0) - newAmountPaid) * 100) / 100;
 
-      let newStatus = 'sent';
-      if (newAmountDue <= 0) {
-        newStatus = 'paid';
-      } else if (newAmountPaid > 0) {
-        newStatus = 'partial';
-      }
+      const newStatus = deriveInvoiceStatus(newAmountPaid, newAmountDue);
 
       const { error: updateError } = await supabase
         .from('invoices')
@@ -364,12 +360,7 @@ export const voidPayment = async (paymentId: string) => {
     const newAmountPaid = Math.max(0, (invoice.amount_paid || 0) - alloc.amount);
     const newAmountDue = (invoice.total_amount || 0) - newAmountPaid;
 
-    let newStatus = 'sent';
-    if (newAmountDue <= 0) {
-      newStatus = 'paid';
-    } else if (newAmountPaid > 0) {
-      newStatus = 'partial';
-    }
+    const newStatus = deriveInvoiceStatus(newAmountPaid, newAmountDue);
 
     await supabase
       .from('invoices')
