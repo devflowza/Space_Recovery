@@ -724,6 +724,122 @@ export async function generateQuotePDFBlob(quoteId: string): Promise<PDFBlobResu
   return generateQuoteAsBlob(quoteId);
 }
 
+// Mirrors invoiceService.BulkSendInvoiceResult. Same three-state outcome
+// shape so the InvoicesListPage / QuotesListPage summary toasts can share
+// rendering logic if we generalize later.
+export interface BulkSendQuoteResult {
+  quoteId: string;
+  quoteNumber: string | null;
+  status: 'sent' | 'skipped' | 'failed';
+  error?: string;
+}
+
+// Sequential per-row send. Same reasoning as bulkSendInvoiceEmails:
+// the 5/min email rate limit + heavy PDF gen want serialization, and
+// callers want a per-row outcome rather than a hard throw.
+export async function bulkSendQuoteEmails(
+  quoteIds: string[],
+  onProgress?: (done: number, total: number, latest: BulkSendQuoteResult) => void,
+): Promise<BulkSendQuoteResult[]> {
+  const [{ sendDocumentEmail }, { getEmailTemplate }] = await Promise.all([
+    import('./emailDocumentService'),
+    import('./emailTemplates'),
+  ]);
+
+  const { data: rows, error } = await supabase
+    .from('quotes')
+    .select(
+      'id, quote_number, case_id, customers_enhanced:customer_id(customer_name, email)',
+    )
+    .in('id', quoteIds)
+    .is('deleted_at', null);
+  if (error) throw error;
+
+  const results: BulkSendQuoteResult[] = [];
+  const total = rows?.length ?? 0;
+  let done = 0;
+
+  for (const q of rows ?? []) {
+    const customer = q.customers_enhanced as {
+      customer_name?: string;
+      email?: string | null;
+    } | null;
+    const email = customer?.email?.trim();
+    let result: BulkSendQuoteResult;
+
+    if (!email) {
+      result = {
+        quoteId: q.id,
+        quoteNumber: q.quote_number,
+        status: 'skipped',
+        error: 'Customer has no email',
+      };
+    } else {
+      try {
+        const pdfResult = await generateQuotePDFBlob(q.id);
+        if (!pdfResult.success || !pdfResult.blob || !pdfResult.filename) {
+          result = {
+            quoteId: q.id,
+            quoteNumber: q.quote_number,
+            status: 'failed',
+            error: pdfResult.error || 'PDF generation failed',
+          };
+        } else {
+          const template = getEmailTemplate('quote', {
+            customerName: customer?.customer_name || 'Valued Customer',
+            caseNumber: '',
+            companyName: '',
+            documentType: 'quote',
+          });
+          const send = await sendDocumentEmail({
+            to: email,
+            subject: template.subject,
+            body: template.body,
+            blob: pdfResult.blob,
+            filename: pdfResult.filename,
+            caseId: q.case_id || undefined,
+            documentType: 'quote',
+          });
+          if (send.success) {
+            // Best-effort status update — quotes table has no sent_at
+            // column (unlike invoices). Don't fail the row if this
+            // errors; the email already went out.
+            await supabase
+              .from('quotes')
+              .update({ status: 'sent' })
+              .eq('id', q.id);
+            result = {
+              quoteId: q.id,
+              quoteNumber: q.quote_number,
+              status: 'sent',
+            };
+          } else {
+            result = {
+              quoteId: q.id,
+              quoteNumber: q.quote_number,
+              status: 'failed',
+              error: send.error || 'Send failed',
+            };
+          }
+        }
+      } catch (err) {
+        result = {
+          quoteId: q.id,
+          quoteNumber: q.quote_number,
+          status: 'failed',
+          error: err instanceof Error ? err.message : 'Unknown error',
+        };
+      }
+    }
+
+    results.push(result);
+    done += 1;
+    onProgress?.(done, total, result);
+  }
+
+  return results;
+}
+
 export const quotesService = {
   fetchQuotes,
   fetchQuoteById,
@@ -740,4 +856,5 @@ export const quotesService = {
   getQuotesByCaseId,
   generateQuotePDF,
   generateQuotePDFBlob,
+  bulkSendQuoteEmails,
 };

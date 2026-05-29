@@ -63,6 +63,7 @@ export const QuotesListPage: React.FC = () => {
   const selection = useBulkSelection();
   const canBulkArchive = profile?.role === 'owner' || profile?.role === 'admin';
   const [isArchiving, setIsArchiving] = useState(false);
+  const [sendProgress, setSendProgress] = useState<{ done: number; total: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -199,6 +200,41 @@ export const QuotesListPage: React.FC = () => {
       toast.error((err as Error).message || 'Failed to archive quotes');
     } finally {
       setIsArchiving(false);
+    }
+  };
+
+  const handleBulkSend = async () => {
+    if (selection.selectedCount === 0) return;
+    const n = selection.selectedCount;
+    const msg =
+      n > 5
+        ? `Email ${n} quotes to their customers? Sending is rate-limited to 5/minute — this will take roughly ${Math.ceil(n / 5)} minute(s).`
+        : `Email ${n} quote${n === 1 ? '' : 's'} to their customers?`;
+    if (!window.confirm(msg)) return;
+    setSendProgress({ done: 0, total: n });
+    try {
+      const { bulkSendQuoteEmails } = await import('../../lib/quotesService');
+      const results = await bulkSendQuoteEmails(
+        Array.from(selection.selectedIds),
+        (done, total) => setSendProgress({ done, total }),
+      );
+      const sent = results.filter((r) => r.status === 'sent').length;
+      const skipped = results.filter((r) => r.status === 'skipped').length;
+      const failed = results.filter((r) => r.status === 'failed').length;
+      if (failed === 0 && skipped === 0) {
+        toast.success(`Sent ${sent} quote${sent === 1 ? '' : 's'}`);
+      } else {
+        toast(
+          `Bulk send: ${sent} sent, ${skipped} skipped, ${failed} failed`,
+          { icon: failed > 0 ? '⚠️' : 'ℹ️', duration: 6000 },
+        );
+      }
+      selection.clear();
+      queryClient.invalidateQueries({ queryKey: ['quotes'] });
+    } catch (err) {
+      toast.error((err as Error).message || 'Bulk send failed');
+    } finally {
+      setSendProgress(null);
     }
   };
 
@@ -793,6 +829,18 @@ export const QuotesListPage: React.FC = () => {
           icon={<Download className="w-4 h-4" />}
           label="Export"
           onClick={handleBulkExport}
+          disabled={sendProgress !== null}
+        />
+        <BulkActionButton
+          variant="primary"
+          icon={<Send className="w-4 h-4" />}
+          label={
+            sendProgress
+              ? `Sending ${sendProgress.done}/${sendProgress.total}…`
+              : 'Send'
+          }
+          onClick={handleBulkSend}
+          disabled={sendProgress !== null || isArchiving}
         />
         {canBulkArchive && (
           <BulkActionButton
@@ -800,7 +848,7 @@ export const QuotesListPage: React.FC = () => {
             icon={<Archive className="w-4 h-4" />}
             label={isArchiving ? 'Archiving…' : 'Archive'}
             onClick={handleBulkArchive}
-            disabled={isArchiving}
+            disabled={isArchiving || sendProgress !== null}
           />
         )}
       </BulkActionsBar>
