@@ -10,10 +10,14 @@ import { Badge } from '../../components/ui/Badge';
 import { PhoneInput } from '../../components/ui/PhoneInput';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { CustomerAvatar } from '../../components/ui/CustomerAvatar';
-import { Plus, Search, Filter, Mail, Phone, Building2, MapPin, Users, UserCheck, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Filter, Mail, Phone, Building2, MapPin, Users, UserCheck, Clock, ChevronLeft, ChevronRight, Archive, Download } from 'lucide-react';
 import { ExportButton } from '../../components/shared/ExportButton';
+import { BulkActionsBar, BulkActionButton } from '../../components/shared/BulkActionsBar';
+import { useBulkSelection } from '../../hooks/useBulkSelection';
+import { downloadCSV } from '../../lib/csvExport';
 import { formatDate } from '../../lib/format';
 import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 interface Customer {
   id: string;
@@ -74,6 +78,9 @@ export const CustomersListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { profile } = useAuth();
+  const selection = useBulkSelection();
+  const canBulkArchive = profile?.role === 'owner' || profile?.role === 'admin';
+  const [isArchiving, setIsArchiving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -405,6 +412,80 @@ export const CustomersListPage: React.FC = () => {
   const startIndex = (currentPage - 1) * CUSTOMERS_PER_PAGE;
   const endIndex = Math.min(startIndex + CUSTOMERS_PER_PAGE, filteredCustomers.length);
   const paginatedCustomers = filteredCustomers.slice(startIndex, endIndex);
+  const visibleIds = paginatedCustomers.map((c) => c.id);
+
+  const handleBulkExport = async () => {
+    if (selection.selectedCount === 0) return;
+    const ids = Array.from(selection.selectedIds);
+    const { data, error } = await supabase
+      .from('customers_enhanced')
+      .select('customer_number, customer_name, email, mobile_number, phone, address, portal_enabled, created_at, customer_groups:customer_group_id(name)')
+      .in('id', ids);
+    if (error) {
+      toast.error('Failed to export selected customers');
+      return;
+    }
+    downloadCSV(
+      data ?? [],
+      [
+        { key: 'customer_number', label: 'Customer #' },
+        { key: 'customer_name', label: 'Name' },
+        { key: 'email', label: 'Email' },
+        { key: 'mobile_number', label: 'Mobile' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'address', label: 'Address' },
+        {
+          key: (r) => (r.customer_groups as { name?: string } | null)?.name,
+          label: 'Group',
+        },
+        {
+          key: 'portal_enabled',
+          label: 'Portal Enabled',
+          format: (v) => (v ? 'yes' : 'no'),
+        },
+        {
+          key: 'created_at',
+          label: 'Created',
+          format: (v) => (v ? new Date(v as string).toISOString().slice(0, 10) : ''),
+        },
+      ],
+      'customers-selected',
+    );
+    toast.success(`Exported ${data?.length ?? 0} customer${data?.length === 1 ? '' : 's'}`);
+  };
+
+  const handleBulkArchive = async () => {
+    if (selection.selectedCount === 0) return;
+    if (!canBulkArchive) {
+      toast.error('Only admins can bulk archive customers');
+      return;
+    }
+    const n = selection.selectedCount;
+    // Be explicit about the cascade reality — archiving a customer
+    // doesn't archive their cases, but those cases will render with
+    // a missing-customer placeholder until restored.
+    if (!window.confirm(
+      `Archive ${n} customer${n === 1 ? '' : 's'}?\n\n` +
+      `Their cases and invoices will remain but will show "Unknown customer" until the customer is restored.`
+    )) {
+      return;
+    }
+    setIsArchiving(true);
+    try {
+      const { error } = await supabase
+        .from('customers_enhanced')
+        .update({ deleted_at: new Date().toISOString() })
+        .in('id', Array.from(selection.selectedIds));
+      if (error) throw error;
+      toast.success(`Archived ${n} customer${n === 1 ? '' : 's'}`);
+      selection.clear();
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    } catch (err) {
+      toast.error((err as Error).message || 'Failed to archive customers');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
 
   const recentCustomers = customers.filter((c) => {
     const createdDate = new Date(c.created_at);
@@ -649,6 +730,21 @@ export const CustomersListPage: React.FC = () => {
               <table className="w-full">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
+                    <th className="px-4 py-4 w-10">
+                      <input
+                        type="checkbox"
+                        checked={selection.allSelected(visibleIds)}
+                        ref={(el) => {
+                          if (el) {
+                            el.indeterminate =
+                              !selection.allSelected(visibleIds) && selection.someSelected(visibleIds);
+                          }
+                        }}
+                        onChange={(e) => selection.setMany(visibleIds, e.target.checked)}
+                        className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                        aria-label="Select all on this page"
+                      />
+                    </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                       Customer Number
                     </th>
@@ -683,8 +779,22 @@ export const CustomersListPage: React.FC = () => {
                     <tr
                       key={customer.id}
                       onClick={() => navigate(`/customers/${customer.id}`)}
-                      className="hover:bg-slate-50 transition-colors cursor-pointer"
+                      className={`hover:bg-slate-50 transition-colors cursor-pointer ${
+                        selection.isSelected(customer.id) ? 'bg-info-muted/30' : ''
+                      }`}
                     >
+                      <td
+                        className="px-4 py-4 w-10"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selection.isSelected(customer.id)}
+                          onChange={() => selection.toggle(customer.id)}
+                          className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                          aria-label={`Select customer ${customer.customer_name}`}
+                        />
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="font-semibold text-primary">
                           {customer.customer_number}
@@ -1106,6 +1216,28 @@ export const CustomersListPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      <BulkActionsBar
+        count={selection.selectedCount}
+        onClear={selection.clear}
+        itemNoun="customer"
+      >
+        <BulkActionButton
+          variant="ghost"
+          icon={<Download className="w-4 h-4" />}
+          label="Export"
+          onClick={handleBulkExport}
+        />
+        {canBulkArchive && (
+          <BulkActionButton
+            variant="danger"
+            icon={<Archive className="w-4 h-4" />}
+            label={isArchiving ? 'Archiving…' : 'Archive'}
+            onClick={handleBulkArchive}
+            disabled={isArchiving}
+          />
+        )}
+      </BulkActionsBar>
     </div>
   );
 };
