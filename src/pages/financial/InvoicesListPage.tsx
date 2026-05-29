@@ -22,6 +22,11 @@ import { useCurrency } from '../../hooks/useCurrency';
 import { supabase } from '../../lib/supabaseClient';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { ExportButton } from '../../components/shared/ExportButton';
+import { BulkActionsBar, BulkActionButton } from '../../components/shared/BulkActionsBar';
+import { useBulkSelection } from '../../hooks/useBulkSelection';
+import { downloadCSV } from '../../lib/csvExport';
+import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 import {
   FileText,
   Plus,
@@ -38,6 +43,8 @@ import {
   ArrowRight,
   ExternalLink,
   Lock,
+  Archive,
+  Download,
 } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 
@@ -46,6 +53,10 @@ export const InvoicesListPage: React.FC<unknown> = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
+  const { profile } = useAuth();
+  const selection = useBulkSelection();
+  const canBulkArchive = profile?.role === 'owner' || profile?.role === 'admin';
+  const [isArchiving, setIsArchiving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -131,6 +142,73 @@ export const InvoicesListPage: React.FC<unknown> = () => {
     }),
     [invoices]
   );
+
+  // Invoice.id is technically string | undefined in the service-layer
+  // interface (it carries through unsaved drafts), so filter to defined
+  // strings before handing the list to the selection state.
+  const visibleIds = invoices.map((i) => i.id).filter((id): id is string => Boolean(id));
+
+  const handleBulkExport = async () => {
+    if (selection.selectedCount === 0) return;
+    const ids = Array.from(selection.selectedIds);
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('invoice_number, invoice_date, due_date, invoice_type, subtotal, tax_amount, total_amount, amount_paid, balance_due, status, customers_enhanced:customer_id(customer_name)')
+      .in('id', ids);
+    if (error) {
+      toast.error('Failed to export selected invoices');
+      return;
+    }
+    downloadCSV(
+      data ?? [],
+      [
+        { key: 'invoice_number', label: 'Invoice #' },
+        { key: 'invoice_date', label: 'Date' },
+        { key: 'due_date', label: 'Due' },
+        { key: 'invoice_type', label: 'Type' },
+        {
+          key: (r) => (r.customers_enhanced as { customer_name?: string } | null)?.customer_name,
+          label: 'Customer',
+        },
+        { key: 'subtotal', label: 'Subtotal' },
+        { key: 'tax_amount', label: 'Tax' },
+        { key: 'total_amount', label: 'Total' },
+        { key: 'amount_paid', label: 'Paid' },
+        { key: 'balance_due', label: 'Balance' },
+        { key: 'status', label: 'Status' },
+      ],
+      'invoices-selected',
+    );
+    toast.success(`Exported ${data?.length ?? 0} invoice${data?.length === 1 ? '' : 's'}`);
+  };
+
+  const handleBulkArchive = async () => {
+    if (selection.selectedCount === 0) return;
+    if (!canBulkArchive) {
+      toast.error('Only admins can bulk archive invoices');
+      return;
+    }
+    const n = selection.selectedCount;
+    if (!window.confirm(`Archive ${n} invoice${n === 1 ? '' : 's'}? They'll be hidden from lists but recoverable.`)) {
+      return;
+    }
+    setIsArchiving(true);
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ deleted_at: new Date().toISOString() })
+        .in('id', Array.from(selection.selectedIds));
+      if (error) throw error;
+      toast.success(`Archived ${n} invoice${n === 1 ? '' : 's'}`);
+      selection.clear();
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice_stats'] });
+    } catch (err) {
+      toast.error((err as Error).message || 'Failed to archive invoices');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -382,6 +460,21 @@ export const InvoicesListPage: React.FC<unknown> = () => {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
+                  <th className="px-4 py-4 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selection.allSelected(visibleIds)}
+                      ref={(el) => {
+                        if (el) {
+                          el.indeterminate =
+                            !selection.allSelected(visibleIds) && selection.someSelected(visibleIds);
+                        }
+                      }}
+                      onChange={(e) => selection.setMany(visibleIds, e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                      aria-label="Select all on this page"
+                    />
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                     Invoice #
                   </th>
@@ -417,9 +510,26 @@ export const InvoicesListPage: React.FC<unknown> = () => {
                     key={invoice.id}
                     onClick={() => navigate(`/invoices/${invoice.id}`)}
                     className={`hover:bg-slate-50 transition-colors cursor-pointer ${
-                      invoice.status === 'overdue' ? 'bg-danger-muted' : ''
+                      invoice.id && selection.isSelected(invoice.id)
+                        ? 'bg-info-muted/30'
+                        : invoice.status === 'overdue'
+                          ? 'bg-danger-muted'
+                          : ''
                     }`}
                   >
+                    <td
+                      className="px-4 py-4 w-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={invoice.id ? selection.isSelected(invoice.id) : false}
+                        onChange={() => invoice.id && selection.toggle(invoice.id)}
+                        disabled={!invoice.id}
+                        className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer disabled:opacity-30"
+                        aria-label={`Select invoice ${invoice.invoice_number}`}
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-semibold text-primary">
                         {invoice.invoice_number}
@@ -759,6 +869,28 @@ export const InvoicesListPage: React.FC<unknown> = () => {
           clientReference={editingInvoice?.client_reference}
         />
       )}
+
+      <BulkActionsBar
+        count={selection.selectedCount}
+        onClear={selection.clear}
+        itemNoun="invoice"
+      >
+        <BulkActionButton
+          variant="ghost"
+          icon={<Download className="w-4 h-4" />}
+          label="Export"
+          onClick={handleBulkExport}
+        />
+        {canBulkArchive && (
+          <BulkActionButton
+            variant="danger"
+            icon={<Archive className="w-4 h-4" />}
+            label={isArchiving ? 'Archiving…' : 'Archive'}
+            onClick={handleBulkArchive}
+            disabled={isArchiving}
+          />
+        )}
+      </BulkActionsBar>
     </div>
   );
 };
