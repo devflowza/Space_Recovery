@@ -15090,6 +15090,15 @@ export type Database = {
         Args: { p_resource: string; p_tenant_id: string }
         Returns: boolean
       }
+      compute_realized_fx: {
+        Args: {
+          p_base_currency: string
+          p_doc_amount: number
+          p_invoice_rate: number
+          p_payment_rate: number
+        }
+        Returns: number
+      }
       convert_proforma_to_tax_invoice: {
         Args: { p_quote_id: string }
         Returns: string
@@ -15125,6 +15134,8 @@ export type Database = {
       }
       get_current_portal_customer_id: { Args: never; Returns: string }
       get_current_tenant_id: { Args: never; Returns: string }
+      get_expense_stats_base: { Args: never; Returns: Json }
+      get_invoice_stats_base: { Args: { p_case_id?: string }; Returns: Json }
       get_my_role: { Args: never; Returns: string }
       get_next_case_number: { Args: never; Returns: string }
       get_next_company_number: { Args: never; Returns: string }
@@ -15137,6 +15148,7 @@ export type Database = {
       get_next_supplier_number: { Args: never; Returns: string }
       get_next_ticket_number: { Args: never; Returns: string }
       get_next_transfer_number: { Args: never; Returns: string }
+      get_quote_stats_base: { Args: never; Returns: Json }
       get_system_setting: { Args: { p_key: string }; Returns: string }
       get_tenant_storage_bytes: {
         Args: { p_tenant_id: string }
