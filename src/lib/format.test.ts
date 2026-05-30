@@ -13,7 +13,7 @@ vi.mock('./supabaseClient', () => ({
   },
 }));
 
-import { formatCurrency } from './format';
+import { formatCurrency, formatBaseEquivalent } from './format';
 
 describe('formatCurrency (currency-aware decimals)', () => {
   it('uses 2 decimals for USD', () => {
@@ -24,5 +24,15 @@ describe('formatCurrency (currency-aware decimals)', () => {
   });
   it('uses 0 decimals for JPY', () => {
     expect(formatCurrency(1234, 'JPY')).toMatch(/1,234(?!\.)/);
+  });
+});
+
+describe('formatBaseEquivalent', () => {
+  it('formats the converted base amount with its currency decimals', () => {
+    // 1000 USD * 0.385 -> 385 OMR (3dp)
+    expect(formatBaseEquivalent(1000, 0.385, 'OMR')).toMatch(/385\.000/);
+  });
+  it('returns null when document currency equals base (no preview needed)', () => {
+    expect(formatBaseEquivalent(1000, 1, 'USD', 'USD')).toBeNull();
   });
 });

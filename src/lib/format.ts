@@ -104,6 +104,20 @@ export const formatCurrency = (amount: number, currency = 'USD'): string => {
   }
 };
 
+/**
+ * "≈ <base>" preview for a document total. Returns null when doc currency == base
+ * (caller hides the line). Rounds via Intl to the base currency's ISO-4217 decimals.
+ */
+export const formatBaseEquivalent = (
+  docTotal: number,
+  rate: number,
+  baseCurrency: string,
+  documentCurrency?: string,
+): string | null => {
+  if (documentCurrency && documentCurrency === baseCurrency) return null;
+  return `≈ ${formatCurrency(docTotal * rate, baseCurrency)}`;
+};
+
 export const formatDate = (date: string | Date, formatStr = 'MMM dd, yyyy'): string => {
   try {
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
