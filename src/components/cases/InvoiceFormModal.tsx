@@ -788,7 +788,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Discount ({invoiceData.discount_type === 'percentage' ? '%' : currencyFormat.currencySymbol})
+                    Discount ({invoiceData.discount_type === 'percentage' ? '%' : docCurrency})
                   </label>
                   <input
                     type="number"

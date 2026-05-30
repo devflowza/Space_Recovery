@@ -42,7 +42,10 @@ export const LocationStep = ({
       .select('code, name')
       .eq('is_active', true)
       .order('code')
-      .then(({ data }) => setCurrencyCodes(data ?? []));
+      .then(
+        ({ data }) => setCurrencyCodes(data ?? []),
+        () => setCurrencyCodes([]),
+      );
   }, []);
 
   const handleCountryChange = (id: string) => {
