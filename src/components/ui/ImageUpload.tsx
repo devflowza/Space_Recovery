@@ -246,6 +246,13 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   };
 
+  const handleDropzoneKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInputRef.current?.click();
+    }
+  };
+
   const handleRemove = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
@@ -335,12 +342,18 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
       ) : (
         <div
+          role="button"
+          tabIndex={0}
+          aria-label={t('ui.imageUpload.dropzoneLabel')}
           className={cn(
             dropzoneVariants({ density: resolvedDensity }),
+            'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
             isDragging
               ? 'border-primary bg-primary/5'
               : 'border-slate-300 bg-slate-50 hover:border-slate-400 hover:bg-slate-100'
           )}
+          onClick={() => fileInputRef.current?.click()}
+          onKeyDown={handleDropzoneKeyDown}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}

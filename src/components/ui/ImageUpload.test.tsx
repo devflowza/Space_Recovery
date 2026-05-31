@@ -178,4 +178,29 @@ describe('ImageUpload (cn + density cva + a11y + loading + dead-API)', () => {
     expect(root.className).toContain('space-y-8');
     expect(root.className).not.toContain('space-y-3');
   });
+
+  it('dropzone is a keyboard-operable button with a localized accessible name', () => {
+    render(<ImageUpload onChange={() => {}} />);
+    const dropzone = screen.getByRole('button', { name: /upload an image/i });
+    expect(dropzone).toBeInTheDocument();
+    expect(dropzone).toHaveAttribute('tabindex', '0');
+  });
+
+  it('pressing Enter on the dropzone opens the hidden file input', () => {
+    render(<ImageUpload onChange={() => {}} />);
+    const dropzone = screen.getByRole('button', { name: /upload an image/i });
+    const input = getFileInput();
+    const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {});
+    fireEvent.keyDown(dropzone, { key: 'Enter' });
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('pressing Space on the dropzone opens the hidden file input', () => {
+    render(<ImageUpload onChange={() => {}} />);
+    const dropzone = screen.getByRole('button', { name: /upload an image/i });
+    const input = getFileInput();
+    const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {});
+    fireEvent.keyDown(dropzone, { key: ' ' });
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+  });
 });
