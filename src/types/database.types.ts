@@ -11146,6 +11146,205 @@ export type Database = {
           },
         ]
       }
+      recovery_manifest_acceptances: {
+        Row: {
+          acceptance_method: string
+          accepted_at: string
+          accepted_by: string | null
+          accepted_by_name: string
+          accepted_by_type: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          manifest_id: string
+          notes: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          acceptance_method?: string
+          accepted_at?: string
+          accepted_by?: string | null
+          accepted_by_name: string
+          accepted_by_type: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          manifest_id: string
+          notes?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          acceptance_method?: string
+          accepted_at?: string
+          accepted_by?: string | null
+          accepted_by_name?: string
+          accepted_by_type?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          manifest_id?: string
+          notes?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_manifest_acceptances_manifest_id_fkey"
+            columns: ["manifest_id"]
+            isOneToOne: false
+            referencedRelation: "recovery_manifests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recovery_manifest_acceptances_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recovery_manifest_items: {
+        Row: {
+          checksum: string | null
+          created_at: string
+          deleted_at: string | null
+          device_id: string | null
+          id: string
+          item_type: string
+          manifest_id: string
+          modified_at: string | null
+          name: string
+          path: string
+          size_bytes: number | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          checksum?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          device_id?: string | null
+          id?: string
+          item_type?: string
+          manifest_id: string
+          modified_at?: string | null
+          name: string
+          path: string
+          size_bytes?: number | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          checksum?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          device_id?: string | null
+          id?: string
+          item_type?: string
+          manifest_id?: string
+          modified_at?: string | null
+          name?: string
+          path?: string
+          size_bytes?: number | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_manifest_items_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "case_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recovery_manifest_items_manifest_id_fkey"
+            columns: ["manifest_id"]
+            isOneToOne: false
+            referencedRelation: "recovery_manifests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recovery_manifest_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recovery_manifests: {
+        Row: {
+          case_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          finalized_at: string | null
+          id: string
+          source: string
+          status: string
+          tenant_id: string
+          title: string
+          tool_name: string | null
+          total_bytes: number
+          total_files: number
+          total_folders: number
+          updated_at: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          finalized_at?: string | null
+          id?: string
+          source?: string
+          status?: string
+          tenant_id: string
+          title: string
+          tool_name?: string | null
+          total_bytes?: number
+          total_files?: number
+          total_folders?: number
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          finalized_at?: string | null
+          id?: string
+          source?: string
+          status?: string
+          tenant_id?: string
+          title?: string
+          tool_name?: string | null
+          total_bytes?: number
+          total_files?: number
+          total_folders?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_manifests_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recovery_manifests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recruitment_candidates: {
         Row: {
           applied_date: string | null
