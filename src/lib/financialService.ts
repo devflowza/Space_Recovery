@@ -230,24 +230,6 @@ export const getTransactionTypes = (): TransactionType[] => {
   ];
 };
 
-export const getStatusColor = (status: string): string => {
-  const colors: Record<string, string> = {
-    draft: '#94a3b8',
-    pending: '#f59e0b',
-    sent: '#3b82f6',
-    approved: '#10b981',
-    'partially-paid': '#f59e0b',
-    paid: '#10b981',
-    completed: '#10b981',
-    overdue: '#ef4444',
-    rejected: '#ef4444',
-    failed: '#ef4444',
-    cancelled: '#6b7280',
-    refunded: '#6b7280',
-  };
-  return colors[status] || '#64748b';
-};
-
 export const getFinancialYearDates = () => {
   const now = new Date();
   const currentYear = now.getFullYear();

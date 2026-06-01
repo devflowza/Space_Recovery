@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { statusToBadgeVariant } from '../../lib/ui/variants';
 import { formatDate } from '../../lib/format';
 import { useCurrency } from '../../hooks/useCurrency';
 import {
@@ -56,16 +57,6 @@ interface PaymentViewModalProps {
   payment: PaymentViewData | null;
   onPrintReceipt?: () => void;
 }
-
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    completed: '#10b981',
-    pending: '#f59e0b',
-    failed: '#ef4444',
-    refunded: '#6b7280',
-  };
-  return colors[status] || '#64748b';
-};
 
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -133,8 +124,7 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
               </p>
               <div className="mt-2">
                 <Badge
-                  variant="custom"
-                  color={getStatusColor(payment.status ?? '')}
+                  variant={statusToBadgeVariant(payment.status ?? '')}
                   size="md"
                   className="flex items-center gap-1.5"
                 >

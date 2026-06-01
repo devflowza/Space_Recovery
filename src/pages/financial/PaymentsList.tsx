@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { statusToBadgeVariant } from '../../lib/ui/variants';
 import { formatDate } from '../../lib/format';
 import { FinancialModuleHeader } from '../../components/financial/FinancialModuleHeader';
 import { FinancialStatsCard } from '../../components/financial/FinancialStatsCard';
@@ -255,16 +256,6 @@ export const PaymentsList: React.FC = () => {
     dateFilter !== 'all' ? dateFilter : null,
     paymentMethodFilter !== 'all' ? paymentMethodFilter : null,
   ].filter(Boolean).length;
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      completed: '#10b981',
-      pending: '#f59e0b',
-      failed: '#ef4444',
-      refunded: '#6b7280',
-    };
-    return colors[status] || '#64748b';
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -529,8 +520,7 @@ export const PaymentsList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
-                        variant="custom"
-                        color={getStatusColor(payment.status ?? '')}
+                        variant={statusToBadgeVariant(payment.status ?? '')}
                         size="sm"
                         className="flex items-center gap-1"
                       >

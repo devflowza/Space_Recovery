@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { statusToBadgeVariant } from '../../lib/ui/variants';
 import { Modal } from '../../components/ui/Modal';
 import { formatDate } from '../../lib/format';
 import { FinancialModuleHeader } from '../../components/financial/FinancialModuleHeader';
@@ -217,17 +218,6 @@ export const ExpensesList: React.FC = () => {
       expenseId: expenseToReject,
       reason: rejectionReason,
     });
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      draft: '#94a3b8',
-      pending: '#f59e0b',
-      approved: '#10b981',
-      rejected: '#ef4444',
-      paid: '#3b82f6',
-    };
-    return colors[status] || '#64748b';
   };
 
   const getStatusIcon = (status: string) => {
@@ -569,8 +559,7 @@ export const ExpensesList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
-                        variant="custom"
-                        color={getStatusColor(expense.status ?? '')}
+                        variant={statusToBadgeVariant(expense.status ?? '')}
                         size="sm"
                         className="flex items-center gap-1"
                       >
