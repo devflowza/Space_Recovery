@@ -5,7 +5,7 @@ import { Badge } from '../../components/ui/Badge';
 import { formatDate } from '../../lib/format';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useConfirm } from '../../hooks/useConfirm';
-import { getStatusColor } from '../../lib/financialService';
+import { statusToBadgeVariant } from '../../lib/ui/variants';
 import { FinancialModuleHeader } from '../../components/financial/FinancialModuleHeader';
 import { FinancialStatsCard } from '../../components/financial/FinancialStatsCard';
 import { TransactionFormModal } from '../../components/financial/TransactionFormModal';
@@ -440,8 +440,7 @@ export const TransactionsList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
-                        variant="custom"
-                        color={getStatusColor(transaction.status)}
+                        variant={statusToBadgeVariant(transaction.status)}
                         size="sm"
                       >
                         {transaction.status}

@@ -17,6 +17,7 @@ import {
   fetchVATReturns,
   getVATStats,
 } from '../../lib/vatService';
+import { statusToBadgeVariant } from '../../lib/ui/variants';
 import {
   FileCheck,
   Plus,
@@ -207,16 +208,6 @@ export const VATAuditPage: React.FC = () => {
   const totalVATCollected = salesRecords.reduce((sum, r) => sum + (r.vat_amount || 0), 0);
   const totalVATPaid = purchaseRecords.reduce((sum, r) => sum + (r.vat_amount || 0), 0);
   const netVATPosition = totalVATCollected - totalVATPaid;
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      draft: '#94a3b8',
-      review: '#f59e0b',
-      submitted: '#3b82f6',
-      paid: '#10b981',
-    };
-    return colors[status] || '#64748b';
-  };
 
   const getActionColor = (action: string) => {
     const colors: Record<string, string> = {
@@ -410,8 +401,7 @@ export const VATAuditPage: React.FC = () => {
                             </td>
                             <td className="py-4 px-6">
                               <Badge
-                                variant="custom"
-                                color={getStatusColor(vatReturn.status)}
+                                variant={statusToBadgeVariant(vatReturn.status)}
                                 className="capitalize"
                               >
                                 {vatReturn.status}

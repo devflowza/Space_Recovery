@@ -15,6 +15,7 @@ type InvoiceWithLegacyLinks = InvoiceWithDetails & {
 };
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { statusToBadgeVariant } from '../../lib/ui/variants';
 import { FinancialModuleHeader } from '../../components/financial/FinancialModuleHeader';
 import { FinancialStatsCard } from '../../components/financial/FinancialStatsCard';
 import { InvoiceFormModal } from '../../components/cases/InvoiceFormModal';
@@ -108,19 +109,6 @@ export const InvoicesListPage: React.FC<unknown> = () => {
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      draft: '#94a3b8',
-      sent: '#3b82f6',
-      paid: '#10b981',
-      partial: '#f59e0b',
-      overdue: '#ef4444',
-      cancelled: '#64748b',
-      converted: 'rgb(var(--color-accent))',
-    };
-    return colors[status] || '#64748b';
-  };
 
   const getTypeColor = (type: string) => {
     return type === 'proforma' ? 'rgb(var(--color-accent))' : '#0ea5e9';
@@ -653,7 +641,7 @@ export const InvoicesListPage: React.FC<unknown> = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col gap-1">
-                        <Badge variant="custom" color={getStatusColor(invoice.status)} size="sm">
+                        <Badge variant={statusToBadgeVariant(invoice.status)} size="sm">
                           {invoice.status}
                         </Badge>
                         {invoice.status === 'converted' &&
