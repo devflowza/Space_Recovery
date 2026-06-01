@@ -5,6 +5,7 @@ import { fetchQuotes, getQuoteStats } from '../../lib/quotesService';
 import type { QuoteWithDetails } from '../../lib/quotesService';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { statusToBadgeVariant } from '../../lib/ui/variants';
 import { FinancialModuleHeader } from '../../components/financial/FinancialModuleHeader';
 import { FinancialStatsCard } from '../../components/financial/FinancialStatsCard';
 import { QuoteFormModal } from '../../components/cases/QuoteFormModal';
@@ -109,18 +110,6 @@ export const QuotesListPage: React.FC = () => {
     refetchOnWindowFocus: false,
     retry: 2,
   });
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      draft: '#94a3b8',
-      sent: '#3b82f6',
-      accepted: '#10b981',
-      rejected: '#ef4444',
-      expired: '#f59e0b',
-      converted: 'rgb(var(--color-accent))',
-    };
-    return colors[status] || '#64748b';
-  };
 
   const getClientName = (quote: QuoteWithDetails) => {
     if (quote?.customers?.customer_name) {
@@ -606,7 +595,7 @@ export const QuotesListPage: React.FC = () => {
                       {formatCurrency(quote.total_amount || 0)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant="custom" color={getStatusColor(quote.status)} size="sm">
+                      <Badge variant={statusToBadgeVariant(quote.status)} size="sm">
                         {quote.status}
                       </Badge>
                     </td>

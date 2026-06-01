@@ -4,6 +4,7 @@ import { usePortalAuth } from '../../contexts/PortalAuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import { statusToBadgeVariant } from '../../lib/ui/variants';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { DollarSign, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
@@ -135,21 +136,6 @@ export const PortalQuotes: React.FC = () => {
       setResponse('');
     },
   });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending_approval':
-        return '#f59e0b';
-      case 'approved':
-        return '#10b981';
-      case 'rejected':
-        return '#ef4444';
-      case 'expired':
-        return '#64748b';
-      default:
-        return '#3b82f6';
-    }
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -306,7 +292,7 @@ export const PortalQuotes: React.FC = () => {
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-bold text-slate-900">{quote.cases?.title ?? quote.quote_number}</h3>
                       {getStatusIcon(quote.status)}
-                      <Badge variant="custom" color={getStatusColor(quote.status)}>
+                      <Badge variant={statusToBadgeVariant(quote.status)}>
                         {quote.status.replace('_', ' ')}
                       </Badge>
                     </div>
@@ -350,7 +336,7 @@ export const PortalQuotes: React.FC = () => {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h2 className="text-xl font-bold text-slate-900">{selectedQuote.cases?.title ?? selectedQuote.quote_number}</h2>
-                <Badge variant="custom" color={getStatusColor(selectedQuote.status)}>
+                <Badge variant={statusToBadgeVariant(selectedQuote.status)}>
                   {selectedQuote.status.replace('_', ' ')}
                 </Badge>
               </div>
