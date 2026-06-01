@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchInvoiceById, convertProformaToTaxInvoice, getConversionHistory } from '../../lib/invoiceService';
+import { fetchInvoiceById, convertProformaToTaxInvoice, getConversionHistory, updateInvoice } from '../../lib/invoiceService';
+import type { Invoice, InvoiceItem, InvoiceWithDetails } from '../../lib/invoiceService';
 import { PageHeader } from '../../components/shared/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -13,6 +14,7 @@ import { usePDFDownload } from '../../hooks/usePDFDownload';
 import { useToast } from '../../hooks/useToast';
 import { FileText, ArrowLeft, CreditCard as Edit, DollarSign, AlertCircle, RefreshCw, CheckCircle, ArrowRight, Lock } from 'lucide-react';
 import { RecordReceiptModal } from '../../components/banking/RecordReceiptModal';
+import { InvoiceFormModal } from '../../components/cases/InvoiceFormModal';
 import { logger } from '../../lib/logger';
 import { supabase } from '../../lib/supabaseClient';
 import type { PaymentReceipt } from '../../lib/bankingService';
@@ -59,6 +61,8 @@ export const InvoiceDetailPage: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<InvoiceWithDetails | null>(null);
   const [showConversionHistoryModal, setShowConversionHistoryModal] = useState(false);
   const [conversionHistory, setConversionHistory] = useState<Array<Record<string, unknown>>>([]);
 
@@ -127,6 +131,28 @@ export const InvoiceDetailPage: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['invoice', id] });
     queryClient.invalidateQueries({ queryKey: ['invoices'] });
     setShowPaymentModal(false);
+  };
+
+  const handleOpenEdit = async () => {
+    if (!id) return;
+    // Re-fetch with line items so the form can pre-fill items (the detail
+    // query returns the document-shaped invoice without an editable item array).
+    const { data, error } = await supabase
+      .from('invoices')
+      .select(`
+        *,
+        invoice_line_items (*)
+      `)
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error || !data) {
+      logger.error('Error loading invoice for edit:', error);
+      toast.error('Failed to load invoice for editing.');
+      return;
+    }
+    setEditingInvoice(data as unknown as InvoiceWithDetails);
+    setShowEditModal(true);
   };
 
   if (isLoading) {
@@ -519,7 +545,7 @@ export const InvoiceDetailPage: React.FC = () => {
 
                 {canEdit && (
                   <Button
-                    onClick={() => navigate(`/invoices/${id}/edit`)}
+                    onClick={handleOpenEdit}
                     variant="secondary"
                     className="w-full"
                   >
@@ -646,6 +672,50 @@ export const InvoiceDetailPage: React.FC = () => {
             );
             handlePaymentRecorded();
           }}
+        />
+      )}
+
+      {/* Edit Invoice Modal */}
+      {showEditModal && editingInvoice && (
+        <InvoiceFormModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingInvoice(null);
+          }}
+          onSave={async (invoiceData: Record<string, unknown>, items: InvoiceItem[]) => {
+            const invoicePayload = invoiceData as Partial<Invoice>;
+            if (!editingInvoice.id) return;
+            await updateInvoice(
+              editingInvoice.id,
+              {
+                title: invoicePayload.title,
+                invoice_type: invoicePayload.invoice_type,
+                invoice_date: invoicePayload.invoice_date,
+                due_date: invoicePayload.due_date,
+                status: invoicePayload.status,
+                payment_terms: invoicePayload.payment_terms,
+                notes: invoicePayload.notes,
+                internal_notes: invoicePayload.internal_notes,
+                discount_amount: invoicePayload.discount_amount,
+                discount_type: invoicePayload.discount_type,
+                tax_rate: invoicePayload.tax_rate,
+                client_reference: invoicePayload.client_reference,
+                bank_account_id: invoicePayload.bank_account_id,
+                terms_and_conditions: invoicePayload.terms_and_conditions,
+                quote_id: invoicePayload.quote_id,
+              },
+              items,
+            );
+            queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['invoice_stats'] });
+          }}
+          caseId={editingInvoice.case_id || ''}
+          customerId={editingInvoice.customer_id}
+          companyId={editingInvoice.company_id}
+          initialData={editingInvoice as unknown as Record<string, unknown> | undefined}
+          clientReference={editingInvoice.client_reference}
         />
       )}
 
