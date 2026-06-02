@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -23,6 +23,8 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>('');
+  const employeeSelectId = useId();
+  const currencySelectId = useId();
 
   const [formData, setFormData] = useState({
     account_name: '',
@@ -310,8 +312,9 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
           <>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Assigned Employee</label>
+                <label htmlFor={employeeSelectId} className="block text-sm font-medium text-slate-700 mb-1.5">Assigned Employee</label>
                 <select
+                  id={employeeSelectId}
                   value={formData.employee_id}
                   onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
@@ -356,8 +359,9 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Currency</label>
+            <label htmlFor={currencySelectId} className="block text-sm font-medium text-slate-700 mb-1.5">Currency</label>
             <select
+              id={currencySelectId}
               value={formData.currency_id}
               onChange={(e) => setFormData({ ...formData, currency_id: e.target.value })}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"

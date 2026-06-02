@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -36,6 +36,9 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
   const [error, setError] = useState<string>('');
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
   const [allocations, setAllocations] = useState<Map<string, number>>(new Map());
+  const accountSelectId = useId();
+  const paymentMethodSelectId = useId();
+  const notesId = useId();
 
   const [formData, setFormData] = useState({
     receipt_date: new Date().toISOString().split('T')[0],
@@ -289,10 +292,11 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
           />
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label htmlFor={accountSelectId} className="block text-sm font-medium text-slate-700 mb-1.5">
               Deposit To Account <span className="text-danger">*</span>
             </label>
             <select
+              id={accountSelectId}
               value={formData.account_id}
               onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
@@ -484,8 +488,9 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
           />
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Method</label>
+            <label htmlFor={paymentMethodSelectId} className="block text-sm font-medium text-slate-700 mb-1.5">Payment Method</label>
             <select
+              id={paymentMethodSelectId}
               value={formData.payment_method_id}
               onChange={(e) => setFormData({ ...formData, payment_method_id: e.target.value })}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
@@ -515,8 +520,9 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
         />
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">Notes</label>
+          <label htmlFor={notesId} className="block text-sm font-medium text-slate-700 mb-1.5">Notes</label>
           <textarea
+            id={notesId}
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             rows={3}

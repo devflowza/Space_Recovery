@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { Search, Filter, Save, X, Star, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -43,6 +43,9 @@ export default function DonorSearchPage() {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
+  const templateNameRef = useRef<HTMLInputElement>(null);
+  const templateNameId = useId();
+  const templateDescriptionId = useId();
 
   useEffect(() => {
     loadMasterData();
@@ -410,13 +413,22 @@ export default function DonorSearchPage() {
         title="Save Search Template"
         icon={Save}
         size="sm"
+        initialFocusRef={templateNameRef}
       >
-        <div className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSaveTemplate();
+          }}
+          className="space-y-4"
+        >
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor={templateNameId} className="block text-sm font-medium text-slate-700 mb-2">
               Template Name
             </label>
             <Input
+              ref={templateNameRef}
+              id={templateNameId}
               type="text"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
@@ -424,10 +436,11 @@ export default function DonorSearchPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor={templateDescriptionId} className="block text-sm font-medium text-slate-700 mb-2">
               Description (Optional)
             </label>
             <textarea
+              id={templateDescriptionId}
               value={templateDescription}
               onChange={(e) => setTemplateDescription(e.target.value)}
               placeholder="Describe this search template..."
@@ -436,14 +449,14 @@ export default function DonorSearchPage() {
             />
           </div>
           <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
-            <Button variant="secondary" onClick={() => setShowSaveTemplate(false)}>
+            <Button type="button" variant="secondary" onClick={() => setShowSaveTemplate(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveTemplate} disabled={!templateName.trim()}>
+            <Button type="submit" disabled={!templateName.trim()}>
               Save Template
             </Button>
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );

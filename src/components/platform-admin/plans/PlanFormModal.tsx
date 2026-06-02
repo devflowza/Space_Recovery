@@ -82,8 +82,9 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
       >
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Plan Name *</label>
+              <label htmlFor="plan-name" className="block text-sm font-medium text-slate-700 mb-1">Plan Name *</label>
               <input
+                id="plan-name"
                 ref={nameInputRef}
                 type="text"
                 value={formData.name || ''}
@@ -93,8 +94,9 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Code</label>
+              <label htmlFor="plan-code" className="block text-sm font-medium text-slate-700 mb-1">Code</label>
               <input
+                id="plan-code"
                 type="text"
                 value={formData.code || ''}
                 onChange={(e) => updateField('code', e.target.value)}
@@ -105,8 +107,9 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Slug</label>
+              <label htmlFor="plan-slug" className="block text-sm font-medium text-slate-700 mb-1">Slug</label>
               <input
+                id="plan-slug"
                 type="text"
                 value={formData.slug || ''}
                 onChange={(e) => updateField('slug', e.target.value)}
@@ -114,8 +117,9 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Sort Order</label>
+              <label htmlFor="plan-sort-order" className="block text-sm font-medium text-slate-700 mb-1">Sort Order</label>
               <input
+                id="plan-sort-order"
                 type="number"
                 value={formData.sort_order ?? 0}
                 onChange={(e) => updateField('sort_order', parseInt(e.target.value) || 0)}
@@ -125,8 +129,9 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+            <label htmlFor="plan-description" className="block text-sm font-medium text-slate-700 mb-1">Description</label>
             <textarea
+              id="plan-description"
               value={formData.description || ''}
               onChange={(e) => updateField('description', e.target.value)}
               rows={2}
@@ -136,8 +141,9 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Monthly Price</label>
+              <label htmlFor="plan-monthly-price" className="block text-sm font-medium text-slate-700 mb-1">Monthly Price</label>
               <input
+                id="plan-monthly-price"
                 type="number"
                 step="0.01"
                 value={formData.price_monthly ?? 0}
@@ -146,8 +152,9 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Yearly Price</label>
+              <label htmlFor="plan-yearly-price" className="block text-sm font-medium text-slate-700 mb-1">Yearly Price</label>
               <input
+                id="plan-yearly-price"
                 type="number"
                 step="0.01"
                 value={formData.price_yearly ?? 0}
@@ -156,8 +163,9 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+              <label htmlFor="plan-currency" className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
               <input
+                id="plan-currency"
                 type="text"
                 value={formData.currency || 'USD'}
                 onChange={(e) => updateField('currency', e.target.value)}
@@ -167,8 +175,9 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Trial Days</label>
+            <label htmlFor="plan-trial-days" className="block text-sm font-medium text-slate-700 mb-1">Trial Days</label>
             <input
+              id="plan-trial-days"
               type="number"
               value={formData.trial_days ?? ''}
               onChange={(e) => updateField('trial_days', e.target.value ? parseInt(e.target.value) : null)}

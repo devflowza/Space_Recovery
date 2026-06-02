@@ -77,8 +77,9 @@ export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClos
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Coupon Code *</label>
+              <label htmlFor="coupon-code" className="block text-sm font-medium text-slate-700 mb-1">Coupon Code *</label>
               <input
+                id="coupon-code"
                 ref={codeInputRef}
                 type="text"
                 value={formData.code}
@@ -89,8 +90,9 @@ export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClos
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+              <label htmlFor="coupon-name" className="block text-sm font-medium text-slate-700 mb-1">Name</label>
               <input
+                id="coupon-name"
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
@@ -102,8 +104,9 @@ export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClos
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Discount Type *</label>
+              <label htmlFor="coupon-discount-type" className="block text-sm font-medium text-slate-700 mb-1">Discount Type *</label>
               <select
+                id="coupon-discount-type"
                 value={formData.discount_type}
                 onChange={(e) => setFormData((p) => ({ ...p, discount_type: e.target.value }))}
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -113,8 +116,9 @@ export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClos
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Discount Value *</label>
+              <label htmlFor="coupon-discount-value" className="block text-sm font-medium text-slate-700 mb-1">Discount Value *</label>
               <input
+                id="coupon-discount-value"
                 type="number"
                 step="0.01"
                 value={formData.discount_value}
@@ -127,8 +131,9 @@ export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClos
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Valid From</label>
+              <label htmlFor="coupon-valid-from" className="block text-sm font-medium text-slate-700 mb-1">Valid From</label>
               <input
+                id="coupon-valid-from"
                 type="date"
                 value={formData.valid_from}
                 onChange={(e) => setFormData((p) => ({ ...p, valid_from: e.target.value }))}
@@ -136,8 +141,9 @@ export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClos
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Valid Until</label>
+              <label htmlFor="coupon-valid-until" className="block text-sm font-medium text-slate-700 mb-1">Valid Until</label>
               <input
+                id="coupon-valid-until"
                 type="date"
                 value={formData.valid_until}
                 onChange={(e) => setFormData((p) => ({ ...p, valid_until: e.target.value }))}
@@ -147,8 +153,9 @@ export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClos
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Max Redemptions</label>
+            <label htmlFor="coupon-max-redemptions" className="block text-sm font-medium text-slate-700 mb-1">Max Redemptions</label>
             <input
+              id="coupon-max-redemptions"
               type="number"
               value={formData.max_redemptions ?? ''}
               onChange={(e) =>
@@ -163,8 +170,9 @@ export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClos
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">PayPal Coupon ID</label>
+            <label htmlFor="coupon-paypal-id" className="block text-sm font-medium text-slate-700 mb-1">PayPal Coupon ID</label>
             <input
+              id="coupon-paypal-id"
               type="text"
               value={formData.paypal_coupon_id}
               onChange={(e) => setFormData((p) => ({ ...p, paypal_coupon_id: e.target.value }))}

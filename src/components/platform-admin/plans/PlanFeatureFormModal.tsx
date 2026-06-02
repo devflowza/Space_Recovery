@@ -141,8 +141,9 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Display Name *</label>
+              <label htmlFor="feature-display-name" className="block text-sm font-medium text-slate-700 mb-1">Display Name *</label>
               <input
+                id="feature-display-name"
                 type="text"
                 value={formData.feature_name}
                 onChange={(e) => setFormData((p) => ({ ...p, feature_name: e.target.value }))}
@@ -151,8 +152,9 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Arabic Name</label>
+              <label htmlFor="feature-arabic-name" className="block text-sm font-medium text-slate-700 mb-1">Arabic Name</label>
               <input
+                id="feature-arabic-name"
                 type="text"
                 dir="rtl"
                 value={formData.feature_name_ar}
@@ -164,8 +166,9 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Limit Type</label>
+              <label htmlFor="feature-limit-type" className="block text-sm font-medium text-slate-700 mb-1">Limit Type</label>
               <input
+                id="feature-limit-type"
                 type="text"
                 value={formData.limit_type}
                 onChange={(e) => setFormData((p) => ({ ...p, limit_type: e.target.value }))}
@@ -174,8 +177,9 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Limit Value</label>
+              <label htmlFor="feature-limit-value" className="block text-sm font-medium text-slate-700 mb-1">Limit Value</label>
               <input
+                id="feature-limit-value"
                 type="number"
                 value={formData.limit_value ?? ''}
                 onChange={(e) =>
@@ -191,8 +195,9 @@ export const PlanFeatureFormModal: React.FC<PlanFeatureFormModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Display Order</label>
+            <label htmlFor="feature-display-order" className="block text-sm font-medium text-slate-700 mb-1">Display Order</label>
             <input
+              id="feature-display-order"
               type="number"
               value={formData.display_order ?? 0}
               onChange={(e) =>

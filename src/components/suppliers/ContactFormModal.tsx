@@ -187,10 +187,11 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="supplier-contact-notes" className="block text-sm font-medium text-gray-700 mb-1">
             Notes
           </label>
           <textarea
+            id="supplier-contact-notes"
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"

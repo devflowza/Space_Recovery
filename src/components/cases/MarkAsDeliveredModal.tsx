@@ -210,10 +210,11 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
 
           <div className="space-y-2.5 mb-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1.5">
+              <label htmlFor="mark-delivered-notes" className="block text-xs font-medium text-slate-700 mb-1.5">
                 Delivery Notes (Optional)
               </label>
               <Input
+                id="mark-delivered-notes"
                 value={deliveryNotes}
                 onChange={(e) => setDeliveryNotes(e.target.value)}
                 placeholder="e.g., USB drive, Cloud link, Physical pickup..."

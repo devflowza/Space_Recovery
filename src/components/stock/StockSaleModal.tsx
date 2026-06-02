@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useId, useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
 import { Modal } from '../ui/Modal';
@@ -78,6 +78,8 @@ export const StockSaleModal: React.FC<StockSaleModalProps> = ({
   onSuccess,
 }) => {
   const toast = useToast();
+  const paymentMethodFieldId = useId();
+  const notesFieldId = useId();
 
   const [allItems, setAllItems] = useState<StockItemWithCategory[]>([]);
   const [filteredItems, setFilteredItems] = useState<StockItemWithCategory[]>([]);
@@ -513,10 +515,11 @@ export const StockSaleModal: React.FC<StockSaleModalProps> = ({
               />
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor={paymentMethodFieldId} className="block text-sm font-medium text-slate-700 mb-1">
                   Payment Method
                 </label>
                 <select
+                  id={paymentMethodFieldId}
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -529,10 +532,11 @@ export const StockSaleModal: React.FC<StockSaleModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor={notesFieldId} className="block text-sm font-medium text-slate-700 mb-1">
                   Notes
                 </label>
                 <textarea
+                  id={notesFieldId}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Optional notes..."
