@@ -176,7 +176,7 @@ export const PortalDashboard: React.FC = () => {
 
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cat-4 to-cat-4/80 flex items-center justify-center">
               <Clock className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
             <div>
@@ -188,7 +188,7 @@ export const PortalDashboard: React.FC = () => {
 
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cat-3 to-cat-3/80 flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
             <div>

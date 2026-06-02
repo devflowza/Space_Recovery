@@ -152,7 +152,7 @@ export const TemplatesDashboard: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading templates...</p>
         </div>
       </div>
@@ -207,8 +207,8 @@ export const TemplatesDashboard: React.FC = () => {
               <p className="text-sm text-slate-600">Total Templates</p>
               <p className="text-2xl font-bold text-slate-900 mt-1">{totalTemplates}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-cat-7/10 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-cat-7" />
             </div>
           </div>
         </Card>
@@ -219,8 +219,8 @@ export const TemplatesDashboard: React.FC = () => {
               <p className="text-sm text-slate-600">Categories</p>
               <p className="text-2xl font-bold text-slate-900 mt-1">{categories.length}</p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <LayoutGrid className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-cat-3/10 rounded-lg flex items-center justify-center">
+              <LayoutGrid className="w-6 h-6 text-cat-3" />
             </div>
           </div>
         </Card>
@@ -243,8 +243,8 @@ export const TemplatesDashboard: React.FC = () => {
               <p className="text-sm text-slate-600">Active</p>
               <p className="text-2xl font-bold text-slate-900 mt-1">{totalTemplates}</p>
             </div>
-            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-teal-600" />
+            <div className="w-12 h-12 bg-cat-2/10 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-cat-2" />
             </div>
           </div>
         </Card>
@@ -267,7 +267,7 @@ export const TemplatesDashboard: React.FC = () => {
           <select
             value={selectedCategory || ''}
             onChange={(e) => setSelectedCategory(e.target.value || null)}
-            className="px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">All Categories</option>
             {categories.map((cat) => (
@@ -279,13 +279,13 @@ export const TemplatesDashboard: React.FC = () => {
           <div className="flex border border-slate-300 rounded-lg overflow-hidden">
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-3 py-2 ${viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`px-3 py-2 ${viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'}`}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-2 border-l border-slate-300 ${viewMode === 'list' ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+              className={`px-3 py-2 border-l border-slate-300 ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'}`}
             >
               <ListIcon className="w-4 h-4" />
             </button>
@@ -356,7 +356,7 @@ export const TemplatesDashboard: React.FC = () => {
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     <span>Code: {type.code}</span>
                     {type.template_count === 0 && (
-                      <span className="text-orange-600">No templates</span>
+                      <span className="text-warning">No templates</span>
                     )}
                   </div>
                 </Card>

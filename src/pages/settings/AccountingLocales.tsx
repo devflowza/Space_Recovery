@@ -190,7 +190,7 @@ export const AccountingLocales: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-slate-900">{locale.name}</span>
-                        {locale.is_default && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
+                        {locale.is_default && <Star className="w-3 h-3 text-cat-4 fill-cat-4" />}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{locale.locale_code}</td>
@@ -215,11 +215,11 @@ export const AccountingLocales: React.FC = () => {
                         </button>
                         <button
                           onClick={() => !locale.is_default && setDefaultMutation.mutate(locale.id)}
-                          className={`p-2 rounded-lg transition-colors ${locale.is_default ? 'text-yellow-500 bg-yellow-50 cursor-default' : 'text-slate-400 hover:text-yellow-500 hover:bg-yellow-50'}`}
+                          className={`p-2 rounded-lg transition-colors ${locale.is_default ? 'text-cat-4 bg-cat-4/10 cursor-default' : 'text-slate-400 hover:text-cat-4 hover:bg-cat-4/10'}`}
                           disabled={locale.is_default ?? false}
                           title={locale.is_default ? 'Default locale' : 'Set as default'}
                         >
-                          <Star className={`w-4 h-4 ${locale.is_default ? 'fill-yellow-500' : ''}`} />
+                          <Star className={`w-4 h-4 ${locale.is_default ? 'fill-cat-4' : ''}`} />
                         </button>
                         <button
                           onClick={() => deleteMutation.mutate(locale.id)}

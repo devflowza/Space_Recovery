@@ -154,7 +154,7 @@ const NotificationDLQ = lazyWithRetry(() => import('./pages/platform-admin/Notif
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
     <div className="text-center">
-      <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+      <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
       <p className="text-slate-600 mt-4">Loading...</p>
     </div>
   </div>
@@ -752,7 +752,7 @@ function App() {
                 <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
                   <h1 className="text-4xl font-bold text-gray-900 mb-2">404</h1>
                   <p className="text-lg text-gray-600 mb-6">Page not found</p>
-                  <a href="/" className="text-blue-600 hover:text-blue-800 font-medium">Go back to dashboard</a>
+                  <a href="/" className="text-primary hover:text-primary/80 font-medium">Go back to dashboard</a>
                 </div>
               } />
             </Routes>

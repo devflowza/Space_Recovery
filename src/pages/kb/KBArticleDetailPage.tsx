@@ -230,7 +230,7 @@ export const KBArticleDetailPage: React.FC = () => {
           </div>
 
           {article.excerpt && (
-            <div className="bg-blue-50 border-l-4 text-sm text-blue-800 px-4 py-3 rounded-r-lg mb-6 leading-relaxed" style={{ borderColor: catColor }}>
+            <div className="bg-info-muted border-l-4 text-sm text-info px-4 py-3 rounded-r-lg mb-6 leading-relaxed" style={{ borderColor: catColor }}>
               {article.excerpt}
             </div>
           )}

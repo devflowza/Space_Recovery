@@ -50,7 +50,7 @@ function ItemTypeBadge({ itemType }: { itemType: string | null }) {
   }
   if (itemType === 'both') {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-teal-100 text-teal-800 ring-1 ring-teal-200">
+      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-cat-2/10 text-cat-2 ring-1 ring-cat-2/20">
         Both
       </span>
     );

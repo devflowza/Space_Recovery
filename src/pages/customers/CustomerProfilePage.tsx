@@ -355,7 +355,7 @@ export const CustomerProfilePage: React.FC = () => {
     return (
       <div className="p-8 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-cyan-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading customer profile...</p>
         </div>
       </div>
@@ -509,7 +509,7 @@ export const CustomerProfilePage: React.FC = () => {
                       onClick={() => navigate(`/companies/${company.id}`)}
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cat-7/70 to-cat-7 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
                           {displayName.substring(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1">

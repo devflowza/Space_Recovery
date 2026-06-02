@@ -382,7 +382,7 @@ export const InvoicesListPage: React.FC<unknown> = () => {
                 }
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   typeFilter === 'tax_invoice'
-                    ? 'bg-sky-500 text-white shadow-md'
+                    ? 'bg-cat-1 text-white shadow-md'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >

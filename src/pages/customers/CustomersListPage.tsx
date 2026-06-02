@@ -667,7 +667,7 @@ export const CustomersListPage: React.FC = () => {
 
       {isLoading ? (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
           <p className="text-slate-500 mt-4">Loading customers...</p>
         </div>
       ) : filteredCustomers.length === 0 ? (

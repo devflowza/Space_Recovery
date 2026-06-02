@@ -185,7 +185,7 @@ export const BankingPage: React.FC = () => {
       case 'cash':
         return <Wallet className="w-5 h-5 text-success" />;
       case 'mobile':
-        return <Smartphone className="w-5 h-5 text-orange-600" />;
+        return <Smartphone className="w-5 h-5 text-cat-5" />;
       default:
         return <Landmark className="w-5 h-5 text-slate-600" />;
     }
@@ -193,7 +193,7 @@ export const BankingPage: React.FC = () => {
 
   const getBalanceColor = (balance: number) => {
     if (balance < 0) return 'text-danger';
-    if (balance < 1000) return 'text-orange-600';
+    if (balance < 1000) return 'text-warning';
     return 'text-slate-900';
   };
 
@@ -245,7 +245,7 @@ export const BankingPage: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                <div className="w-2 h-2 rounded-full bg-cat-5"></div>
                 <span className="text-slate-600">
                   {formatCurrencyValue(balanceSummary?.totalMobileBalance || 0)} Mobile
                 </span>
@@ -328,16 +328,16 @@ export const BankingPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+        <div className="bg-gradient-to-br from-cat-5/10 to-cat-5/10 rounded-xl p-4 border border-cat-5/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-orange-600 uppercase tracking-wide">Mobile Balance</p>
-              <p className="text-2xl font-bold text-orange-900 mt-1">
+              <p className="text-xs font-medium text-cat-5 uppercase tracking-wide">Mobile Balance</p>
+              <p className="text-2xl font-bold text-cat-5 mt-1">
                 {formatCurrencyValue(balanceSummary?.totalMobileBalance || 0)}
               </p>
-              <p className="text-xs text-orange-700 mt-1">{mobileAccounts.length} accounts</p>
+              <p className="text-xs text-cat-5 mt-1">{mobileAccounts.length} accounts</p>
             </div>
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-cat-5 rounded-lg flex items-center justify-center">
               <Smartphone className="w-5 h-5 text-white" />
             </div>
           </div>
@@ -434,7 +434,7 @@ export const BankingPage: React.FC = () => {
                       switch (type) {
                         case 'bank': return { bg: 'from-info-muted/50 to-info-muted/30', border: 'border-info/30', accent: 'bg-info' };
                         case 'cash': return { bg: 'from-success-muted/50 to-success-muted/30', border: 'border-success/30', accent: 'bg-success' };
-                        case 'mobile': return { bg: 'from-orange-50/50 to-orange-100/30', border: 'border-orange-200', accent: 'bg-orange-500' };
+                        case 'mobile': return { bg: 'from-cat-5/10 to-cat-5/5', border: 'border-cat-5/20', accent: 'bg-cat-5' };
                         default: return { bg: 'from-slate-50/50 to-slate-100/30', border: 'border-slate-200', accent: 'bg-slate-500' };
                       }
                     };
@@ -650,7 +650,7 @@ export const BankingPage: React.FC = () => {
                               {transaction.is_reconciled ? (
                                 <CheckCircle2 className="w-4 h-4 text-success mx-auto" />
                               ) : (
-                                <Clock className="w-4 h-4 text-orange-600 mx-auto" />
+                                <Clock className="w-4 h-4 text-warning mx-auto" />
                               )}
                             </td>
                           </tr>
