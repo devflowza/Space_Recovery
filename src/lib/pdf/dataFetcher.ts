@@ -17,6 +17,15 @@ import type {
   ChainOfCustodyEntryData,
 } from './types';
 
+// PostgREST embeds resolve under their select alias (e.g. `customers`, `companies`),
+// but the document builders read singular `customer`/`company` (matching the receipt
+// path). Normalize a to-one embed (object, or array if PostgREST infers to-many) to a
+// single object so the builders find the data instead of falling through to "N/A".
+function toOne<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
 export async function fetchReceiptData(caseId: string): Promise<ReceiptData> {
   const [caseResult, devicesResult, settingsResult] = await Promise.all([
     fetchCaseData(caseId),
@@ -277,6 +286,8 @@ async function fetchQuoteDetails(quoteId: string): Promise<QuoteData> {
 
   return {
     ...quoteData,
+    customer: toOne(quoteData.customers),
+    company: toOne(quoteData.companies),
     created_by_profile: createdByProfile,
     terms_and_conditions: quoteData.terms ?? undefined,
     title: undefined,
@@ -391,6 +402,8 @@ async function fetchInvoiceDetails(invoiceId: string): Promise<InvoiceData> {
 
   return {
     ...invoiceData,
+    customer: toOne(invoiceData.customers),
+    company: toOne(invoiceData.companies),
     invoice_line_items: items || [],
     customer_associated_company: customerAssociatedCompany,
     accounting_locales: defaultLocale || {
