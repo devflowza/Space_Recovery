@@ -39,11 +39,20 @@ export async function createCompany(
   const { data: companyNumber, error: numberError } = await supabase.rpc('get_next_company_number');
   if (numberError) throw numberError;
 
+  // uuid FK columns reject empty strings ("invalid input syntax for type uuid")
+  // — a 400 that the `as CompanyInsert` cast would otherwise hide. Coerce blanks
+  // to null here so every caller (forms that send '' for an unset select) is safe.
+  const uuidOrNull = (v?: string | null) => (v && v.trim() !== '' ? v : null);
+
   const payload = {
     ...input,
     company_number: companyNumber,
     company_name: resolvedName,
     name: resolvedName,
+    industry_id: uuidOrNull(input.industry_id),
+    country_id: uuidOrNull(input.country_id),
+    city_id: uuidOrNull(input.city_id),
+    created_by: uuidOrNull(input.created_by),
   } as CompanyInsert;
 
   const { data: newCompany, error: createError } = await supabase
