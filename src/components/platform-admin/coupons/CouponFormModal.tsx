@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { X } from 'lucide-react';
+import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { createCoupon, updateCoupon } from '../../../lib/billingService';
 import { platformAdminKeys } from '../../../lib/queryKeys';
@@ -18,6 +18,7 @@ interface CouponFormModalProps {
 export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClose, coupon }) => {
   const queryClient = useQueryClient();
   const isEditing = !!coupon;
+  const codeInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     code: coupon?.code || '',
@@ -58,32 +59,26 @@ export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClos
     onError: (err: Error) => toast.error(err.message || 'Failed to save coupon'),
   });
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">
-            {isEditing ? 'Edit Coupon' : 'Create Coupon'}
-          </h2>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600 rounded">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditing ? 'Edit Coupon' : 'Create Coupon'}
+      size="md"
+      initialFocusRef={codeInputRef}
+    >
         <form
           onSubmit={(e) => {
             e.preventDefault();
             mutation.mutate();
           }}
-          className="p-6 space-y-4"
+          className="space-y-4"
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Coupon Code *</label>
               <input
+                ref={codeInputRef}
                 type="text"
                 value={formData.code}
                 onChange={(e) => setFormData((p) => ({ ...p, code: e.target.value.toUpperCase() }))}
@@ -196,7 +191,6 @@ export const CouponFormModal: React.FC<CouponFormModalProps> = ({ isOpen, onClos
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { X } from 'lucide-react';
+import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { createSubscriptionPlan } from '../../../lib/billingService';
 import { platformAdminKeys } from '../../../lib/queryKeys';
@@ -19,6 +19,7 @@ const generateSlug = (name: string): string =>
 
 export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose }) => {
   const queryClient = useQueryClient();
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<Partial<PlanInsert>>({
     name: '',
     code: '',
@@ -63,30 +64,26 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
     });
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">Create Subscription Plan</h2>
-          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600 rounded">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            createMutation.mutate();
-          }}
-          className="p-6 space-y-4"
-        >
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create Subscription Plan"
+      size="lg"
+      initialFocusRef={nameInputRef}
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          createMutation.mutate();
+        }}
+        className="space-y-4"
+      >
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Plan Name *</label>
               <input
+                ref={nameInputRef}
                 type="text"
                 value={formData.name || ''}
                 onChange={(e) => updateField('name', e.target.value)}
@@ -208,8 +205,7 @@ export const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose })
               {createMutation.isPending ? 'Creating...' : 'Create Plan'}
             </Button>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 };
