@@ -180,7 +180,7 @@ export const TemplateTypeDetail: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading templates...</p>
         </div>
       </div>
@@ -232,8 +232,8 @@ export const TemplateTypeDetail: React.FC = () => {
               <p className="text-sm text-slate-600">Total Templates</p>
               <p className="text-2xl font-bold text-slate-900 mt-1">{templates.length}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Copy className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-cat-7/10 rounded-lg flex items-center justify-center">
+              <Copy className="w-6 h-6 text-cat-7" />
             </div>
           </div>
         </Card>
@@ -246,8 +246,8 @@ export const TemplateTypeDetail: React.FC = () => {
                 {templates.filter(t => t.is_default).length}
               </p>
             </div>
-            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <Star className="w-6 h-6 text-yellow-600" />
+            <div className="w-12 h-12 bg-cat-4/10 rounded-lg flex items-center justify-center">
+              <Star className="w-6 h-6 text-cat-4" />
             </div>
           </div>
         </Card>
@@ -260,8 +260,8 @@ export const TemplateTypeDetail: React.FC = () => {
                 {templates.length > 0 ? formatDate(templates[0].updated_at) : '—'}
               </p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-cat-3/10 rounded-lg flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-cat-3" />
             </div>
           </div>
         </Card>
@@ -328,7 +328,7 @@ export const TemplateTypeDetail: React.FC = () => {
                     setShowDeleteConfirm(true);
                   }}
                 >
-                  <Trash2 className="w-4 h-4 text-red-600" />
+                  <Trash2 className="w-4 h-4 text-danger" />
                 </Button>
               </div>
             </div>

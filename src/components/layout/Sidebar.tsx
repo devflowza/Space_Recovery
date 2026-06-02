@@ -89,12 +89,12 @@ export const Sidebar: React.FC = () => {
 
   const getRoleAvatarBg = (role?: string) => {
     switch (role) {
-      case 'admin': return 'from-rose-500 to-rose-600';
-      case 'technician': return 'from-teal-500 to-teal-600';
-      case 'sales': return 'from-emerald-500 to-emerald-600';
-      case 'accounts': return 'from-amber-500 to-amber-600';
-      case 'hr': return 'from-sky-500 to-sky-600';
-      default: return 'from-blue-500 to-blue-600';
+      case 'admin': return 'from-cat-6 to-cat-6';
+      case 'technician': return 'from-cat-2 to-cat-2';
+      case 'sales': return 'from-cat-3 to-cat-3';
+      case 'accounts': return 'from-cat-4 to-cat-4';
+      case 'hr': return 'from-cat-1 to-cat-1';
+      default: return 'from-cat-7 to-cat-7';
     }
   };
 
@@ -570,7 +570,7 @@ export const Sidebar: React.FC = () => {
                   </div>
                   <button
                     onClick={handleSignOut}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 hover:bg-rose-400 text-white rounded-full flex items-center justify-center transition-all duration-200 shadow-lg"
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-danger hover:bg-danger/90 text-danger-foreground rounded-full flex items-center justify-center transition-all duration-200 shadow-lg"
                     title="Logout"
                   >
                     <LogOut className="w-2.5 h-2.5" />

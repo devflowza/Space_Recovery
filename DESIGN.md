@@ -87,7 +87,10 @@ etc. is a bug (it falsely signals status). Use these instead.
 - Brand hex literals: `#1E5BB8`, `#8b5cf6`, `#6366f1`, `#a855f7`, `#4A5568`, `#6A7A8A`.
 - Raw Tailwind brand colors (`bg-blue-600`, `text-purple-*`, etc.) → use a semantic
   token, or `cat-1`…`cat-8` for identity color. Neutrals (`gray/slate/zinc/white/black`)
-  remain allowed for utility use.
+  remain allowed for utility use. Rule: `eslint-rules/no-raw-tailwind-colors.js`
+  (catches the full brand-color family across all class prefixes). `src/` is now at
+  **zero** raw brand-color classes outside the fixed surfaces above — so the rule can
+  run as a hard `error` with only those file-level exemptions, no line baseline.
 
 ## Non-Themed Surfaces (intentionally fixed — do NOT wire to the theme)
 These read from constants, never from CSS variables. This is by design so output stays comparable across tenants/themes.
@@ -96,6 +99,7 @@ These read from constants, never from CSS variables. This is by design so output
 - **Categorical UI palette:** `cat-1`…`cat-8` (`src/index.css`, `tailwind.config.js`) — the screen-side mirror of `chartCategorical`, for identity color in UI (see **Color → Categorical (identity) palette**). Fixed across themes by design.
 - **PDFs:** `src/lib/pdf/styles.ts` — `PDF_COLORS` (primary `#162660` = fixed Royal-brand navy, text `#1E293B`, …), font `Roboto`. One fixed color for all tenants by design (a themed invoice would look alarming). Device-role badge colors (patient/backup/donor/spare) are fixed.
 - **Device icons:** `src/lib/deviceIconMapper.ts` — fixed SVG hexes. Intentional.
+- **Auth screens:** `src/components/auth/shared/AuthBackground.tsx` + `constants.ts` — the login/signup split-screen's fixed dark decorative identity (slate/blue gradient, circuit SVG, particles, CTA button gradient). Auth renders **before** a tenant theme is known (you're not in a tenant yet), so it is intentionally non-themed and lint-exempt like PDFs.
 
 ## Spacing
 - **Base unit:** Tailwind default 4px scale (`p-1`=4px … `p-6`=24px …). Density target: **comfortable-to-compact** for data tables.
@@ -131,3 +135,4 @@ Captured 2026-06-01 from a code audit. **All three drifts resolved 2026-06-02** 
 | 2026-06-02 | Resolved drift #2: focus `ring` follows `primary` | Removed the banned indigo `#6366F1`; focus rings now read as on-brand per theme. (Shipped earlier in the a11y focus-ring work; doc reconciled here.) |
 | 2026-06-02 | Resolved drift #3: PDF `primary` set to fixed Royal navy `#162660` (was cyan `#0891B2`) | PDFs are intentionally non-themed (one color for all tenants — a themed invoice would look alarming). Cyan matched no brand and read as an unconfigured template; navy aligns to the default Royal identity and to the existing `primaryDark` navy. |
 | 2026-06-02 | Added a sanctioned **categorical palette** (`cat-1`…`cat-8`), mirroring `chartCategorical`; migrated `InventoryInsightsHeader` onto it as proof | The raw-color burndown found that most surviving raw Tailwind brand colors are *identity* color (device-type tiles, per-module accents), not status. The 14-token vocab had no "N distinct categories" slot, so mechanical migration to `danger`/`info` falsely signalled status. A fixed, non-themed categorical tier reuses the already-blessed chart hues and unblocks a safe sweep. |
+| 2026-06-02 | Completed the burndown: 31 files migrated to **zero** raw brand-color classes (identity→`cat-*`, status→semantic, brand→`primary`/`ring`, neutrals kept); exempted the fixed surfaces (PDF doc builders, auth decorative) | Finishes the work the categorical palette unblocked. Each file was classified by *intent* (status vs identity vs neutral) rather than find-replaced, so no element falsely signals status. Leaves `src/` clean enough that `no-raw-tailwind-colors` can enforce as `error` with only file-level exemptions. |

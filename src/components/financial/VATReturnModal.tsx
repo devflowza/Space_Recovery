@@ -219,19 +219,19 @@ export const VATReturnModal: React.FC<VATReturnModalProps> = ({
             <div className={`rounded-lg p-4 border ${
               summary.netVAT >= 0
                 ? 'bg-info-muted border-info/30'
-                : 'bg-orange-50 border-orange-200'
+                : 'bg-warning-muted border-warning/30'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileCheck className={`w-5 h-5 ${
-                    summary.netVAT >= 0 ? 'text-info' : 'text-orange-600'
+                    summary.netVAT >= 0 ? 'text-info' : 'text-warning'
                   }`} />
                   <span className="font-medium text-slate-900">
                     Net VAT {summary.netVAT >= 0 ? 'Payable' : 'Reclaimable'}
                   </span>
                 </div>
                 <p className={`text-2xl font-bold ${
-                  summary.netVAT >= 0 ? 'text-info' : 'text-orange-700'
+                  summary.netVAT >= 0 ? 'text-info' : 'text-warning'
                 }`}>
                   {formatCurrency(Math.abs(summary.netVAT))}
                 </p>

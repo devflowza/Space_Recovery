@@ -152,7 +152,7 @@ export const UserProfile: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-2xl">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold text-2xl">
                 {profile.full_name
                   .split(' ')
                   .map((n) => n[0])

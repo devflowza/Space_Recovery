@@ -329,7 +329,7 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({
         )}
 
         {entry.digital_signature && (
-          <div className="flex items-center gap-2 text-xs text-teal-700 bg-teal-50 border border-teal-200 rounded p-2">
+          <div className="flex items-center gap-2 text-xs text-cat-2 bg-cat-2/10 border border-cat-2/20 rounded p-2">
             <Lock className="w-4 h-4 flex-shrink-0" />
             <span className="font-semibold">Digitally Signed</span>
             <span className="text-slate-500">•</span>
@@ -614,7 +614,7 @@ export const ChainOfCustodyTab: React.FC<ChainOfCustodyTabProps> = ({
                                   {formatActionType(entry.action_type)}
                                 </h3>
                                 {entry.hash_value && (
-                                  <div className="flex items-center gap-1 text-xs text-teal-600 flex-shrink-0">
+                                  <div className="flex items-center gap-1 text-xs text-cat-2 flex-shrink-0">
                                     <Fingerprint className="w-3 h-3" />
                                     <span>Verified</span>
                                   </div>

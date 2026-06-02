@@ -730,9 +730,9 @@ export const ReportsDashboard: React.FC = () => {
                       <p className="text-xs font-medium text-warning">1-30 Days</p>
                       <p className="text-lg font-bold text-warning">{formatCurrency(agedReceivablesData.totals.thirtyDays)}</p>
                     </div>
-                    <div className="bg-orange-50 rounded-lg p-3 border border-orange-200 text-center">
-                      <p className="text-xs font-medium text-orange-600">31-60 Days</p>
-                      <p className="text-lg font-bold text-orange-900">{formatCurrency(agedReceivablesData.totals.sixtyDays)}</p>
+                    <div className="bg-warning-muted rounded-lg p-3 border border-warning/40 text-center">
+                      <p className="text-xs font-medium text-warning">31-60 Days</p>
+                      <p className="text-lg font-bold text-warning">{formatCurrency(agedReceivablesData.totals.sixtyDays)}</p>
                     </div>
                     <div className="bg-danger-muted rounded-lg p-3 border border-danger/30 text-center">
                       <p className="text-xs font-medium text-danger">61-90 Days</p>
@@ -834,9 +834,9 @@ export const ReportsDashboard: React.FC = () => {
                       <p className="text-xs font-medium text-warning">31-60 Days</p>
                       <p className="text-lg font-bold text-warning">{formatCurrency(agedPayablesData.totals.thirtyDays)}</p>
                     </div>
-                    <div className="bg-orange-50 rounded-lg p-3 border border-orange-200 text-center">
-                      <p className="text-xs font-medium text-orange-600">61-90 Days</p>
-                      <p className="text-lg font-bold text-orange-900">{formatCurrency(agedPayablesData.totals.sixtyDays)}</p>
+                    <div className="bg-warning-muted rounded-lg p-3 border border-warning/40 text-center">
+                      <p className="text-xs font-medium text-warning">61-90 Days</p>
+                      <p className="text-lg font-bold text-warning">{formatCurrency(agedPayablesData.totals.sixtyDays)}</p>
                     </div>
                     <div className="bg-danger-muted rounded-lg p-3 border border-danger/30 text-center">
                       <p className="text-xs font-medium text-danger">91-120 Days</p>

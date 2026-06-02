@@ -288,7 +288,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => toggleActiveMutation.mutate({ id: cat.id, is_active: !cat.is_active })}
-                      className={`text-xs px-2 py-0.5 rounded transition-colors ${cat.is_active ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'text-gray-500 bg-gray-100 hover:bg-gray-200'}`}
+                      className={`text-xs px-2 py-0.5 rounded transition-colors ${cat.is_active ? 'text-success bg-success-muted hover:bg-success/20' : 'text-gray-500 bg-gray-100 hover:bg-gray-200'}`}
                     >
                       {cat.is_active ? 'Active' : 'Inactive'}
                     </button>

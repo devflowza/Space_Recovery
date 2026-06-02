@@ -455,12 +455,12 @@ export const CategoryDetail: React.FC = () => {
                 onClick={() => handleSetDefaultCountry(row.id.toString())}
                 className={`p-2 rounded-lg transition-all hover:scale-110 ${
                   isDefaultCountry
-                    ? 'text-yellow-500 bg-yellow-50'
-                    : 'text-slate-400 hover:text-yellow-500 hover:bg-yellow-50'
+                    ? 'text-cat-4 bg-cat-4/10'
+                    : 'text-slate-400 hover:text-cat-4 hover:bg-cat-4/10'
                 }`}
                 title={isDefaultCountry ? 'Default country' : 'Set as default country'}
               >
-                <Star className={`w-4 h-4 ${isDefaultCountry ? 'fill-yellow-500' : ''}`} />
+                <Star className={`w-4 h-4 ${isDefaultCountry ? 'fill-cat-4' : ''}`} />
               </button>
             )}
             <button
@@ -584,7 +584,7 @@ export const CategoryDetail: React.FC = () => {
               <p className="text-slate-500 text-xs md:text-sm mt-1">Manage your {TABLE_LABELS[activeTable].toLowerCase()}</p>
               {activeTable === 'geo_countries' && defaultCountryId && (
                 <div className="flex items-center gap-2 mt-2">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                  <Star className="w-4 h-4 text-cat-4 fill-cat-4" />
                   <span className="text-sm text-slate-600">
                     Default: <span className="font-semibold text-slate-900">
                       {allItems.find((item) => item.id.toString() === defaultCountryId)?.name || 'None'}

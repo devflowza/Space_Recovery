@@ -155,8 +155,8 @@ export const StockSalesPage: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
-          <div className="p-2.5 rounded-lg bg-teal-50">
-            <TrendingUp className="w-5 h-5 text-teal-600" />
+          <div className="p-2.5 rounded-lg bg-cat-2/10">
+            <TrendingUp className="w-5 h-5 text-cat-2" />
           </div>
           <div>
             <p className="text-sm text-slate-500 font-medium">This Month</p>

@@ -262,8 +262,8 @@ export const AccountFormModal: React.FC<AccountFormModalProps> = ({
         )}
 
         {formData.account_type === 'mobile' && (
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-            <p className="text-sm text-orange-800">
+          <div className="bg-info-muted border border-info/30 rounded-lg p-3">
+            <p className="text-sm text-info">
               Mobile money accounts use the mobile number as the primary identifier instead of an account number.
             </p>
           </div>
