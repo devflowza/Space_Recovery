@@ -6,6 +6,7 @@ import { sanitizeFilterValue } from './postgrestSanitizer';
 import { logger } from './logger';
 import { calculateQuoteTotals, calculateQuoteTotalsBase, roundMoney } from './financialMath';
 import { resolveRateContext, getBaseCurrency, getCurrencyDecimals } from './currencyService';
+import { toDateInputValue } from './format';
 
 type QuoteInsert = Database['public']['Tables']['quotes']['Insert'];
 type QuoteUpdate = Database['public']['Tables']['quotes']['Update'];
@@ -307,6 +308,24 @@ export const fetchQuoteById = async (id: string): Promise<QuoteWithDetails | nul
     customer_associated_company: customerAssociatedCompany,
   } as unknown as QuoteWithDetails;
 };
+
+/**
+ * Build the QuoteFormModal `initialData` from a fetched quote. Normalizes the two
+ * fields the form can't consume from a raw row: the `timestamptz` `valid_until`
+ * is formatted to the `yyyy-MM-dd` a date input needs, and the DB `terms` column
+ * is mapped onto the form's `terms_and_conditions`. Without this the date and
+ * terms render blank on edit (apparent data loss). All other fields pass through,
+ * so once title/client_reference/discount_type/bank_account_id are persisted they
+ * populate automatically.
+ */
+export const toQuoteEditInitialData = (quote: Record<string, unknown>): Record<string, unknown> => ({
+  ...quote,
+  valid_until: toDateInputValue(quote.valid_until as string | null | undefined),
+  terms_and_conditions:
+    (quote.terms_and_conditions as string | null | undefined) ??
+    (quote.terms as string | null | undefined) ??
+    '',
+});
 
 export const getNextQuoteNumber = async () => {
   const { data, error } = await supabase.rpc('get_next_number', {
@@ -896,6 +915,7 @@ export async function bulkSendQuoteEmails(
 export const quotesService = {
   fetchQuotes,
   fetchQuoteById,
+  toQuoteEditInitialData,
   getNextQuoteNumber,
   createQuote,
   updateQuote,

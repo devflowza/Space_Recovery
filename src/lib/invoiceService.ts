@@ -7,6 +7,7 @@ import { sanitizeFilterValue } from './postgrestSanitizer';
 import { calculateInvoiceTotals, calculateInvoiceTotalsBase, convertToBase, roundMoney } from './financialMath';
 import { resolveRateContext, getBaseCurrency, getCurrencyDecimals } from './currencyService';
 import { deriveInvoiceStatus } from './invoiceStatus';
+import { toDateInputValue } from './format';
 
 type InvoiceInsert = Database['public']['Tables']['invoices']['Insert'];
 type InvoiceUpdate = Database['public']['Tables']['invoices']['Update'];
@@ -341,6 +342,25 @@ export const fetchInvoiceById = async (id: string): Promise<InvoiceWithDetails |
     customer_associated_company: customerAssociatedCompany,
   } as unknown as InvoiceWithDetails;
 };
+
+/**
+ * Build the InvoiceFormModal `initialData` from a fetched invoice. Normalizes the
+ * fields the form can't consume from a raw row: the `timestamptz` `invoice_date`
+ * and `due_date` are formatted to the `yyyy-MM-dd` a date input needs, and the DB
+ * `terms` column is mapped onto the form's `terms_and_conditions`. Without this
+ * the dates and terms render blank on edit (apparent data loss). All other fields
+ * pass through, so once title/client_reference/discount_type are persisted they
+ * populate automatically.
+ */
+export const toInvoiceEditInitialData = (invoice: Record<string, unknown>): Record<string, unknown> => ({
+  ...invoice,
+  invoice_date: toDateInputValue(invoice.invoice_date as string | null | undefined),
+  due_date: toDateInputValue(invoice.due_date as string | null | undefined),
+  terms_and_conditions:
+    (invoice.terms_and_conditions as string | null | undefined) ??
+    (invoice.terms as string | null | undefined) ??
+    '',
+});
 
 export const getNextInvoiceNumber = async (_invoiceType?: 'proforma' | 'tax_invoice'): Promise<string> => {
   // Live function signature: get_next_invoice_number() — takes no args.
@@ -1014,6 +1034,7 @@ export async function bulkSendInvoiceEmails(
 export const invoiceService = {
   fetchInvoices,
   fetchInvoiceById,
+  toInvoiceEditInitialData,
   getNextInvoiceNumber,
   createInvoice,
   updateInvoice,

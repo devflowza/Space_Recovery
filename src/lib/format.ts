@@ -156,6 +156,28 @@ export const formatDateTime = (date: string | Date, localeCode?: string): string
   return formatDate(date, 'MMM dd, yyyy HH:mm', localeCode);
 };
 
+/**
+ * Normalize a date value to the `yyyy-MM-dd` string an `<input type="date">`
+ * requires. Postgres `timestamptz` columns come back as full ISO strings
+ * (e.g. "2026-07-03T00:00:00+00:00"); binding one straight into a date input
+ * renders BLANK — which looks like data loss when editing a record. Slices the
+ * leading date portion when present (no timezone shift), else parses defensively.
+ */
+export const toDateInputValue = (value: string | Date | null | undefined): string => {
+  if (!value) return '';
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? '' : dateFnsFormat(value, 'yyyy-MM-dd');
+  }
+  const leading = /^(\d{4}-\d{2}-\d{2})/.exec(value);
+  if (leading) return leading[1];
+  try {
+    const parsed = parseISO(value);
+    return Number.isNaN(parsed.getTime()) ? '' : dateFnsFormat(parsed, 'yyyy-MM-dd');
+  } catch {
+    return '';
+  }
+};
+
 export const formatNumber = (num: number, decimals = 2, localeCode?: string): string => {
   const isArabic = normalizeLang(localeCode) === 'ar';
   return new Intl.NumberFormat(isArabic ? localeCode : DEFAULT_LOCALE, {
