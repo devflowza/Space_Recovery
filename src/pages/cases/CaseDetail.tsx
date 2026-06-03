@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
+import { getNextCaseNumber } from '../../lib/caseService';
 import { ArrowLeft, MessageCircle, Printer, FileText, Tag, CheckCircle2, Copy, User, HardDrive, FileStack, AlertCircle, Calendar, Package, Activity, Settings, History, Users, DollarSign, Trash2, Grid2x2 as Grid, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
@@ -97,6 +99,21 @@ export const CaseDetail: React.FC = () => {
     createPaymentMutation,
     queryClient, navigate, profile, toast,
   } = useCaseMutations({ id, caseData, devices, modals });
+
+  // Reserve the next job number when the duplicate confirmation opens so the
+  // user sees the exact number the copy will receive. get_next_number advances
+  // the sequence, so the reserved number is reused on confirm; cancelling just
+  // leaves a (harmless) gap. staleTime keeps the same number across re-opens.
+  const nextCaseNumberQuery = useQuery({
+    queryKey: ['next_case_number', 'duplicate', id],
+    queryFn: getNextCaseNumber,
+    enabled: modals.showDuplicateModal,
+    staleTime: Infinity,
+    gcTime: 0,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
 
   // Holds a pending submission while the SpaceInsufficientWarningModal asks
   // the user to confirm before we INSERT into clone_drives.
@@ -205,7 +222,7 @@ export const CaseDetail: React.FC = () => {
   };
 
   const handleConfirmDuplicate = () => {
-    duplicateCaseMutation.mutate();
+    duplicateCaseMutation.mutate(nextCaseNumberQuery.data);
   };
 
   const handleDeleteCase = () => {
@@ -781,6 +798,8 @@ export const CaseDetail: React.FC = () => {
           originalCaseNumber={caseData.case_no ?? ''}
           customerName={caseData.customer?.customer_name || 'Unknown'}
           serviceName={caseData.service_type?.name || 'Unknown'}
+          newCaseNumber={nextCaseNumberQuery.data}
+          isGeneratingNumber={nextCaseNumberQuery.isFetching}
           isLoading={duplicateCaseMutation.isPending}
         />
       )}
