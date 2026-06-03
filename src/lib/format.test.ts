@@ -22,6 +22,7 @@ import {
   formatDate,
   formatDateTime,
   formatCurrencyWithConfig,
+  toDateInputValue,
 } from './format';
 import type { CurrencyConfig } from '../types/tenantConfig';
 
@@ -152,5 +153,31 @@ describe('ar path is locale-aware (Gregorian, Western numerals)', () => {
     expect(out).toMatch(/[0-9]/);
     expect(out).not.toMatch(/[٠-٩]/); // no Arabic-Indic digits
     expect(out).toContain('1,234.50');
+  });
+});
+
+describe('toDateInputValue (timestamptz -> yyyy-MM-dd for <input type="date">)', () => {
+  it('slices the date out of a full ISO timestamptz without timezone drift', () => {
+    expect(toDateInputValue('2026-07-03T00:00:00+00:00')).toBe('2026-07-03');
+    expect(toDateInputValue('2026-07-03 00:00:00+00')).toBe('2026-07-03');
+    expect(toDateInputValue('2026-12-31T23:59:59.999Z')).toBe('2026-12-31');
+  });
+
+  it('passes through an already date-only value', () => {
+    expect(toDateInputValue('2026-07-03')).toBe('2026-07-03');
+  });
+
+  it('returns empty string for null/undefined/empty (so the input renders blank, not "Invalid")', () => {
+    expect(toDateInputValue(null)).toBe('');
+    expect(toDateInputValue(undefined)).toBe('');
+    expect(toDateInputValue('')).toBe('');
+  });
+
+  it('formats a Date instance', () => {
+    expect(toDateInputValue(new Date('2026-07-03T12:00:00Z'))).toBe('2026-07-03');
+  });
+
+  it('returns empty string for an unparseable value rather than throwing', () => {
+    expect(toDateInputValue('not-a-date')).toBe('');
   });
 });

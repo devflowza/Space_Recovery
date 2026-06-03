@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchInvoices, getInvoiceStats, createInvoice, updateInvoice } from '../../lib/invoiceService';
+import { fetchInvoices, getInvoiceStats, createInvoice, updateInvoice, toInvoiceEditInitialData } from '../../lib/invoiceService';
 import type { Invoice, InvoiceItem, InvoiceWithDetails } from '../../lib/invoiceService';
 import type { PaymentReceipt } from '../../lib/bankingService';
 import { receiptsService } from '../../lib/receiptsService';
@@ -842,7 +842,7 @@ export const InvoicesListPage: React.FC<unknown> = () => {
           caseId={editingInvoice?.case_id || ''}
           customerId={editingInvoice?.customer_id}
           companyId={editingInvoice?.company_id}
-          initialData={editingInvoice as unknown as Record<string, unknown> | undefined}
+          initialData={editingInvoice ? toInvoiceEditInitialData(editingInvoice as unknown as Record<string, unknown>) : undefined}
           clientReference={editingInvoice?.client_reference}
         />
       )}

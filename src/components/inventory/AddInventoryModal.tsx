@@ -7,6 +7,7 @@ import { SearchableSelect } from '../ui/SearchableSelect';
 import { supabase, getTenantId } from '../../lib/supabaseClient';
 import { useCurrency } from '../../hooks/useCurrency';
 import { logger } from '../../lib/logger';
+import { toDateInputValue } from '../../lib/format';
 import type { Database } from '../../types/database.types';
 
 type InventoryItemInsert = Database['public']['Tables']['inventory_items']['Insert'];
@@ -126,7 +127,7 @@ const AddInventoryModal: React.FC<AddInventoryModalProps> = ({ isOpen, onClose, 
           head_map: item.head_map || '',
           firmware_version: item.firmware_version || '',
           purchase_price: item.purchase_price != null ? item.purchase_price.toString() : '',
-          purchase_date: item.purchase_date || '',
+          purchase_date: toDateInputValue(item.purchase_date),
           condition_id: item.condition_id || '',
           quantity: item.quantity ?? 1,
           location_id: item.location_id || '',

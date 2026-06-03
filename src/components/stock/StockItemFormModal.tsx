@@ -87,8 +87,8 @@ export const StockItemFormModal: React.FC<StockItemFormModalProps> = ({
       setCategoryId(item.category_id ?? null);
       setItemType((item.item_type as 'internal' | 'saleable' | 'both') ?? 'internal');
       setBrand(item.brand ?? '');
-      setModel('');
-      setCapacity('');
+      setModel(item.model ?? '');
+      setCapacity(item.capacity ?? '');
       setUnitOfMeasure(item.unit ?? 'pcs');
       setBarcode(item.barcode ?? '');
       setImageUrl(item.photos?.[0] ?? '');

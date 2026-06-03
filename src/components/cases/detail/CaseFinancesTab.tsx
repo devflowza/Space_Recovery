@@ -7,6 +7,8 @@ import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { getCaseExpenses, getCasePayments, type CaseExpense, type CasePayment, type CaseFinancialSummary } from '@/lib/caseFinanceService';
 import { formatDate } from '@/lib/format';
+import { toQuoteEditInitialData } from '@/lib/quotesService';
+import { toInvoiceEditInitialData } from '@/lib/invoiceService';
 import { useNavigate } from 'react-router-dom';
 
 // Row shapes match the live DB schema (quotes / invoices tables) plus the
@@ -227,7 +229,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                             size="sm"
                             onClick={async () => {
                               const fullQuote = await quotesService.fetchQuoteById(quote.id);
-                              onSetEditingQuote(fullQuote);
+                              onSetEditingQuote(fullQuote ? toQuoteEditInitialData(fullQuote as Record<string, unknown>) : null);
                               onSetShowQuoteModal(true);
                             }}
                             title="Edit Quote"
@@ -361,7 +363,7 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                               size="sm"
                               onClick={async () => {
                                 const fullInvoice = await invoiceService.fetchInvoiceById(invoice.id);
-                                onSetEditingInvoice(fullInvoice);
+                                onSetEditingInvoice(fullInvoice ? toInvoiceEditInitialData(fullInvoice as Record<string, unknown>) : null);
                                 onSetShowInvoiceModal(true);
                               }}
                               title="Edit Invoice"
