@@ -6910,6 +6910,7 @@ export type Database = {
           balance_due_base: number | null
           bank_account_id: string | null
           case_id: string | null
+          client_reference: string | null
           company_id: string | null
           converted_at: string | null
           converted_from_quote_id: string | null
@@ -6920,6 +6921,7 @@ export type Database = {
           customer_id: string | null
           deleted_at: string | null
           discount_amount: number | null
+          discount_type: string
           due_date: string | null
           exchange_rate: number
           footer: string | null
@@ -6942,6 +6944,7 @@ export type Database = {
           tax_rate: number | null
           tenant_id: string
           terms: string | null
+          title: string | null
           total_amount: number | null
           total_amount_base: number | null
           updated_at: string
@@ -6955,6 +6958,7 @@ export type Database = {
           balance_due_base?: number | null
           bank_account_id?: string | null
           case_id?: string | null
+          client_reference?: string | null
           company_id?: string | null
           converted_at?: string | null
           converted_from_quote_id?: string | null
@@ -6965,6 +6969,7 @@ export type Database = {
           customer_id?: string | null
           deleted_at?: string | null
           discount_amount?: number | null
+          discount_type?: string
           due_date?: string | null
           exchange_rate?: number
           footer?: string | null
@@ -6987,6 +6992,7 @@ export type Database = {
           tax_rate?: number | null
           tenant_id: string
           terms?: string | null
+          title?: string | null
           total_amount?: number | null
           total_amount_base?: number | null
           updated_at?: string
@@ -7000,6 +7006,7 @@ export type Database = {
           balance_due_base?: number | null
           bank_account_id?: string | null
           case_id?: string | null
+          client_reference?: string | null
           company_id?: string | null
           converted_at?: string | null
           converted_from_quote_id?: string | null
@@ -7010,6 +7017,7 @@ export type Database = {
           customer_id?: string | null
           deleted_at?: string | null
           discount_amount?: number | null
+          discount_type?: string
           due_date?: string | null
           exchange_rate?: number
           footer?: string | null
@@ -7032,6 +7040,7 @@ export type Database = {
           tax_rate?: number | null
           tenant_id?: string
           terms?: string | null
+          title?: string | null
           total_amount?: number | null
           total_amount_base?: number | null
           updated_at?: string
@@ -10782,7 +10791,9 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          bank_account_id: string | null
           case_id: string | null
+          client_reference: string | null
           company_id: string | null
           converted_to_invoice_id: string | null
           created_at: string
@@ -10791,6 +10802,7 @@ export type Database = {
           customer_id: string | null
           deleted_at: string | null
           discount_amount: number | null
+          discount_type: string
           exchange_rate: number
           id: string
           notes: string | null
@@ -10809,6 +10821,7 @@ export type Database = {
           tax_rate: number | null
           tenant_id: string
           terms: string | null
+          title: string | null
           total_amount: number | null
           total_amount_base: number | null
           updated_at: string
@@ -10818,7 +10831,9 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          bank_account_id?: string | null
           case_id?: string | null
+          client_reference?: string | null
           company_id?: string | null
           converted_to_invoice_id?: string | null
           created_at?: string
@@ -10827,6 +10842,7 @@ export type Database = {
           customer_id?: string | null
           deleted_at?: string | null
           discount_amount?: number | null
+          discount_type?: string
           exchange_rate?: number
           id?: string
           notes?: string | null
@@ -10845,6 +10861,7 @@ export type Database = {
           tax_rate?: number | null
           tenant_id: string
           terms?: string | null
+          title?: string | null
           total_amount?: number | null
           total_amount_base?: number | null
           updated_at?: string
@@ -10854,7 +10871,9 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          bank_account_id?: string | null
           case_id?: string | null
+          client_reference?: string | null
           company_id?: string | null
           converted_to_invoice_id?: string | null
           created_at?: string
@@ -10863,6 +10882,7 @@ export type Database = {
           customer_id?: string | null
           deleted_at?: string | null
           discount_amount?: number | null
+          discount_type?: string
           exchange_rate?: number
           id?: string
           notes?: string | null
@@ -10881,6 +10901,7 @@ export type Database = {
           tax_rate?: number | null
           tenant_id?: string
           terms?: string | null
+          title?: string | null
           total_amount?: number | null
           total_amount_base?: number | null
           updated_at?: string
@@ -10888,6 +10909,13 @@ export type Database = {
           valid_until?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "quotes_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quotes_case_id_fkey"
             columns: ["case_id"]

@@ -7,6 +7,7 @@ import {
   deleteQuote,
   duplicateQuote,
   updateQuote,
+  toQuoteEditInitialData,
 } from '../../lib/quotesService';
 import type { Quote } from '../../lib/quotesService';
 import { PageHeader } from '../../components/shared/PageHeader';
@@ -770,7 +771,7 @@ export const QuoteDetailPage: React.FC = () => {
           caseId={quote.case_id}
           customerId={quote.customer_id}
           companyId={quote.company_id}
-          initialData={quote as unknown as Record<string, unknown>}
+          initialData={quote ? toQuoteEditInitialData(quote as unknown as Record<string, unknown>) : undefined}
           clientReference={quote.client_reference}
         />
       )}

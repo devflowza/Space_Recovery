@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchQuotes, getQuoteStats } from '../../lib/quotesService';
+import { fetchQuotes, getQuoteStats, toQuoteEditInitialData } from '../../lib/quotesService';
 import type { QuoteWithDetails } from '../../lib/quotesService';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -806,7 +806,7 @@ export const QuotesListPage: React.FC = () => {
           caseId={editingQuote?.case_id || ''}
           customerId={editingQuote?.customer_id}
           companyId={editingQuote?.company_id}
-          initialData={editingQuote ? (editingQuote as unknown as Record<string, unknown>) : undefined}
+          initialData={editingQuote ? toQuoteEditInitialData(editingQuote as unknown as Record<string, unknown>) : undefined}
           clientReference={editingQuote?.client_reference}
         />
       )}

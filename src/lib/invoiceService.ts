@@ -32,10 +32,10 @@ export interface InvoiceItem {
   sort_order?: number;
 }
 
-// Caller-facing Invoice shape. Several fields (title, client_reference, terms_and_conditions,
-// discount_type, template_id, accounting_locale_id, currency_id, internal_notes, payment_terms,
-// quote_id) no longer exist in the DB but are still consumed by InvoiceFormModal etc.
-// TODO(B8): migrate callers off these fields, then drop them from this interface.
+// Caller-facing Invoice shape. A few fields remain UI-only (internal_notes,
+// payment_terms, template_id, accounting_locale_id, currency_id) and
+// `terms_and_conditions` maps to the DB `terms` column; title/client_reference/
+// discount_type are now persisted columns.
 export interface Invoice {
   id?: string;
   invoice_number?: string;
@@ -43,17 +43,14 @@ export interface Invoice {
   customer_id?: string | null;
   company_id?: string | null;
   invoice_type: 'proforma' | 'tax_invoice';
-  /** @deprecated TODO(B8): not persisted — invoices table has no `title` column */
   title?: string;
   invoice_date: string;
   due_date: string;
   status: string;
-  /** @deprecated TODO(B8): not persisted — invoices table has no `client_reference` column */
   client_reference?: string;
   subtotal?: number;
   tax_rate?: number;
   tax_amount?: number;
-  /** @deprecated TODO(B8): not persisted — invoices table has no `discount_type` column */
   discount_type?: 'fixed' | 'percentage';
   discount_amount?: number;
   total_amount?: number;
@@ -150,9 +147,12 @@ const pickInvoicePersistFields = (input: Partial<Invoice>): InvoiceUpdate => {
   if (input.tax_rate !== undefined) out.tax_rate = input.tax_rate;
   if (input.tax_amount !== undefined) out.tax_amount = input.tax_amount;
   if (input.discount_amount !== undefined) out.discount_amount = input.discount_amount;
+  if (input.discount_type !== undefined) out.discount_type = input.discount_type;
   if (input.total_amount !== undefined) out.total_amount = input.total_amount;
   if (input.amount_paid !== undefined) out.amount_paid = input.amount_paid;
   if (input.balance_due !== undefined) out.balance_due = input.balance_due;
+  if (input.title !== undefined) out.title = input.title;
+  if (input.client_reference !== undefined) out.client_reference = input.client_reference;
   if (input.notes !== undefined) out.notes = input.notes;
   if (input.bank_account_id !== undefined) out.bank_account_id = input.bank_account_id;
   if (input.currency !== undefined) out.currency = input.currency;

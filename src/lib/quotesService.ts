@@ -13,10 +13,11 @@ type QuoteUpdate = Database['public']['Tables']['quotes']['Update'];
 type QuoteItemRow = Database['public']['Tables']['quote_items']['Row'];
 type QuoteItemInsert = Database['public']['Tables']['quote_items']['Insert'];
 
-// FK-safe UUID fields. `template_id`, `accounting_locale_id`, `bank_account_id` were removed
-// from the `quotes` schema in v1.0.0 — kept here only because callers may still pass them
-// via Partial<Quote>. They are stripped in pickQuotePersistFields() before any DB write.
-const QUOTE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'approved_by', 'converted_to_invoice_id'];
+// FK-safe UUID fields — coerced empty-string -> null before any DB write so an
+// unset <select> can't trip the uuid cast (22P02). `template_id` /
+// `accounting_locale_id` remain non-persisted (no columns) and are dropped by
+// pickQuotePersistFields(); `bank_account_id` is now a real FK column.
+const QUOTE_UUID_FIELDS = ['customer_id', 'company_id', 'case_id', 'created_by', 'approved_by', 'converted_to_invoice_id', 'bank_account_id'];
 const sanitizeUuidFields = <T extends Record<string, unknown>>(data: T): T =>
   sanitizeUuids(data, QUOTE_UUID_FIELDS) as T;
 
@@ -30,10 +31,10 @@ export interface QuoteItem {
   sort_order?: number;
 }
 
-// Caller-facing Quote shape. Several fields (title, description, terms_and_conditions,
-// discount_type, template_id, accounting_locale_id, bank_account_id) no longer exist in
-// the DB but are still consumed by QuoteFormModal, QuoteDocument, etc.
-// TODO(B8): migrate callers off these fields, then drop them from this interface.
+// Caller-facing Quote shape. A few fields remain UI-only (description,
+// template_id, accounting_locale_id, converted_to_case_id) and `terms_and_conditions`
+// maps to the DB `terms` column; title/client_reference/discount_type/bank_account_id
+// are now persisted columns.
 export interface Quote {
   id?: string;
   quote_number?: string;
@@ -41,18 +42,15 @@ export interface Quote {
   customer_id: string | null;
   company_id: string | null;
   status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
-  /** @deprecated TODO(B8): not persisted — quotes table has no `title` column */
   title?: string;
   /** @deprecated TODO(B8): not persisted — quotes table has no `description` column */
   description?: string;
   valid_until?: string;
-  /** @deprecated TODO(B8): not persisted — quotes table has no `client_reference` column */
   client_reference?: string;
   subtotal?: number;
   tax_rate?: number;
   tax_amount?: number;
   discount_amount?: number;
-  /** @deprecated TODO(B8): not persisted — quotes table has no `discount_type` column */
   discount_type?: 'amount' | 'percentage' | 'fixed';
   total_amount?: number;
   /** @deprecated TODO(B8): not persisted — quotes table column is `terms`, not `terms_and_conditions` */
@@ -68,7 +66,6 @@ export interface Quote {
   template_id?: string | null;
   /** @deprecated TODO(B8): not persisted — quotes table has no `accounting_locale_id` column */
   accounting_locale_id?: string | null;
-  /** @deprecated TODO(B8): not persisted — quotes table has no `bank_account_id` column */
   bank_account_id?: string | null;
   currency?: string | null;
   /** Frozen documentCurrency->base rate. Optional manual override; otherwise snapshotted by the service. */
@@ -134,7 +131,11 @@ const pickQuotePersistFields = (input: Partial<Quote>): QuoteUpdate => {
   if (input.tax_rate !== undefined) out.tax_rate = input.tax_rate;
   if (input.tax_amount !== undefined) out.tax_amount = input.tax_amount;
   if (input.discount_amount !== undefined) out.discount_amount = input.discount_amount;
+  if (input.discount_type !== undefined) out.discount_type = input.discount_type;
   if (input.total_amount !== undefined) out.total_amount = input.total_amount;
+  if (input.title !== undefined) out.title = input.title;
+  if (input.client_reference !== undefined) out.client_reference = input.client_reference;
+  if (input.bank_account_id !== undefined) out.bank_account_id = input.bank_account_id;
   if (input.notes !== undefined) out.notes = input.notes;
   if (input.created_by !== undefined) out.created_by = input.created_by;
   if (input.approved_by !== undefined) out.approved_by = input.approved_by;
