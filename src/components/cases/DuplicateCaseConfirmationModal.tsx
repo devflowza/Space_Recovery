@@ -1,5 +1,5 @@
 import React from 'react';
-import { Copy, AlertTriangle, Info } from 'lucide-react';
+import { Copy, AlertTriangle, Info, Loader2 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 
@@ -10,6 +10,10 @@ interface DuplicateCaseConfirmationModalProps {
   originalCaseNumber: string;
   customerName: string;
   serviceName: string;
+  /** The job number reserved for the new case, shown before confirming. */
+  newCaseNumber?: string | null;
+  /** True while the new job number is still being reserved. */
+  isGeneratingNumber?: boolean;
   isLoading?: boolean;
 }
 
@@ -20,8 +24,11 @@ export const DuplicateCaseConfirmationModal: React.FC<DuplicateCaseConfirmationM
   originalCaseNumber,
   customerName,
   serviceName,
+  newCaseNumber,
+  isGeneratingNumber = false,
   isLoading = false,
 }) => {
+  const canConfirm = !isLoading && !isGeneratingNumber && !!newCaseNumber;
   return (
     <Modal
       isOpen={isOpen}
@@ -34,9 +41,26 @@ export const DuplicateCaseConfirmationModal: React.FC<DuplicateCaseConfirmationM
         <div className="flex gap-2">
           <Info className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
           <p className="text-sm text-info">
-            This will create an exact copy of the case with a new job number. The original case will not be changed.
+            This will create an exact copy of the case. The original case will not be changed.
           </p>
         </div>
+      </div>
+
+      {/* Prominent preview of the job number the new case will be assigned. */}
+      <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-4 text-center">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">New Job Number</p>
+        {isGeneratingNumber ? (
+          <span className="mt-1.5 inline-flex items-center gap-2 text-sm text-slate-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Generating…
+          </span>
+        ) : newCaseNumber ? (
+          <p className="mt-1 text-2xl font-bold tracking-tight text-primary">#{newCaseNumber}</p>
+        ) : (
+          <p className="mt-1.5 text-sm text-danger">
+            Couldn't generate a job number. Please close and try again.
+          </p>
+        )}
       </div>
 
       <div className="space-y-3 mb-4">
@@ -73,7 +97,7 @@ export const DuplicateCaseConfirmationModal: React.FC<DuplicateCaseConfirmationM
         </Button>
         <Button
           onClick={onConfirm}
-          disabled={isLoading}
+          disabled={!canConfirm}
           style={{ backgroundColor: 'rgb(var(--color-primary))' }}
           className="flex items-center gap-2"
         >

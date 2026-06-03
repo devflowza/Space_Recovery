@@ -473,7 +473,9 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
   });
 
   const duplicateCaseMutation = useMutation({
-    mutationFn: async () => {
+    // `caseNumber` is the number already reserved + shown in the confirmation
+    // modal, so the assigned number matches what the user saw.
+    mutationFn: async (caseNumber?: string) => {
       if (!caseData) throw new Error('Case data is required to duplicate');
       const tenantId = requireTenantId(profile?.tenant_id);
 
@@ -490,6 +492,7 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
         },
         devices,
         { id: profile?.id ?? null, tenantId },
+        caseNumber,
       );
     },
     onSuccess: (newCase) => {

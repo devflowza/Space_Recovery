@@ -84,21 +84,43 @@ export interface DuplicateCaseSource {
 }
 
 /**
- * Duplicate a case: generate a new case number, insert a fresh case copied from
- * the source, and copy its devices. Returns the new case row. Extracted verbatim
- * from useCaseMutations.duplicateCaseMutation so the case data layer has a real
- * service seam. tenant_id is resolved by the caller from the active session.
+ * Reserve the next case/job number from the canonical `case` sequence — the
+ * SAME scope `CreateCaseWizard` uses (`get_next_number({ p_scope: 'case' })`).
+ *
+ * The legacy `get_next_case_number()` RPC resolves `get_next_number('cases')`
+ * (plural), a separate counter row. Duplication used to call it, so duplicated
+ * cases were numbered from an orphaned sequence — the live `case` sequence never
+ * advanced and the prefix/value diverged (e.g. `CASE-0005` instead of `C-0020`).
+ * Calling this keeps duplicates in the one true case-number sequence.
+ */
+export async function getNextCaseNumber(): Promise<string> {
+  const { data, error } = await supabase.rpc('get_next_number', { p_scope: 'case' });
+  if (error) {
+    logger.error('Error getting next case number:', error);
+    throw new Error('Failed to get next case number');
+  }
+  if (!data) {
+    throw new Error('Failed to get next case number');
+  }
+  return data;
+}
+
+/**
+ * Duplicate a case: assign a new case number, insert a fresh case copied from
+ * the source, and copy its devices. Returns the new case row. tenant_id is
+ * resolved by the caller from the active session.
+ *
+ * `caseNumber` lets the caller pass a number already reserved via
+ * `getNextCaseNumber()` (e.g. shown in the confirmation modal) so the displayed
+ * number is exactly the one assigned; when omitted, one is reserved here.
  */
 export async function duplicateCase(
   source: DuplicateCaseSource,
   devices: DuplicateDeviceSource[],
   actor: { id?: string | null; tenantId: string },
+  caseNumber?: string,
 ): Promise<CaseRow> {
-  const { data: nextCaseNumber, error: numberError } = await supabase.rpc('get_next_case_number');
-  if (numberError) {
-    logger.error('Error getting next case number:', numberError);
-    throw new Error('Failed to get next case number');
-  }
+  const nextCaseNumber = caseNumber ?? (await getNextCaseNumber());
 
   const newCaseData: CaseInsert = {
     tenant_id: actor.tenantId,

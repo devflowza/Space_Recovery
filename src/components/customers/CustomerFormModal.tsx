@@ -379,6 +379,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 options={customerGroups.map((g) => ({ id: g.id, name: g.name }))}
                 placeholder="Select type"
                 clearable={false}
+                usePortal
               />
               <SearchableSelect
                 label="Company"
@@ -392,6 +393,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 onAddNew={() => setIsAddCompanyModalOpen(true)}
                 addNewLabel="Add New Company"
                 clearable={false}
+                usePortal
               />
             </div>
           </div>
@@ -411,6 +413,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                   options={countries.map((c) => ({ id: c.id, name: c.name }))}
                   placeholder="Select country"
                   clearable={false}
+                  usePortal
                 />
                 <SearchableSelect
                   label="City"
@@ -420,6 +423,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                   placeholder="Select city"
                   disabled={!formData.country_id}
                   clearable={false}
+                  usePortal
                 />
               </div>
 
