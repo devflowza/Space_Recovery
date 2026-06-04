@@ -7,6 +7,7 @@
   import noBannedEmbeds from './eslint-rules/no-banned-embeds-in-select.js';
   import noUntranslatedJsxText from './eslint-rules/no-untranslated-jsx-text.js';
   import noRawTailwindColors from './eslint-rules/no-raw-tailwind-colors.js';
+  import noRawStyleColors from './eslint-rules/no-raw-style-colors.js';
 
   // Hoisted so the main config and the fixed-surface override below share one
   // identical xsuite plugin object (flat config resolves plugin rules per block).
@@ -15,6 +16,7 @@
       'no-banned-embeds-in-select': noBannedEmbeds,
       'no-untranslated-jsx-text': noUntranslatedJsxText,
       'no-raw-tailwind-colors': noRawTailwindColors,
+      'no-raw-style-colors': noRawStyleColors,
     },
   };
 
@@ -70,6 +72,11 @@
         // --max-warnings, so the ~1,684 pre-existing hardcoded strings warn
         // without failing CI, while NEW untranslated JSX text surfaces in review.
         'xsuite/no-untranslated-jsx-text': 'warn',
+        // Non-blocking (warn), same convention: surfaces raw inline-style hex
+        // colors (e.g. a hardcoded button bg) that the class-based
+        // no-raw-tailwind-colors rule cannot see. Ratchet to error once the
+        // remaining decorative gradients migrate to tokens/cat-*.
+        'xsuite/no-raw-style-colors': 'warn',
         '@typescript-eslint/no-unused-vars': ['error', {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
@@ -110,6 +117,9 @@
         'src/components/auth/shared/constants.ts',
       ],
       plugins: { 'xsuite': xsuitePlugin },
-      rules: { 'xsuite/no-raw-tailwind-colors': 'off' },
+      rules: {
+        'xsuite/no-raw-tailwind-colors': 'off',
+        'xsuite/no-raw-style-colors': 'off',
+      },
     }
   );

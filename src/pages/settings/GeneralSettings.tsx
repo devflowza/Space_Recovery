@@ -967,7 +967,7 @@ export const GeneralSettings: React.FC = () => {
         <CollapsibleSection
           title="Legal & Compliance"
           icon={Shield}
-          color="rgb(var(--color-accent))"
+          color="#1e40af"
           fieldCount={5}
           isOpen={openSections.has('legal_compliance')}
           onToggle={() => toggleSection('legal_compliance')}
@@ -1408,7 +1408,7 @@ export const GeneralSettings: React.FC = () => {
         <CollapsibleSection
           title="Clone Drive Defaults"
           icon={HardDrive}
-          color="rgb(var(--color-accent))"
+          color="#0d9488"
           fieldCount={3}
           isOpen={openSections.has('clone_defaults')}
           onToggle={() => toggleSection('clone_defaults')}
