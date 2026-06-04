@@ -290,7 +290,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
           }
         }
 
-        const activeCaseId = caseId || selectedCaseId;
+        const activeCaseId = selectedCaseId || caseId;
         if (activeCaseId) {
           const { data } = await supabase
             .from('cases')
@@ -449,7 +449,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const activeCaseId = caseId || selectedCaseId;
+    const activeCaseId = selectedCaseId || caseId;
     if (!activeCaseId) {
       toast.error('Select which case this invoice is for');
       return;

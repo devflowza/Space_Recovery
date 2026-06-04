@@ -1214,6 +1214,9 @@ export const CaseDetail: React.FC = () => {
               const lineItems = items as InvoiceItemShape[];
               if (editingInvoiceId) {
                 await updateInvoiceService(editingInvoiceId, {
+                  case_id: payload.case_id,
+                  customer_id: payload.customer_id,
+                  company_id: payload.company_id,
                   title: payload.title,
                   invoice_type: payload.invoice_type,
                   invoice_date: payload.invoice_date,
