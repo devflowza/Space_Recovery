@@ -695,15 +695,18 @@ export const InvoicesListPage: React.FC<unknown> = () => {
                               if (!invoice.id) return;
                               const { data, error } = await supabase
                                 .from('invoices')
-                                .select(`
-                                  *,
-                                  invoice_line_items (*)
-                                `)
+                                .select('*')
                                 .eq('id', invoice.id)
                                 .maybeSingle();
 
                               if (!error && data) {
-                                setEditingInvoice(data as unknown as InvoiceWithDetails);
+                                const { data: items } = await supabase
+                                  .from('invoice_line_items')
+                                  .select('*')
+                                  .eq('invoice_id', invoice.id)
+                                  .is('deleted_at', null)
+                                  .order('sort_order', { ascending: true });
+                                setEditingInvoice({ ...data, invoice_line_items: items ?? [] } as unknown as InvoiceWithDetails);
                                 setShowInvoiceModal(true);
                               }
                             }}

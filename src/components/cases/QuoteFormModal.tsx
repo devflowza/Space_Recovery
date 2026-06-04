@@ -221,7 +221,10 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
     } else {
       setLineItems([{ description: '', quantity: 1, unit_price: 0, unit: 'Service' }]);
     }
-  }, [initialData]);
+    // Re-seed only when the edited document changes — keying on object identity
+    // re-fired on every parent re-render and clobbered edits / quote-import items.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.id]);
 
   const { data: lineItemTemplates = [], isLoading: catalogLoading } = useQuery<LineItemTemplate[]>({
     queryKey: ['quote_line_item_templates'],
@@ -395,9 +398,11 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
     setIsSubmitting(true);
     try {
       const selectedCase = cases.find(c => c.id === activeCaseId);
+      const editingId = asString(initialData?.id);
       await onSave(
         {
           ...quoteData,
+          id: editingId,
           case_id: activeCaseId,
           customer_id: customerId || selectedCase?.customer_id || null,
           company_id: companyId || selectedCase?.company_id || null,

@@ -617,15 +617,18 @@ export const QuotesListPage: React.FC = () => {
                               if (!quote.id) return;
                               const { data, error } = await supabase
                                 .from('quotes')
-                                .select(`
-                                  *,
-                                  quote_items (*)
-                                `)
+                                .select('*')
                                 .eq('id', quote.id)
                                 .maybeSingle();
 
                               if (!error && data) {
-                                setEditingQuote(data as unknown as QuoteWithDetails);
+                                const { data: items } = await supabase
+                                  .from('quote_items')
+                                  .select('*')
+                                  .eq('quote_id', quote.id)
+                                  .is('deleted_at', null)
+                                  .order('sort_order', { ascending: true });
+                                setEditingQuote({ ...data, quote_items: items ?? [] } as unknown as QuoteWithDetails);
                                 setShowQuoteModal(true);
                               }
                             }}

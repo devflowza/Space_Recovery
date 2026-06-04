@@ -182,7 +182,9 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     } else {
       setLineItems([{ description: '', quantity: 1, unit_price: 0, unit: 'Service' }]);
     }
-  }, [initialData]);
+    // Re-seed only when the edited document changes (see QuoteFormModal note).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(initialData as { id?: string } | undefined)?.id]);
 
   const { data: lineItemTemplates = [], isLoading: catalogLoading } = useQuery<LineItemTemplate[]>({
     queryKey: ['invoice_line_item_templates'],
@@ -332,10 +334,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
 
     const { data: quoteData, error } = await supabase
       .from('quotes')
-      .select(`
-        *,
-        quote_items (*)
-      `)
+      .select('*')
       .eq('id', quoteId)
       .maybeSingle();
 
@@ -344,8 +343,17 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
       return;
     }
 
-    if (quoteData.quote_items && quoteData.quote_items.length > 0) {
-      const items = quoteData.quote_items.map((item) => ({
+    // Read the quote's LIVE items only — quote_items are soft-deleted on edit, and
+    // an embedded `quote_items (*)` would resurface deleted rows as duplicate lines.
+    const { data: quoteItems } = await supabase
+      .from('quote_items')
+      .select('*')
+      .eq('quote_id', quoteId)
+      .is('deleted_at', null)
+      .order('sort_order', { ascending: true });
+
+    if (quoteItems && quoteItems.length > 0) {
+      const items = quoteItems.map((item) => ({
         description: item.description,
         quantity: item.quantity ?? 1,
         unit_price: item.unit_price,
@@ -465,9 +473,11 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     setIsSubmitting(true);
     try {
       const selectedCase = cases.find(c => c.id === activeCaseId);
+      const editingId = (initialData as { id?: string } | undefined)?.id;
 
       const invoicePayload = {
         ...invoiceData,
+        id: editingId,
         case_id: activeCaseId,
         customer_id: customerId || selectedCase?.customer_id || null,
         company_id: companyId || selectedCase?.company_id || null,

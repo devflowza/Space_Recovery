@@ -620,7 +620,8 @@ export const QuoteDetailPage: React.FC = () => {
                     const { data: existingItems } = await supabase
                       .from('quote_items')
                       .select('*')
-                      .eq('quote_id', id!);
+                      .eq('quote_id', id!)
+                      .is('deleted_at', null);
                     const current = (existingItems ?? []).map((i) => ({
                       description: i.description,
                       quantity: i.quantity ?? 0,

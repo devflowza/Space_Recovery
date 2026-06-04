@@ -98,6 +98,7 @@ export async function getChecklistItems(checklistId: string) {
     .from('onboarding_checklist_items')
     .select('*')
     .eq('checklist_id', checklistId)
+    .is('deleted_at', null)
     .order('order_index');
 
   if (error) throw error;
