@@ -397,18 +397,15 @@ export default function InventoryDetailModal({
                       </span>
                       {assignment.usage_result && (
                         <Badge
-                          variant="default"
-                          style={{
-                            backgroundColor:
-                              assignment.usage_result === 'working'
-                                ? '#10B981'
-                                : assignment.usage_result === 'defective'
-                                ? '#EF4444'
-                                : '#6B7280',
-                            color: '#fff',
-                            fontSize: '10px',
-                            padding: '2px 6px'
-                          }}
+                          variant={
+                            assignment.usage_result === 'working'
+                              ? 'success'
+                              : assignment.usage_result === 'defective'
+                              ? 'danger'
+                              : 'default'
+                          }
+                          size="sm"
+                          className="text-xxs px-1.5 py-0.5"
                         >
                           {assignment.usage_result}
                         </Badge>
