@@ -31,3 +31,7 @@ cases-errors.txt
 
 # Local agent worktrees
 .claude/worktrees/
+
+# Python bytecode (skills under .claude/skills generate these at runtime)
+__pycache__/
+*.pyc

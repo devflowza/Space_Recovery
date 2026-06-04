@@ -27,6 +27,7 @@
         'dist/**',
         'node_modules/**',
         '.claude/worktrees/**',
+        '.claude/skills/**',
         'supabase/functions/**',
         'scripts/**',
         'eslint-rules/**',
