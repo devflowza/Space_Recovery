@@ -800,6 +800,9 @@ export const InvoicesListPage: React.FC<unknown> = () => {
             const invoicePayload = invoiceData as Partial<Invoice>;
             if (editingInvoice && editingInvoice.id) {
               await updateInvoice(editingInvoice.id, {
+                case_id: invoicePayload.case_id,
+                customer_id: invoicePayload.customer_id,
+                company_id: invoicePayload.company_id,
                 title: invoicePayload.title,
                 invoice_type: invoicePayload.invoice_type,
                 invoice_date: invoicePayload.invoice_date,
