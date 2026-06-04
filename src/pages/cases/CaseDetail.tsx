@@ -1109,7 +1109,6 @@ export const CaseDetail: React.FC = () => {
               const stateEditingId = (modals.editingQuote as { id?: string } | null)?.id;
               const payloadEditingId = typeof quoteData.id === 'string' && quoteData.id ? quoteData.id : undefined;
               const editingQuoteId = payloadEditingId ?? stateEditingId;
-              console.warn('[DOC-SAVE-DIAG] CaseDetail.quote.onSave', { stateEditingId, payloadEditingId, decision: editingQuoteId ? 'UPDATE' : 'CREATE' });
               if (editingQuoteId) {
                 // Edit path — patch quote + replace line items inline
                 const updatePayload: Database['public']['Tables']['quotes']['Update'] = {
@@ -1213,7 +1212,6 @@ export const CaseDetail: React.FC = () => {
               const payloadEditingId = typeof payload.id === 'string' && payload.id ? payload.id : undefined;
               const editingInvoiceId = payloadEditingId ?? stateEditingId;
               const lineItems = items as InvoiceItemShape[];
-              console.warn('[DOC-SAVE-DIAG] CaseDetail.invoice.onSave', { stateEditingId, payloadEditingId, decision: editingInvoiceId ? 'UPDATE' : 'CREATE' });
               if (editingInvoiceId) {
                 await updateInvoiceService(editingInvoiceId, {
                   title: payload.title,

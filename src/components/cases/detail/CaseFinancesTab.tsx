@@ -230,7 +230,6 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                             onClick={async () => {
                               const fullQuote = await quotesService.fetchQuoteById(quote.id);
                               const editData = fullQuote ? toQuoteEditInitialData(fullQuote as Record<string, unknown>) : null;
-                              console.warn('[DOC-SAVE-DIAG] editQuote.open', { clickedId: quote.id, fetchedId: (fullQuote as { id?: string } | null)?.id, editDataId: (editData as { id?: string } | null)?.id });
                               onSetEditingQuote(editData);
                               onSetShowQuoteModal(true);
                             }}
@@ -373,7 +372,6 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
                               onClick={async () => {
                                 const fullInvoice = await invoiceService.fetchInvoiceById(invoice.id);
                                 const editData = fullInvoice ? toInvoiceEditInitialData(fullInvoice as Record<string, unknown>) : null;
-                                console.warn('[DOC-SAVE-DIAG] editInvoice.open', { clickedId: invoice.id, fetchedId: (fullInvoice as { id?: string } | null)?.id, editDataId: (editData as { id?: string } | null)?.id });
                                 onSetEditingInvoice(editData);
                                 onSetShowInvoiceModal(true);
                               }}

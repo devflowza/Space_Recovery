@@ -8,6 +8,7 @@
   import noUntranslatedJsxText from './eslint-rules/no-untranslated-jsx-text.js';
   import noRawTailwindColors from './eslint-rules/no-raw-tailwind-colors.js';
   import noRawStyleColors from './eslint-rules/no-raw-style-colors.js';
+  import noUnfilteredItemEmbed from './eslint-rules/no-unfiltered-item-embed.js';
 
   // Hoisted so the main config and the fixed-surface override below share one
   // identical xsuite plugin object (flat config resolves plugin rules per block).
@@ -17,6 +18,7 @@
       'no-untranslated-jsx-text': noUntranslatedJsxText,
       'no-raw-tailwind-colors': noRawTailwindColors,
       'no-raw-style-colors': noRawStyleColors,
+      'no-unfiltered-item-embed': noUnfilteredItemEmbed,
     },
   };
 
@@ -67,6 +69,7 @@
           ],
         }],
         'xsuite/no-banned-embeds-in-select': 'error',
+        'xsuite/no-unfiltered-item-embed': 'error',
         'xsuite/no-raw-tailwind-colors': 'error',
         // Non-blocking (warn): the lint gate runs `eslint .` with no
         // --max-warnings, so the ~1,684 pre-existing hardcoded strings warn

@@ -140,10 +140,7 @@ export const InvoiceDetailPage: React.FC = () => {
     // query returns the document-shaped invoice without an editable item array).
     const { data, error } = await supabase
       .from('invoices')
-      .select(`
-        *,
-        invoice_line_items (*)
-      `)
+      .select('*')
       .eq('id', id)
       .maybeSingle();
 
@@ -152,7 +149,14 @@ export const InvoiceDetailPage: React.FC = () => {
       toast.error('Failed to load invoice for editing.');
       return;
     }
-    setEditingInvoice(data as unknown as InvoiceWithDetails);
+    // LIVE line items only — soft-deleted rows must not resurface on edit.
+    const { data: items } = await supabase
+      .from('invoice_line_items')
+      .select('*')
+      .eq('invoice_id', id)
+      .is('deleted_at', null)
+      .order('sort_order', { ascending: true });
+    setEditingInvoice({ ...data, invoice_line_items: items ?? [] } as unknown as InvoiceWithDetails);
     setShowEditModal(true);
   };
 

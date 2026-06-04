@@ -679,15 +679,21 @@ export const convertQuoteToInvoice = async (
 ) => {
   const { data: quote, error: quoteError } = await supabase
     .from('quotes')
-    .select(`
-      *,
-      quote_items (*)
-    `)
+    .select('*')
     .eq('id', quoteId)
     .maybeSingle();
 
   if (quoteError) throw quoteError;
   if (!quote) throw new Error('Quote not found');
+
+  // LIVE items only — quote_items are soft-deleted on edit; an embedded read would
+  // copy deleted rows into the converted invoice.
+  const { data: quoteItems } = await supabase
+    .from('quote_items')
+    .select('*')
+    .eq('quote_id', quoteId)
+    .is('deleted_at', null)
+    .order('sort_order', { ascending: true });
 
   if (!quote.case_id) {
     throw new Error('Quote must be linked to a case to convert to invoice');
@@ -712,7 +718,7 @@ export const convertQuoteToInvoice = async (
     ...additionalData,
   };
 
-  const items: InvoiceItem[] = (quote.quote_items ?? []).map((item) => ({
+  const items: InvoiceItem[] = (quoteItems ?? []).map((item) => ({
     description: item.description,
     quantity: item.quantity ?? 0,
     unit_price: item.unit_price,

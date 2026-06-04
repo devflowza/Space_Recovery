@@ -94,6 +94,7 @@ export const PortalQuotes: React.FC = () => {
         .from('case_quote_items')
         .select('id, description, quantity, unit_price, total_price')
         .eq('quote_id', selectedQuote.id)
+        .is('deleted_at', null)
         .order('sort_order');
 
       if (error) throw error;
