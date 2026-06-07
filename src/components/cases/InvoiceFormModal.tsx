@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Trash2, Search, FileText, Download, DollarSign, FileBarChart, Briefcase, Calculator, Package, Info, X, Percent } from 'lucide-react';
+import { Plus, Trash2, Search, FileText, Download, DollarSign, FileBarChart, Briefcase, Calculator, Package, Info, X, Percent, Lock } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
@@ -11,6 +11,7 @@ import { useToast } from '../../hooks/useToast';
 import { logger } from '../../lib/logger';
 import { getSupportedCurrencies, getBaseCurrency, getConversionRate, type SupportedCurrency } from '../../lib/currencyService';
 import { formatCurrency, formatBaseEquivalent } from '../../lib/format';
+import { getInvoiceEditability } from '../../lib/invoicePermissions';
 
 interface LineItemTemplate {
   id: string;
@@ -44,6 +45,10 @@ interface InvoiceInitialData {
   invoice_number?: string;
   invoice_line_items?: InvoiceLineItem[];
   currency?: string;
+  payment_status?: string | null;
+  amount_paid?: number | null;
+  total_amount?: number | null;
+  balance_due?: number | null;
 }
 
 interface QuoteOption {
@@ -489,6 +494,14 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     }
   };
 
+  // Restricted-edit business rule: a financially-locked invoice (issued or with
+  // payments) allows only non-financial fields. Form disables the rest; the
+  // updateInvoice service enforces it server-side too.
+  const editability = initialData
+    ? getInvoiceEditability(initialData)
+    : ({ mode: 'full', isLocked: false, editableFields: 'all', reason: '' } as const);
+  const isRestricted = editability.mode === 'restricted';
+
   const headerBadges = (
     <>
       <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/30 px-2.5 py-1 rounded-lg">
@@ -512,6 +525,13 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
       closeOnBackdrop={false}
     >
       <form onSubmit={handleSubmit} className="space-y-3">
+
+        {isRestricted && (
+          <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-muted px-3 py-2 text-sm text-warning">
+            <Lock className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>{editability.reason}</span>
+          </div>
+        )}
 
         {!caseId && (
           <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
@@ -555,6 +575,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <div className="flex border border-slate-300 rounded-md overflow-hidden h-[34px]">
                   <button
                     type="button"
+                    disabled={isRestricted}
                     onClick={() => setInvoiceData({ ...invoiceData, invoice_type: 'tax_invoice' })}
                     className={`flex-1 px-2 py-1 text-xs transition-all ${
                       invoiceData.invoice_type === 'tax_invoice'
@@ -566,6 +587,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                   </button>
                   <button
                     type="button"
+                    disabled={isRestricted}
                     onClick={() => setInvoiceData({ ...invoiceData, invoice_type: 'proforma' })}
                     className={`flex-1 px-2 py-1 text-xs border-l border-slate-300 transition-all ${
                       invoiceData.invoice_type === 'proforma'
@@ -582,6 +604,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <label htmlFor={statusId} className="block text-sm font-medium text-slate-700 mb-1">Status</label>
                 <select
                   id={statusId}
+                  disabled={isRestricted}
                   value={invoiceData.status}
                   onChange={(e) => setInvoiceData({ ...invoiceData, status: e.target.value })}
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
@@ -612,6 +635,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 onChange={(e) => setInvoiceData({ ...invoiceData, title: e.target.value })}
                 placeholder="e.g., Data Recovery Services Invoice"
                 required
+                disabled={isRestricted}
               />
             </div>
 
@@ -620,6 +644,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <Input
                   label="Invoice Date"
                   type="date"
+                  disabled={isRestricted}
                   value={invoiceData.invoice_date}
                   onChange={(e) => {
                     const newDate = e.target.value;
@@ -652,6 +677,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <label htmlFor={currencyId} className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
                 <select
                   id={currencyId}
+                  disabled={isRestricted}
                   value={invoiceData.currency || baseCurrency}
                   onChange={(e) => setInvoiceData((d) => ({ ...d, currency: e.target.value }))}
                   className="rounded border border-border bg-surface px-3 py-2 text-sm"
@@ -689,7 +715,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
           </div>
         )}
 
-        <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+        <fieldset disabled={isRestricted} className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm min-w-0">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="bg-slate-100 p-1.5 rounded-lg">
@@ -777,10 +803,10 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
               </div>
             ))}
           </div>
-        </div>
+        </fieldset>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+          <fieldset disabled={isRestricted} className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm min-w-0">
             <div className="flex items-center gap-2 mb-3">
               <div className="bg-slate-100 p-1.5 rounded-lg">
                 <Calculator className="w-4 h-4 text-slate-600" />
@@ -899,7 +925,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 })()}
               </div>
             </div>
-          </div>
+          </fieldset>
 
           <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
             <div className="flex items-center gap-2 mb-3">

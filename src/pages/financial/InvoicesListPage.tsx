@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchInvoices, getInvoiceStats, createInvoice, updateInvoice, toInvoiceEditInitialData } from '../../lib/invoiceService';
 import type { Invoice, InvoiceItem, InvoiceWithDetails } from '../../lib/invoiceService';
+import { getInvoiceEditability, canRecordPayment as invoiceCanRecordPayment } from '../../lib/invoicePermissions';
 import type { PaymentReceipt } from '../../lib/bankingService';
 import { receiptsService } from '../../lib/receiptsService';
 
@@ -689,7 +690,7 @@ export const InvoicesListPage: React.FC<unknown> = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {['draft', 'sent'].includes(invoice.status) && invoice.status !== 'converted' && (
+                        {getInvoiceEditability(invoice).mode !== 'none' && (
                           <button
                             onClick={async () => {
                               if (!invoice.id) return;
@@ -716,7 +717,7 @@ export const InvoicesListPage: React.FC<unknown> = () => {
                             <Edit className="w-4 h-4" />
                           </button>
                         )}
-                        {invoice.invoice_type === 'tax_invoice' && invoice.status !== 'paid' && invoice.status !== 'converted' && (
+                        {invoiceCanRecordPayment(invoice) && (
                           <button
                             onClick={() => {
                               setPaymentInvoice(invoice);

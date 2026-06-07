@@ -16,7 +16,7 @@ export function buildInvoiceDocument(
   qrCodeBase64?: string | null,
   qrCodeCaption?: string | null
 ): TDocumentDefinitions {
-  const { invoiceData, companySettings } = data;
+  const { invoiceData, companySettings, paymentHistory = [] } = data;
   const { t, isBilingual, fontFamily } = ctx;
 
   const finalQrCodeCaption = qrCodeCaption || 'Scan to pay this invoice';
@@ -318,6 +318,45 @@ export function buildInvoiceDocument(
     margin: [280, 8, 0, 8],
   } as Content;
 
+  const paymentHistoryTitle = isBilingual ? t('paymentHistory', 'Payment History') : 'Payment History';
+  const paymentHistorySection: Content =
+    !isProforma && paymentHistory.length > 0
+      ? {
+          margin: [0, 10, 0, 0],
+          stack: [
+            { text: paymentHistoryTitle, fontSize: 10, bold: true, color: PDF_COLORS.text, margin: [0, 0, 0, 4] },
+            {
+              table: {
+                headerRows: 1,
+                widths: ['auto', '*', 'auto', 'auto', 'auto'],
+                body: [
+                  [
+                    { text: 'Date', fontSize: 8, bold: true, color: PDF_COLORS.textLight },
+                    { text: 'Method', fontSize: 8, bold: true, color: PDF_COLORS.textLight },
+                    { text: 'Reference', fontSize: 8, bold: true, color: PDF_COLORS.textLight },
+                    { text: 'Recorded By', fontSize: 8, bold: true, color: PDF_COLORS.textLight },
+                    { text: 'Amount', fontSize: 8, bold: true, color: PDF_COLORS.textLight, alignment: 'right' },
+                  ],
+                  ...paymentHistory.map((p): TableCell[] => [
+                    { text: p.payment_date ? formatDate(p.payment_date) : '-', fontSize: 8, color: PDF_COLORS.text },
+                    { text: p.method || '-', fontSize: 8, color: PDF_COLORS.text },
+                    { text: p.reference || '-', fontSize: 8, color: PDF_COLORS.text },
+                    { text: p.recorded_by || '-', fontSize: 8, color: PDF_COLORS.text },
+                    { text: formatCurrency(p.amount), fontSize: 8, color: PDF_COLORS.text, alignment: 'right' },
+                  ]),
+                ],
+              },
+              layout: {
+                fillColor: (rowIndex: number) => (rowIndex === 0 ? PDF_COLORS.background : null),
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0,
+                hLineColor: () => PDF_COLORS.border,
+              },
+            },
+          ],
+        }
+      : { text: '' };
+
   const termsAndBankSection: Content[] = [];
 
   const paymentTermsLabel = isBilingual ? t('paymentTermsTitle', 'Payment Terms') : 'Payment Terms';
@@ -449,6 +488,7 @@ export function buildInvoiceDocument(
       infoBoxesSection,
       lineItemsSection,
       financialSummarySection,
+      paymentHistorySection,
       ...termsAndBankSection,
     ],
     footer: (_currentPage: number, _pageCount: number) => {

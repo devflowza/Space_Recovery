@@ -6932,6 +6932,7 @@ export type Database = {
           is_proforma: boolean | null
           notes: string | null
           paid_at: string | null
+          payment_status: string | null
           proforma_invoice_id: string | null
           rate_source: string
           sent_at: string | null
@@ -6980,6 +6981,7 @@ export type Database = {
           is_proforma?: boolean | null
           notes?: string | null
           paid_at?: string | null
+          payment_status?: string | null
           proforma_invoice_id?: string | null
           rate_source?: string
           sent_at?: string | null
@@ -7028,6 +7030,7 @@ export type Database = {
           is_proforma?: boolean | null
           notes?: string | null
           paid_at?: string | null
+          payment_status?: string | null
           proforma_invoice_id?: string | null
           rate_source?: string
           sent_at?: string | null
@@ -9350,6 +9353,7 @@ export type Database = {
           reference: string | null
           status: string | null
           tenant_id: string
+          transaction_id: string | null
           updated_at: string
         }
         Insert: {
@@ -9373,6 +9377,7 @@ export type Database = {
           reference?: string | null
           status?: string | null
           tenant_id: string
+          transaction_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -9396,6 +9401,7 @@ export type Database = {
           reference?: string | null
           status?: string | null
           tenant_id?: string
+          transaction_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -15660,6 +15666,7 @@ export type Database = {
           reference: string | null
           status: string | null
           tenant_id: string
+          transaction_id: string | null
           updated_at: string
         }
         SetofOptions: {
@@ -15830,6 +15837,7 @@ export type Database = {
           reference: string | null
           status: string | null
           tenant_id: string
+          transaction_id: string | null
           updated_at: string
         }
         SetofOptions: {
