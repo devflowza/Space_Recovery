@@ -9,6 +9,7 @@ import { PortalAuthProvider } from './contexts/PortalAuthContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
 import { ConfirmProvider } from './hooks/useConfirm';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { FeatureRoute } from './components/FeatureRoute';
 import { ProtectedPortalRoute } from './components/ProtectedPortalRoute';
 import { ProtectedPlatformAdminRoute } from './components/ProtectedPlatformAdminRoute';
 import { AppLayout } from './components/layout/AppLayout';
@@ -312,7 +313,9 @@ function App() {
               path="invoices"
               element={
                 <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
-                  <InvoicesListPage />
+                  <FeatureRoute featureKey="nav.financial">
+                    <InvoicesListPage />
+                  </FeatureRoute>
                 </ProtectedRoute>
               }
             />
@@ -328,7 +331,9 @@ function App() {
               path="payments"
               element={
                 <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
-                  <PaymentsList />
+                  <FeatureRoute featureKey="nav.financial">
+                    <PaymentsList />
+                  </FeatureRoute>
                 </ProtectedRoute>
               }
             />
@@ -336,7 +341,9 @@ function App() {
               path="expenses"
               element={
                 <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
-                  <ExpensesList />
+                  <FeatureRoute featureKey="nav.financial">
+                    <ExpensesList />
+                  </FeatureRoute>
                 </ProtectedRoute>
               }
             />
@@ -368,7 +375,9 @@ function App() {
               path="reports"
               element={
                 <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
-                  <ReportsDashboard />
+                  <FeatureRoute featureKey="nav.financial">
+                    <ReportsDashboard />
+                  </FeatureRoute>
                 </ProtectedRoute>
               }
             />
