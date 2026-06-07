@@ -7,17 +7,12 @@ const configCache = new Map<string, { config: TenantConfig; timestamp: number }>
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
-  // feature_flags is read via a defensive cast so the app still boots BEFORE the
-  // tenants.feature_flags migration is applied (missing column → {} → all features
-  // default-on, i.e. backward compatible). Replace the cast with the typed column
-  // after the migration + `npm run db:types`.
-  const flagsPromise = (supabase.from('tenants') as unknown as {
-    select: (c: string) => {
-      eq: (k: string, v: string) => {
-        maybeSingle: () => Promise<{ data: { feature_flags?: unknown } | null }>;
-      };
-    };
-  }).select('feature_flags').eq('id', tenantId).maybeSingle();
+  // Per-tenant feature overrides, read concurrently with the tenant config.
+  const flagsPromise = supabase
+    .from('tenants')
+    .select('feature_flags')
+    .eq('id', tenantId)
+    .maybeSingle();
 
   // These reads are keyed only on tenantId and are independent, so run concurrently.
   const [tenantResult, localeResult, flagsResult] = await Promise.all([

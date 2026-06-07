@@ -26,12 +26,10 @@ This is a **workflow/visibility** layer, NOT a security boundary. Tenant isolati
 
 ## Migration — APPLIED (`20260607193758_add_tenants_feature_flags`)
 
-The migration below is **applied to the live DB**, so the feature runs end-to-end (Settings
-saves persist; reads resolve overrides). The only owed step is regenerating
-`database.types.ts` — the Supabase CLI is unavailable in-container and the ~16k-line MCP regen
-was deferred to avoid a context blowout. Until the regen, the code reads `feature_flags` and
-calls `tenant_feature_enabled` through small temporary casts in `tenantConfigService.ts`,
-`tenantFeaturesService.ts`, and `PortalAuthContext.tsx`.
+The migration below is **applied to the live DB**, and `database.types.ts` has been
+**regenerated** to match (via the Supabase MCP type generator — the CLI is unavailable
+in-container). The temporary casts have been removed; `feature_flags` and
+`tenant_feature_enabled` are read through the generated types.
 
 The applied SQL was:
 

@@ -6932,6 +6932,7 @@ export type Database = {
           is_proforma: boolean | null
           notes: string | null
           paid_at: string | null
+          payment_status: string | null
           proforma_invoice_id: string | null
           rate_source: string
           sent_at: string | null
@@ -6980,6 +6981,7 @@ export type Database = {
           is_proforma?: boolean | null
           notes?: string | null
           paid_at?: string | null
+          payment_status?: string | null
           proforma_invoice_id?: string | null
           rate_source?: string
           sent_at?: string | null
@@ -7028,6 +7030,7 @@ export type Database = {
           is_proforma?: boolean | null
           notes?: string | null
           paid_at?: string | null
+          payment_status?: string | null
           proforma_invoice_id?: string | null
           rate_source?: string
           sent_at?: string | null
@@ -9350,6 +9353,7 @@ export type Database = {
           reference: string | null
           status: string | null
           tenant_id: string
+          transaction_id: string | null
           updated_at: string
         }
         Insert: {
@@ -9373,6 +9377,7 @@ export type Database = {
           reference?: string | null
           status?: string | null
           tenant_id: string
+          transaction_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -9396,6 +9401,7 @@ export type Database = {
           reference?: string | null
           status?: string | null
           tenant_id?: string
+          transaction_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -14331,6 +14337,7 @@ export type Database = {
           default_tax_rate: number
           deleted_at: string | null
           domain: string | null
+          feature_flags: Json
           features: Json
           fiscal_year_start: string
           id: string
@@ -14369,6 +14376,7 @@ export type Database = {
           default_tax_rate?: number
           deleted_at?: string | null
           domain?: string | null
+          feature_flags?: Json
           features?: Json
           fiscal_year_start?: string
           id?: string
@@ -14407,6 +14415,7 @@ export type Database = {
           default_tax_rate?: number
           deleted_at?: string | null
           domain?: string | null
+          feature_flags?: Json
           features?: Json
           fiscal_year_start?: string
           id?: string
@@ -15660,6 +15669,7 @@ export type Database = {
           reference: string | null
           status: string | null
           tenant_id: string
+          transaction_id: string | null
           updated_at: string
         }
         SetofOptions: {
@@ -15762,6 +15772,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      tenant_feature_enabled: {
+        Args: { p_key: string; p_tenant_id: string }
+        Returns: boolean
+      }
       test_tenant_isolation: {
         Args: never
         Returns: {
@@ -15830,6 +15844,7 @@ export type Database = {
           reference: string | null
           status: string | null
           tenant_id: string
+          transaction_id: string | null
           updated_at: string
         }
         SetofOptions: {
