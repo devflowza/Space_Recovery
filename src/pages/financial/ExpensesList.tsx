@@ -19,6 +19,7 @@ import {
   getExpenseStats,
   Expense,
 } from '../../lib/expensesService';
+import { getExpenseEditability } from '../../lib/expensePermissions';
 import { useAuth } from '../../contexts/AuthContext';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { ExportButton } from '../../components/shared/ExportButton';
@@ -574,7 +575,7 @@ export const ExpensesList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                        {expense.status === 'pending' && isAccountsRole && (
+                        {getExpenseEditability(expense.status).canApprove && isAccountsRole && (
                           <>
                             <button
                               onClick={(e) => handleApprove(expense.id, e)}
@@ -592,7 +593,7 @@ export const ExpensesList: React.FC = () => {
                             </button>
                           </>
                         )}
-                        {(expense.status === 'draft' || expense.status === 'pending') && (
+                        {getExpenseEditability(expense.status).canEdit && (
                           <button
                             onClick={(e) => handleEdit(expense, e)}
                             className="p-1.5 text-warning hover:bg-warning-muted rounded transition-colors"

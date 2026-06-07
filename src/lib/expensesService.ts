@@ -5,6 +5,7 @@ import type { Database } from '../types/database.types';
 import { createFinancialTransaction } from './financialService';
 import { resolveRateContext, getBaseCurrency, getCurrencyDecimals } from './currencyService';
 import { convertToBase } from './financialMath';
+import { getExpenseEditability } from './expensePermissions';
 
 type ExpenseInsert = Database['public']['Tables']['expenses']['Insert'];
 type ExpenseAttachmentRow = Database['public']['Tables']['expense_attachments']['Row'];
@@ -192,6 +193,18 @@ export const updateExpense = async (
   id: string,
   expense: Partial<Expense>
 ) => {
+  // Defense in depth: block content edits on terminal expenses (approved/rejected/paid).
+  // Lifecycle changes flow through the dedicated submit/approve/reject/markPaid actions.
+  const { data: lockRow } = await supabase
+    .from('expenses')
+    .select('status')
+    .eq('id', id)
+    .maybeSingle();
+  const editability = getExpenseEditability(lockRow?.status ?? null);
+  if (!editability.canEdit) {
+    throw new Error(editability.reason || 'This expense can no longer be edited.');
+  }
+
   const updatePayload = { ...expense } as unknown as Database['public']['Tables']['expenses']['Update'];
 
   // Re-snapshot base amounts when the money or currency changes, reusing the

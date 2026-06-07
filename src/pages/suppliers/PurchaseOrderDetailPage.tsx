@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 import { format } from 'date-fns';
 import { logger } from '../../lib/logger';
+import { getPurchaseOrderEditability } from '../../lib/purchaseOrderPermissions';
 
 export default function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -141,10 +142,12 @@ export default function PurchaseOrderDetailPage() {
               Receive into Stock
             </Button>
           )}
-          <Button onClick={() => setShowEditModal(true)}>
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Order
-          </Button>
+          {getPurchaseOrderEditability(order.status?.name).canEdit && (
+            <Button onClick={() => setShowEditModal(true)}>
+              <Edit className="w-4 h-4 mr-2" />
+              Edit Order
+            </Button>
+          )}
         </div>
       </div>
 
