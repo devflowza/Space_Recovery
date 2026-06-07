@@ -5,6 +5,7 @@ import { getTenantConfig, invalidateTenantConfigCache } from '../lib/tenantConfi
 import { useAuth } from './AuthContext';
 import { getPortalTenantIdFromSession } from './PortalAuthContext';
 import { logger } from '../lib/logger';
+import { isFeatureEnabled } from '../lib/features/registry';
 
 interface TenantConfigContextType {
   config: TenantConfig;
@@ -113,4 +114,31 @@ export function useDateTimeConfig(): DateTimeConfig {
 export function useLocaleConfig(): LocaleConfig {
   const { config } = useTenantConfig();
   return config.locale;
+}
+
+/**
+ * Tenant Feature Management — resolve a single feature key against this tenant's
+ * overrides + the code registry defaults. Distinct from the plan-entitlement
+ * `useFeature` in hooks/useFeatureGate.ts. Defaults on (backward compatible)
+ * for any feature the tenant hasn't explicitly disabled.
+ */
+export function useTenantFeature(key: string): boolean {
+  const { config } = useTenantConfig();
+  return isFeatureEnabled(config.featureFlags, key);
+}
+
+export function useTenantFeatures(): {
+  isEnabled: (key: string) => boolean;
+  flags: Record<string, boolean>;
+  isLoading: boolean;
+} {
+  const { config, isLoading } = useTenantConfig();
+  return useMemo(
+    () => ({
+      isEnabled: (key: string) => isFeatureEnabled(config.featureFlags, key),
+      flags: config.featureFlags,
+      isLoading,
+    }),
+    [config.featureFlags, isLoading],
+  );
 }
