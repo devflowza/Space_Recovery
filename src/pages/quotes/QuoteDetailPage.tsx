@@ -10,6 +10,7 @@ import {
   toQuoteEditInitialData,
 } from '../../lib/quotesService';
 import type { Quote } from '../../lib/quotesService';
+import { getQuoteEditability } from '../../lib/quotePermissions';
 import { PageHeader } from '../../components/shared/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -218,9 +219,10 @@ export const QuoteDetailPage: React.FC = () => {
   }
 
   const StatusIcon = statusConfig[quote.status as keyof typeof statusConfig]?.icon || FileText;
-  const canEdit = ['draft', 'sent'].includes(quote.status);
-  const canDelete = quote.status === 'draft';
-  const canConvert = quote.status === 'accepted';
+  const quoteEditability = getQuoteEditability(quote);
+  const canEdit = quoteEditability.canEdit;
+  const canDelete = quoteEditability.canDelete;
+  const canConvert = quoteEditability.canConvert;
 
   return (
     <>

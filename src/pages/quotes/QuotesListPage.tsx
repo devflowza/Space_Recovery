@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchQuotes, getQuoteStats, toQuoteEditInitialData } from '../../lib/quotesService';
 import type { QuoteWithDetails } from '../../lib/quotesService';
+import { getQuoteEditability } from '../../lib/quotePermissions';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { statusToBadgeVariant } from '../../lib/ui/variants';
@@ -611,7 +612,7 @@ export const QuotesListPage: React.FC = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {quote.id && ['draft', 'sent'].includes(quote.status) && (
+                        {quote.id && getQuoteEditability(quote).canEdit && (
                           <button
                             onClick={async () => {
                               if (!quote.id) return;
@@ -638,7 +639,7 @@ export const QuotesListPage: React.FC = () => {
                             <Edit className="w-4 h-4" />
                           </button>
                         )}
-                        {quote.id && quote.status === 'draft' && (
+                        {quote.id && getQuoteEditability(quote).canDelete && (
                           <button
                             onClick={async () => {
                               if (!quote.id) return;

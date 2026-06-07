@@ -7,6 +7,7 @@ import { logger } from './logger';
 import { calculateQuoteTotals, calculateQuoteTotalsBase, roundMoney } from './financialMath';
 import { resolveRateContext, getBaseCurrency, getCurrencyDecimals } from './currencyService';
 import { toDateInputValue } from './format';
+import { getQuoteEditability } from './quotePermissions';
 
 type QuoteInsert = Database['public']['Tables']['quotes']['Insert'];
 type QuoteUpdate = Database['public']['Tables']['quotes']['Update'];
@@ -125,7 +126,9 @@ const pickQuotePersistFields = (input: Partial<Quote>): QuoteUpdate => {
   if (input.case_id !== undefined) out.case_id = input.case_id;
   if (input.customer_id !== undefined) out.customer_id = input.customer_id;
   if (input.company_id !== undefined) out.company_id = input.company_id;
-  if (input.status !== undefined) out.status = input.status;
+  // status is intentionally NOT persisted via content edits — lifecycle changes go
+  // through updateQuoteStatus (the dedicated "Change Status" action). This closes the
+  // manual-status drift flagged in the payment-workflow audit.
   if (input.valid_until !== undefined) out.valid_until = input.valid_until;
   if (input.subtotal !== undefined) out.subtotal = input.subtotal;
   if (input.tax_rate !== undefined) out.tax_rate = input.tax_rate;
@@ -486,6 +489,18 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
 };
 
 export const updateQuote = async (id: string, quote: Partial<Quote>, items?: QuoteItem[]) => {
+  // Defense in depth: only draft/sent quotes are editable. Terminal quotes
+  // (accepted/rejected/expired/converted) reject content edits server-side.
+  const { data: lockRow } = await supabase
+    .from('quotes')
+    .select('status')
+    .eq('id', id)
+    .maybeSingle();
+  const editability = getQuoteEditability(lockRow ?? {});
+  if (!editability.canEdit) {
+    throw new Error(editability.reason || 'This quote can no longer be edited.');
+  }
+
   let updateData: QuoteUpdate = sanitizeUuidFields(
     pickQuotePersistFields(quote) as Record<string, unknown>
   ) as QuoteUpdate;

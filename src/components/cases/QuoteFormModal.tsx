@@ -501,21 +501,6 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
             </div>
 
             <div className="md:col-span-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-              <select
-                value={quoteData.status}
-                onChange={(e) => setQuoteData({ ...quoteData, status: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-success focus:border-success"
-              >
-                <option value="draft">Draft</option>
-                <option value="sent">Sent</option>
-                <option value="accepted">Accepted</option>
-                <option value="rejected">Rejected</option>
-                <option value="expired">Expired</option>
-              </select>
-            </div>
-
-            <div className="md:col-span-1">
               <Input
                 label="Valid Until"
                 type="date"
