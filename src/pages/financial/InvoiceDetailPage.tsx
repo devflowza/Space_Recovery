@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchInvoiceById, convertProformaToTaxInvoice, getConversionHistory, updateInvoice, toInvoiceEditInitialData } from '../../lib/invoiceService';
 import type { Invoice, InvoiceItem, InvoiceWithDetails } from '../../lib/invoiceService';
+import { getInvoiceEditability, canRecordPayment as invoiceCanRecordPayment } from '../../lib/invoicePermissions';
 import { PageHeader } from '../../components/shared/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -189,8 +190,9 @@ export const InvoiceDetailPage: React.FC = () => {
   // v1.0.0: invoices has no `converted_to_invoice_id`/`proforma_invoice_id`/`converted_at` columns.
   // Conversion state is inferred from status and `converted_from_quote_id` (proforma→tax via RPC).
   const isConverted = invoice.invoice_type === 'proforma' && invoice.status === 'converted';
-  const canEdit = ['draft', 'sent'].includes(invoice.status ?? '') && !isConverted;
-  const canRecordPayment = invoice.invoice_type === 'tax_invoice' && ['sent', 'partial', 'overdue'].includes(invoice.status ?? '');
+  const editability = getInvoiceEditability(invoice);
+  const canEdit = editability.mode !== 'none';
+  const canRecordPayment = invoiceCanRecordPayment(invoice);
   const canConvert = invoice.invoice_type === 'proforma' && invoice.status !== 'converted';
   const hasConversionHistory = invoice.invoice_type === 'tax_invoice' && !!invoice.converted_from_quote_id;
   const wasConvertedFromProforma = invoice.invoice_type === 'tax_invoice' && !!invoice.converted_from_quote_id;

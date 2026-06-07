@@ -7,6 +7,7 @@ import { sanitizeFilterValue } from './postgrestSanitizer';
 import { calculateInvoiceTotals, calculateInvoiceTotalsBase, convertToBase, roundMoney } from './financialMath';
 import { resolveRateContext, getBaseCurrency, getCurrencyDecimals } from './currencyService';
 import { deriveInvoiceStatus } from './invoiceStatus';
+import { getInvoiceEditability, RESTRICTED_EDITABLE_FIELDS } from './invoicePermissions';
 import { toDateInputValue } from './format';
 
 type InvoiceInsert = Database['public']['Tables']['invoices']['Insert'];
@@ -483,6 +484,30 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
 };
 
 export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items?: InvoiceItem[]) => {
+  // Enforce the restricted-edit business rule server-side (defense in depth — the
+  // form also disables locked fields). Once an invoice is issued or has any payment,
+  // only non-financial fields persist and line-item / total changes are ignored.
+  const { data: lockRow } = await supabase
+    .from('invoices')
+    .select('status, payment_status, invoice_type, total_amount, amount_paid, balance_due, due_date')
+    .eq('id', id)
+    .maybeSingle();
+  const editability = getInvoiceEditability(lockRow ?? {});
+  if (editability.mode === 'none') {
+    throw new Error(editability.reason || 'This invoice can no longer be edited.');
+  }
+  if (editability.mode === 'restricted') {
+    const allowed = new Set<string>(RESTRICTED_EDITABLE_FIELDS);
+    const filtered: Partial<Invoice> = {};
+    for (const key of Object.keys(invoice)) {
+      if (allowed.has(key)) (filtered as Record<string, unknown>)[key] = (invoice as Record<string, unknown>)[key];
+    }
+    const restrictedData = sanitizeUuidFields(pickInvoicePersistFields(filtered));
+    const { data, error } = await supabase.from('invoices').update(restrictedData).eq('id', id).select().maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
   let updateData: InvoiceUpdate = sanitizeUuidFields(pickInvoicePersistFields(invoice));
 
   if (items) {
