@@ -310,9 +310,21 @@ export interface QuoteDocumentData {
   companySettings: CompanySettingsData;
 }
 
+export interface InvoicePaymentLine {
+  payment_date: string | null;
+  amount: number;
+  method: string | null;
+  reference: string | null;
+  transaction_id: string | null;
+  status: string | null;
+  recorded_by: string | null;
+  notes: string | null;
+}
+
 export interface InvoiceDocumentData {
   invoiceData: InvoiceData;
   companySettings: CompanySettingsData;
+  paymentHistory?: InvoicePaymentLine[];
 }
 
 export interface PaymentReceiptData {

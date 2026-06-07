@@ -18,6 +18,7 @@ interface PortalPaymentRow {
   currency: string | null;
   payment_date: string | null;
   reference: string | null;
+  transaction_id: string | null;
   status: string | null;
   notes: string | null;
   created_at: string;
@@ -80,7 +81,7 @@ export const PortalPayments: React.FC = () => {
       const { data, error } = await supabase
         .from('payments')
         .select(`
-          id, payment_number, amount, currency, payment_date, reference, status, notes, created_at,
+          id, payment_number, amount, currency, payment_date, reference, transaction_id, status, notes, created_at,
           invoice_id, case_id,
           invoices ( invoice_number, total_amount, balance_due ),
           cases ( case_no ),
@@ -235,6 +236,9 @@ export const PortalPayments: React.FC = () => {
                         )}
                         {payment.reference && (
                           <span className="text-slate-400">Ref: {payment.reference}</span>
+                        )}
+                        {payment.transaction_id && (
+                          <span className="text-slate-400">Txn: {payment.transaction_id}</span>
                         )}
                       </div>
 

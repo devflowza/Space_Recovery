@@ -575,6 +575,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <div className="flex border border-slate-300 rounded-md overflow-hidden h-[34px]">
                   <button
                     type="button"
+                    disabled={isRestricted}
                     onClick={() => setInvoiceData({ ...invoiceData, invoice_type: 'tax_invoice' })}
                     className={`flex-1 px-2 py-1 text-xs transition-all ${
                       invoiceData.invoice_type === 'tax_invoice'
@@ -586,6 +587,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                   </button>
                   <button
                     type="button"
+                    disabled={isRestricted}
                     onClick={() => setInvoiceData({ ...invoiceData, invoice_type: 'proforma' })}
                     className={`flex-1 px-2 py-1 text-xs border-l border-slate-300 transition-all ${
                       invoiceData.invoice_type === 'proforma'
@@ -602,6 +604,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <label htmlFor={statusId} className="block text-sm font-medium text-slate-700 mb-1">Status</label>
                 <select
                   id={statusId}
+                  disabled={isRestricted}
                   value={invoiceData.status}
                   onChange={(e) => setInvoiceData({ ...invoiceData, status: e.target.value })}
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
@@ -632,6 +635,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 onChange={(e) => setInvoiceData({ ...invoiceData, title: e.target.value })}
                 placeholder="e.g., Data Recovery Services Invoice"
                 required
+                disabled={isRestricted}
               />
             </div>
 
@@ -640,6 +644,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <Input
                   label="Invoice Date"
                   type="date"
+                  disabled={isRestricted}
                   value={invoiceData.invoice_date}
                   onChange={(e) => {
                     const newDate = e.target.value;
@@ -672,6 +677,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <label htmlFor={currencyId} className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
                 <select
                   id={currencyId}
+                  disabled={isRestricted}
                   value={invoiceData.currency || baseCurrency}
                   onChange={(e) => setInvoiceData((d) => ({ ...d, currency: e.target.value }))}
                   className="rounded border border-border bg-surface px-3 py-2 text-sm"
