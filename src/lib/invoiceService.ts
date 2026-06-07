@@ -7,6 +7,7 @@ import { sanitizeFilterValue } from './postgrestSanitizer';
 import { calculateInvoiceTotals, calculateInvoiceTotalsBase, convertToBase, roundMoney } from './financialMath';
 import { resolveRateContext, getBaseCurrency, getCurrencyDecimals } from './currencyService';
 import { deriveInvoiceStatus } from './invoiceStatus';
+import { getInvoiceEditability, RESTRICTED_EDITABLE_FIELDS } from './invoicePermissions';
 import { toDateInputValue } from './format';
 
 type InvoiceInsert = Database['public']['Tables']['invoices']['Insert'];
@@ -483,6 +484,30 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
 };
 
 export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items?: InvoiceItem[]) => {
+  // Enforce the restricted-edit business rule server-side (defense in depth — the
+  // form also disables locked fields). Once an invoice is issued or has any payment,
+  // only non-financial fields persist and line-item / total changes are ignored.
+  const { data: lockRow } = await supabase
+    .from('invoices')
+    .select('status, payment_status, invoice_type, total_amount, amount_paid, balance_due, due_date')
+    .eq('id', id)
+    .maybeSingle();
+  const editability = getInvoiceEditability(lockRow ?? {});
+  if (editability.mode === 'none') {
+    throw new Error(editability.reason || 'This invoice can no longer be edited.');
+  }
+  if (editability.mode === 'restricted') {
+    const allowed = new Set<string>(RESTRICTED_EDITABLE_FIELDS);
+    const filtered: Partial<Invoice> = {};
+    for (const key of Object.keys(invoice)) {
+      if (allowed.has(key)) (filtered as Record<string, unknown>)[key] = (invoice as Record<string, unknown>)[key];
+    }
+    const restrictedData = sanitizeUuidFields(pickInvoicePersistFields(filtered));
+    const { data, error } = await supabase.from('invoices').update(restrictedData).eq('id', id).select().maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
   let updateData: InvoiceUpdate = sanitizeUuidFields(pickInvoicePersistFields(invoice));
 
   if (items) {
@@ -861,17 +886,80 @@ export const recordPayment = async (
   return payment;
 };
 
-export const getPaymentHistory = async (invoiceId: string) => {
-  // payments has no FK to profiles, so the legacy embed has been removed.
-  // TODO(B8): if a recorded-by profile is required for UI, do a separate fetch.
+export interface PaymentHistoryEntry {
+  id: string;
+  payment_number: string | null;
+  payment_date: string | null;
+  amount: number;
+  currency: string | null;
+  method: string | null;
+  reference: string | null;
+  transaction_id: string | null;
+  status: string | null;
+  notes: string | null;
+  recorded_by: string | null;
+}
+
+interface RawPaymentRow {
+  id: string;
+  payment_number?: string | null;
+  payment_date?: string | null;
+  amount?: number | string | null;
+  currency?: string | null;
+  reference?: string | null;
+  transaction_id?: string | null;
+  status?: string | null;
+  notes?: string | null;
+  created_by?: string | null;
+  payment_method?: { name: string | null } | null;
+}
+
+// Pure shaping of payment rows into the UI/PDF/portal payment-history trail.
+// Kept separate from the fetch so it is unit-testable without Supabase.
+export function mapPaymentHistory(
+  rows: RawPaymentRow[],
+  nameById: Record<string, string>,
+): PaymentHistoryEntry[] {
+  return rows.map((r) => ({
+    id: r.id,
+    payment_number: r.payment_number ?? null,
+    payment_date: r.payment_date ?? null,
+    amount: typeof r.amount === 'number' ? r.amount : Number(r.amount ?? 0),
+    currency: r.currency ?? null,
+    method: r.payment_method?.name ?? null,
+    reference: r.reference ?? null,
+    transaction_id: r.transaction_id ?? null,
+    status: r.status ?? null,
+    notes: r.notes ?? null,
+    recorded_by: r.created_by ? (nameById[r.created_by] ?? null) : null,
+  }));
+}
+
+// payments has no FK to profiles, so the recorder name is resolved with a second
+// batched fetch and joined in `mapPaymentHistory`.
+export const getPaymentHistory = async (invoiceId: string): Promise<PaymentHistoryEntry[]> => {
   const { data, error } = await supabase
     .from('payments')
-    .select('*')
+    .select(
+      'id, payment_number, payment_date, amount, currency, reference, transaction_id, status, notes, created_by, payment_method:master_payment_methods(name)',
+    )
     .eq('invoice_id', invoiceId)
+    .is('deleted_at', null)
     .order('payment_date', { ascending: false });
 
   if (error) throw error;
-  return data ?? [];
+  const rows = (data ?? []) as unknown as RawPaymentRow[];
+
+  const ids = Array.from(new Set(rows.map((r) => r.created_by).filter((v): v is string => !!v)));
+  let nameById: Record<string, string> = {};
+  if (ids.length > 0) {
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', ids);
+    nameById = Object.fromEntries(
+      (profiles ?? []).map((p: { id: string; full_name: string | null }) => [p.id, p.full_name ?? '']),
+    );
+  }
+
+  return mapPaymentHistory(rows, nameById);
 };
 
 export const convertProformaToTaxInvoice = async (

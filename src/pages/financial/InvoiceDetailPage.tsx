@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchInvoiceById, convertProformaToTaxInvoice, getConversionHistory, updateInvoice, toInvoiceEditInitialData } from '../../lib/invoiceService';
+import { fetchInvoiceById, convertProformaToTaxInvoice, getConversionHistory, updateInvoice, toInvoiceEditInitialData, getPaymentHistory } from '../../lib/invoiceService';
 import type { Invoice, InvoiceItem, InvoiceWithDetails } from '../../lib/invoiceService';
+import { getInvoiceEditability, canRecordPayment as invoiceCanRecordPayment, getPaymentSummary } from '../../lib/invoicePermissions';
+import { PaymentSummaryBar } from '../../components/financial/PaymentSummaryBar';
+import { PaymentHistoryTable } from '../../components/financial/PaymentHistoryTable';
 import { PageHeader } from '../../components/shared/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -13,7 +16,7 @@ import { InvoiceDocument } from '../../components/documents/InvoiceDocument';
 import { useCurrency } from '../../hooks/useCurrency';
 import { usePDFDownload } from '../../hooks/usePDFDownload';
 import { useToast } from '../../hooks/useToast';
-import { FileText, ArrowLeft, CreditCard as Edit, DollarSign, AlertCircle, RefreshCw, CheckCircle, ArrowRight, Lock } from 'lucide-react';
+import { FileText, ArrowLeft, CreditCard as Edit, DollarSign, AlertCircle, RefreshCw, CheckCircle, ArrowRight, Lock, Receipt } from 'lucide-react';
 import { RecordReceiptModal } from '../../components/banking/RecordReceiptModal';
 import { InvoiceFormModal } from '../../components/cases/InvoiceFormModal';
 import { logger } from '../../lib/logger';
@@ -70,6 +73,12 @@ export const InvoiceDetailPage: React.FC = () => {
   const { data: invoice, isLoading } = useQuery({
     queryKey: ['invoice', id],
     queryFn: () => fetchInvoiceById(id!),
+    enabled: !!id,
+  });
+
+  const { data: payments = [] } = useQuery({
+    queryKey: ['invoice_payments', id],
+    queryFn: () => getPaymentHistory(id!),
     enabled: !!id,
   });
 
@@ -189,8 +198,9 @@ export const InvoiceDetailPage: React.FC = () => {
   // v1.0.0: invoices has no `converted_to_invoice_id`/`proforma_invoice_id`/`converted_at` columns.
   // Conversion state is inferred from status and `converted_from_quote_id` (proforma→tax via RPC).
   const isConverted = invoice.invoice_type === 'proforma' && invoice.status === 'converted';
-  const canEdit = ['draft', 'sent'].includes(invoice.status ?? '') && !isConverted;
-  const canRecordPayment = invoice.invoice_type === 'tax_invoice' && ['sent', 'partial', 'overdue'].includes(invoice.status ?? '');
+  const editability = getInvoiceEditability(invoice);
+  const canEdit = editability.mode !== 'none';
+  const canRecordPayment = invoiceCanRecordPayment(invoice);
   const canConvert = invoice.invoice_type === 'proforma' && invoice.status !== 'converted';
   const hasConversionHistory = invoice.invoice_type === 'tax_invoice' && !!invoice.converted_from_quote_id;
   const wasConvertedFromProforma = invoice.invoice_type === 'tax_invoice' && !!invoice.converted_from_quote_id;
@@ -637,6 +647,21 @@ export const InvoiceDetailPage: React.FC = () => {
                 )}
               </div>
             </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Receipt className="w-4 h-4 text-slate-600" />
+                <h3 className="text-lg font-semibold text-slate-900">Payment History</h3>
+              </div>
+              <div className="space-y-3">
+                <PaymentSummaryBar summary={getPaymentSummary(invoice)} formatMoney={formatCurrency} />
+                <PaymentHistoryTable
+                  entries={payments}
+                  formatMoney={formatCurrency}
+                  formatDate={(d) => (d ? new Date(d).toLocaleDateString() : '—')}
+                />
+              </div>
+            </Card>
           </div>
         </div>
       </div>
@@ -716,6 +741,7 @@ export const InvoiceDetailPage: React.FC = () => {
               items,
             );
             queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+            queryClient.invalidateQueries({ queryKey: ['invoice_payments', id] });
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
             queryClient.invalidateQueries({ queryKey: ['invoice_stats'] });
           }}
