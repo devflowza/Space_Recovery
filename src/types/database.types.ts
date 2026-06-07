@@ -14337,6 +14337,7 @@ export type Database = {
           default_tax_rate: number
           deleted_at: string | null
           domain: string | null
+          feature_flags: Json
           features: Json
           fiscal_year_start: string
           id: string
@@ -14375,6 +14376,7 @@ export type Database = {
           default_tax_rate?: number
           deleted_at?: string | null
           domain?: string | null
+          feature_flags?: Json
           features?: Json
           fiscal_year_start?: string
           id?: string
@@ -14413,6 +14415,7 @@ export type Database = {
           default_tax_rate?: number
           deleted_at?: string | null
           domain?: string | null
+          feature_flags?: Json
           features?: Json
           fiscal_year_start?: string
           id?: string
@@ -15769,6 +15772,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      tenant_feature_enabled: {
+        Args: { p_key: string; p_tenant_id: string }
+        Returns: boolean
+      }
       test_tenant_isolation: {
         Args: never
         Returns: {

@@ -7,10 +7,15 @@ const configCache = new Map<string, { config: TenantConfig; timestamp: number }>
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
-  // Both reads are keyed only on tenantId and are independent of each other, so
-  // run them concurrently to remove a serial round-trip from the auth->shell
-  // bootstrap path.
-  const [tenantResult, localeResult] = await Promise.all([
+  // Per-tenant feature overrides, read concurrently with the tenant config.
+  const flagsPromise = supabase
+    .from('tenants')
+    .select('feature_flags')
+    .eq('id', tenantId)
+    .maybeSingle();
+
+  // These reads are keyed only on tenantId and are independent, so run concurrently.
+  const [tenantResult, localeResult, flagsResult] = await Promise.all([
     supabase
       .from('tenants')
       .select(`
@@ -35,6 +40,7 @@ async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
       .eq('is_default', true)
       .is('deleted_at', null)
       .maybeSingle(),
+    flagsPromise,
   ]);
 
   const { data, error } = tenantResult;
@@ -45,6 +51,12 @@ async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
 
   const country = data.country as Record<string, unknown> | null;
   const { data: defaultLocale } = localeResult;
+
+  const rawFlags = flagsResult?.data?.feature_flags;
+  const featureFlags: Record<string, boolean> =
+    rawFlags && typeof rawFlags === 'object' && !Array.isArray(rawFlags)
+      ? (rawFlags as Record<string, boolean>)
+      : {};
 
   return {
     tenantId: data.id,
@@ -85,6 +97,7 @@ async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
       postalCodeLabel: (country?.postal_code_label as string) || 'Postal Code',
     },
     theme: THEMES.includes(data.theme as Theme) ? (data.theme as Theme) : DEFAULT_THEME,
+    featureFlags,
   };
 }
 

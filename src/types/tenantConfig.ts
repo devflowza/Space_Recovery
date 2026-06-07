@@ -48,6 +48,9 @@ export interface TenantConfig {
   dateTime: DateTimeConfig;
   locale: LocaleConfig;
   theme: Theme;
+  /** Per-tenant feature overrides (from tenants.feature_flags). Only keys the
+   *  tenant explicitly changed; everything else falls back to registry defaults. */
+  featureFlags: Record<string, boolean>;
 }
 
 export const DEFAULT_TENANT_CONFIG: TenantConfig = {
@@ -86,4 +89,5 @@ export const DEFAULT_TENANT_CONFIG: TenantConfig = {
     postalCodeLabel: 'Postal Code',
   },
   theme: DEFAULT_THEME,
+  featureFlags: {},
 };

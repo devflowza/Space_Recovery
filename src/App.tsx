@@ -9,6 +9,7 @@ import { PortalAuthProvider } from './contexts/PortalAuthContext';
 import { PermissionsProvider } from './contexts/PermissionsContext';
 import { ConfirmProvider } from './hooks/useConfirm';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { FeatureRoute } from './components/FeatureRoute';
 import { ProtectedPortalRoute } from './components/ProtectedPortalRoute';
 import { ProtectedPlatformAdminRoute } from './components/ProtectedPlatformAdminRoute';
 import { AppLayout } from './components/layout/AppLayout';
@@ -40,6 +41,7 @@ const CategoryDetail = lazyWithRetry(() => import('./pages/settings/CategoryDeta
 const SystemNumbers = lazyWithRetry(() => import('./pages/settings/SystemNumbers').then(m => ({ default: m.SystemNumbers as React.ComponentType<unknown> })));
 const GeneralSettings = lazyWithRetry(() => import('./pages/settings/GeneralSettings').then(m => ({ default: m.GeneralSettings as React.ComponentType<unknown> })));
 const AppearanceSettings = lazyWithRetry(() => import('./pages/settings/AppearanceSettings').then(m => ({ default: m.AppearanceSettings as React.ComponentType<unknown> })));
+const FeaturesSettings = lazyWithRetry(() => import('./pages/settings/FeaturesSettings').then(m => ({ default: m.FeaturesSettings as React.ComponentType<unknown> })));
 const ClientsList = lazyWithRetry(() => import('./pages/clients/ClientsList').then(m => ({ default: m.ClientsList as React.ComponentType<unknown> })));
 const CustomersListPage = lazyWithRetry(() => import('./pages/customers/CustomersListPage').then(m => ({ default: m.CustomersListPage as React.ComponentType<unknown> })));
 const CustomerProfilePage = lazyWithRetry(() => import('./pages/customers/CustomerProfilePage').then(m => ({ default: m.CustomerProfilePage as React.ComponentType<unknown> })));
@@ -311,7 +313,9 @@ function App() {
               path="invoices"
               element={
                 <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
-                  <InvoicesListPage />
+                  <FeatureRoute featureKey="nav.financial">
+                    <InvoicesListPage />
+                  </FeatureRoute>
                 </ProtectedRoute>
               }
             />
@@ -327,7 +331,9 @@ function App() {
               path="payments"
               element={
                 <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
-                  <PaymentsList />
+                  <FeatureRoute featureKey="nav.financial">
+                    <PaymentsList />
+                  </FeatureRoute>
                 </ProtectedRoute>
               }
             />
@@ -335,7 +341,9 @@ function App() {
               path="expenses"
               element={
                 <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
-                  <ExpensesList />
+                  <FeatureRoute featureKey="nav.financial">
+                    <ExpensesList />
+                  </FeatureRoute>
                 </ProtectedRoute>
               }
             />
@@ -367,7 +375,9 @@ function App() {
               path="reports"
               element={
                 <ProtectedRoute allowedRoles={['owner', 'admin', 'accounts']}>
-                  <ReportsDashboard />
+                  <FeatureRoute featureKey="nav.financial">
+                    <ReportsDashboard />
+                  </FeatureRoute>
                 </ProtectedRoute>
               }
             />
@@ -574,6 +584,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['owner', 'admin']}>
                     <AppearanceSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="features"
+                element={
+                  <ProtectedRoute allowedRoles={['owner', 'admin']}>
+                    <FeaturesSettings />
                   </ProtectedRoute>
                 }
               />

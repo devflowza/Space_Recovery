@@ -13,6 +13,7 @@ import {
   Palette,
   Bell,
   Coins,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
@@ -71,6 +72,16 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     tables: [],
     actionLabel: 'Choose Theme',
     description: 'Pick the look and feel of xSuite for everyone in your workspace.',
+  },
+  {
+    id: 'features',
+    title: 'Features & Modules',
+    icon: SlidersHorizontal,
+    backgroundColor: '#0891b2',
+    borderColor: '#0891b2',
+    tables: [],
+    actionLabel: 'Configure',
+    description: 'Enable or disable modules, tabs, dashboard widgets, and workflow stages for your workspace.',
   },
   {
     id: 'device-media',

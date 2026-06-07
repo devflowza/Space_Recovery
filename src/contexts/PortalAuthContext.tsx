@@ -183,6 +183,18 @@ export const PortalAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return false;
       }
 
+      // Server-side gate: a tenant can disable the Customer Portal entirely. Only an
+      // explicit `false` denies — a missing key / errored check fails open so a
+      // transient issue never locks customers out.
+      const { data: portalOn } = await supabase.rpc('tenant_feature_enabled', {
+        p_tenant_id: data.tenant_id,
+        p_key: 'portal.customer',
+      });
+      if (portalOn === false) {
+        setError('The customer portal is not available for this account. Please contact us directly.');
+        return false;
+      }
+
       const session: PortalSession = {
         customer: data,
         last_activity_at: Date.now(),

@@ -1,5 +1,8 @@
 # xSuite — Architecture Reference for Claude
 
+> **Supabase project (canonical): `https://ssmbegiyjivrcwgcqutu.supabase.co` · `project_id = ssmbegiyjivrcwgcqutu`.**
+> The organization has **7 projects** — every Supabase MCP call (migrations, type generation, SQL) **MUST** pass this `project_id`. (Documentation only: the MCP is bound by the `project_id` argument on each call, not by this file.)
+
 ## ⚠️ THIS IS A DATA RECOVERY LAB PLATFORM — NOT A GENERIC CRM
 
 > **xSuite is built EXCLUSIVELY for data recovery companies and forensic data-recovery labs.**
