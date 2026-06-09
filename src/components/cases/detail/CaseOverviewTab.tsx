@@ -679,25 +679,31 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
               </label>
               {editingSection === 'client' ? (
                 <div className="flex items-center gap-2">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={editedDeviceData.password ?? devices[0]?.password ?? ''}
-                    onChange={(e) => setEditedDeviceData((prev) => ({ ...prev, password: e.target.value }))}
-                    placeholder="Enter password..."
-                    className="font-mono text-xs bg-white px-2 py-1 rounded border border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent w-24"
-                  />
+                  <form className="contents" onSubmit={(e) => e.preventDefault()}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={editedDeviceData.password ?? devices[0]?.password ?? ''}
+                      onChange={(e) => setEditedDeviceData((prev) => ({ ...prev, password: e.target.value }))}
+                      placeholder="Enter password..."
+                      autoComplete="off"
+                      className="font-mono text-xs bg-white px-2 py-1 rounded border border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent w-24"
+                    />
+                  </form>
                   <Button variant="secondary" size="sm" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                   </Button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={devices[0]?.password || ''}
-                    readOnly
-                    className="font-mono text-xs bg-white px-2 py-1 rounded border border-slate-300 w-24"
-                  />
+                  <form className="contents" onSubmit={(e) => e.preventDefault()}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={devices[0]?.password || ''}
+                      readOnly
+                      autoComplete="off"
+                      className="font-mono text-xs bg-white px-2 py-1 rounded border border-slate-300 w-24"
+                    />
+                  </form>
                   <Button variant="secondary" size="sm" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                   </Button>
