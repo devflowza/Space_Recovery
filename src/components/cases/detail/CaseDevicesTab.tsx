@@ -147,12 +147,15 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
                 <div>
                   <span className="text-slate-500 text-xs font-medium block mb-1.5">Device Password</span>
                   <div className="flex items-center gap-1.5">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={device.password}
-                      readOnly
-                      className="font-mono text-xs bg-slate-50 px-2 py-1.5 rounded border border-slate-300 flex-1"
-                    />
+                    <form className="contents" onSubmit={(e) => e.preventDefault()}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={device.password}
+                        readOnly
+                        autoComplete="off"
+                        className="font-mono text-xs bg-slate-50 px-2 py-1.5 rounded border border-slate-300 flex-1"
+                      />
+                    </form>
                     <Button variant="secondary" size="sm" onClick={() => onSetShowPassword(!showPassword)} className="!p-1.5">
                       {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </Button>

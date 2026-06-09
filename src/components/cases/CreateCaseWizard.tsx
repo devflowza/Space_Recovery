@@ -959,15 +959,18 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                       Device Password
                     </label>
                     <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={devices[0].device_password}
-                        onChange={(e) =>
-                          updateDevice('1', 'device_password', e.target.value)
-                        }
-                        className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-warning focus:border-warning text-sm"
-                        placeholder="Password needed to access encrypted data (if applicable)"
-                      />
+                      <form className="contents" onSubmit={(e) => e.preventDefault()}>
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={devices[0].device_password}
+                          onChange={(e) =>
+                            updateDevice('1', 'device_password', e.target.value)
+                          }
+                          className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-warning focus:border-warning text-sm"
+                          placeholder="Password needed to access encrypted data (if applicable)"
+                          autoComplete="off"
+                        />
+                      </form>
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
