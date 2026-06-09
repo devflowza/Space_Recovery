@@ -16,7 +16,9 @@ import { useCasesRealtime } from '../../hooks/useCasesRealtime';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageLimit } from '../../hooks/useFeatureGate';
 import { canPerformAction } from '../../lib/featureGateService';
-import toast from 'react-hot-toast';
+import { useToast } from '../../hooks/useToast';
+import { useConfirm } from '../../hooks/useConfirm';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 interface Case {
   id: string;
@@ -50,6 +52,8 @@ interface Case {
 
 export const CasesList: React.FC = () => {
   const navigate = useNavigate();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [searchParams, setSearchParams] = useSearchParams();
   const { profile } = useAuth();
   const { usage: caseUsage } = useUsageLimit('max_cases_per_month');
@@ -86,7 +90,8 @@ export const CasesList: React.FC = () => {
   const buildFiltersQuery = () => {
     let query = supabase
       .from('cases')
-      .select('id, case_no, priority, status, customer_id', { count: 'exact', head: false });
+      .select('id, case_no, priority, status, customer_id', { count: 'exact', head: false })
+      .is('deleted_at', null);
 
     if (searchTerm) {
       query = query.or(
@@ -140,7 +145,8 @@ export const CasesList: React.FC = () => {
           assigned_engineer_id,
           customer:customers_enhanced!customer_id (id, customer_number, customer_name, mobile_number),
           devices:case_devices (id, serial_number, device_type_id, catalog_device_types (id, name))
-        `);
+        `)
+        .is('deleted_at', null);
 
       if (searchTerm) {
         query = query.or(
@@ -198,6 +204,7 @@ export const CasesList: React.FC = () => {
       const { data, error } = await supabase
         .from('cases')
         .select('id, status, priority')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -272,7 +279,7 @@ export const CasesList: React.FC = () => {
       return;
     }
     if (check.message) {
-      toast(check.message, { icon: '⚠️' });
+      toast.warning(check.message);
     }
     setIsWizardOpen(true);
   };
@@ -322,10 +329,13 @@ export const CasesList: React.FC = () => {
       return;
     }
     const n = selection.selectedCount;
-    // Native confirm — destructive enough to warrant a hard stop. Don't
-    // build a custom modal until users actually request progress bars or
-    // bulk-archive undo; YAGNI.
-    if (!window.confirm(`Archive ${n} case${n === 1 ? '' : 's'}? They'll be hidden from lists but recoverable.`)) {
+    const ok = await confirm({
+      title: 'Archive Cases',
+      message: `Archive ${n} case${n === 1 ? '' : 's'}? They'll be hidden from lists but recoverable.`,
+      confirmLabel: 'Archive',
+      tone: 'danger',
+    });
+    if (!ok) {
       return;
     }
     setIsArchiving(true);
@@ -574,7 +584,7 @@ export const CasesList: React.FC = () => {
                 >
                   <option value="all">All Statuses</option>
                   {caseStatuses.map((status) => (
-                    <option key={status.id} value={status.name.toLowerCase()}>
+                    <option key={status.id} value={status.name}>
                       {status.name}
                     </option>
                   ))}
@@ -603,9 +613,22 @@ export const CasesList: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-12 text-center">
-          <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
-          <p className="text-slate-500 mt-4">Loading cases...</p>
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+          <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+            <Skeleton className="h-4 w-32" />
+          </div>
+          <div className="divide-y divide-slate-200">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-6 px-6 py-4">
+                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-4 w-32 flex-1" />
+                <Skeleton className="h-5 w-24 rounded-full" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : cases.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200">
