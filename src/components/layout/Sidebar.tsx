@@ -253,7 +253,7 @@ export const Sidebar: React.FC = () => {
               <ProtectedSidebarNavItem
                 to="/reports"
                 icon={BarChart3}
-                label="Reports"
+                label="Financial Reports"
                 isCollapsed={isCollapsed}
               />
             </SidebarSection>

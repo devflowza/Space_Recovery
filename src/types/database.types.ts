@@ -15603,6 +15603,8 @@ export type Database = {
           p_case_id: string
           p_content?: string
           p_direction?: string
+          p_sent_by?: string
+          p_sent_to?: string
           p_subject?: string
           p_type: string
         }
