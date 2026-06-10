@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { getNextCaseNumber } from '../../lib/caseService';
-import { ArrowLeft, MessageCircle, Printer, FileText, Tag, CheckCircle2, Copy, User, HardDrive, FileStack, AlertCircle, Calendar, Package, Activity, Settings, History, Users, DollarSign, Trash2, Grid2x2 as Grid, Eye, Mail } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Printer, FileText, Tag, CheckCircle2, Copy, User, HardDrive, FileStack, AlertCircle, Package, Activity, Settings, History, Users, DollarSign, Trash2, Grid2x2 as Grid, Eye, Mail } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -28,6 +28,8 @@ import { MarkAsDeliveredModal } from '../../components/cases/MarkAsDeliveredModa
 import { PreserveLongTermModal } from '../../components/cases/PreserveLongTermModal';
 import type { CreateCloneDriveFormValues } from '../../components/cases/CreateCloneDriveModal';
 import { ChainOfCustodyTab } from '../../components/cases/ChainOfCustodyTab';
+import { CaseActivityTab } from '../../components/cases/detail/CaseActivityTab';
+import { AuditInfo } from '../../components/ui/AuditInfo';
 import { ReportTypeSelectionModal } from '../../components/cases/ReportTypeSelectionModal';
 import { StreamlinedReportEditor } from '../../components/cases/StreamlinedReportEditor';
 import ReportViewModal from '../../components/cases/ReportViewModal';
@@ -63,6 +65,8 @@ type TabType = 'overview' | 'client' | 'devices' | 'clones' | 'reports' | 'quote
 export const CaseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  // History tab sub-view: the forensic custody ledger vs the workflow activity log.
+  const [historyView, setHistoryView] = useState<'custody' | 'activity'>('custody');
   const { isEnabled } = useTenantFeatures();
   const modals = useCaseModals();
 
@@ -334,16 +338,13 @@ export const CaseDetail: React.FC = () => {
                 {getStatusDisplayName(caseData.status)}
               </Badge>
             </div>
-            <div className="flex items-center gap-4 mt-2 text-sm text-slate-500 flex-wrap">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                Created {formatDate(caseData.created_at)}
-              </span>
-              <span className="flex items-center gap-1">
-                <User className="w-4 h-4" />
-                by {caseData.created_by_profile?.full_name || 'System'}
-              </span>
-            </div>
+            <AuditInfo
+              className="mt-2"
+              createdAt={caseData.created_at}
+              createdByName={caseData.created_by_profile?.full_name}
+              updatedAt={caseData.updated_at}
+              updatedByName={caseData.updated_by_profile?.full_name}
+            />
           </div>
 
           {/* Action Buttons */}
@@ -734,6 +735,7 @@ export const CaseDetail: React.FC = () => {
                 created_at: n.created_at,
                 updated_at: n.updated_at,
                 created_by: n.created_by,
+                updated_by: n.updated_by,
               }))}
               newNote={modals.newNote}
               onNoteChange={modals.setNewNote}
@@ -775,18 +777,55 @@ export const CaseDetail: React.FC = () => {
             />
           )}
 
-          {/* History Tab - Forensic Chain of Custody */}
+          {/* History Tab — forensic Chain of Custody ledger + workflow activity log */}
           {activeTab === 'history' && (
-            <ChainOfCustodyTab
-              caseId={id!}
-              caseNumber={caseData.case_no ?? ''}
-              caseStatus={caseData.status ?? null}
-              caseDevices={(devices ?? []).map((d) => ({
-                id: d.id,
-                model: d.model ?? null,
-                serial_number: d.serial_number ?? null,
-              }))}
-            />
+            <div>
+              <div
+                className="mb-4 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5"
+                role="group"
+                aria-label="History view"
+              >
+                <button
+                  type="button"
+                  onClick={() => setHistoryView('custody')}
+                  aria-pressed={historyView === 'custody'}
+                  className={`min-h-[2.75rem] rounded-md px-4 text-sm font-medium transition-colors duration-150 ${
+                    historyView === 'custody'
+                      ? 'bg-surface text-primary shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Chain of Custody
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryView('activity')}
+                  aria-pressed={historyView === 'activity'}
+                  className={`min-h-[2.75rem] rounded-md px-4 text-sm font-medium transition-colors duration-150 ${
+                    historyView === 'activity'
+                      ? 'bg-surface text-primary shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Case Activity
+                </button>
+              </div>
+
+              {historyView === 'custody' ? (
+                <ChainOfCustodyTab
+                  caseId={id!}
+                  caseNumber={caseData.case_no ?? ''}
+                  caseStatus={caseData.status ?? null}
+                  caseDevices={(devices ?? []).map((d) => ({
+                    id: d.id,
+                    model: d.model ?? null,
+                    serial_number: d.serial_number ?? null,
+                  }))}
+                />
+              ) : (
+                <CaseActivityTab caseId={id!} />
+              )}
+            </div>
           )}
         </>
       )}

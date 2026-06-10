@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { logAuditTrail } from './auditTrailService';
+import { logInvoicePayment } from './chainOfCustodyService';
 import { sanitizeFilterValue } from './postgrestSanitizer';
 import { logger } from './logger';
 import { resolveRateContext } from './currencyService';
@@ -212,6 +213,33 @@ export const createPayment = async (
   }
 
   await logAuditTrail('create', 'payments', data.id, {}, { payment_number: data.payment_number, amount: payment.amount });
+
+  // Forensic ledger: record a payment event on each case-linked invoice in the
+  // allocation (post-RPC, so balances are final). Best-effort — a ledger failure
+  // must not abort the already-recorded payment.
+  try {
+    const invoiceIds = [...new Set(allocations.map((a) => a.invoice_id))];
+    const { data: allocatedInvoices } = await supabase
+      .from('invoices')
+      .select('id, case_id, invoice_number, amount_paid, total_amount')
+      .in('id', invoiceIds);
+    for (const inv of allocatedInvoices ?? []) {
+      if (!inv.case_id) continue;
+      const allocated = allocations
+        .filter((a) => a.invoice_id === inv.id)
+        .reduce((sum, a) => sum + a.amount, 0);
+      await logInvoicePayment({
+        caseId: inv.case_id,
+        invoiceNo: inv.invoice_number ?? inv.id,
+        paymentAmount: allocated,
+        totalPaid: inv.amount_paid ?? 0,
+        totalAmount: inv.total_amount ?? 0,
+        paymentMethod: payment.payment_method_id ?? undefined,
+      });
+    }
+  } catch (custodyError) {
+    logger.error('Payment recorded but chain-of-custody event failed:', custodyError);
+  }
 
   return data;
 };

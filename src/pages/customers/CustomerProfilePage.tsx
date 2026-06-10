@@ -18,9 +18,13 @@ import {
   Copy, RefreshCw, Ban, Check, AlertTriangle, ShoppingBag
 } from 'lucide-react';
 import { formatDate } from '../../lib/format';
+import { useProfileNames } from '../../hooks/useProfileNames';
+import { AuditInfo } from '../../components/ui/AuditInfo';
 import { uploadCustomerProfilePhoto, deleteCustomerProfilePhoto } from '../../lib/fileStorageService';
 import { generatePortalLoginUrl, generateCustomerPortalCredentialsText } from '../../lib/portalUrlService';
 import { generateSecurePassword } from '../../lib/passwordUtils';
+import { ManageCompaniesModal } from '../../components/customers/ManageCompaniesModal';
+import { useAuth } from '../../contexts/AuthContext';
 import { CustomerPurchasesTab } from '../../components/customers/CustomerPurchasesTab';
 import { CustomerCasesTab } from '../../components/customers/CustomerCasesTab';
 import { CustomerFinancialTab } from '../../components/customers/CustomerFinancialTab';
@@ -48,6 +52,9 @@ interface Customer {
   notes: string | null;
   is_active: boolean | null;
   created_at: string;
+  created_by: string | null;
+  updated_at: string | null;
+  updated_by: string | null;
   customer_groups: { id: string; name: string } | null;
   geo_countries: { id: string; name: string } | null;
   geo_cities: { id: string; name: string } | null;
@@ -107,6 +114,10 @@ export const CustomerProfilePage: React.FC = () => {
   });
   const [showComposeEmail, setShowComposeEmail] = useState(false);
   const [composeMessageChannel, setComposeMessageChannel] = useState<'whatsapp' | 'sms' | null>(null);
+  const [showManageCompanies, setShowManageCompanies] = useState(false);
+  const { profile } = useAuth();
+  // Relationship management is a controlled operation: manager and above.
+  const canManageCompanies = ['owner', 'admin', 'manager'].includes(profile?.role ?? '');
 
   const { data: customer, isLoading } = useQuery({
     queryKey: ['customer', id],
@@ -128,6 +139,7 @@ export const CustomerProfilePage: React.FC = () => {
     },
     enabled: !!id,
   });
+  const { nameOf } = useProfileNames([customer?.created_by, customer?.updated_by]);
 
   const { data: companies = [] } = useQuery({
     queryKey: ['customer_companies', id],
@@ -139,7 +151,9 @@ export const CustomerProfilePage: React.FC = () => {
           *,
           companies (id, company_number, company_name, name)
         `)
-        .eq('customer_id', id);
+        .eq('customer_id', id)
+        .is('deleted_at', null)
+        .order('is_primary', { ascending: false });
 
       if (error) throw error;
       return (data ?? []) as unknown as CompanyRelationship[];
@@ -506,10 +520,13 @@ export const CustomerProfilePage: React.FC = () => {
                       <span>{[customer.geo_cities?.name, customer.geo_countries?.name].filter(Boolean).join(', ')}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <Calendar className="w-4 h-4 text-slate-400" />
-                    <span>Joined {formatDate(customer.created_at)}</span>
-                  </div>
+                  <AuditInfo
+                    createdAt={customer.created_at}
+                    createdLabel="Joined"
+                    createdByName={nameOf(customer.created_by)}
+                    updatedAt={customer.updated_at}
+                    updatedByName={nameOf(customer.updated_by)}
+                  />
                 </div>
 
                 {customer.address && (
@@ -525,12 +542,22 @@ export const CustomerProfilePage: React.FC = () => {
             </div>
           </Card>
 
-          {companies.length > 0 && (
+          {(companies.length > 0 || canManageCompanies) && (
             <Card className="p-6">
-              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Building2 className="w-4 h-4" />
-                Associated Companies
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Associated Companies
+                </h3>
+                {canManageCompanies && (
+                  <Button size="sm" variant="secondary" onClick={() => setShowManageCompanies(true)}>
+                    Manage
+                  </Button>
+                )}
+              </div>
+              {companies.length === 0 && (
+                <p className="text-sm text-slate-500">No companies linked yet.</p>
+              )}
               <div className="space-y-3">
                 {companies.map((rel) => {
                   if (!rel.companies) return null;
@@ -569,6 +596,15 @@ export const CustomerProfilePage: React.FC = () => {
                 })}
               </div>
             </Card>
+          )}
+
+          {showManageCompanies && id && customer && (
+            <ManageCompaniesModal
+              isOpen={showManageCompanies}
+              onClose={() => setShowManageCompanies(false)}
+              customerId={id}
+              customerName={customer.customer_name}
+            />
           )}
         </div>
 
