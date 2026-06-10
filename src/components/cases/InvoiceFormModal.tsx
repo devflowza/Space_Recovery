@@ -12,6 +12,8 @@ import { logger } from '../../lib/logger';
 import { getSupportedCurrencies, getBaseCurrency, getConversionRate, type SupportedCurrency } from '../../lib/currencyService';
 import { formatCurrency, formatBaseEquivalent } from '../../lib/format';
 import { getInvoiceEditability } from '../../lib/invoicePermissions';
+import { listTemplates, recordTemplateUsage } from '../../lib/documentTemplatesService';
+import { templateKeys } from '../../lib/queryKeys';
 
 interface LineItemTemplate {
   id: string;
@@ -214,26 +216,15 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
   });
 
   const { data: termsTemplates = [], isLoading: termsLoading } = useQuery({
-    queryKey: ['invoice_terms_templates'],
-    queryFn: async () => {
-      const { data: typeData, error: typeError } = await supabase
-        .from('master_template_types')
-        .select('id')
-        .eq('code', 'invoice_terms')
-        .maybeSingle();
-
-      if (typeError || !typeData) return [];
-
-      const { data, error } = await supabase
-        .from('document_templates')
-        .select('id, name, content, is_default')
-        .eq('template_type_id', typeData.id)
-        .eq('is_active', true)
-        .order('is_default', { ascending: false })
-        .order('name');
-
-      if (error) throw error;
-      return data as InvoiceTermsTemplate[];
+    queryKey: templateKeys.list('invoice_terms'),
+    queryFn: async (): Promise<InvoiceTermsTemplate[]> => {
+      const templates = await listTemplates('invoice_terms');
+      return templates.map((t) => ({
+        id: t.id,
+        name: t.name,
+        content: t.content,
+        is_default: t.isDefault,
+      }));
     },
     enabled: isOpen,
   });
@@ -432,6 +423,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     const plainText = stripHtmlTags(template.content ?? '');
     setInvoiceData(prev => ({ ...prev, terms_and_conditions: plainText }));
     setShowTermsTemplates(false);
+    void recordTemplateUsage(template.id);
   };
 
   const docCurrency = invoiceData.currency || baseCurrency || 'USD';

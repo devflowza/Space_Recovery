@@ -11,6 +11,8 @@ import { useToast } from '../../hooks/useToast';
 import { logger } from '../../lib/logger';
 import { getSupportedCurrencies, getBaseCurrency, getConversionRate, type SupportedCurrency } from '../../lib/currencyService';
 import { formatCurrency, formatBaseEquivalent } from '../../lib/format';
+import { listTemplates, recordTemplateUsage } from '../../lib/documentTemplatesService';
+import { templateKeys } from '../../lib/queryKeys';
 
 interface LineItemTemplate {
   id: string;
@@ -238,26 +240,15 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
   });
 
   const { data: termsTemplates = [], isLoading: termsLoading } = useQuery({
-    queryKey: ['quote_terms_templates'],
-    queryFn: async () => {
-      const { data: typeData, error: typeError } = await supabase
-        .from('master_template_types')
-        .select('id')
-        .eq('code', 'quote_terms')
-        .maybeSingle();
-
-      if (typeError || !typeData) return [];
-
-      const { data, error } = await supabase
-        .from('document_templates')
-        .select('id, name, content, is_default')
-        .eq('template_type_id', typeData.id)
-        .eq('is_active', true)
-        .order('is_default', { ascending: false })
-        .order('name');
-
-      if (error) throw error;
-      return data as QuoteTermsTemplate[];
+    queryKey: templateKeys.list('quote_terms'),
+    queryFn: async (): Promise<QuoteTermsTemplate[]> => {
+      const templates = await listTemplates('quote_terms');
+      return templates.map((t) => ({
+        id: t.id,
+        name: t.name,
+        content: t.content,
+        is_default: t.isDefault,
+      }));
     },
     enabled: isOpen,
   });
@@ -346,8 +337,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
     const plainText = stripHtmlTags(template.content);
     setQuoteData(prev => ({ ...prev, terms_and_conditions: plainText }));
     setShowTermsTemplates(false);
-    // Schema drift: document_templates.usage_count / last_used_at no longer
-    // exist, so per-template usage telemetry is dropped.
+    void recordTemplateUsage(template.id);
   };
 
   const docCurrency = quoteData.currency || baseCurrency || 'USD';

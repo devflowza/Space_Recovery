@@ -75,6 +75,10 @@ export default function PortalReports() {
           cases!inner(case_number)
         `)
         .in('case_id', reportVisibleCaseIds)
+        // Customers only ever see released reports: the send action sets
+        // status='sent' + content.visible_to_customer=true (reportsService).
+        .in('status', ['approved', 'sent'])
+        .eq('content->>visible_to_customer', 'true')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
