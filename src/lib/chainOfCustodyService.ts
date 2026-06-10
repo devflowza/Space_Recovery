@@ -396,12 +396,14 @@ export async function logChainOfCustody(params: {
     action_type: params.actionType,
   };
 
+  // p_device_id is omitted for case-level events: the RPC defaults it to NULL.
+  // (Sending '' here used to fail the uuid cast and broke every deviceless event.)
   const { data, error } = await supabase.rpc('log_chain_of_custody', {
     p_case_id: params.caseId,
     p_action_category: params.actionCategory,
     p_action: params.actionType,
     p_description: params.actionDescription,
-    p_device_id: params.deviceId ?? '',
+    ...(params.deviceId ? { p_device_id: params.deviceId } : {}),
     p_metadata: mergedMetadata,
   });
 
@@ -1157,54 +1159,6 @@ export async function logPortalApproval(params: {
   });
 }
 
-export async function logDeviceCheckout(params: {
-  caseId: string;
-  deviceId?: string;
-  collectorName: string;
-  collectorMobile?: string;
-  collectorId?: string;
-  checkoutDate: string;
-}): Promise<string> {
-  return await logChainOfCustody({
-    caseId: params.caseId,
-    actionCategory: 'transfer',
-    actionType: 'DEVICE_CHECKED_OUT',
-    actionDescription: `Device checked out to ${params.collectorName}`,
-    deviceId: params.deviceId,
-    afterValues: {
-      checkout_date: params.checkoutDate,
-      collector_name: params.collectorName,
-      collector_mobile: params.collectorMobile,
-      collector_id: params.collectorId,
-    },
-    metadata: {
-      checkout_date: params.checkoutDate,
-    },
-  });
-}
-
-export async function logDeviceReturn(params: {
-  caseId: string;
-  deviceId?: string;
-  returnedBy: string;
-  returnDate: string;
-  condition?: string;
-  integrityVerified?: boolean;
-}): Promise<string> {
-  return await logChainOfCustody({
-    caseId: params.caseId,
-    actionCategory: 'transfer',
-    actionType: 'DEVICE_RETURNED',
-    actionDescription: `Device returned by ${params.returnedBy}`,
-    deviceId: params.deviceId,
-    afterValues: {
-      return_date: params.returnDate,
-      returned_by: params.returnedBy,
-      condition: params.condition,
-      integrity_verified: params.integrityVerified,
-    },
-    metadata: {
-      return_date: params.returnDate,
-    },
-  });
-}
+// logDeviceCheckout / logDeviceReturn were removed: checkout custody events are
+// written server-side by log_case_checkout (DEVICE_CHECKED_OUT / CASE_CHECKED_OUT),
+// so no client path can record a physical handoff without the ledger entry.

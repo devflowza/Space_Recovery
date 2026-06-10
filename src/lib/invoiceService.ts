@@ -2,6 +2,8 @@ import { supabase, resolveTenantId } from './supabaseClient';
 import type { Database } from '../types/database.types';
 import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
 import { logAuditTrail } from './auditTrailService';
+import { logInvoiceCreated, logInvoicePayment } from './chainOfCustodyService';
+import { logger } from './logger';
 import { sanitizeUuidFields as sanitizeUuids, dropEmptyKeys } from './dataValidation';
 import { sanitizeFilterValue } from './postgrestSanitizer';
 import { calculateInvoiceTotals, calculateInvoiceTotalsBase, convertToBase, roundMoney } from './financialMath';
@@ -487,6 +489,22 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
 
   await logAuditTrail('create', 'invoices', invoiceData.id, {}, { invoice_number: invoiceData.invoice_number, total_amount: totalAmount });
 
+  // Forensic ledger: invoices are always case-linked (guarded above). A ledger
+  // failure must not abort the already-created invoice — log and continue.
+  try {
+    await logInvoiceCreated({
+      caseId: invoice.case_id,
+      invoiceNo: invoiceData.invoice_number ?? invoiceNumber,
+      total: totalAmount,
+      subtotal,
+      discount: invoice.discount_amount ?? 0,
+      tax: taxAmount,
+      dueDate: invoiceData.due_date ?? undefined,
+    });
+  } catch (custodyError) {
+    logger.error('Invoice created but chain-of-custody event failed:', custodyError);
+  }
+
   return invoiceData;
 };
 
@@ -817,7 +835,7 @@ export const recordPayment = async (
 ) => {
   const { data: invoice, error: fetchError } = await supabase
     .from('invoices')
-    .select('total_amount, amount_paid, invoice_type, customer_id, currency, exchange_rate')
+    .select('total_amount, amount_paid, invoice_type, customer_id, currency, exchange_rate, case_id, invoice_number')
     .eq('id', invoiceId)
     .maybeSingle();
 
@@ -889,6 +907,21 @@ export const recordPayment = async (
     .eq('id', invoiceId);
 
   if (updateError) throw updateError;
+
+  if (invoice.case_id) {
+    try {
+      await logInvoicePayment({
+        caseId: invoice.case_id,
+        invoiceNo: invoice.invoice_number ?? invoiceId,
+        paymentAmount: paymentData.amount,
+        totalPaid: newAmountPaid,
+        totalAmount,
+        paymentMethod: paymentData.payment_method,
+      });
+    } catch (custodyError) {
+      logger.error('Payment recorded but chain-of-custody event failed:', custodyError);
+    }
+  }
 
   return payment;
 };

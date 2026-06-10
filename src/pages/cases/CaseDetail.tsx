@@ -28,6 +28,7 @@ import { MarkAsDeliveredModal } from '../../components/cases/MarkAsDeliveredModa
 import { PreserveLongTermModal } from '../../components/cases/PreserveLongTermModal';
 import type { CreateCloneDriveFormValues } from '../../components/cases/CreateCloneDriveModal';
 import { ChainOfCustodyTab } from '../../components/cases/ChainOfCustodyTab';
+import { CaseActivityTab } from '../../components/cases/detail/CaseActivityTab';
 import { ReportTypeSelectionModal } from '../../components/cases/ReportTypeSelectionModal';
 import { StreamlinedReportEditor } from '../../components/cases/StreamlinedReportEditor';
 import ReportViewModal from '../../components/cases/ReportViewModal';
@@ -63,6 +64,8 @@ type TabType = 'overview' | 'client' | 'devices' | 'clones' | 'reports' | 'quote
 export const CaseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  // History tab sub-view: the forensic custody ledger vs the workflow activity log.
+  const [historyView, setHistoryView] = useState<'custody' | 'activity'>('custody');
   const { isEnabled } = useTenantFeatures();
   const modals = useCaseModals();
 
@@ -775,18 +778,55 @@ export const CaseDetail: React.FC = () => {
             />
           )}
 
-          {/* History Tab - Forensic Chain of Custody */}
+          {/* History Tab — forensic Chain of Custody ledger + workflow activity log */}
           {activeTab === 'history' && (
-            <ChainOfCustodyTab
-              caseId={id!}
-              caseNumber={caseData.case_no ?? ''}
-              caseStatus={caseData.status ?? null}
-              caseDevices={(devices ?? []).map((d) => ({
-                id: d.id,
-                model: d.model ?? null,
-                serial_number: d.serial_number ?? null,
-              }))}
-            />
+            <div>
+              <div
+                className="mb-4 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5"
+                role="group"
+                aria-label="History view"
+              >
+                <button
+                  type="button"
+                  onClick={() => setHistoryView('custody')}
+                  aria-pressed={historyView === 'custody'}
+                  className={`min-h-[2.75rem] rounded-md px-4 text-sm font-medium transition-colors duration-150 ${
+                    historyView === 'custody'
+                      ? 'bg-surface text-primary shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Chain of Custody
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHistoryView('activity')}
+                  aria-pressed={historyView === 'activity'}
+                  className={`min-h-[2.75rem] rounded-md px-4 text-sm font-medium transition-colors duration-150 ${
+                    historyView === 'activity'
+                      ? 'bg-surface text-primary shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Case Activity
+                </button>
+              </div>
+
+              {historyView === 'custody' ? (
+                <ChainOfCustodyTab
+                  caseId={id!}
+                  caseNumber={caseData.case_no ?? ''}
+                  caseStatus={caseData.status ?? null}
+                  caseDevices={(devices ?? []).map((d) => ({
+                    id: d.id,
+                    model: d.model ?? null,
+                    serial_number: d.serial_number ?? null,
+                  }))}
+                />
+              ) : (
+                <CaseActivityTab caseId={id!} />
+              )}
+            </div>
           )}
         </>
       )}

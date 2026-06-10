@@ -1,6 +1,7 @@
 import { supabase, resolveTenantId } from './supabaseClient';
 import type { Database } from '../types/database.types';
 import { logAuditTrail } from './auditTrailService';
+import { logQuoteCreated, logQuoteStatusChanged } from './chainOfCustodyService';
 import { sanitizeUuidFields as sanitizeUuids, dropEmptyKeys } from './dataValidation';
 import { sanitizeFilterValue } from './postgrestSanitizer';
 import { logger } from './logger';
@@ -478,6 +479,21 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
 
     await logAuditTrail('create', 'quotes', quoteData.id, {}, { quote_number: quoteData.quote_number, total_amount: quoteData.total_amount });
 
+    // Forensic ledger: quotes are always case-linked (guarded above). A ledger
+    // failure must not abort the already-created quote — log and continue.
+    try {
+      await logQuoteCreated({
+        caseId: quote.case_id,
+        quoteNo: quoteData.quote_number ?? quoteNumber,
+        total: totalAmount,
+        subtotal,
+        discount: quote.discount_amount || 0,
+        tax: taxAmount,
+      });
+    } catch (custodyError) {
+      logger.error('Quote created but chain-of-custody event failed:', custodyError);
+    }
+
     return quoteData;
   } catch (error: unknown) {
     logger.error('Quote creation failed:', error);
@@ -652,6 +668,13 @@ export const updateQuoteStatus = async (
   status: Quote['status'],
   additionalData?: Partial<Quote>
 ) => {
+  // Prior state for the audit + custody trail (status transition, case linkage).
+  const { data: before } = await supabase
+    .from('quotes')
+    .select('status, case_id, quote_number')
+    .eq('id', id)
+    .maybeSingle();
+
   const persistAdditional = additionalData ? pickQuotePersistFields(additionalData) : {};
   const updatePayload: QuoteUpdate = {
     status,
@@ -668,6 +691,19 @@ export const updateQuoteStatus = async (
   if (error) throw error;
 
   await logAuditTrail('update', 'quotes', id, {}, updatePayload as Record<string, unknown>);
+
+  if (before?.case_id && before.status !== status) {
+    try {
+      await logQuoteStatusChanged({
+        caseId: before.case_id,
+        quoteNo: before.quote_number ?? id,
+        oldStatus: before.status ?? 'unknown',
+        newStatus: status ?? 'unknown',
+      });
+    } catch (custodyError) {
+      logger.error('Quote status changed but chain-of-custody event failed:', custodyError);
+    }
+  }
 
   return data;
 };
