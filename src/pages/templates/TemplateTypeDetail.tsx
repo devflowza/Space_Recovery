@@ -19,6 +19,7 @@ import { Modal } from '../../components/ui/Modal';
 import { formatDate } from '../../lib/format';
 import { sanitizeHtml } from '../../lib/sanitizeHtml';
 import { LineItemTemplateFormModal } from '../../components/templates/LineItemTemplateFormModal';
+import { renderTemplate, SAMPLE_CONTEXT } from '../../lib/templateEngine';
 import { logger } from '../../lib/logger';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Database } from '../../types/database.types';
@@ -31,6 +32,9 @@ interface Template {
   name: string;
   description: string | null;
   content: string | null;
+  subject_line: string | null;
+  document_type: string | null;
+  usage_count: number | null;
   is_default: boolean | null;
   is_active: boolean | null;
   created_at: string;
@@ -87,9 +91,10 @@ export const TemplateTypeDetail: React.FC = () => {
 
         const { data: templatesData } = await supabase
           .from('document_templates')
-          .select('id, name, description, content, is_default, is_active, created_at, updated_at, template_type_id, category_id')
+          .select('id, name, description, content, subject_line, document_type, usage_count, is_default, is_active, created_at, updated_at, template_type_id, category_id')
           .eq('template_type_id', typeData.id)
           .eq('is_active', true)
+          .is('deleted_at', null)
           .order('is_default', { ascending: false })
           .order('name');
 
@@ -130,6 +135,8 @@ export const TemplateTypeDetail: React.FC = () => {
         name: `${template.name} (Copy)`,
         description: template.description,
         content: template.content,
+        subject_line: template.subject_line,
+        document_type: template.document_type,
         category_id: template.category_id,
         is_default: false,
         is_active: true,
@@ -362,11 +369,25 @@ export const TemplateTypeDetail: React.FC = () => {
           onClose={() => setShowPreview(false)}
           title={selectedTemplate.name}
         >
-          <div className="prose max-w-none">
+          <div className="space-y-3">
+            {selectedTemplate.subject_line && (
+              <p className="text-sm text-slate-700">
+                <span className="font-medium">Subject:</span>{' '}
+                {renderTemplate(selectedTemplate.subject_line, SAMPLE_CONTEXT)}
+              </p>
+            )}
             <div
-              className="border border-slate-200 rounded-lg p-4 prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedTemplate.content || '') }}
+              className="border border-slate-200 rounded-lg p-4 prose max-w-none whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(
+                  renderTemplate(selectedTemplate.content || '', SAMPLE_CONTEXT)
+                ),
+              }}
             />
+            <p className="text-xs text-slate-400">
+              Placeholders are shown filled with sample data. Real case, customer, and
+              financial values are substituted when the template is applied.
+            </p>
           </div>
         </Modal>
       )}
@@ -411,6 +432,7 @@ export const TemplateTypeDetail: React.FC = () => {
           initialData={selectedTemplate ? { ...selectedTemplate } : undefined}
           templateTypeId={templateType.id}
           isLineItemType={false}
+          typeCode={templateType.code}
         />
       )}
     </div>

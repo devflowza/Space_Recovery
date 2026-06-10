@@ -120,6 +120,14 @@ export const stockKeys = {
   transfer: (id: string) => [...stockKeys.all, 'transfer', id] as const,
 };
 
+export const templateKeys = {
+  all: ['document-templates'] as const,
+  list: (typeCode: string, documentType?: string) =>
+    [...templateKeys.all, 'list', typeCode, documentType ?? null] as const,
+  variables: () => [...templateKeys.all, 'variables'] as const,
+  context: (refs: Record<string, unknown>) => [...templateKeys.all, 'context', refs] as const,
+};
+
 export const masterDataKeys = {
   deviceTypes: () => ['master', 'device-types'] as const,
   deviceBrands: () => ['master', 'device-brands'] as const,

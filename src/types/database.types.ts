@@ -4777,6 +4777,7 @@ export type Database = {
           default_price: number | null
           deleted_at: string | null
           description: string | null
+          document_type: string | null
           id: string
           is_active: boolean | null
           is_default: boolean | null
@@ -4801,6 +4802,7 @@ export type Database = {
           default_price?: number | null
           deleted_at?: string | null
           description?: string | null
+          document_type?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
@@ -4825,6 +4827,7 @@ export type Database = {
           default_price?: number | null
           deleted_at?: string | null
           description?: string | null
+          document_type?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null

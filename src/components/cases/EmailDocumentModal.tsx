@@ -19,6 +19,7 @@ import {
 import { sendDocumentEmail } from '../../lib/emailDocumentService';
 import { isValidEmail } from '../../lib/utils';
 import { getEmailTemplate, getDocumentTypeLabel } from '../../lib/emailTemplates';
+import { TemplatePicker } from '../templates/TemplatePicker';
 import type { DocumentType } from '../../lib/pdf/types';
 
 interface EmailDocumentModalProps {
@@ -64,6 +65,9 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      // Hardcoded system default; the TemplatePicker below replaces it with the
+      // tenant's default document_templates row (rendered with real context)
+      // as soon as one resolves.
       const template = getEmailTemplate(documentType, {
         customerName: customerName || 'Valued Customer',
         caseNumber,
@@ -191,6 +195,20 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
               disabled={isSending}
             />
           </div>
+
+          <TemplatePicker
+            typeCode="email"
+            documentType={documentType}
+            contextRefs={{ caseId }}
+            channel="plain"
+            autoApplyDefault
+            label="Email template"
+            disabled={isSending}
+            onApply={({ subject: appliedSubject, body: appliedBody }) => {
+              if (appliedSubject) setSubject(appliedSubject);
+              setBody(appliedBody);
+            }}
+          />
 
           <div className="flex gap-2">
             {!showCc && (
