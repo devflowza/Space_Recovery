@@ -253,6 +253,37 @@ export function StreamlinedReportEditor({
       }
 
       await loadSectionsFromDatabase(template.id);
+
+      // Recovered-files reports prefill their summary section from the case's
+      // recovery manifests (the lab's delivery artifact — lifecycle stage 12).
+      if (reportType === 'recovered_files') {
+        try {
+          const [{ manifestService }, { formatFileSize }] = await Promise.all([
+            import('../../lib/manifestService'),
+            import('../../lib/format'),
+          ]);
+          const manifests = await manifestService.listManifests(caseId);
+          if (manifests.length > 0) {
+            const escapeHtml = (value: string) =>
+              value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const lines = manifests
+              .map(
+                (manifest) =>
+                  `<p><strong>${escapeHtml(manifest.title ?? 'Manifest')}</strong>` +
+                  `${manifest.tool_name ? ` (${escapeHtml(manifest.tool_name)})` : ''} — ` +
+                  `${manifest.total_files ?? 0} files, ${manifest.total_folders ?? 0} folders, ` +
+                  `${formatFileSize(manifest.total_bytes ?? 0)} · ${manifest.status}</p>`
+              )
+              .join('\n');
+            setSections((prev) => ({
+              ...prev,
+              recovered_files_summary: `<p>Recovery manifest summary:</p>\n${lines}`,
+            }));
+          }
+        } catch (manifestError) {
+          logger.error('Error prefilling manifest summary:', manifestError);
+        }
+      }
     } catch (error) {
       logger.error('Error initializing report:', error);
       toast.error('Failed to initialize report. Please try again.');
