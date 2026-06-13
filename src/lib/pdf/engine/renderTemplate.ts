@@ -17,12 +17,16 @@
  * builders — it is the additive engine entry point.
  */
 
-import type { Content, PageOrientation, PageSize, TDocumentDefinitions } from 'pdfmake/interfaces';
+import type { Content, DynamicContent, PageOrientation, PageSize, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { getStylesWithFont } from '../styles';
 import type { DocumentTemplateConfig } from '../templateConfig';
 import type { TranslationContext } from '../types';
 import type { EngineContext, EngineDocData } from './types';
 import { SECTION_REGISTRY } from './registry';
+import { buildPageFooter } from './sections/footer';
+
+/** Section keys that can be promoted to the repeating page footer. */
+const PAGE_FOOTER_KEYS = new Set(['footer', 'qr']);
 
 export function renderTemplate(
   config: DocumentTemplateConfig,
@@ -39,13 +43,37 @@ export function renderTemplate(
   const pageOrientation: PageOrientation = config.paper.orientation;
   const pageMargins = config.paper.margins;
 
-  // 3. Visible sections, ascending order, dispatched via the registry.
+  // 2. Visible sections, ascending order, dispatched via the registry.
   const ordered = [...config.sections]
     .filter((s) => s.visible)
     .sort((a, b) => a.order - b.order);
 
+  // Decide whether the footer/qr sections drive a REPEATING page footer.
+  // They do only when a `footer` section is part of the document's TRAILING run
+  // (the common case): a contiguous tail of footer/qr sections that includes a
+  // `footer`. When a tenant reorders the footer into the body it stays inline
+  // (no page footer) so its position is honored, and a trailing `qr` with no
+  // accompanying footer also stays inline (it is body content, not chrome).
+  // This keeps the page footer generic — documents without a trailing footer
+  // get no page-footer callback.
+  let trailingFrom = ordered.length;
+  for (let i = ordered.length - 1; i >= 0; i--) {
+    if (PAGE_FOOTER_KEYS.has(ordered[i].key)) {
+      trailingFrom = i;
+    } else {
+      break;
+    }
+  }
+  const trailingKeys = ordered.slice(trailingFrom).map((s) => s.key);
+  const promoteToPageFooter = trailingKeys.includes('footer');
+
+  // 3. Flatten the in-body sections. When the trailing run is promoted to the
+  // page footer it is excluded here and emitted via the `footer:` callback
+  // instead of inline content.
+  const bodyEnd = promoteToPageFooter ? trailingFrom : ordered.length;
   const content: Content[] = [];
-  for (const section of ordered) {
+  for (let i = 0; i < bodyEnd; i++) {
+    const section = ordered[i];
     const renderer = SECTION_REGISTRY[section.key];
     if (!renderer) continue; // skip unknown / not-yet-implemented keys safely
     const out = renderer(engine, data);
@@ -57,6 +85,15 @@ export function renderTemplate(
     }
   }
 
+  // 4. Repeating page footer (divider + tagline + website + optional QR),
+  // mirroring the hand-written builders' `footer:` callback. `buildPageFooter`
+  // returns null when there is nothing to render, in which case the trailing
+  // sections simply contribute nothing (the same outcome as the in-content
+  // renderers returning null for empty data).
+  const footer: DynamicContent | undefined = promoteToPageFooter
+    ? buildPageFooter(engine, data) ?? undefined
+    : undefined;
+
   return {
     pageSize,
     pageOrientation,
@@ -64,5 +101,6 @@ export function renderTemplate(
     defaultStyle: { font: ctx.fontFamily },
     styles: getStylesWithFont(ctx.fontFamily),
     content,
+    ...(footer ? { footer } : {}),
   };
 }
