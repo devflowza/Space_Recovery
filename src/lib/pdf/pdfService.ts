@@ -13,7 +13,7 @@ import { buildChainOfCustodyDocument } from './documents/ChainOfCustodyDocument'
 import { loadImageAsBase64 } from './utils';
 import { logPDFGeneration } from './loggingService';
 import { withTimeout, createTranslationContext } from './translationContext';
-import type { DocumentType, InvoiceDocumentData, QuoteDocumentData, PaymentReceiptDocumentData, ChainOfCustodyDocumentData, ReceiptData, TranslationContext } from './types';
+import type { DocumentType, InvoiceDocumentData, QuoteDocumentData, PaymentReceiptDocumentData, PayslipDocumentData, ChainOfCustodyDocumentData, ReceiptData, TranslationContext } from './types';
 import { type LanguageCode } from '../documentTranslations';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { isPdfEngineEnabled } from './engine/featureFlag';
@@ -25,6 +25,7 @@ import { toEngineData as toReceiptEngineData, type ReceiptVariant } from './engi
 import { toEngineData as toCheckoutEngineData } from './engine/adapters/checkoutAdapter';
 import { toEngineData as toCaseLabelEngineData } from './engine/adapters/caseLabelAdapter';
 import { toEngineData as toChainOfCustodyEngineData } from './engine/adapters/chainOfCustodyAdapter';
+import { toEngineData as toPayslipEngineData } from './engine/adapters/payslipAdapter';
 import {
   BUILT_IN_TEMPLATE_CONFIGS,
   resolveTemplateConfig,
@@ -142,6 +143,39 @@ async function buildPaymentReceiptViaEngine(
 
   const engineData = toPaymentReceiptEngineData(data, resolvedConfig);
   return renderTemplate(resolvedConfig, engineData, ctx, logoBase64, qrCodeBase64);
+}
+
+/**
+ * Build the payslip pdfmake doc-definition via the NEW config-driven engine.
+ * Flag-guarded: only reached when `isPdfEngineEnabled('payslip')` is true.
+ * Mirrors {@link buildPaymentReceiptViaEngine} with the 'payslip' built-in config
+ * and the payslip adapter. A payslip is HR-internal: it has no QR and no party
+ * blocks, so no logo/QR images are loaded (the header still draws the company
+ * identity from `companySettings`).
+ */
+async function buildPayslipViaEngine(
+  data: PayslipDocumentData,
+  ctx: TranslationContext,
+): Promise<TDocumentDefinitions> {
+  let docTypeOverride: TemplateConfigOverride | undefined;
+  try {
+    const deployed = await getDeployedVersionByType('payslip');
+    if (deployed) {
+      docTypeOverride = readConfig(deployed.config);
+    }
+  } catch (err) {
+    console.error('[PDF Service] Payslip engine: template resolution failed, using built-in default:', err);
+  }
+
+  const resolvedConfig: DocumentTemplateConfig = resolveTemplateConfig(
+    BUILT_IN_TEMPLATE_CONFIGS.payslip,
+    /* theme */ undefined,
+    /* docType */ docTypeOverride,
+    /* instance */ undefined,
+  );
+
+  const engineData = toPayslipEngineData(data, resolvedConfig);
+  return renderTemplate(resolvedConfig, engineData, ctx, null, null);
 }
 
 /**
@@ -933,7 +967,9 @@ export async function generatePayslip(recordId: string, download: boolean = true
     }
 
     const ctx = createTranslationContext(mode, languageCode);
-    const docDefinition = buildPayslipDocument(data, ctx);
+    const docDefinition = isPdfEngineEnabled('payslip')
+      ? await buildPayslipViaEngine(data, ctx)
+      : buildPayslipDocument(data, ctx);
     const filename = `Payslip_${data.payslipData.employee.employee_number}_${data.payslipData.payroll_period.period_name}.pdf`;
 
     if (download) {
@@ -1417,7 +1453,9 @@ export async function generatePayslipAsBlob(recordId: string): Promise<PDFBlobRe
     await initializePDFFonts(languageCode);
     const ctx = createTranslationContext(languageSettings?.mode || 'english_only', languageCode);
 
-    const docDefinition = buildPayslipDocument(data, ctx);
+    const docDefinition = isPdfEngineEnabled('payslip')
+      ? await buildPayslipViaEngine(data, ctx)
+      : buildPayslipDocument(data, ctx);
     const filename = `Payslip_${data.payslipData.employee.employee_number}_${data.payslipData.payroll_period.period_name}.pdf`;
 
     return new Promise((resolve) => {

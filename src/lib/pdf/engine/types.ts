@@ -272,6 +272,99 @@ export interface CaseLabelBlock {
 }
 
 /**
+ * The payslip employee/period header — employee name + number, the pay period,
+ * payment date, and the working-days/hours rows — rendered as one bilingual info
+ * box of label/value rows (the payslip counterpart to {@link CaseInfoBlock}).
+ * The adapter pre-formats every value (name, period name + start/end, payment
+ * date, days worked/absent, regular/overtime hours); the renderer stays dumb.
+ *
+ * Generalized from the "Employee Information" + "Attendance Summary" boxes in
+ * `documents/PayslipDocument.ts` (lines ~83-149).
+ */
+export interface PayslipInfoBlock {
+  /** Box heading (e.g. "Employee Information" / "معلومات الموظف"). */
+  title: LabelText;
+  /** Labelled rows: name / number / pay period / payment date / days / hours. */
+  rows: Array<{ label: LabelText; value: string }>;
+}
+
+/**
+ * A component table for a payslip — earnings OR deductions. Three columns:
+ * component / calculation / amount, plus a pre-formatted total row. The adapter
+ * pre-stringifies every cell (including the right-aligned, currency-formatted
+ * amounts and the total); the renderer lays out the header + body + total and
+ * RTL-mirrors the columns. Both {@link EngineDocData.earnings} and
+ * {@link EngineDocData.deductions} use this same shape.
+ *
+ * Generalized from `buildComponentTable` in `documents/PayslipDocument.ts`
+ * (lines ~151-207).
+ */
+export interface PayComponentBlock {
+  /** Section heading (e.g. "Earnings" / "الإيرادات", "Deductions" / "الخصومات"). */
+  title: LabelText;
+  /** Bilingual column headers (component / calculation / amount). */
+  columns: { component: LabelText; calculation: LabelText; amount: LabelText };
+  /** One row per component; values already stringified by the adapter. */
+  rows: Array<{ component: string; calculation: string; amount: string }>;
+  /** Pre-formatted total: its label (e.g. "Total Earnings") and amount string. */
+  total: { label: LabelText; amount: string };
+}
+
+/**
+ * The emphasized Net Salary line on a payslip — a single bilingual label plus
+ * the pre-formatted net amount, rendered in the boxed, larger treatment (the
+ * payslip's grand-total equivalent). Distinct from {@link EngineDocData.totals}:
+ * a payslip net is one self-contained highlighted block, not a stack of totals
+ * lines.
+ *
+ * Generalized from the `netSalarySection` in `documents/PayslipDocument.ts`
+ * (lines ~209-234).
+ */
+export interface NetPayBlock {
+  /** Net-salary label (e.g. "Net Salary" / "صافي الراتب"). */
+  label: LabelText;
+  /** Pre-formatted net amount string (currency applied by the adapter). */
+  amount: string;
+}
+
+/**
+ * The compact STOCK-LABEL body for a physical stock label: item name, optional
+ * category + brand, and a short detail list (SKU / barcode / price / location).
+ * Every value is pre-formatted by the adapter; the renderer only lays them out
+ * print-friendly on the small custom label page. Optional fields are omitted to
+ * hide their row, exactly like the legacy builder's conditional pushes.
+ *
+ * Generalized from `buildSingleLabel` in `documents/StockLabelDocument.ts`
+ * (lines ~15-125). The label is its own self-contained document body — the
+ * engine renders just these fields on the custom label-sized page.
+ */
+export interface StockLabelBlock {
+  /** Item name shown large + bold (the label's focal point). */
+  name: string;
+  /** Optional category caption (top-right), e.g. "Internal HDD". */
+  category?: string;
+  /** Optional brand line under the name. */
+  brand?: string;
+  /** Optional SKU detail row. */
+  sku?: string;
+  /** Optional barcode detail row (monospace value). */
+  barcode?: string;
+  /** Optional pre-formatted price detail row (currency applied by the adapter). */
+  price?: string;
+  /** Optional location detail row. */
+  location?: string;
+  /** Optional company name caption (top-left). */
+  companyName?: string;
+  /** Bilingual detail-row labels (SKU / Barcode / Price / Location). */
+  labels?: {
+    sku?: LabelText;
+    barcode?: LabelText;
+    price?: LabelText;
+    location?: LabelText;
+  };
+}
+
+/**
  * The document-agnostic shape every section renderer consumes. Adapters
  * (one per source `*DocumentData`) map their domain data into this shape; the
  * engine never sees invoice/quote/etc. specifics. Optional members let one
@@ -351,6 +444,30 @@ export interface EngineDocData {
    * summary), or absent on non-label documents.
    */
   caseLabel?: CaseLabelBlock | null;
+  /**
+   * Payslip employee/period header (name, number, pay period, payment date,
+   * working days/hours), or absent on non-payslip documents.
+   */
+  payslipInfo?: PayslipInfoBlock | null;
+  /**
+   * Payslip earnings component table (component / calculation / amount + total),
+   * or absent on non-payslip documents.
+   */
+  earnings?: PayComponentBlock | null;
+  /**
+   * Payslip deductions component table (component / calculation / amount + total),
+   * or absent on non-payslip documents.
+   */
+  deductions?: PayComponentBlock | null;
+  /**
+   * Payslip emphasized Net Salary line, or absent on non-payslip documents.
+   */
+  netPay?: NetPayBlock | null;
+  /**
+   * Stock-label body (item name, category, brand, SKU/barcode/price/location),
+   * or absent on non-stock-label documents.
+   */
+  stockLabel?: StockLabelBlock | null;
   /** Caption shown under the QR code, or `null` when no QR is rendered. */
   qrCaption?: string | null;
 }

@@ -7,9 +7,10 @@
  * generation). The keys covered mirror the financial + intake defaults in
  * `templateConfig.ts`. Case-intake/checkout keys (`caseInfo`, `devices`,
  * `collector`, `legalTerms`) and the forensic/label keys (`custodyLog`,
- * `caseLabel`) ARE registered. Remaining document-specific keys (`employee`,
- * `period`, `earnings`, `deductions`, `summary`, `findings`, `sections`,
- * `stockInfo`) are intentionally NOT registered yet — they belong to later
+ * `caseLabel`) ARE registered, as are the payslip keys (`payslipInfo`,
+ * `earnings`, `deductions`, `netPay`) and the stock-label key (`stockLabel`).
+ * Remaining document-specific keys (`summary`, `findings`, `sections` for the
+ * case report) are intentionally NOT registered yet — they belong to later
  * milestones and are skipped until then.
  */
 
@@ -22,6 +23,11 @@ import { renderCollector } from './sections/collector';
 import { renderLegalTerms } from './sections/legalTerms';
 import { renderCustodyLog } from './sections/custodyLog';
 import { renderCaseLabel } from './sections/caseLabel';
+import { renderPayslipInfo } from './sections/payslipInfo';
+import { renderEarnings } from './sections/earnings';
+import { renderDeductions } from './sections/deductions';
+import { renderNetPay } from './sections/netPay';
+import { renderStockLabel } from './sections/stockLabel';
 import { renderLineItems } from './sections/lineItemTable';
 import { renderTotals } from './sections/totals';
 import { renderPaymentHistory } from './sections/paymentHistory';
@@ -41,6 +47,11 @@ export const SECTION_REGISTRY: Record<string, SectionRenderer> = {
   legalTerms: renderLegalTerms,
   custodyLog: renderCustodyLog,
   caseLabel: renderCaseLabel,
+  payslipInfo: renderPayslipInfo,
+  earnings: renderEarnings,
+  deductions: renderDeductions,
+  netPay: renderNetPay,
+  stockLabel: renderStockLabel,
   lineItems: renderLineItems,
   totals: renderTotals,
   paymentHistory: renderPaymentHistory,

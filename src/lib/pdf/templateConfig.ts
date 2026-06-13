@@ -33,11 +33,24 @@ export interface LanguageConfig {
   primary: 'en' | 'ar';
 }
 
-/** Page geometry. `margins` is pdfmake order: [top, right, bottom, left]. */
+/**
+ * Page geometry. `margins` is pdfmake order: [top, right, bottom, left].
+ *
+ * `size` is normally a predefined sheet (`'A4'` / `'Letter'`). For physical
+ * LABELS (stock / case labels), set `size: 'custom'` and supply `dimensions`
+ * as a `[width, height]` pair in POINTS (1pt = 1/72"); `renderTemplate` then
+ * passes that literal page box to pdfmake instead of a predefined size. This
+ * mirrors the legacy `StockLabelDocument`'s `pageSize: { width: 283, height: 170 }`
+ * label sheet. `dimensions` is ignored for the predefined sizes, and a `'custom'`
+ * size with no `dimensions` falls back to A4 — so existing configs (which never
+ * set `'custom'`) are completely unaffected.
+ */
 export interface PaperConfig {
-  size: 'A4' | 'Letter';
+  size: 'A4' | 'Letter' | 'custom';
   orientation: 'portrait' | 'landscape';
   margins: [number, number, number, number];
+  /** Literal page box `[width, height]` in points; used only when `size === 'custom'`. */
+  dimensions?: [number, number];
 }
 
 /**
@@ -148,11 +161,24 @@ const A4_PORTRAIT: PaperConfig = {
   margins: [40, 40, 40, 40],
 };
 
-/** Compact label paper (case / stock labels print on a small landscape sheet). */
+/** Compact case-label paper (case labels print on a small landscape sheet). */
 const LABEL_PAPER: PaperConfig = {
   size: 'A4',
   orientation: 'landscape',
   margins: [16, 16, 16, 16],
+};
+
+/**
+ * Physical stock-label paper — a small custom sheet matching the legacy
+ * `StockLabelDocument`'s `{ width: 283, height: 170 }` (points) label, with the
+ * same tight 12pt margins. `size: 'custom'` tells `renderTemplate` to use the
+ * literal `dimensions` box rather than a predefined sheet.
+ */
+const STOCK_LABEL_PAPER: PaperConfig = {
+  size: 'custom',
+  orientation: 'portrait',
+  dimensions: [283, 170],
+  margins: [12, 12, 12, 12],
 };
 
 const NEUTRAL_BRANDING: BrandingConfig = {
@@ -326,11 +352,11 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
     case 'stock_label':
       return {
         ...base,
-        paper: LABEL_PAPER,
+        paper: STOCK_LABEL_PAPER,
         sections: [
           section('header', 0, { visible: false }),
-          section('stockInfo', 1),
-          section('qr', 2),
+          section('stockLabel', 1),
+          section('qr', 2, { visible: false }),
         ],
         labels: { documentTitle: { en: 'STOCK LABEL', ar: 'ملصق المخزون' } },
       };
@@ -339,12 +365,16 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
         ...base,
         sections: [
           section('header', 0),
-          section('employee', 1),
-          section('period', 2),
-          section('earnings', 3),
-          section('deductions', 4),
-          section('totals', 5, { lines: { gross: true, deductions: true, net: true } }),
-          section('footer', 6),
+          // payslipInfo = employee identity + pay period + payment date +
+          // working-days/hours rows, in one bilingual info box (generalized from
+          // the legacy "Employee Information" + "Attendance Summary" boxes).
+          section('payslipInfo', 1),
+          section('earnings', 2),
+          section('deductions', 3),
+          // netPay = the emphasized Net Salary line (its own block, not a totals
+          // line, mirroring the legacy boxed net-salary treatment).
+          section('netPay', 4),
+          section('footer', 5),
         ],
         labels: { documentTitle: { en: 'PAYSLIP', ar: 'قسيمة الراتب' } },
       };

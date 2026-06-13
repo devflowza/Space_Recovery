@@ -38,9 +38,18 @@ export function renderTemplate(
 ): TDocumentDefinitions {
   const engine: EngineContext = { config, ctx, logoBase64, qrCodeBase64 };
 
-  // 1. Page geometry from config.paper. Map the config size to a pdfmake
-  // PredefinedPageSize (pdfmake spells "LETTER" uppercase).
-  const pageSize: PageSize = config.paper.size === 'Letter' ? 'LETTER' : 'A4';
+  // 1. Page geometry from config.paper. A `'custom'` size (physical labels)
+  // becomes a literal `{ width, height }` page box from `paper.dimensions`; the
+  // predefined sizes map to a pdfmake PredefinedPageSize (pdfmake spells "LETTER"
+  // uppercase). A `'custom'` size with no dimensions degrades to A4 so a
+  // malformed config can never produce an invalid page box.
+  let pageSize: PageSize;
+  if (config.paper.size === 'custom') {
+    const dims = config.paper.dimensions;
+    pageSize = dims ? { width: dims[0], height: dims[1] } : 'A4';
+  } else {
+    pageSize = config.paper.size === 'Letter' ? 'LETTER' : 'A4';
+  }
   const pageOrientation: PageOrientation = config.paper.orientation;
   const pageMargins = config.paper.margins;
 

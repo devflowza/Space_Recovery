@@ -8,12 +8,14 @@
  * into the engine — any other value (unset, `'false'`, `'1'`, …) stays OFF.
  *
  * `'invoice'` (the M3 pilot), `'quote'`, `'payment_receipt'`, the three case
- * documents `'office_receipt'`, `'customer_copy'`, and `'checkout_form'`, plus
- * the `'case_label'` and `'chain_of_custody'` documents each have a wired engine
- * branch, driven by `VITE_PDF_ENGINE_INVOICE`, `VITE_PDF_ENGINE_QUOTE`,
+ * documents `'office_receipt'`, `'customer_copy'`, and `'checkout_form'`, the
+ * `'case_label'` and `'chain_of_custody'` documents, and the `'payslip'` +
+ * `'stock_label'` documents each have a wired engine branch, driven by
+ * `VITE_PDF_ENGINE_INVOICE`, `VITE_PDF_ENGINE_QUOTE`,
  * `VITE_PDF_ENGINE_PAYMENT_RECEIPT`, `VITE_PDF_ENGINE_OFFICE_RECEIPT`,
  * `VITE_PDF_ENGINE_CUSTOMER_COPY`, `VITE_PDF_ENGINE_CHECKOUT_FORM`,
- * `VITE_PDF_ENGINE_CASE_LABEL`, and `VITE_PDF_ENGINE_CHAIN_OF_CUSTODY`
+ * `VITE_PDF_ENGINE_CASE_LABEL`, `VITE_PDF_ENGINE_CHAIN_OF_CUSTODY`,
+ * `VITE_PDF_ENGINE_PAYSLIP`, and `VITE_PDF_ENGINE_STOCK_LABEL`
  * respectively. Other document types always return `false` here.
  *
  * NOTE: this is a build-time, ALL-tenants switch. Per-tenant rollout (reading a
@@ -31,6 +33,8 @@ const FLAG_ENV_BY_TYPE: Record<string, string> = {
   checkout_form: 'VITE_PDF_ENGINE_CHECKOUT_FORM',
   case_label: 'VITE_PDF_ENGINE_CASE_LABEL',
   chain_of_custody: 'VITE_PDF_ENGINE_CHAIN_OF_CUSTODY',
+  payslip: 'VITE_PDF_ENGINE_PAYSLIP',
+  stock_label: 'VITE_PDF_ENGINE_STOCK_LABEL',
 };
 
 /**
