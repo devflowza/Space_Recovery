@@ -224,16 +224,22 @@ function financialSections(): SectionConfig[] {
   ];
 }
 
-/** An intake/checkout document base section set (devices, not money). */
+/**
+ * An intake document base section set (office_receipt / customer_copy):
+ * case-info header + device-intake table + consent box, not money. Uses the
+ * case-doc section keys (`caseInfo`, `devices`, `legalTerms`) and ends with the
+ * signature lines, then `qr` + `footer` (promoted to the repeating page footer).
+ */
 function intakeSections(): SectionConfig[] {
   return [
     section('header', 0),
     section('parties', 1),
     section('caseInfo', 2),
     section('devices', 3),
-    section('terms', 4),
+    section('legalTerms', 4),
     section('signature', 5),
-    section('footer', 6),
+    section('qr', 6),
+    section('footer', 7),
   ];
 }
 
@@ -284,7 +290,7 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
       return {
         ...base,
         sections: intakeSections(),
-        labels: { documentTitle: { en: 'CUSTOMER COPY', ar: 'نسخة العميل' } },
+        labels: { documentTitle: { en: 'DEVICE CHECK-IN RECEIPT', ar: 'إيصال استلام جهاز' } },
       };
     case 'checkout_form':
       return {
@@ -295,9 +301,10 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
           section('caseInfo', 2),
           section('devices', 3),
           section('collector', 4),
-          section('terms', 5),
+          section('legalTerms', 5),
           section('signature', 6),
-          section('footer', 7),
+          section('qr', 7),
+          section('footer', 8),
         ],
         labels: { documentTitle: { en: 'DEVICE CHECKOUT / RETURN FORM', ar: 'نموذج تسليم الجهاز' } },
       };

@@ -13,7 +13,7 @@ import { buildChainOfCustodyDocument } from './documents/ChainOfCustodyDocument'
 import { loadImageAsBase64 } from './utils';
 import { logPDFGeneration } from './loggingService';
 import { withTimeout, createTranslationContext } from './translationContext';
-import type { DocumentType, InvoiceDocumentData, QuoteDocumentData, PaymentReceiptDocumentData, TranslationContext } from './types';
+import type { DocumentType, InvoiceDocumentData, QuoteDocumentData, PaymentReceiptDocumentData, ReceiptData, TranslationContext } from './types';
 import { type LanguageCode } from '../documentTranslations';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { isPdfEngineEnabled } from './engine/featureFlag';
@@ -21,6 +21,8 @@ import { renderTemplate } from './engine/renderTemplate';
 import { toEngineData } from './engine/adapters/invoiceAdapter';
 import { toEngineData as toQuoteEngineData } from './engine/adapters/quoteAdapter';
 import { toEngineData as toPaymentReceiptEngineData } from './engine/adapters/paymentReceiptAdapter';
+import { toEngineData as toReceiptEngineData, type ReceiptVariant } from './engine/adapters/receiptAdapter';
+import { toEngineData as toCheckoutEngineData } from './engine/adapters/checkoutAdapter';
 import {
   BUILT_IN_TEMPLATE_CONFIGS,
   resolveTemplateConfig,
@@ -140,6 +142,94 @@ async function buildPaymentReceiptViaEngine(
   return renderTemplate(resolvedConfig, engineData, ctx, logoBase64, qrCodeBase64);
 }
 
+/**
+ * Build a case INTAKE (office_receipt / customer_copy) pdfmake doc-definition via
+ * the NEW config-driven engine. Flag-guarded: only reached when
+ * `isPdfEngineEnabled('office_receipt' | 'customer_copy')` is true. Mirrors
+ * {@link buildInvoiceDocumentViaEngine}: resolve the tenant's deployed template
+ * for the given doc type (if any) as the doc-type cascade layer over the built-in
+ * default, normalize through the receipt adapter for the matching variant, and
+ * assemble via `renderTemplate`. Falls back to the built-in config when no tenant
+ * template is seeded, so the path works without any DB seeding.
+ */
+async function buildOfficeReceiptViaEngine(
+  data: ReceiptData,
+  ctx: TranslationContext,
+  logoBase64: string | null,
+  qrCodeBase64: string | null,
+  docType: 'office_receipt' | 'customer_copy',
+  variant: ReceiptVariant,
+): Promise<TDocumentDefinitions> {
+  let docTypeOverride: TemplateConfigOverride | undefined;
+  try {
+    const deployed = await getDeployedVersionByType(docType);
+    if (deployed) {
+      docTypeOverride = readConfig(deployed.config);
+    }
+  } catch (err) {
+    console.error(`[PDF Service] ${docType} engine: template resolution failed, using built-in default:`, err);
+  }
+
+  const resolvedConfig: DocumentTemplateConfig = resolveTemplateConfig(
+    BUILT_IN_TEMPLATE_CONFIGS[docType],
+    /* theme */ undefined,
+    /* docType */ docTypeOverride,
+    /* instance */ undefined,
+  );
+
+  const engineData = toReceiptEngineData(data, resolvedConfig, variant);
+  return renderTemplate(resolvedConfig, engineData, ctx, logoBase64, qrCodeBase64);
+}
+
+/**
+ * Build the customer_copy intake doc via the engine. Thin wrapper over
+ * {@link buildOfficeReceiptViaEngine} with the 'customer_copy' config + the
+ * customer-facing receipt variant.
+ */
+function buildCustomerCopyViaEngine(
+  data: ReceiptData,
+  ctx: TranslationContext,
+  logoBase64: string | null,
+  qrCodeBase64: string | null,
+): Promise<TDocumentDefinitions> {
+  return buildOfficeReceiptViaEngine(data, ctx, logoBase64, qrCodeBase64, 'customer_copy', 'customer');
+}
+
+/**
+ * Build the checkout_form (device return) pdfmake doc-definition via the NEW
+ * config-driven engine. Flag-guarded: only reached when
+ * `isPdfEngineEnabled('checkout_form')` is true. Mirrors
+ * {@link buildOfficeReceiptViaEngine} with the 'checkout_form' built-in config
+ * and the checkout adapter (case-info + device return table + collector +
+ * signature + consent box).
+ */
+async function buildCheckoutFormViaEngine(
+  data: ReceiptData,
+  ctx: TranslationContext,
+  logoBase64: string | null,
+  qrCodeBase64: string | null,
+): Promise<TDocumentDefinitions> {
+  let docTypeOverride: TemplateConfigOverride | undefined;
+  try {
+    const deployed = await getDeployedVersionByType('checkout_form');
+    if (deployed) {
+      docTypeOverride = readConfig(deployed.config);
+    }
+  } catch (err) {
+    console.error('[PDF Service] Checkout form engine: template resolution failed, using built-in default:', err);
+  }
+
+  const resolvedConfig: DocumentTemplateConfig = resolveTemplateConfig(
+    BUILT_IN_TEMPLATE_CONFIGS.checkout_form,
+    /* theme */ undefined,
+    /* docType */ docTypeOverride,
+    /* instance */ undefined,
+  );
+
+  const engineData = toCheckoutEngineData(data, resolvedConfig);
+  return renderTemplate(resolvedConfig, engineData, ctx, logoBase64, qrCodeBase64);
+}
+
 const PDF_GENERATION_TIMEOUT = 45000; // 45 seconds
 
 export interface PDFGenerationResult {
@@ -214,7 +304,9 @@ export async function generateOfficeReceipt(caseId: string, download: boolean = 
 
     const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
 
-    const docDefinition = buildOfficeReceiptDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const docDefinition = isPdfEngineEnabled('office_receipt')
+      ? await buildOfficeReceiptViaEngine(data, ctx, logoBase64, qrCodeBase64, 'office_receipt', 'office')
+      : buildOfficeReceiptDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
 
     const filename = `Office_Receipt_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
 
@@ -293,7 +385,9 @@ export async function generateCustomerCopy(caseId: string, download: boolean = t
 
     const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
 
-    const docDefinition = buildCustomerCopyDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const docDefinition = isPdfEngineEnabled('customer_copy')
+      ? await buildCustomerCopyViaEngine(data, ctx, logoBase64, qrCodeBase64)
+      : buildCustomerCopyDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
 
     const filename = `Customer_Copy_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
 
@@ -342,7 +436,9 @@ export async function generateCheckoutForm(caseId: string, download: boolean = t
 
     const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
 
-    const docDefinition = buildCheckoutFormDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const docDefinition = isPdfEngineEnabled('checkout_form')
+      ? await buildCheckoutFormViaEngine(data, ctx, logoBase64, qrCodeBase64)
+      : buildCheckoutFormDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
 
     const filename = `Checkout_Form_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
 
@@ -897,7 +993,9 @@ export async function generateOfficeReceiptAsBlob(caseId: string): Promise<PDFBl
 
     const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
 
-    const docDefinition = buildOfficeReceiptDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const docDefinition = isPdfEngineEnabled('office_receipt')
+      ? await buildOfficeReceiptViaEngine(data, ctx, logoBase64, qrCodeBase64, 'office_receipt', 'office')
+      : buildOfficeReceiptDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
     const filename = `Office_Receipt_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
 
     const blobPromise = new Promise<{ blobUrl: string; blob: Blob }>((resolve, reject) => {
@@ -988,7 +1086,9 @@ export async function generateCustomerCopyAsBlob(caseId: string): Promise<PDFBlo
 
     const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
 
-    const docDefinition = buildCustomerCopyDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const docDefinition = isPdfEngineEnabled('customer_copy')
+      ? await buildCustomerCopyViaEngine(data, ctx, logoBase64, qrCodeBase64)
+      : buildCustomerCopyDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
     const filename = `Customer_Copy_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
 
     return new Promise((resolve) => {
@@ -1031,7 +1131,9 @@ export async function generateCheckoutFormAsBlob(caseId: string): Promise<PDFBlo
 
     const qrCodeCaption = data.companySettings.branding?.qr_code_general_caption || 'Scan for more information';
 
-    const docDefinition = buildCheckoutFormDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const docDefinition = isPdfEngineEnabled('checkout_form')
+      ? await buildCheckoutFormViaEngine(data, ctx, logoBase64, qrCodeBase64)
+      : buildCheckoutFormDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
     const filename = `Checkout_Form_${data.caseData.case_number}_${new Date().toISOString().split('T')[0]}.pdf`;
 
     return new Promise((resolve) => {

@@ -5,15 +5,20 @@
  * Keys with no entry are skipped safely (a tenant override may reference a
  * section the engine doesn't render yet; that must not crash document
  * generation). The keys covered mirror the financial + intake defaults in
- * `templateConfig.ts`; document-specific keys (`caseInfo`, `devices`,
- * `custodyLog`, `employee`, `period`, `earnings`, `deductions`, `summary`,
- * `findings`, `sections`, `stockInfo`, `collector`) are intentionally NOT
- * registered yet — they belong to later milestones and are skipped until then.
+ * `templateConfig.ts`. Case-intake/checkout keys (`caseInfo`, `devices`,
+ * `collector`, `legalTerms`) ARE registered. Remaining document-specific keys
+ * (`custodyLog`, `employee`, `period`, `earnings`, `deductions`, `summary`,
+ * `findings`, `sections`, `stockInfo`) are intentionally NOT registered yet —
+ * they belong to later milestones and are skipped until then.
  */
 
 import type { SectionRenderer } from './types';
 import { renderHeader } from './sections/header';
 import { renderParties, renderMeta } from './sections/infoBoxes';
+import { renderCaseInfo } from './sections/caseInfo';
+import { renderDevices } from './sections/devices';
+import { renderCollector } from './sections/collector';
+import { renderLegalTerms } from './sections/legalTerms';
 import { renderLineItems } from './sections/lineItemTable';
 import { renderTotals } from './sections/totals';
 import { renderPaymentHistory } from './sections/paymentHistory';
@@ -27,6 +32,10 @@ export const SECTION_REGISTRY: Record<string, SectionRenderer> = {
   header: renderHeader,
   parties: renderParties,
   meta: renderMeta,
+  caseInfo: renderCaseInfo,
+  devices: renderDevices,
+  collector: renderCollector,
+  legalTerms: renderLegalTerms,
   lineItems: renderLineItems,
   totals: renderTotals,
   paymentHistory: renderPaymentHistory,

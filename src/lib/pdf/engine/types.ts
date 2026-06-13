@@ -129,12 +129,92 @@ export interface PaymentHistoryBlock {
 }
 
 /**
+ * Case identification / job header for an INTAKE (office_receipt / customer_copy)
+ * or CHECKOUT (checkout_form) document, rendered as a bilingual info box of
+ * label/value rows — the case-level counterpart to {@link PartyBlock}. The
+ * adapter pre-formats every value (case no, status, priority, received date/time,
+ * assigned technician, service type, problem description); renderers stay dumb.
+ *
+ * Mirrors the "Case Details" box in `documents/OfficeReceiptDocument.ts`
+ * (lines ~143-156) and `documents/CheckoutFormDocument.ts` (lines ~138-144).
+ */
+export interface CaseInfoBlock {
+  /** Box heading (e.g. "Case Details" / "تفاصيل الحالة"). */
+  title: LabelText;
+  /** Labelled detail rows, e.g. `{ label: {en:'Case ID:'}, value: 'CASE-0042' }`. */
+  rows: Array<{ label: LabelText; value: string }>;
+}
+
+/**
+ * The device-intake/return TABLE for case documents — a config-driven column
+ * list plus pre-stringified rows, the device-level counterpart to
+ * {@link EngineDocData.lineItems}. The adapter resolves the columns (which to
+ * show, in what order, with which bilingual headers) into {@link ResolvedColumn}s
+ * and stringifies each cell, including any role label; the renderer lays out the
+ * header + body, applies per-column alignment, RTL-mirrors via `mirrorColumns`,
+ * and colours the `role` cell via `getRoleBadgeColors` / `getSimpleRoleLabel`.
+ *
+ * Generalized from the "Device(s) Received / Returned" table in
+ * `documents/OfficeReceiptDocument.ts` (lines ~182-265) and
+ * `documents/CheckoutFormDocument.ts` (lines ~193-276). Default columns:
+ * type / brand / model / serial / capacity / condition / role / notes.
+ */
+export interface DevicesBlock {
+  /** Section heading (e.g. "Device(s) Received" / "الأجهزة المستلمة"). */
+  title: LabelText;
+  /** Resolved, ordered columns (key ties to a field in each {@link rows} record). */
+  columns: ResolvedColumn[];
+  /** One record per device; values already stringified by the adapter. */
+  rows: Array<Record<string, string>>;
+}
+
+/**
+ * The CHECKOUT collector block for a return/checkout document: who physically
+ * collected the device(s) and when. The adapter pre-formats every value (name,
+ * mobile, ID, checkout date, notes); the renderer lays them out as a bilingual
+ * info box and (separately, via the shared signature section) draws the
+ * signature lines. Rendered only on checkout documents.
+ *
+ * Mirrors the "Collection Information" box in
+ * `documents/CheckoutFormDocument.ts` (lines ~146-167).
+ */
+export interface CollectorBlock {
+  /** Box heading (e.g. "Collection Information" / "معلومات الاستلام"). */
+  title: LabelText;
+  /** Labelled rows: collector name / mobile / national ID / checkout date / notes. */
+  rows: Array<{ label: LabelText; value: string }>;
+}
+
+/**
+ * A consent / Terms-&-Conditions text block for intake & checkout documents —
+ * a bilingual title plus already-resolved body prose, optionally with a policy
+ * link. Distinct from the financial {@link TermsBlock}: that one drives the
+ * Payment-Terms/Notes + bank two-column layout; this one is a single
+ * acknowledgement/consent box (the customer authorizes the lab to proceed, or
+ * acknowledges checkout/T&C).
+ *
+ * Generalized from the acknowledgement boxes in
+ * `documents/OfficeReceiptDocument.ts` (terms section, lines ~267-277),
+ * `documents/CustomerCopyDocument.ts` (lines ~265-326), and
+ * `documents/CheckoutFormDocument.ts` (lines ~278-334).
+ */
+export interface LegalTermsBlock {
+  /** Box heading (e.g. "Terms & Conditions" / "الشروط والأحكام"). */
+  title: LabelText;
+  /** Consent / T&C body prose. Already language-resolved by the adapter. */
+  body: LabelText;
+  /** Optional policy URL rendered as a link under the body. */
+  policyUrl?: string | null;
+}
+
+/**
  * The document-agnostic shape every section renderer consumes. Adapters
  * (one per source `*DocumentData`) map their domain data into this shape; the
  * engine never sees invoice/quote/etc. specifics. Optional members let one
  * shape serve financial docs (lineItems/totals/bank), intake docs (parties +
- * meta), and labels (title + qr) alike — a section renderer simply returns
- * `null` when its slice of data is absent.
+ * caseInfo + devices + legalTerms), checkout docs (collector), and labels
+ * (title + qr) alike — a section renderer simply returns `null` when its slice
+ * of data is absent.
  */
 export interface EngineDocData {
   /** Bilingual document title (e.g. EN "TAX INVOICE" / AR "فاتورة ضريبية"). */
@@ -145,6 +225,29 @@ export interface EngineDocData {
   parties: { from?: PartyBlock; to?: PartyBlock };
   /** Free-form metadata rows (doc no, dates, job id, …) shown in a meta box. */
   meta: Array<{ label: LabelText; value: string }>;
+  /**
+   * Case identification / job header for intake & checkout documents (case no,
+   * status, priority, received date/time, assigned technician, service type,
+   * problem description), or absent on documents with no case context.
+   */
+  caseInfo?: CaseInfoBlock | null;
+  /**
+   * Device intake/return table for case documents (type/brand/model/serial/
+   * capacity/condition/role/notes), or absent when the document tracks no
+   * physical devices.
+   */
+  devices?: DevicesBlock | null;
+  /**
+   * Checkout collector block (who collected the device(s) + checkout date/notes),
+   * or absent on non-checkout documents.
+   */
+  collector?: CollectorBlock | null;
+  /**
+   * Consent / Terms-&-Conditions acknowledgement box for intake & checkout
+   * documents, or absent to omit. Distinct from the financial {@link terms}
+   * block (Payment-Terms/Notes + bank).
+   */
+  legalTerms?: LegalTermsBlock | null;
   /** Line-item table: resolved columns + already-stringified/numeric cells. */
   lineItems?: {
     columns: ResolvedColumn[];
