@@ -13,6 +13,7 @@ export interface InvoiceFinancials {
   invoice_type?: string | null;
   total_amount?: number | null;
   amount_paid?: number | null;
+  credited_amount?: number | null; // applied credit notes (non-cash)
   balance_due?: number | null;
   due_date?: string | null;
 }
@@ -56,9 +57,10 @@ function deriveSettlement(inv: InvoiceFinancials): Settlement {
   const ps = inv.payment_status;
   if (ps === 'unpaid' || ps === 'partial' || ps === 'paid') return ps;
   const total = num(inv.total_amount);
-  const paid = num(inv.amount_paid);
-  if (paid >= total && total > 0) return 'paid';
-  if (paid > 0) return 'partial';
+  // Credit notes settle an invoice just like cash does.
+  const settled = num(inv.amount_paid) + num(inv.credited_amount);
+  if (settled >= total && total > 0) return 'paid';
+  if (settled > 0) return 'partial';
   return 'unpaid';
 }
 
@@ -67,8 +69,10 @@ const isIssued = (status: string) => status !== 'draft' && !TERMINAL.includes(st
 export function getPaymentSummary(inv: InvoiceFinancials, now: Date = new Date()): PaymentSummary {
   const total = num(inv.total_amount);
   const paid = num(inv.amount_paid);
-  const balance = inv.balance_due != null ? Math.max(0, num(inv.balance_due)) : Math.max(0, total - paid);
-  const progress = total > 0 ? Math.min(1, Math.max(0, paid / total)) : paid > 0 ? 1 : 0;
+  // Settlement counts cash + applied credit notes; `paid` stays cash-only.
+  const settled = paid + num(inv.credited_amount);
+  const balance = inv.balance_due != null ? Math.max(0, num(inv.balance_due)) : Math.max(0, total - settled);
+  const progress = total > 0 ? Math.min(1, Math.max(0, settled / total)) : settled > 0 ? 1 : 0;
   const settlement = deriveSettlement(inv);
   const status = inv.status ?? 'draft';
 
