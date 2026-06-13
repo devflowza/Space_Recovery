@@ -365,6 +365,65 @@ export interface StockLabelBlock {
 }
 
 /**
+ * The ordered, DB-DRIVEN dynamic sections of a case REPORT — each a bilingual
+ * section header plus a free-prose content body. This is the engine counterpart
+ * to the `case_report_sections` rows the legacy `documents/ReportDocument.ts`
+ * iterates (its `visibleSections.forEach`, lines ~411-495): a tenant/template
+ * supplies an arbitrary list of titled sections (diagnostic findings, proposed
+ * solutions, recovery time, failure-cause analysis, recommendations, …) and the
+ * renderer lays each out as a boxed heading + paragraph-preserving content.
+ *
+ * The adapter pre-resolves each section's title into a {@link LabelText} (real
+ * EN/AR strings, never a hardcoded null) and pre-cleans the content to PLAIN
+ * TEXT — stripping HTML the same way the legacy `stripHtmlTags` helper does, so
+ * paragraph breaks survive as `\n` newlines — and may pass an explicit `order`.
+ * The renderer is stable for ANY number of sections (zero → renders nothing).
+ *
+ * NOTE: the forensic chain-of-custody timeline is NOT modelled here. That reuses
+ * the existing {@link CustodyLogBlock} / `custodyLog` block, exactly as the
+ * legacy builder special-cases the `chain_of_custody` section into its own
+ * timeline rather than a prose box.
+ */
+export interface ReportSectionsBlock {
+  /**
+   * The ordered dynamic sections. Each is a bilingual header + plain-text body.
+   * `order` is optional; when present the renderer sorts ascending by it (ties
+   * keep input order), otherwise input order is preserved.
+   */
+  sections: Array<{ title: LabelText; content: string; order?: number }>;
+}
+
+/**
+ * The device DIAGNOSTICS info box for a case REPORT — the "Media Details" /
+ * "Component Diagnostics" block rendered as bilingual label/value rows (the
+ * report counterpart to {@link CaseInfoBlock}). The adapter pre-formats every
+ * value and chooses the field set by device kind: HDD diagnostics (heads / PCB /
+ * motor / surface status) vs SSD diagnostics (controller / memory-chips status,
+ * controller model, NAND type), plus shared rows (type / model / capacity /
+ * serial / physical-damage notes). The renderer stays dumb — it only lays the
+ * supplied rows out; the HDD-vs-SSD branching lives entirely in the adapter.
+ *
+ * Generalized from the Media-Details + Component-Diagnostics block hand-written
+ * in `documents/ReportDocument.ts` (lines ~300-400), where the HDD branch reads
+ * `heads_status` / `pcb_status` / `motor_status` / `surface_status` and the SSD
+ * branch reads `controller_status` / `memory_chips_status` / `controller_model`
+ * / `nand_type` off `diagnosticsData.device_type_category`. Returns nothing when
+ * no rows are supplied.
+ */
+export interface DiagnosticsBlock {
+  /** Box heading (e.g. "Media Details" / "تفاصيل الوسائط"). */
+  title: LabelText;
+  /** Labelled rows: type/model/capacity/serial + the kind-specific diagnostics. */
+  rows: Array<{ label: LabelText; value: string }>;
+  /**
+   * The RAW device kind/category the adapter branched on (e.g. `'hdd'` / `'ssd'`),
+   * passed through for documentary/diagnostic purposes; the renderer does not
+   * branch on it (the adapter already chose the rows). Omitted when unknown.
+   */
+  deviceKind?: string;
+}
+
+/**
  * The document-agnostic shape every section renderer consumes. Adapters
  * (one per source `*DocumentData`) map their domain data into this shape; the
  * engine never sees invoice/quote/etc. specifics. Optional members let one
@@ -439,6 +498,18 @@ export interface EngineDocData {
    * plus the legal notice, or absent on documents with no custody ledger.
    */
   custodyLog?: CustodyLogBlock | null;
+  /**
+   * Device diagnostics info box for a case REPORT (Media Details / Component
+   * Diagnostics — type/model/capacity/serial plus the HDD- or SSD-specific
+   * component-status rows the adapter selected), or absent on non-report docs.
+   */
+  diagnostics?: DiagnosticsBlock | null;
+  /**
+   * The ordered, DB-driven dynamic sections of a case REPORT (each a bilingual
+   * header + prose body), or absent on non-report documents. The custody
+   * timeline is NOT here — it reuses {@link custodyLog}.
+   */
+  reportSections?: ReportSectionsBlock | null;
   /**
    * Case-label body (large case number, priority badge, received date, device
    * summary), or absent on non-label documents.

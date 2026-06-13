@@ -412,12 +412,29 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
         ...base,
         sections: [
           section('header', 0),
+          // caseInfo = customer + report meta in one bilingual info box
+          // (generalized from the legacy Customer Information + Report Details
+          // boxes). diagnostics = the HDD/SSD-aware Media Details / Component
+          // Diagnostics box. reportSections = the ordered DB-driven prose
+          // sections.
           section('caseInfo', 1),
-          section('summary', 2),
-          section('findings', 3),
-          section('sections', 4),
-          section('signature', 5),
-          section('footer', 6),
+          section('diagnostics', 2),
+          section('reportSections', 3),
+          // custodyLog is OPTIONAL: only forensic reports with custody events
+          // populate it (the adapter returns no block otherwise, so the section
+          // renders nothing). Its columns are the report timeline's
+          // event/description/actor/date-time; a tenant may rename/resize/toggle
+          // them and the adapter merges by key.
+          section('custodyLog', 4, {
+            columns: [
+              { key: 'entry', visible: true, label: { en: 'Entry #', ar: 'رقم' }, width: 38 },
+              { key: 'action', visible: true, label: { en: 'Event', ar: 'الحدث' }, width: 90 },
+              { key: 'description', visible: true, label: { en: 'Description', ar: 'الوصف' } },
+              { key: 'actor', visible: true, label: { en: 'Actor', ar: 'المنفّذ' }, width: 80 },
+              { key: 'occurredAt', visible: true, label: { en: 'Date/Time', ar: 'التاريخ/الوقت' }, width: 75 },
+            ],
+          }),
+          section('footer', 5),
         ],
         labels: { documentTitle: { en: 'CASE REPORT', ar: 'تقرير الحالة' } },
       };

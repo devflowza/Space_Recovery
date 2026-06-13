@@ -9,14 +9,16 @@
  *
  * `'invoice'` (the M3 pilot), `'quote'`, `'payment_receipt'`, the three case
  * documents `'office_receipt'`, `'customer_copy'`, and `'checkout_form'`, the
- * `'case_label'` and `'chain_of_custody'` documents, and the `'payslip'` +
- * `'stock_label'` documents each have a wired engine branch, driven by
+ * `'case_label'` and `'chain_of_custody'` documents, the `'payslip'` +
+ * `'stock_label'` documents, and the `'report'` (case report) document each have
+ * a wired engine branch, driven by
  * `VITE_PDF_ENGINE_INVOICE`, `VITE_PDF_ENGINE_QUOTE`,
  * `VITE_PDF_ENGINE_PAYMENT_RECEIPT`, `VITE_PDF_ENGINE_OFFICE_RECEIPT`,
  * `VITE_PDF_ENGINE_CUSTOMER_COPY`, `VITE_PDF_ENGINE_CHECKOUT_FORM`,
  * `VITE_PDF_ENGINE_CASE_LABEL`, `VITE_PDF_ENGINE_CHAIN_OF_CUSTODY`,
- * `VITE_PDF_ENGINE_PAYSLIP`, and `VITE_PDF_ENGINE_STOCK_LABEL`
- * respectively. Other document types always return `false` here.
+ * `VITE_PDF_ENGINE_PAYSLIP`, `VITE_PDF_ENGINE_STOCK_LABEL`, and
+ * `VITE_PDF_ENGINE_REPORT` respectively. Other document types always return
+ * `false` here.
  *
  * NOTE: this is a build-time, ALL-tenants switch. Per-tenant rollout (reading a
  * tenant flag / a deployed-template opt-in) is a later milestone — deliberately
@@ -35,6 +37,7 @@ const FLAG_ENV_BY_TYPE: Record<string, string> = {
   chain_of_custody: 'VITE_PDF_ENGINE_CHAIN_OF_CUSTODY',
   payslip: 'VITE_PDF_ENGINE_PAYSLIP',
   stock_label: 'VITE_PDF_ENGINE_STOCK_LABEL',
+  report: 'VITE_PDF_ENGINE_REPORT',
 };
 
 /**

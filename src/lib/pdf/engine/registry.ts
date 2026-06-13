@@ -8,9 +8,11 @@
  * `templateConfig.ts`. Case-intake/checkout keys (`caseInfo`, `devices`,
  * `collector`, `legalTerms`) and the forensic/label keys (`custodyLog`,
  * `caseLabel`) ARE registered, as are the payslip keys (`payslipInfo`,
- * `earnings`, `deductions`, `netPay`) and the stock-label key (`stockLabel`).
- * Remaining document-specific keys (`summary`, `findings`, `sections` for the
- * case report) are intentionally NOT registered yet — they belong to later
+ * `earnings`, `deductions`, `netPay`), the stock-label key (`stockLabel`), and
+ * the case-report keys (`diagnostics` for the device diagnostics info box and
+ * `reportSections` for the ordered DB-driven prose sections — the custody
+ * timeline reuses `custodyLog`). Remaining document-specific keys (`summary`,
+ * `findings`) are intentionally NOT registered yet — they belong to later
  * milestones and are skipped until then.
  */
 
@@ -22,6 +24,8 @@ import { renderDevices } from './sections/devices';
 import { renderCollector } from './sections/collector';
 import { renderLegalTerms } from './sections/legalTerms';
 import { renderCustodyLog } from './sections/custodyLog';
+import { renderDiagnostics } from './sections/reportDiagnostics';
+import { renderReportSections } from './sections/reportSections';
 import { renderCaseLabel } from './sections/caseLabel';
 import { renderPayslipInfo } from './sections/payslipInfo';
 import { renderEarnings } from './sections/earnings';
@@ -46,6 +50,8 @@ export const SECTION_REGISTRY: Record<string, SectionRenderer> = {
   collector: renderCollector,
   legalTerms: renderLegalTerms,
   custodyLog: renderCustodyLog,
+  diagnostics: renderDiagnostics,
+  reportSections: renderReportSections,
   caseLabel: renderCaseLabel,
   payslipInfo: renderPayslipInfo,
   earnings: renderEarnings,
