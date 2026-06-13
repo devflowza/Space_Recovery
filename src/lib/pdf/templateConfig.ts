@@ -313,9 +313,13 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
         ...base,
         paper: LABEL_PAPER,
         sections: [
+          // Header is OPTIONAL on a compact label (off by default): the label
+          // body (large case number + priority + received date + device summary)
+          // is the self-contained focal content. A tenant may switch it on to
+          // print the company identity above the label.
           section('header', 0, { visible: false }),
-          section('caseInfo', 1),
-          section('qr', 2),
+          section('caseLabel', 1),
+          section('footer', 2),
         ],
         labels: { documentTitle: { en: 'CASE LABEL', ar: 'ملصق الحالة' } },
       };
@@ -351,15 +355,24 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
           section('header', 0),
           section('caseInfo', 1),
           section('custodyLog', 2, {
+            // The adapter owns the DATA + default column set (entry / action /
+            // description / actor / date-time / category, plus optional hash &
+            // signature gated on the report options). These config entries let a
+            // tenant rename / resize / toggle those columns; the adapter merges
+            // them by key. Order here mirrors the legacy entries table.
             columns: [
-              { key: 'entry', visible: true, label: { en: '#', ar: 'رقم' }, width: 24 },
-              { key: 'action', visible: true, label: { en: 'Action', ar: 'الإجراء' } },
-              { key: 'actor', visible: true, label: { en: 'Actor', ar: 'المنفّذ' } },
-              { key: 'occurredAt', visible: true, label: { en: 'Date/Time', ar: 'التاريخ/الوقت' } },
-              { key: 'hash', visible: true, label: { en: 'Hash', ar: 'البصمة' } },
+              { key: 'entry', visible: true, label: { en: 'Entry #', ar: 'رقم' }, width: 38 },
+              { key: 'action', visible: true, label: { en: 'Action Type', ar: 'نوع الإجراء' }, width: 65 },
+              { key: 'description', visible: true, label: { en: 'Description', ar: 'الوصف' } },
+              { key: 'actor', visible: true, label: { en: 'Actor', ar: 'المنفّذ' }, width: 80 },
+              { key: 'occurredAt', visible: true, label: { en: 'Date/Time', ar: 'التاريخ/الوقت' }, width: 70 },
+              { key: 'actionCategory', visible: true, label: { en: 'Category', ar: 'الفئة' }, width: 65 },
             ],
           }),
-          section('signature', 3),
+          // Signature lines are OPTIONAL on a custody report (off by default):
+          // the immutable ledger + hashes are the evidentiary record. A tenant
+          // may switch them on for a wet-ink custodian/witness sign-off.
+          section('signature', 3, { visible: false }),
           section('footer', 4),
         ],
         labels: { documentTitle: { en: 'CHAIN OF CUSTODY', ar: 'سلسلة الحيازة' } },

@@ -7,13 +7,14 @@
  * Only the literal string `'true'` on the matching env var opts a document type
  * into the engine — any other value (unset, `'false'`, `'1'`, …) stays OFF.
  *
- * `'invoice'` (the M3 pilot), `'quote'`, `'payment_receipt'`, and the three
- * case documents `'office_receipt'`, `'customer_copy'`, and `'checkout_form'`
- * each have a wired engine branch, driven by `VITE_PDF_ENGINE_INVOICE`,
- * `VITE_PDF_ENGINE_QUOTE`, `VITE_PDF_ENGINE_PAYMENT_RECEIPT`,
- * `VITE_PDF_ENGINE_OFFICE_RECEIPT`, `VITE_PDF_ENGINE_CUSTOMER_COPY`, and
- * `VITE_PDF_ENGINE_CHECKOUT_FORM` respectively. Other document types always
- * return `false` here.
+ * `'invoice'` (the M3 pilot), `'quote'`, `'payment_receipt'`, the three case
+ * documents `'office_receipt'`, `'customer_copy'`, and `'checkout_form'`, plus
+ * the `'case_label'` and `'chain_of_custody'` documents each have a wired engine
+ * branch, driven by `VITE_PDF_ENGINE_INVOICE`, `VITE_PDF_ENGINE_QUOTE`,
+ * `VITE_PDF_ENGINE_PAYMENT_RECEIPT`, `VITE_PDF_ENGINE_OFFICE_RECEIPT`,
+ * `VITE_PDF_ENGINE_CUSTOMER_COPY`, `VITE_PDF_ENGINE_CHECKOUT_FORM`,
+ * `VITE_PDF_ENGINE_CASE_LABEL`, and `VITE_PDF_ENGINE_CHAIN_OF_CUSTODY`
+ * respectively. Other document types always return `false` here.
  *
  * NOTE: this is a build-time, ALL-tenants switch. Per-tenant rollout (reading a
  * tenant flag / a deployed-template opt-in) is a later milestone — deliberately
@@ -28,6 +29,8 @@ const FLAG_ENV_BY_TYPE: Record<string, string> = {
   office_receipt: 'VITE_PDF_ENGINE_OFFICE_RECEIPT',
   customer_copy: 'VITE_PDF_ENGINE_CUSTOMER_COPY',
   checkout_form: 'VITE_PDF_ENGINE_CHECKOUT_FORM',
+  case_label: 'VITE_PDF_ENGINE_CASE_LABEL',
+  chain_of_custody: 'VITE_PDF_ENGINE_CHAIN_OF_CUSTODY',
 };
 
 /**

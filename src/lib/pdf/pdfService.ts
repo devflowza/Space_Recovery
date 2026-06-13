@@ -13,7 +13,7 @@ import { buildChainOfCustodyDocument } from './documents/ChainOfCustodyDocument'
 import { loadImageAsBase64 } from './utils';
 import { logPDFGeneration } from './loggingService';
 import { withTimeout, createTranslationContext } from './translationContext';
-import type { DocumentType, InvoiceDocumentData, QuoteDocumentData, PaymentReceiptDocumentData, ReceiptData, TranslationContext } from './types';
+import type { DocumentType, InvoiceDocumentData, QuoteDocumentData, PaymentReceiptDocumentData, ChainOfCustodyDocumentData, ReceiptData, TranslationContext } from './types';
 import { type LanguageCode } from '../documentTranslations';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { isPdfEngineEnabled } from './engine/featureFlag';
@@ -23,6 +23,8 @@ import { toEngineData as toQuoteEngineData } from './engine/adapters/quoteAdapte
 import { toEngineData as toPaymentReceiptEngineData } from './engine/adapters/paymentReceiptAdapter';
 import { toEngineData as toReceiptEngineData, type ReceiptVariant } from './engine/adapters/receiptAdapter';
 import { toEngineData as toCheckoutEngineData } from './engine/adapters/checkoutAdapter';
+import { toEngineData as toCaseLabelEngineData } from './engine/adapters/caseLabelAdapter';
+import { toEngineData as toChainOfCustodyEngineData } from './engine/adapters/chainOfCustodyAdapter';
 import {
   BUILT_IN_TEMPLATE_CONFIGS,
   resolveTemplateConfig,
@@ -227,6 +229,81 @@ async function buildCheckoutFormViaEngine(
   );
 
   const engineData = toCheckoutEngineData(data, resolvedConfig);
+  return renderTemplate(resolvedConfig, engineData, ctx, logoBase64, qrCodeBase64);
+}
+
+/**
+ * Build the case_label pdfmake doc-definition via the NEW config-driven engine.
+ * Flag-guarded: only reached when `isPdfEngineEnabled('case_label')` is true.
+ * Mirrors {@link buildOfficeReceiptViaEngine}: resolve the tenant's deployed
+ * case_label template (if any) as the doc-type cascade layer over the built-in
+ * 'case_label' default, normalize the receipt data through the case-label
+ * adapter (large case number + priority badge + received date + device summary),
+ * and assemble via `renderTemplate`. Falls back to the built-in config when no
+ * tenant template is seeded, so the path works without any DB seeding.
+ */
+async function buildCaseLabelViaEngine(
+  data: ReceiptData,
+  ctx: TranslationContext,
+  logoBase64: string | null,
+  qrCodeBase64: string | null,
+): Promise<TDocumentDefinitions> {
+  let docTypeOverride: TemplateConfigOverride | undefined;
+  try {
+    const deployed = await getDeployedVersionByType('case_label');
+    if (deployed) {
+      docTypeOverride = readConfig(deployed.config);
+    }
+  } catch (err) {
+    console.error('[PDF Service] Case label engine: template resolution failed, using built-in default:', err);
+  }
+
+  const resolvedConfig: DocumentTemplateConfig = resolveTemplateConfig(
+    BUILT_IN_TEMPLATE_CONFIGS.case_label,
+    /* theme */ undefined,
+    /* docType */ docTypeOverride,
+    /* instance */ undefined,
+  );
+
+  const engineData = toCaseLabelEngineData(data, resolvedConfig);
+  return renderTemplate(resolvedConfig, engineData, ctx, logoBase64, qrCodeBase64);
+}
+
+/**
+ * Build the chain_of_custody pdfmake doc-definition via the NEW config-driven
+ * engine. Flag-guarded: only reached when
+ * `isPdfEngineEnabled('chain_of_custody')` is true. Mirrors
+ * {@link buildCaseLabelViaEngine}: resolve the tenant's deployed
+ * chain_of_custody template (if any) as the doc-type cascade layer over the
+ * built-in 'chain_of_custody' default, normalize the ledger data through the
+ * chain-of-custody adapter (case-info header + entries table + legal notice +
+ * optional hash/signature columns), and assemble via `renderTemplate`. Falls
+ * back to the built-in config when no tenant template is seeded.
+ */
+async function buildChainOfCustodyViaEngine(
+  data: ChainOfCustodyDocumentData,
+  ctx: TranslationContext,
+  logoBase64: string | null,
+  qrCodeBase64: string | null,
+): Promise<TDocumentDefinitions> {
+  let docTypeOverride: TemplateConfigOverride | undefined;
+  try {
+    const deployed = await getDeployedVersionByType('chain_of_custody');
+    if (deployed) {
+      docTypeOverride = readConfig(deployed.config);
+    }
+  } catch (err) {
+    console.error('[PDF Service] Chain of custody engine: template resolution failed, using built-in default:', err);
+  }
+
+  const resolvedConfig: DocumentTemplateConfig = resolveTemplateConfig(
+    BUILT_IN_TEMPLATE_CONFIGS.chain_of_custody,
+    /* theme */ undefined,
+    /* docType */ docTypeOverride,
+    /* instance */ undefined,
+  );
+
+  const engineData = toChainOfCustodyEngineData(data, resolvedConfig);
   return renderTemplate(resolvedConfig, engineData, ctx, logoBase64, qrCodeBase64);
 }
 
@@ -485,7 +562,9 @@ export async function generateCaseLabel(caseId: string, download: boolean = true
         : Promise.resolve(null),
     ]);
 
-    const docDefinition = buildCaseLabelDocument(data, ctx, logoBase64, qrCodeBase64);
+    const docDefinition = isPdfEngineEnabled('case_label')
+      ? await buildCaseLabelViaEngine(data, ctx, logoBase64, qrCodeBase64)
+      : buildCaseLabelDocument(data, ctx, logoBase64, qrCodeBase64);
 
     const filename = `Label_${data.caseData.case_number}.pdf`;
 
@@ -901,7 +980,21 @@ export async function generateChainOfCustody(
     }
 
     const ctx = createTranslationContext(mode, languageCode);
-    const docDefinition = buildChainOfCustodyDocument(data, ctx);
+
+    let docDefinition: TDocumentDefinitions;
+    if (isPdfEngineEnabled('chain_of_custody')) {
+      const [logoBase64, qrCodeBase64] = await Promise.all([
+        data.companySettings.branding?.logo_url
+          ? withTimeout(loadImageAsBase64(data.companySettings.branding.logo_url), 5000, 'Logo loading timeout')
+          : Promise.resolve(null),
+        data.companySettings.branding?.qr_code_general_url
+          ? withTimeout(loadImageAsBase64(data.companySettings.branding.qr_code_general_url), 5000, 'QR code loading timeout')
+          : Promise.resolve(null),
+      ]);
+      docDefinition = await buildChainOfCustodyViaEngine(data, ctx, logoBase64, qrCodeBase64);
+    } else {
+      docDefinition = buildChainOfCustodyDocument(data, ctx);
+    }
     const filename = `Chain_of_Custody_${caseNumber}_${new Date().toISOString().split('T')[0]}.pdf`;
 
     if (download) {
@@ -1174,7 +1267,9 @@ export async function generateCaseLabelAsBlob(caseId: string): Promise<PDFBlobRe
         : Promise.resolve(null),
     ]);
 
-    const docDefinition = buildCaseLabelDocument(data, ctx, logoBase64, qrCodeBase64);
+    const docDefinition = isPdfEngineEnabled('case_label')
+      ? await buildCaseLabelViaEngine(data, ctx, logoBase64, qrCodeBase64)
+      : buildCaseLabelDocument(data, ctx, logoBase64, qrCodeBase64);
     const filename = `Label_${data.caseData.case_number}.pdf`;
 
     return new Promise((resolve) => {
@@ -1349,7 +1444,16 @@ export async function generateChainOfCustodyAsBlob(
     await initializePDFFonts(languageCode);
     const ctx = createTranslationContext(languageSettings?.mode || 'english_only', languageCode);
 
-    const docDefinition = buildChainOfCustodyDocument(data, ctx);
+    let docDefinition: TDocumentDefinitions;
+    if (isPdfEngineEnabled('chain_of_custody')) {
+      const [logoBase64, qrCodeBase64] = await Promise.all([
+        data.companySettings.branding?.logo_url ? loadImageAsBase64(data.companySettings.branding.logo_url) : Promise.resolve(null),
+        data.companySettings.branding?.qr_code_general_url ? loadImageAsBase64(data.companySettings.branding.qr_code_general_url) : Promise.resolve(null),
+      ]);
+      docDefinition = await buildChainOfCustodyViaEngine(data, ctx, logoBase64, qrCodeBase64);
+    } else {
+      docDefinition = buildChainOfCustodyDocument(data, ctx);
+    }
     const filename = `Chain_of_Custody_${caseNumber}_${new Date().toISOString().split('T')[0]}.pdf`;
 
     return new Promise((resolve) => {

@@ -208,6 +208,70 @@ export interface LegalTermsBlock {
 }
 
 /**
+ * The forensic chain-of-custody ENTRIES table for a Chain-of-Custody report —
+ * a config-driven column list plus pre-stringified rows, one per ledger entry
+ * (entry no, occurred-at, action category + type, actor + role, evidence ref,
+ * and optionally hash / signature). The adapter resolves which columns to show
+ * (in what order, with which bilingual headers) into {@link ResolvedColumn}s and
+ * stringifies every cell; the renderer lays out the header + body, applies
+ * per-column alignment, RTL-mirrors via `mirrorColumns`, and colour-codes the
+ * `actionCategory` cell (mirroring the legacy category palette). The legal
+ * notice is a single already-resolved line rendered above (or below) the table.
+ *
+ * Generalized from the entries table + legal notice in
+ * `documents/ChainOfCustodyDocument.ts` (lines ~196-288, legal notice ~81-121).
+ * The adapter passes the RAW `action_category` (e.g. `'critical_event'`) in the
+ * `actionCategory` field so the renderer can map it to the category colour;
+ * every other cell is already display-formatted. `hash` / `signature` columns
+ * are only included by the adapter when {@link includeHashes} /
+ * {@link includeSignatures} is set, keeping this block self-describing.
+ */
+export interface CustodyLogBlock {
+  /** Section heading (e.g. "Chain of Custody Entries" / "سجل سلسلة الحيازة"). */
+  title: LabelText;
+  /** Resolved, ordered columns (key ties to a field in each {@link rows} record). */
+  columns: ResolvedColumn[];
+  /** One record per ledger entry; values already stringified by the adapter. */
+  rows: Array<Record<string, string>>;
+  /**
+   * The forensic legal-notice line (immutability / tamper warning), already
+   * language-resolved by the adapter, rendered as a highlighted box above the
+   * table. Omitted to render no notice.
+   */
+  legalNotice?: LabelText;
+  /** Whether the adapter included a hash column (drives nothing here; documentary). */
+  includeHashes?: boolean;
+  /** Whether the adapter included a signature column (documentary). */
+  includeSignatures?: boolean;
+}
+
+/**
+ * The compact case-LABEL layout for a physical device/case label: a large
+ * centered case number, an optional priority badge, the received date, and a
+ * short device-summary list. Every value is pre-formatted by the adapter; the
+ * renderer only lays them out print-friendly on the small label page.
+ *
+ * Generalized from `documents/CaseLabelDocument.ts` (large case-number block
+ * lines ~53-71, priority badge ~34-48, received date ~73-89, device summary
+ * ~139-198). Unlike the financial/intake blocks this one is its own self-
+ * contained document body — the engine renders just these fields on a label-
+ * sized page. `priority` is the RAW priority string (e.g. `'critical'`) so the
+ * renderer can colour the badge via `getPriorityColor`.
+ */
+export interface CaseLabelBlock {
+  /** Pre-formatted case number shown large + centered (e.g. "CASE-0042"). */
+  caseNumber: string;
+  /** Raw priority string for the badge (e.g. `'critical'`); omitted to hide it. */
+  priority?: string;
+  /** Pre-formatted received date/time string; omitted to hide the received line. */
+  receivedAt?: string;
+  /** Short device-summary lines (e.g. ["Seagate ST2000 — HDD", "+2 more"]). */
+  deviceSummary?: string[];
+  /** Optional bilingual caption under the case number (e.g. "CASE NUMBER"). */
+  subtitle?: LabelText;
+}
+
+/**
  * The document-agnostic shape every section renderer consumes. Adapters
  * (one per source `*DocumentData`) map their domain data into this shape; the
  * engine never sees invoice/quote/etc. specifics. Optional members let one
@@ -276,6 +340,17 @@ export interface EngineDocData {
   paymentHistory?: PaymentHistoryBlock | null;
   /** Signature line labels (e.g. ["Received by", "Authorized by"]). */
   signatures?: LabelText[];
+  /**
+   * Forensic chain-of-custody entries table (entry no / occurred-at / action
+   * category + type / actor + role / evidence ref / optional hash+signature)
+   * plus the legal notice, or absent on documents with no custody ledger.
+   */
+  custodyLog?: CustodyLogBlock | null;
+  /**
+   * Case-label body (large case number, priority badge, received date, device
+   * summary), or absent on non-label documents.
+   */
+  caseLabel?: CaseLabelBlock | null;
   /** Caption shown under the QR code, or `null` when no QR is rendered. */
   qrCaption?: string | null;
 }

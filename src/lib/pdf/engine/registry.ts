@@ -6,10 +6,11 @@
  * section the engine doesn't render yet; that must not crash document
  * generation). The keys covered mirror the financial + intake defaults in
  * `templateConfig.ts`. Case-intake/checkout keys (`caseInfo`, `devices`,
- * `collector`, `legalTerms`) ARE registered. Remaining document-specific keys
- * (`custodyLog`, `employee`, `period`, `earnings`, `deductions`, `summary`,
- * `findings`, `sections`, `stockInfo`) are intentionally NOT registered yet —
- * they belong to later milestones and are skipped until then.
+ * `collector`, `legalTerms`) and the forensic/label keys (`custodyLog`,
+ * `caseLabel`) ARE registered. Remaining document-specific keys (`employee`,
+ * `period`, `earnings`, `deductions`, `summary`, `findings`, `sections`,
+ * `stockInfo`) are intentionally NOT registered yet — they belong to later
+ * milestones and are skipped until then.
  */
 
 import type { SectionRenderer } from './types';
@@ -19,6 +20,8 @@ import { renderCaseInfo } from './sections/caseInfo';
 import { renderDevices } from './sections/devices';
 import { renderCollector } from './sections/collector';
 import { renderLegalTerms } from './sections/legalTerms';
+import { renderCustodyLog } from './sections/custodyLog';
+import { renderCaseLabel } from './sections/caseLabel';
 import { renderLineItems } from './sections/lineItemTable';
 import { renderTotals } from './sections/totals';
 import { renderPaymentHistory } from './sections/paymentHistory';
@@ -36,6 +39,8 @@ export const SECTION_REGISTRY: Record<string, SectionRenderer> = {
   devices: renderDevices,
   collector: renderCollector,
   legalTerms: renderLegalTerms,
+  custodyLog: renderCustodyLog,
+  caseLabel: renderCaseLabel,
   lineItems: renderLineItems,
   totals: renderTotals,
   paymentHistory: renderPaymentHistory,
