@@ -134,3 +134,16 @@ export function canDeleteInvoice(inv: InvoiceFinancials): boolean {
   const status = inv.status ?? 'draft';
   return status === 'draft' && deriveSettlement(inv) === 'unpaid';
 }
+
+/** A credit note can reduce an issued tax invoice that still has an outstanding
+ *  balance (discount, partial recovery, negotiated settlement). Drafts,
+ *  proformas, fully-settled, and terminal invoices cannot be credited here. */
+export function canCreditInvoice(inv: InvoiceFinancials): boolean {
+  const status = inv.status ?? 'draft';
+  const total = num(inv.total_amount);
+  const balance =
+    inv.balance_due != null
+      ? Math.max(0, num(inv.balance_due))
+      : Math.max(0, total - num(inv.amount_paid) - num(inv.credited_amount));
+  return inv.invoice_type === 'tax_invoice' && isIssued(status) && balance > 0;
+}
