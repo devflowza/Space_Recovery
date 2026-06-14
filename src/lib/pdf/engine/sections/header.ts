@@ -241,15 +241,14 @@ function buildLetterhead(
 
     case 'classic':
     default: {
-      const node = buildLogoNode(logo, { width: header.logoWidth, height: h, margin: [0, 0, 0, 5] });
-      if (!node) {
+      if (!logo || logo.kind === 'none') {
         return { stack: identityLines('center'), margin };
       }
       if (header.logoPlacement === 'center') {
-        return { stack: stackedLetterhead(buildLogoNode(logo, { width: header.logoWidth, height: h, alignment: 'center', margin: [0, 0, 0, 4] }), identityLines('center')), alignment: 'center', margin };
+        return { stack: stackedLetterhead(buildLogoNode(logo, { width: header.logoWidth, height: h, maxHeight: header.logoMaxHeight, alignment: 'center', margin: [0, 0, 0, 4] }), identityLines('center')), alignment: 'center', margin };
       }
       const logoLeft = header.logoPlacement !== 'right';
-      const logoCol = buildLogoNode(logo, { width: header.logoWidth, height: h, margin: [0, 0, 0, 5], alignment: (logoLeft ? 'left' : 'right') })!;
+      const logoCol = buildLogoNode(logo, { width: header.logoWidth, height: h, maxHeight: header.logoMaxHeight, margin: [0, 0, 0, header.logoMarginBottom], alignment: (logoLeft ? 'left' : 'right') })!;
       const idCol = { stack: identityLines(logoLeft ? 'right' : 'left'), width: '*' as const };
       return { columns: logoLeft ? [logoCol, idCol] : [idCol, logoCol], margin };
     }
