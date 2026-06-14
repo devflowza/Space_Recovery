@@ -11,7 +11,7 @@ const PNG_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIA
 const SVG_MARKUP = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10"/></svg>';
 const SVG_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(SVG_MARKUP, 'utf-8').toString('base64')}`;
 
-const res = (body: BodyInit | null, type: string, ok = true): typeof fetch =>
+const res = (body: BlobPart | null, type: string, ok = true): typeof fetch =>
   (async () => ({ ok, blob: async () => new Blob(body ? [body] : [], { type }) })) as unknown as typeof fetch;
 
 describe('brandingImageWarning', () => {

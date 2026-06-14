@@ -88,7 +88,7 @@ export function buildLogoNode(
   if (opts.alignment) node.alignment = opts.alignment;
   if (img.kind === 'raster') node.image = img.dataUrl;
   else node.svg = img.markup;
-  return node as Content;
+  return node as unknown as Content;
 }
 
 /** A labeled placeholder logo box for previews when no real logo exists. */
