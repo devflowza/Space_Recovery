@@ -39,14 +39,18 @@ export function ar(label: LabelText): string | null {
 
 /**
  * Resolve a label to the single display string for the given language mode:
- * - `ar`              → Arabic (falls back to English when no Arabic supplied)
- * - `en`              → English
- * - `bilingual_*`     → "EN | AR" with the primary language leading; English
- *                       only when no Arabic string exists.
+ * - `ar`                    → Arabic (falls back to English when no Arabic supplied)
+ * - `en`                    → English
+ * - `bilingual_sidebyside`  → "EN | AR" on one line, primary leading
+ * - `bilingual_stacked`     → "EN" then "AR" on a second line (newline-separated),
+ *                             primary leading
+ * English only when no Arabic string exists.
  *
- * Use this for inline strings (titles, totals labels). For section/info-box
- * headers that have dedicated bilingual helpers, prefer passing `en()`/`ar()`
- * separately so the helper can right-align the Arabic column.
+ * The two bilingual modes deliberately render DIFFERENTLY (inline vs stacked) so
+ * the document-language picker is meaningful. Use this for inline strings (titles,
+ * totals labels). For section/info-box headers that have dedicated bilingual
+ * helpers, prefer passing `en()`/`ar()` separately so the helper can right-align
+ * the Arabic column.
  */
 export function resolveLabel(label: LabelText, language: LanguageConfig): string {
   const english = label.en ?? '';
@@ -55,8 +59,12 @@ export function resolveLabel(label: LabelText, language: LanguageConfig): string
   if (language.mode === 'ar') return arabic ?? english;
   if (language.mode === 'en') return english;
 
-  // Bilingual: join both, primary first. Degrade gracefully if one side is missing.
+  // Bilingual: join both, primary first. Degrade gracefully if one side is
+  // missing. Stacked uses a newline; side-by-side uses an inline separator.
   if (!arabic) return english;
   if (!english) return arabic;
-  return language.primary === 'ar' ? `${arabic} | ${english}` : `${english} | ${arabic}`;
+  const separator = language.mode === 'bilingual_stacked' ? '\n' : ' | ';
+  return language.primary === 'ar'
+    ? `${arabic}${separator}${english}`
+    : `${english}${separator}${arabic}`;
 }

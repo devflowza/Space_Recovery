@@ -59,21 +59,25 @@ export function engineLayoutDirection(language: LanguageConfig): LayoutDirection
 }
 
 /**
- * The document `defaultStyle.font` for a language config. Under RTL we want the
- * Arabic family so Arabic glyphs shape; pdfmake resolves the family name from
- * its VFS at render time (callers preload fonts via `preloadAllFonts()` /
- * `initializePDFFonts('ar')`). We ask `getFontFamily('ar')` first so a loaded
- * Tajawal is used, and fall back to the literal Arabic family name so the
- * doc-definition is deterministic even before fonts have been loaded (the engine
- * must produce a stable definition; font binaries are resolved later). LTR keeps
- * the tenant/base font unchanged.
+ * The document `defaultStyle.font` for a language config. ANY document that
+ * includes Arabic — single Arabic (`ar`) OR either bilingual mode (even with
+ * English leading) — needs the Arabic family so Arabic glyphs shape. Tajawal
+ * covers Latin too, so the English half of a bilingual document still renders
+ * correctly. Only pure English keeps the tenant/base font.
+ *
+ * pdfmake resolves the family name from its VFS at render time (callers preload
+ * fonts via `preloadAllFonts()` / `initializePDFFonts('ar')`). We ask
+ * `getFontFamily('ar')` first so a loaded Tajawal is used, and fall back to the
+ * literal Arabic family name so the doc-definition is deterministic even before
+ * fonts have loaded (the engine must produce a stable definition; font binaries
+ * are resolved later).
  */
 export function engineDefaultFont(language: LanguageConfig, baseFont: string): string {
-  if (engineLayoutDirection(language) !== 'rtl') return baseFont;
+  if (language.mode === 'en') return baseFont;
   // `getFontFamily('ar')` returns 'Tajawal' only when the family is already
-  // loaded into pdfmake's VFS, else 'Roboto'. For an RTL document we always want
-  // the Arabic family in the definition (binaries are resolved at render time by
-  // the caller's font preload), so coerce to the Arabic family name explicitly.
+  // loaded into pdfmake's VFS, else 'Roboto'. For an Arabic-containing document
+  // we always want the Arabic family in the definition (binaries are resolved at
+  // render time by the caller's font preload), so coerce to it explicitly.
   const arabicFamily = getFontFamily('ar');
   return arabicFamily === 'Tajawal' ? arabicFamily : 'Tajawal';
 }

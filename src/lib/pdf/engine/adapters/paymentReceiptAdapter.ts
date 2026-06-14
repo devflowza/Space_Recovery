@@ -116,6 +116,10 @@ export function toEngineData(
     }
   }
 
+  // Generic verification QR so the QR section/footer renders a real, scannable
+  // code instead of an empty box.
+  const qrPayload = `RECEIPT:${paymentData.receipt_number || 'Draft'} AMOUNT:${money(paymentData.amount)} DATE:${formatDate(paymentData.payment_date, 'dd MMM yyyy')}`;
+
   return {
     documentTitle,
     identity: companySettings,
@@ -126,5 +130,6 @@ export function toEngineData(
     terms,
     bank,
     qrCaption: 'Scan to verify this receipt',
+    qrPayload,
   };
 }

@@ -21,6 +21,7 @@ import type {
   SectionRenderer,
 } from '../types';
 import { isBilingualMode, en, ar, resolveLabel } from '../labels';
+import { engineLayoutDirection } from '../rtl';
 
 function infoRow(
   label: LabelText,
@@ -63,6 +64,40 @@ function partyBox(
   ) as Content;
 }
 
+/** Build the party info boxes (recipient first, then issuer). May be empty. */
+function buildPartyBoxes(engine: EngineContext, data: EngineDocData): Content[] {
+  const userIcon = getGeneralIconSvg('user');
+  const fileIcon = getGeneralIconSvg('fileText');
+  const boxes: Content[] = [];
+  if (data.parties.to) boxes.push(partyBox(data.parties.to, engine, userIcon));
+  if (data.parties.from) boxes.push(partyBox(data.parties.from, engine, fileIcon));
+  return boxes;
+}
+
+/** Build the meta (document-details) info box, or null when there is nothing to show. */
+function buildMetaBox(engine: EngineContext, data: EngineDocData): Content | null {
+  if (!data.meta || data.meta.length === 0) return null;
+
+  const { language } = engine.config;
+  const bilingual = isBilingualMode(language);
+  const labelWidth = bilingual ? 150 : 90;
+  const fileIcon = getGeneralIconSvg('fileText');
+
+  const rows: object[] = data.meta.map((m) => infoRow(m.label, m.value, language, labelWidth));
+
+  // Title taken from a config label if the tenant set one ("meta"/"details"),
+  // else a sensible bilingual default.
+  const metaTitle: LabelText =
+    engine.config.labels.meta ?? engine.config.labels.details ?? { en: 'Details', ar: 'التفاصيل' };
+
+  return createBilingualInfoBox(
+    en(metaTitle),
+    bilingual ? ar(metaTitle) : null,
+    rows,
+    fileIcon,
+  ) as Content;
+}
+
 /**
  * Parties section: issuer (`from`) and/or recipient (`to`) side by side. When
  * only one is present it spans full width; when both, they split 50/50.
@@ -71,12 +106,7 @@ export const renderParties: SectionRenderer = (
   engine: EngineContext,
   data: EngineDocData,
 ): Content | null => {
-  const userIcon = getGeneralIconSvg('user');
-  const fileIcon = getGeneralIconSvg('fileText');
-
-  const boxes: Content[] = [];
-  if (data.parties.to) boxes.push(partyBox(data.parties.to, engine, userIcon));
-  if (data.parties.from) boxes.push(partyBox(data.parties.from, engine, fileIcon));
+  const boxes = buildPartyBoxes(engine, data);
 
   if (boxes.length === 0) return null;
   if (boxes.length === 1) {
@@ -102,26 +132,39 @@ export const renderMeta: SectionRenderer = (
   engine: EngineContext,
   data: EngineDocData,
 ): Content | null => {
-  if (!data.meta || data.meta.length === 0) return null;
-
-  const { language } = engine.config;
-  const bilingual = isBilingualMode(language);
-  const labelWidth = bilingual ? 150 : 90;
-  const fileIcon = getGeneralIconSvg('fileText');
-
-  const rows: object[] = data.meta.map((m) => infoRow(m.label, m.value, language, labelWidth));
-
-  // Title taken from a config label if the tenant set one ("meta"/"details"),
-  // else a sensible bilingual default.
-  const metaTitle: LabelText =
-    engine.config.labels.meta ?? engine.config.labels.details ?? { en: 'Details', ar: 'التفاصيل' };
-
-  const box = createBilingualInfoBox(
-    en(metaTitle),
-    bilingual ? ar(metaTitle) : null,
-    rows,
-    fileIcon,
-  ) as Content;
-
-  return { stack: [box], margin: [0, 0, 0, 8] };
+  const box = buildMetaBox(engine, data);
+  return box ? { stack: [box], margin: [0, 0, 0, 8] } : null;
 };
+
+/**
+ * Combined parties + meta layout: the (single) customer/party box on one side
+ * and the document-details box on the other, in two balanced columns — the
+ * standard invoice/quote letterhead that fills the empty space beside a lone
+ * customer block. Used by `renderTemplate` when `config.layout.partiesMetaSideBySide`
+ * is on. Under RTL the columns mirror (customer on the right). Degrades to a
+ * single full-width box when only one of the two is present.
+ */
+export function renderPartiesMeta(
+  engine: EngineContext,
+  data: EngineDocData,
+): Content | null {
+  const partyBoxes = buildPartyBoxes(engine, data);
+  const metaBox = buildMetaBox(engine, data);
+
+  const partyContent: Content | null =
+    partyBoxes.length === 0 ? null : partyBoxes.length === 1 ? partyBoxes[0] : { stack: partyBoxes };
+
+  if (!partyContent && !metaBox) return null;
+  if (!partyContent) return { stack: [metaBox as Content], margin: [0, 0, 0, 8] };
+  if (!metaBox) return { stack: [partyContent], margin: [0, 0, 0, 8] };
+
+  const partyCol = { width: '50%', stack: [partyContent] };
+  const metaCol = { width: '50%', stack: [metaBox] };
+  const gap = { width: 8, text: '' };
+  const rtl = engineLayoutDirection(engine.config.language) === 'rtl';
+
+  return {
+    columns: rtl ? [metaCol, gap, partyCol] : [partyCol, gap, metaCol],
+    margin: [0, 0, 0, 8],
+  };
+}

@@ -29,7 +29,7 @@ export const renderFooter: SectionRenderer = (
   const online = settings.online_presence;
   const qr = engine.qrCodeBase64;
   const zatca = data.zatcaPayload;
-  const qrNode = qrContentNode(zatca, qr, 60, [0, 0, 0, 2]);
+  const qrNode = qrContentNode(zatca, qr, data.qrPayload, 60, [0, 0, 0, 2]);
 
   // Nothing to show: no tagline, no website, no socials, no QR.
   const hasSocial =
@@ -107,7 +107,7 @@ export function buildPageFooter(
   const hasSocial =
     !!online &&
     (!!online.website || !!online.facebook || !!online.twitter || !!online.linkedin || !!online.instagram);
-  const hasQr = !!qr || !!zatca;
+  const hasQr = !!qr || !!zatca || !!data.qrPayload;
   if (!tagline && !hasSocial && !hasQr && !fcfg?.customText) return null;
 
   const dividerLine: Content = {
@@ -126,7 +126,7 @@ export function buildPageFooter(
       if (online?.website) {
         lines.push({ text: online.website, fontSize: Math.max(7, fcfg.fontSize - 1), color: fcfg.fontColor, alignment: fcfg.alignment, margin: [0, 2, 0, 0] });
       }
-      const fcfgQrNode = qrContentNode(zatca, qr, 60, [0, 0, 0, 0]);
+      const fcfgQrNode = qrContentNode(zatca, qr, data.qrPayload, 60, [0, 0, 0, 0]);
       if (fcfgQrNode) {
         return {
           stack: [
@@ -145,7 +145,7 @@ export function buildPageFooter(
       return { stack: [dividerLine, { stack: lines }], margin: [35, 10, 35, 25] };
     }
 
-    const qrNode = qrContentNode(zatca, qr, 60, [0, 0, 0, 2]);
+    const qrNode = qrContentNode(zatca, qr, data.qrPayload, 60, [0, 0, 0, 2]);
     if (qrNode) {
       const footerStack: Content[] = [];
       if (tagline) {

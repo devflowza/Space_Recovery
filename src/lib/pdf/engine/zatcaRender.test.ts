@@ -50,7 +50,7 @@ function findImages(node: unknown, out: string[]): void {
 
 describe('qrContentNode', () => {
   it('renders a native qr from the ZATCA payload when present', () => {
-    const node = qrContentNode('ZATCA_PAYLOAD', 'IMG', 60);
+    const node = qrContentNode('ZATCA_PAYLOAD', 'IMG', 'FALLBACK', 60);
     const qrs: string[] = [];
     const imgs: string[] = [];
     findQr(node, qrs);
@@ -60,7 +60,7 @@ describe('qrContentNode', () => {
   });
 
   it('falls back to the image QR when there is no ZATCA payload', () => {
-    const node = qrContentNode(null, 'IMG', 60);
+    const node = qrContentNode(null, 'IMG', 'FALLBACK', 60);
     const qrs: string[] = [];
     const imgs: string[] = [];
     findQr(node, qrs);
@@ -69,8 +69,25 @@ describe('qrContentNode', () => {
     expect(qrs).toHaveLength(0);
   });
 
-  it('returns null when neither is available', () => {
-    expect(qrContentNode(null, null, 60)).toBeNull();
+  it('falls back to a native qr from the generic payload when there is no ZATCA payload and no image', () => {
+    const node = qrContentNode(null, null, 'FALLBACK', 60);
+    const qrs: string[] = [];
+    const imgs: string[] = [];
+    findQr(node, qrs);
+    findImages(node, imgs);
+    expect(qrs).toContain('FALLBACK');
+    expect(imgs).toHaveLength(0);
+  });
+
+  it('prefers the image QR over the generic fallback payload', () => {
+    const node = qrContentNode(null, 'IMG', 'FALLBACK', 60);
+    const qrs: string[] = [];
+    findQr(node, qrs);
+    expect(qrs).toHaveLength(0);
+  });
+
+  it('returns null when nothing is available', () => {
+    expect(qrContentNode(null, null, null, 60)).toBeNull();
   });
 });
 

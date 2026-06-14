@@ -24,6 +24,7 @@ import {
   type FooterConfig,
   type HeaderConfig,
   type LanguageMode,
+  type LayoutConfig,
   type OrganizationConfig,
   type PageFittingConfig,
   type PageNumbersConfig,
@@ -66,6 +67,7 @@ export interface StudioApi {
   setOrgManual: (key: keyof NonNullable<OrganizationConfig['manual']>, value: string) => void;
   setTaxBar: (patch: Partial<TaxBarConfig>) => void;
   setTable: (patch: Partial<TableConfig>) => void;
+  setLayout: (patch: Partial<LayoutConfig>) => void;
   setPageFitting: (patch: Partial<PageFittingConfig>) => void;
   patchSection: (key: string, patch: { visible?: boolean; order?: number }) => void;
   patchColumn: (key: string, patch: { visible?: boolean; labelEn?: string; labelAr?: string }) => void;
@@ -245,6 +247,7 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
         })),
       setTaxBar: (patch) => mergeGroup('taxBar', patch),
       setTable: (patch) => mergeGroup('table', patch),
+      setLayout: (patch) => mergeGroup('layout', patch),
       setPageFitting: (patch) => mergeGroup('pageFitting', patch),
       patchSection: (key, patch) =>
         setOverride((prev) => {

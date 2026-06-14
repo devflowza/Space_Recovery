@@ -264,6 +264,22 @@ export interface WatermarkConfig {
   fontSize?: number;
 }
 
+/**
+ * Document body LAYOUT options (opt-in). Absent → legacy stacked layout.
+ */
+export interface LayoutConfig {
+  /**
+   * Render the parties (customer) info box and the meta (document details) box
+   * SIDE BY SIDE in two columns instead of stacked full-width. Applies only when
+   * both sections are visible and the parties block holds a single box — the
+   * common financial case (a customer block, with the issuer in the letterhead),
+   * which otherwise leaves the right half of the page empty. Default false
+   * (legacy stacked); the engine falls back to stacking automatically when the
+   * conditions are not met, so this never produces an overlapping layout.
+   */
+  partiesMetaSideBySide?: boolean;
+}
+
 /** The resolved, render-ready template configuration for one document. */
 export interface DocumentTemplateConfig {
   paper: PaperConfig;
@@ -284,6 +300,7 @@ export interface DocumentTemplateConfig {
   table?: TableConfig;
   pageFitting?: PageFittingConfig;
   watermark?: WatermarkConfig;
+  layout?: LayoutConfig;
 }
 
 /**
@@ -333,6 +350,7 @@ export interface TemplateConfigOverride {
   table?: TableConfig;
   pageFitting?: PageFittingConfig;
   watermark?: WatermarkConfig;
+  layout?: LayoutConfig;
 }
 
 /** Partial section override; `key` identifies the target section. */
@@ -486,12 +504,17 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
         ...base,
         sections: financialSections(),
         labels: { documentTitle: { en: 'TAX INVOICE', ar: 'فاتورة ضريبية' } },
+        // Customer block (left) + document details (right) side by side — the
+        // standard invoice letterhead, and it fills the otherwise-empty space
+        // beside a single customer box.
+        layout: { partiesMetaSideBySide: true },
       };
     case 'quote':
       return {
         ...base,
         sections: financialSections(),
         labels: { documentTitle: { en: 'QUOTATION', ar: 'عرض سعر' } },
+        layout: { partiesMetaSideBySide: true },
       };
     case 'payment_receipt':
       return {
@@ -509,6 +532,7 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
           section('footer', 6),
         ],
         labels: { documentTitle: { en: 'PAYMENT RECEIPT', ar: 'إيصال دفع' } },
+        layout: { partiesMetaSideBySide: true },
       };
     case 'office_receipt':
       return {
@@ -845,6 +869,7 @@ function applyOverride(
     table: mergeGroup(base.table, override.table),
     pageFitting: mergeGroup(base.pageFitting, override.pageFitting),
     watermark: mergeGroup(base.watermark, override.watermark),
+    layout: mergeGroup(base.layout, override.layout),
   };
 }
 
