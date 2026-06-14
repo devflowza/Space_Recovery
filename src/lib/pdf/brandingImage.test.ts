@@ -4,6 +4,7 @@ import {
   resolveBrandingImage,
   buildLogoNode,
   placeholderLogoSvg,
+  brandingImageWarning,
 } from './brandingImage';
 
 const PNG_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN48OABAAVEAqEuYekCAAAAAElFTkSuQmCC';
@@ -12,6 +13,18 @@ const SVG_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(SVG_MARKUP, 'utf-8
 
 const res = (body: BodyInit | null, type: string, ok = true): typeof fetch =>
   (async () => ({ ok, blob: async () => new Blob(body ? [body] : [], { type }) })) as unknown as typeof fetch;
+
+describe('brandingImageWarning', () => {
+  it('returns an info note for an empty logo', () => {
+    expect(brandingImageWarning({ kind: 'none', reason: 'empty' })).toContain('No logo uploaded');
+  });
+  it('returns a failure note for a load error', () => {
+    expect(brandingImageWarning({ kind: 'none', reason: 'http_error' })).toContain("couldn't load");
+  });
+  it('returns null when the logo is fine', () => {
+    expect(brandingImageWarning({ kind: 'raster', dataUrl: 'data:image/png;base64,AA' })).toBeNull();
+  });
+});
 
 describe('classifyLogo', () => {
   it('routes an svg data URL to svg with decoded markup', () => {
@@ -29,6 +42,15 @@ describe('classifyLogo', () => {
     expect(classifyLogo(null)).toEqual({ kind: 'none', reason: 'empty' });
     expect(classifyLogo('')).toEqual({ kind: 'none', reason: 'empty' });
     expect(classifyLogo({ kind: 'svg', markup: SVG_MARKUP })).toEqual({ kind: 'svg', markup: SVG_MARKUP });
+  });
+  it('routes a URL-encoded (non-base64) svg data URL to svg', () => {
+    const r = classifyLogo('data:image/svg+xml,' + encodeURIComponent(SVG_MARKUP));
+    expect(r.kind).toBe('svg');
+    expect(r.kind === 'svg' && r.markup).toContain('<svg');
+  });
+  it('returns decode_failed for a corrupt base64 svg data URL', () => {
+    const r = classifyLogo('data:image/svg+xml;base64,@@@not-base64@@@');
+    expect(r).toEqual({ kind: 'none', reason: 'decode_failed' });
   });
 });
 
@@ -76,6 +98,18 @@ describe('resolveBrandingImage', () => {
   it('reports unsupported for a non-image mime', async () => {
     const r = await resolveBrandingImage('x', { fetchImpl: res('hi', 'text/plain') });
     expect(r).toEqual({ kind: 'none', reason: 'unsupported' });
+  });
+  it('reports timeout when the fetch is aborted', async () => {
+    const hangingFetch = ((_url: string, opts?: { signal?: AbortSignal }) =>
+      new Promise((_resolve, reject) => {
+        opts?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+      })) as unknown as typeof fetch;
+    const r = await resolveBrandingImage('x', { fetchImpl: hangingFetch, timeoutMs: 5 });
+    expect(r).toEqual({ kind: 'none', reason: 'timeout' });
+  });
+  it('reports decode_failed for an empty svg body', async () => {
+    const r = await resolveBrandingImage('x', { fetchImpl: res(null, 'image/svg+xml') });
+    expect(r).toEqual({ kind: 'none', reason: 'decode_failed' });
   });
 });
 
