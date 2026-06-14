@@ -251,6 +251,42 @@ export const getCompanyLogo = async (
   }
 };
 
+export const getCompanyStamp = async (): Promise<string | null> => {
+  try {
+    const { data } = await supabase
+      .from('company_settings')
+      .select('branding')
+      .limit(1)
+      .maybeSingle();
+
+    if (!data?.branding) return null;
+
+    const branding = data.branding as Record<string, string | undefined>;
+    return branding.stamp_url || null;
+  } catch (error) {
+    logger.error('Get stamp error:', error);
+    return null;
+  }
+};
+
+export const getCompanySignature = async (): Promise<string | null> => {
+  try {
+    const { data } = await supabase
+      .from('company_settings')
+      .select('branding')
+      .limit(1)
+      .maybeSingle();
+
+    if (!data?.branding) return null;
+
+    const branding = data.branding as Record<string, string | undefined>;
+    return branding.signature_url || null;
+  } catch (error) {
+    logger.error('Get signature error:', error);
+    return null;
+  }
+};
+
 export const getCompanyQRCode = async (
   type: 'invoice' | 'quote' | 'label' | 'general'
 ): Promise<string | null> => {
