@@ -90,6 +90,180 @@ export interface SectionConfig {
   lines?: Record<string, boolean>;
 }
 
+// ---------------------------------------------------------------------------
+// Premium template controls (all OPTIONAL; absent group/field = neutral/legacy)
+//
+// Every group below is additive and optional. The built-in defaults
+// (`defaultFor`) populate NONE of them, so a stored config that omits them
+// resolves to today's exact behavior. Render-time defaults are applied by pure
+// resolvers in `engine/branding.ts` (validate-or-fall-back-to-neutral), so a
+// malformed value can never break a render. PDFs stay neutral by default and
+// the engine never reads the app theme — `PDF_COLORS` is the fixed fallback.
+// ---------------------------------------------------------------------------
+
+/** PDF-safe font families (the VFS bundles Roboto + Tajawal + Noto Sans Arabic). */
+export type PdfFontFamily = 'Roboto' | 'Tajawal' | 'NotoSansArabic';
+
+/** The subset of named PDF styles the studio exposes for per-section sizing. */
+export type TypographyStyleKey =
+  | 'documentTitle'
+  | 'sectionTitle'
+  | 'tableHeader'
+  | 'tableCell'
+  | 'label'
+  | 'value'
+  | 'totalValue'
+  | 'footer'
+  | 'termsText';
+
+export interface TypographyConfig {
+  /** Base Latin family. Default `'Roboto'` (= `DEFAULT_FONT`). */
+  fontFamily?: PdfFontFamily;
+  /** Multiplier applied to every named style's fontSize (0.85–1.3). Default 1. */
+  baseScale?: number;
+  /** Absolute per-style fontSize overrides (points); omitted keys use the engine default. */
+  sizes?: Partial<Record<TypographyStyleKey, number>>;
+}
+
+/**
+ * Full per-template color set. Every field is OPT-IN; an omitted field resolves
+ * to its neutral `PDF_COLORS.*` default, so PDFs stay neutral unless a tenant
+ * opts a surface in. Never sourced from the app theme.
+ */
+export interface ColorsConfig {
+  /** Accent (rules, emphasis). Default `PDF_COLORS.primary`. Supersedes `branding.accent`. */
+  accent?: string;
+  /** Body text. Default `PDF_COLORS.text`. */
+  text?: string;
+  /** Muted label text. Default `PDF_COLORS.textLight`. */
+  label?: string;
+  /** Table-header / section band fill. Default `PDF_COLORS.headerBg`. */
+  headerBackground?: string;
+  /** Whether the header-background fill is painted. Default true. */
+  headerBackgroundEnabled?: boolean;
+}
+
+export type HeaderLayout = 'classic' | 'modern' | 'minimal' | 'boxed' | 'split' | 'spreadsheet';
+export type LogoPlacement = 'left' | 'center' | 'right';
+export type AddressZone = 'left' | 'center' | 'right' | 'hidden';
+export type DividerStyle = 'thin' | 'thick' | 'none';
+
+export interface HeaderConfig {
+  /** Header arrangement. Default `'classic'` (current behavior). */
+  layout?: HeaderLayout;
+  /** Logo edge. Default `'left'`. */
+  logoPlacement?: LogoPlacement;
+  /** Logo box in points. Default width 130, height auto-from-width. */
+  logoWidth?: number;
+  logoHeight?: number;
+  /** Address zone in the 3-zone layouts. Default `'right'`. */
+  addressZone?: AddressZone;
+  /** Divider rule under the letterhead. Default `'thin'` (0.5pt today). */
+  divider?: DividerStyle;
+  /** Nudge the divider rule endpoints / baseline (points). Default 0/0/0. */
+  dividerNudge?: { start?: number; end?: number; vertical?: number };
+}
+
+export interface FooterConfig {
+  /** Custom footer text; empty/omitted uses the identity tagline + website. */
+  customText?: string;
+  /** Fill behind the footer; omitted = none. */
+  background?: string;
+  /** Footer text color. Default `PDF_COLORS.textMuted`. */
+  fontColor?: string;
+  /** Footer font size. Default 8. */
+  fontSize?: number;
+  /** Footer alignment. Default `'center'`. */
+  alignment?: 'left' | 'center' | 'right';
+}
+
+export interface PageNumbersConfig {
+  /** Default false (legacy = no page numbers). */
+  enabled?: boolean;
+  /** Default `'right'`. */
+  position?: 'left' | 'center' | 'right';
+  /** `{page}` / `{pages}` tokens. Default `'Page {page} of {pages}'`. */
+  format?: string;
+}
+
+export interface ContinuationConfig {
+  /** Suppress the full letterhead on pages 2+. Default false. */
+  suppressLetterhead?: boolean;
+}
+
+export interface OrganizationConfig {
+  /** Where the header identity is sourced. Default `'company_info'`. */
+  source?: 'company_info' | 'manual';
+  /** Per-line visibility. All default true except the `*Ar` lines (false). */
+  show?: {
+    logo?: boolean;
+    name?: boolean;
+    nameAr?: boolean;
+    legalName?: boolean;
+    legalNameAr?: boolean;
+    address?: boolean;
+    taxId?: boolean;
+  };
+  /** Address font size. Default 8. */
+  addressFontSize?: number;
+  /** Header address column width. Default `'auto'`. */
+  columnWidth?: 'auto' | number;
+  /** Literal values used when `source === 'manual'`. */
+  manual?: {
+    name?: string;
+    nameAr?: string;
+    legalName?: string;
+    legalNameAr?: string;
+    address?: string;
+    taxId?: string;
+  };
+}
+
+export interface TaxBarConfig {
+  /** Default false (no VAT/GST identification bar). */
+  enabled?: boolean;
+  /** Bar label, e.g. `{ en: 'VAT Reg. No.', ar: 'الرقم الضريبي' }`. */
+  label?: LabelText;
+  /** `'company_info'` pulls the registration number from identity; `'manual'` uses `value`. */
+  source?: 'company_info' | 'manual';
+  value?: string;
+}
+
+export interface TableConfig {
+  /** Table-header fill. Default `PDF_COLORS.headerBg`. */
+  headerBackground?: string;
+  /** Prepend an S/N row-number column. Default false. */
+  rowNumbering?: boolean;
+  /** Alternating row fill. Default false. */
+  zebra?: boolean;
+  /** Grouped section subtotals. Default false. */
+  sectionSubtotals?: boolean;
+}
+
+export type DensityPreset = 'comfortable' | 'compact' | 'dense';
+
+export interface PageFittingConfig {
+  /** Scale spacing/fonts to keep the document on one page. Default false. */
+  autoFitOnePage?: boolean;
+  /** Spacing density. Default `'comfortable'` (current margins/sizes). */
+  density?: DensityPreset;
+  /** Legibility floor for auto-fit scaling. Default 0.8. */
+  minScale?: number;
+}
+
+export interface WatermarkConfig {
+  /** Watermark text (supersedes `branding.watermark`). */
+  text?: string;
+  /** Render an uploaded watermark image instead of text. Default false. */
+  image?: boolean;
+  /** Diagonal angle in degrees. Default -45. */
+  angle?: number;
+  /** Opacity 0–1. Default 0.3. */
+  opacity?: number;
+  /** Text watermark font size. Default 60. */
+  fontSize?: number;
+}
+
 /** The resolved, render-ready template configuration for one document. */
 export interface DocumentTemplateConfig {
   paper: PaperConfig;
@@ -98,6 +272,18 @@ export interface DocumentTemplateConfig {
   sections: SectionConfig[];
   /** Tenant-extendable label dictionary (e.g. `documentTitle`). */
   labels: Record<string, LabelText>;
+  // ── Premium controls (optional; absent = neutral/legacy) ──────────────────
+  typography?: TypographyConfig;
+  colors?: ColorsConfig;
+  header?: HeaderConfig;
+  footer?: FooterConfig;
+  pageNumbers?: PageNumbersConfig;
+  continuation?: ContinuationConfig;
+  organization?: OrganizationConfig;
+  taxBar?: TaxBarConfig;
+  table?: TableConfig;
+  pageFitting?: PageFittingConfig;
+  watermark?: WatermarkConfig;
 }
 
 /**
@@ -132,6 +318,21 @@ export interface TemplateConfigOverride {
   language?: Partial<LanguageConfig>;
   sections?: SectionConfigOverride[];
   labels?: Record<string, LabelText>;
+  // ── Premium controls — the interfaces are all-optional, so they double as
+  //    their own override shape. Scalars replace; the nested objects
+  //    (`typography.sizes`, `header.dividerNudge`, `organization.show`/`manual`)
+  //    deep-merge by key. ──────────────────────────────────────────────────
+  typography?: TypographyConfig;
+  colors?: ColorsConfig;
+  header?: HeaderConfig;
+  footer?: FooterConfig;
+  pageNumbers?: PageNumbersConfig;
+  continuation?: ContinuationConfig;
+  organization?: OrganizationConfig;
+  taxBar?: TaxBarConfig;
+  table?: TableConfig;
+  pageFitting?: PageFittingConfig;
+  watermark?: WatermarkConfig;
 }
 
 /** Partial section override; `key` identifies the target section. */
@@ -567,6 +768,56 @@ function mergeLabels(
   return result;
 }
 
+/**
+ * Shallow-merge an optional config group. Returns `undefined` when neither layer
+ * sets it (so absent premium groups stay absent → neutral/legacy), the lone
+ * defined layer when only one sets it, or the spread of both (later wins).
+ */
+function mergeGroup<T extends object>(base: T | undefined, override: T | undefined): T | undefined {
+  if (!base) return override;
+  if (!override) return base;
+  return { ...base, ...override };
+}
+
+/** Merge typography, deep-merging the per-style `sizes` map by key. */
+function mergeTypography(
+  base: TypographyConfig | undefined,
+  override: TypographyConfig | undefined,
+): TypographyConfig | undefined {
+  if (!base) return override;
+  if (!override) return base;
+  const sizes = mergeGroup(base.sizes, override.sizes);
+  return { ...base, ...override, ...(sizes ? { sizes } : {}) };
+}
+
+/** Merge header config, deep-merging the `dividerNudge` triplet by key. */
+function mergeHeader(
+  base: HeaderConfig | undefined,
+  override: HeaderConfig | undefined,
+): HeaderConfig | undefined {
+  if (!base) return override;
+  if (!override) return base;
+  const dividerNudge = mergeGroup(base.dividerNudge, override.dividerNudge);
+  return { ...base, ...override, ...(dividerNudge ? { dividerNudge } : {}) };
+}
+
+/** Merge organization config, deep-merging the `show` toggles and `manual` values by key. */
+function mergeOrganization(
+  base: OrganizationConfig | undefined,
+  override: OrganizationConfig | undefined,
+): OrganizationConfig | undefined {
+  if (!base) return override;
+  if (!override) return base;
+  const show = mergeGroup(base.show, override.show);
+  const manual = mergeGroup(base.manual, override.manual);
+  return {
+    ...base,
+    ...override,
+    ...(show ? { show } : {}),
+    ...(manual ? { manual } : {}),
+  };
+}
+
 function applyOverride(
   base: DocumentTemplateConfig,
   override: TemplateConfigOverride | undefined,
@@ -578,6 +829,19 @@ function applyOverride(
     language: { ...base.language, ...override.language },
     sections: mergeSections(base.sections, override.sections),
     labels: mergeLabels(base.labels, override.labels),
+    // Premium groups — undefined-safe (absent layers leave the group absent →
+    // neutral/legacy); the three nested objects deep-merge by key.
+    typography: mergeTypography(base.typography, override.typography),
+    colors: mergeGroup(base.colors, override.colors),
+    header: mergeHeader(base.header, override.header),
+    footer: mergeGroup(base.footer, override.footer),
+    pageNumbers: mergeGroup(base.pageNumbers, override.pageNumbers),
+    continuation: mergeGroup(base.continuation, override.continuation),
+    organization: mergeOrganization(base.organization, override.organization),
+    taxBar: mergeGroup(base.taxBar, override.taxBar),
+    table: mergeGroup(base.table, override.table),
+    pageFitting: mergeGroup(base.pageFitting, override.pageFitting),
+    watermark: mergeGroup(base.watermark, override.watermark),
   };
 }
 

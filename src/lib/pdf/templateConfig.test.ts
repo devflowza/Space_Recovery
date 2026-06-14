@@ -205,3 +205,93 @@ describe('resolveTemplateConfig — branding & language', () => {
     expect(resolved.language.primary).toBe('ar');
   });
 });
+
+describe('resolveTemplateConfig — premium control groups', () => {
+  const base = BUILT_IN_TEMPLATE_CONFIGS.invoice;
+
+  it('leaves every premium group absent when no override sets it (parity)', () => {
+    const resolved = resolveTemplateConfig(base);
+    expect(resolved.colors).toBeUndefined();
+    expect(resolved.typography).toBeUndefined();
+    expect(resolved.header).toBeUndefined();
+    expect(resolved.footer).toBeUndefined();
+    expect(resolved.pageNumbers).toBeUndefined();
+    expect(resolved.continuation).toBeUndefined();
+    expect(resolved.organization).toBeUndefined();
+    expect(resolved.taxBar).toBeUndefined();
+    expect(resolved.table).toBeUndefined();
+    expect(resolved.pageFitting).toBeUndefined();
+    expect(resolved.watermark).toBeUndefined();
+  });
+
+  it('surfaces a scalar color group from an override', () => {
+    const resolved = resolveTemplateConfig(base, undefined, undefined, {
+      colors: { accent: '#10b981', headerBackground: '#ecfdf5' },
+    });
+    expect(resolved.colors?.accent).toBe('#10b981');
+    expect(resolved.colors?.headerBackground).toBe('#ecfdf5');
+  });
+
+  it('merges color fields across cascade layers without dropping siblings', () => {
+    const resolved = resolveTemplateConfig(
+      base,
+      { colors: { accent: '#10b981' } },
+      { colors: { text: '#064e3b' } },
+      { colors: { label: '#6b7280' } },
+    );
+    expect(resolved.colors?.accent).toBe('#10b981'); // from theme
+    expect(resolved.colors?.text).toBe('#064e3b'); // from doc-type
+    expect(resolved.colors?.label).toBe('#6b7280'); // from instance
+  });
+
+  it('later layer wins on the same color field', () => {
+    const resolved = resolveTemplateConfig(
+      base,
+      { colors: { accent: '#111111' } },
+      { colors: { accent: '#222222' } },
+    );
+    expect(resolved.colors?.accent).toBe('#222222');
+  });
+
+  it('deep-merges typography.sizes by key across layers', () => {
+    const resolved = resolveTemplateConfig(
+      base,
+      { typography: { fontFamily: 'Tajawal', sizes: { documentTitle: 18 } } },
+      { typography: { sizes: { tableHeader: 9 } } },
+    );
+    expect(resolved.typography?.fontFamily).toBe('Tajawal');
+    expect(resolved.typography?.sizes?.documentTitle).toBe(18); // preserved
+    expect(resolved.typography?.sizes?.tableHeader).toBe(9); // added
+  });
+
+  it('deep-merges header.dividerNudge while replacing scalar header fields', () => {
+    const resolved = resolveTemplateConfig(
+      base,
+      { header: { layout: 'modern', dividerNudge: { start: 10 } } },
+      { header: { divider: 'thick', dividerNudge: { end: 20 } } },
+    );
+    expect(resolved.header?.layout).toBe('modern');
+    expect(resolved.header?.divider).toBe('thick');
+    expect(resolved.header?.dividerNudge?.start).toBe(10); // preserved
+    expect(resolved.header?.dividerNudge?.end).toBe(20); // added
+  });
+
+  it('deep-merges organization.show toggles across layers', () => {
+    const resolved = resolveTemplateConfig(
+      base,
+      { organization: { show: { logo: false } } },
+      { organization: { source: 'manual', show: { taxId: false } } },
+    );
+    expect(resolved.organization?.source).toBe('manual');
+    expect(resolved.organization?.show?.logo).toBe(false); // preserved
+    expect(resolved.organization?.show?.taxId).toBe(false); // added
+  });
+
+  it('does not mutate the built-in input when premium groups are applied', () => {
+    const before = JSON.stringify(base);
+    resolveTemplateConfig(base, { colors: { accent: '#10b981' } }, undefined, {
+      header: { layout: 'boxed' },
+    });
+    expect(JSON.stringify(base)).toBe(before);
+  });
+});
