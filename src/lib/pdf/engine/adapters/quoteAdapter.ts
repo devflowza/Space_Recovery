@@ -199,6 +199,12 @@ export function toEngineData(
     }
   }
 
+  // Generic verification QR so the QR section/footer renders a real, scannable
+  // code instead of an empty box.
+  const qrPayload = `QUOTE:${quoteData.quote_number || 'Draft'} TOTAL:${money(totalAmount)}${
+    quoteData.valid_until ? ` VALID:${formatDate(quoteData.valid_until, 'dd MMM yyyy')}` : ''
+  }`;
+
   return {
     documentTitle,
     identity: companySettings,
@@ -209,6 +215,13 @@ export function toEngineData(
     paymentHistory: null,
     terms,
     bank,
-    qrCaption: 'Scan to approve this quote',
+    // Default signature lines so the (opt-in) Signature block renders real lines
+    // when a tenant switches it on for a quote.
+    signatures: [
+      { en: 'Authorized Signature', ar: 'التوقيع المعتمد' },
+      { en: 'Customer Acceptance', ar: 'موافقة العميل' },
+    ],
+    qrCaption: 'Scan to verify this quote',
+    qrPayload,
   };
 }

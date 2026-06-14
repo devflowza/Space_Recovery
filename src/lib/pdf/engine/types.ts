@@ -635,6 +635,13 @@ export interface EngineDocData {
    * pre-loaded image QR. Set by the invoice adapter when the tax bar is enabled.
    */
   zatcaPayload?: string | null;
+  /**
+   * A generic QR payload (e.g. a document-verification string) the QR surfaces
+   * fall back to when there is no {@link zatcaPayload} and no pre-loaded image QR.
+   * Lets a document render a real, scannable QR by default instead of nothing.
+   * Precedence: `zatcaPayload` → pre-loaded image → `qrPayload`.
+   */
+  qrPayload?: string | null;
 }
 
 /**

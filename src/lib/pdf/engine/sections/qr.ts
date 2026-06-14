@@ -9,14 +9,17 @@ import { PDF_COLORS } from '../../styles';
 import type { EngineContext, EngineDocData, SectionRenderer } from '../types';
 
 /**
- * The QR content node: a native ZATCA e-invoice QR (rendered from the payload
- * string via pdfmake's `qr` content type — no encoding dependency) when a
- * `zatcaPayload` is present, otherwise the pre-loaded image QR, otherwise null.
- * Centralized so the inline section and the page footer render QR identically.
+ * The QR content node, in precedence order: a native ZATCA e-invoice QR
+ * (rendered from the payload string via pdfmake's `qr` content type — no encoding
+ * dependency) when a `zatcaPayload` is present, otherwise the pre-loaded image QR,
+ * otherwise a native QR from the generic `fallbackPayload` (e.g. a verification
+ * string), otherwise null. Centralized so the inline section and the page footer
+ * render QR identically.
  */
 export function qrContentNode(
   zatcaPayload: string | null | undefined,
   image: string | null | undefined,
+  fallbackPayload: string | null | undefined,
   size: number,
   margin: [number, number, number, number] = [0, 0, 0, 0],
 ): Content | null {
@@ -26,6 +29,9 @@ export function qrContentNode(
   if (image) {
     return { image, width: size, height: size, alignment: 'left', margin };
   }
+  if (fallbackPayload) {
+    return { qr: fallbackPayload, fit: size, foreground: PDF_COLORS.text, alignment: 'left', margin };
+  }
   return null;
 }
 
@@ -33,7 +39,7 @@ export const renderQr: SectionRenderer = (
   engine: EngineContext,
   data: EngineDocData,
 ): Content | null => {
-  const node = qrContentNode(data.zatcaPayload, engine.qrCodeBase64, 70, [0, 0, 0, 2]);
+  const node = qrContentNode(data.zatcaPayload, engine.qrCodeBase64, data.qrPayload, 70, [0, 0, 0, 2]);
   if (!node) return null;
 
   const caption = data.qrCaption ?? null;

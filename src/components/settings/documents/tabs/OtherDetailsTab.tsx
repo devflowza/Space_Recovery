@@ -2,9 +2,17 @@ import React, { useMemo } from 'react';
 import { ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { Input } from '../../../ui/Input';
 import { Select } from '../../../ui/Select';
-import { FieldGroup } from '../controls';
-import type { LanguageMode } from '../../../../lib/pdf/templateConfig';
+import { FieldGroup, ToggleRow } from '../controls';
+import type { LanguageMode, SectionConfig } from '../../../../lib/pdf/templateConfig';
 import type { StudioApi } from '../TemplateStudio';
+
+/** Sections whose content depends on record data — a hint avoids "I toggled it but nothing showed". */
+const DATA_DEPENDENT_HINTS: Record<string, string> = {
+  taxBar: 'Needs a VAT/GST number (Transaction Details → set one, or use a manual value).',
+  paymentHistory: 'Shows only when the document has recorded payments.',
+  signature: 'Adds signature lines to the document.',
+  qr: 'Renders a scannable verification QR code.',
+};
 
 const SECTION_LABELS: Record<string, string> = {
   header: 'Header & logo',
@@ -37,6 +45,24 @@ export const OtherDetailsTab: React.FC<{ api: StudioApi }> = ({ api }) => {
     [api.resolved.sections],
   );
 
+  // The side-by-side parties/meta layout only makes sense when the document has
+  // both a customer/party block and a document-details block.
+  const hasPartiesAndMeta = useMemo(
+    () => ordered.some((s) => s.key === 'parties') && ordered.some((s) => s.key === 'meta'),
+    [ordered],
+  );
+
+  /**
+   * Toggle a section's visibility. The VAT/GST bar is gated by BOTH section
+   * visibility and `taxBar.enabled`, so flip both here — otherwise toggling it on
+   * in this list would render nothing.
+   */
+  const toggleSection = (section: SectionConfig) => {
+    const next = !section.visible;
+    api.patchSection(section.key, { visible: next });
+    if (section.key === 'taxBar') api.setTaxBar({ enabled: next });
+  };
+
   return (
     <div className="space-y-7">
       <FieldGroup title="Language" description="Single language or bilingual (English + Arabic, RTL-aware).">
@@ -47,11 +73,22 @@ export const OtherDetailsTab: React.FC<{ api: StudioApi }> = ({ api }) => {
           options={[
             { value: 'en', label: 'English only' },
             { value: 'ar', label: 'Arabic only' },
-            { value: 'bilingual_stacked', label: 'Bilingual — stacked' },
-            { value: 'bilingual_sidebyside', label: 'Bilingual — side by side' },
+            { value: 'bilingual_stacked', label: 'Bilingual — stacked (English over Arabic)' },
+            { value: 'bilingual_sidebyside', label: 'Bilingual — side by side (English | Arabic)' },
           ]}
         />
       </FieldGroup>
+
+      {hasPartiesAndMeta && (
+        <FieldGroup title="Layout" description="How the customer and document-details blocks are arranged.">
+          <ToggleRow
+            label="Customer & document details side by side"
+            description="Place the customer block and the document-details block in two columns to fill the space; off stacks them full-width."
+            checked={api.resolved.layout?.partiesMetaSideBySide ?? false}
+            onChange={(v) => api.setLayout({ partiesMetaSideBySide: v })}
+          />
+        </FieldGroup>
+      )}
 
       <FieldGroup title="Sections" description="Show, hide, reorder, and rename each section.">
         <ul className="space-y-2">
@@ -80,7 +117,7 @@ export const OtherDetailsTab: React.FC<{ api: StudioApi }> = ({ api }) => {
                   </div>
                   <span className="flex-1 text-sm font-medium text-slate-800">{sectionLabel(section.key)}</span>
                   <button
-                    onClick={() => api.patchSection(section.key, { visible: !section.visible })}
+                    onClick={() => toggleSection(section)}
                     aria-pressed={section.visible}
                     aria-label={`${section.visible ? 'Hide' : 'Show'} ${sectionLabel(section.key)}`}
                     className={[
@@ -92,6 +129,9 @@ export const OtherDetailsTab: React.FC<{ api: StudioApi }> = ({ api }) => {
                     {section.visible ? 'Shown' : 'Hidden'}
                   </button>
                 </div>
+                {section.visible && DATA_DEPENDENT_HINTS[section.key] && (
+                  <p className="mt-2 text-xs text-slate-500">{DATA_DEPENDENT_HINTS[section.key]}</p>
+                )}
                 {label && (
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <Input aria-label={`${sectionLabel(section.key)} heading (English)`} placeholder="Heading (EN)" value={label.en} onChange={(e) => api.setSectionLabel(section.key, 'en', e.target.value)} />

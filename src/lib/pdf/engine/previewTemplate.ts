@@ -71,12 +71,15 @@ export function previewTemplate(
   ctx: TranslationContext = PREVIEW_CTX_EN,
 ): Promise<string> {
   const engineData = buildPreviewEngineData(docType, config);
+  // Logo uses the gray placeholder so the header logo branch renders; the QR is
+  // passed as null so the QR surfaces render the REAL `qrPayload` (a native,
+  // scannable pdfmake QR) instead of the meaningless 1×1 placeholder square.
   const docDefinition = renderTemplate(
     config,
     engineData,
     ctx,
     PREVIEW_PLACEHOLDER_IMAGE,
-    PREVIEW_PLACEHOLDER_IMAGE,
+    null,
   );
 
   // Wire pdfmake's error callback so a rasterization failure REJECTS (rather

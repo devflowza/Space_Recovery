@@ -254,6 +254,14 @@ export function toEngineData(
     }
   }
 
+  // ---- Generic verification QR (fallback when no ZATCA payload) ------------
+  // So the QR section/footer always renders a real, scannable code — not an
+  // empty box — even for non-GCC invoices. The ZATCA TLV takes precedence when
+  // the tax bar is enabled (handled by the QR surfaces' precedence).
+  const qrPayload = zatcaPayload
+    ? null
+    : `INVOICE:${invoiceData.invoice_number || 'Draft'} TOTAL:${money(totalAmount)} DATE:${formatDate(invoiceData.invoice_date, 'dd MMM yyyy')}`;
+
   return {
     documentTitle,
     identity: companySettings,
@@ -264,7 +272,14 @@ export function toEngineData(
     paymentHistory,
     terms,
     bank,
-    qrCaption: zatcaPayload ? 'ZATCA e-invoice QR' : 'Scan to pay this invoice',
+    // Default signature lines so the (opt-in) Signature block renders real
+    // lines when a tenant switches it on for an invoice.
+    signatures: [
+      { en: 'Authorized Signature', ar: 'التوقيع المعتمد' },
+      { en: 'Customer Signature', ar: 'توقيع العميل' },
+    ],
+    qrCaption: zatcaPayload ? 'ZATCA e-invoice QR' : 'Scan to verify this invoice',
     zatcaPayload,
+    qrPayload,
   };
 }
