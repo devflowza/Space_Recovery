@@ -38,7 +38,7 @@ import type {
   TemplateDocumentType,
 } from '../../lib/pdf/templateConfig';
 import { DOCUMENT_TYPES, DOC_TYPE_LABELS } from './documentTypeMeta';
-import { DocumentTemplateEditor } from './DocumentTemplateEditor';
+import { TemplateStudio } from '../../components/settings/documents/TemplateStudio';
 
 /** Roles allowed to edit document templates (manager and above). */
 const EDITOR_ROLES = ['owner', 'admin', 'manager'] as const;
@@ -183,7 +183,7 @@ export const DocumentTemplatesPage: React.FC = () => {
       ? readConfig(state.deployed.config)
       : {};
     return (
-      <DocumentTemplateEditor
+      <TemplateStudio
         docType={editing}
         initialOverride={initialOverride}
         isSaving={saveMutation.isPending}
