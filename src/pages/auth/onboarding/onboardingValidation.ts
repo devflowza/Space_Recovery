@@ -84,3 +84,31 @@ export function shouldShowJurisdictionStep(
   if (!taxSystem) return false;
   return taxSystem.toUpperCase() !== 'NONE';
 }
+
+/**
+ * The account step cannot advance until the admin email is OTP-verified
+ * (Country Engine §9.5). Pure predicate over the only field that gates it.
+ */
+export function canAdvanceFromAccount(formData: { emailVerified: boolean }): boolean {
+  return formData.emailVerified === true;
+}
+
+/** A well-formed OTP is exactly six ASCII digits, no surrounding whitespace. */
+export function otpCodeIsValidShape(code: string): boolean {
+  return /^[0-9]{6}$/.test(code);
+}
+
+/**
+ * Decide what ui_language to send to provisioning. Send the chosen value ONLY
+ * when the user deviated from the country default — otherwise return undefined
+ * so the DB country-sync trigger owns the default (§9.2). Never sends a value
+ * the user did not actively pick.
+ */
+export function resolveUiLanguagePayload(
+  countryLanguageCode: string | null | undefined,
+  chosen: string | null | undefined,
+): string | undefined {
+  if (!chosen) return undefined;
+  const countryDefault = resolveUiLanguageDefault(countryLanguageCode);
+  return chosen === countryDefault ? undefined : chosen;
+}

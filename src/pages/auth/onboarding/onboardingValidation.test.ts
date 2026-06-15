@@ -4,6 +4,9 @@ import {
   validateTaxNumber,
   resolveUiLanguageDefault,
   shouldShowJurisdictionStep,
+  canAdvanceFromAccount,
+  otpCodeIsValidShape,
+  resolveUiLanguagePayload,
 } from './onboardingValidation';
 
 describe('filterOnboardableCountries', () => {
@@ -75,5 +78,40 @@ describe('shouldShowJurisdictionStep', () => {
     expect(shouldShowJurisdictionStep('NONE')).toBe(false);
     expect(shouldShowJurisdictionStep(null)).toBe(false);
     expect(shouldShowJurisdictionStep('')).toBe(false);
+  });
+});
+
+describe('canAdvanceFromAccount', () => {
+  it('blocks until the email is verified (OTP gate, §9.5)', () => {
+    expect(canAdvanceFromAccount({ emailVerified: false })).toBe(false);
+    expect(canAdvanceFromAccount({ emailVerified: true })).toBe(true);
+  });
+});
+
+describe('resolveUiLanguagePayload', () => {
+  it('returns undefined when the chosen language equals the country default (let DB sync own it, §9.2)', () => {
+    expect(resolveUiLanguagePayload('ar', 'ar')).toBeUndefined();
+    expect(resolveUiLanguagePayload('en', 'en')).toBeUndefined();
+  });
+  it('returns undefined when nothing was chosen (empty/undefined)', () => {
+    expect(resolveUiLanguagePayload('ar', '')).toBeUndefined();
+    expect(resolveUiLanguagePayload('ar', undefined)).toBeUndefined();
+  });
+  it('forwards the override only when the user deviated from the country default', () => {
+    expect(resolveUiLanguagePayload('ar', 'en')).toBe('en'); // country ar, user chose en
+    expect(resolveUiLanguagePayload('en', 'ar')).toBe('ar');
+  });
+});
+
+describe('otpCodeIsValidShape', () => {
+  it('accepts exactly 6 digits', () => {
+    expect(otpCodeIsValidShape('123456')).toBe(true);
+  });
+  it('rejects non-6-digit or non-numeric codes', () => {
+    expect(otpCodeIsValidShape('12345')).toBe(false);
+    expect(otpCodeIsValidShape('1234567')).toBe(false);
+    expect(otpCodeIsValidShape('12a456')).toBe(false);
+    expect(otpCodeIsValidShape('')).toBe(false);
+    expect(otpCodeIsValidShape(' 123456 ')).toBe(false);
   });
 });
