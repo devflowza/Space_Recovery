@@ -54,6 +54,21 @@ jobs:
       - run: npm ci
       - run: npx eslint src
 
+  country-i18n:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      # Portal-scoped i18n missing-key gate (no-op pass until the portal slice lands).
+      - run: bash scripts/check-i18n-keys.sh
+      # Custom eslint-rule unit tests (eslint-rules/ is in eslint's ignore list, so
+      # these are otherwise orphaned — run them here so rule regressions fail CI).
+      - run: node --test eslint-rules/*.test.js
+
   tenant-table-requirements:
     runs-on: ubuntu-latest
     env:
