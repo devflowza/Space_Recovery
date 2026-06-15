@@ -1,5 +1,7 @@
 import { supabase, resolveTenantId } from './supabaseClient';
 import type { Database, Json } from '../types/database.types';
+import { resolveRateContext } from './currencyService';
+import { buildPayrollBaseColumns } from './payrollBase';
 
 type PayrollPeriod = Database['public']['Tables']['payroll_periods']['Row'];
 type PayrollPeriodInsert = Database['public']['Tables']['payroll_periods']['Insert'];
@@ -352,6 +354,13 @@ export const payrollService = {
     const socialSecurityRate = settings.social_security_rate ?? 0.07;
     const overtimeMultiplier = settings.overtime_rate_multiplier.regular;
 
+    // Multi-currency closure (D7): freeze currency + rate + *_base on each payroll
+    // record. Resolve ONE rate context per run at the tenant base currency. We
+    // deliberately do NOT pass settings.currency.code here: it defaults to 'USD'
+    // (a fail-loud violation) and would convert base-currency salaries as if they
+    // were USD. Per-employee functional-currency payroll is Phase 3 (D5), not here.
+    const rc = await resolveRateContext(undefined, period.end_date, null);
+
     // Loan repayments are collected here and posted only AFTER payroll_records
     // are committed (below), so a failed records insert can never leave loans
     // deducted with no payroll record behind them.
@@ -402,6 +411,10 @@ export const payrollService = {
         total_earnings: totalEarnings,
         total_deductions: totalDeductions,
         net_salary: netSalary,
+        ...buildPayrollBaseColumns(
+          { total_earnings: totalEarnings, total_deductions: totalDeductions, net_salary: netSalary },
+          rc,
+        ),
         status: 'calculated',
       });
 
