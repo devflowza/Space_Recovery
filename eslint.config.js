@@ -83,10 +83,11 @@
         // neutral-chrome are baselined OFF per-file below (same pattern as
         // no-raw-tailwind-colors).
         'xsuite/no-raw-style-colors': 'error',
-        // D7/D8: cross-document money sums must use the *_base shadow. Starts as
-        // 'warn' to surface any residual raw aggregations without breaking the
-        // gate; flip to 'error' once the flagged set is confirmed empty/handled.
-        'xsuite/no-raw-currency-aggregation': 'warn',
+        // D7/D8: cross-document money sums must use the *_base shadow. Flipped to
+        // 'error' after the 57-site burndown — every cross-document rollup now routes
+        // through baseAmount/sumBankBalanceBase, and genuine single-currency rollups
+        // carry a reasoned inline disable. New raw aggregations fail CI.
+        'xsuite/no-raw-currency-aggregation': 'error',
         '@typescript-eslint/no-unused-vars': ['error', {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
