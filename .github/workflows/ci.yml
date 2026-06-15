@@ -115,10 +115,10 @@ jobs:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check active-country config completeness (Phase-0 inner: currency/locale/date/tz)
+      - name: 'Check active-country config completeness (Phase-0 inner: currency/locale/date/tz)'
         if: ${{ env.SUPABASE_DB_URL != '' }}
         run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/check-active-country-config.sql
-      - name: Check geo completeness (Phase-1 strict: + phone/address, no stubs)
+      - name: 'Check geo completeness (Phase-1 strict: + phone/address, no stubs)'
         if: ${{ env.SUPABASE_DB_URL != '' }}
         run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/check-geo-completeness.sql
       - name: Skip active-country config check (no Supabase credentials)
