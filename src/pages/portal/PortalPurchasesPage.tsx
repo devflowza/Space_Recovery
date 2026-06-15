@@ -7,6 +7,7 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { ShoppingBag, Package, Calendar, DollarSign } from 'lucide-react';
 import { formatDate } from '../../lib/format';
+import { baseAmount } from '../../lib/financialMath';
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -39,7 +40,7 @@ export const PortalPurchasesPage: React.FC = () => {
       const { data, error } = await supabase
         .from('stock_sales')
         .select(`
-          id, sale_number, created_at, total_amount, status,
+          id, sale_number, created_at, total_amount, total_amount_base, status,
           stock_sale_items (
             id, quantity, unit_price, total,
             stock_items ( id, name, brand, sku )
@@ -54,7 +55,7 @@ export const PortalPurchasesPage: React.FC = () => {
     enabled: !!customer?.id,
   });
 
-  const totalSpent = (purchases ?? []).reduce((sum, s) => sum + (s.total_amount ?? 0), 0);
+  const totalSpent = (purchases ?? []).reduce((sum, s) => sum + baseAmount(s, 'total_amount'), 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

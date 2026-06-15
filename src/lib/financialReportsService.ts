@@ -214,10 +214,15 @@ export const generateAgedReceivablesReport = async (): Promise<AgedReceivablesDa
   });
 
   const totals = {
+    // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- amount is already base (accumulated via baseAmount above)
     current: buckets.current.reduce((sum, c) => sum + c.amount, 0),
+    // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- amount is already base (accumulated via baseAmount above)
     thirtyDays: buckets.thirtyDays.reduce((sum, c) => sum + c.amount, 0),
+    // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- amount is already base (accumulated via baseAmount above)
     sixtyDays: buckets.sixtyDays.reduce((sum, c) => sum + c.amount, 0),
+    // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- amount is already base (accumulated via baseAmount above)
     ninetyDays: buckets.ninetyDays.reduce((sum, c) => sum + c.amount, 0),
+    // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- amount is already base (accumulated via baseAmount above)
     overNinetyDays: buckets.overNinetyDays.reduce((sum, c) => sum + c.amount, 0),
     total: 0,
   };
@@ -531,10 +536,15 @@ export const generateAgedPayablesReport = async (): Promise<AgedPayablesData> =>
   });
 
   const totals = {
+    // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- amount is already base (accumulated via baseAmount above)
     current: buckets.current.reduce((sum, c) => sum + c.amount, 0),
+    // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- amount is already base (accumulated via baseAmount above)
     thirtyDays: buckets.thirtyDays.reduce((sum, c) => sum + c.amount, 0),
+    // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- amount is already base (accumulated via baseAmount above)
     sixtyDays: buckets.sixtyDays.reduce((sum, c) => sum + c.amount, 0),
+    // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- amount is already base (accumulated via baseAmount above)
     ninetyDays: buckets.ninetyDays.reduce((sum, c) => sum + c.amount, 0),
+    // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- amount is already base (accumulated via baseAmount above)
     overNinetyDays: buckets.overNinetyDays.reduce((sum, c) => sum + c.amount, 0),
     total: 0,
   };

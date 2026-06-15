@@ -11,11 +11,13 @@ import { formatDate } from '../../lib/format';
 import { useCurrency } from '../../hooks/useCurrency';
 import { generatePaymentReceipt } from '../../lib/pdf/pdfService';
 import { logger } from '../../lib/logger';
+import { baseAmount } from '../../lib/financialMath';
 
 interface PortalPaymentRow {
   id: string;
   payment_number: string | null;
   amount: number;
+  amount_base: number | null;
   currency: string | null;
   payment_date: string | null;
   reference: string | null;
@@ -83,7 +85,7 @@ export const PortalPayments: React.FC = () => {
       const { data, error } = await supabase
         .from('payments')
         .select(`
-          id, payment_number, amount, currency, payment_date, reference, transaction_id, status, notes, created_at,
+          id, payment_number, amount, amount_base, currency, payment_date, reference, transaction_id, status, notes, created_at,
           invoice_id, case_id,
           invoices ( invoice_number, total_amount, balance_due ),
           cases ( case_no ),
@@ -101,7 +103,10 @@ export const PortalPayments: React.FC = () => {
   });
 
   const list = payments ?? [];
-  const totalPaid = list.reduce((sum, p) => sum + (p.amount ?? 0), 0);
+  const totalPaid = list.reduce(
+    (sum, p) => sum + baseAmount(p as unknown as Record<string, unknown>, 'amount'),
+    0,
+  );
 
   const handleDownload = async (paymentId: string) => {
     setDownloadError(null);
