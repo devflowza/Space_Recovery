@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { supabase, resolveTenantId } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
+import { useCurrency } from '../../hooks/useCurrency';
 import { logger } from '../../lib/logger';
 
 interface LineItem {
@@ -39,6 +40,7 @@ interface PurchaseOrderFormModalProps {
 
 export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, purchaseOrder, supplierId }: PurchaseOrderFormModalProps) {
   const toast = useToast();
+  const { formatCurrency } = useCurrency();
   const [loading, setLoading] = useState(false);
   const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string; supplier_number: string | null }>>([]);
   const [statuses, setStatuses] = useState<Array<{ id: string; name: string; sort_order?: number | null; is_active?: boolean }>>([]);
@@ -367,7 +369,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
                 </div>
                 <div className="w-32">
                   <Input
-                    value={item.total.toFixed(2)}
+                    value={formatCurrency(item.total)}
                     disabled
                     placeholder="Total"
                   />
@@ -391,15 +393,15 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
             <div className="flex flex-col items-end space-y-2">
               <div className="flex justify-between w-64">
                 <span className="text-gray-600">Subtotal:</span>
-                <span className="font-semibold">${totals.subtotal.toFixed(2)}</span>
+                <span className="font-semibold">{formatCurrency(totals.subtotal)}</span>
               </div>
               <div className="flex justify-between w-64">
                 <span className="text-gray-600">Tax (15%):</span>
-                <span className="font-semibold">${totals.tax.toFixed(2)}</span>
+                <span className="font-semibold">{formatCurrency(totals.tax)}</span>
               </div>
               <div className="flex justify-between w-64 text-lg border-t pt-2">
                 <span className="font-bold">Total:</span>
-                <span className="font-bold text-primary">${totals.total.toFixed(2)}</span>
+                <span className="font-bold text-primary">{formatCurrency(totals.total)}</span>
               </div>
             </div>
           </div>
