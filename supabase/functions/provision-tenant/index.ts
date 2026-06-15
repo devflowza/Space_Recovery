@@ -329,7 +329,9 @@ Deno.serve(async (req: Request) => {
 
     if (onboardingError) {
       console.error('Onboarding progress creation failed:', onboardingError);
-      // Non-critical, don't fail the whole flow
+      // FAIL-LOUD: a half-provisioned tenant must not silently lose its wizard.
+      await supabase.from('tenants').update({ deleted_at: new Date().toISOString() }).eq('id', tenant.id);
+      throw new Error(`Provisioning failed: onboarding_progress insert: ${onboardingError.message}`);
     }
 
     return new Response(

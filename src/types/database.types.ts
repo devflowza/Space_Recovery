@@ -9580,28 +9580,34 @@ export type Database = {
           completed_at: string | null
           created_at: string
           current_step: string | null
+          deleted_at: string | null
           id: string
           steps_completed: string[] | null
           tenant_id: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           completed_at?: string | null
           created_at?: string
           current_step?: string | null
+          deleted_at?: string | null
           id?: string
           steps_completed?: string[] | null
           tenant_id: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           completed_at?: string | null
           created_at?: string
           current_step?: string | null
+          deleted_at?: string | null
           id?: string
           steps_completed?: string[] | null
           tenant_id?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -16101,6 +16107,7 @@ export type Database = {
           module_slug: string
         }[]
       }
+      get_base_currency: { Args: never; Returns: string }
       get_current_portal_customer_id: { Args: never; Returns: string }
       get_current_tenant_id: { Args: never; Returns: string }
       get_expense_stats_base: { Args: never; Returns: Json }
