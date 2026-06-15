@@ -778,6 +778,11 @@ export const ReportsDashboard: React.FC = () => {
                     <p className={`text-3xl font-bold ${cashFlowData.netCashFlow >= 0 ? 'text-success' : 'text-danger'}`}>
                       {formatCurrency(cashFlowData.netCashFlow)}
                     </p>
+                    {cashFlowData.closingBalanceIsIndicative && (
+                      <div className="mt-2 flex justify-center">
+                        <Badge variant="info">Indicative base — converted across currencies</Badge>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
