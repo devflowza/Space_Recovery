@@ -58,6 +58,10 @@ export interface TenantConfig {
   featureFlags: Record<string, boolean>;
 }
 
+/** Typed SHAPE placeholder only — never rendered. The provider blocks render when
+ *  isResolvedConfig() is false (sentinel-bearing required keys). Cosmetic display
+ *  fields keep safe defaults; required jurisdiction keys stay REQUIRED_SENTINEL so
+ *  an unconfigured tenant fails loud instead of silently rendering US (D2/D3). */
 export const DEFAULT_TENANT_CONFIG: TenantConfig = {
   tenantId: '',
   tenantName: '',
