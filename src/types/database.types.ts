@@ -1206,6 +1206,7 @@ export type Database = {
           address: string | null
           city_id: string | null
           code: string | null
+          config: Json
           country_id: string | null
           created_at: string
           deleted_at: string | null
@@ -1213,8 +1214,11 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_main: boolean | null
+          legal_entity_id: string | null
           name: string
+          parent_branch_id: string | null
           phone: string | null
+          subdivision_id: string | null
           tenant_id: string
           updated_at: string
         }
@@ -1222,6 +1226,7 @@ export type Database = {
           address?: string | null
           city_id?: string | null
           code?: string | null
+          config?: Json
           country_id?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -1229,8 +1234,11 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_main?: boolean | null
+          legal_entity_id?: string | null
           name: string
+          parent_branch_id?: string | null
           phone?: string | null
+          subdivision_id?: string | null
           tenant_id: string
           updated_at?: string
         }
@@ -1238,6 +1246,7 @@ export type Database = {
           address?: string | null
           city_id?: string | null
           code?: string | null
+          config?: Json
           country_id?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -1245,8 +1254,11 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_main?: boolean | null
+          legal_entity_id?: string | null
           name?: string
+          parent_branch_id?: string | null
           phone?: string | null
+          subdivision_id?: string | null
           tenant_id?: string
           updated_at?: string
         }
@@ -1263,6 +1275,27 @@ export type Database = {
             columns: ["country_id"]
             isOneToOne: false
             referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branches_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branches_parent_branch_id_fkey"
+            columns: ["parent_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branches_subdivision_id_fkey"
+            columns: ["subdivision_id"]
+            isOneToOne: false
+            referencedRelation: "geo_subdivisions"
             referencedColumns: ["id"]
           },
           {
@@ -1487,6 +1520,7 @@ export type Database = {
         Row: {
           accessories: string[] | null
           brand_id: string | null
+          business_unit_id: string | null
           capacity_id: string | null
           case_id: string
           condition_id: string | null
@@ -1524,6 +1558,7 @@ export type Database = {
         Insert: {
           accessories?: string[] | null
           brand_id?: string | null
+          business_unit_id?: string | null
           capacity_id?: string | null
           case_id: string
           condition_id?: string | null
@@ -1561,6 +1596,7 @@ export type Database = {
         Update: {
           accessories?: string[] | null
           brand_id?: string | null
+          business_unit_id?: string | null
           capacity_id?: string | null
           case_id?: string
           condition_id?: string | null
@@ -1601,6 +1637,13 @@ export type Database = {
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "catalog_device_brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_devices_business_unit_id_fkey"
+            columns: ["business_unit_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
           {
@@ -2634,6 +2677,7 @@ export type Database = {
           internal_notes: string | null
           is_urgent: boolean | null
           is_warranty: boolean | null
+          legal_entity_id: string | null
           net_amount: number | null
           phase_entered_at: string | null
           priority: string | null
@@ -2680,6 +2724,7 @@ export type Database = {
           internal_notes?: string | null
           is_urgent?: boolean | null
           is_warranty?: boolean | null
+          legal_entity_id?: string | null
           net_amount?: number | null
           phase_entered_at?: string | null
           priority?: string | null
@@ -2726,6 +2771,7 @@ export type Database = {
           internal_notes?: string | null
           is_urgent?: boolean | null
           is_warranty?: boolean | null
+          legal_entity_id?: string | null
           net_amount?: number | null
           phase_entered_at?: string | null
           priority?: string | null
@@ -2748,6 +2794,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "cases_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cases_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -2766,6 +2819,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers_enhanced"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
             referencedColumns: ["id"]
           },
           {
@@ -3416,6 +3476,7 @@ export type Database = {
           actor_id: string | null
           actor_name: string
           actor_role: string | null
+          business_unit_id: string | null
           case_id: string
           created_at: string
           custody_status: Database["public"]["Enums"]["custody_status"] | null
@@ -3435,6 +3496,7 @@ export type Database = {
           actor_id?: string | null
           actor_name: string
           actor_role?: string | null
+          business_unit_id?: string | null
           case_id: string
           created_at?: string
           custody_status?: Database["public"]["Enums"]["custody_status"] | null
@@ -3454,6 +3516,7 @@ export type Database = {
           actor_id?: string | null
           actor_name?: string
           actor_role?: string | null
+          business_unit_id?: string | null
           case_id?: string
           created_at?: string
           custody_status?: Database["public"]["Enums"]["custody_status"] | null
@@ -3468,6 +3531,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chain_of_custody_business_unit_id_fkey"
+            columns: ["business_unit_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chain_of_custody_case_id_fkey"
             columns: ["case_id"]
@@ -6313,15 +6383,20 @@ export type Database = {
           address_format: Json
           code: string
           code3: string | null
+          config_status: string
+          config_version: number
+          country_config: Json
           created_at: string
           currency_code: string | null
           currency_name: string
           currency_position: string
           currency_symbol: string
+          data_protection_regime: string | null
           date_format: string
           decimal_places: number
           decimal_separator: string
           default_tax_rate: number
+          digit_grouping: string
           fiscal_year_start: string
           id: string
           invoice_prefix_required: boolean
@@ -6333,7 +6408,11 @@ export type Database = {
           phone_format: string | null
           postal_code_format: string | null
           postal_code_label: string
+          reference_dataset_version: string | null
+          region_id: string | null
+          requires_local_residency: boolean
           sort_order: number | null
+          statutory_workweek: number | null
           tax_invoice_required: boolean
           tax_label: string
           tax_number_format: string | null
@@ -6345,20 +6424,26 @@ export type Database = {
           timezone: string
           updated_at: string
           week_starts_on: number
+          weekend_days: number[]
         }
         Insert: {
           address_format?: Json
           code: string
           code3?: string | null
+          config_status?: string
+          config_version?: number
+          country_config?: Json
           created_at?: string
           currency_code?: string | null
           currency_name?: string
           currency_position?: string
           currency_symbol?: string
+          data_protection_regime?: string | null
           date_format?: string
           decimal_places?: number
           decimal_separator?: string
           default_tax_rate?: number
+          digit_grouping?: string
           fiscal_year_start?: string
           id?: string
           invoice_prefix_required?: boolean
@@ -6370,7 +6455,11 @@ export type Database = {
           phone_format?: string | null
           postal_code_format?: string | null
           postal_code_label?: string
+          reference_dataset_version?: string | null
+          region_id?: string | null
+          requires_local_residency?: boolean
           sort_order?: number | null
+          statutory_workweek?: number | null
           tax_invoice_required?: boolean
           tax_label?: string
           tax_number_format?: string | null
@@ -6382,20 +6471,26 @@ export type Database = {
           timezone?: string
           updated_at?: string
           week_starts_on?: number
+          weekend_days?: number[]
         }
         Update: {
           address_format?: Json
           code?: string
           code3?: string | null
+          config_status?: string
+          config_version?: number
+          country_config?: Json
           created_at?: string
           currency_code?: string | null
           currency_name?: string
           currency_position?: string
           currency_symbol?: string
+          data_protection_regime?: string | null
           date_format?: string
           decimal_places?: number
           decimal_separator?: string
           default_tax_rate?: number
+          digit_grouping?: string
           fiscal_year_start?: string
           id?: string
           invoice_prefix_required?: boolean
@@ -6407,7 +6502,11 @@ export type Database = {
           phone_format?: string | null
           postal_code_format?: string | null
           postal_code_label?: string
+          reference_dataset_version?: string | null
+          region_id?: string | null
+          requires_local_residency?: boolean
           sort_order?: number | null
+          statutory_workweek?: number | null
           tax_invoice_required?: boolean
           tax_label?: string
           tax_number_format?: string | null
@@ -6419,8 +6518,124 @@ export type Database = {
           timezone?: string
           updated_at?: string
           week_starts_on?: number
+          weekend_days?: number[]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "geo_countries_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "geo_regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_regions: {
+        Row: {
+          code: string
+          created_at: string
+          data_residency_region: string
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parent_id: string | null
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          data_residency_region?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_id?: string | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          data_residency_region?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_id?: string | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_regions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "geo_regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_subdivisions: {
+        Row: {
+          code: string
+          country_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parent_id: string | null
+          sort_order: number | null
+          subdivision_type: string | null
+          tax_authority_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          country_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_id?: string | null
+          sort_order?: number | null
+          subdivision_type?: string | null
+          tax_authority_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          country_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_id?: string | null
+          sort_order?: number | null
+          subdivision_type?: string | null
+          tax_authority_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_subdivisions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "geo_subdivisions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "geo_subdivisions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       import_export_jobs: {
         Row: {
@@ -7432,6 +7647,7 @@ export type Database = {
           balance_due: number | null
           balance_due_base: number | null
           bank_account_id: string | null
+          business_unit_id: string | null
           case_id: string | null
           client_reference: string | null
           company_id: string | null
@@ -7455,6 +7671,7 @@ export type Database = {
           invoice_number: string | null
           invoice_type: string | null
           is_proforma: boolean | null
+          legal_entity_id: string | null
           notes: string | null
           paid_at: string | null
           payment_status: string | null
@@ -7484,6 +7701,7 @@ export type Database = {
           balance_due?: number | null
           balance_due_base?: number | null
           bank_account_id?: string | null
+          business_unit_id?: string | null
           case_id?: string | null
           client_reference?: string | null
           company_id?: string | null
@@ -7507,6 +7725,7 @@ export type Database = {
           invoice_number?: string | null
           invoice_type?: string | null
           is_proforma?: boolean | null
+          legal_entity_id?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_status?: string | null
@@ -7536,6 +7755,7 @@ export type Database = {
           balance_due?: number | null
           balance_due_base?: number | null
           bank_account_id?: string | null
+          business_unit_id?: string | null
           case_id?: string | null
           client_reference?: string | null
           company_id?: string | null
@@ -7559,6 +7779,7 @@ export type Database = {
           invoice_number?: string | null
           invoice_type?: string | null
           is_proforma?: boolean | null
+          legal_entity_id?: string | null
           notes?: string | null
           paid_at?: string | null
           payment_status?: string | null
@@ -7588,6 +7809,13 @@ export type Database = {
             columns: ["bank_account_id"]
             isOneToOne: false
             referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_business_unit_id_fkey"
+            columns: ["business_unit_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
           {
@@ -7630,6 +7858,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers_enhanced"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
             referencedColumns: ["id"]
           },
           {
@@ -8113,6 +8348,91 @@ export type Database = {
           },
         ]
       }
+      legal_entities: {
+        Row: {
+          address: Json
+          config: Json
+          country_id: string
+          created_at: string
+          created_by: string | null
+          currency_code: string
+          data_residency_region: string
+          deleted_at: string | null
+          id: string
+          is_primary: boolean
+          name: string
+          registration_number: string | null
+          subdivision_id: string | null
+          tax_identifier: string | null
+          tax_system: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          address?: Json
+          config?: Json
+          country_id: string
+          created_at?: string
+          created_by?: string | null
+          currency_code: string
+          data_residency_region?: string
+          deleted_at?: string | null
+          id?: string
+          is_primary?: boolean
+          name: string
+          registration_number?: string | null
+          subdivision_id?: string | null
+          tax_identifier?: string | null
+          tax_system?: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          address?: Json
+          config?: Json
+          country_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency_code?: string
+          data_residency_region?: string
+          deleted_at?: string | null
+          id?: string
+          is_primary?: boolean
+          name?: string
+          registration_number?: string | null
+          subdivision_id?: string | null
+          tax_identifier?: string | null
+          tax_system?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_entities_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_entities_subdivision_id_fkey"
+            columns: ["subdivision_id"]
+            isOneToOne: false
+            referencedRelation: "geo_subdivisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_entities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_repayments: {
         Row: {
           amount: number
@@ -8313,6 +8633,36 @@ export type Database = {
           name?: string
           sort_order?: number | null
           symbol?: string | null
+        }
+        Relationships: []
+      }
+      master_data_residency_regions: {
+        Row: {
+          code: string
+          deleted_at: string | null
+          display_name: string
+          id: string
+          is_active: boolean
+          storage_endpoint: string | null
+          supabase_ref: string | null
+        }
+        Insert: {
+          code: string
+          deleted_at?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean
+          storage_endpoint?: string | null
+          supabase_ref?: string | null
+        }
+        Update: {
+          code?: string
+          deleted_at?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          storage_endpoint?: string | null
+          supabase_ref?: string | null
         }
         Relationships: []
       }
@@ -8525,39 +8875,63 @@ export type Database = {
       }
       master_leave_types: {
         Row: {
+          country_id: string | null
           created_at: string
           default_days: number | null
+          deleted_at: string | null
           description: string | null
           id: string
           is_active: boolean
           is_paid: boolean | null
           name: string
+          region_id: string | null
           sort_order: number | null
           updated_at: string
         }
         Insert: {
+          country_id?: string | null
           created_at?: string
           default_days?: number | null
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
           is_paid?: boolean | null
           name: string
+          region_id?: string | null
           sort_order?: number | null
           updated_at?: string
         }
         Update: {
+          country_id?: string | null
           created_at?: string
           default_days?: number | null
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
           is_paid?: boolean | null
           name?: string
+          region_id?: string | null
           sort_order?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "master_leave_types_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "master_leave_types_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "geo_regions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       master_modules: {
         Row: {
@@ -8641,42 +9015,66 @@ export type Database = {
       }
       master_payroll_components: {
         Row: {
+          country_id: string | null
           created_at: string
+          deleted_at: string | null
           description: string | null
           id: string
           is_active: boolean
           is_mandatory: boolean | null
           is_taxable: boolean | null
           name: string
+          region_id: string | null
           sort_order: number | null
           type: string
           updated_at: string
         }
         Insert: {
+          country_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
           is_mandatory?: boolean | null
           is_taxable?: boolean | null
           name: string
+          region_id?: string | null
           sort_order?: number | null
           type: string
           updated_at?: string
         }
         Update: {
+          country_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
           is_mandatory?: boolean | null
           is_taxable?: boolean | null
           name?: string
+          region_id?: string | null
           sort_order?: number | null
           type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "master_payroll_components_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "master_payroll_components_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "geo_regions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       master_purchase_order_statuses: {
         Row: {
@@ -9365,42 +9763,74 @@ export type Database = {
       }
       number_sequences: {
         Row: {
+          business_unit_id: string | null
           created_at: string
           current_value: number | null
+          fiscal_year_anchor: string | null
+          format_template: string | null
           id: string
+          last_reset_period: string | null
           last_reset_year: number | null
+          legal_entity_id: string | null
           padding: number | null
           prefix: string | null
           reset_annually: boolean | null
+          reset_basis: string | null
           scope: string
           tenant_id: string
           updated_at: string
         }
         Insert: {
+          business_unit_id?: string | null
           created_at?: string
           current_value?: number | null
+          fiscal_year_anchor?: string | null
+          format_template?: string | null
           id?: string
+          last_reset_period?: string | null
           last_reset_year?: number | null
+          legal_entity_id?: string | null
           padding?: number | null
           prefix?: string | null
           reset_annually?: boolean | null
+          reset_basis?: string | null
           scope: string
           tenant_id: string
           updated_at?: string
         }
         Update: {
+          business_unit_id?: string | null
           created_at?: string
           current_value?: number | null
+          fiscal_year_anchor?: string | null
+          format_template?: string | null
           id?: string
+          last_reset_period?: string | null
           last_reset_year?: number | null
+          legal_entity_id?: string | null
           padding?: number | null
           prefix?: string | null
           reset_annually?: boolean | null
+          reset_basis?: string | null
           scope?: string
           tenant_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "number_sequences_business_unit_id_fkey"
+            columns: ["business_unit_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "number_sequences_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "number_sequences_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -9904,6 +10334,7 @@ export type Database = {
           exchange_rate: number
           id: string
           invoice_id: string | null
+          legal_entity_id: string | null
           notes: string | null
           payment_date: string | null
           payment_method_id: string | null
@@ -9928,6 +10359,7 @@ export type Database = {
           exchange_rate?: number
           id?: string
           invoice_id?: string | null
+          legal_entity_id?: string | null
           notes?: string | null
           payment_date?: string | null
           payment_method_id?: string | null
@@ -9952,6 +10384,7 @@ export type Database = {
           exchange_rate?: number
           id?: string
           invoice_id?: string | null
+          legal_entity_id?: string | null
           notes?: string | null
           payment_date?: string | null
           payment_method_id?: string | null
@@ -9997,6 +10430,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
             referencedColumns: ["id"]
           },
           {
@@ -10975,6 +11415,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          business_unit_id: string | null
           case_access_level: string | null
           created_at: string
           deleted_at: string | null
@@ -10984,6 +11425,7 @@ export type Database = {
           id: string
           is_active: boolean
           last_login_at: string | null
+          legal_entity_id: string | null
           mfa_enabled: boolean | null
           mfa_enrolled_at: string | null
           password_reset_required: boolean | null
@@ -10995,6 +11437,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          business_unit_id?: string | null
           case_access_level?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -11004,6 +11447,7 @@ export type Database = {
           id: string
           is_active?: boolean
           last_login_at?: string | null
+          legal_entity_id?: string | null
           mfa_enabled?: boolean | null
           mfa_enrolled_at?: string | null
           password_reset_required?: boolean | null
@@ -11015,6 +11459,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          business_unit_id?: string | null
           case_access_level?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -11024,6 +11469,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_login_at?: string | null
+          legal_entity_id?: string | null
           mfa_enabled?: boolean | null
           mfa_enrolled_at?: string | null
           password_reset_required?: boolean | null
@@ -11034,6 +11480,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_business_unit_id_fkey"
+            columns: ["business_unit_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -11360,6 +11820,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           bank_account_id: string | null
+          business_unit_id: string | null
           case_id: string | null
           client_reference: string | null
           company_id: string | null
@@ -11373,6 +11834,7 @@ export type Database = {
           discount_type: string
           exchange_rate: number
           id: string
+          legal_entity_id: string | null
           notes: string | null
           quote_date: string | null
           quote_number: string | null
@@ -11401,6 +11863,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           bank_account_id?: string | null
+          business_unit_id?: string | null
           case_id?: string | null
           client_reference?: string | null
           company_id?: string | null
@@ -11414,6 +11877,7 @@ export type Database = {
           discount_type?: string
           exchange_rate?: number
           id?: string
+          legal_entity_id?: string | null
           notes?: string | null
           quote_date?: string | null
           quote_number?: string | null
@@ -11442,6 +11906,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           bank_account_id?: string | null
+          business_unit_id?: string | null
           case_id?: string | null
           client_reference?: string | null
           company_id?: string | null
@@ -11455,6 +11920,7 @@ export type Database = {
           discount_type?: string
           exchange_rate?: number
           id?: string
+          legal_entity_id?: string | null
           notes?: string | null
           quote_date?: string | null
           quote_number?: string | null
@@ -11485,6 +11951,13 @@ export type Database = {
             columns: ["bank_account_id"]
             isOneToOne: false
             referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_business_unit_id_fkey"
+            columns: ["business_unit_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
             referencedColumns: ["id"]
           },
           {
@@ -11520,6 +11993,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers_enhanced"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
             referencedColumns: ["id"]
           },
           {
@@ -11637,6 +12117,7 @@ export type Database = {
           deleted_at: string | null
           exchange_rate: number
           id: string
+          legal_entity_id: string | null
           notes: string | null
           payment_method: string | null
           rate_source: string
@@ -11656,6 +12137,7 @@ export type Database = {
           deleted_at?: string | null
           exchange_rate?: number
           id?: string
+          legal_entity_id?: string | null
           notes?: string | null
           payment_method?: string | null
           rate_source?: string
@@ -11675,6 +12157,7 @@ export type Database = {
           deleted_at?: string | null
           exchange_rate?: number
           id?: string
+          legal_entity_id?: string | null
           notes?: string | null
           payment_method?: string | null
           rate_source?: string
@@ -11698,6 +12181,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers_enhanced"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
             referencedColumns: ["id"]
           },
           {
@@ -13279,6 +13769,7 @@ export type Database = {
           discount_amount: number | null
           id: string
           invoice_id: string | null
+          legal_entity_id: string | null
           notes: string | null
           payment_method_id: string | null
           payment_status: string
@@ -13300,6 +13791,7 @@ export type Database = {
           discount_amount?: number | null
           id?: string
           invoice_id?: string | null
+          legal_entity_id?: string | null
           notes?: string | null
           payment_method_id?: string | null
           payment_status?: string
@@ -13321,6 +13813,7 @@ export type Database = {
           discount_amount?: number | null
           id?: string
           invoice_id?: string | null
+          legal_entity_id?: string | null
           notes?: string | null
           payment_method_id?: string | null
           payment_status?: string
@@ -13360,6 +13853,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_sales_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
             referencedColumns: ["id"]
           },
           {
@@ -14935,12 +15435,15 @@ export type Database = {
       tenants: {
         Row: {
           base_currency_code: string
+          country_config_overrides: Json
+          country_config_version: number | null
           country_id: string | null
           created_at: string
           currency_code: string
           currency_symbol: string
           current_period_end: string | null
           current_period_start: string | null
+          data_residency_region: string
           date_format: string
           decimal_places: number
           default_tax_rate: number
@@ -14958,6 +15461,7 @@ export type Database = {
           paypal_subscription_id: string | null
           plan_id: string | null
           require_mfa_for_admins: boolean
+          resolved_country_config: Json
           settings: Json
           slug: string
           status: string
@@ -14974,12 +15478,15 @@ export type Database = {
         }
         Insert: {
           base_currency_code: string
+          country_config_overrides?: Json
+          country_config_version?: number | null
           country_id?: string | null
           created_at?: string
           currency_code?: string
           currency_symbol?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          data_residency_region?: string
           date_format?: string
           decimal_places?: number
           default_tax_rate?: number
@@ -14997,6 +15504,7 @@ export type Database = {
           paypal_subscription_id?: string | null
           plan_id?: string | null
           require_mfa_for_admins?: boolean
+          resolved_country_config?: Json
           settings?: Json
           slug: string
           status?: string
@@ -15013,12 +15521,15 @@ export type Database = {
         }
         Update: {
           base_currency_code?: string
+          country_config_overrides?: Json
+          country_config_version?: number | null
           country_id?: string | null
           created_at?: string
           currency_code?: string
           currency_symbol?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          data_residency_region?: string
           date_format?: string
           decimal_places?: number
           default_tax_rate?: number
@@ -15036,6 +15547,7 @@ export type Database = {
           paypal_subscription_id?: string | null
           plan_id?: string | null
           require_mfa_for_admins?: boolean
+          resolved_country_config?: Json
           settings?: Json
           slug?: string
           status?: string
@@ -15933,6 +16445,7 @@ export type Database = {
       }
     }
     Functions: {
+      _apply_country_config: { Args: { p_tenant_id: string }; Returns: number }
       _fin_base_currency: { Args: { p_tenant: string }; Returns: string }
       _fin_currency_decimals: { Args: { p_code: string }; Returns: number }
       admin_validate_user_creation: { Args: { p_email: string }; Returns: Json }
@@ -16012,6 +16525,7 @@ export type Database = {
         Returns: Json
       }
       belongs_to_tenant: { Args: { check_tenant_id: string }; Returns: boolean }
+      business_unit_scoping_enabled: { Args: never; Returns: boolean }
       change_portal_password: {
         Args: {
           p_current_password: string
@@ -16061,6 +16575,7 @@ export type Database = {
           deleted_at: string | null
           exchange_rate: number
           id: string
+          legal_entity_id: string | null
           notes: string | null
           payment_method: string | null
           rate_source: string
@@ -16108,7 +16623,9 @@ export type Database = {
         }[]
       }
       get_base_currency: { Args: never; Returns: string }
+      get_current_business_unit_id: { Args: never; Returns: string }
       get_current_portal_customer_id: { Args: never; Returns: string }
+      get_current_region_id: { Args: never; Returns: string }
       get_current_tenant_id: { Args: never; Returns: string }
       get_expense_stats_base: { Args: never; Returns: Json }
       get_invoice_stats_base: { Args: { p_case_id?: string }; Returns: Json }
@@ -16130,6 +16647,7 @@ export type Database = {
         Returns: {
           accessories: string[] | null
           brand_id: string | null
+          business_unit_id: string | null
           capacity_id: string | null
           case_id: string
           condition_id: string | null
@@ -16412,6 +16930,7 @@ export type Database = {
           exchange_rate: number
           id: string
           invoice_id: string | null
+          legal_entity_id: string | null
           notes: string | null
           payment_date: string | null
           payment_method_id: string | null
@@ -16494,6 +17013,7 @@ export type Database = {
           discount_amount: number | null
           id: string
           invoice_id: string | null
+          legal_entity_id: string | null
           notes: string | null
           payment_method_id: string | null
           payment_status: string
@@ -16581,6 +17101,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      resync_tenant_country_config: {
+        Args: { p_tenant_id: string }
+        Returns: number
       }
       reverse_financial_transaction: {
         Args: { p_reason?: string; p_transaction_id: string }
@@ -16798,6 +17322,7 @@ export type Database = {
           exchange_rate: number
           id: string
           invoice_id: string | null
+          legal_entity_id: string | null
           notes: string | null
           payment_date: string | null
           payment_method_id: string | null
