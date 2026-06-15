@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { TenantConfig, TaxSystem, Theme } from '../types/tenantConfig';
-import { DEFAULT_TENANT_CONFIG, DEFAULT_THEME, THEMES } from '../types/tenantConfig';
+import { DEFAULT_TENANT_CONFIG, DEFAULT_THEME, THEMES, REQUIRED_SENTINEL } from '../types/tenantConfig';
 import { logger } from './logger';
 
 const configCache = new Map<string, { config: TenantConfig; timestamp: number }>();
@@ -49,7 +49,6 @@ async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
     return { ...DEFAULT_TENANT_CONFIG, tenantId };
   }
 
-  const country = data.country as Record<string, unknown> | null;
   const { data: defaultLocale } = localeResult;
 
   const rawFlags = flagsResult?.data?.feature_flags;
@@ -58,38 +57,54 @@ async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
       ? (rawFlags as Record<string, boolean>)
       : {};
 
+  return { ...mapRowToConfig(data, defaultLocale), featureFlags };
+}
+
+/**
+ * Pure mapper: tenant row (+ default accounting-locale row) → TenantConfig.
+ * D2/D3 fail-loud: required jurisdiction-derived keys (currency code, locale code)
+ * resolve to REQUIRED_SENTINEL when absent — NEVER to a US literal (USD/en-US). The
+ * provider surfaces this via isResolvedConfig instead of silently rendering US.
+ * Cosmetic/tenant-chosen display fields (symbol, separators, position) keep their
+ * safe display fallbacks (spec §2.3). Extracted as the testable seam for Task 2.2.
+ */
+export function mapRowToConfig(
+  data: Record<string, unknown>,
+  defaultLocale: Record<string, unknown> | null,
+): TenantConfig {
+  const country = (data.country as Record<string, unknown> | null) ?? null;
   return {
-    tenantId: data.id,
-    tenantName: data.name,
+    tenantId: data.id as string,
+    tenantName: data.name as string,
     countryCode: (country?.code as string) || 'US',
     countryName: (country?.name as string) || 'United States',
     currency: {
-      code: defaultLocale?.currency_code || data.currency_code || 'USD',
-      symbol: defaultLocale?.currency_symbol || data.currency_symbol || '$',
-      name: (country?.currency_name as string) || data.currency_code || 'USD',
-      decimalPlaces: defaultLocale?.decimal_places ?? data.decimal_places ?? 2,
-      decimalSeparator: defaultLocale?.decimal_separator || (country?.decimal_separator as string) || '.',
-      thousandsSeparator: defaultLocale?.thousands_separator ?? (country?.thousands_separator as string) ?? ',',
-      position: ((defaultLocale?.currency_position || country?.currency_position as string) || 'before') as 'before' | 'after',
+      code: (defaultLocale?.currency_code as string) || (data.currency_code as string) || REQUIRED_SENTINEL,
+      symbol: (defaultLocale?.currency_symbol as string) || (data.currency_symbol as string) || '$',
+      name: (country?.currency_name as string) || (data.currency_code as string) || 'Currency',
+      decimalPlaces: (defaultLocale?.decimal_places as number) ?? (data.decimal_places as number) ?? 2,
+      decimalSeparator: (defaultLocale?.decimal_separator as string) || (country?.decimal_separator as string) || '.',
+      thousandsSeparator: (defaultLocale?.thousands_separator as string) ?? (country?.thousands_separator as string) ?? ',',
+      position: ((defaultLocale?.currency_position as string) || (country?.currency_position as string) || 'before') as 'before' | 'after',
     },
     tax: {
       system: (data.tax_system || 'NONE') as TaxSystem,
-      label: data.tax_label || 'Tax',
-      numberLabel: data.tax_number_label || 'Tax ID',
+      label: (data.tax_label as string) || 'Tax',
+      numberLabel: (data.tax_number_label as string) || 'Tax ID',
       numberFormat: (country?.tax_number_format as string) || null,
       numberPlaceholder: (country?.tax_number_placeholder as string) || null,
       defaultRate: parseFloat(String(data.default_tax_rate)) || 0,
       invoiceRequired: (country?.tax_invoice_required as boolean) || false,
     },
     dateTime: {
-      dateFormat: defaultLocale?.date_format || data.date_format || 'MM/DD/YYYY',
+      dateFormat: (defaultLocale?.date_format as string) || (data.date_format as string) || 'MM/DD/YYYY',
       timeFormat: ((country?.time_format as string) || '12h') as '12h' | '24h',
-      timezone: data.timezone || 'UTC',
+      timezone: (data.timezone as string) || 'UTC',
       weekStartsOn: ((country?.week_starts_on as number) ?? 0) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
-      fiscalYearStart: data.fiscal_year_start || '01-01',
+      fiscalYearStart: (data.fiscal_year_start as string) || '01-01',
     },
     locale: {
-      localeCode: defaultLocale?.locale_code || data.locale_code || 'en-US',
+      localeCode: (defaultLocale?.locale_code as string) || (data.locale_code as string) || REQUIRED_SENTINEL,
       // UI language / text-direction is a deliberate tenant choice, NOT a function
       // of country. country.language_code is intentionally no longer read here, so
       // an English-operating lab in an Arabic-language country defaults to LTR.
@@ -97,7 +112,7 @@ async function fetchTenantConfig(tenantId: string): Promise<TenantConfig> {
       postalCodeLabel: (country?.postal_code_label as string) || 'Postal Code',
     },
     theme: THEMES.includes(data.theme as Theme) ? (data.theme as Theme) : DEFAULT_THEME,
-    featureFlags,
+    featureFlags: {},
   };
 }
 
