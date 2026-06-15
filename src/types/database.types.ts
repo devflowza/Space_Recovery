@@ -4861,6 +4861,7 @@ export type Database = {
           portal_last_login: string | null
           portal_locked_until: string | null
           portal_password_hash: string | null
+          preferred_language: string | null
           profile_photo_url: string | null
           referred_by: string | null
           source: string | null
@@ -4898,6 +4899,7 @@ export type Database = {
           portal_last_login?: string | null
           portal_locked_until?: string | null
           portal_password_hash?: string | null
+          preferred_language?: string | null
           profile_photo_url?: string | null
           referred_by?: string | null
           source?: string | null
@@ -4935,6 +4937,7 @@ export type Database = {
           portal_last_login?: string | null
           portal_locked_until?: string | null
           portal_password_hash?: string | null
+          preferred_language?: string | null
           profile_photo_url?: string | null
           referred_by?: string | null
           source?: string | null
@@ -5246,6 +5249,7 @@ export type Database = {
       }
       document_template_versions: {
         Row: {
+          business_unit_id: string | null
           change_note: string | null
           config: Json
           created_at: string
@@ -5253,6 +5257,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           is_deployed: boolean
+          legal_entity_id: string | null
           template_id: string
           tenant_id: string
           updated_at: string
@@ -5260,6 +5265,7 @@ export type Database = {
           version_number: number
         }
         Insert: {
+          business_unit_id?: string | null
           change_note?: string | null
           config: Json
           created_at?: string
@@ -5267,6 +5273,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           is_deployed?: boolean
+          legal_entity_id?: string | null
           template_id: string
           tenant_id: string
           updated_at?: string
@@ -5274,6 +5281,7 @@ export type Database = {
           version_number: number
         }
         Update: {
+          business_unit_id?: string | null
           change_note?: string | null
           config?: Json
           created_at?: string
@@ -5281,6 +5289,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           is_deployed?: boolean
+          legal_entity_id?: string | null
           template_id?: string
           tenant_id?: string
           updated_at?: string
@@ -5288,6 +5297,20 @@ export type Database = {
           version_number?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "document_template_versions_business_unit_id_fkey"
+            columns: ["business_unit_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_template_versions_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "document_template_versions_template_id_fkey"
             columns: ["template_id"]
@@ -6542,6 +6565,42 @@ export type Database = {
           },
         ]
       }
+      geo_languages: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_rtl: boolean
+          name: string
+          native_name: string | null
+          numbering_system: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_rtl?: boolean
+          name: string
+          native_name?: string | null
+          numbering_system?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_rtl?: boolean
+          name?: string
+          native_name?: string | null
+          numbering_system?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       geo_regions: {
         Row: {
           code: string
@@ -6648,6 +6707,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      i18n_translations: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_machine_translated: boolean
+          is_verified: boolean
+          key: string
+          language_code: string
+          namespace: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_machine_translated?: boolean
+          is_verified?: boolean
+          key: string
+          language_code: string
+          namespace: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_machine_translated?: boolean
+          is_verified?: boolean
+          key?: string
+          language_code?: string
+          namespace?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
       }
       import_export_jobs: {
         Row: {
@@ -8994,6 +9092,62 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "master_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      master_notification_templates: {
+        Row: {
+          body_template: string
+          channel: string
+          country_id: string | null
+          created_at: string
+          deleted_at: string | null
+          event_type: string
+          id: string
+          is_active: boolean
+          link_template: string | null
+          locale: string
+          subject_template: string | null
+          template_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          body_template: string
+          channel: string
+          country_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          event_type: string
+          id?: string
+          is_active?: boolean
+          link_template?: string | null
+          locale?: string
+          subject_template?: string | null
+          template_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body_template?: string
+          channel?: string
+          country_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          event_type?: string
+          id?: string
+          is_active?: boolean
+          link_template?: string | null
+          locale?: string
+          subject_template?: string | null
+          template_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_notification_templates_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
             referencedColumns: ["id"]
           },
         ]
