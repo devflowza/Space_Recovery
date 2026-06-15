@@ -685,8 +685,10 @@ export type Database = {
           currency: string | null
           currency_id: string | null
           current_balance: number | null
+          current_balance_base: number | null
           deleted_at: string | null
           employee_id: string | null
+          exchange_rate: number
           iban: string | null
           id: string
           is_active: boolean | null
@@ -694,6 +696,8 @@ export type Database = {
           name: string
           notes: string | null
           opening_balance: number | null
+          opening_balance_base: number | null
+          rate_source: string
           swift_code: string | null
           tenant_id: string
           updated_at: string
@@ -708,8 +712,10 @@ export type Database = {
           currency?: string | null
           currency_id?: string | null
           current_balance?: number | null
+          current_balance_base?: number | null
           deleted_at?: string | null
           employee_id?: string | null
+          exchange_rate?: number
           iban?: string | null
           id?: string
           is_active?: boolean | null
@@ -717,6 +723,8 @@ export type Database = {
           name: string
           notes?: string | null
           opening_balance?: number | null
+          opening_balance_base?: number | null
+          rate_source?: string
           swift_code?: string | null
           tenant_id: string
           updated_at?: string
@@ -731,8 +739,10 @@ export type Database = {
           currency?: string | null
           currency_id?: string | null
           current_balance?: number | null
+          current_balance_base?: number | null
           deleted_at?: string | null
           employee_id?: string | null
+          exchange_rate?: number
           iban?: string | null
           id?: string
           is_active?: boolean | null
@@ -740,6 +750,8 @@ export type Database = {
           name?: string
           notes?: string | null
           opening_balance?: number | null
+          opening_balance_base?: number | null
+          rate_source?: string
           swift_code?: string | null
           tenant_id?: string
           updated_at?: string
@@ -9664,6 +9676,7 @@ export type Database = {
           link_template: string | null
           locale: string
           subject_template: string | null
+          template_key: string | null
           tenant_id: string | null
           updated_at: string
         }
@@ -9678,6 +9691,7 @@ export type Database = {
           link_template?: string | null
           locale?: string
           subject_template?: string | null
+          template_key?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
@@ -9692,6 +9706,7 @@ export type Database = {
           link_template?: string | null
           locale?: string
           subject_template?: string | null
+          template_key?: string | null
           tenant_id?: string | null
           updated_at?: string
         }
@@ -10754,57 +10769,75 @@ export type Database = {
         Row: {
           basic_salary: number
           created_at: string
+          currency: string
           deleted_at: string | null
           employee_id: string
+          exchange_rate: number
           hours_worked: number | null
           id: string
           net_salary: number | null
+          net_salary_base: number | null
           notes: string | null
           overtime_amount: number | null
           overtime_hours: number | null
           period_id: string
+          rate_source: string
           status: string | null
           tenant_id: string
           total_deductions: number | null
+          total_deductions_base: number | null
           total_earnings: number | null
+          total_earnings_base: number | null
           updated_at: string
           working_days: number | null
         }
         Insert: {
           basic_salary: number
           created_at?: string
+          currency?: string
           deleted_at?: string | null
           employee_id: string
+          exchange_rate?: number
           hours_worked?: number | null
           id?: string
           net_salary?: number | null
+          net_salary_base?: number | null
           notes?: string | null
           overtime_amount?: number | null
           overtime_hours?: number | null
           period_id: string
+          rate_source?: string
           status?: string | null
           tenant_id: string
           total_deductions?: number | null
+          total_deductions_base?: number | null
           total_earnings?: number | null
+          total_earnings_base?: number | null
           updated_at?: string
           working_days?: number | null
         }
         Update: {
           basic_salary?: number
           created_at?: string
+          currency?: string
           deleted_at?: string | null
           employee_id?: string
+          exchange_rate?: number
           hours_worked?: number | null
           id?: string
           net_salary?: number | null
+          net_salary_base?: number | null
           notes?: string | null
           overtime_amount?: number | null
           overtime_hours?: number | null
           period_id?: string
+          rate_source?: string
           status?: string | null
           tenant_id?: string
           total_deductions?: number | null
+          total_deductions_base?: number | null
           total_earnings?: number | null
+          total_earnings_base?: number | null
           updated_at?: string
           working_days?: number | null
         }
@@ -11601,22 +11634,29 @@ export type Database = {
           currency: string | null
           deleted_at: string | null
           discount_amount: number | null
+          discount_amount_base: number | null
+          exchange_rate: number
           expected_delivery_date: string | null
           id: string
           notes: string | null
           order_date: string | null
           po_number: string | null
+          rate_source: string
           received_at: string | null
           received_by: string | null
           shipping_address: string | null
           shipping_cost: number | null
+          shipping_cost_base: number | null
           status_id: string | null
           subtotal: number | null
+          subtotal_base: number | null
           supplier_id: string
           tax_amount: number | null
+          tax_amount_base: number | null
           tenant_id: string
           terms: string | null
           total_amount: number | null
+          total_amount_base: number | null
           updated_at: string
           updated_by: string | null
         }
@@ -11628,22 +11668,29 @@ export type Database = {
           currency?: string | null
           deleted_at?: string | null
           discount_amount?: number | null
+          discount_amount_base?: number | null
+          exchange_rate?: number
           expected_delivery_date?: string | null
           id?: string
           notes?: string | null
           order_date?: string | null
           po_number?: string | null
+          rate_source?: string
           received_at?: string | null
           received_by?: string | null
           shipping_address?: string | null
           shipping_cost?: number | null
+          shipping_cost_base?: number | null
           status_id?: string | null
           subtotal?: number | null
+          subtotal_base?: number | null
           supplier_id: string
           tax_amount?: number | null
+          tax_amount_base?: number | null
           tenant_id: string
           terms?: string | null
           total_amount?: number | null
+          total_amount_base?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -11655,22 +11702,29 @@ export type Database = {
           currency?: string | null
           deleted_at?: string | null
           discount_amount?: number | null
+          discount_amount_base?: number | null
+          exchange_rate?: number
           expected_delivery_date?: string | null
           id?: string
           notes?: string | null
           order_date?: string | null
           po_number?: string | null
+          rate_source?: string
           received_at?: string | null
           received_by?: string | null
           shipping_address?: string | null
           shipping_cost?: number | null
+          shipping_cost_base?: number | null
           status_id?: string | null
           subtotal?: number | null
+          subtotal_base?: number | null
           supplier_id?: string
           tax_amount?: number | null
+          tax_amount_base?: number | null
           tenant_id?: string
           terms?: string | null
           total_amount?: number | null
+          total_amount_base?: number | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -12113,6 +12167,7 @@ export type Database = {
           amount_base: number | null
           created_at: string
           created_by: string | null
+          currency_code: string
           customer_id: string | null
           deleted_at: string | null
           exchange_rate: number
@@ -12133,6 +12188,7 @@ export type Database = {
           amount_base?: number | null
           created_at?: string
           created_by?: string | null
+          currency_code?: string
           customer_id?: string | null
           deleted_at?: string | null
           exchange_rate?: number
@@ -12153,6 +12209,7 @@ export type Database = {
           amount_base?: number | null
           created_at?: string
           created_by?: string | null
+          currency_code?: string
           customer_id?: string | null
           deleted_at?: string | null
           exchange_rate?: number
@@ -13764,66 +13821,87 @@ export type Database = {
           case_id: string | null
           created_at: string
           created_by: string | null
+          currency: string
           customer_id: string | null
           deleted_at: string | null
           discount_amount: number | null
+          discount_amount_base: number | null
+          exchange_rate: number
           id: string
           invoice_id: string | null
           legal_entity_id: string | null
           notes: string | null
           payment_method_id: string | null
           payment_status: string
+          rate_source: string
           sale_date: string | null
           sale_number: string | null
           status: string | null
           subtotal: number | null
+          subtotal_base: number | null
           tax_amount: number | null
+          tax_amount_base: number | null
           tenant_id: string
           total_amount: number | null
+          total_amount_base: number | null
           updated_at: string
         }
         Insert: {
           case_id?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string
           customer_id?: string | null
           deleted_at?: string | null
           discount_amount?: number | null
+          discount_amount_base?: number | null
+          exchange_rate?: number
           id?: string
           invoice_id?: string | null
           legal_entity_id?: string | null
           notes?: string | null
           payment_method_id?: string | null
           payment_status?: string
+          rate_source?: string
           sale_date?: string | null
           sale_number?: string | null
           status?: string | null
           subtotal?: number | null
+          subtotal_base?: number | null
           tax_amount?: number | null
+          tax_amount_base?: number | null
           tenant_id: string
           total_amount?: number | null
+          total_amount_base?: number | null
           updated_at?: string
         }
         Update: {
           case_id?: string | null
           created_at?: string
           created_by?: string | null
+          currency?: string
           customer_id?: string | null
           deleted_at?: string | null
           discount_amount?: number | null
+          discount_amount_base?: number | null
+          exchange_rate?: number
           id?: string
           invoice_id?: string | null
           legal_entity_id?: string | null
           notes?: string | null
           payment_method_id?: string | null
           payment_status?: string
+          rate_source?: string
           sale_date?: string | null
           sale_number?: string | null
           status?: string | null
           subtotal?: number | null
+          subtotal_base?: number | null
           tax_amount?: number | null
+          tax_amount_base?: number | null
           tenant_id?: string
           total_amount?: number | null
+          total_amount_base?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -16571,6 +16649,7 @@ export type Database = {
           amount_base: number | null
           created_at: string
           created_by: string | null
+          currency_code: string
           customer_id: string | null
           deleted_at: string | null
           exchange_rate: number
@@ -17008,22 +17087,29 @@ export type Database = {
           case_id: string | null
           created_at: string
           created_by: string | null
+          currency: string
           customer_id: string | null
           deleted_at: string | null
           discount_amount: number | null
+          discount_amount_base: number | null
+          exchange_rate: number
           id: string
           invoice_id: string | null
           legal_entity_id: string | null
           notes: string | null
           payment_method_id: string | null
           payment_status: string
+          rate_source: string
           sale_date: string | null
           sale_number: string | null
           status: string | null
           subtotal: number | null
+          subtotal_base: number | null
           tax_amount: number | null
+          tax_amount_base: number | null
           tenant_id: string
           total_amount: number | null
+          total_amount_base: number | null
           updated_at: string
         }
         SetofOptions: {
