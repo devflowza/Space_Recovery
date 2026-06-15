@@ -1,6 +1,15 @@
 import { supabase } from './supabaseClient';
 import { baseAmount } from './financialMath';
 
+/** D8 — sum bank balances in base currency. A balance is a live position, so the
+ *  *_base column is an "indicative base" snapshot, not a frozen committed value.
+ *  Falls back to the raw balance for rows that predate the base columns. */
+export function sumBankBalanceBase(
+  rows: Array<Record<string, number | null | undefined>>, field: 'current_balance' | 'opening_balance',
+): number {
+  return (rows || []).reduce((sum, a) => sum + (a[`${field}_base`] ?? a[field] ?? 0), 0);
+}
+
 export interface ProfitLossData {
   revenue: {
     total: number;
@@ -230,8 +239,8 @@ export const generateCashFlowReport = async (
   const receipts = (paymentsResult.data || []).reduce((sum, p) => sum + baseAmount(p, 'amount'), 0);
   const payments = (expensesResult.data || []).reduce((sum, e) => sum + baseAmount(e, 'amount'), 0);
 
-  const totalCurrentBalance = (bankAccountsResult.data || []).reduce((sum, a) => sum + (a.current_balance || 0), 0);
-  const totalOpeningBalance = (bankAccountsResult.data || []).reduce((sum, a) => sum + (a.opening_balance || 0), 0);
+  const totalCurrentBalance = sumBankBalanceBase(bankAccountsResult.data || [], 'current_balance');
+  const totalOpeningBalance = sumBankBalanceBase(bankAccountsResult.data || [], 'opening_balance');
 
   return {
     operatingActivities: {
