@@ -86,6 +86,22 @@ jobs:
       - uses: actions/checkout@v4
       - run: bash scripts/check-from-table-names.sh
 
+  country-config-completeness:
+    runs-on: ubuntu-latest
+    # Phase 0: report-only until §10a country population; flip to required then
+    # (remove continue-on-error) once unprepared countries are set is_active=false.
+    continue-on-error: true
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check active-country config completeness (no stubs)
+        if: ${{ env.SUPABASE_DB_URL != '' }}
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/check-active-country-config.sql
+      - name: Skip active-country config check (no Supabase credentials)
+        if: ${{ env.SUPABASE_DB_URL == '' }}
+        run: 'echo "SKIP country-config-completeness: SUPABASE_DB_URL unavailable (Dependabot/fork PRs have no access to Actions secrets). Enforced on internal PRs and on push to main."'
+
   token-guard:
     runs-on: ubuntu-latest
     steps:
