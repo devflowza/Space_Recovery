@@ -7,7 +7,9 @@ import { logger } from '../lib/logger';
 
 const LOCALE_HINT_KEY = 'xsuite_locale_hint';
 
-type Locale = 'en' | 'ar';
+// Config-driven: any code in the hydrated SUPPORTED_LANGS (geo_languages), not a
+// compile-pinned 'en'|'ar' union. Direction comes from isRTLLanguage(locale).
+type Locale = string;
 
 interface LocaleContextType {
   locale: Locale;

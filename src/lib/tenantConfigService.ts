@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient';
 import type { TenantConfig, TaxSystem, Theme } from '../types/tenantConfig';
 import { DEFAULT_TENANT_CONFIG, DEFAULT_THEME, THEMES, REQUIRED_SENTINEL } from '../types/tenantConfig';
 import { logger } from './logger';
+import { SUPPORTED_LANGS } from './locale';
 import { resolveCountryConfigKey } from './country/registry';
 import { buildConfigLayers } from './country/buildConfigLayers';
 import type { ConfigLayers } from './country/resolveCountryConfig';
@@ -199,8 +200,10 @@ export async function getTenantConfig(tenantId: string): Promise<TenantConfig> {
   return config;
 }
 
-export async function updateTenantUiLanguage(tenantId: string, language: 'en' | 'ar'): Promise<void> {
-  if (language !== 'en' && language !== 'ar') {
+export async function updateTenantUiLanguage(tenantId: string, language: string): Promise<void> {
+  // Validate against the hydrated supported-language set (geo_languages), not a
+  // hardcoded en/ar union. Bootstrap is {en, ar} until hydrateLanguages widens it.
+  if (!SUPPORTED_LANGS.has(language)) {
     throw new Error(`Invalid UI language: ${language}`);
   }
   const { error } = await supabase
