@@ -24,6 +24,7 @@ import type {
 import type { Database } from '../../types/database.types';
 import type { CurrencyConfig } from '../../types/tenantConfig';
 import { getTenantConfig } from '../tenantConfigService';
+import { renderCurrencyToken } from '../format';
 
 type QuotesRow = Database['public']['Tables']['quotes']['Row'];
 type InvoicesRow = Database['public']['Tables']['invoices']['Row'];
@@ -149,15 +150,15 @@ function toBankAccount(src: unknown): NonNullable<InvoiceData['bank_accounts']> 
 
 /**
  * The document currency block, sourced from the resolved Country Engine
- * CurrencyConfig (NOT the legacy accounting_locales table). Falls back to the ISO
- * code when a tenant has no display symbol — never to a US '$'/'USD' default. This
- * is the single place currency formatting enters the PDF/document layer; Phase 2
- * will extend it to honor a tenant display_mode (symbol vs ISO code).
+ * CurrencyConfig (NOT the legacy accounting_locales table). The rendered token
+ * honors the tenant's display_mode (symbol 'ر.ع.' / ISO code 'OMR' / both
+ * 'ر.ع. OMR') via renderCurrencyToken, which also falls back to the ISO code when
+ * a tenant has no display symbol — never to a US '$'/'USD' default. This is the
+ * single place currency formatting enters the PDF/document layer.
  */
 export function currencyToBlock(c: CurrencyConfig): NonNullable<QuoteData['accounting_locales']> {
-  const code = typeof c.code === 'string' ? c.code : '';
   return {
-    currency_symbol: c.symbol || code,
+    currency_symbol: renderCurrencyToken(c),
     currency_position: c.position,
     decimal_places: c.decimalPlaces,
   };

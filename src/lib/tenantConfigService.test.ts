@@ -73,4 +73,41 @@ describe('resolveTenantConfigFromLayers — engine path (fail-loud, no US litera
     );
     expect(resolveTenantConfigFromLayers(baseRow, layers).dateTime.dateFormat).toBe('yyyy-MM-dd');
   });
+
+  it('defaults currency display preferences to symbol/minus when no layer sets them', () => {
+    const layers = buildConfigLayers(
+      {
+        resolved_country_config: {
+          'currency.code': 'OMR', 'tax.label': 'VAT', 'tax.default_rate': 5,
+          'number_format.amount_in_words_minor_units': 3, 'locale.code': 'ar-OM',
+          'datetime.date_format': 'dd/MM/yyyy', 'datetime.timezone': 'Asia/Muscat',
+        },
+        country_config_overrides: {},
+      },
+      null,
+    );
+    const cfg = resolveTenantConfigFromLayers(baseRow, layers);
+    expect(cfg.currency.displayMode).toBe('symbol');
+    expect(cfg.currency.negativeFormat).toBe('minus');
+  });
+
+  it('threads a tenant currency.display_mode / negative_format override into cfg.currency', () => {
+    const layers = buildConfigLayers(
+      {
+        resolved_country_config: {
+          'currency.code': 'OMR', 'tax.label': 'VAT', 'tax.default_rate': 5,
+          'number_format.amount_in_words_minor_units': 3, 'locale.code': 'ar-OM',
+          'datetime.date_format': 'dd/MM/yyyy', 'datetime.timezone': 'Asia/Muscat',
+        },
+        country_config_overrides: {
+          'currency.display_mode': 'symbol_code',
+          'currency.negative_format': 'parentheses',
+        },
+      },
+      null,
+    );
+    const cfg = resolveTenantConfigFromLayers(baseRow, layers);
+    expect(cfg.currency.displayMode).toBe('symbol_code');
+    expect(cfg.currency.negativeFormat).toBe('parentheses');
+  });
 });

@@ -57,6 +57,40 @@ describe('resolveCountryConfigKey bound to the real registry', () => {
   });
 });
 
+describe('currency display preferences (Phase 2: tenant-overridable, NON-statutory)', () => {
+  it('currency.display_mode resolves to the coded default "symbol" when no layer sets it', () => {
+    expect(resolveCountryConfigKey<string>({}, 'currency.display_mode')).toBe('symbol');
+  });
+
+  it('currency.negative_format resolves to the coded default "minus" when no layer sets it', () => {
+    expect(resolveCountryConfigKey<string>({}, 'currency.negative_format')).toBe('minus');
+  });
+
+  it('currency.display_mode is tenant-overridable (the tenant layer wins — preference, not statutory)', () => {
+    expect(
+      resolveCountryConfigKey<string>(
+        { tenant: { 'currency.display_mode': 'symbol_code' } },
+        'currency.display_mode',
+      ),
+    ).toBe('symbol_code');
+  });
+
+  it('rejects an out-of-enum display_mode (fail-loud on bad config)', () => {
+    expect(() =>
+      resolveCountryConfigKey({ tenant: { 'currency.display_mode': 'bogus' } }, 'currency.display_mode'),
+    ).toThrow(CountryConfigError);
+  });
+
+  it('neither preference key is statutory, so the registry↔trigger parity gate never governs them', () => {
+    expect(STATUTORY_KEYS).not.toContain('currency.display_mode');
+    expect(STATUTORY_KEYS).not.toContain('currency.negative_format');
+    expect(REGISTRY_BY_KEY['currency.display_mode'].maxOverrideLayer).toBeUndefined();
+    expect(REGISTRY_BY_KEY['currency.negative_format'].maxOverrideLayer).toBeUndefined();
+    expect(REGISTRY_BY_KEY['currency.display_mode'].required).toBeFalsy();
+    expect(REGISTRY_BY_KEY['currency.negative_format'].required).toBeFalsy();
+  });
+});
+
 describe('§4.7 worked example — a NEW country key ships with ZERO schema change', () => {
   it('a registry entry alone makes a new per-country key resolvable through the cascade', () => {
     // Simulate the ONLY change a new key requires: one registry entry. In prod

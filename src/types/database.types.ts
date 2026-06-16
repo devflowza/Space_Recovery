@@ -17322,6 +17322,10 @@ export type Database = {
         Args: { p_payload: Json; p_template: string }
         Returns: string
       }
+      reset_tenant_country_config_overrides: {
+        Args: { p_keys: string[]; p_tenant_id: string }
+        Returns: Json
+      }
       respond_to_custody_transfer: {
         Args: { p_action: string; p_payload?: Json; p_transfer_id: string }
         Returns: {
@@ -17440,6 +17444,10 @@ export type Database = {
       set_portal_password: {
         Args: { p_customer_id: string; p_new_password: string }
         Returns: boolean
+      }
+      set_tenant_country_config_overrides: {
+        Args: { p_overrides: Json; p_tenant_id: string }
+        Returns: Json
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }

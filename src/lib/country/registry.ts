@@ -53,6 +53,31 @@ export const COUNTRY_CONFIG_REGISTRY: ConfigKeyDef[] = [
     codedDefault: REQUIRED_SENTINEL,
     required: true,
   },
+  {
+    // Tenant PREFERENCE (not statutory): how the currency renders on documents
+    // and in-app — symbol (ر.ع.), ISO code (OMR), or both (ر.ع. OMR). No
+    // maxOverrideLayer ⇒ fully tenant-overridable AND outside STATUTORY_KEYS, so
+    // the registry↔trigger parity gate never governs it (validate_country_config_
+    // overrides() only rejects maxOverrideLayer:'country' keys). Real coded
+    // default 'symbol' ⇒ NOT required, byte-identical to pre-Phase-2 rendering.
+    key: 'currency.display_mode',
+    domain: 'currency',
+    label: 'Currency display mode',
+    description: 'How the currency token renders: symbol (ر.ع.), ISO code (OMR), or both (ر.ع. OMR). Tenant preference, not statutory.',
+    schema: z.enum(['symbol', 'iso_code', 'symbol_code']),
+    codedDefault: 'symbol',
+  },
+  {
+    // Tenant PREFERENCE (not statutory): negative-amount rendering — a leading
+    // minus (current behavior) or accounting parentheses. Default 'minus' keeps
+    // output byte-identical to pre-Phase-2.
+    key: 'currency.negative_format',
+    domain: 'currency',
+    label: 'Negative amount format',
+    description: 'How negative amounts render: minus sign or accounting parentheses. Tenant preference, not statutory.',
+    schema: z.enum(['minus', 'parentheses']),
+    codedDefault: 'minus',
+  },
   // ── tax (statutory; D9/D10/D11) ──
   {
     key: 'tax.label',

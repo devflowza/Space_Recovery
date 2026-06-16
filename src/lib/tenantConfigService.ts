@@ -104,6 +104,10 @@ export function resolveTenantConfigFromLayers(
       decimalSeparator: (snap['currency.decimal_separator'] as string) || '.',
       thousandsSeparator: (snap['currency.thousands_separator'] as string) ?? ',',
       position: ((snap['currency.position'] as string) || 'before') as 'before' | 'after',
+      // Tenant display preferences (registry codedDefault 'symbol'/'minus' unless
+      // the tenant overrode via country_config_overrides). Non-statutory.
+      displayMode: get<'symbol' | 'iso_code' | 'symbol_code'>('currency.display_mode'),
+      negativeFormat: get<'minus' | 'parentheses'>('currency.negative_format'),
     },
     tax: {
       system: ((snap['tax.system'] as string) || 'NONE') as TaxSystem,
@@ -159,6 +163,10 @@ export function mapRowToConfig(
       decimalSeparator: (defaultLocale?.decimal_separator as string) || (country?.decimal_separator as string) || '.',
       thousandsSeparator: (defaultLocale?.thousands_separator as string) ?? (country?.thousands_separator as string) ?? ',',
       position: ((defaultLocale?.currency_position as string) || (country?.currency_position as string) || 'before') as 'before' | 'after',
+      // Legacy accounting-locale path carries no display-preference columns; default
+      // to byte-identical pre-Phase-2 rendering. The engine path resolves overrides.
+      displayMode: 'symbol',
+      negativeFormat: 'minus',
     },
     tax: {
       system: (data.tax_system || 'NONE') as TaxSystem,
