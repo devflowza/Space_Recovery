@@ -96,6 +96,31 @@ export const formatCurrencyWithSettings = (
   }
 };
 
+/**
+ * The currency TOKEN the tenant chose to see: the display symbol ('ر.ع.'), the ISO
+ * 4217 code ('OMR'), or both ('ر.ع. OMR'). Pure — Phase 2's single place the
+ * symbol-vs-code decision is made (currencyToBlock feeds it into the PDF/document
+ * layer; formatCurrencyWithConfig uses it for in-app rendering). Falls back to the
+ * code when no display symbol exists, and to the symbol when the code is the
+ * unresolved REQUIRED_SENTINEL — never blank, never a Symbol→string crash.
+ */
+export const renderCurrencyToken = (config: CurrencyConfig): string => {
+  const code = typeof config.code === 'string' ? config.code : '';
+  const symbol = config.symbol || code;
+  switch (config.displayMode) {
+    case 'iso_code':
+      return code || symbol;
+    case 'symbol_code':
+      // Avoid duplicating ('OMR OMR') when there is no distinct display symbol.
+      return code && config.symbol && config.symbol !== code
+        ? `${config.symbol} ${code}`
+        : code || symbol;
+    case 'symbol':
+    default:
+      return symbol;
+  }
+};
+
 export const formatCurrencyWithConfig = (
   amount: number,
   config: CurrencyConfig,
@@ -105,16 +130,23 @@ export const formatCurrencyWithConfig = (
   // opt-in without a breaking signature change.
   _localeCode?: string,
 ): string => {
-  const parts = amount.toFixed(config.decimalPlaces).split('.');
+  const token = renderCurrencyToken(config);
+  // Parentheses mode renders the MAGNITUDE then wraps it; minus mode (the default)
+  // keeps the sign inside the number via toFixed — byte-identical to pre-Phase-2.
+  const useParens = config.negativeFormat === 'parentheses' && amount < 0;
+  const magnitude = useParens ? Math.abs(amount) : amount;
+
+  const parts = magnitude.toFixed(config.decimalPlaces).split('.');
   const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, config.thousandsSeparator);
   const decimalPart = parts[1];
   const formattedNumber = config.decimalPlaces > 0
     ? `${integerPart}${config.decimalSeparator}${decimalPart}`
     : integerPart;
 
-  return config.position === 'before'
-    ? `${config.symbol}${formattedNumber}`
-    : `${formattedNumber} ${config.symbol}`;
+  const body = config.position === 'before'
+    ? `${token}${formattedNumber}`
+    : `${formattedNumber} ${token}`;
+  return useParens ? `(${body})` : body;
 };
 
 export const formatCurrency = (amount: number, currency = 'USD', localeCode?: string): string => {

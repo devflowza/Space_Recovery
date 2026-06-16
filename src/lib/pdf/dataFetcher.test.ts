@@ -19,6 +19,8 @@ const OMR: CurrencyConfig = {
   decimalSeparator: '.',
   thousandsSeparator: ',',
   position: 'before',
+  displayMode: 'symbol',
+  negativeFormat: 'minus',
 };
 
 const QUOTE_ROW = {
@@ -78,6 +80,14 @@ describe('currencyToBlock — resolved CurrencyConfig → document currency bloc
     expect(block.currency_symbol).toBe('OMR');
     expect(block.currency_symbol).not.toBe('USD');
     expect(block.currency_symbol).not.toBe('$');
+  });
+
+  it('propagates display_mode "iso_code" — the document shows the ISO code (OMR)', () => {
+    expect(currencyToBlock({ ...OMR, displayMode: 'iso_code' }).currency_symbol).toBe('OMR');
+  });
+
+  it('propagates display_mode "symbol_code" — the document shows "symbol code" (ر.ع. OMR)', () => {
+    expect(currencyToBlock({ ...OMR, displayMode: 'symbol_code' }).currency_symbol).toBe('ر.ع. OMR');
   });
 });
 

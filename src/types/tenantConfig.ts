@@ -17,6 +17,12 @@ export interface CurrencyConfig {
   decimalSeparator: string;
   thousandsSeparator: string;
   position: 'before' | 'after';
+  /** Tenant preference: which token renders — symbol ('ر.ع.'), ISO code ('OMR'),
+   *  or both ('ر.ع. OMR'). Resolved from currency.display_mode (default 'symbol'). */
+  displayMode: 'symbol' | 'iso_code' | 'symbol_code';
+  /** Tenant preference: negative-amount rendering — leading minus (default) or
+   *  accounting parentheses. Resolved from currency.negative_format. */
+  negativeFormat: 'minus' | 'parentheses';
 }
 
 export interface TaxConfig {
@@ -75,6 +81,8 @@ export const DEFAULT_TENANT_CONFIG: TenantConfig = {
     decimalSeparator: '.',
     thousandsSeparator: ',',
     position: 'before',
+    displayMode: 'symbol',
+    negativeFormat: 'minus',
   },
   tax: {
     system: 'SALES_TAX',
