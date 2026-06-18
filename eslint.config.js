@@ -142,17 +142,12 @@
       },
     },
     {
-      // no-raw-style-colors baseline (per-file OFF), mirroring the
-      // no-raw-tailwind-colors burndown pattern:
+      // no-raw-style-colors baseline (per-file OFF):
       //  - *.test.* — fixtures legitimately pass literal hex to components.
-      //  - app-shell chrome (Sidebar/AppLayout) still uses raw *neutral* hex
-      //    (slate/gray) inside inline styles with hover handlers; neutrals are
-      //    allowed by DESIGN.md, pending a separate slate-class migration.
+      // (The app-shell chrome — Sidebar/SidebarSection/AppLayout — was migrated
+      //  to semantic tokens + neutral classes, so it is now enforced.)
       files: [
         'src/**/*.test.{ts,tsx}',
-        'src/components/layout/Sidebar.tsx',
-        'src/components/layout/SidebarSection.tsx',
-        'src/components/layout/AppLayout.tsx',
       ],
       plugins: { 'xsuite': xsuitePlugin },
       rules: { 'xsuite/no-raw-style-colors': 'off' },
