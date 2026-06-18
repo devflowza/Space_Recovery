@@ -146,7 +146,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mode = 'docked' }) => {
       </div>
 
       {/* Navigation */}
-      <nav aria-label="Primary" className={`flex-1 overflow-y-auto w-full ${collapsed ? 'px-2' : 'px-3'} py-2`}>
+      <nav aria-label="Primary" className={`flex-1 min-h-0 overflow-y-auto w-full ${collapsed ? 'px-2' : 'px-3'} py-2`}>
         <SidebarSection title="Core Operations" isCollapsed={collapsed} alwaysExpanded>
           <ProtectedSidebarNavItem to="/" icon={LayoutDashboard} label="Dashboard" isCollapsed={collapsed} />
           <ProtectedSidebarNavItem

@@ -106,7 +106,7 @@ export const AppLayout: React.FC = () => {
 
   return (
     <SidebarPreferencesProvider>
-    <div className="min-h-screen flex flex-col bg-slate-100">
+    <div className="h-dvh flex flex-col bg-slate-100">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary focus:shadow-lg focus:ring-2 focus:ring-ring focus:outline-none"
@@ -117,7 +117,7 @@ export const AppLayout: React.FC = () => {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
 
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <header className="flex-shrink-0 flex items-center gap-2 px-4 md:px-6 h-14 bg-surface border-b border-primary/15 shadow-sm">
           <button
             type="button"
@@ -161,7 +161,7 @@ export const AppLayout: React.FC = () => {
           </div>
         </header>
 
-        <main id="main-content" tabIndex={-1} className="flex-1 p-6 overflow-auto focus:outline-none">
+        <main id="main-content" tabIndex={-1} className="flex-1 min-h-0 p-6 overflow-auto focus:outline-none">
           <Suspense fallback={<ContentLoadingFallback />}>
             <Outlet />
           </Suspense>
