@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 type AccentColor = 'amber' | 'emerald' | 'teal' | 'sky' | 'slate' | 'blue' | 'payroll' | 'employee';
@@ -13,15 +13,18 @@ interface SidebarSectionProps {
   accentColor?: AccentColor;
 }
 
-const accentDotColors: Record<AccentColor, string> = {
-  amber: '#D97706',
-  emerald: '#059669',
-  teal: '#0D9488',
-  sky: '#0284C7',
-  payroll: '#0891B2',
-  employee: '#DB2777',
-  slate: '#475569',
-  blue: '#3b82f6',
+// Per-section identity dots map to the fixed cat-* palette (DESIGN.md). These
+// are intentionally constant across themes — they identify the group, not the
+// brand, so they do NOT change with the Appearance theme (by design).
+const accentDotClasses: Record<AccentColor, string> = {
+  amber: 'bg-cat-4',
+  emerald: 'bg-cat-2',
+  teal: 'bg-cat-1',
+  sky: 'bg-cat-7',
+  payroll: 'bg-cat-3',
+  employee: 'bg-cat-6',
+  slate: 'bg-cat-8',
+  blue: 'bg-cat-5',
 };
 
 export const SidebarSection: React.FC<SidebarSectionProps> = ({
@@ -34,7 +37,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   accentColor,
 }) => {
   const [isOpen, setIsOpen] = useState(!defaultCollapsed);
-  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+  const contentId = useId();
 
   useEffect(() => {
     setIsOpen(!defaultCollapsed);
@@ -48,94 +51,54 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
     onToggle?.(!newState);
   };
 
+  // Collapsed icon rail: drop the group label/dot and separate groups with a
+  // hairline divider so the rail stays scannable without text.
   if (isCollapsed) {
     return (
-      <div className="py-2" style={{ borderBottom: '1px solid #edf0f5' }}>
-        {accentColor && (
-          <div className="flex justify-center mb-1.5">
-            <div
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ background: accentDotColors[accentColor] }}
-            />
-          </div>
-        )}
-        <div className="space-y-1">
-          {children}
-        </div>
+      <div className="py-2 border-b border-border">
+        <div className="space-y-1">{children}</div>
       </div>
     );
   }
+
+  const headerInner = (
+    <div className="flex items-center gap-2">
+      {accentColor && (
+        <span
+          className={`w-2 h-2 rounded-full flex-shrink-0 transition-transform duration-200 group-hover:scale-125 ${accentDotClasses[accentColor]}`}
+        />
+      )}
+      <span className="text-xxs font-semibold uppercase tracking-[0.08em] text-slate-500 group-hover:text-primary transition-colors">
+        {title}
+      </span>
+    </div>
+  );
 
   return (
     <div className="py-1">
       {!alwaysExpanded ? (
         <button
+          type="button"
           onClick={handleToggle}
-          className="w-full flex items-center justify-between rounded-lg transition-all duration-[180ms]"
-          style={{
-            padding: '9px 10px',
-            background: isHeaderHovered ? '#E8ECF2' : 'transparent',
-            borderLeft: `3px solid ${isHeaderHovered ? 'rgb(var(--color-primary) / 0.4)' : 'transparent'}`,
-          }}
-          onMouseEnter={() => setIsHeaderHovered(true)}
-          onMouseLeave={() => setIsHeaderHovered(false)}
+          aria-expanded={isOpen}
+          aria-controls={contentId}
+          className="group w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-colors hover:bg-primary/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
-          <div className="flex items-center gap-2">
-            {accentColor && (
-              <div
-                className="rounded-full flex-shrink-0"
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  background: accentDotColors[accentColor],
-                  transform: isHeaderHovered ? 'scale(1.3)' : 'scale(1)',
-                  transition: 'transform 0.2s ease',
-                }}
-              />
-            )}
-            <span
-              className="font-[600] uppercase tracking-[0.07em] transition-colors duration-[180ms]"
-              style={{ fontSize: '11.5px', color: isHeaderHovered ? 'rgb(var(--color-primary))' : '#5A6A7A' }}
-            >
-              {title}
-            </span>
-          </div>
+          {headerInner}
           <ChevronRight
-            className="transition-all duration-200"
-            style={{
-              width: '14px',
-              height: '14px',
-              color: isHeaderHovered ? 'rgb(var(--color-primary))' : '#7A8A9A',
-              transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-            }}
+            className={`w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
           />
         </button>
       ) : (
-        <div style={{ padding: '9px 10px' }}>
-          <div className="flex items-center gap-2">
-            {accentColor && (
-              <div
-                className="rounded-full flex-shrink-0"
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  background: accentDotColors[accentColor],
-                }}
-              />
-            )}
-            <span
-              className="font-[600] uppercase tracking-[0.07em]"
-              style={{ fontSize: '11.5px', color: '#5A6A7A' }}
-            >
-              {title}
-            </span>
-          </div>
-        </div>
+        <div className="px-2.5 py-2">{headerInner}</div>
       )}
 
       <div
+        id={contentId}
+        role="group"
+        aria-label={title}
         className={`mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 ease-in-out ${
-          (isOpen || alwaysExpanded) ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+          isOpen || alwaysExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         {children}
