@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bankingService, BankAccount, PaymentReceipt, AccountTransfer } from '../../lib/bankingService';
 import { Button } from '../../components/ui/Button';
@@ -11,6 +11,7 @@ import { useToast } from '../../hooks/useToast';
 import { AccountFormModal } from '../../components/banking/AccountFormModal';
 import { RecordReceiptModal } from '../../components/banking/RecordReceiptModal';
 import { TransferFundsModal } from '../../components/banking/TransferFundsModal';
+import { VirtualizedTableBody } from '../../components/ui/VirtualizedTableBody';
 import {
   Plus,
   Landmark,
@@ -96,6 +97,8 @@ export const BankingPage: React.FC = () => {
     },
     enabled: !!selectedAccount,
   });
+
+  const transactionsScrollRef = useRef<HTMLDivElement>(null);
 
   const createAccountMutation = useMutation({
     mutationFn: (data: Partial<BankAccount>) => bankingService.createAccount(data),
@@ -589,7 +592,9 @@ export const BankingPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="overflow-x-auto" style={{ maxHeight: '500px' }}>
+              {/* transactionsScrollRef is the vertical scroll viewport VirtualizedTableBody
+                  measures — keep overflow-y scrollable (do not change to overflow-y-hidden). */}
+              <div ref={transactionsScrollRef} className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '500px' }}>
                 {activeTab === 'accounts' && (
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
@@ -611,54 +616,60 @@ export const BankingPage: React.FC = () => {
                           </td>
                         </tr>
                       ) : (
-                        bankTransactions.map((transaction) => {
-                          // bank_transactions has amount+type, not separate debit/credit columns.
-                          const isDebit = transaction.type === 'debit' || transaction.type === 'expense' || transaction.type === 'withdrawal';
-                          const isCredit = transaction.type === 'credit' || transaction.type === 'income' || transaction.type === 'deposit';
-                          return (
-                          <tr key={transaction.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="py-2 px-4 text-xs text-slate-600">
-                              {new Date(transaction.transaction_date).toLocaleDateString()}
-                            </td>
-                            <td className="py-2 px-4">
-                              <p className="text-xs font-medium text-slate-900">{transaction.description ?? ''}</p>
-                              {transaction.reference && (
-                                <p className="text-xs text-slate-500">{transaction.reference}</p>
-                              )}
-                            </td>
-                            <td className="py-2 px-4 text-right">
-                              {isDebit && transaction.amount > 0 ? (
-                                <span className="text-xs font-semibold text-danger flex items-center justify-end gap-1">
-                                  <TrendingDown className="w-3 h-3" />
-                                  {formatCurrencyValue(transaction.amount)}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-slate-400">-</span>
-                              )}
-                            </td>
-                            <td className="py-2 px-4 text-right">
-                              {isCredit && transaction.amount > 0 ? (
-                                <span className="text-xs font-semibold text-success flex items-center justify-end gap-1">
-                                  <TrendingUp className="w-3 h-3" />
-                                  {formatCurrencyValue(transaction.amount)}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-slate-400">-</span>
-                              )}
-                            </td>
-                            <td className="py-2 px-4 text-right text-xs font-semibold text-slate-900">
-                              -
-                            </td>
-                            <td className="py-2 px-4 text-center">
-                              {transaction.is_reconciled ? (
-                                <CheckCircle2 className="w-4 h-4 text-success mx-auto" />
-                              ) : (
-                                <Clock className="w-4 h-4 text-warning mx-auto" />
-                              )}
-                            </td>
-                          </tr>
-                          );
-                        })
+                        <VirtualizedTableBody
+                          items={bankTransactions}
+                          scrollRef={transactionsScrollRef}
+                          colSpan={6}
+                          estimateRowHeight={44}
+                          renderRow={(transaction) => {
+                            // bank_transactions has amount+type, not separate debit/credit columns.
+                            const isDebit = transaction.type === 'debit' || transaction.type === 'expense' || transaction.type === 'withdrawal';
+                            const isCredit = transaction.type === 'credit' || transaction.type === 'income' || transaction.type === 'deposit';
+                            return (
+                            <tr key={transaction.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="py-2 px-4 text-xs text-slate-600">
+                                {new Date(transaction.transaction_date).toLocaleDateString()}
+                              </td>
+                              <td className="py-2 px-4">
+                                <p className="text-xs font-medium text-slate-900">{transaction.description ?? ''}</p>
+                                {transaction.reference && (
+                                  <p className="text-xs text-slate-500">{transaction.reference}</p>
+                                )}
+                              </td>
+                              <td className="py-2 px-4 text-right">
+                                {isDebit && transaction.amount > 0 ? (
+                                  <span className="text-xs font-semibold text-danger flex items-center justify-end gap-1">
+                                    <TrendingDown className="w-3 h-3" />
+                                    {formatCurrencyValue(transaction.amount)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-slate-400">-</span>
+                                )}
+                              </td>
+                              <td className="py-2 px-4 text-right">
+                                {isCredit && transaction.amount > 0 ? (
+                                  <span className="text-xs font-semibold text-success flex items-center justify-end gap-1">
+                                    <TrendingUp className="w-3 h-3" />
+                                    {formatCurrencyValue(transaction.amount)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-slate-400">-</span>
+                                )}
+                              </td>
+                              <td className="py-2 px-4 text-right text-xs font-semibold text-slate-900">
+                                -
+                              </td>
+                              <td className="py-2 px-4 text-center">
+                                {transaction.is_reconciled ? (
+                                  <CheckCircle2 className="w-4 h-4 text-success mx-auto" />
+                                ) : (
+                                  <Clock className="w-4 h-4 text-warning mx-auto" />
+                                )}
+                              </td>
+                            </tr>
+                            );
+                          }}
+                        />
                       )}
                     </tbody>
                   </table>
