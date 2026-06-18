@@ -592,7 +592,9 @@ export const BankingPage: React.FC = () => {
                 </div>
               </div>
 
-              <div ref={transactionsScrollRef} className="overflow-x-auto" style={{ maxHeight: '500px' }}>
+              {/* transactionsScrollRef is the vertical scroll viewport VirtualizedTableBody
+                  measures — keep overflow-y scrollable (do not change to overflow-y-hidden). */}
+              <div ref={transactionsScrollRef} className="overflow-x-auto overflow-y-auto" style={{ maxHeight: '500px' }}>
                 {activeTab === 'accounts' && (
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
