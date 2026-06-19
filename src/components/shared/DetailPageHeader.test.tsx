@@ -15,7 +15,9 @@ describe('DetailPageHeader', () => {
       />,
     );
     expect(screen.getByRole('link', { name: 'Invoices' })).toHaveAttribute('href', '/invoices');
-    expect(screen.getByRole('heading', { name: 'Invoice INV-0042' })).toBeInTheDocument();
+    const title = screen.getByRole('heading', { name: 'Invoice INV-0042' });
+    expect(title).toBeInTheDocument();
+    expect(title).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByRole('link', { name: 'Invoice INV-0042' })).not.toBeInTheDocument();
   });
 

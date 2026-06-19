@@ -59,7 +59,7 @@ export const DetailPageHeader: React.FC<DetailPageHeaderProps> = ({
             </nav>
           )}
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-900">{current?.label}</h1>
+            <h1 aria-current="page" className="text-2xl font-bold text-slate-900">{current?.label}</h1>
             {badges}
           </div>
         </div>

@@ -218,7 +218,7 @@ export const InvoiceDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-8">
+      <div className="px-6 py-5 max-w-[1800px] mx-auto">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-slate-200 rounded w-1/4"></div>
           <div className="h-64 bg-slate-200 rounded"></div>
@@ -229,7 +229,7 @@ export const InvoiceDetailPage: React.FC = () => {
 
   if (!invoice) {
     return (
-      <div className="p-8">
+      <div className="px-6 py-5 max-w-[1800px] mx-auto">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Invoice Not Found</h2>
           <Button onClick={() => navigate('/invoices')}>
