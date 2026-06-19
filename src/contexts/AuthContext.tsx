@@ -50,6 +50,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [mfaPending, setMfaPending] = useState(false);
   const profileCache = useRef<Profile | null>(null);
   const profileFetchInFlight = useRef<string | null>(null);
+  // Bumped on every sign-out (manual or expiry). A profile fetch snapshots it
+  // at start and bails before any setState if it changed mid-flight, so a fetch
+  // that resolves after logout can't flash the Profile Error card or resurrect
+  // a stale profile.
+  const authEpoch = useRef(0);
 
   const fetchProfile = useCallback(async (userId: string) => {
     // Boot fires this twice (getSession() resolution AND the INITIAL_SESSION
@@ -57,41 +62,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // calls (refreshProfile) still go through.
     if (profileFetchInFlight.current === userId) return;
     profileFetchInFlight.current = userId;
+    const epoch = authEpoch.current;
+    const isStale = () => authEpoch.current !== epoch;
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+      // Retry transient failures (network / RLS hiccup) before surfacing the
+      // dead-end error screen — a single blip shouldn't strand the user.
+      let lastError: unknown = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
+          if (error) throw error;
+          if (isStale()) return;
 
-      if (error) throw error;
+          const profileData = data as unknown as Profile | null;
+          profileCache.current = profileData;
+          setProfile(profileData);
+          setPasswordResetRequired(profileData?.password_reset_required || false);
 
-      const profileData = data as unknown as Profile | null;
-      profileCache.current = profileData;
-      setProfile(profileData);
-      setPasswordResetRequired(profileData?.password_reset_required || false);
+          if (data?.tenant_id) {
+            localStorage.setItem('tenant_id', data.tenant_id);
+          } else {
+            localStorage.removeItem('tenant_id');
+          }
 
-      if (data?.tenant_id) {
-        localStorage.setItem('tenant_id', data.tenant_id);
-      } else {
-        localStorage.removeItem('tenant_id');
+          if (!data) {
+            setProfileStatus('error');
+          } else if (data.role === null) {
+            setProfileStatus('pending_approval');
+          } else if (!data.is_active) {
+            setProfileStatus('inactive');
+          } else {
+            setProfileStatus('approved');
+          }
+          return;
+        } catch (err) {
+          lastError = err;
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+          }
+        }
       }
-
-      if (!data) {
-        setProfileStatus('error');
-      } else if (data.role === null) {
-        setProfileStatus('pending_approval');
-      } else if (!data.is_active) {
-        setProfileStatus('inactive');
-      } else {
-        setProfileStatus('approved');
-      }
-    } catch (error) {
-      logger.error('Error fetching profile:', error);
+      if (isStale()) return;
+      logger.error('Error fetching profile (after retries):', lastError);
       setProfileStatus('error');
     } finally {
       profileFetchInFlight.current = null;
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   }, []);
 
@@ -125,8 +145,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await fetchProfile(session.user.id);
           }
         } else {
+          // Signed out (manual, expiry, or revoked refresh token). Invalidate
+          // in-flight fetches and reset status so it isn't left stale at
+          // 'error'/'loading' from the previous session.
+          authEpoch.current++;
           setProfile(null);
           profileCache.current = null;
+          setProfileStatus('loading');
           setLoading(false);
         }
       })();
@@ -223,6 +248,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(async () => {
+    // Invalidate any in-flight profile fetch and show the auth skeleton until
+    // the SIGNED_OUT event redirects. Clearing `profile` while `user` is still
+    // set and `loading` is false is what flashed the Profile Error card.
+    authEpoch.current++;
+    setLoading(true);
     profileCache.current = null;
     setProfile(null);
     setProfileStatus('loading');
@@ -231,6 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await supabase.auth.signOut();
     } catch (e) {
       logger.error('Sign out error:', e);
+      setLoading(false);
     }
   }, []);
 

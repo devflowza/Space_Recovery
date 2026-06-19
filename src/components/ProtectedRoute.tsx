@@ -76,7 +76,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     );
   }
 
-  if (profileStatus === 'error' || !profile) {
+  if (profileStatus === 'error') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
@@ -92,6 +92,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
         </div>
       </div>
     );
+  }
+
+  // Profile not present yet/anymore but not a hard error — e.g. the logout
+  // transition (signOut clears profile before user) or a transient refetch.
+  // Show the skeleton, never the dead-end error card, until the auth state
+  // settles (redirect on signed-out, or profile resolves).
+  if (!profile) {
+    return <AuthLoadingSkeleton />;
   }
 
   const isPlatformAdmin = !profile.tenant_id && (profile.role === 'owner' || profile.role === 'admin');
