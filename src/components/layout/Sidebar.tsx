@@ -131,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mode = 'docked' }) => {
           {!collapsed && (
             <div>
               <h1 className="text-[15px] font-semibold tracking-tight leading-tight text-slate-900">DataRecovery</h1>
-              <p className="mt-0.5 text-xxs font-medium uppercase tracking-[0.16em] text-slate-400">Professional Suite</p>
+              <p className="mt-0.5 text-xxs font-medium uppercase tracking-[0.16em] text-slate-500">Professional Suite</p>
             </div>
           )}
         </div>
