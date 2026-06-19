@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Search, Package, DollarSign, Clock, CheckCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { PageHeader } from '../../components/shared/PageHeader';
+import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
 import { Button } from '../../components/ui/Button';
 import { DataTable, type Column } from '../../components/shared/DataTable';
 import { ExportButton } from '../../components/shared/ExportButton';
@@ -250,9 +250,8 @@ export default function PurchaseOrdersListPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <PageHeaderSlot
         title="Purchase Orders"
-        description="Manage purchase orders and track deliveries"
         actions={
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="w-4 h-4 mr-2" />
