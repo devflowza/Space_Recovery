@@ -30,7 +30,7 @@ import {
   type StockItemWithCategory,
   type StockFilters,
 } from '../../lib/stockService';
-import { PageHeader } from '../../components/shared/PageHeader';
+import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
 import { Button } from '../../components/ui/Button';
 import { Pager } from '../../components/ui/Pager';
 import { Modal } from '../../components/ui/Modal';
@@ -245,10 +245,8 @@ export const StockListPage: React.FC = () => {
 
   return (
     <div className="p-6 max-w-[1800px] mx-auto space-y-6">
-      <PageHeader
+      <PageHeaderSlot
         title="Stock"
-        description="Manage backup devices and internal supplies"
-        icon={Package}
         actions={
           <>
             <Button
