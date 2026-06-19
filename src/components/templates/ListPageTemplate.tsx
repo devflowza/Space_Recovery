@@ -50,7 +50,7 @@ export const ListPageTemplate: React.FC<ListPageTemplateProps> = ({
   loadingFallback,
   unstyledBody = false,
 }) => (
-  <div className="px-6 py-5 max-w-[1800px] mx-auto">
+  <div className="px-6 py-5 max-w-[1800px] 2xl:max-w-[2400px] mx-auto">
     <PageHeaderSlot title={title} actions={headerActions} />
     {loading ? (
       loadingFallback ?? <ListPageSkeleton />
