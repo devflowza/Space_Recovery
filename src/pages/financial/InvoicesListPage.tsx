@@ -19,7 +19,7 @@ import { Pager } from '../../components/ui/Pager';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { statusToBadgeVariant } from '../../lib/ui/variants';
-import { PageHeader } from '../../components/shared/PageHeader';
+import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
 import { StatCard } from '../../components/shared/StatCard';
 import { InvoiceFormModal } from '../../components/cases/InvoiceFormModal';
 import { RecordReceiptModal } from '../../components/banking/RecordReceiptModal';
@@ -279,10 +279,8 @@ export const InvoicesListPage: React.FC<unknown> = () => {
 
   return (
     <div className="px-6 py-5 max-w-[1800px] mx-auto">
-      <PageHeader
-        icon={FileText}
+      <PageHeaderSlot
         title="Invoices"
-        description="Manage customer invoices and billing"
         actions={
           <>
             <ExportButton

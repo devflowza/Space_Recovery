@@ -19,7 +19,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { PageHeader } from '../../components/shared/PageHeader';
+import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { VirtualizedTableBody } from '../../components/ui/VirtualizedTableBody';
 import { useCurrency } from '../../hooks/useCurrency';
@@ -166,11 +166,7 @@ export const StockReportsPage: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <PageHeader
-        title="Stock Reports"
-        description="Valuation, sales performance, and inventory health"
-        icon={BarChart2}
-      />
+      <PageHeaderSlot title="Stock Reports" />
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex items-end gap-4">
         <div>
