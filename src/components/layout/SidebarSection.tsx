@@ -56,8 +56,8 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   // now means "you are here" rather than a fixed (and arbitrary) hue per group,
   // which freed the cat-* palette for its real job (charts / device tiles).
   const isActiveGroup = isOpen && !alwaysExpanded;
-  const iconColor = isActiveGroup ? 'text-primary' : 'text-slate-400 group-hover:text-primary';
-  const labelColor = isActiveGroup ? 'text-primary' : 'text-slate-500 group-hover:text-primary';
+  const iconColor = isActiveGroup ? 'text-primary' : 'text-slate-500 group-hover:text-primary';
+  const labelColor = isActiveGroup ? 'text-primary' : 'text-slate-700 group-hover:text-primary';
 
   const headerInner = (
     <div className="flex items-center gap-3 min-w-0">
@@ -72,34 +72,41 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
 
   return (
     <div className={alwaysExpanded ? 'py-1' : 'pt-3 mt-1.5 border-t border-border'}>
-      {!alwaysExpanded ? (
-        <button
-          type="button"
-          onClick={handleToggle}
-          aria-expanded={isOpen}
-          aria-controls={contentId}
-          className="group w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-colors hover:bg-primary/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-        >
-          {headerInner}
-          <ChevronRight
-            className={`w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ${
-              isOpen ? 'rotate-90 text-primary' : 'text-slate-400 group-hover:text-primary'
-            }`}
-          />
-        </button>
-      ) : (
-        <div className="px-2.5 py-2">{headerInner}</div>
-      )}
+      {/* The open group rides a faint navy band + a 2px spine so the active
+          branch carries real weight instead of dissolving into the chrome. */}
+      <div className={isActiveGroup ? 'relative rounded-xl bg-primary/[0.06] py-1' : ''}>
+        {isActiveGroup && (
+          <span aria-hidden="true" className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full bg-primary" />
+        )}
+        {!alwaysExpanded ? (
+          <button
+            type="button"
+            onClick={handleToggle}
+            aria-expanded={isOpen}
+            aria-controls={contentId}
+            className="group w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-colors hover:bg-primary/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          >
+            {headerInner}
+            <ChevronRight
+              className={`w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ${
+                isOpen ? 'rotate-90 text-primary' : 'text-slate-500 group-hover:text-primary'
+              }`}
+            />
+          </button>
+        ) : (
+          <div className="px-2.5 py-2">{headerInner}</div>
+        )}
 
-      <div
-        id={contentId}
-        role="group"
-        aria-label={title}
-        className={`mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 ease-in-out ${
-          isOpen || alwaysExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
-        }`}
-      >
-        {children}
+        <div
+          id={contentId}
+          role="group"
+          aria-label={title}
+          className={`mt-0.5 space-y-0.5 overflow-hidden transition-all duration-300 ease-in-out ${
+            isOpen || alwaysExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
