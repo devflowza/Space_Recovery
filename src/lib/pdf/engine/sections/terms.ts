@@ -78,7 +78,11 @@ export const renderTerms: SectionRenderer = (
 
   // ---- Structured layout: Payment Terms / Notes stacks + optional bank box --
   const blocks = terms?.blocks?.filter((b) => b.body);
-  const bank = data.bank && data.bank.rows.length > 0 ? data.bank : null;
+  // When the tenant enables the standalone, movable "Bank details" section, the
+  // bank box renders THERE (positionable) — so the terms section must not also
+  // render it (avoid double-rendering). Default templates keep the inline box.
+  const bankSectionVisible = engine.config.sections.some((s) => s.key === 'bank' && s.visible);
+  const bank = !bankSectionVisible && data.bank && data.bank.rows.length > 0 ? data.bank : null;
 
   if ((blocks && blocks.length > 0) || (terms && terms.blocks && bank)) {
     // Build the terms-stack column (Payment Terms, then Notes, …).
