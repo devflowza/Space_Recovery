@@ -6,7 +6,7 @@ const ALLOWED_TAGS = [
 
 // Per-tag non-style attributes; `style` is allowed on every tag (sanitized).
 const TAG_ATTRS: Record<string, string[]> = {
-  a: ['href', 'target', 'rel'],
+  a: ['href', 'target'],
   img: ['src', 'alt', 'width', 'height'],
   th: ['colspan', 'rowspan'],
   td: ['colspan', 'rowspan'],
@@ -14,18 +14,38 @@ const TAG_ATTRS: Record<string, string[]> = {
 
 const ALLOWED_STYLES = ['color', 'background-color', 'font-weight', 'font-style', 'text-decoration'];
 
+// Raw-text / RCDATA elements: the HTML parser treats their contents as raw text,
+// not child elements. Unwrapping them would surface the raw text (which may
+// contain "<img onerror=…>" strings) into the output as entity-encoded markup,
+// potentially leaking attack strings. Drop these entirely instead of unwrapping.
+const RAW_TEXT_ELEMENTS = new Set(['script', 'style', 'textarea', 'noscript', 'xmp', 'plaintext', 'title']);
+
 // href: http(s) + mailto only. src: http(s) + RASTER data images only (no SVG — it can carry script).
 const SAFE_HREF = /^(https?:|mailto:)/i;
-const SAFE_IMG_SRC = /^(https?:\/\/|data:image\/(png|jpeg|jpg|gif|webp);base64,)/i;
-const NUMERIC = /^\d+$/;
+const SAFE_IMG_SRC = /^(https?:\/\/|data:image\/(png|jpeg|jpg|gif|webp)(;[\w=-]+)*;base64,)/i;
+const NUMERIC = /^\d{1,4}$/;
 const BLOCKED_VALUE_PATTERNS = /url\s*\(|expression\s*\(|javascript:|@import|import\s*\(/i;
 
+// The PROPERTY allowlist (ALLOWED_STYLES) is the real security guarantee: none of
+// the allowed properties fetch a URL or execute script, so a malicious value is
+// inert even if it slips through. The value checks below are defense-in-depth:
+// split on the FIRST colon only (so a colon-bearing value isn't truncated, which
+// would weaken the filter), reject CSS escapes (e.g. `\75` reconstructs `u`),
+// then reject the known dangerous tokens.
 function sanitizeStyles(styleString: string): string {
   const out: string[] = [];
-  for (const style of styleString.split(';')) {
-    if (!style.trim()) continue;
-    const [property, value] = style.split(':').map((s) => s.trim());
-    if (property && value && ALLOWED_STYLES.includes(property.toLowerCase()) && !BLOCKED_VALUE_PATTERNS.test(value)) {
+  for (const decl of styleString.split(';')) {
+    if (!decl.trim()) continue;
+    const idx = decl.indexOf(':');
+    if (idx === -1) continue;
+    const property = decl.slice(0, idx).trim().toLowerCase();
+    const value = decl.slice(idx + 1).trim();
+    if (
+      property && value &&
+      ALLOWED_STYLES.includes(property) &&
+      !value.includes('\\') &&
+      !BLOCKED_VALUE_PATTERNS.test(value)
+    ) {
       out.push(`${property}: ${value}`);
     }
   }
@@ -43,6 +63,10 @@ export function sanitizeHtml(html: string): string {
 
     const element = node as Element;
     const tagName = element.tagName.toLowerCase();
+
+    // Raw-text elements (script, style, textarea, …): drop entirely.
+    // Their text children are raw markup strings, not safe DOM content.
+    if (RAW_TEXT_ELEMENTS.has(tagName)) return null;
 
     // Unknown tag: unwrap — keep sanitized children, drop the tag itself.
     if (!ALLOWED_TAGS.includes(tagName)) {
@@ -78,8 +102,6 @@ export function sanitizeHtml(html: string): string {
         if (SAFE_IMG_SRC.test(value)) newElement.setAttribute('src', value);
       } else if (attr === 'target') {
         if (value === '_blank') newElement.setAttribute('target', '_blank');
-      } else if (attr === 'rel') {
-        // forced below; ignore author value
       } else if (attr === 'width' || attr === 'height' || attr === 'colspan' || attr === 'rowspan') {
         if (NUMERIC.test(value)) newElement.setAttribute(attr, value);
       } else if (value) {

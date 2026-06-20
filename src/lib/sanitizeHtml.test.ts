@@ -69,3 +69,65 @@ describe('sanitizeHtml — hostile input', () => {
     expect(out).toContain('hi');
   });
 });
+
+describe('sanitizeHtml — mXSS / unwrap vectors', () => {
+  it('does not re-materialize script when unwrapping RCDATA/foreign-content tags', () => {
+    for (const input of [
+      '<style><img src=x onerror=alert(1)></style>',
+      '<noscript><img src=x onerror=alert(1)></noscript>',
+      '<textarea><img src=x onerror=alert(1)></textarea>',
+      '<xmp><img src=x onerror=alert(1)></xmp>',
+    ]) {
+      const out = sanitizeHtml(input);
+      // Re-parse the sanitized output (simulates dangerouslySetInnerHTML) and assert no live nodes.
+      const doc = new DOMParser().parseFromString(out, 'text/html');
+      expect(doc.querySelector('script')).toBeNull();
+      expect(out).not.toContain('onerror');
+    }
+  });
+
+  it('unwraps an unknown tag but keeps its allowed children', () => {
+    const out = sanitizeHtml('<div><script>bad()</script><b>keep</b></div>');
+    expect(out).toContain('<b>keep</b>');
+    expect(out).not.toContain('<script');
+  });
+});
+
+describe('sanitizeHtml — URL scheme bypass attempts', () => {
+  it('drops protocol-relative href and src', () => {
+    expect(sanitizeHtml('<a href="//evil.com">x</a>')).not.toContain('//evil.com');
+    expect(sanitizeHtml('<img src="//evil.com/a.png">')).not.toContain('//evil.com');
+  });
+  it('drops whitespace/control-char prefixed javascript scheme', () => {
+    expect(sanitizeHtml('<a href="\tjavascript:alert(1)">x</a>')).not.toContain('javascript');
+    expect(sanitizeHtml('<a href=" javascript:alert(1)">x</a>')).not.toContain('javascript');
+  });
+  it('drops HTML-entity-encoded javascript scheme', () => {
+    // &#106; decodes to "j" before getAttribute, so the decoded value is javascript:
+    expect(sanitizeHtml('<a href="&#106;avascript:alert(1)">x</a>')).not.toContain('javascript');
+  });
+});
+
+describe('sanitizeHtml — style value filter', () => {
+  it('strips url(), expression(), and @import values', () => {
+    expect(sanitizeHtml('<span style="background-color: url(x)">a</span>')).not.toContain('url(');
+    expect(sanitizeHtml('<span style="color: expression(alert(1))">a</span>')).not.toContain('expression');
+    expect(sanitizeHtml('<span style="color: @import">a</span>')).not.toContain('@import');
+  });
+  it('strips CSS-escaped values', () => {
+    const out = sanitizeHtml('<span style="background-color: \\75 rl(x)">a</span>');
+    expect(out).not.toContain('\\75');
+  });
+  it('keeps a plain color value with parentheses (rgb)', () => {
+    expect(sanitizeHtml('<span style="color: rgb(0,0,0)">a</span>')).toContain('color: rgb(0,0,0)');
+  });
+});
+
+describe('sanitizeHtml — data image params + numeric caps', () => {
+  it('keeps a raster data URI that carries a media-type parameter', () => {
+    expect(sanitizeHtml('<img src="data:image/png;charset=utf-8;base64,AAAA">')).toContain('data:image/png;charset=utf-8;base64,AAAA');
+  });
+  it('drops an absurdly large colspan (digit cap)', () => {
+    expect(sanitizeHtml('<table><tbody><tr><td colspan="100000">a</td></tr></tbody></table>')).not.toContain('colspan');
+  });
+});
