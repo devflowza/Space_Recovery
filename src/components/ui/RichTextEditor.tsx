@@ -121,6 +121,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
   // useImperativeHandle with []) never calls a stale closure over value/onChange.
   const handleInputRef = useRef(handleInput);
   handleInputRef.current = handleInput;
+  // Live source-mode flag for the imperative handle (also built once with []).
+  const isSourceModeRef = useRef(isSourceMode);
+  isSourceModeRef.current = isSourceMode;
 
   const execCommand = (command: string, value?: string) => {
     document.execCommand(command, false, value);
@@ -130,6 +133,12 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 
   useImperativeHandle(ref, () => ({
     insertAtCursor: (text: string) => {
+      // In HTML source mode the contentEditable region is unmounted; append to the
+      // source textarea instead so the token isn't silently dropped.
+      if (isSourceModeRef.current) {
+        setSourceValue((prev) => prev + text);
+        return;
+      }
       editorRef.current?.focus();
       document.execCommand('insertText', false, text);
       handleInputRef.current();

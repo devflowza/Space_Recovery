@@ -84,6 +84,7 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
   const richEditorRef = useRef<RichTextEditorHandle>(null);
   const descriptionId = useId();
   const defaultPriceId = useId();
+  const templateContentId = useId();
   const currencyConfig = useCurrencyConfig();
   const decimalPlaces = currencyConfig.decimalPlaces ?? DEFAULT_DECIMAL_PLACES;
   const [formData, setFormData] = useState<LineItemTemplateFormState>({
@@ -309,7 +310,7 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
             ) : (
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-medium text-slate-700">
+                  <label htmlFor={templateContentId} className="block text-sm font-medium text-slate-700">
                     Template Content
                   </label>
                   <div className="flex items-center gap-2">
@@ -326,6 +327,7 @@ export const LineItemTemplateFormModal: React.FC<LineItemTemplateFormModalProps>
                 </div>
                 <RichTextEditor
                   ref={richEditorRef}
+                  id={templateContentId}
                   value={formData.content}
                   onChange={(content) => setFormData({ ...formData, content })}
                   minHeight="220px"
