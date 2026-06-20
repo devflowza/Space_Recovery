@@ -56,6 +56,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // that resolves after logout can't flash the Profile Error card or resurrect
   // a stale profile.
   const authEpoch = useRef(0);
+  // Set by signOut() so the SIGNED_OUT handler can tell a deliberate logout
+  // apart from a token-expiry / revoked-refresh eject (H4) and leave the login
+  // page a breadcrumb to explain the latter.
+  const userInitiatedSignOut = useRef(false);
 
   const fetchProfile = useCallback(async (userId: string, force = false) => {
     // Boot fires this twice (getSession() resolution AND the INITIAL_SESSION
@@ -172,6 +176,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileCache.current = null;
           setProfileStatus('loading');
           setMfaPending(false);
+          // A SIGNED_OUT with no preceding signOut() is an expiry / revoked
+          // refresh token, not a deliberate logout — flag it so the login page
+          // shows "session expired" instead of a silent eject (H4). INITIAL_SESSION
+          // with no user (cold boot) is not a sign-out, so scope to SIGNED_OUT.
+          if (event === 'SIGNED_OUT' && !userInitiatedSignOut.current) {
+            localStorage.setItem('auth_session_expired', '1');
+          }
+          userInitiatedSignOut.current = false;
           // Drop the previous user's role-permission cache + tenant pointer so a
           // different user on the same device can't inherit them (H6, L5).
           rolePermissionsService.clearCache();
@@ -244,6 +256,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // the SIGNED_OUT event redirects. Clearing `profile` while `user` is still
     // set and `loading` is false is what flashed the Profile Error card.
     authEpoch.current++;
+    userInitiatedSignOut.current = true;
     setLoading(true);
     profileCache.current = null;
     setProfile(null);

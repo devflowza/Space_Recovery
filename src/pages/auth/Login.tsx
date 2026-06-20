@@ -29,6 +29,15 @@ export const Login: React.FC = () => {
     }
   }, [profile]);
 
+  // H4: explain an expiry / revoked-refresh eject (flagged by AuthContext)
+  // instead of dropping the user at a blank login form.
+  useEffect(() => {
+    if (localStorage.getItem('auth_session_expired')) {
+      localStorage.removeItem('auth_session_expired');
+      setError('Your session has expired. Please sign in again.');
+    }
+  }, []);
+
   const handleSubmit = async (email: string, password: string) => {
     setError('');
     setLoading(true);

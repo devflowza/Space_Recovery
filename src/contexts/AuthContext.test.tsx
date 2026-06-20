@@ -125,6 +125,32 @@ describe('AuthContext', () => {
     await waitFor(() => expect(clearPermissionCache).toHaveBeenCalled());
   });
 
+  it('flags an expired session (not a manual logout) for the login page (H4)', async () => {
+    localStorage.removeItem('auth_session_expired');
+    maybeSingleImpl = async () => ({ data: APPROVED, error: null });
+    render(<AuthProvider><Harness /></AuthProvider>);
+    await waitFor(() => expect(state()).toBe('approved|false|yes'));
+
+    // Token-expiry / revoked refresh: SIGNED_OUT arrives with no preceding
+    // signOut() — leave a breadcrumb so the login page can explain it.
+    await act(async () => {
+      authStateCb?.('SIGNED_OUT', null);
+      await Promise.resolve();
+    });
+    expect(localStorage.getItem('auth_session_expired')).toBe('1');
+  });
+
+  it('does not flag a manual logout as an expired session (H4)', async () => {
+    localStorage.removeItem('auth_session_expired');
+    maybeSingleImpl = async () => ({ data: APPROVED, error: null });
+    render(<AuthProvider><Harness /></AuthProvider>);
+    await waitFor(() => expect(state()).toBe('approved|false|yes'));
+
+    fireEvent.click(screen.getByText('logout'));
+    await waitFor(() => expect(signOutMock).toHaveBeenCalled());
+    expect(localStorage.getItem('auth_session_expired')).toBeNull();
+  });
+
   it('refreshProfile() still fetches while a boot fetch is in flight (L8)', async () => {
     let calls = 0;
     // First fetch hangs (stays in flight); later calls resolve immediately.
