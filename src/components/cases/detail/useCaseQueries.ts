@@ -178,6 +178,7 @@ export function useCaseQueries(
           is_primary,
           role_notes,
           created_at,
+          checked_out_at,
           created_by,
           device_type:catalog_device_types(id, name),
           brand:catalog_device_brands(name),

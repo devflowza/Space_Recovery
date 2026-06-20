@@ -69,72 +69,92 @@ function recoveryOutcomeLabel(outcome: string | undefined | null): string {
   return outcomes[outcome] || outcome;
 }
 
+/** The collector for one checkout batch (read from the batch's devices). */
+interface CollectorInfo {
+  name?: string;
+  mobile?: string;
+  id?: string;
+  relationship?: string;
+}
+
+const RELATIONSHIP_LABELS: Record<string, string> = {
+  self: 'Customer (self)',
+  authorized_agent: 'Authorized agent',
+  company_rep: 'Company representative',
+  courier: 'Courier',
+};
+
 /**
- * The "Case Details" info box for a checkout. Mirrors the legacy builder's case
- * box (Case ID, Customer Name, Company, Service, Customer Phone).
+ * The devices collected in THIS checkout event — the most recent checkout batch.
+ * A partial collection prints only the devices actually handed over now; the rest
+ * stay in the lab for a later visit. Falls back to ALL devices when none carry a
+ * checkout stamp (e.g. the Studio sample/preview, or a legacy case-level checkout).
  */
-function caseInfoBlock(caseData: CaseData): CaseInfoBlock {
-  const customerName = caseData.customer?.customer_name || caseData.contact_name;
-  const customerPhone =
-    caseData.customer?.mobile_number ||
-    caseData.customer?.phone_number ||
-    caseData.contact_phone;
+function devicesInLatestBatch(devices: DeviceData[]): DeviceData[] {
+  const checkedOut = devices.filter((d) => d.checked_out_at);
+  if (checkedOut.length === 0) return devices;
+  let latest = checkedOut[0];
+  for (const d of checkedOut) {
+    if ((d.checked_out_at ?? '') > (latest.checked_out_at ?? '')) latest = d;
+  }
+  if (latest.checkout_batch_id) {
+    return checkedOut.filter((d) => d.checkout_batch_id === latest.checkout_batch_id);
+  }
+  return checkedOut.filter((d) => d.checked_out_at === latest.checked_out_at);
+}
+
+/**
+ * The "Case Details" box — case facts only (Case ID, Service, Recovery Outcome,
+ * Checkout Date, and how many devices were collected). The customer's identity
+ * lives in the Customer Information box and is deliberately NOT repeated here.
+ */
+function caseInfoBlock(caseData: CaseData, collectedCount: number, totalCount: number): CaseInfoBlock {
   return {
     title: { en: 'Case Details', ar: 'تفاصيل الحالة' },
     rows: [
       { label: { en: 'Case ID:', ar: 'رقم الحالة:' }, value: safeString(caseData.case_no) },
-      { label: { en: 'Customer Name:', ar: 'اسم العميل:' }, value: safeString(customerName) },
-      { label: { en: 'Company:', ar: 'الشركة:' }, value: safeString(caseData.company?.company_name) },
       { label: { en: 'Service:', ar: 'الخدمة:' }, value: safeString(caseData.service_type?.name) },
-      { label: { en: 'Customer Phone:', ar: 'هاتف العميل:' }, value: safeString(customerPhone) },
+      { label: { en: 'Recovery Outcome:', ar: 'نتيجة الاستعادة:' }, value: recoveryOutcomeLabel(caseData.recovery_outcome) },
+      { label: { en: 'Checkout Date:', ar: 'تاريخ التسليم:' }, value: formatDate(caseData.checkout_date || new Date().toISOString(), 'dd MMM yyyy, HH:mm') },
+      { label: { en: 'Devices Collected:', ar: 'الأجهزة المستلمة:' }, value: `${collectedCount} of ${totalCount}` },
     ],
   };
 }
 
 /**
- * The "Collection Information" block. Mirrors the legacy builder's two branches:
- * when the collector IS the customer (or no distinct collector was recorded) the
- * box shows the customer's name/mobile; otherwise it shows the recorded
- * collector's name / mobile / national ID. Checkout date and recovery outcome
- * are always present.
+ * The "Collection Information" block — WHO physically collected the device(s).
+ * When the collector is the customer (relationship 'self', or no distinct
+ * collector recorded) it reads "Collected by the customer". When someone collects
+ * on the customer's behalf, it names the collector, states the relationship and
+ * "On Behalf Of" the customer, and shows the National ID captured at handoff.
  */
-function collectorBlock(caseData: CaseData): CollectorBlock {
-  const checkoutDate = formatDate(
-    caseData.checkout_date || new Date().toISOString(),
-    'dd MMM yyyy, HH:mm',
-  );
-  const outcome = recoveryOutcomeLabel(caseData.recovery_outcome);
+function collectorBlock(caseData: CaseData, collector: CollectorInfo): CollectorBlock {
+  const customerName = caseData.customer?.customer_name || caseData.contact_name;
+  const customerMobile =
+    caseData.customer?.mobile_number ||
+    caseData.customer?.phone_number ||
+    caseData.contact_phone;
 
-  const collectorIsCustomer =
-    caseData.checkout_collector_name === caseData.customer?.customer_name ||
-    !caseData.checkout_collector_name ||
-    caseData.checkout_collector_name.trim() === '';
+  const isSelf =
+    collector.relationship === 'self' ||
+    (!collector.relationship &&
+      (!collector.name || collector.name.trim() === '' || collector.name === customerName));
 
-  const rows: CollectorBlock['rows'] = [
-    { label: { en: 'Checkout Date:', ar: 'تاريخ التسليم:' }, value: checkoutDate },
-    { label: { en: 'Recovery Outcome:', ar: 'نتيجة الاستعادة:' }, value: outcome },
-  ];
-
-  if (collectorIsCustomer) {
-    const name = caseData.customer?.customer_name || caseData.contact_name;
-    const mobile =
-      caseData.customer?.mobile_number ||
-      caseData.customer?.phone_number ||
-      caseData.contact_phone;
+  const rows: CollectorBlock['rows'] = [];
+  if (isSelf) {
     rows.push(
-      { label: { en: 'Collected By:', ar: 'استلمها:' }, value: safeString(name) },
-      { label: { en: 'Mobile Number:', ar: 'رقم الجوال:' }, value: safeString(mobile) },
+      { label: { en: 'Collected By:', ar: 'استلمها:' }, value: safeString(collector.name || customerName) },
+      { label: { en: 'Relationship:', ar: 'صفة المستلم:' }, value: RELATIONSHIP_LABELS.self },
+      { label: { en: 'Mobile Number:', ar: 'رقم الجوال:' }, value: safeString(collector.mobile || customerMobile) },
     );
   } else {
     rows.push(
-      { label: { en: 'Collected By:', ar: 'استلمها:' }, value: safeString(caseData.checkout_collector_name) },
-      { label: { en: 'Mobile Number:', ar: 'رقم الجوال:' }, value: safeString(caseData.checkout_collector_mobile) },
-      { label: { en: 'National ID:', ar: 'رقم الهوية:' }, value: safeString(caseData.checkout_collector_id) },
+      { label: { en: 'Collected By:', ar: 'استلمها:' }, value: safeString(collector.name) },
+      { label: { en: 'On Behalf Of:', ar: 'نيابة عن:' }, value: safeString(customerName) },
+      { label: { en: 'Relationship:', ar: 'صفة المستلم:' }, value: RELATIONSHIP_LABELS[collector.relationship ?? ''] ?? safeString(collector.relationship) },
+      { label: { en: 'Mobile Number:', ar: 'رقم الجوال:' }, value: safeString(collector.mobile) },
+      { label: { en: 'National ID:', ar: 'رقم الهوية:' }, value: safeString(collector.id) },
     );
-  }
-
-  if (caseData.checkout_notes) {
-    rows.push({ label: { en: 'Notes:', ar: 'ملاحظات:' }, value: safeString(caseData.checkout_notes) });
   }
 
   return { title: { en: 'Collection Information', ar: 'معلومات الاستلام' }, rows };
@@ -162,6 +182,17 @@ export function toEngineData(
 ): EngineDocData {
   const { caseData, devices, companySettings } = data;
 
+  // Only the devices collected in THIS checkout event (the latest batch); the
+  // collector is read from that batch (all its devices share one collector).
+  const collectedDevices = devicesInLatestBatch(devices);
+  const batchDevice = collectedDevices.find((d) => d.checked_out_at) ?? null;
+  const collectorInfo: CollectorInfo = {
+    name: batchDevice?.checkout_collector_name ?? caseData.checkout_collector_name,
+    mobile: batchDevice?.checkout_collector_mobile ?? caseData.checkout_collector_mobile,
+    id: batchDevice?.checkout_collector_id ?? caseData.checkout_collector_id,
+    relationship: batchDevice?.checkout_collector_relationship,
+  };
+
   // ---- Title ---------------------------------------------------------------
   const documentTitle: LabelText = {
     en: 'DEVICE CHECKOUT / RETURN FORM',
@@ -169,7 +200,7 @@ export function toEngineData(
   };
 
   // ---- Case-info header ----------------------------------------------------
-  const caseInfo: CaseInfoBlock = caseInfoBlock(caseData);
+  const caseInfo: CaseInfoBlock = caseInfoBlock(caseData, collectedDevices.length, devices.length);
 
   // ---- Customer party ------------------------------------------------------
   const to: PartyBlock = {
@@ -193,11 +224,11 @@ export function toEngineData(
   const devicesBlock: DevicesBlock = {
     title: { en: 'Device(s) Returned', ar: 'الأجهزة المرتجعة' },
     columns: checkoutDeviceColumns(),
-    rows: devices.map(deviceRow),
+    rows: collectedDevices.map(deviceRow),
   };
 
   // ---- Collector block -----------------------------------------------------
-  const collector: CollectorBlock = collectorBlock(caseData);
+  const collector: CollectorBlock = collectorBlock(caseData, collectorInfo);
 
   // ---- Legal terms / consent ----------------------------------------------
   const legalTerms: LegalTermsBlock = legalTermsBlock(companySettings);
