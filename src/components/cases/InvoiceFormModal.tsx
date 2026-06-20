@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId, useRef } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Trash2, Search, FileText, Download, DollarSign, FileBarChart, Briefcase, Calculator, Package, Info, X, Percent, Lock } from 'lucide-react';
 import { Modal } from '../ui/Modal';
@@ -17,7 +17,7 @@ import { getInvoiceEditability } from '../../lib/invoicePermissions';
 import { listTemplates, recordTemplateUsage } from '../../lib/documentTemplatesService';
 import { templateKeys } from '../../lib/queryKeys';
 import { sanitizeHtml } from '../../lib/sanitizeHtml';
-import { RichTextEditor, type RichTextEditorHandle } from '../ui/RichTextEditor';
+import { RichTextEditor } from '../ui/RichTextEditor';
 import { resolveInvoiceTermsHtml, resolveTermsHtmlFromContent } from '../../lib/invoiceTermsService';
 
 interface LineItemTemplate {
@@ -117,7 +117,6 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
   const [selectedQuoteId, setSelectedQuoteId] = useState<string>('');
   const [showTermsTemplates, setShowTermsTemplates] = useState(false);
   const [editingTerms, setEditingTerms] = useState(false);
-  const termsEditorRef = useRef<RichTextEditorHandle>(null);
   const [invoiceNumber, setInvoiceNumber] = useState<string>('');
   const [caseNumber, setCaseNumber] = useState<string>('');
   const [selectedCaseId, setSelectedCaseId] = useState<string>(caseId || '');
@@ -140,15 +139,19 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
 
   const [dueDateManuallySet, setDueDateManuallySet] = useState(false);
 
-  const buildTermsOverlay = () => ({
-    invoice: {
-      due_date: invoiceData.due_date ? toDateInputValue(invoiceData.due_date) : '',
-      due_days: invoiceData.invoice_date && invoiceData.due_date
-        ? String(Math.max(0, Math.round(
-            (new Date(invoiceData.due_date).getTime() - new Date(invoiceData.invoice_date).getTime()) / 86_400_000)))
-        : '',
-    },
-  });
+  const buildTermsOverlay = () => {
+    let dueDays = '';
+    if (invoiceData.invoice_date && invoiceData.due_date) {
+      const ms = new Date(invoiceData.due_date).getTime() - new Date(invoiceData.invoice_date).getTime();
+      if (!Number.isNaN(ms)) dueDays = String(Math.max(0, Math.round(ms / 86_400_000)));
+    }
+    return {
+      invoice: {
+        due_date: invoiceData.due_date ? toDateInputValue(invoiceData.due_date) : '',
+        due_days: dueDays,
+      },
+    };
+  };
 
   useEffect(() => {
     if (!isOpen || initialData) return; // edit mode keeps saved terms
@@ -161,7 +164,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
       if (!cancelled && html) {
         setInvoiceData((prev) => (prev.terms_and_conditions ? prev : { ...prev, terms_and_conditions: html }));
       }
-    })();
+    })().catch(() => { /* best-effort default terms; empty state renders otherwise */ });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialData, selectedCaseId, caseId, customerId]);
@@ -389,6 +392,9 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
       discount_amount: quoteData.discount_amount ?? 0,
     }));
 
+    // Quote selection is an explicit action: refresh terms from the default
+    // template with quote context. Intentionally replaces current terms, unlike
+    // the passive on-open auto-fill (which only fills when terms are empty).
     const defaultHtml = await resolveInvoiceTermsHtml({
       refs: { caseId: selectedCaseId || caseId, customerId: customerId ?? undefined, quoteId },
       overlay: buildTermsOverlay(),
@@ -444,13 +450,17 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
   };
 
   const applyTermsTemplate = async (template: InvoiceTermsTemplate) => {
-    const html = await resolveTermsHtmlFromContent(template.content ?? '', {
-      refs: { caseId: selectedCaseId || caseId, customerId: customerId ?? undefined },
-      overlay: buildTermsOverlay(),
-    });
-    setInvoiceData((prev) => ({ ...prev, terms_and_conditions: html }));
-    setShowTermsTemplates(false);
-    void recordTemplateUsage(template.id);
+    try {
+      const html = await resolveTermsHtmlFromContent(template.content ?? '', {
+        refs: { caseId: selectedCaseId || caseId, customerId: customerId ?? undefined },
+        overlay: buildTermsOverlay(),
+      });
+      setInvoiceData((prev) => ({ ...prev, terms_and_conditions: html }));
+      setShowTermsTemplates(false);
+      void recordTemplateUsage(template.id);
+    } catch {
+      toast.error('Could not apply the template. Please try again.');
+    }
   };
 
   const docCurrency = invoiceData.currency || baseCurrency || currencyFormat.currencyCode;
@@ -1028,7 +1038,6 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 )}
                 {editingTerms ? (
                   <RichTextEditor
-                    ref={termsEditorRef}
                     value={invoiceData.terms_and_conditions}
                     onChange={(html) => setInvoiceData({ ...invoiceData, terms_and_conditions: html })}
                     minHeight="160px"
