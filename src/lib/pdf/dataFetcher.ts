@@ -384,6 +384,12 @@ async function fetchCaseDevices(caseId: string): Promise<DeviceData[]> {
     role: device.device_role_id ? roleMap.get(device.device_role_id) ?? undefined : undefined,
     notes: device.symptoms ?? (device.accessories ? device.accessories.join(', ') : undefined),
     device_problem: device.symptoms ?? undefined,
+    checked_out_at: device.checked_out_at ?? undefined,
+    checkout_batch_id: device.checkout_batch_id ?? undefined,
+    checkout_collector_name: device.checkout_collector_name ?? undefined,
+    checkout_collector_mobile: device.checkout_collector_mobile ?? undefined,
+    checkout_collector_id: device.checkout_collector_id ?? undefined,
+    checkout_collector_relationship: device.checkout_collector_relationship ?? undefined,
   }));
 }
 

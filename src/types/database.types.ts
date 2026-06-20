@@ -1535,6 +1535,13 @@ export type Database = {
           business_unit_id: string | null
           capacity_id: string | null
           case_id: string
+          checked_out_at: string | null
+          checkout_batch_id: string | null
+          checkout_by: string | null
+          checkout_collector_id: string | null
+          checkout_collector_mobile: string | null
+          checkout_collector_name: string | null
+          checkout_collector_relationship: string | null
           condition_id: string | null
           created_at: string
           created_by: string | null
@@ -1573,6 +1580,13 @@ export type Database = {
           business_unit_id?: string | null
           capacity_id?: string | null
           case_id: string
+          checked_out_at?: string | null
+          checkout_batch_id?: string | null
+          checkout_by?: string | null
+          checkout_collector_id?: string | null
+          checkout_collector_mobile?: string | null
+          checkout_collector_name?: string | null
+          checkout_collector_relationship?: string | null
           condition_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1611,6 +1625,13 @@ export type Database = {
           business_unit_id?: string | null
           capacity_id?: string | null
           case_id?: string
+          checked_out_at?: string | null
+          checkout_batch_id?: string | null
+          checkout_by?: string | null
+          checkout_collector_id?: string | null
+          checkout_collector_mobile?: string | null
+          checkout_collector_name?: string | null
+          checkout_collector_relationship?: string | null
           condition_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -16895,6 +16916,13 @@ export type Database = {
           business_unit_id: string | null
           capacity_id: string | null
           case_id: string
+          checked_out_at: string | null
+          checkout_batch_id: string | null
+          checkout_by: string | null
+          checkout_collector_id: string | null
+          checkout_collector_mobile: string | null
+          checkout_collector_name: string | null
+          checkout_collector_relationship: string | null
           condition_id: string | null
           created_at: string
           created_by: string | null
@@ -17051,6 +17079,7 @@ export type Database = {
           p_collector_id?: string
           p_collector_mobile: string
           p_collector_name: string
+          p_collector_relationship?: string
           p_device_ids?: string[]
           p_recovery_outcome?: string
         }

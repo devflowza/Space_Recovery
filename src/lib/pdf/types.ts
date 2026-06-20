@@ -58,6 +58,13 @@ export interface DeviceData {
   role?: string;
   notes?: string;
   device_problem?: string;
+  /** Per-device checkout state (Stage 13). `checked_out_at` null = still in the lab. */
+  checked_out_at?: string;
+  checkout_batch_id?: string;
+  checkout_collector_name?: string;
+  checkout_collector_mobile?: string;
+  checkout_collector_id?: string;
+  checkout_collector_relationship?: string;
 }
 
 export interface CompanySettingsData {
