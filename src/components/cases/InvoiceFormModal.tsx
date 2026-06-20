@@ -549,11 +549,32 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
         )}
 
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="bg-slate-100 p-1.5 rounded-lg">
-              <FileText className="w-4 h-4 text-slate-600" />
+          <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <div className="bg-slate-100 p-1.5 rounded-lg">
+                <FileText className="w-4 h-4 text-slate-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-900">Invoice Details</h3>
             </div>
-            <h3 className="text-sm font-semibold text-slate-900">Invoice Details</h3>
+            {quotes && quotes.length > 0 && !initialData && (
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Download className="w-3.5 h-3.5 text-slate-400 shrink-0 hidden sm:block" />
+                <select
+                  aria-label="Convert from an existing quote"
+                  value={selectedQuoteId}
+                  onChange={(e) => handleQuoteSelection(e.target.value)}
+                  className="w-full sm:w-auto sm:max-w-[16rem] px-2.5 py-1.5 text-xs border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                >
+                  <option value="">Convert from a quote…</option>
+                  {quotes.map((quote) => (
+                    <option key={quote.id} value={quote.id}>
+                      {quote.quote_number} - {quote.title} ({currencyFormat.currencySymbol}
+                      {quote.total_amount?.toFixed(2)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           <div className="space-y-2.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
@@ -615,18 +636,18 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
               </div>
             </div>
 
-            <div className="md:col-span-1">
-              <Input
-                label="Invoice Title"
-                value={invoiceData.title}
-                onChange={(e) => setInvoiceData({ ...invoiceData, title: e.target.value })}
-                placeholder="e.g., Data Recovery Services Invoice"
-                required
-                disabled={isRestricted}
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5">
+              <div className="md:col-span-2">
+                <Input
+                  label="Invoice Title"
+                  value={invoiceData.title}
+                  onChange={(e) => setInvoiceData({ ...invoiceData, title: e.target.value })}
+                  placeholder="e.g., Data Recovery Services Invoice"
+                  required
+                  disabled={isRestricted}
+                />
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
               <div className="md:col-span-1">
                 <Input
                   label="Invoice Date"
@@ -677,30 +698,6 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
             )}
           </div>
         </div>
-
-        {quotes && quotes.length > 0 && !initialData && (
-          <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="bg-slate-100 p-1.5 rounded-lg">
-                <Download className="w-4 h-4 text-slate-600" />
-              </div>
-              <h3 className="text-sm font-semibold text-slate-900">Convert from Existing Quote</h3>
-            </div>
-            <select
-              value={selectedQuoteId}
-              onChange={(e) => handleQuoteSelection(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-            >
-              <option value="">Select a quote to import...</option>
-              {quotes.map((quote) => (
-                <option key={quote.id} value={quote.id}>
-                  {quote.quote_number} - {quote.title} ({currencyFormat.currencySymbol}
-                  {quote.total_amount?.toFixed(2)})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
 
         <fieldset disabled={isRestricted} className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm min-w-0">
           <div className="flex items-center justify-between mb-3">
