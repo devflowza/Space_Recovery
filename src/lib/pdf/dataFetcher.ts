@@ -387,7 +387,7 @@ async function fetchCaseDevices(caseId: string): Promise<DeviceData[]> {
   }));
 }
 
-async function fetchCompanySettings(): Promise<CompanySettingsData> {
+export async function fetchCompanySettings(): Promise<CompanySettingsData> {
   try {
     const settings = await getOrCreateCompanySettings();
     return {

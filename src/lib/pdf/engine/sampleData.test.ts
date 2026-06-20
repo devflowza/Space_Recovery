@@ -3,7 +3,7 @@ import type { DynamicContent } from 'pdfmake/interfaces';
 import { BUILT_IN_TEMPLATE_CONFIGS, type TemplateDocumentType } from '../templateConfig';
 import { buildPreviewEngineData } from './sampleData';
 import { renderTemplate } from './renderTemplate';
-import type { TranslationContext } from '../types';
+import type { CompanySettingsData, TranslationContext } from '../types';
 
 // ---------------------------------------------------------------------------
 // Regression guard for the broken live preview: BEFORE the fix every doc type
@@ -69,5 +69,31 @@ describe('buildPreviewEngineData', () => {
       texts.some((t) => t.includes(MARKERS[docType])),
       `${docType} preview should contain "${MARKERS[docType]}"`,
     ).toBe(true);
+  });
+
+  it('renders the tenant company in place of the sample company when provided', () => {
+    const config = BUILT_IN_TEMPLATE_CONFIGS.quote;
+    const tenant = {
+      basic_info: { company_name: 'Tenant Recovery Labs', legal_name: 'Tenant Recovery Labs LLC' },
+      location: { address_line1: '1 Tenant Way', city: 'Muscat', country: 'Oman' },
+      contact_info: { phone_primary: '+968 1234 5678', email_general: 'lab@tenant.example' },
+      branding: {},
+      online_presence: {},
+      legal_compliance: {},
+      localization: { document_language_settings: { mode: 'english_only', secondary_language: null } },
+    } as unknown as CompanySettingsData;
+
+    const data = buildPreviewEngineData('quote', config, tenant);
+    const def = renderTemplate(config, data, ctx, 'LOGO', 'QR');
+    const texts: string[] = [];
+    collectText(def.content, texts);
+    if (typeof def.header === 'function') collectText((def.header as DynamicContent)(1, 1, pageSize), texts);
+    if (typeof def.footer === 'function') collectText((def.footer as DynamicContent)(1, 1, pageSize), texts);
+
+    // The tenant's company identity + contact (from companySettings) replace the
+    // sample company; the sample customer/line items stay illustrative.
+    expect(texts.some((t) => t.includes('Tenant Recovery Labs'))).toBe(true);
+    expect(texts.some((t) => t.includes('+968 1234 5678'))).toBe(true);
+    expect(texts.some((t) => t.includes('RAID-5 logical recovery'))).toBe(true);
   });
 });
