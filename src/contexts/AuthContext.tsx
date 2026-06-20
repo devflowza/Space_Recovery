@@ -2,7 +2,8 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 import { mfaService } from '../lib/mfaService';
-import { logger } from '../lib/logger';
+import { rolePermissionsService } from '../lib/rolePermissionsService';
+import { logger, setSentryUser } from '../lib/logger';
 
 interface Profile {
   id: string;
@@ -55,12 +56,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // that resolves after logout can't flash the Profile Error card or resurrect
   // a stale profile.
   const authEpoch = useRef(0);
+  // Set by signOut() so the SIGNED_OUT handler can tell a deliberate logout
+  // apart from a token-expiry / revoked-refresh eject (H4) and leave the login
+  // page a breadcrumb to explain the latter.
+  const userInitiatedSignOut = useRef(false);
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string, force = false) => {
     // Boot fires this twice (getSession() resolution AND the INITIAL_SESSION
-    // auth event); dedupe concurrent fetches for the same user. Sequential
-    // calls (refreshProfile) still go through.
-    if (profileFetchInFlight.current === userId) return;
+    // auth event); dedupe concurrent fetches for the same user. An explicit
+    // refreshProfile() passes force to bypass the guard (L8) so a manual
+    // refresh isn't silently dropped while a boot fetch is still in flight.
+    if (!force && profileFetchInFlight.current === userId) return;
     profileFetchInFlight.current = userId;
     const epoch = authEpoch.current;
     const isStale = () => authEpoch.current !== epoch;
@@ -170,9 +176,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileCache.current = null;
           setProfileStatus('loading');
           setMfaPending(false);
+          // A SIGNED_OUT with no preceding signOut() is an expiry / revoked
+          // refresh token, not a deliberate logout — flag it so the login page
+          // shows "session expired" instead of a silent eject (H4). INITIAL_SESSION
+          // with no user (cold boot) is not a sign-out, so scope to SIGNED_OUT.
+          if (event === 'SIGNED_OUT' && !userInitiatedSignOut.current) {
+            localStorage.setItem('auth_session_expired', '1');
+          }
+          userInitiatedSignOut.current = false;
+          // Drop the previous user's role-permission cache + tenant pointer so a
+          // different user on the same device can't inherit them (H6, L5).
+          rolePermissionsService.clearCache();
+          localStorage.removeItem('tenant_id');
           setLoading(false);
         }
-      })();
+      })().catch((e) => logger.error('Auth state change handler failed:', e));
     });
 
     return () => {
@@ -181,42 +199,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [fetchProfile, checkMFAStatus]);
 
+  // M8: attach the signed-in user to telemetry so captured errors / RLS
+  // denials carry id + tenant + role context; clear it on sign-out.
   useEffect(() => {
-    if (!user) return;
-
-    const INACTIVITY_LIMIT = 30 * 60 * 1000;
-    const WARNING_BEFORE = 5 * 60 * 1000;
-    let lastActivity = Date.now();
-    let warningShown = false;
-
-    const resetTimer = () => {
-      lastActivity = Date.now();
-      warningShown = false;
-    };
-
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'] as const;
-    events.forEach(e => window.addEventListener(e, resetTimer));
-
-    const interval = setInterval(() => {
-      const idle = Date.now() - lastActivity;
-      if (idle >= INACTIVITY_LIMIT) {
-        clearInterval(interval);
-        events.forEach(e => window.removeEventListener(e, resetTimer));
-        signOut();
-      } else if (idle >= INACTIVITY_LIMIT - WARNING_BEFORE && !warningShown) {
-        warningShown = true;
-      }
-    }, 60_000);
-
-    return () => {
-      clearInterval(interval);
-      events.forEach(e => window.removeEventListener(e, resetTimer));
-    };
-  }, [user]);
+    if (user && profile) {
+      setSentryUser({ id: user.id, email: user.email, tenant_id: profile.tenant_id, role: profile.role });
+    } else if (!user) {
+      setSentryUser(null);
+    }
+  }, [user, profile]);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user.id, true);
     }
   }, [user, fetchProfile]);
 
@@ -261,11 +256,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // the SIGNED_OUT event redirects. Clearing `profile` while `user` is still
     // set and `loading` is false is what flashed the Profile Error card.
     authEpoch.current++;
+    userInitiatedSignOut.current = true;
     setLoading(true);
     profileCache.current = null;
     setProfile(null);
     setProfileStatus('loading');
     setMfaPending(false);
+    rolePermissionsService.clearCache();
     localStorage.removeItem('tenant_id');
     try {
       await supabase.auth.signOut();
@@ -274,6 +271,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     }
   }, []);
+
+  // Auto sign-out after inactivity. Keyed on user?.id (not the user object) so
+  // an hourly TOKEN_REFRESHED — which mints a new User identity for the same
+  // person — doesn't reset the idle clock (L2). Placed after signOut so it can
+  // depend on the stable callback.
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const INACTIVITY_LIMIT = 30 * 60 * 1000;
+    let lastActivity = Date.now();
+
+    const resetTimer = () => { lastActivity = Date.now(); };
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'] as const;
+    events.forEach(e => window.addEventListener(e, resetTimer));
+
+    const interval = setInterval(() => {
+      if (Date.now() - lastActivity >= INACTIVITY_LIMIT) {
+        clearInterval(interval);
+        events.forEach(e => window.removeEventListener(e, resetTimer));
+        void signOut();
+      }
+    }, 60_000);
+
+    return () => {
+      clearInterval(interval);
+      events.forEach(e => window.removeEventListener(e, resetTimer));
+    };
+  }, [user?.id, signOut]);
 
   // Memoized so the context only changes when auth state actually changes —
   // 59 files consume useAuth(), so an unstable value re-renders most of the app.

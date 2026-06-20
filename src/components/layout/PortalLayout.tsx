@@ -76,7 +76,8 @@ export const PortalLayout: React.FC = () => {
   const handleLogout = () => {
     setMenuOpen(false);
     logout();
-    navigate('/portal/login');
+    // replace so the back button can't return to a now-protected portal page (L7).
+    navigate('/portal/login', { replace: true });
   };
 
   const handleOpenSettings = () => {
