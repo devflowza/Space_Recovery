@@ -117,6 +117,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     }
   };
 
+  // Keep a live ref to handleInput so the imperative insertAtCursor (built once via
+  // useImperativeHandle with []) never calls a stale closure over value/onChange.
+  const handleInputRef = useRef(handleInput);
+  handleInputRef.current = handleInput;
+
   const execCommand = (command: string, value?: string) => {
     document.execCommand(command, false, value);
     editorRef.current?.focus();
@@ -127,7 +132,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     insertAtCursor: (text: string) => {
       editorRef.current?.focus();
       document.execCommand('insertText', false, text);
-      handleInput();
+      handleInputRef.current();
     },
   }), []);
 
