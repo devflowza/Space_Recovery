@@ -20,8 +20,10 @@
  */
 
 import type { DocumentTemplateConfig, TemplateDocumentType } from '../templateConfig';
-import type { TranslationContext } from '../types';
+import type { CompanySettingsData, TranslationContext } from '../types';
 import { renderTemplate } from './renderTemplate';
+import { applyTenantLanguage } from './applyTenantLanguage';
+import { buildTenantPreviewContext } from './tenantPreviewContext';
 import { createPdfWithFonts } from '../fonts';
 import { withTimeout } from '../translationContext';
 import { buildPreviewEngineData, sampleInvoiceData } from './sampleData';
@@ -97,16 +99,25 @@ export function previewTemplate(
   logo?: BrandingImage | null,
   stampImage?: BrandingImage | null,
   signatureImage?: BrandingImage | null,
+  companySettings?: CompanySettingsData,
 ): Promise<PreviewResult> {
-  const engineData = buildPreviewEngineData(docType, config);
+  // When the tenant's company settings are supplied, render the way the generator
+  // does: the tenant's real company replaces the sample company, and the config
+  // `language` + translation context follow the tenant's document-language
+  // settings — so the preview predicts the generated PDF instead of a neutral
+  // bilingual sample. Without it, the legacy sample-company + English-context
+  // behavior is preserved (callers/tests that pass no tenant settings).
+  const effectiveConfig = companySettings ? applyTenantLanguage(config, companySettings) : config;
+  const effectiveCtx = companySettings ? buildTenantPreviewContext(companySettings) : ctx;
+  const engineData = buildPreviewEngineData(docType, effectiveConfig, companySettings);
   // Draw the real logo when resolved, else a labeled placeholder box; the QR is
   // passed as null so the QR surfaces render the REAL `qrPayload` (a native,
   // scannable pdfmake QR) instead of the meaningless 1×1 placeholder square.
   const { logo: previewLogo, warnings } = resolvePreviewLogo(logo);
   const docDefinition = renderTemplate(
-    config,
+    effectiveConfig,
     engineData,
-    ctx,
+    effectiveCtx,
     previewLogo,
     null,
     stampImage ?? null,

@@ -13,6 +13,7 @@
 
 import type {
   ChainOfCustodyDocumentData,
+  CompanySettingsData,
   InvoiceDocumentData,
   PayslipDocumentData,
   PaymentReceiptDocumentData,
@@ -302,37 +303,55 @@ export function sampleStockLabelData(): StockLabelData {
 }
 
 /**
+ * Swap the illustrative {@link SAMPLE_COMPANY} for the tenant's REAL company
+ * settings when provided, so the Studio preview shows the tenant's own
+ * header/branding/banking (the customer + line items stay sample). Returns the
+ * data untouched when no override is given (legacy callers / tests).
+ */
+function withCompany<T extends { companySettings: CompanySettingsData }>(
+  data: T,
+  companySettings: CompanySettingsData | undefined,
+): T {
+  return companySettings ? { ...data, companySettings } : data;
+}
+
+/**
  * Resolve a document type to render-ready {@link EngineDocData} from sample data,
  * routing through the matching adapter. The fallback is the invoice sample.
+ *
+ * When `companySettings` is supplied, the tenant's real company settings replace
+ * the sample company so the preview reflects the tenant's own branding/language;
+ * omit it (tests, callers without a tenant) to keep the neutral sample company.
  */
 export function buildPreviewEngineData(
   docType: TemplateDocumentType,
   config: DocumentTemplateConfig,
+  companySettings?: CompanySettingsData,
 ): EngineDocData {
   switch (docType) {
     case 'invoice':
-      return invoiceToEngine(sampleInvoiceData(), config);
+      return invoiceToEngine(withCompany(sampleInvoiceData(), companySettings), config);
     case 'quote':
-      return quoteToEngine(sampleQuoteData(), config);
+      return quoteToEngine(withCompany(sampleQuoteData(), companySettings), config);
     case 'payment_receipt':
-      return paymentReceiptToEngine(samplePaymentReceiptData(), config);
+      return paymentReceiptToEngine(withCompany(samplePaymentReceiptData(), companySettings), config);
     case 'office_receipt':
-      return receiptToEngine(sampleReceiptData(), config, 'office');
+      return receiptToEngine(withCompany(sampleReceiptData(), companySettings), config, 'office');
     case 'customer_copy':
-      return receiptToEngine(sampleReceiptData(), config, 'customer');
+      return receiptToEngine(withCompany(sampleReceiptData(), companySettings), config, 'customer');
     case 'checkout_form':
-      return checkoutToEngine(sampleCheckoutData(), config);
+      return checkoutToEngine(withCompany(sampleCheckoutData(), companySettings), config);
     case 'case_label':
-      return caseLabelToEngine(sampleReceiptData(), config);
+      return caseLabelToEngine(withCompany(sampleReceiptData(), companySettings), config);
     case 'chain_of_custody':
-      return chainOfCustodyToEngine(sampleChainOfCustodyData(), config);
+      return chainOfCustodyToEngine(withCompany(sampleChainOfCustodyData(), companySettings), config);
     case 'payslip':
-      return payslipToEngine(samplePayslipData(), config);
+      return payslipToEngine(withCompany(samplePayslipData(), companySettings), config);
     case 'report':
-      return reportToEngine(sampleReportData(), config);
+      return reportToEngine(withCompany(sampleReportData(), companySettings), config);
     case 'stock_label':
       return stockLabelToEngine(sampleStockLabelData(), config);
     default:
-      return invoiceToEngine(sampleInvoiceData(), config);
+      return invoiceToEngine(withCompany(sampleInvoiceData(), companySettings), config);
   }
 }

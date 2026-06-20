@@ -44,6 +44,8 @@ import {
 import { DOC_TYPE_LABELS } from '../../../pages/settings/documentTypeMeta';
 import { getCompanyLogo, getCompanyStamp, getCompanySignature } from '../../../lib/fileStorageService';
 import { resolveBrandingImage, type BrandingImage } from '../../../lib/pdf/brandingImage';
+import { fetchCompanySettings } from '../../../lib/pdf/dataFetcher';
+import type { CompanySettingsData } from '../../../lib/pdf/types';
 import { GeneralTab } from './tabs/GeneralTab';
 import { HeaderFooterTab } from './tabs/HeaderFooterTab';
 import { TransactionTab } from './tabs/TransactionTab';
@@ -144,6 +146,7 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
   const [tenantLogo, setTenantLogo] = useState<BrandingImage | null>(null);
   const [tenantStamp, setTenantStamp] = useState<BrandingImage | null>(null);
   const [tenantSignature, setTenantSignature] = useState<BrandingImage | null>(null);
+  const [companySettings, setCompanySettings] = useState<CompanySettingsData | null>(null);
   const [previewWarnings, setPreviewWarnings] = useState<string[]>([]);
   const lastUrlRef = useRef<string | null>(null);
 
@@ -159,7 +162,10 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
         let warnings: string[] = [];
         if (dataSource === 'sample') {
           const { previewTemplate } = await import('../../../lib/pdf/engine/previewTemplate');
-          ({ url, warnings } = await previewTemplate(docType, resolved, undefined, tenantLogo, tenantStamp, tenantSignature));
+          // Pass the tenant's real company settings so the sample preview shows the
+          // tenant's own header/branding/language (predicting the generated PDF),
+          // not the neutral bilingual sample company.
+          ({ url, warnings } = await previewTemplate(docType, resolved, undefined, tenantLogo, tenantStamp, tenantSignature, companySettings ?? undefined));
         } else {
           const { previewDocumentForRecord } = await import('../../../lib/pdf/previewRecord');
           ({ url, warnings } = await previewDocumentForRecord(docType, dataSource, resolved));
@@ -184,7 +190,7 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [resolved, dataSource, docType, tenantLogo, tenantStamp, tenantSignature]);
+  }, [resolved, dataSource, docType, tenantLogo, tenantStamp, tenantSignature, companySettings]);
 
   useEffect(() => () => {
     if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
@@ -195,6 +201,9 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
   // warning chip).
   useEffect(() => {
     let cancelled = false;
+    fetchCompanySettings()
+      .then((cs) => { if (!cancelled) setCompanySettings(cs); })
+      .catch(() => { if (!cancelled) setCompanySettings(null); });
     getCompanyLogo('primary')
       .then((url) => resolveBrandingImage(url))
       .then((img) => { if (!cancelled) setTenantLogo(img); })
