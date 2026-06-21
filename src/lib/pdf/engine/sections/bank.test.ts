@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import { renderBank } from './bank';
+import { PDF_COLORS } from '../../styles';
 import type { EngineContext, EngineDocData } from '../types';
 
 function collectText(node: unknown, out: string[]): void {
@@ -30,6 +31,44 @@ function fontSizeOf(node: unknown, needle: string): number | undefined {
     if (r !== undefined) return r;
   }
   return undefined;
+}
+
+/** Find the `style` of the first text node whose text contains `needle`. */
+function styleOf(node: unknown, needle: string): string | undefined {
+  if (node == null || typeof node !== 'object') return undefined;
+  if (Array.isArray(node)) {
+    for (const c of node) {
+      const r = styleOf(c, needle);
+      if (r) return r;
+    }
+    return undefined;
+  }
+  const o = node as Record<string, unknown>;
+  if (typeof o.text === 'string' && o.text.includes(needle) && typeof o.style === 'string') return o.style;
+  for (const v of Object.values(o)) {
+    const r = styleOf(v, needle);
+    if (r) return r;
+  }
+  return undefined;
+}
+
+/** True when any node carries the given fillColor (i.e. a shaded header band). */
+function hasFill(node: unknown, color: string): boolean {
+  if (node == null || typeof node !== 'object') return false;
+  if (Array.isArray(node)) return node.some((c) => hasFill(c, color));
+  const o = node as Record<string, unknown>;
+  if (o.fillColor === color) return true;
+  return Object.values(o).some((v) => hasFill(v, color));
+}
+
+/** Bilingual (EN | AR) engine for header-translation assertions. */
+function engineBilingual(bankWidth?: 'auto' | 'half' | 'full'): EngineContext {
+  return {
+    config: {
+      language: { mode: 'bilingual_sidebyside', primary: 'en' },
+      sections: [{ key: 'bank', visible: true, order: 8, ...(bankWidth ? { bankWidth } : {}) }],
+    },
+  } as unknown as EngineContext;
 }
 
 const BANK_DATA = {
@@ -119,8 +158,17 @@ describe('renderBank — readability', () => {
     expect(fontSizeOf(renderBank(engine('inline'), BANK_DATA), 'Account No:')).toBe(9);
   });
 
-  it('renders the bank title at 9pt (>= body, bold)', () => {
-    expect(fontSizeOf(renderBank(engine(), BANK_DATA), 'Bank Account')).toBe(9);
+  it('renders the bank title on a shaded band with the shared bilingualHeader style', () => {
+    const out = renderBank(engine(), BANK_DATA);
+    // Same treatment as the other section headers (Customer Information, Details).
+    expect(styleOf(out, 'Bank Account')).toBe('bilingualHeader');
+    expect(hasFill(out, PDF_COLORS.background)).toBe(true);
+  });
+
+  it('shows the Arabic bank title in bilingual mode — even on a narrow box', () => {
+    const texts: string[] = [];
+    collectText(renderBank(engineBilingual(), BANK_DATA), texts);
+    expect(texts.some((t) => t.includes('تفاصيل البنك'))).toBe(true);
   });
 });
 
