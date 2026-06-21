@@ -143,6 +143,21 @@ describe('renderTemplate — typography group', () => {
     expect(styleSize(def, 'tableCell')).toBe(baseCell * 1.25);
     expect(styleSize(def, 'tableHeader')).toBe(11); // absolute override wins
   });
+
+  it('scales the table-cell alignment variants and section headers with the font size', () => {
+    const config = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
+      typography: { baseScale: 1.5 },
+    });
+    const def = renderTemplate(config, makeData(), englishCtx, null, null);
+    const cell = styleSize(def, 'tableCell');
+    expect(cell).toBe(8 * 1.5); // body cell scales
+    // The Qty (centered) and amount (right-aligned) line-item cells must match —
+    // the reported "font size not reflecting in the items" bug.
+    expect(styleSize(def, 'tableCellCenter')).toBe(cell);
+    expect(styleSize(def, 'tableCellRight')).toBe(cell);
+    // Section header titles (Customer Information, etc.) scale too.
+    expect(styleSize(def, 'bilingualHeader')).toBe(9 * 1.5);
+  });
 });
 
 describe('renderTemplate — page numbers', () => {

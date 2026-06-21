@@ -66,27 +66,28 @@ export function buildBankBox(bank: BankBlock, engine: EngineContext): Content {
   const bilingual = isBilingualMode(engine.config.language);
   const fullWidth = disp.width === 'full';
 
-  // Full width keeps the bilingual EN-left / AR-right header; narrow boxes show
-  // the English title only (an AR title on a narrow box just crowds it).
-  let headerCell: Content;
-  if (fullWidth) {
-    const headerColumns: object[] = [
-      { text: en(bank.title, 'Bank Account'), fontSize: 9, bold: true, color: PDF_COLORS.text, width: 'auto' },
-      { text: '', width: '*' },
-    ];
-    if (bilingual) {
-      headerColumns.push({
-        text: ar(bank.title) ?? 'تفاصيل البنك',
-        fontSize: 9, bold: true, color: PDF_COLORS.text, alignment: 'right', width: 'auto',
-      });
-    }
-    headerCell = { columns: headerColumns, columnGap: 6, fillColor: PDF_COLORS.background, margin: [6, 3, 6, 3] } as Content;
-  } else {
-    headerCell = {
-      text: en(bank.title, 'Bank Account'),
-      fontSize: 9, bold: true, color: PDF_COLORS.text, fillColor: PDF_COLORS.background, margin: [6, 3, 6, 3],
-    } as Content;
+  // Header band — the same shaded, bilingual treatment as the other section
+  // boxes (Customer Information, Details): the shared `bilingualHeader` style
+  // (accent), English title left and the Arabic translation right when bilingual.
+  // Applied at every width so the heading always carries its translation.
+  const headerColumns: object[] = [
+    { text: en(bank.title, 'Bank Account'), style: 'bilingualHeader', width: 'auto' },
+    { text: '', width: '*' },
+  ];
+  if (bilingual) {
+    headerColumns.push({
+      text: ar(bank.title) ?? 'تفاصيل البنك',
+      style: 'bilingualHeader',
+      alignment: 'right',
+      width: 'auto',
+    });
   }
+  const headerCell: Content = {
+    columns: headerColumns,
+    columnGap: 6,
+    fillColor: PDF_COLORS.background,
+    margin: [6, 4, 6, 4],
+  } as Content;
 
   const bodyCell: Content = {
     stack: bank.rows.map((r) => ({

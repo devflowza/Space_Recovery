@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import { renderTerms, renderRecordTerms } from './terms';
+import { PDF_COLORS } from '../../styles';
 import type { EngineContext, EngineDocData } from '../types';
 import type {
   DocumentTemplateConfig,
@@ -34,6 +35,34 @@ function fontSizeOf(node: unknown, needle: string): number | undefined {
   for (const v of Object.values(o)) {
     const r = fontSizeOf(v, needle);
     if (r !== undefined) return r;
+  }
+  return undefined;
+}
+
+/** True when any node carries the given fillColor (i.e. a shaded header band). */
+function hasFill(node: unknown, color: string): boolean {
+  if (node == null || typeof node !== 'object') return false;
+  if (Array.isArray(node)) return node.some((c) => hasFill(c, color));
+  const o = node as Record<string, unknown>;
+  if (o.fillColor === color) return true;
+  return Object.values(o).some((v) => hasFill(v, color));
+}
+
+/** Find the `style` of the first text node whose text contains `needle`. */
+function styleOf(node: unknown, needle: string): string | undefined {
+  if (node == null || typeof node !== 'object') return undefined;
+  if (Array.isArray(node)) {
+    for (const c of node) {
+      const r = styleOf(c, needle);
+      if (r) return r;
+    }
+    return undefined;
+  }
+  const o = node as Record<string, unknown>;
+  if (typeof o.text === 'string' && o.text.includes(needle) && typeof o.style === 'string') return o.style;
+  for (const v of Object.values(o)) {
+    const r = styleOf(v, needle);
+    if (r) return r;
   }
   return undefined;
 }
@@ -161,6 +190,30 @@ describe('terms readability — body renders at the 9pt body tier', () => {
       withRecordTerms([{ title: { en: 'Quote Terms' }, body: 'No data, no fee. Valid 30 days.' }]),
     );
     expect(fontSizeOf(out, 'No data, no fee')).toBe(9);
+  });
+});
+
+describe('renderRecordTerms — header matches the other section boxes', () => {
+  // The per-record heading was plain bold text (no shaded band, English only).
+  // It now uses the same bilingual gray-band treatment as Customer Information.
+  it('renders the heading as a shaded bilingual band (EN + AR translation)', () => {
+    const out = renderRecordTerms(
+      engine({ language: BILINGUAL }),
+      withRecordTerms([{ title: { en: 'Quote Terms', ar: 'شروط العرض' }, body: 'No data, no fee.' }]),
+    );
+    const texts: string[] = [];
+    collectText(out, texts);
+    expect(texts.some((t) => t.includes('Quote Terms'))).toBe(true);
+    expect(texts.some((t) => t.includes('شروط العرض'))).toBe(true); // Arabic translation
+    expect(hasFill(out, PDF_COLORS.background)).toBe(true); // shaded header band
+  });
+
+  it('uses the shared bilingualHeader style for the heading', () => {
+    const out = renderRecordTerms(
+      engine({}),
+      withRecordTerms([{ title: { en: 'Quote Terms', ar: 'شروط العرض' }, body: 'No data, no fee.' }]),
+    );
+    expect(styleOf(out, 'Quote Terms')).toBe('bilingualHeader');
   });
 });
 

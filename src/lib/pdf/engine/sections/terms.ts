@@ -17,7 +17,7 @@
  */
 
 import type { Content } from 'pdfmake/interfaces';
-import { PDF_COLORS } from '../../styles';
+import { PDF_COLORS, createBilingualInfoBox } from '../../styles';
 import { htmlToPdfmake } from '../../htmlToPdfmake';
 import { decodeHtmlEntities } from '../../../sanitizeHtml';
 import { isBilingualMode, en, ar } from '../labels';
@@ -134,38 +134,25 @@ function stripLeadingHeadingHtml(html: string, title: string): string {
 }
 
 /**
- * The single full-width column built from the PER-RECORD terms blocks the adapter
- * resolved from the edited quote/invoice (the terms, then Notes). Each block's
- * body renders as rich content when the adapter marks it `format: 'html'` and as
- * plain prose otherwise. Empty blocks — or HTML producing nothing — are skipped.
- *
- * The section prints the block title as its heading, so a leading heading carried
- * inside the body that duplicates it (or a standard terms heading) is removed, and
- * HTML entities in plain-text bodies (e.g. a stored `&amp;`) are decoded.
+ * The body Content for one PER-RECORD terms block (the terms, or Notes) the
+ * adapter resolved from the edited quote/invoice. Renders as rich content when
+ * the adapter marks it `format: 'html'`, plain prose otherwise; returns null for
+ * an empty block. The block title is the box heading, so a leading heading inside
+ * the body that duplicates it (or a standard terms heading) is removed, and HTML
+ * entities in plain-text bodies (e.g. a stored `&amp;`) are decoded.
  */
-function perRecordColumn(blocks: TermsTextBlock[]): Content[] {
-  const stack: Content[] = [];
-  for (const b of blocks) {
-    const title = en(b.title);
-    const raw = (b.body ?? '').trim();
-    if (!raw) continue;
-    let bodyNode: Content;
-    if (b.format === 'html') {
-      const rich = htmlToPdfmake(stripLeadingHeadingHtml(raw, title));
-      if (rich.length === 0) continue;
-      bodyNode = { stack: rich, fontSize: 9, color: PDF_COLORS.textLight, lineHeight: 1.3 };
-    } else {
-      const text = stripLeadingTitleLine(decodeHtmlEntities(raw), title).trim();
-      if (!text) continue;
-      bodyNode = { text, fontSize: 9, color: PDF_COLORS.textLight, lineHeight: 1.3 };
-    }
-    if (stack.length > 0) stack.push({ text: '', margin: [0, 4, 0, 0] as [number, number, number, number] });
-    stack.push(
-      { text: title, fontSize: 9, bold: true, color: PDF_COLORS.text, alignment: 'left', margin: [0, 0, 0, 3] as [number, number, number, number] },
-      bodyNode,
-    );
+function recordBodyNode(b: TermsTextBlock): object | null {
+  const title = en(b.title);
+  const raw = (b.body ?? '').trim();
+  if (!raw) return null;
+  if (b.format === 'html') {
+    const rich = htmlToPdfmake(stripLeadingHeadingHtml(raw, title));
+    if (rich.length === 0) return null;
+    return { stack: rich, fontSize: 9, color: PDF_COLORS.textLight, lineHeight: 1.3 };
   }
-  return stack;
+  const text = stripLeadingTitleLine(decodeHtmlEntities(raw), title).trim();
+  if (!text) return null;
+  return { text, fontSize: 9, color: PDF_COLORS.textLight, lineHeight: 1.3 };
 }
 
 /**
@@ -197,6 +184,7 @@ export const renderRecordTerms: SectionRenderer = (
 ): Content | null => {
   const recordLabel = engine.config.labels.recordTerms;
   const notesLabel = engine.config.labels.notes ?? { en: 'Notes', ar: 'ملاحظات' };
+  const bilingual = isBilingualMode(engine.config.language);
   const rawBlocks = data.terms?.blocks ?? [];
   // A Studio rename overrides the per-record terms heading (but not the Notes block).
   const blocks = recordLabel
@@ -204,5 +192,16 @@ export const renderRecordTerms: SectionRenderer = (
         normalizeHeading(en(b.title)) === normalizeHeading(en(notesLabel)) ? b : { ...b, title: recordLabel },
       )
     : rawBlocks;
-  return termsBox(perRecordColumn(blocks), []);
+  // Each block renders as a bordered box with a shaded bilingual header band —
+  // the same `createBilingualInfoBox` treatment as Customer Information / Details,
+  // so the heading carries its Arabic translation and matches the other sections.
+  const boxes: Content[] = [];
+  for (const b of blocks) {
+    const body = recordBodyNode(b);
+    if (!body) continue;
+    if (boxes.length > 0) boxes.push({ text: '', margin: [0, 4, 0, 0] as [number, number, number, number] });
+    boxes.push(createBilingualInfoBox(en(b.title), bilingual ? ar(b.title) ?? null : null, [body]) as Content);
+  }
+  if (boxes.length === 0) return null;
+  return { stack: boxes, margin: [0, 8, 0, 0] as [number, number, number, number] };
 };

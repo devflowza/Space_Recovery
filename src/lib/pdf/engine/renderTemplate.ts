@@ -194,8 +194,18 @@ export function renderTemplate(
   // absent → today's sizes (parity).
   const styles: StyleDictionary = getStylesWithFont(baseFont);
   if (config.typography) {
-    for (const key of TYPOGRAPHY_STYLE_KEYS) {
-      styles[key] = { ...styles[key], fontSize: typography.sizeFor(key) };
+    // Scale EVERY named style by the font-size control: exposed keys honour any
+    // absolute per-style override via `sizeFor`, the rest scale by the base scale.
+    // (Mirrors the density pass below, which scales all styles — so the control
+    // reaches table-cell alignment variants, section headers, etc., not a subset.)
+    const exposed = new Set<string>(TYPOGRAPHY_STYLE_KEYS);
+    for (const key of Object.keys(styles)) {
+      const current = (styles[key] as { fontSize?: number }).fontSize;
+      if (typeof current !== 'number') continue;
+      const size = exposed.has(key)
+        ? typography.sizeFor(key as TypographyStyleKey)
+        : Math.round(current * typography.scale * 10) / 10;
+      styles[key] = { ...styles[key], fontSize: size };
     }
   }
 
