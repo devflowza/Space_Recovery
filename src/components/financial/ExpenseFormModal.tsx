@@ -74,7 +74,14 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
 
   useEffect(() => {
     if (initialData) {
-      setExpenseDate(initialData.expense_date || new Date().toISOString().split('T')[0]);
+      // expense_date is a timestamptz, so it arrives as a full ISO string; an
+      // <input type="date"> only accepts YYYY-MM-DD, so slice the date portion or
+      // the saved date renders blank on edit.
+      setExpenseDate(
+        initialData.expense_date
+          ? initialData.expense_date.slice(0, 10)
+          : new Date().toISOString().split('T')[0],
+      );
       setAmount(initialData.amount || 0);
       setDescription(initialData.description || '');
       setVendorName(initialData.vendor || '');

@@ -69,4 +69,21 @@ describe('ExpenseFormModal edit prefill (EXP-003a / EXP-003b)', () => {
     expect(screen.queryByText(/payment method/i)).toBeNull();
     expect(screen.queryByLabelText(/payment method/i)).toBeNull();
   });
+
+  it('pre-fills the date input from a full timestamptz value when editing (date must not vanish)', () => {
+    // expenses.expense_date is timestamptz, so a saved value arrives as a full ISO
+    // timestamp. <input type="date"> only accepts YYYY-MM-DD; feeding it the full
+    // timestamp blanks the field — the reported "date disappears on edit" bug.
+    const { container } = renderForm(
+      <ExpenseFormModal
+        isOpen
+        onClose={() => {}}
+        onSave={async () => {}}
+        initialData={{ id: 'e1', expense_date: '2026-06-01T00:00:00+00:00', amount: 10, description: 'x', status: 'pending' }}
+      />,
+    );
+    const dateInput = container.querySelector('input[type="date"]') as HTMLInputElement;
+    expect(dateInput).not.toBeNull();
+    expect(dateInput.value).toBe('2026-06-01');
+  });
 });
