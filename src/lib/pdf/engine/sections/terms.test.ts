@@ -253,3 +253,103 @@ describe('renderTerms — per-record terms (from the edited quote/invoice)', () 
     expect(renderTerms(engine({}), withRecordTerms([]))).toBeNull();
   });
 });
+
+describe('renderTerms — entity decoding & duplicate-heading suppression', () => {
+  function withRecordTerms(blocks: Array<{ title: LabelText; body: string; format?: 'html' | 'text' }>): EngineDocData {
+    return { terms: { title: { en: 'Terms & Conditions', ar: 'الشروط والأحكام' }, blocks } } as unknown as EngineDocData;
+  }
+
+  it('decodes HTML entities in plain-text per-record terms (&amp; → &)', () => {
+    const out = renderTerms(
+      engine({}),
+      withRecordTerms([
+        { title: { en: 'Terms & Conditions' }, body: 'Accepted Payments: Cash, Card, Cheque &amp; Bank Transfer.' },
+      ]),
+    );
+    const texts: string[] = [];
+    collectText(out, texts);
+    const joined = texts.join('\n');
+    expect(joined).toContain('Cheque & Bank Transfer');
+    expect(joined).not.toContain('&amp;');
+  });
+
+  it('decodes numeric and named entities (&#39; &nbsp; &lt;) in plain-text terms', () => {
+    const out = renderTerms(
+      engine({}),
+      withRecordTerms([
+        { title: { en: 'Notes' }, body: 'It&#39;s 50%&nbsp;advance &lt; balance.' },
+      ]),
+    );
+    const texts: string[] = [];
+    collectText(out, texts);
+    const joined = texts.join('\n');
+    expect(joined).toContain("It's 50%");
+    expect(joined).toContain('< balance.');
+    expect(joined).not.toContain('&#39;');
+    expect(joined).not.toContain('&nbsp;');
+  });
+
+  it('drops a leading heading line that duplicates the section title (plain text)', () => {
+    const out = renderTerms(
+      engine({}),
+      withRecordTerms([
+        { title: { en: 'Terms & Conditions' }, body: 'Terms & Conditions\nNo data, no fee. 50% deposit to begin.' },
+      ]),
+    );
+    const texts: string[] = [];
+    collectText(out, texts);
+    // The section prints the heading itself, so it must appear exactly once.
+    expect(texts.filter((t) => t.includes('Terms & Conditions')).length).toBe(1);
+    expect(texts.join('\n')).toContain('No data, no fee. 50% deposit to begin.');
+  });
+
+  it('keeps a leading line that is NOT the section title (real content, e.g. "No Data – No Fee")', () => {
+    const out = renderTerms(
+      engine({}),
+      withRecordTerms([
+        { title: { en: 'Terms & Conditions' }, body: 'No Data – No Fee: You only pay if recovery is successful.\nPayment: 50% advance.' },
+      ]),
+    );
+    const texts: string[] = [];
+    collectText(out, texts);
+    const joined = texts.join('\n');
+    expect(joined).toContain('No Data – No Fee: You only pay if recovery is successful.');
+    // The section heading still renders exactly once (the content is not a heading).
+    expect(texts.filter((t) => t === 'Terms & Conditions').length).toBe(1);
+  });
+
+  it('drops a leading heading ELEMENT that duplicates the section title (rich HTML invoice terms)', () => {
+    const out = renderTerms(
+      engine({}),
+      withRecordTerms([
+        {
+          title: { en: 'Payment Terms' },
+          body: '<div class="payment-terms"><h3>Payment Terms</h3><p>Net 30 from invoice date.</p></div>',
+          format: 'html',
+        },
+      ]),
+    );
+    const texts: string[] = [];
+    collectText(out, texts);
+    expect(texts.filter((t) => t.includes('Payment Terms')).length).toBe(1);
+    expect(texts.join('\n')).toContain('Net 30 from invoice date.');
+  });
+
+  it('keeps a rich HTML heading that does NOT match the section title', () => {
+    const out = renderTerms(
+      engine({}),
+      withRecordTerms([
+        {
+          title: { en: 'Terms & Conditions' },
+          body: '<h3>No Data – No Fee</h3><p>You only pay if recovery is successful.</p>',
+          format: 'html',
+        },
+      ]),
+    );
+    const texts: string[] = [];
+    collectText(out, texts);
+    const joined = texts.join('\n');
+    expect(joined).toContain('No Data – No Fee');
+    expect(joined).toContain('You only pay if recovery is successful.');
+  });
+});

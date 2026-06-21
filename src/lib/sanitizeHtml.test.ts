@@ -1,6 +1,40 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
-import { sanitizeHtml } from './sanitizeHtml';
+import { sanitizeHtml, decodeHtmlEntities, htmlToPlainText } from './sanitizeHtml';
+
+describe('decodeHtmlEntities', () => {
+  it('decodes &amp; to &', () => {
+    expect(decodeHtmlEntities('Cash, Card, Cheque &amp; Bank Transfer')).toBe('Cash, Card, Cheque & Bank Transfer');
+  });
+  it('decodes numeric and named entities', () => {
+    expect(decodeHtmlEntities('It&#39;s &lt;b&gt; &amp; &nbsp;done')).toBe("It's <b> &  done");
+  });
+  it('decodes &amp; last so &amp;lt; becomes &lt; (not <)', () => {
+    expect(decodeHtmlEntities('&amp;lt;')).toBe('&lt;');
+  });
+  it('returns empty input unchanged', () => {
+    expect(decodeHtmlEntities('')).toBe('');
+  });
+});
+
+describe('htmlToPlainText', () => {
+  it('strips tags and decodes entities', () => {
+    expect(htmlToPlainText('<p>Cheque &amp; Bank Transfer</p>')).toBe('Cheque & Bank Transfer');
+  });
+  it('turns block boundaries into newlines', () => {
+    const out = htmlToPlainText('<h3>Terms &amp; Conditions</h3><p>No data, no fee.</p><p>50% advance.</p>');
+    expect(out).toBe('Terms & Conditions\nNo data, no fee.\n50% advance.');
+  });
+  it('renders list items on separate lines', () => {
+    expect(htmlToPlainText('<ul><li>Cash</li><li>Card</li></ul>')).toBe('Cash\nCard');
+  });
+  it('honours <br> as a line break', () => {
+    expect(htmlToPlainText('Line one<br>Line two')).toBe('Line one\nLine two');
+  });
+  it('returns empty string for empty input', () => {
+    expect(htmlToPlainText('')).toBe('');
+  });
+});
 
 describe('sanitizeHtml — existing formatting preserved', () => {
   it('keeps bold, lists, and inline color', () => {

@@ -136,3 +136,73 @@ export function stripHtmlTags(html: string): string {
   const doc = parser.parseFromString(html, 'text/html');
   return doc.body.textContent || '';
 }
+
+function fromCodePoint(cp: number): string {
+  try {
+    return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Decode the common HTML entities to plain text. Pure (no DOM) so it is safe in
+ * any environment — including the node-side PDF engine, where stored terms may
+ * carry literal `&amp;` from older rich-text exports. `&amp;` is decoded LAST so
+ * a double-encoded sequence like `&amp;lt;` resolves to `&lt;` rather than `<`.
+ */
+export function decodeHtmlEntities(input: string): string {
+  if (!input) return input;
+  return input
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => fromCodePoint(parseInt(dec, 10)))
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&');
+}
+
+/**
+ * Convert rich HTML to readable PLAIN TEXT: decodes entities and turns block
+ * boundaries (`<p>`, `<h1-6>`, `<li>`, `<br>`, …) into newlines so a textarea or
+ * other plain-text target keeps the structure. Used when applying a Terms
+ * Library snippet into the quote's plain-text terms field. Browser-only path
+ * uses `DOMParser`; falls back to a tag-strip + entity-decode without a DOM.
+ */
+export function htmlToPlainText(html: string): string {
+  if (!html) return '';
+  if (typeof DOMParser === 'undefined') {
+    return decodeHtmlEntities(html.replace(/<[^>]*>/g, ' ')).replace(/[ \t]+/g, ' ').trim();
+  }
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const BLOCK = new Set([
+    'p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'li', 'ul', 'ol', 'tr', 'table', 'blockquote', 'section',
+  ]);
+  let out = '';
+  const walk = (node: Node): void => {
+    node.childNodes.forEach((child) => {
+      if (child.nodeType === Node.TEXT_NODE) {
+        out += child.textContent ?? '';
+        return;
+      }
+      if (child.nodeType !== Node.ELEMENT_NODE) return;
+      const el = child as Element;
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'br') {
+        out += '\n';
+        return;
+      }
+      walk(el);
+      if (BLOCK.has(tag)) out += '\n';
+    });
+  };
+  walk(doc.body);
+  return out
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}

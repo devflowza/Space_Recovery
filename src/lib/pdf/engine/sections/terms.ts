@@ -20,6 +20,7 @@
 import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS } from '../../styles';
 import { htmlToPdfmake } from '../../htmlToPdfmake';
+import { decodeHtmlEntities } from '../../../sanitizeHtml';
 import { isBilingualMode, en, ar } from '../labels';
 import { buildBankBox } from './bank';
 import type { EngineContext, EngineDocData, LabelText, SectionRenderer, TermsTextBlock } from '../types';
@@ -54,6 +55,61 @@ function languageColumn(blocks: TermsBlock[], lang: 'en' | 'ar'): Content[] {
   return stack;
 }
 
+/** Normalize a heading for duplicate comparison: collapse whitespace, drop a
+ *  trailing colon, lowercase. */
+function normalizeHeading(s: string): string {
+  return s.replace(/\s+/g, ' ').trim().replace(/[:：]\s*$/, '').toLowerCase();
+}
+
+/**
+ * Strip a leading heading LINE from plain-text terms when it duplicates the
+ * section title — the section already prints that heading, so an identical first
+ * line would render it twice. Matched only when the heading is the whole first
+ * line (or the entire body), never a run-on prefix, so prose that merely begins
+ * with the same words (e.g. "Terms & Conditions apply…") is left untouched.
+ */
+function stripLeadingTitleLine(text: string, title: string): string {
+  const normTitle = normalizeHeading(title);
+  if (!normTitle) return text;
+  const nlIdx = text.search(/\r?\n/);
+  const firstLine = nlIdx === -1 ? text : text.slice(0, nlIdx);
+  if (normalizeHeading(firstLine) !== normTitle) return text;
+  return nlIdx === -1 ? '' : text.slice(nlIdx).replace(/^[\s]+/, '');
+}
+
+/**
+ * Strip a leading heading ELEMENT (`h1`–`h6`) from rich HTML terms when its text
+ * duplicates the section title, descending through wrapper containers (the
+ * rich-text editor wraps terms in a `<div>`). Returns the original HTML when
+ * there is no DOM (node fallback) or no matching leading heading.
+ */
+function stripLeadingHeadingHtml(html: string, title: string): string {
+  if (typeof DOMParser === 'undefined') return html;
+  const normTitle = normalizeHeading(title);
+  if (!normTitle) return html;
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  const firstElement = (el: Element): Element | null => {
+    for (const child of Array.from(el.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE && !(child.textContent ?? '').trim()) continue;
+      return child.nodeType === Node.ELEMENT_NODE ? (child as Element) : null;
+    }
+    return null;
+  };
+
+  let first = firstElement(doc.body);
+  while (first && (first.tagName.toLowerCase() === 'div' || first.tagName.toLowerCase() === 'section')) {
+    const inner = firstElement(first);
+    if (!inner) break;
+    first = inner;
+  }
+  if (first && /^h[1-6]$/.test(first.tagName.toLowerCase()) && normalizeHeading(first.textContent ?? '') === normTitle) {
+    first.remove();
+    return doc.body.innerHTML;
+  }
+  return html;
+}
+
 /**
  * The English column built from the PER-RECORD terms blocks the adapter resolved
  * from the edited quote/invoice (Payment Terms / Terms & Conditions, then Notes).
@@ -61,23 +117,30 @@ function languageColumn(blocks: TermsBlock[], lang: 'en' | 'ar'): Content[] {
  * `format: 'html'` (rich-text editor output) and as plain prose otherwise. Blocks
  * whose body is empty — or whose HTML produces nothing — are skipped, so an empty
  * record falls back to the template terms.
+ *
+ * The section prints the block title as its heading, so a leading heading carried
+ * inside the body that duplicates that title is removed, and HTML entities in
+ * plain-text bodies (e.g. a stored `&amp;`) are decoded before rendering.
  */
 function perRecordColumn(blocks: TermsTextBlock[]): Content[] {
   const stack: Content[] = [];
   for (const b of blocks) {
-    const body = (b.body ?? '').trim();
-    if (!body) continue;
+    const title = en(b.title);
+    const raw = (b.body ?? '').trim();
+    if (!raw) continue;
     let bodyNode: Content;
     if (b.format === 'html') {
-      const rich = htmlToPdfmake(body);
+      const rich = htmlToPdfmake(stripLeadingHeadingHtml(raw, title));
       if (rich.length === 0) continue;
       bodyNode = { stack: rich, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.3 };
     } else {
-      bodyNode = { text: body, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.3 };
+      const text = stripLeadingTitleLine(decodeHtmlEntities(raw), title).trim();
+      if (!text) continue;
+      bodyNode = { text, fontSize: 7, color: PDF_COLORS.textLight, lineHeight: 1.3 };
     }
     if (stack.length > 0) stack.push({ text: '', margin: [0, 4, 0, 0] as [number, number, number, number] });
     stack.push(
-      { text: en(b.title), fontSize: 9, bold: true, color: PDF_COLORS.text, alignment: 'left', margin: [0, 0, 0, 3] as [number, number, number, number] },
+      { text: title, fontSize: 9, bold: true, color: PDF_COLORS.text, alignment: 'left', margin: [0, 0, 0, 3] as [number, number, number, number] },
       bodyNode,
     );
   }

@@ -996,7 +996,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                       className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                     >
                       <FileText className="w-3.5 h-3.5" />
-                      Quick Add
+                      Terms Library
                     </button>
                     <button
                       type="button"
@@ -1013,7 +1013,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                       {termsLoading ? (
                         <div className="text-center py-2 text-xs text-slate-500">Loading...</div>
                       ) : termsTemplates.length === 0 ? (
-                        <div className="text-center py-2 text-xs text-slate-500">No templates found</div>
+                        <div className="text-center py-2 text-xs text-slate-500">No saved terms yet</div>
                       ) : (
                         termsTemplates.map((template) => (
                           <button
@@ -1050,7 +1050,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                   />
                 ) : (
                   <p className="border border-dashed border-slate-300 rounded-lg p-3 text-sm text-slate-400">
-                    No payment terms yet. Use Quick Add or Edit.
+                    No payment terms yet. Use Terms Library or Edit.
                   </p>
                 )}
               </div>
