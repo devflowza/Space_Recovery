@@ -18,7 +18,27 @@ import { type LanguageCode } from '../documentTranslations';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { isPdfEngineEnabled } from './engine/featureFlag';
 import { renderTemplate } from './engine/renderTemplate';
+import { resolveQrImage } from './qrImage';
 import { applyTenantLanguage } from './engine/applyTenantLanguage';
+
+/**
+ * Render via the engine with the QR resolved to an image: the tenant's uploaded
+ * QR image if present, else one auto-generated from the document's verification
+ * payload (pdfmake's native `qr` doesn't paint in the browser, so a PNG image is
+ * the reliable path). Used by every engine builder so QR works without an upload.
+ */
+async function renderWithQr(
+  config: Parameters<typeof renderTemplate>[0],
+  data: Parameters<typeof renderTemplate>[1],
+  ctx: Parameters<typeof renderTemplate>[2],
+  logo: Parameters<typeof renderTemplate>[3],
+  tenantQr: string | null,
+  stampImage?: Parameters<typeof renderTemplate>[5],
+  signatureImage?: Parameters<typeof renderTemplate>[6],
+): Promise<ReturnType<typeof renderTemplate>> {
+  const qr = await resolveQrImage(tenantQr, data.zatcaPayload ?? data.qrPayload);
+  return renderTemplate(config, data, ctx, logo, qr, stampImage, signatureImage);
+}
 import { toEngineData } from './engine/adapters/invoiceAdapter';
 import { toEngineData as toQuoteEngineData } from './engine/adapters/quoteAdapter';
 import { toEngineData as toPaymentReceiptEngineData } from './engine/adapters/paymentReceiptAdapter';
@@ -103,7 +123,7 @@ async function buildInvoiceDocumentViaEngine(
   const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
 
   const engineData = toEngineData(data, languageAwareConfig);
-  return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
 }
 
 /**
@@ -142,7 +162,7 @@ async function buildQuoteViaEngine(
   const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
 
   const engineData = toQuoteEngineData(data, languageAwareConfig);
-  return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
 }
 
 /**
@@ -178,7 +198,7 @@ async function buildPaymentReceiptViaEngine(
   const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
 
   const engineData = toPaymentReceiptEngineData(data, languageAwareConfig);
-  return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
 }
 
 /**
@@ -256,7 +276,7 @@ async function buildOfficeReceiptViaEngine(
   const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
 
   const engineData = toReceiptEngineData(data, languageAwareConfig, variant);
-  return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64, stampImage, signatureImage);
+  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64, stampImage, signatureImage);
 }
 
 /**
@@ -320,7 +340,7 @@ async function buildCheckoutFormViaEngine(
   const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
 
   const engineData = toCheckoutEngineData(data, languageAwareConfig);
-  return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64, stampImage, signatureImage);
+  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64, stampImage, signatureImage);
 }
 
 /**
@@ -359,7 +379,7 @@ async function buildCaseLabelViaEngine(
   const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
 
   const engineData = toCaseLabelEngineData(data, languageAwareConfig);
-  return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
 }
 
 /**
@@ -399,7 +419,7 @@ async function buildChainOfCustodyViaEngine(
   const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
 
   const engineData = toChainOfCustodyEngineData(data, languageAwareConfig);
-  return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
 }
 
 const PDF_GENERATION_TIMEOUT = 45000; // 45 seconds

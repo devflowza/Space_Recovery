@@ -238,7 +238,7 @@ export const OtherDetailsTab: React.FC<{ api: StudioApi }> = ({ api }) => {
                   <p className="mt-2 text-xs text-slate-500">{GUIDANCE_HINTS[section.key]}</p>
                 )}
                 {section.key === 'bank' && (
-                  <div className="mt-3">
+                  <div className="mt-3 space-y-3">
                     <SegmentedControl
                       label="Display style"
                       columns={2}
@@ -249,8 +249,37 @@ export const OtherDetailsTab: React.FC<{ api: StudioApi }> = ({ api }) => {
                         { value: 'inline', label: 'Single line' },
                       ]}
                     />
-                    <p className="mt-1.5 text-xs text-slate-500">
-                      Boxed shows a bordered panel; Single line prints the details on one compact line.
+                    {(section.bankStyle ?? 'boxed') === 'boxed' && (
+                      <>
+                        <SegmentedControl
+                          label="Box width"
+                          columns={3}
+                          value={section.bankWidth ?? 'auto'}
+                          onChange={(v) => api.patchSection('bank', { bankWidth: v })}
+                          options={[
+                            { value: 'auto', label: 'Auto' },
+                            { value: 'half', label: 'Half' },
+                            { value: 'full', label: 'Full' },
+                          ]}
+                        />
+                        {(section.bankWidth ?? 'auto') !== 'full' && (
+                          <SegmentedControl
+                            label="Alignment"
+                            columns={3}
+                            value={section.bankAlign ?? 'left'}
+                            onChange={(v) => api.patchSection('bank', { bankAlign: v })}
+                            options={[
+                              { value: 'left', label: 'Left' },
+                              { value: 'center', label: 'Center' },
+                              { value: 'right', label: 'Right' },
+                            ]}
+                          />
+                        )}
+                      </>
+                    )}
+                    <p className="text-xs text-slate-500">
+                      Single line prints the details on one compact line. Boxed: Auto hugs the content, Half is a fixed
+                      half-width panel, Full spans the row.
                     </p>
                   </div>
                 )}

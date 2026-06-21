@@ -27,6 +27,7 @@ import { buildTenantPreviewContext } from './tenantPreviewContext';
 import { createPdfWithFonts } from '../fonts';
 import { withTimeout } from '../translationContext';
 import { buildPreviewEngineData, sampleInvoiceData } from './sampleData';
+import { resolveQrImage } from '../qrImage';
 import { brandingImageWarning, placeholderLogoSvg, type BrandingImage } from '../brandingImage';
 
 // Re-exported for any caller/test that wants the canonical invoice sample.
@@ -92,7 +93,7 @@ export function resolvePreviewLogo(
  * @returns A {@link PreviewResult} — `url` is a `blob:` URL the caller MUST
  *          `URL.revokeObjectURL` when done; `warnings` is non-blocking copy.
  */
-export function previewTemplate(
+export async function previewTemplate(
   docType: TemplateDocumentType,
   config: DocumentTemplateConfig,
   ctx: TranslationContext = PREVIEW_CTX_EN,
@@ -110,16 +111,18 @@ export function previewTemplate(
   const effectiveConfig = companySettings ? applyTenantLanguage(config, companySettings) : config;
   const effectiveCtx = companySettings ? buildTenantPreviewContext(companySettings) : ctx;
   const engineData = buildPreviewEngineData(docType, effectiveConfig, companySettings);
-  // Draw the real logo when resolved, else a labeled placeholder box; the QR is
-  // passed as null so the QR surfaces render the REAL `qrPayload` (a native,
-  // scannable pdfmake QR) instead of the meaningless 1×1 placeholder square.
+  // Draw the real logo when resolved, else a labeled placeholder box. The QR is
+  // auto-generated from the document's verification payload as a PNG image —
+  // pdfmake's native `qr` does not paint in the browser build, so an image is the
+  // reliable path (the same one tenant-uploaded QR images use).
   const { logo: previewLogo, warnings } = resolvePreviewLogo(logo);
+  const qrImage = await resolveQrImage(null, engineData.zatcaPayload ?? engineData.qrPayload);
   const docDefinition = renderTemplate(
     effectiveConfig,
     engineData,
     effectiveCtx,
     previewLogo,
-    null,
+    qrImage,
     stampImage ?? null,
     signatureImage ?? null,
   );

@@ -91,6 +91,11 @@ export interface SectionConfig {
   /** Bank section only: how the bank-account details render — a bordered box
    *  (`'boxed'`, default) or a single compact pipe-separated line (`'inline'`). */
   bankStyle?: 'boxed' | 'inline';
+  /** Bank section, boxed style only: box width — `'auto'` hugs the content
+   *  (default), `'half'` a fixed ~half-page column, `'full'` spans the row. */
+  bankWidth?: 'auto' | 'half' | 'full';
+  /** Bank section, boxed non-full width only: horizontal placement of the box. */
+  bankAlign?: 'left' | 'center' | 'right';
 }
 
 // ---------------------------------------------------------------------------
@@ -434,6 +439,8 @@ export interface SectionConfigOverride {
   columns?: ColumnConfigOverride[];
   lines?: Record<string, boolean>;
   bankStyle?: 'boxed' | 'inline';
+  bankWidth?: 'auto' | 'half' | 'full';
+  bankAlign?: 'left' | 'center' | 'right';
 }
 
 /** Partial column override; `key` identifies the target column. */
@@ -500,7 +507,7 @@ function lineItemColumns(): ColumnConfig[] {
 function section(
   key: string,
   order: number,
-  extra?: Pick<SectionConfig, 'columns' | 'lines' | 'bankStyle'> & { visible?: boolean },
+  extra?: Pick<SectionConfig, 'columns' | 'lines' | 'bankStyle' | 'bankWidth' | 'bankAlign'> & { visible?: boolean },
 ): SectionConfig {
   return {
     key,
@@ -509,6 +516,8 @@ function section(
     ...(extra?.columns ? { columns: extra.columns } : {}),
     ...(extra?.lines ? { lines: extra.lines } : {}),
     ...(extra?.bankStyle ? { bankStyle: extra.bankStyle } : {}),
+    ...(extra?.bankWidth ? { bankWidth: extra.bankWidth } : {}),
+    ...(extra?.bankAlign ? { bankAlign: extra.bankAlign } : {}),
   };
 }
 
@@ -549,7 +558,7 @@ function financialSections(): SectionConfig[] {
     // Bank account as its own movable section — visible by default and rendered
     // here (no longer inline in terms). Reorder / show-hide like any section, with
     // a Boxed | Single line display style.
-    section('bank', 9, { bankStyle: 'boxed' }),
+    section('bank', 9, { bankStyle: 'boxed', bankWidth: 'auto', bankAlign: 'left' }),
     section('signature', 10, { visible: false }),
     section('qr', 11),
     section('footer', 12),
@@ -613,7 +622,7 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
           // Per-record notes entered on the receipt (returns null when empty).
           section('recordTerms', 5),
           // Bank account as its own visible section.
-          section('bank', 6, { bankStyle: 'boxed' }),
+          section('bank', 6, { bankStyle: 'boxed', bankWidth: 'auto', bankAlign: 'left' }),
           section('qr', 7),
           section('footer', 8),
         ],
@@ -858,6 +867,8 @@ function mergeSections(
         ...(ov.columns ? { columns: mergeColumns(existing.columns, ov.columns) } : {}),
         ...(ov.lines ? { lines: { ...existing.lines, ...ov.lines } } : {}),
         ...(ov.bankStyle !== undefined ? { bankStyle: ov.bankStyle } : {}),
+        ...(ov.bankWidth !== undefined ? { bankWidth: ov.bankWidth } : {}),
+        ...(ov.bankAlign !== undefined ? { bankAlign: ov.bankAlign } : {}),
       });
     } else {
       // New section introduced by an override layer.
@@ -868,6 +879,8 @@ function mergeSections(
         ...(ov.columns ? { columns: mergeColumns(undefined, ov.columns) } : {}),
         ...(ov.lines ? { lines: { ...ov.lines } } : {}),
         ...(ov.bankStyle !== undefined ? { bankStyle: ov.bankStyle } : {}),
+        ...(ov.bankWidth !== undefined ? { bankWidth: ov.bankWidth } : {}),
+        ...(ov.bankAlign !== undefined ? { bankAlign: ov.bankAlign } : {}),
       });
     }
   }

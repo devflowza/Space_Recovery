@@ -16,12 +16,24 @@ import { safeString } from '../../utils';
 import { isBilingualMode, en, ar } from '../labels';
 import type { BankBlock, EngineContext, EngineDocData, SectionRenderer } from '../types';
 
-/** The configured display style for the bank details (default `'boxed'`). The
- *  toggle lives on the movable `bank` section so the inline and standalone
- *  renders stay in sync. */
-function bankDisplayStyle(engine: EngineContext): 'boxed' | 'inline' {
-  const bankSection = engine.config.sections.find((s) => s.key === 'bank');
-  return bankSection?.bankStyle === 'inline' ? 'inline' : 'boxed';
+/** ~half of the 525pt content width — the fixed column for the `'half'` width. */
+const HALF_WIDTH = 250;
+
+interface BankDisplay {
+  style: 'boxed' | 'inline';
+  width: 'auto' | 'half' | 'full';
+  align: 'left' | 'center' | 'right';
+}
+
+/** The configured bank display (style + boxed width + alignment), read from the
+ *  movable `bank` section so the inline and standalone renders stay in sync. */
+function bankDisplay(engine: EngineContext): BankDisplay {
+  const s = engine.config.sections.find((x) => x.key === 'bank');
+  return {
+    style: s?.bankStyle === 'inline' ? 'inline' : 'boxed',
+    width: s?.bankWidth ?? 'auto',
+    align: s?.bankAlign ?? 'left',
+  };
 }
 
 /**
@@ -44,39 +56,53 @@ function buildBankInline(bank: BankBlock): Content {
   } as Content;
 }
 
-/** A compact bank-account box: bilingual header, English-only field labels. */
+/** A compact bank-account box. Width: `'full'` spans the row (bilingual EN/AR
+ *  header); `'auto'` hugs its content; `'half'` a fixed ~half-page column. Non-full
+ *  boxes are placed left/centre/right via an alignment wrapper. */
 export function buildBankBox(bank: BankBlock, engine: EngineContext): Content {
-  if (bankDisplayStyle(engine) === 'inline') return buildBankInline(bank);
+  const disp = bankDisplay(engine);
+  if (disp.style === 'inline') return buildBankInline(bank);
 
-  const { language } = engine.config;
-  const bilingual = isBilingualMode(language);
+  const bilingual = isBilingualMode(engine.config.language);
+  const fullWidth = disp.width === 'full';
 
-  const headerColumns: object[] = [
-    { text: en(bank.title, 'Bank Account'), fontSize: 8, bold: true, color: PDF_COLORS.text, width: 'auto' },
-    { text: '', width: '*' },
-  ];
-  if (bilingual) {
-    headerColumns.push({
-      text: ar(bank.title) ?? 'تفاصيل البنك',
-      fontSize: 8, bold: true, color: PDF_COLORS.text, alignment: 'right', width: 'auto',
-    });
+  // Full width keeps the bilingual EN-left / AR-right header; narrow boxes show
+  // the English title only (an AR title on a narrow box just crowds it).
+  let headerCell: Content;
+  if (fullWidth) {
+    const headerColumns: object[] = [
+      { text: en(bank.title, 'Bank Account'), fontSize: 8, bold: true, color: PDF_COLORS.text, width: 'auto' },
+      { text: '', width: '*' },
+    ];
+    if (bilingual) {
+      headerColumns.push({
+        text: ar(bank.title) ?? 'تفاصيل البنك',
+        fontSize: 8, bold: true, color: PDF_COLORS.text, alignment: 'right', width: 'auto',
+      });
+    }
+    headerCell = { columns: headerColumns, columnGap: 6, fillColor: PDF_COLORS.background, margin: [6, 3, 6, 3] } as Content;
+  } else {
+    headerCell = {
+      text: en(bank.title, 'Bank Account'),
+      fontSize: 8, bold: true, color: PDF_COLORS.text, fillColor: PDF_COLORS.background, margin: [6, 3, 6, 3],
+    } as Content;
   }
 
-  return {
+  const bodyCell: Content = {
+    stack: bank.rows.map((r) => ({
+      text: `${en(r.label)} ${safeString(r.value)}`,
+      fontSize: 7,
+      color: PDF_COLORS.text,
+      margin: [0, 0.5, 0, 0.5] as [number, number, number, number],
+    })),
+    margin: [6, 3, 6, 4] as [number, number, number, number],
+  };
+
+  const innerTable: Content = {
     table: {
-      widths: ['*'],
-      body: [
-        [{ columns: headerColumns, columnGap: 6, fillColor: PDF_COLORS.background, margin: [6, 3, 6, 3] }],
-        [{
-          stack: bank.rows.map((r) => ({
-            text: `${en(r.label)} ${safeString(r.value)}`,
-            fontSize: 7,
-            color: PDF_COLORS.text,
-            margin: [0, 0.5, 0, 0.5],
-          })),
-          margin: [6, 3, 6, 4],
-        }],
-      ],
+      // Full / half fill their container; auto hugs the widest line.
+      widths: fullWidth || disp.width === 'half' ? ['*'] : ['auto'],
+      body: [[headerCell], [bodyCell]],
     },
     layout: {
       hLineWidth: () => 0.5,
@@ -85,6 +111,20 @@ export function buildBankBox(bank: BankBlock, engine: EngineContext): Content {
       vLineColor: () => PDF_COLORS.border,
     },
   } as Content;
+
+  if (fullWidth) return innerTable;
+
+  // Narrow box: wrap in columns to size (half = fixed, auto = hug) and align.
+  const boxCol =
+    disp.width === 'half'
+      ? { width: HALF_WIDTH, stack: [innerTable] }
+      : { width: 'auto', stack: [innerTable] };
+  const spacer = { text: '', width: '*' };
+  const columns =
+    disp.align === 'right' ? [spacer, boxCol]
+    : disp.align === 'center' ? [spacer, boxCol, spacer]
+    : [boxCol, spacer];
+  return { columns } as Content;
 }
 
 export const renderBank: SectionRenderer = (
