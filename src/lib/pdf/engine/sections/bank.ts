@@ -16,8 +16,38 @@ import { safeString } from '../../utils';
 import { isBilingualMode, en, ar } from '../labels';
 import type { BankBlock, EngineContext, EngineDocData, SectionRenderer } from '../types';
 
+/** The configured display style for the bank details (default `'boxed'`). The
+ *  toggle lives on the movable `bank` section so the inline and standalone
+ *  renders stay in sync. */
+function bankDisplayStyle(engine: EngineContext): 'boxed' | 'inline' {
+  const bankSection = engine.config.sections.find((s) => s.key === 'bank');
+  return bankSection?.bankStyle === 'inline' ? 'inline' : 'boxed';
+}
+
+/**
+ * A single compact line: `Bank Account: <name> | Account No: <n> | Bank: <b> …`.
+ * The box title leads (so the account name needs no redundant "Account Name:"
+ * label); every other present field keeps its label. Absent fields are omitted.
+ */
+function buildBankInline(bank: BankBlock): Content {
+  const title = en(bank.title, 'Bank Account');
+  const segments = bank.rows.map((r) => {
+    const label = en(r.label);
+    const value = safeString(r.value);
+    return /account\s*name/i.test(label) ? value : `${label} ${value}`;
+  });
+  return {
+    text: `${title}: ${segments.join('  |  ')}`,
+    fontSize: 7,
+    color: PDF_COLORS.text,
+    margin: [0, 0, 0, 0],
+  } as Content;
+}
+
 /** A compact bank-account box: bilingual header, English-only field labels. */
 export function buildBankBox(bank: BankBlock, engine: EngineContext): Content {
+  if (bankDisplayStyle(engine) === 'inline') return buildBankInline(bank);
+
   const { language } = engine.config;
   const bilingual = isBilingualMode(language);
 

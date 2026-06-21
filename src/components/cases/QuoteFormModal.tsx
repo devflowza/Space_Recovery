@@ -14,6 +14,7 @@ import { logger } from '../../lib/logger';
 import { getSupportedCurrencies, getBaseCurrency, getConversionRate, type SupportedCurrency } from '../../lib/currencyService';
 import { formatCurrency, formatBaseEquivalent } from '../../lib/format';
 import { listTemplates, recordTemplateUsage } from '../../lib/documentTemplatesService';
+import { htmlToPlainText } from '../../lib/sanitizeHtml';
 import { templateKeys } from '../../lib/queryKeys';
 
 interface LineItemTemplate {
@@ -330,14 +331,8 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
     setSearchQuery('');
   };
 
-  const stripHtmlTags = (html: string): string => {
-    const div = document.createElement('div');
-    div.textContent = html.replace(/<[^>]*>/g, ' ');
-    return (div.textContent || '').trim();
-  };
-
   const applyTermsTemplate = (template: QuoteTermsTemplate) => {
-    const plainText = stripHtmlTags(template.content);
+    const plainText = htmlToPlainText(template.content);
     setQuoteData(prev => ({ ...prev, terms_and_conditions: plainText }));
     setShowTermsTemplates(false);
     void recordTemplateUsage(template.id);
@@ -786,7 +781,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                     className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    Quick Add
+                    Terms Library
                   </button>
                 </div>
                 {showTermsTemplates && (
@@ -795,7 +790,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                       {termsLoading ? (
                         <div className="text-center py-2 text-xs text-slate-500">Loading...</div>
                       ) : termsTemplates.length === 0 ? (
-                        <div className="text-center py-2 text-xs text-slate-500">No templates found</div>
+                        <div className="text-center py-2 text-xs text-slate-500">No saved terms yet</div>
                       ) : (
                         termsTemplates.map((template) => (
                           <button

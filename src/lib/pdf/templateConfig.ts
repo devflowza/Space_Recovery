@@ -88,6 +88,9 @@ export interface SectionConfig {
   order: number;
   columns?: ColumnConfig[];
   lines?: Record<string, boolean>;
+  /** Bank section only: how the bank-account details render — a bordered box
+   *  (`'boxed'`, default) or a single compact pipe-separated line (`'inline'`). */
+  bankStyle?: 'boxed' | 'inline';
 }
 
 // ---------------------------------------------------------------------------
@@ -430,6 +433,7 @@ export interface SectionConfigOverride {
   order?: number;
   columns?: ColumnConfigOverride[];
   lines?: Record<string, boolean>;
+  bankStyle?: 'boxed' | 'inline';
 }
 
 /** Partial column override; `key` identifies the target column. */
@@ -496,7 +500,7 @@ function lineItemColumns(): ColumnConfig[] {
 function section(
   key: string,
   order: number,
-  extra?: Pick<SectionConfig, 'columns' | 'lines'> & { visible?: boolean },
+  extra?: Pick<SectionConfig, 'columns' | 'lines' | 'bankStyle'> & { visible?: boolean },
 ): SectionConfig {
   return {
     key,
@@ -504,6 +508,7 @@ function section(
     order,
     ...(extra?.columns ? { columns: extra.columns } : {}),
     ...(extra?.lines ? { lines: extra.lines } : {}),
+    ...(extra?.bankStyle ? { bankStyle: extra.bankStyle } : {}),
   };
 }
 
@@ -540,7 +545,7 @@ function financialSections(): SectionConfig[] {
     // layouts are unchanged (the terms section keeps rendering the bank box
     // inline). Enabling it in the Studio moves the bank here, where it can be
     // shown/hidden and reordered like any other section.
-    section('bank', 8, { visible: false }),
+    section('bank', 8, { visible: false, bankStyle: 'boxed' }),
     section('signature', 9, { visible: false }),
     section('qr', 10),
     section('footer', 11),
@@ -846,6 +851,7 @@ function mergeSections(
         ...(ov.order !== undefined ? { order: ov.order } : {}),
         ...(ov.columns ? { columns: mergeColumns(existing.columns, ov.columns) } : {}),
         ...(ov.lines ? { lines: { ...existing.lines, ...ov.lines } } : {}),
+        ...(ov.bankStyle !== undefined ? { bankStyle: ov.bankStyle } : {}),
       });
     } else {
       // New section introduced by an override layer.
@@ -855,6 +861,7 @@ function mergeSections(
         order: ov.order ?? base.length,
         ...(ov.columns ? { columns: mergeColumns(undefined, ov.columns) } : {}),
         ...(ov.lines ? { lines: { ...ov.lines } } : {}),
+        ...(ov.bankStyle !== undefined ? { bankStyle: ov.bankStyle } : {}),
       });
     }
   }

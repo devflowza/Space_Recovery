@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { Input } from '../../../ui/Input';
 import { Select } from '../../../ui/Select';
 import { Textarea } from '../../../ui/Textarea';
-import { FieldGroup, ToggleRow } from '../controls';
+import { FieldGroup, SegmentedControl, ToggleRow } from '../controls';
 import type { LanguageMode, SectionConfig, TranslationPolicyConfig } from '../../../../lib/pdf/templateConfig';
 import type { StudioApi } from '../TemplateStudio';
 
@@ -225,6 +225,23 @@ export const OtherDetailsTab: React.FC<{ api: StudioApi }> = ({ api }) => {
                 )}
                 {GUIDANCE_HINTS[section.key] && (
                   <p className="mt-2 text-xs text-slate-500">{GUIDANCE_HINTS[section.key]}</p>
+                )}
+                {section.key === 'bank' && (
+                  <div className="mt-3">
+                    <SegmentedControl
+                      label="Display style"
+                      columns={2}
+                      value={section.bankStyle ?? 'boxed'}
+                      onChange={(v) => api.patchSection('bank', { bankStyle: v })}
+                      options={[
+                        { value: 'boxed', label: 'Boxed' },
+                        { value: 'inline', label: 'Single line' },
+                      ]}
+                    />
+                    <p className="mt-1.5 text-xs text-slate-500">
+                      Boxed shows a bordered panel; Single line prints the details on one compact line.
+                    </p>
+                  </div>
                 )}
                 {label && (
                   <div className="mt-3 grid grid-cols-2 gap-2">
