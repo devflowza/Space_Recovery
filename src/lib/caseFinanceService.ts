@@ -110,6 +110,7 @@ export async function getCaseExpenses(caseId: string): Promise<CaseExpense[]> {
       category:master_expense_categories(name)
     `)
     .eq('case_id', caseId)
+    .is('deleted_at', null)
     .order('expense_date', { ascending: false });
 
   if (error) throw error;

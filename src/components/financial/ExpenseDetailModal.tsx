@@ -91,6 +91,12 @@ export const ExpenseDetailModal: React.FC<ExpenseDetailModalProps> = ({
             </Field>
           ) : null}
 
+          {expense.rejection_reason ? (
+            <Field label="Rejection reason">
+              <p className="whitespace-pre-wrap text-danger">{expense.rejection_reason}</p>
+            </Field>
+          ) : null}
+
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">Attachments</p>
             {expense.attachments && expense.attachments.length > 0 ? (
