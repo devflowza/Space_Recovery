@@ -71,6 +71,7 @@ type ExpenseRow = Pick<
   | 'approved_by'
   | 'approved_at'
   | 'notes'
+  | 'rejection_reason'
 > & {
   category: { id: string; name: string } | null;
   case: { case_no: string | null; title: string | null } | null;
@@ -599,9 +600,9 @@ export const ExpensesList: React.FC = () => {
                         {getStatusIcon(expense.status ?? '')}
                         {expense.status ?? '-'}
                       </Badge>
-                      {expense.status === 'rejected' && expense.notes && (
-                        <p className="text-xs text-danger mt-1 max-w-[150px] truncate" title={expense.notes}>
-                          {expense.notes}
+                      {expense.status === 'rejected' && expense.rejection_reason && (
+                        <p className="text-xs text-danger mt-1 max-w-[150px] truncate" title={expense.rejection_reason}>
+                          {expense.rejection_reason}
                         </p>
                       )}
                     </td>
