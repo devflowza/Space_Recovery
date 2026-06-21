@@ -83,7 +83,16 @@ export interface StudioApi {
   setTranslationGroup: (group: keyof NonNullable<TranslationPolicyConfig['groups']>, value: boolean) => void;
   setTermsContent: (patch: Partial<TermsContentConfig>) => void;
   setPageFitting: (patch: Partial<PageFittingConfig>) => void;
-  patchSection: (key: string, patch: { visible?: boolean; order?: number; bankStyle?: 'boxed' | 'inline' }) => void;
+  patchSection: (
+    key: string,
+    patch: {
+      visible?: boolean;
+      order?: number;
+      bankStyle?: 'boxed' | 'inline';
+      bankWidth?: 'auto' | 'half' | 'full';
+      bankAlign?: 'left' | 'center' | 'right';
+    },
+  ) => void;
   patchColumn: (key: string, patch: { visible?: boolean; labelEn?: string; labelAr?: string }) => void;
   setSectionLabel: (key: string, lang: 'en' | 'ar', value: string) => void;
   moveSection: (key: string, direction: -1 | 1) => void;

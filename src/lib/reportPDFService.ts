@@ -11,6 +11,7 @@ import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import type { TranslationContext } from './pdf/types';
 import { isPdfEngineEnabled } from './pdf/engine/featureFlag';
 import { renderTemplate } from './pdf/engine/renderTemplate';
+import { resolveQrImage } from './pdf/qrImage';
 import { applyTenantLanguage } from './pdf/engine/applyTenantLanguage';
 import { toEngineData as toReportEngineData } from './pdf/engine/adapters/reportAdapter';
 import {
@@ -200,7 +201,8 @@ class ReportPDFService {
     const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
 
     const engineData = toReportEngineData(data, languageAwareConfig);
-    return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+    const qr = await resolveQrImage(qrCodeBase64, engineData.zatcaPayload ?? engineData.qrPayload);
+    return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qr);
   }
 
   /**
