@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { baseAmount } from './financialMath';
+import { baseAmount, isReceivableInvoice } from './financialMath';
 
 export interface CaseFinancialSummary {
   caseId: string;
@@ -70,9 +70,7 @@ export async function getCaseFinancialSummary(caseId: string): Promise<CaseFinan
   // Only tax invoices are receivables. A converted proforma and the tax invoice
   // it became are the SAME bill — counting both doubled "Invoiced" (e.g. 630 →
   // 1,260). Void/cancelled invoices aren't owed either.
-  const billableInvoices = invoices.filter(
-    inv => inv.invoice_type === 'tax_invoice' && inv.status !== 'void' && inv.status !== 'cancelled',
-  );
+  const billableInvoices = invoices.filter(isReceivableInvoice);
 
   const totalInvoiced = billableInvoices.reduce((sum, inv) => sum + baseAmount(inv, 'total_amount'), 0);
   const totalPaid = billableInvoices.reduce((sum, inv) => sum + baseAmount(inv, 'amount_paid'), 0);

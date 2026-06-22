@@ -184,3 +184,15 @@ export const baseAmount = (
   const raw = row[field];
   return typeof raw === 'number' ? raw : 0;
 };
+
+// Canonical receivable filter — a converted proforma and the tax_invoice it became are
+// the SAME bill; void/cancelled are not owed. Shared by the case-detail Financial Summary
+// and the Revenue-by-Case report so the two surfaces cannot diverge (EXP-014).
+export const RECEIVABLE_INVOICE_EXCLUDED_STATUSES = ['void', 'cancelled'] as const;
+
+export const isReceivableInvoice = (inv: {
+  invoice_type?: string | null;
+  status?: string | null;
+}): boolean =>
+  inv.invoice_type === 'tax_invoice' &&
+  !(RECEIVABLE_INVOICE_EXCLUDED_STATUSES as readonly string[]).includes(inv.status ?? '');

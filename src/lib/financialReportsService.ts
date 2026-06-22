@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { baseAmount } from './financialMath';
+import { baseAmount, RECEIVABLE_INVOICE_EXCLUDED_STATUSES } from './financialMath';
 import { getBaseCurrency } from './currencyService';
 
 /** D8 — sum bank balances in base currency. A balance is a live position, so the
@@ -400,6 +400,12 @@ export const generateRevenueByCaseReport = async (
       case_id,
       cases(id, case_no, title)
     `)
+    // Match the case-detail Financial Summary's receivable filter (EXP-014): only
+    // tax invoices, exclude void/cancelled and soft-deleted — so the two case-profit
+    // surfaces agree and a converted proforma isn't double-counted with its tax invoice.
+    .eq('invoice_type', 'tax_invoice')
+    .is('deleted_at', null)
+    .not('status', 'in', `(${RECEIVABLE_INVOICE_EXCLUDED_STATUSES.map((s) => `"${s}"`).join(',')})`)
     .gte('invoice_date', dateFrom)
     .lte('invoice_date', dateTo);
 
