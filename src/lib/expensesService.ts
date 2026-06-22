@@ -312,48 +312,37 @@ export const updateExpense = async (
   return data;
 };
 
-export const deleteExpense = async (id: string) => {
-  // If this expense posted to the ledger, reverse it with a compensating entry
-  // (the ledger is append-only) and retire its VAT row, so reports stop counting
-  // deleted spend and no orphan ledger entry survives (EXP-006).
-  const { data: existing } = await supabase
-    .from('expenses')
-    .select('status')
-    .eq('id', id)
-    .maybeSingle();
-
-  if (existing && (existing.status === 'approved' || existing.status === 'paid')) {
-    const { data: ledgerRows } = await supabase
-      .from('financial_transactions')
-      .select('id')
-      .eq('reference_type', 'expense')
-      .eq('reference_id', id)
-      .is('deleted_at', null);
-    for (const row of ledgerRows ?? []) {
-      await supabase.rpc('reverse_financial_transaction', {
-        p_transaction_id: row.id,
-        p_reason: 'Expense deleted',
-      });
-    }
-    await supabase
-      .from('vat_records')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('record_id', id)
-      .in('record_type', ['purchase', 'expense'])
-      .is('deleted_at', null);
-  }
-
-  await supabase
-    .from('expense_attachments')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('expense_id', id);
-
-  const { error } = await supabase
-    .from('expenses')
-    .update({ deleted_at: new Date().toISOString(), status: 'voided' })
-    .eq('id', id);
-
+/**
+ * EXP-018 — the single canonical "remove an expense" path. Admin-gated, atomic, and
+ * idempotent in the DB: reverses the GL accrual (append-only, via reverse_financial_transaction)
+ * + retires input-VAT for an approved expense, cascades attachment soft-delete, then sets
+ * deleted_at + status='voided'. A PAID expense is rejected server-side (its disbursement must
+ * be un-paid first). Replaces the old client-side reverse loop + raw bulk .update({deleted_at}),
+ * which skipped reversal and orphaned the ledger on bulk archive.
+ */
+export const archiveExpense = async (id: string, reason?: string) => {
+  const params: Database['public']['Functions']['archive_expense']['Args'] = { p_expense_id: id };
+  if (reason) params.p_reason = reason;
+  const { data, error } = await supabase.rpc('archive_expense', params);
   if (error) throw error;
+  return data;
+};
+
+// Back-compat alias — every caller now routes through the admin-gated, reversal-correct RPC.
+export const deleteExpense = (id: string) => archiveExpense(id);
+
+/**
+ * EXP-006 — read-only diagnostic: per-period delta between the expenses table (the source
+ * of truth) and the financial_transactions GL ledger. Ledger side nets reversal rows, so a
+ * voided expense ties to 0. Accrual-side only (cash/bank tracked separately).
+ */
+export const getExpenseLedgerReconciliation = async (filters?: { dateFrom?: string; dateTo?: string }) => {
+  const params: Database['public']['Functions']['reconcile_expense_ledger']['Args'] = {};
+  if (filters?.dateFrom) params.p_date_from = filters.dateFrom;
+  if (filters?.dateTo) params.p_date_to = filters.dateTo;
+  const { data, error } = await supabase.rpc('reconcile_expense_ledger', params);
+  if (error) throw error;
+  return data;
 };
 
 export const submitExpense = async (id: string, submittedBy: string) => {
@@ -783,6 +772,8 @@ export const expensesService = {
   createExpense,
   updateExpense,
   deleteExpense,
+  archiveExpense,
+  getExpenseLedgerReconciliation,
   submitExpense,
   approveExpense,
   rejectExpense,

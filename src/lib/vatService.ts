@@ -101,12 +101,20 @@ export const calculateVATForPeriod = async (
   periodStart: string,
   periodEnd: string
 ): Promise<VATSummary> => {
+  // EXP-024-fx/EXP-032: bucket by the economic month (tax_period, YYYY-MM) not created_at,
+  // so an expense approved in a later month still reports in its expense-date period. Rows
+  // with a NULL tax_period fall back to created_at bucketing (no silent data loss). Verified
+  // safe for sales: every live 'sale' row's tax_period month == created_at month.
+  const startMonth = periodStart.slice(0, 7);
+  const endMonth = periodEnd.slice(0, 7);
   const { data: records, error } = await supabase
     .from('vat_records')
-    .select('record_type, vat_amount')
+    .select('record_type, vat_amount, tax_period, created_at')
     .is('deleted_at', null)
-    .gte('created_at', periodStart)
-    .lte('created_at', periodEnd);
+    .or(
+      `and(tax_period.gte.${startMonth},tax_period.lte.${endMonth}),` +
+      `and(tax_period.is.null,created_at.gte.${periodStart},created_at.lte.${periodEnd})`,
+    );
 
   if (error) throw error;
 

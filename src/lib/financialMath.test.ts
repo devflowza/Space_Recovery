@@ -8,6 +8,8 @@ import {
   calculateQuoteTotalsBase,
   computeRealizedFx,
   baseAmount,
+  isReceivableInvoice,
+  RECEIVABLE_INVOICE_EXCLUDED_STATUSES,
 } from './financialMath';
 
 // Characterization tests. These pin the EXISTING behavior of the canonical
@@ -318,5 +320,30 @@ describe('baseAmount', () => {
   it('returns 0 when neither base nor raw is a usable number', () => {
     expect(baseAmount({}, 'amount')).toBe(0);
     expect(baseAmount({ amount: null, amount_base: null }, 'amount')).toBe(0);
+  });
+});
+
+// EXP-014: the case-detail Financial Summary and the Revenue-by-Case report must apply
+// the SAME receivable filter, or the two case-profit surfaces disagree (a converted
+// proforma + its tax invoice get double-counted). This locks the shared contract.
+describe('isReceivableInvoice (shared receivable filter — EXP-014)', () => {
+  it('counts a tax invoice in any owed status', () => {
+    for (const status of ['paid', 'partial', 'overdue', 'sent', null]) {
+      expect(isReceivableInvoice({ invoice_type: 'tax_invoice', status })).toBe(true);
+    }
+  });
+
+  it('excludes proformas regardless of status (same bill as the tax invoice it became)', () => {
+    expect(isReceivableInvoice({ invoice_type: 'proforma', status: 'paid' })).toBe(false);
+    expect(isReceivableInvoice({ invoice_type: 'proforma', status: 'converted' })).toBe(false);
+  });
+
+  it('excludes void/cancelled tax invoices (not owed)', () => {
+    expect(isReceivableInvoice({ invoice_type: 'tax_invoice', status: 'void' })).toBe(false);
+    expect(isReceivableInvoice({ invoice_type: 'tax_invoice', status: 'cancelled' })).toBe(false);
+  });
+
+  it('parity contract: excluded-status list is exactly void + cancelled', () => {
+    expect([...RECEIVABLE_INVOICE_EXCLUDED_STATUSES]).toEqual(['void', 'cancelled']);
   });
 });

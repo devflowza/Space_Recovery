@@ -16793,6 +16793,55 @@ export type Database = {
         }
       }
       approve_quote: { Args: { p_quote_id: string }; Returns: undefined }
+      archive_expense: {
+        Args: { p_expense_id: string; p_reason?: string }
+        Returns: {
+          amount: number
+          amount_base: number | null
+          approved_at: string | null
+          approved_by: string | null
+          bank_account_id: string | null
+          case_id: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          deleted_at: string | null
+          description: string | null
+          exchange_rate: number
+          expense_date: string | null
+          expense_number: string | null
+          id: string
+          is_billable: boolean | null
+          notes: string | null
+          paid_at: string | null
+          rate_source: string
+          receipt_url: string | null
+          reference: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          status: string | null
+          submitted_at: string | null
+          submitted_by: string | null
+          tax_amount: number | null
+          tax_amount_base: number | null
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+          vendor: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "expenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      assert_expense_import_allowed: {
+        Args: { p_row_count: number }
+        Returns: undefined
+      }
       assign_inventory_to_case: {
         Args: { p_case_id: string; p_item_id: string; p_notes?: string }
         Returns: {
@@ -17219,6 +17268,15 @@ export type Database = {
       promote_device_to_primary: {
         Args: { p_case_id: string; p_device_id: string }
         Returns: undefined
+      }
+      reconcile_expense_ledger: {
+        Args: { p_date_from?: string; p_date_to?: string }
+        Returns: {
+          delta_base: number
+          expenses_base: number
+          ledger_base: number
+          period: string
+        }[]
       }
       record_expense_disbursement: {
         Args: {

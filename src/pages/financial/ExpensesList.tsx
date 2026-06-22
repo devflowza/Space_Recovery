@@ -21,6 +21,7 @@ import {
   approveExpense,
   rejectExpense,
   recordExpenseDisbursement,
+  archiveExpense,
   getExpenseStats,
   fetchExpenseById,
   uploadExpenseAttachment,
@@ -30,6 +31,7 @@ import {
   ExpenseAttachment,
 } from '../../lib/expensesService';
 import { useAuth } from '../../contexts/AuthContext';
+import { canManageExpenses } from '../../lib/roleGates';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { ExportButton } from '../../components/shared/ExportButton';
 import { BulkActionsBar, BulkActionButton } from '../../components/shared/BulkActionsBar';
@@ -123,7 +125,10 @@ export const ExpensesList: React.FC = () => {
     setPage(0);
   }, [searchTerm, statusFilter]);
 
-  const isAccountsRole = profile?.role === 'admin' || profile?.role === 'accounts';
+  // Mirror the server has_role('accounts') set (owner/admin/manager/accounts) so the
+  // Approve/Reject/Mark-as-Paid affordances match what RLS+service actually permit (EXP-012).
+  // SoD (creator≠approver) is still enforced server-side in approveExpense.
+  const canManage = canManageExpenses(profile?.role);
 
   const { data: expensesPage, isLoading, error, refetch } = useQuery({
     queryKey: ['expenses', searchTerm, statusFilter, page],
@@ -383,15 +388,25 @@ export const ExpensesList: React.FC = () => {
     }
     setIsArchiving(true);
     try {
-      const { error } = await supabase
-        .from('expenses')
-        .update({ deleted_at: new Date().toISOString() })
-        .in('id', Array.from(selection.selectedIds));
-      if (error) throw error;
-      toast.success(`Archived ${n} expense${n === 1 ? '' : 's'}`);
+      // Route through archive_expense so each row reverses its GL accrual + retires VAT
+      // (the old raw bulk .update({deleted_at}) orphaned the ledger). Per-row so one
+      // failure (e.g. a paid expense, which the RPC blocks) doesn't sink the whole batch.
+      const ids = Array.from(selection.selectedIds);
+      const failures: string[] = [];
+      for (const id of ids) {
+        try {
+          await archiveExpense(id);
+        } catch (err) {
+          failures.push((err as Error).message || id);
+        }
+      }
+      const archived = ids.length - failures.length;
+      if (archived > 0) toast.success(`Archived ${archived} expense${archived === 1 ? '' : 's'}`);
+      if (failures.length > 0) toast.error(`${failures.length} could not be archived: ${failures[0]}`);
       selection.clear();
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['expense_stats'] });
+      queryClient.invalidateQueries({ queryKey: ['bank_accounts'] });
     } catch (err) {
       toast.error((err as Error).message || 'Failed to archive expenses');
     } finally {
@@ -672,7 +687,7 @@ export const ExpensesList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                        {expense.status === 'pending' && isAccountsRole && (
+                        {expense.status === 'pending' && canManage && (
                           <>
                             <button
                               onClick={(e) => handleApprove(expense.id, e)}
@@ -690,7 +705,7 @@ export const ExpensesList: React.FC = () => {
                             </button>
                           </>
                         )}
-                        {expense.status === 'approved' && isAccountsRole && (
+                        {expense.status === 'approved' && canManage && (
                           <button
                             onClick={(e) => handlePay(expense, e)}
                             className="p-1.5 text-success hover:bg-success-muted rounded transition-colors"
@@ -782,7 +797,7 @@ export const ExpensesList: React.FC = () => {
           setShowApproveModal(false);
           setExpenseToApprove(null);
         }}
-        title=""
+        title="Approve Expense"
         size="xs"
       >
         <div className="text-center py-2">
