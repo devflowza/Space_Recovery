@@ -16838,6 +16838,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      assert_expense_import_allowed: {
+        Args: { p_row_count: number }
+        Returns: undefined
+      }
       assign_inventory_to_case: {
         Args: { p_case_id: string; p_item_id: string; p_notes?: string }
         Returns: {

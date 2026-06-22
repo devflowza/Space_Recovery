@@ -49,6 +49,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
   const [fieldMappings, setFieldMappings] = useState<Record<string, string>>({});
   const [validationResults, setValidationResults] = useState<ValidationResult[]>([]);
   const [importResult, setImportResult] = useState<{ success: number; errors: number } | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [useNameBasedLookup, setUseNameBasedLookup] = useState(false);
   const [lookupResults, setLookupResults] = useState<BulkLookupResults | null>(null);
@@ -175,6 +176,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
     setIsImporting(true);
     setStep(4);
     setImportResult({ success: 0, errors: 0 });
+    setImportError(null);
 
     try {
       const { supabase } = await import('../../lib/supabaseClient');
@@ -184,8 +186,25 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
       const errorRowNumbers = new Set(validationResults.map(v => v.rowNumber));
       const validRows = parsedData.filter((_, index) => !errorRowNumbers.has(index + 2));
 
+      // EXP-063: server preflight — enforce the bulk_import feature + max_expenses_per_month
+      // quota before any insert (wizard-scoped; expenses_insert RLS is unchanged). Aborts the
+      // whole import on denial with a clear upgrade/limit message.
+      if (entityType === 'expenses') {
+        const { error: gateErr } = await supabase.rpc('assert_expense_import_allowed', {
+          p_row_count: validRows.length,
+        });
+        if (gateErr) {
+          logger.error('Expense import gate denied:', gateErr);
+          setImportError(gateErr.message || 'This import is not allowed on your current plan.');
+          setImportResult({ success: 0, errors: parsedData.length });
+          setIsImporting(false);
+          return;
+        }
+      }
+
       let successCount = 0;
       let errorCount = validationResults.length;
+      const rowErrors: string[] = [];
 
       // Process rows in batches of 100 for better performance
       const batchSize = 100;
@@ -262,20 +281,32 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
 
         if (error) {
           logger.error('Batch insert error:', error);
-          logger.error('Failed records sample:', recordsToInsert[0]);
-          logger.error('Error details:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-          });
-          errorCount += batch.length;
+          // EXP-064: don't lose the whole batch on one bad row (e.g. a bad category_id/
+          // case_id FK). Fall back to per-row inserts so the good rows still land and each
+          // failure is counted/surfaced individually.
+          for (const rec of recordsToInsert) {
+            const { error: rowErr } = await sb
+              .from(config.tableName as TableName)
+              .insert([rec])
+              .select();
+            if (rowErr) {
+              errorCount += 1;
+              if (rowErrors.length < 10) rowErrors.push(rowErr.message);
+              logger.error('Row insert error:', rowErr.message);
+            } else {
+              successCount += 1;
+            }
+          }
         } else {
           successCount += data?.length || 0;
         }
 
         // Update progress
         setImportResult({ success: successCount, errors: errorCount });
+      }
+
+      if (rowErrors.length > 0) {
+        setImportError(`${errorCount} row(s) failed. First error: ${rowErrors[0]}`);
       }
 
       // Invalidate queries to refresh data
@@ -755,6 +786,12 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({ entityType, onClose 
                   </>
                 )}
               </p>
+
+              {importError && (
+                <div className="mb-6 mx-auto max-w-md rounded-lg border border-danger/30 bg-danger-muted px-4 py-3 text-sm text-danger">
+                  {importError}
+                </div>
+              )}
 
               <Button onClick={onClose} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 Done
