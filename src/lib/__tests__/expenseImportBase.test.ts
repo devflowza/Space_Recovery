@@ -1,4 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// importExportService transitively imports the supabase client, which throws on
+// missing env at import time; stub it (this suite only reads the static config).
+vi.mock('../supabaseClient', () => ({ supabase: {} }));
+
 import { ENTITY_CONFIGS } from '../importExportService';
 
 // EXP-062: imported expenses must be able to carry currency/tax/rate, and amount_base
