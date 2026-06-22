@@ -12,7 +12,15 @@ vi.mock('./currencyService', () => ({
   getCurrencyDecimals: vi.fn(),
 }));
 
-import { getExpensesByCategory, EXPENSE_LIST_COLUMNS, recordExpenseDisbursement, rejectExpense } from './expensesService';
+import {
+  getExpensesByCategory,
+  EXPENSE_LIST_COLUMNS,
+  recordExpenseDisbursement,
+  rejectExpense,
+  archiveExpense,
+  deleteExpense,
+  getExpenseLedgerReconciliation,
+} from './expensesService';
 
 /** Thenable query builder: select/in/gte/lte are chainable; awaiting yields {data}. */
 function makeQuery(rows: Array<Record<string, unknown>>) {
@@ -159,5 +167,39 @@ describe('rejectExpense (EXP-007 — reason to its own column, notes preserved)'
   it('throws when the expense does not exist', async () => {
     from.mockReturnValueOnce(statusReader(null));
     await expect(rejectExpense('e1', 'mgr-9', 'x')).rejects.toThrow(/not found/i);
+  });
+});
+
+describe('archiveExpense / deleteExpense (EXP-018/EXP-006 — admin-gated atomic archive)', () => {
+  it('archiveExpense calls archive_expense with the id, and p_reason only when given', async () => {
+    rpc.mockResolvedValueOnce({ data: { id: 'e1', status: 'voided' }, error: null });
+    const res = await archiveExpense('e1');
+    expect(rpc).toHaveBeenCalledWith('archive_expense', { p_expense_id: 'e1' });
+    expect(res).toEqual({ id: 'e1', status: 'voided' });
+
+    rpc.mockResolvedValueOnce({ data: {}, error: null });
+    await archiveExpense('e1', 'cleanup');
+    expect(rpc).toHaveBeenLastCalledWith('archive_expense', { p_expense_id: 'e1', p_reason: 'cleanup' });
+  });
+
+  it('deleteExpense delegates to archive_expense (back-compat alias)', async () => {
+    rpc.mockResolvedValueOnce({ data: { id: 'e1' }, error: null });
+    await deleteExpense('e1');
+    expect(rpc).toHaveBeenCalledWith('archive_expense', { p_expense_id: 'e1' });
+  });
+
+  it('surfaces the RPC guard error (paid / non-admin block)', async () => {
+    rpc.mockResolvedValueOnce({ data: null, error: { message: 'Cannot archive a paid expense — reverse its disbursement (un-pay) first' } });
+    await expect(archiveExpense('e1')).rejects.toMatchObject({ message: expect.stringContaining('paid expense') });
+  });
+
+  it('getExpenseLedgerReconciliation calls reconcile_expense_ledger (empty + date-filtered)', async () => {
+    rpc.mockResolvedValueOnce({ data: [], error: null });
+    await getExpenseLedgerReconciliation();
+    expect(rpc).toHaveBeenCalledWith('reconcile_expense_ledger', {});
+
+    rpc.mockResolvedValueOnce({ data: [], error: null });
+    await getExpenseLedgerReconciliation({ dateFrom: '2026-01-01', dateTo: '2026-12-31' });
+    expect(rpc).toHaveBeenLastCalledWith('reconcile_expense_ledger', { p_date_from: '2026-01-01', p_date_to: '2026-12-31' });
   });
 });
