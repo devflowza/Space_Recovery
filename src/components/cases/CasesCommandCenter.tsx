@@ -58,14 +58,13 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
   actions,
   note,
 }) => {
-  const periodOpt = CASE_PERIOD_OPTIONS.find((o) => o.value === period) ?? CASE_PERIOD_OPTIONS[0];
   const summary = stats
     ? `${stats.active} active · ${stats.diagnosis} in diagnosis · ${stats.urgent} urgent`
     : 'Data recovery case management';
 
   return (
-    <div className="mb-5">
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="mb-4">
+      <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <Briefcase className="h-5 w-5" aria-hidden="true" />
@@ -88,14 +87,13 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
         <GradientStatCard
           tone="primary"
           icon={FilePlus2}
           label="New"
           value={stats?.newCount ?? 0}
           trend={stats?.newTrend}
-          trendLabel={periodOpt.vsLabel}
           loading={loading}
         />
         <GradientStatCard
@@ -103,7 +101,7 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
           icon={Briefcase}
           label="Active"
           value={stats?.active ?? 0}
-          sub={stats ? `of ${stats.total} total` : undefined}
+          denom={stats?.total}
           loading={loading}
         />
         <GradientStatCard
@@ -111,7 +109,7 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
           icon={AlertCircle}
           label="Urgent"
           value={stats?.urgent ?? 0}
-          sub="need attention"
+          denom={stats?.total}
           loading={loading}
         />
         <GradientStatCard
@@ -119,7 +117,7 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
           icon={Microscope}
           label="In Diagnosis"
           value={stats?.diagnosis ?? 0}
-          sub="in the lab"
+          denom={stats?.total}
           loading={loading}
         />
         <GradientStatCard
@@ -127,7 +125,7 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
           icon={CheckCircle2}
           label="Ready"
           value={stats?.ready ?? 0}
-          sub="to hand over"
+          denom={stats?.total}
           loading={loading}
         />
         <GradientStatCard
@@ -136,7 +134,6 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
           label="Delivered"
           value={stats?.deliveredCount ?? 0}
           trend={stats?.deliveredTrend}
-          trendLabel={periodOpt.vsLabel}
           loading={loading}
         />
       </div>
