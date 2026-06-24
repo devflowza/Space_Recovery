@@ -455,8 +455,8 @@ export const CasesList: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 mb-6">
-        <div className="p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 mb-4">
+        <div className="p-4">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
             <div className="w-full lg:w-80 relative flex-shrink-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />

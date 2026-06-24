@@ -4,13 +4,10 @@ import { cn } from '../../lib/utils';
 import type { Trend } from '../../lib/casePeriods';
 
 /**
- * Tones are the gradient face of the card. Every value is a SEMANTIC TOKEN
+ * Tones are the gradient face of the tile. Every value is a SEMANTIC TOKEN
  * (primary/info/danger/warning/success) or the fixed cat-* identity palette —
- * never a raw brand color or hex — so the cards re-theme per tenant and stay
+ * never a raw brand color or hex — so the tiles re-theme per tenant and stay
  * clear of the purple/indigo ban + the no-raw-style-colors rule.
- *
- * Gentle two-stop gradients (token → token/85) keep the lower-right corner —
- * where the value/sub sit — saturated enough for white text to read.
  */
 export type GradientTone = 'primary' | 'info' | 'danger' | 'warning' | 'success' | 'cat-2';
 
@@ -34,37 +31,39 @@ interface GradientStatCardProps {
   value: string | number;
   icon: LucideIcon;
   tone: GradientTone;
-  /** Contextual sub-label for snapshot metrics, e.g. "of 286 total". */
-  sub?: string;
-  /** Period-over-period trend for flow metrics; renders a pill. */
+  /** Period-over-period trend (flow metrics) → inline pill. */
   trend?: Trend;
-  /** Caption shown beside the trend pill, e.g. "vs last month". */
-  trendLabel?: string;
+  /** Denominator for snapshot metrics → "/N" + a share-of-total bar. */
+  denom?: number;
   loading?: boolean;
   onClick?: () => void;
   className?: string;
 }
 
 /**
- * Bold gradient KPI tile for the Cases command center. Big tabular value, an
- * icon chip, a soft corner glow + oversized ghost icon for depth, and either a
- * trend pill (flow metrics) or a contextual sub-label (snapshot metrics).
+ * Compact gradient KPI tile (~76px) for the Cases stat ribbon. A single tight
+ * stack: label + icon, a big tabular value with either an inline trend pill
+ * (flow metrics) or a "/total" denominator (snapshot metrics), and a thin
+ * share-of-total bar that doubles as a baseline so every tile is the same
+ * height. Built to pack six metrics into roughly half the old height.
  */
 export const GradientStatCard: React.FC<GradientStatCardProps> = ({
   label,
   value,
   icon: Icon,
   tone,
-  sub,
   trend,
-  trendLabel,
+  denom,
   loading = false,
   onClick,
   className,
 }) => {
   const interactive = Boolean(onClick);
   const TrendIcon = trend ? TREND_ICON[trend.direction] : null;
-  const caption = trend ? trendLabel : sub;
+  const pct =
+    denom && denom > 0 && typeof value === 'number'
+      ? Math.max(0, Math.min(100, Math.round((value / denom) * 100)))
+      : null;
 
   return (
     <div
@@ -82,47 +81,45 @@ export const GradientStatCard: React.FC<GradientStatCardProps> = ({
           : undefined
       }
       className={cn(
-        'relative overflow-hidden rounded-2xl p-4 text-white shadow-lg ring-1 ring-inset ring-white/10',
+        'relative overflow-hidden rounded-xl p-3 text-white shadow-md ring-1 ring-inset ring-white/10',
         'bg-gradient-to-br',
         TONE_GRADIENT[tone],
         interactive &&
-          'cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
+          'cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
         className,
       )}
     >
       <div
-        className="pointer-events-none absolute -top-8 -right-6 h-24 w-24 rounded-full bg-white/15 blur-2xl"
+        className="pointer-events-none absolute -top-6 -right-5 h-16 w-16 rounded-full bg-white/15 blur-xl"
         aria-hidden="true"
-      />
-      <Icon
-        className="pointer-events-none absolute -bottom-4 -right-3 h-24 w-24 text-white/10"
-        aria-hidden="true"
-        strokeWidth={1.5}
       />
 
-      <div className="relative flex items-start justify-between gap-2">
-        <p className="text-xxs font-semibold uppercase tracking-wider text-white/90">{label}</p>
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/15">
-          <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-        </div>
+      <div className="relative flex items-center justify-between gap-2">
+        <p className="truncate text-xxs font-semibold uppercase tracking-wider text-white/90">{label}</p>
+        <Icon className="h-4 w-4 shrink-0 text-white/80" aria-hidden="true" />
       </div>
 
-      <div className="relative mt-3 flex h-9 items-end">
+      <div className="relative mt-1.5 flex items-end justify-between gap-2">
         {loading ? (
-          <span className="h-8 w-20 animate-pulse rounded-md bg-white/25" />
+          <span className="h-7 w-14 animate-pulse rounded bg-white/25" />
         ) : (
-          <span className="text-3xl font-bold leading-none tabular-nums">{value}</span>
+          <span className="flex items-baseline gap-1 leading-none">
+            <span className="text-2xl font-bold tabular-nums">{value}</span>
+            {denom != null && <span className="text-xxs font-medium text-white/60">/{denom}</span>}
+          </span>
         )}
-      </div>
-
-      <div className="relative mt-2 flex min-h-[20px] flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-        {trend && !loading && (
-          <span className="inline-flex items-center gap-1 rounded-md bg-white/15 px-1.5 py-0.5 font-semibold">
+        {!loading && trend && (
+          <span className="inline-flex items-center gap-0.5 rounded bg-white/15 px-1 py-0.5 text-xxs font-semibold">
             {TrendIcon && <TrendIcon className="h-3 w-3" aria-hidden="true" />}
             {trend.pct === null ? 'New' : `${trend.pct}%`}
           </span>
         )}
-        {!loading && caption && <span className="truncate text-white/80">{caption}</span>}
+      </div>
+
+      <div className="relative mt-2 h-1 overflow-hidden rounded-full bg-white/20">
+        {pct != null && !loading && (
+          <div className="h-full rounded-full bg-white/75" style={{ width: `${pct}%` }} />
+        )}
       </div>
     </div>
   );
