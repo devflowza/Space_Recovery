@@ -60,7 +60,7 @@ describe('DeviceFormModal — add mode wiring', () => {
     });
     expect(screen.getByText('Technical Information')).toBeInTheDocument();
 
-    // Save is gated until a device type or serial number is entered.
+    // Save is gated until a device type is selected (device_type_id required for non-donor).
     expect(screen.getByRole('button', { name: /Add Device/i })).toBeDisabled();
   });
 });

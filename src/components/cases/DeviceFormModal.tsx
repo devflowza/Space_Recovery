@@ -395,7 +395,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   const isFormValid = !!formData.device_role_id && (
     isDonorRole
       ? !!selectedDonorInventoryId
-      : (!!detailState.device_type_id || !!detailState.serial_number)
+      : !!detailState.device_type_id
   );
 
   return (
