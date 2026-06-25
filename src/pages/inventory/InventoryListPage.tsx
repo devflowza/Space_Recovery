@@ -504,10 +504,10 @@ export default function InventoryListPage() {
                           <div className="font-semibold text-slate-900">
                             {item.brand?.name || 'Unknown'} {item.model || 'N/A'}
                           </div>
-                          {item.inventory_code && (
+                          {item.item_number && (
                             <div className="inline-flex items-center gap-1.5 bg-info-muted border border-info/30 rounded-md px-2.5 py-1">
                               <span className="text-xs font-medium text-info">INV#:</span>
-                              <span className="text-sm font-bold text-info font-mono tracking-wide">{item.inventory_code}</span>
+                              <span className="text-sm font-bold text-info font-mono tracking-wide">{item.item_number}</span>
                             </div>
                           )}
                           {item.serial_number && (
