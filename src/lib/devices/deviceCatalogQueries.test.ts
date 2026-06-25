@@ -17,4 +17,15 @@ describe('CATALOG_SOURCES', () => {
       expect(typeof CATALOG_SOURCES[key].table).toBe('string');
     }
   });
+
+  it('component_statuses uses valueField "name" so reports store readable labels', () => {
+    expect(CATALOG_SOURCES.component_statuses.valueField).toBe('name');
+  });
+
+  it('all other catalog sources do NOT set valueField to "name" (they use id)', () => {
+    const others = (Object.keys(CATALOG_SOURCES) as CatalogKey[]).filter(k => k !== 'component_statuses');
+    for (const key of others) {
+      expect(CATALOG_SOURCES[key].valueField, `${key} should not use name as value`).not.toBe('name');
+    }
+  });
 });
