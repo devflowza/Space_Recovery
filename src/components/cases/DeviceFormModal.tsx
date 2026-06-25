@@ -735,7 +735,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                 {!isDonorRole && (
                   <div className="col-span-3">
                     <SearchableSelect
-                      label="Encryption Type"
+                      label="Encryption"
                       value={formData.encryption_id}
                       onChange={(value) => setFormData({ ...formData, encryption_id: value })}
                       options={encryptionTypes.map(et => ({ id: et.id, name: et.name }))}
@@ -749,7 +749,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
                   <>
                     <div className="col-span-3">
                       <label htmlFor={symptomsId} className="block text-sm font-medium text-slate-700 mb-2">
-                        Problem Description
+                        Device Problem
                       </label>
                       <textarea
                         id={symptomsId}

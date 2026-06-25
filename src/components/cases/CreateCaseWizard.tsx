@@ -987,7 +987,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                   </div>
 
                   <SearchableSelect
-                    label="Encryption Type"
+                    label="Encryption"
                     value={devices[0].encryption_type_id}
                     onChange={(value) =>
                       updateDevice('1', 'encryption_type_id', value)

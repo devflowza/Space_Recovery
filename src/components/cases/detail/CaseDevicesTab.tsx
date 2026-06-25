@@ -139,7 +139,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
               )}
               {device.symptoms && (
                 <div>
-                  <span className="text-slate-500 text-xs font-medium block mb-1">Problem Description</span>
+                  <span className="text-slate-500 text-xs font-medium block mb-1">Device Problem</span>
                   <p className="text-slate-900 text-xs leading-relaxed">{device.symptoms}</p>
                 </div>
               )}
