@@ -35,3 +35,6 @@ cases-errors.txt
 # Python bytecode (skills under .claude/skills generate these at runtime)
 __pycache__/
 *.pyc
+
+# Supabase CLI temp files (generated on `supabase link` / type generation)
+supabase/.temp/

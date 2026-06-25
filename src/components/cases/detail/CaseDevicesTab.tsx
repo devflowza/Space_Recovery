@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { HardDrive, Grid2x2 as Grid, History, Clock, Eye, EyeOff, Shield, Package } from 'lucide-react';
-import { CreditCard as Edit } from 'lucide-react';
+import { HardDrive, Grid2x2 as Grid, History, Clock, Eye, EyeOff, Shield, Package, SquarePen as Edit } from 'lucide-react';
 import { ChainOfCustodyTab } from '../ChainOfCustodyTab';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
