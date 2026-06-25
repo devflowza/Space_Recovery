@@ -126,7 +126,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     'Thunderbolt Cable',
   ],
 
-  catalog_device_interfaces: [
+  catalog_interfaces: [
     'SATA I (1.5 Gb/s)',
     'SATA II (3 Gb/s)',
     'SATA III (6 Gb/s)',

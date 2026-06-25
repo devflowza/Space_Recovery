@@ -24,7 +24,6 @@ export type MasterDataTable =
   | 'catalog_device_brands'
   | 'catalog_device_capacities'
   | 'catalog_accessories'
-  | 'catalog_device_interfaces'
   | 'catalog_device_made_in'
   | 'catalog_device_encryption'
   | 'catalog_device_platter_counts'
@@ -106,7 +105,6 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
       'catalog_device_brands',
       'catalog_device_capacities',
       'catalog_accessories',
-      'catalog_device_interfaces',
       'catalog_interfaces',
       'catalog_device_made_in',
       'catalog_device_encryption',
@@ -296,7 +294,6 @@ export const TABLE_LABELS: Record<MasterDataTable, string> = {
   catalog_device_brands: 'Brands',
   catalog_device_capacities: 'Capacities',
   catalog_accessories: 'Accessories',
-  catalog_device_interfaces: 'Device Interface',
   catalog_interfaces: 'Interfaces',
   catalog_device_made_in: 'Device Made In',
   catalog_device_encryption: 'Device Encryption',
