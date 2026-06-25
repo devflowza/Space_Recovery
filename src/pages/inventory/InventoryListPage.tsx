@@ -27,11 +27,13 @@ import { logger } from '../../lib/logger';
 
 const PAGE_SIZE = 50;
 
+type InventoryRow = Awaited<ReturnType<typeof getInventoryItemsPage>>['rows'][number];
+
 export default function InventoryListPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<InventoryRow[]>([]);
   const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const [statusTypes, setStatusTypes] = useState<InventoryStatusType[]>([]);
   const [statistics, setStatistics] = useState({
@@ -604,7 +606,7 @@ export default function InventoryListPage() {
                                 cursor: 'pointer',
                               }}
                             >
-                              {item.status_type?.name || item.status}
+                              {item.status_type?.name || 'N/A'}
                             </Badge>
                           </span>
 
