@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient';
 import { logger } from './logger';
 import {
-  DEVICE_MEDIA_SEED_DATA,
+  DEVICE_INVENTORY_SEED_DATA,
   CLIENT_FINANCIAL_SEED_DATA,
   CASE_SERVICE_SEED_DATA,
   TEMPLATE_SEED_DATA,
@@ -173,7 +173,7 @@ export async function seedDeviceMediaData(): Promise<SeedResult> {
         continue;
       }
 
-      const seedData = DEVICE_MEDIA_SEED_DATA[table];
+      const seedData = DEVICE_INVENTORY_SEED_DATA[table];
 
       if (!seedData || seedData.length === 0) {
         logger.error(`No seed data found for table: ${table}`);
@@ -235,9 +235,9 @@ export async function seedDeviceMediaData(): Promise<SeedResult> {
     if (seededCount > 0 && skippedCount > 0) {
       message = `Seeded ${seededCount} empty tables (${totalInserted} items). Skipped ${skippedCount} tables that already had data.`;
     } else if (seededCount > 0) {
-      message = `Successfully seeded ${totalInserted} records across ${seededCount} Device & Media tables`;
+      message = `Successfully seeded ${totalInserted} records across ${seededCount} Devices & Inventory tables`;
     } else if (skippedCount > 0) {
-      message = `All Device & Media tables already have data. No seeding needed.`;
+      message = `All Devices & Inventory tables already have data. No seeding needed.`;
     } else {
       message = 'No tables were seeded';
     }

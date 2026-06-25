@@ -1,4 +1,4 @@
-export const DEVICE_MEDIA_SEED_DATA = {
+export const DEVICE_INVENTORY_SEED_DATA = {
   catalog_device_types: [
     '2.5" HDD',
     '3.5" HDD',

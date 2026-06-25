@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { SETTINGS_CATEGORIES, TABLE_LABELS } from './settingsCategories';
 
-describe('Device & Media settings — interface catalog consolidation', () => {
+describe('Devices & Inventory settings — interface catalog consolidation', () => {
   const deviceMedia = SETTINGS_CATEGORIES.find((c) => c.id === 'device-media')!;
 
   it('exposes catalog_interfaces and not catalog_device_interfaces', () => {

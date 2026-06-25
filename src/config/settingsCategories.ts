@@ -96,7 +96,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
   },
   {
     id: 'device-media',
-    title: 'Device & Media',
+    title: 'Devices & Inventory',
     icon: HardDrive,
     backgroundColor: '#3b82f6',
     borderColor: '#3b82f6',
