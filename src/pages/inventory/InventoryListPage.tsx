@@ -18,7 +18,7 @@ import {
   getInventoryInsights,
   updateInventoryItem,
   deleteInventoryItem,
-  type InventoryItemCategory,
+  type InventoryCategory,
   type InventoryStatusType,
   type InventoryInsights,
 } from '../../lib/inventoryService';
@@ -32,7 +32,7 @@ export default function InventoryListPage() {
   const toast = useToast();
 
   const [items, setItems] = useState<any[]>([]);
-  const [categories, setCategories] = useState<InventoryItemCategory[]>([]);
+  const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const [statusTypes, setStatusTypes] = useState<InventoryStatusType[]>([]);
   const [statistics, setStatistics] = useState({
     totalItems: 0,

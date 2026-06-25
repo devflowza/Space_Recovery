@@ -3,7 +3,7 @@ import { sanitizeFilterValue } from './postgrestSanitizer';
 import { logger } from './logger';
 import type { Database } from '../types/database.types';
 
-export type InventoryItemCategory = Database['public']['Tables']['master_inventory_categories']['Row'];
+export type InventoryCategory = Database['public']['Tables']['master_inventory_categories']['Row'];
 export type InventoryStatusType = Database['public']['Tables']['master_inventory_status_types']['Row'];
 export type InventoryConditionType = Database['public']['Tables']['master_inventory_condition_types']['Row'];
 export type InventoryItem = Database['public']['Tables']['inventory_items']['Row'];
@@ -26,7 +26,7 @@ export async function getInventoryCategories() {
     logger.error('Error fetching inventory categories:', error);
     throw error;
   }
-  return (data ?? []) as InventoryItemCategory[];
+  return (data ?? []) as InventoryCategory[];
 }
 
 export async function getInventoryStatusTypes() {
