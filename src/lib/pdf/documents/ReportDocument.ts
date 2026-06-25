@@ -307,7 +307,7 @@ export function buildReportDocument(
     const typeLabel = isBilingual ? (t('type', '').split(' | ')[1] ? `Device Type | ${t('type', '').split(' | ')[1]}` : 'Device Type') : 'Device Type';
     const modelLabel = isBilingual ? (t('model', '').split(' | ')[1] ? `Model | ${t('model', '').split(' | ')[1]}` : 'Model') : 'Model';
     const capacityLabel = isBilingual ? (t('capacity', '').split(' | ')[1] ? `Capacity | ${t('capacity', '').split(' | ')[1]}` : 'Capacity') : 'Capacity';
-    const serialLabel = isBilingual ? (t('serialNumber', '').split(' | ')[1] ? `Serial No | ${t('serialNumber', '').split(' | ')[1]}` : 'Serial No') : 'Serial No';
+    const serialLabel = isBilingual ? (t('serialNumber', '').split(' | ')[1] ? `Serial Number | ${t('serialNumber', '').split(' | ')[1]}` : 'Serial Number') : 'Serial Number';
 
     const deviceInfoParts: string[] = [];
     if (deviceData.device_type) deviceInfoParts.push(`${typeLabel}: ${deviceData.device_type}`);

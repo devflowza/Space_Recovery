@@ -82,7 +82,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
               </h4>
               <p className="text-xs text-slate-600 truncate mb-0.5">{device.brand?.name} {device.model}</p>
               {device.serial_number && (
-                <p className="text-xs text-slate-500 font-mono">s/n: {device.serial_number}</p>
+                <p className="text-xs text-slate-500 font-mono">S/N: {device.serial_number}</p>
               )}
             </div>
             <div className="flex items-center gap-1 ml-2 flex-shrink-0">
