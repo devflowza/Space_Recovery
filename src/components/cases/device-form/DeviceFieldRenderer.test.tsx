@@ -13,6 +13,12 @@ const selectDef: DeviceFieldDef = {
   control: 'select', storage: { table: 'case_devices', kind: 'column', column: 'brand_id' }, optionsSource: 'brands',
 };
 
+const staticDef: DeviceFieldDef = {
+  key: 'diagnostic_status', labelKey: 'devices.field.diagnostic_status', labelFallback: 'Diagnostic Status',
+  control: 'select', storage: { table: 'device_diagnostics', kind: 'json', jsonKey: 'diagnostic_status' },
+  staticOptions: [{ id: 'Pending', name: 'Pending' }, { id: 'Completed', name: 'Completed' }],
+};
+
 describe('DeviceFieldRenderer', () => {
   it('renders a text input with the fallback label and emits onChange', async () => {
     const onChange = vi.fn();
@@ -26,6 +32,11 @@ describe('DeviceFieldRenderer', () => {
   it('renders a combobox for select fields', () => {
     render(<DeviceFieldRenderer def={selectDef} value="" onChange={vi.fn()}
       options={[{ id: '1', name: 'Seagate' }]} />);
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+
+  it('uses staticOptions for a select with no catalog options', () => {
+    render(<DeviceFieldRenderer def={staticDef} value="" onChange={() => {}} options={[]} />);
     expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 });

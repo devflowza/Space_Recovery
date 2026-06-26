@@ -21,43 +21,45 @@ export function DeviceFieldRenderer({ def, value, onChange, options, error }: Pr
 
   switch (def.control) {
     case 'select':
-    case 'component-status':
+    case 'component-status': {
+      const opts = def.staticOptions ?? options;
       return (
         <SearchableSelect
           label={label} value={str} onChange={(v) => onChange(def.key, v)}
-          options={options} required={def.required} error={error} clearable={!def.required}
+          options={opts} required={def.required} error={error} clearable={!def.required}
           placeholder={t('ui.select.placeholder', { defaultValue: 'Select...' })}
-          usePortal
+          size="sm" usePortal
         />
       );
+    }
     case 'multiselect':
       return (
         <MultiSelectDropdown
           label={label} value={Array.isArray(value) ? (value as string[]) : []}
           onChange={(ids) => onChange(def.key, ids)} options={options}
-          required={def.required} error={error} usePortal
+          required={def.required} error={error} size="sm" usePortal
         />
       );
     case 'textarea':
       return (
         <Textarea label={label} value={str} required={def.required} error={error}
-          onChange={(e) => onChange(def.key, e.target.value)} rows={3} />
+          onChange={(e) => onChange(def.key, e.target.value)} rows={3} size="sm" />
       );
     case 'number':
       return (
         <Input type="number" label={label} value={str} required={def.required} error={error}
-          onChange={(e) => onChange(def.key, e.target.value)} />
+          onChange={(e) => onChange(def.key, e.target.value)} size="sm" />
       );
     case 'date':
       return (
         <Input type="date" label={label} value={str} required={def.required} error={error}
-          onChange={(e) => onChange(def.key, e.target.value)} />
+          onChange={(e) => onChange(def.key, e.target.value)} size="sm" />
       );
     case 'text':
     default:
       return (
         <Input type="text" label={label} value={str} required={def.required} error={error}
-          onChange={(e) => onChange(def.key, e.target.value)} />
+          onChange={(e) => onChange(def.key, e.target.value)} size="sm" />
       );
   }
 }
