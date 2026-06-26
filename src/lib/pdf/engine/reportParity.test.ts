@@ -286,3 +286,69 @@ describe('case report parity — engine output matches the legacy builder', () =
     expect(footerTexts.some((t) => t.includes('https://acme.test'))).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Regression guard: component diagnostics render for ALL device families,
+// not just hdd/ssd. Before the fix, device_type_category === 'other' (and any
+// non-hdd/ssd category) produced zero component rows even when fields were set.
+// ---------------------------------------------------------------------------
+
+describe('component diagnostics — all device families', () => {
+  it('renders controller_status and storage_chip_status for "other" category in both engine and legacy', () => {
+    const data = makeData();
+    data.diagnosticsData = {
+      device_type_category: 'other',
+      controller_status: 'Healthy',
+      storage_chip_status: 'NAND degraded',
+    };
+    const legacy = allTexts(buildReportDocument(data, englishCtx)).join('|');
+    const engine = allTexts(renderEngine(data)).join('|');
+    expect(legacy).toContain('Healthy');
+    expect(legacy).toContain('NAND degraded');
+    expect(engine).toContain('Healthy');
+    expect(engine).toContain('NAND degraded');
+  });
+
+  it('renders preamp_status and service_area_status (new fields) for "other" category', () => {
+    const data = makeData();
+    data.diagnosticsData = {
+      device_type_category: 'other',
+      preamp_status: 'Weak signal',
+      service_area_status: 'Corrupted',
+    };
+    const legacy = allTexts(buildReportDocument(data, englishCtx)).join('|');
+    const engine = allTexts(renderEngine(data)).join('|');
+    expect(legacy).toContain('Weak signal');
+    expect(legacy).toContain('Corrupted');
+    expect(engine).toContain('Weak signal');
+    expect(engine).toContain('Corrupted');
+  });
+
+  it('adapter toEngineData: emits correct label+value rows for "other" category', () => {
+    const config = BUILT_IN_TEMPLATE_CONFIGS.report;
+    const data = makeData();
+    data.diagnosticsData = {
+      device_type_category: 'other',
+      controller_status: 'Healthy',
+      storage_chip_status: 'NAND degraded',
+      preamp_status: 'Weak signal',
+    };
+    const engineData = toEngineData(data, config);
+    const rows = engineData.diagnostics?.rows ?? [];
+    expect(rows.some((r) => r.label.en === 'Controller' && r.value === 'Healthy')).toBe(true);
+    expect(rows.some((r) => r.label.en === 'Storage Chip' && r.value === 'NAND degraded')).toBe(true);
+    expect(rows.some((r) => r.label.en === 'Pre-Amplifier' && r.value === 'Weak signal')).toBe(true);
+  });
+
+  it('HDD golden unchanged: hdd sample still renders heads/pcb/motor/surface in correct order', () => {
+    const config = BUILT_IN_TEMPLATE_CONFIGS.report;
+    const data = makeData(); // diagnosticsData: hdd with heads/pcb/motor/surface
+    const engineData = toEngineData(data, config);
+    const rows = engineData.diagnostics?.rows ?? [];
+    const componentRows = rows.filter((r) =>
+      ['Heads', 'PCB', 'Motor', 'Surface'].includes(r.label.en),
+    );
+    expect(componentRows.map((r) => r.label.en)).toEqual(['Heads', 'PCB', 'Motor', 'Surface']);
+    expect(componentRows.map((r) => r.value)).toEqual(['Degraded', 'OK', 'OK', 'Bad sectors']);
+  });
+});

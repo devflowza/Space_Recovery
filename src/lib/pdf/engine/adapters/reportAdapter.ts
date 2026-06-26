@@ -15,8 +15,8 @@
  * `chain_of_custody` section into a timeline rather than a prose box).
  *
  * The adapter owns ALL domain knowledge: the report-type → bilingual title map
- * (the 8 report types), the customer/company display fallbacks, the HDD-vs-SSD
- * diagnostics field-set selection, the HTML→plain-text cleaning of section
+ * (the 8 report types), the customer/company display fallbacks, the ordered
+ * component-status diagnostics field set, the HTML→plain-text cleaning of section
  * content (mirroring the legacy `stripHtmlTags`), and the per-entry custody
  * stringification. The section renderers stay dumb.
  *
@@ -105,11 +105,27 @@ function stripHtmlTags(html: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Diagnostics — HDD vs SSD field-set selection. The legacy "Device Details" box
+// Diagnostics — ordered component-status list. The legacy "Device Details" box
 // shows shared rows (type / model / capacity / serial), then a Component
-// Diagnostics block whose rows depend on `device_type_category` (hdd vs ssd),
-// then physical-damage notes. The HDD/SSD branching lives ENTIRELY here.
+// Diagnostics block whose rows come from COMPONENT_FIELDS (any non-empty field
+// renders regardless of device_type_category), then physical-damage notes.
 // ---------------------------------------------------------------------------
+
+type DiagnosticsKey = keyof NonNullable<ReportData['diagnosticsData']>;
+
+const COMPONENT_FIELDS: Array<{ key: DiagnosticsKey; label: LabelText }> = [
+  { key: 'heads_status',       label: { en: 'Heads',            ar: 'الرؤوس' } },
+  { key: 'pcb_status',         label: { en: 'PCB',              ar: 'اللوحة' } },
+  { key: 'motor_status',       label: { en: 'Motor',            ar: 'المحرك' } },
+  { key: 'preamp_status',      label: { en: 'Pre-Amplifier',    ar: 'مضخم الإشارة' } },
+  { key: 'surface_status',     label: { en: 'Surface',          ar: 'السطح' } },
+  { key: 'service_area_status',label: { en: 'Service Area',     ar: 'منطقة الخدمة' } },
+  { key: 'controller_status',  label: { en: 'Controller',       ar: 'المتحكم' } },
+  { key: 'memory_chips_status',label: { en: 'Memory Chips',     ar: 'رقائق الذاكرة' } },
+  { key: 'storage_chip_status',label: { en: 'Storage Chip',     ar: 'رقاقة التخزين' } },
+  { key: 'controller_model',   label: { en: 'Controller Model', ar: 'طراز المتحكم' } },
+  { key: 'nand_type',          label: { en: 'NAND Type',        ar: 'نوع الذاكرة' } },
+];
 
 function buildDiagnostics(
   device: ReportData['deviceData'],
@@ -126,16 +142,9 @@ function buildDiagnostics(
   let deviceKind: string | undefined;
   if (diagnostics) {
     deviceKind = diagnostics.device_type_category;
-    if (diagnostics.device_type_category === 'hdd') {
-      if (diagnostics.heads_status) rows.push({ label: { en: 'Heads', ar: 'الرؤوس' }, value: safeString(diagnostics.heads_status) });
-      if (diagnostics.pcb_status) rows.push({ label: { en: 'PCB', ar: 'اللوحة' }, value: safeString(diagnostics.pcb_status) });
-      if (diagnostics.motor_status) rows.push({ label: { en: 'Motor', ar: 'المحرك' }, value: safeString(diagnostics.motor_status) });
-      if (diagnostics.surface_status) rows.push({ label: { en: 'Surface', ar: 'السطح' }, value: safeString(diagnostics.surface_status) });
-    } else if (diagnostics.device_type_category === 'ssd') {
-      if (diagnostics.controller_status) rows.push({ label: { en: 'Controller', ar: 'المتحكم' }, value: safeString(diagnostics.controller_status) });
-      if (diagnostics.memory_chips_status) rows.push({ label: { en: 'Memory Chips', ar: 'رقائق الذاكرة' }, value: safeString(diagnostics.memory_chips_status) });
-      if (diagnostics.controller_model) rows.push({ label: { en: 'Controller Model', ar: 'طراز المتحكم' }, value: safeString(diagnostics.controller_model) });
-      if (diagnostics.nand_type) rows.push({ label: { en: 'NAND Type', ar: 'نوع الذاكرة' }, value: safeString(diagnostics.nand_type) });
+    for (const field of COMPONENT_FIELDS) {
+      const val = diagnostics[field.key];
+      if (val) rows.push({ label: field.label, value: safeString(val) });
     }
     if (diagnostics.physical_damage_notes) {
       rows.push({ label: { en: 'Physical Damage Notes', ar: 'ملاحظات الضرر المادي' }, value: safeString(diagnostics.physical_damage_notes) });

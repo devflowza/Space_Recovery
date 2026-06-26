@@ -65,9 +65,12 @@ export interface ReportData {
     heads_status?: string;
     pcb_status?: string;
     motor_status?: string;
+    preamp_status?: string;
     surface_status?: string;
+    service_area_status?: string;
     controller_status?: string;
     memory_chips_status?: string;
+    storage_chip_status?: string;
     controller_model?: string;
     nand_type?: string;
     physical_damage_notes?: string;
@@ -337,17 +340,23 @@ export function buildReportDocument(
         { text: diagnosticsTitle, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 6, 0, 3] }
       );
 
+      const componentFields: Array<[keyof NonNullable<ReportData['diagnosticsData']>, string]> = [
+        ['heads_status', 'Heads'],
+        ['pcb_status', 'PCB'],
+        ['motor_status', 'Motor'],
+        ['preamp_status', 'Pre-Amplifier'],
+        ['surface_status', 'Surface'],
+        ['service_area_status', 'Service Area'],
+        ['controller_status', 'Controller'],
+        ['memory_chips_status', 'Memory Chips'],
+        ['storage_chip_status', 'Storage Chip'],
+        ['controller_model', 'Controller Model'],
+        ['nand_type', 'NAND Type'],
+      ];
       const diagnosticsParts: string[] = [];
-      if (diagnosticsData.device_type_category === 'hdd') {
-        if (diagnosticsData.heads_status) diagnosticsParts.push(`Heads: ${diagnosticsData.heads_status}`);
-        if (diagnosticsData.pcb_status) diagnosticsParts.push(`PCB: ${diagnosticsData.pcb_status}`);
-        if (diagnosticsData.motor_status) diagnosticsParts.push(`Motor: ${diagnosticsData.motor_status}`);
-        if (diagnosticsData.surface_status) diagnosticsParts.push(`Surface: ${diagnosticsData.surface_status}`);
-      } else if (diagnosticsData.device_type_category === 'ssd') {
-        if (diagnosticsData.controller_status) diagnosticsParts.push(`Controller: ${diagnosticsData.controller_status}`);
-        if (diagnosticsData.memory_chips_status) diagnosticsParts.push(`Memory Chips: ${diagnosticsData.memory_chips_status}`);
-        if (diagnosticsData.controller_model) diagnosticsParts.push(`Controller Model: ${diagnosticsData.controller_model}`);
-        if (diagnosticsData.nand_type) diagnosticsParts.push(`NAND Type: ${diagnosticsData.nand_type}`);
+      for (const [key, label] of componentFields) {
+        const val = diagnosticsData[key];
+        if (val) diagnosticsParts.push(`${label}: ${val}`);
       }
 
       if (diagnosticsParts.length > 0) {
