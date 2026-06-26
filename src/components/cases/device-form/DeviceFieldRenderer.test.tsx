@@ -35,8 +35,11 @@ describe('DeviceFieldRenderer', () => {
     expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 
-  it('uses staticOptions for a select with no catalog options', () => {
+  it('uses staticOptions for a select with no catalog options', async () => {
+    const user = userEvent.setup();
     render(<DeviceFieldRenderer def={staticDef} value="" onChange={() => {}} options={[]} />);
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    await user.click(screen.getByRole('combobox'));
+    expect(screen.getByRole('option', { name: 'Pending' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Completed' })).toBeInTheDocument();
   });
 });
