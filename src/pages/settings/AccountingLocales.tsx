@@ -533,7 +533,7 @@ export const LocalizationCenter: React.FC = () => {
       </div>
 
       {/* Save bar — sticks to the bottom of the content column (no sidebar overlap) */}
-      <div className="sticky bottom-0 z-20 mt-6 flex items-center justify-end gap-3 border-t border-slate-200 bg-white/90 px-1 py-3 backdrop-blur">
+      <div className="sticky bottom-0 z-sticky mt-6 flex items-center justify-end gap-3 border-t border-slate-200 bg-white/90 px-1 py-3 backdrop-blur">
         {dirty && <span className="text-xs text-slate-500">Unsaved changes</span>}
         <Button onClick={handleSave} disabled={!dirty || isSaving} isLoading={isSaving} loadingLabel="Saving">
           {isSaving ? 'Saving…' : 'Save changes'}

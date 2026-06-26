@@ -86,10 +86,15 @@ describe('Dialog', () => {
   });
 
   it('applies overlayClassName to the outer wrapper (z-index override wins)', () => {
-    render(<Dialog open onClose={() => {}} label="T" overlayClassName="z-[60]"><button>x</button></Dialog>);
+    render(<Dialog open onClose={() => {}} label="T" overlayClassName="z-popover"><button>x</button></Dialog>);
     const wrapper = screen.getByTestId('dialog-overlay');
-    expect(wrapper).toHaveClass('z-[60]');
-    expect(wrapper).not.toHaveClass('z-50');
+    expect(wrapper).toHaveClass('z-popover');
+    expect(wrapper).not.toHaveClass('z-modal');
+  });
+
+  it('defaults the overlay to the z-modal layer', () => {
+    render(<Dialog open onClose={() => {}} label="T"><button>x</button></Dialog>);
+    expect(screen.getByTestId('dialog-overlay')).toHaveClass('z-modal');
   });
 
   it('applies backdropClassName, overriding the default scrim', () => {

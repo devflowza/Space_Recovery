@@ -208,7 +208,7 @@ export const FeaturesSettings: React.FC = () => {
       </div>
 
       {/* Preview-before-save action bar */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+      <div className="fixed inset-x-0 bottom-0 z-sticky border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
           <div className="min-w-0 text-sm">
             {dirty ? (

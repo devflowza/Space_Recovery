@@ -54,6 +54,17 @@ export default {
         // (shadow-sm..xl); see DESIGN.md Known Deviations #11.
         'glow-primary': '0 0 20px rgb(var(--color-primary) / 0.3)',
       },
+      // Named z-index scale — mirrors src/lib/ui/zIndex.ts (see DESIGN.md →
+      // Z-Index Scale). Default Tailwind z-0..z-50/z-auto remain available for
+      // local, panel-internal stacking contexts.
+      zIndex: {
+        sticky: '20',
+        dropdown: '30',
+        overlay: '40',
+        modal: '50',
+        popover: '60',
+        toast: '70',
+      },
       animation: {
         'slide-in': 'slideIn 0.2s ease-out',
         'fade-in': 'fadeIn 0.2s ease-out',

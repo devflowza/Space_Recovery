@@ -1,5 +1,21 @@
 import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { extendTailwindMerge } from 'tailwind-merge';
+
+/**
+ * tailwind-merge, extended so the named z-index scale (z-sticky/z-dropdown/
+ * z-overlay/z-modal/z-popover/z-toast — see src/lib/ui/zIndex.ts) joins the
+ * built-in `z` conflict group. Without this, `cn('z-modal', 'z-popover')`
+ * would keep BOTH classes and overrides would resolve only by stylesheet
+ * source order. The tokens must share the default `z` group so the last one
+ * wins (matching how z-10/z-50/z-[60] already behave).
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      z: [{ z: ['sticky', 'dropdown', 'overlay', 'modal', 'popover', 'toast'] }],
+    },
+  },
+});
 
 /**
  * Merge class names with correct Tailwind conflict resolution.

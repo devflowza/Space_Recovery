@@ -130,7 +130,7 @@ export const EngineerSelector: React.FC<EngineerSelectorProps> = ({
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute z-[9999] w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-xl max-h-64 overflow-hidden">
+        <div className="absolute z-popover w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-xl max-h-64 overflow-hidden">
           <div className="p-2 border-b border-slate-200">
             <input
               type="text"

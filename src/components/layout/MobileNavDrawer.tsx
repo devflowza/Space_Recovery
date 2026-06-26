@@ -38,7 +38,7 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({ isOpen, onClos
   const closedTranslate = isLeft ? '-translate-x-full' : 'translate-x-full';
 
   return createPortal(
-    <div className={`fixed inset-0 z-50 md:hidden ${isOpen ? '' : 'pointer-events-none'}`}>
+    <div className={`fixed inset-0 z-modal md:hidden ${isOpen ? '' : 'pointer-events-none'}`}>
       <div
         aria-hidden="true"
         onClick={onClose}

@@ -20,7 +20,7 @@ export function PhotoViewerModal({ isOpen, onClose, imageUrl, altText }: PhotoVi
       closeOnBackdrop
       closeOnEscape
       label={alt}
-      overlayClassName="z-[60]"
+      overlayClassName="z-popover"
       backdropClassName="bg-black/90 backdrop-blur-sm"
       className="bg-transparent shadow-none max-w-7xl w-auto overflow-visible p-0"
     >

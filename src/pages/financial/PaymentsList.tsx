@@ -586,7 +586,7 @@ export const PaymentsList: React.FC = () => {
                                 className="fixed inset-0 z-10"
                                 onClick={() => setOpenDropdown(null)}
                               />
-                              <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-20">
+                              <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-dropdown">
                                 <button
                                   onClick={() => {
                                     window.open(`/print/payment-receipt/${payment.id}`, '_blank');

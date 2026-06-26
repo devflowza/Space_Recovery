@@ -376,7 +376,7 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
         open={showPdfPreview}
         onClose={() => setShowPdfPreview(false)}
         label="Document preview"
-        overlayClassName="z-[60]"
+        overlayClassName="z-popover"
         backdropClassName="bg-black/70"
         className="max-w-7xl max-h-[90vh] flex flex-col overflow-hidden"
       >

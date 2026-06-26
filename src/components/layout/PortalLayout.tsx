@@ -116,7 +116,7 @@ export const PortalLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <AnnouncementBanner />
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-modal shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-8">
@@ -177,7 +177,7 @@ export const PortalLayout: React.FC = () => {
                 <div
                   role="menu"
                   aria-label={t('portal.common.openAccountMenu')}
-                  className="absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-slate-200 py-2 z-50"
+                  className="absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-slate-200 py-2 z-modal"
                 >
                   <div className="px-3 py-2 border-b border-slate-100">
                     <p className="text-sm font-medium text-slate-900 truncate">

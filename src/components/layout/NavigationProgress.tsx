@@ -26,7 +26,7 @@ export function NavigationProgress() {
 
   return (
     <div
-      className="fixed inset-x-0 top-0 z-[100] h-[3px] overflow-hidden bg-primary/15"
+      className="fixed inset-x-0 top-0 z-toast h-[3px] overflow-hidden bg-primary/15"
       role="progressbar"
       aria-label="Loading page"
     >

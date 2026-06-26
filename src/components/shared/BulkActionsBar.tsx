@@ -19,7 +19,7 @@ export function BulkActionsBar({ count, onClear, children, itemNoun = 'row' }: B
   const label = `${count.toLocaleString()} ${itemNoun}${count === 1 ? '' : 's'} selected`;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-overlay">
       <div className="flex items-center gap-3 px-4 py-2 rounded-full shadow-2xl border border-border bg-surface">
         <button
           type="button"

@@ -350,7 +350,7 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
 
         {isOpen && !usePortal && (
           <div
-            className={`absolute z-50 w-full bg-surface border border-slate-300 rounded-lg shadow-lg overflow-hidden ${
+            className={`absolute z-popover w-full bg-surface border border-slate-300 rounded-lg shadow-lg overflow-hidden ${
               placement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
             }`}
           >

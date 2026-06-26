@@ -66,7 +66,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ label, side = 'right', disable
               left: coords.left,
               transform: `translateY(-50%)${side === 'left' ? ' translateX(-100%)' : ''}`,
             }}
-            className="z-[60] pointer-events-none px-2 py-1 rounded-md bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-lg animate-fade-in"
+            className="z-popover pointer-events-none px-2 py-1 rounded-md bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-lg animate-fade-in"
           >
             {label}
           </div>,

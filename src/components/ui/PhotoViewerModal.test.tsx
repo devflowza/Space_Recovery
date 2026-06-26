@@ -9,7 +9,7 @@ describe('PhotoViewerModal', () => {
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAttribute('aria-label', 'Jane profile photo');
     expect(screen.getByTestId('dialog-backdrop')).toHaveClass('bg-black/90');
-    expect(screen.getByTestId('dialog-overlay')).toHaveClass('z-[60]');
+    expect(screen.getByTestId('dialog-overlay')).toHaveClass('z-popover');
   });
 
   it('shows the image and does not close when the image is clicked', async () => {
