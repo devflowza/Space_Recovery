@@ -26,9 +26,9 @@ export function DeviceFieldRenderer({ def, value, onChange, options, error }: Pr
       return (
         <SearchableSelect
           label={label} value={str} onChange={(v) => onChange(def.key, v)}
-          options={opts} required={def.required} error={error} clearable={!def.required}
+          options={opts} required={def.required} error={error} clearable={false}
           placeholder={t('ui.select.placeholder', { defaultValue: 'Select...' })}
-          size="sm" usePortal
+          size="lg" usePortal
         />
       );
     }
@@ -37,29 +37,29 @@ export function DeviceFieldRenderer({ def, value, onChange, options, error }: Pr
         <MultiSelectDropdown
           label={label} value={Array.isArray(value) ? (value as string[]) : []}
           onChange={(ids) => onChange(def.key, ids)} options={options}
-          required={def.required} error={error} size="sm" usePortal
+          required={def.required} error={error} size="lg" usePortal
         />
       );
     case 'textarea':
       return (
         <Textarea label={label} value={str} required={def.required} error={error}
-          onChange={(e) => onChange(def.key, e.target.value)} rows={3} size="sm" />
+          onChange={(e) => onChange(def.key, e.target.value)} rows={3} size="lg" />
       );
     case 'number':
       return (
         <Input type="number" label={label} value={str} required={def.required} error={error}
-          onChange={(e) => onChange(def.key, e.target.value)} size="sm" />
+          onChange={(e) => onChange(def.key, e.target.value)} size="lg" />
       );
     case 'date':
       return (
         <Input type="date" label={label} value={str} required={def.required} error={error}
-          onChange={(e) => onChange(def.key, e.target.value)} size="sm" />
+          onChange={(e) => onChange(def.key, e.target.value)} size="lg" />
       );
     case 'text':
     default:
       return (
         <Input type="text" label={label} value={str} required={def.required} error={error}
-          onChange={(e) => onChange(def.key, e.target.value)} size="sm" />
+          onChange={(e) => onChange(def.key, e.target.value)} size="lg" />
       );
   }
 }

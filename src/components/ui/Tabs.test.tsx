@@ -46,7 +46,7 @@ describe('Tabs', () => {
     expect(screen.getByRole('tablist')).toHaveClass('border-b');
   });
 
-  it('pills variant renders an active solid fill with foreground ink and no underline', () => {
+  it('pills variant gives every tab a solid colored fill with white ink and no underline', () => {
     const pillTabs: TabDef[] = [
       { id: 'a', label: 'Alpha', colorToken: 'primary' },
       { id: 'b', label: 'Beta', colorToken: 'cat-5' },
@@ -54,23 +54,26 @@ describe('Tabs', () => {
     render(<Tabs tabs={pillTabs} activeId="a" variant="pills" onChange={() => {}} />);
     const active = screen.getByRole('tab', { name: /Alpha/ });
     const inactive = screen.getByRole('tab', { name: /Beta/ });
+    // Active: solid primary fill, white ink, elevated, no underline.
     expect(active.className).toContain('bg-primary');
-    expect(active.className).toContain('text-primary-foreground');
+    expect(active.className).toContain('text-white');
+    expect(active.className).toContain('shadow-md');
     expect(active.className).not.toContain('border-b-2');
-    expect(inactive.className).toContain('bg-cat-5/10');
-    expect(inactive.className).toContain('text-cat-5');
-    expect(inactive.className).toContain('hover:bg-cat-5/15');
+    // Inactive: still a solid colored fill (not a 10% tint), white ink, lifts on hover.
+    expect(inactive.className).toContain('bg-cat-5');
+    expect(inactive.className).not.toContain('bg-cat-5/10');
+    expect(inactive.className).toContain('text-white');
+    expect(inactive.className).toContain('hover:-translate-y-0.5');
   });
 
-  it('pills variant uses slate-900 ink on light/mid cat tones for AA on small labels', () => {
-    // cat-5 (orange-600) active: white ink is ~3.56:1 (sub-AA), so it must use slate-900.
+  it('pills variant uses white ink on every tone (design-spec colored pills)', () => {
     const tones: TabDef[] = [
       { id: 'a', label: 'Orange', colorToken: 'cat-5' },
-      { id: 'b', label: 'Lime', colorToken: 'cat-3' },
+      { id: 'b', label: 'Green', colorToken: 'cat-2' },
     ];
     render(<Tabs tabs={tones} activeId="a" variant="pills" onChange={() => {}} />);
     const active = screen.getByRole('tab', { name: /Orange/ });
-    expect(active.className).toContain('text-slate-900');
-    expect(active.className).not.toContain('text-white');
+    expect(active.className).toContain('text-white');
+    expect(active.className).not.toContain('text-slate-900');
   });
 });

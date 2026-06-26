@@ -7,7 +7,8 @@ import { useFieldA11y } from '../../hooks/useFieldA11y';
 import { useAnchoredPosition } from '../../hooks/useAnchoredPosition';
 import { useListboxKeyboard } from '../../hooks/useListboxKeyboard';
 
-const triggerSizeClasses = { sm: 'px-3 py-1.5 text-sm', md: 'px-3 py-2' } as const;
+const triggerSizeClasses = { sm: 'px-3 py-1.5 text-sm', md: 'px-3 py-2', lg: 'px-4 py-3.5 text-[15px]' } as const;
+const labelSizeClasses = { sm: 'text-sm mb-1', md: 'text-sm mb-1', lg: 'text-[15px] mb-2' } as const;
 
 interface Option {
   id: string;
@@ -33,7 +34,7 @@ interface SearchableSelectProps {
   hint?: string;
   name?: string;
   className?: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelectProps>(
@@ -275,7 +276,7 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
     return (
       <div className={`relative ${className ?? ''}`} ref={containerRef}>
         {label && (
-          <label {...labelProps} className="block text-sm font-medium text-slate-700 mb-1">
+          <label {...labelProps} className={cn('block font-medium text-slate-700', labelSizeClasses[size])}>
             {label}
             {required && (
               <span aria-hidden="true" className="text-danger ms-1">
