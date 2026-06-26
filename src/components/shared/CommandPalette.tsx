@@ -230,7 +230,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       label="Command palette"
       initialFocusRef={inputRef}
       closeOnEscape={false}
-      overlayClassName="items-start justify-center pt-[10vh] bg-slate-900/40 backdrop-blur-sm px-4"
+      overlayClassName="items-start justify-center pt-[10vh] backdrop-blur-sm px-4"
       className="w-full max-w-2xl rounded-xl shadow-2xl border border-border overflow-hidden flex flex-col max-h-[70vh]"
     >
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border">

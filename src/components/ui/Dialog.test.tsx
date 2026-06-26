@@ -97,10 +97,15 @@ describe('Dialog', () => {
     expect(screen.getByTestId('dialog-overlay')).toHaveClass('z-modal');
   });
 
+  it('defaults the backdrop scrim to bg-slate-900/40', () => {
+    render(<Dialog open onClose={() => {}} label="T"><button>x</button></Dialog>);
+    expect(screen.getByTestId('dialog-backdrop')).toHaveClass('bg-slate-900/40');
+  });
+
   it('applies backdropClassName, overriding the default scrim', () => {
     render(<Dialog open onClose={() => {}} label="T" backdropClassName="bg-black/90 backdrop-blur-sm"><button>x</button></Dialog>);
     const backdrop = screen.getByTestId('dialog-backdrop');
     expect(backdrop).toHaveClass('bg-black/90', 'backdrop-blur-sm');
-    expect(backdrop).not.toHaveClass('bg-black/50');
+    expect(backdrop).not.toHaveClass('bg-slate-900/40');
   });
 });

@@ -87,7 +87,7 @@ export function Dialog({
     <div data-testid="dialog-overlay" className={cn('fixed inset-0 z-modal flex items-center justify-center', overlayClassName)}>
       <div
         data-testid="dialog-backdrop"
-        className={cn('absolute inset-0 bg-black/50', backdropClassName)}
+        className={cn('absolute inset-0 bg-slate-900/40', backdropClassName)}
         aria-hidden="true"
         onClick={closeOnBackdrop ? onClose : undefined}
       />
