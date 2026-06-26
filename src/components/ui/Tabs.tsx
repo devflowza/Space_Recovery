@@ -16,6 +16,8 @@ export interface TabsProps {
   activeId: string;
   onChange: (id: string) => void;
   className?: string;
+  /** 'underline' (default) = bottom-border tabs; 'pills' = colored fill tabs. */
+  variant?: 'underline' | 'pills';
 }
 
 // Static lookup — full class strings must be literal so Tailwind JIT can scan them.
@@ -31,9 +33,37 @@ const ACTIVE_CLASSES: Record<string, string> = {
   primary: 'border-primary text-primary',
 };
 
-export function Tabs({ tabs, activeId, onChange, className }: TabsProps): React.JSX.Element {
+// Pill variant — solid tone fill when active, 10% tint when inactive. Full
+// literal strings so Tailwind JIT emits them. cat-* tokens have no -foreground
+// variant, so dark tones use white ink and the light tones (cat-3 lime, cat-4
+// yellow) use slate-900, mirroring the KPI-tile contrast rule.
+const PILL_ACTIVE: Record<string, string> = {
+  primary: 'bg-primary text-primary-foreground shadow-sm',
+  'cat-1': 'bg-cat-1 text-white shadow-sm',
+  'cat-2': 'bg-cat-2 text-white shadow-sm',
+  'cat-3': 'bg-cat-3 text-slate-900 shadow-sm',
+  'cat-4': 'bg-cat-4 text-slate-900 shadow-sm',
+  'cat-5': 'bg-cat-5 text-white shadow-sm',
+  'cat-6': 'bg-cat-6 text-white shadow-sm',
+  'cat-7': 'bg-cat-7 text-white shadow-sm',
+  'cat-8': 'bg-cat-8 text-white shadow-sm',
+};
+const PILL_INACTIVE: Record<string, string> = {
+  primary: 'bg-primary/10 text-primary hover:bg-primary/15',
+  'cat-1': 'bg-cat-1/10 text-cat-1 hover:bg-cat-1/15',
+  'cat-2': 'bg-cat-2/10 text-cat-2 hover:bg-cat-2/15',
+  'cat-3': 'bg-cat-3/10 text-cat-3 hover:bg-cat-3/15',
+  'cat-4': 'bg-cat-4/10 text-cat-4 hover:bg-cat-4/15',
+  'cat-5': 'bg-cat-5/10 text-cat-5 hover:bg-cat-5/15',
+  'cat-6': 'bg-cat-6/10 text-cat-6 hover:bg-cat-6/15',
+  'cat-7': 'bg-cat-7/10 text-cat-7 hover:bg-cat-7/15',
+  'cat-8': 'bg-cat-8/10 text-cat-8 hover:bg-cat-8/15',
+};
+
+export function Tabs({ tabs, activeId, onChange, className, variant = 'underline' }: TabsProps): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
   const enabled = tabs.filter(t => !t.disabled);
+  const isPills = variant === 'pills';
 
   const onKey = (e: React.KeyboardEvent) => {
     const idx = enabled.findIndex(t => t.id === activeId);
@@ -51,11 +81,16 @@ export function Tabs({ tabs, activeId, onChange, className }: TabsProps): React.
 
   return (
     <div ref={ref} role="tablist" onKeyDown={onKey}
-      className={cn('flex border-b border-border', className)}>
+      className={cn(isPills ? 'flex flex-wrap gap-1.5' : 'flex border-b border-border', className)}>
       {tabs.map(t => {
         const active = t.id === activeId;
         const colorKey = t.colorToken ?? 'primary';
-        const activeClass = ACTIVE_CLASSES[colorKey] ?? ACTIVE_CLASSES.primary;
+        const activeClass = isPills
+          ? (PILL_ACTIVE[colorKey] ?? PILL_ACTIVE.primary)
+          : (ACTIVE_CLASSES[colorKey] ?? ACTIVE_CLASSES.primary);
+        const inactiveClass = isPills
+          ? (PILL_INACTIVE[colorKey] ?? PILL_INACTIVE.primary)
+          : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300';
         const Icon = t.icon;
         return (
           <button
@@ -69,11 +104,10 @@ export function Tabs({ tabs, activeId, onChange, className }: TabsProps): React.
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(t.id)}
             className={cn(
-              'inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
+              'inline-flex items-center gap-1.5 text-sm font-medium transition-colors',
+              isPills ? 'px-3.5 py-2 rounded-md' : 'px-4 py-2.5 border-b-2 -mb-px',
               t.disabled && 'opacity-40 cursor-not-allowed',
-              active
-                ? activeClass
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+              active ? activeClass : inactiveClass,
             )}
           >
             {Icon && <Icon className="w-4 h-4" />}

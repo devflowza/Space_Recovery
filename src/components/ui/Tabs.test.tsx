@@ -36,4 +36,37 @@ describe('Tabs', () => {
     expect(onChange).toHaveBeenCalledWith('b');
     expect(screen.getByRole('tab', { name: /Beta/ })).toHaveFocus();
   });
+
+  it('defaults to the underline variant (border-b-2, no pill fill)', () => {
+    render(<Tabs tabs={tabs} activeId="a" onChange={() => {}} />);
+    const active = screen.getByRole('tab', { name: /Alpha/ });
+    expect(active).toHaveClass('border-b-2');
+    expect(active.className).toContain('border-cat-1');
+    expect(active.className).not.toContain('bg-cat-1 ');
+    expect(screen.getByRole('tablist')).toHaveClass('border-b');
+  });
+
+  it('pills variant renders an active solid fill with foreground ink and no underline', () => {
+    const pillTabs: TabDef[] = [
+      { id: 'a', label: 'Alpha', colorToken: 'primary' },
+      { id: 'b', label: 'Beta', colorToken: 'cat-5' },
+    ];
+    render(<Tabs tabs={pillTabs} activeId="a" variant="pills" onChange={() => {}} />);
+    const active = screen.getByRole('tab', { name: /Alpha/ });
+    const inactive = screen.getByRole('tab', { name: /Beta/ });
+    expect(active.className).toContain('bg-primary');
+    expect(active.className).toContain('text-primary-foreground');
+    expect(active.className).not.toContain('border-b-2');
+    expect(inactive.className).toContain('bg-cat-5/10');
+    expect(inactive.className).toContain('text-cat-5');
+    expect(inactive.className).toContain('hover:bg-cat-5/15');
+  });
+
+  it('pills variant uses slate-900 ink for light cat tones', () => {
+    const lightTabs: TabDef[] = [{ id: 'a', label: 'Lime', colorToken: 'cat-3' }];
+    render(<Tabs tabs={lightTabs} activeId="a" variant="pills" onChange={() => {}} />);
+    const tab = screen.getByRole('tab', { name: /Lime/ });
+    expect(tab.className).toContain('text-slate-900');
+    expect(tab.className).not.toContain('text-white');
+  });
 });

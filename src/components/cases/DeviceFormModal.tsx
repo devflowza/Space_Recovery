@@ -420,10 +420,10 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   );
 
   const tabDefs: TabDef[] = [
-    { id: 'details', label: t('devices.tab.details', { defaultValue: 'Device Details' }), icon: HardDrive, colorToken: 'cat-1', hasError: detailErrors.device_type_id != null },
-    { id: 'diagnostic', label: t('devices.tab.diagnostic', { defaultValue: 'Diagnostic' }), icon: Stethoscope, colorToken: 'cat-2', disabled: isDonorRole },
-    { id: 'components', label: t('devices.tab.components', { defaultValue: 'Components' }), icon: Cpu, colorToken: 'cat-3', disabled: isDonorRole },
-    { id: 'history', label: t('devices.tab.history', { defaultValue: 'History / Activity' }), icon: History, colorToken: 'cat-4', disabled: true },
+    { id: 'details', label: t('devices.tab.details', { defaultValue: 'Device Details' }), icon: HardDrive, colorToken: 'primary', hasError: detailErrors.device_type_id != null },
+    { id: 'diagnostic', label: t('devices.tab.diagnostic', { defaultValue: 'Diagnostic' }), icon: Stethoscope, colorToken: 'cat-5', disabled: isDonorRole },
+    { id: 'components', label: t('devices.tab.components', { defaultValue: 'Components' }), icon: Cpu, colorToken: 'cat-2', disabled: isDonorRole },
+    { id: 'history', label: t('devices.tab.history', { defaultValue: 'History / Activity' }), icon: History, colorToken: 'cat-6', disabled: true },
   ];
 
   // Custody secret + role notes — relocated from "Advanced Options" into the
@@ -529,7 +529,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
             )}
           </div>
 
-          <Tabs tabs={tabDefs} activeId={activeTab} onChange={(id) => setActiveTab(id as DeviceTabId)} />
+          <Tabs tabs={tabDefs} activeId={activeTab} variant="pills" onChange={(id) => setActiveTab(id as DeviceTabId)} />
         </div>
 
         {/* Scrolling body */}
