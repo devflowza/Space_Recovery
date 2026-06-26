@@ -12,9 +12,9 @@ const everyField = (): DeviceFieldDef[] => [
 ];
 
 describe('deviceFieldConfig', () => {
-  it('BASIC_FIELDS has the 7 basic fields', () => {
+  it('BASIC_FIELDS has the 8 basic fields, with interface_id between capacity and condition', () => {
     expect(BASIC_FIELDS.map(f => f.key)).toEqual([
-      'device_type_id','brand_id','model','serial_number','capacity_id','condition_id','accessories',
+      'device_type_id','brand_id','model','serial_number','capacity_id','interface_id','condition_id','accessories',
     ]);
   });
 

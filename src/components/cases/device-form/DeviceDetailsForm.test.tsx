@@ -29,11 +29,19 @@ describe('DeviceDetailsForm', () => {
     expect(screen.getByText(/Serial Number/i)).toBeInTheDocument();
   });
 
-  it('renders merged Basic+Technical in one grid with no CollapsibleSection chrome', () => {
+  it('renders titled Basic Information and Technical Information sections', () => {
     render(<DeviceDetailsForm state={{ device_type_id: HDD_ID }} onChange={vi.fn()} options={options} />);
+    expect(screen.getByText('Basic Information')).toBeInTheDocument();
+    expect(screen.getByText('Technical Information')).toBeInTheDocument();
     expect(screen.getByText(/Serial Number/i)).toBeInTheDocument();
     expect(screen.getByText('Physical Head Map')).toBeInTheDocument();
     expect(screen.queryByText('Component Diagnostics')).not.toBeInTheDocument();
+  });
+
+  it('renders Interface exactly once, in Basic Information (no "Interface Type" duplicate)', () => {
+    render(<DeviceDetailsForm state={{ device_type_id: HDD_ID }} onChange={vi.fn()} options={options} />);
+    expect(screen.getAllByText('Interface')).toHaveLength(1);
+    expect(screen.queryByText('Interface Type')).not.toBeInTheDocument();
   });
 
   it('does not render component-status fields (moved to Components tab)', () => {

@@ -78,21 +78,24 @@ export const DIAGNOSTIC_FIELDS: DeviceFieldDef[] = [
 ];
 
 // --- Basic (shared, always visible) -----------------------------------------
+// Interface lives here (single source of truth). It is intentionally NOT also
+// listed in any family `technical` array — the form must never render Interface
+// twice (no "Interface" + "Interface Type" duplication).
 export const BASIC_FIELDS: DeviceFieldDef[] = [
   fk('device_type_id', 'device_type_id', 'Device Type', 'device_types', { required: true }),
   fk('brand_id', 'brand_id', 'Brand', 'brands'),
   text('model', col('model'), 'Model'),
   text('serial_number', col('serial_number'), 'Serial Number'),
   fk('capacity_id', 'capacity_id', 'Capacity / Storage', 'capacities'),
+  fk('interface_id', 'interface_id', 'Interface', 'interfaces'),
   fk('condition_id', 'condition_id', 'Condition', 'conditions'),
   { key: 'accessories', labelKey: 'devices.field.accessories', labelFallback: 'Accessories',
-    control: 'multiselect', storage: col('accessories'), optionsSource: 'accessories', colSpan: 2 },
+    control: 'multiselect', storage: col('accessories'), optionsSource: 'accessories' },
 ];
 
 // Reusable technical fields ---------------------------------------------------
 const F = {
   pcb: text('pcb_number', col('pcb_number'), 'PCB Number'),
-  iface: fk('interface_id', 'interface_id', 'Interface', 'interfaces'),
   madeIn: fk('made_in_id', 'made_in_id', 'Made In', 'made_in'),
   dom: date('dom', col('dom'), 'Date of Manufacture (DOM)'),
   partNumber: text('part_number', col('part_number'), 'Part Number (P/N)'),
@@ -101,7 +104,7 @@ const F = {
   encryption: fk('encryption_id', 'encryption_id', 'Encryption', 'encryption'),
   platters: fk('platter_count_id', 'platter_count_id', 'Number of Platters', 'platter_counts'),
   heads: fk('head_count_id', 'head_count_id', 'Number of Heads', 'head_counts'),
-  headMap: text('physical_head_map', tj('physical_head_map'), 'Physical Head Map', { legacyResultKey: 'head_map', colSpan: 2 }),
+  headMap: text('physical_head_map', tj('physical_head_map'), 'Physical Head Map', { legacyResultKey: 'head_map' }),
   preAmp: text('pre_amp', tj('pre_amp'), 'Pre-Amplifier'),
   controller: text('controller', tj('controller'), 'Controller', { legacyResultKey: 'controller_model' }),
   chipset: text('chipset', tj('chipset'), 'Chipset'),
@@ -114,11 +117,11 @@ const F = {
 
 const REGISTRY: Record<DeviceFamily, { technical: DeviceFieldDef[]; components: DeviceFieldDef[] }> = {
   hdd: {
-    technical: [F.pcb, F.iface, F.madeIn, F.dom, F.partNumber, F.dcm, F.firmware, F.encryption, F.platters, F.heads, F.headMap, F.preAmp],
+    technical: [F.pcb, F.firmware, F.partNumber, F.madeIn, F.dom, F.dcm, F.encryption, F.platters, F.heads, F.headMap, F.preAmp],
     components: [comp('heads', 'Heads'), comp('pcb', 'PCB'), comp('motor', 'Motor'), comp('preamp', 'Pre-Amp'), comp('surface', 'Read/Write Surface'), comp('service_area', 'Service Area (SA)')],
   },
   ssd: {
-    technical: [F.controller, F.firmware, F.dom, F.madeIn, F.iface, F.pcb, F.encryption, F.chipset],
+    technical: [F.controller, F.firmware, F.dom, F.madeIn, F.pcb, F.encryption, F.chipset],
     components: [comp('controller', 'Controller'), comp('memory_chips', 'NAND / Memory Chips'), comp('pcb', 'PCB')],
   },
   usb_flash: {
@@ -144,7 +147,7 @@ const REGISTRY: Record<DeviceFamily, { technical: DeviceFieldDef[]; components: 
       { key: 'technical_notes', labelKey: 'devices.field.technical_notes', labelFallback: 'Member Drive Notes', control: 'textarea', storage: dj('technical_notes'), colSpan: 2 }],
   },
   other: {
-    technical: [F.iface, F.madeIn, F.firmware, F.encryption, F.fileSystem],
+    technical: [F.madeIn, F.firmware, F.encryption, F.fileSystem],
     components: [],
   },
 };

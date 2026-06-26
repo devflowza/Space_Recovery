@@ -70,4 +70,23 @@ describe('DeviceFormModal — tabbed shell', () => {
       expect(screen.getByText('Initial Diagnosis')).toBeInTheDocument();
     });
   });
+
+  it('matches the design: titled sections, a header close button, and no role/password/primary/delete controls', async () => {
+    renderModal();
+
+    // Details tab renders the two titled sections from the design.
+    expect(await screen.findByText('Basic Information')).toBeInTheDocument();
+    expect(screen.getByText('Technical Information')).toBeInTheDocument();
+
+    // Header close affordance is present (replaces the old role context row).
+    expect(screen.getByRole('button', { name: /Close/i })).toBeInTheDocument();
+
+    // Structural controls are intentionally absent from the UI. Their values are
+    // still hydrated and written back on save — they just have no input here.
+    expect(screen.queryByText('Device Role')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mark as Primary Device')).not.toBeInTheDocument();
+    expect(screen.queryByText('Device Password')).not.toBeInTheDocument();
+    expect(screen.queryByText('Role-Specific Notes')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Delete$/i })).not.toBeInTheDocument();
+  });
 });
