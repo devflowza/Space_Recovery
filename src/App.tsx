@@ -9,6 +9,7 @@ import {
   RouterProvider,
 } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { Z } from './lib/ui/zIndex';
 import { AuthProvider } from './contexts/AuthContext';
 import { TenantConfigProvider } from './contexts/TenantConfigContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -61,6 +62,7 @@ function RootLayout() {
         containerStyle={{
           top: '20px',
           right: '20px',
+          zIndex: Z.toast,
         }}
       />
       <AuthProvider>

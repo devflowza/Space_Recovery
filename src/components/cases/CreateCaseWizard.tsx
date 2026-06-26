@@ -816,13 +816,13 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                           />
 
                           <SearchableSelect
-                            label="Media Type"
+                            label="Device Type"
                             value={device.device_type_id}
                             onChange={(value) =>
                               updateDevice(device.id, 'device_type_id', value)
                             }
                             options={deviceTypes.map(dt => ({ id: dt.id, name: dt.name }))}
-                            placeholder="Device type..."
+                            placeholder="Select device type..."
                             required={index === 0}
                             clearable={false}
                           />
@@ -987,7 +987,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
                   </div>
 
                   <SearchableSelect
-                    label="Encryption Type"
+                    label="Encryption"
                     value={devices[0].encryption_type_id}
                     onChange={(value) =>
                       updateDevice('1', 'encryption_type_id', value)

@@ -100,4 +100,18 @@ describe('Input', () => {
       expect(input.className).not.toContain('pl-9');
     });
   });
+
+  describe('size variant', () => {
+    it('size="sm" applies dense control padding and text-sm', () => {
+      render(<Input aria-label="f" size="sm" />);
+      const el = screen.getByLabelText('f');
+      expect(el.className).toMatch(/py-1\.5/);
+      expect(el.className).toMatch(/text-sm/);
+    });
+
+    it('default size keeps the standard control padding (no regression)', () => {
+      render(<Input aria-label="g" />);
+      expect(screen.getByLabelText('g').className).toMatch(/py-2/);
+    });
+  });
 });

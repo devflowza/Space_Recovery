@@ -62,11 +62,11 @@ export const ColumnPickerPopover: React.FC<ColumnPickerPopoverProps> = ({
 
       {open && (
         <>
-          <div className="fixed inset-0 z-40" aria-hidden="true" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-overlay" aria-hidden="true" onClick={() => setOpen(false)} />
           <div
             role="dialog"
             aria-label="Configure table columns"
-            className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-slate-200 bg-surface p-3 shadow-xl"
+            className="absolute right-0 z-modal mt-2 w-80 rounded-xl border border-slate-200 bg-surface p-3 shadow-xl"
           >
             <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-semibold text-slate-900">Table columns</p>

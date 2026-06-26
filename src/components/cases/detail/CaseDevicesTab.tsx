@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { HardDrive, Grid2x2 as Grid, History, Clock, Eye, EyeOff, Shield, Package } from 'lucide-react';
-import { CreditCard as Edit } from 'lucide-react';
+import { HardDrive, Grid2x2 as Grid, History, Clock, Eye, EyeOff, Shield, Package, SquarePen as Edit } from 'lucide-react';
 import { ChainOfCustodyTab } from '../ChainOfCustodyTab';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
@@ -82,7 +81,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
               </h4>
               <p className="text-xs text-slate-600 truncate mb-0.5">{device.brand?.name} {device.model}</p>
               {device.serial_number && (
-                <p className="text-xs text-slate-500 font-mono">s/n: {device.serial_number}</p>
+                <p className="text-xs text-slate-500 font-mono">S/N: {device.serial_number}</p>
               )}
             </div>
             <div className="flex items-center gap-1 ml-2 flex-shrink-0">
@@ -139,7 +138,7 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
               )}
               {device.symptoms && (
                 <div>
-                  <span className="text-slate-500 text-xs font-medium block mb-1">Problem Description</span>
+                  <span className="text-slate-500 text-xs font-medium block mb-1">Device Problem</span>
                   <p className="text-slate-900 text-xs leading-relaxed">{device.symptoms}</p>
                 </div>
               )}

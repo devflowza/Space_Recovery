@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties, type RefObject } from 'react';
+import { Z } from '../lib/ui/zIndex';
 
 interface UseAnchoredPositionOptions {
   open: boolean;
@@ -71,7 +72,7 @@ export function useAnchoredPosition({
       position: 'fixed',
       left,
       width: panelWidth,
-      zIndex: 9999,
+      zIndex: Z.popover,
       maxHeight,
     };
     if (nextPlacement === 'bottom') {

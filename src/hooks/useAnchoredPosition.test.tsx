@@ -77,7 +77,7 @@ describe('useAnchoredPosition', () => {
     );
     const panel = screen.getByTestId('panel');
     expect(panel.style.position).toBe('fixed');
-    expect(panel.style.zIndex).toBe('9999');
+    expect(panel.style.zIndex).toBe('60');
     // matchWidth default true -> width matches anchor rect width
     expect(panel.style.width).toBe('150px');
     // left clamped within [viewportPadding, innerWidth - width - viewportPadding]

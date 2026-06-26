@@ -65,9 +65,12 @@ export interface ReportData {
     heads_status?: string;
     pcb_status?: string;
     motor_status?: string;
+    preamp_status?: string;
     surface_status?: string;
+    service_area_status?: string;
     controller_status?: string;
     memory_chips_status?: string;
+    storage_chip_status?: string;
     controller_model?: string;
     nand_type?: string;
     physical_damage_notes?: string;
@@ -295,19 +298,19 @@ export function buildReportDocument(
 
   const bodyContent: Content[] = [infoBoxesSection];
 
-  // Media Details Section (if device data exists)
+  // Device Details Section (if device data exists)
   if (deviceData) {
-    const mediaDetailsTitle = isBilingual
-      ? `Media Details | ${t('mediaDetails', '').split(' | ')[1] || 'تفاصيل الوسائط'}`
-      : 'Media Details';
+    const deviceDetailsTitle = isBilingual
+      ? `Device Details | ${t('deviceDetails', '').split(' | ')[1] || 'تفاصيل الوسائط'}`
+      : 'Device Details';
 
     const hardDriveIconSvg = getGeneralIconSvg('fileText');
-    const mediaDetailsHeader: Content = createBilingualSectionHeader(mediaDetailsTitle, null, hardDriveIconSvg) as Content;
+    const deviceDetailsHeader: Content = createBilingualSectionHeader(deviceDetailsTitle, null, hardDriveIconSvg) as Content;
 
-    const typeLabel = isBilingual ? (t('type', '').split(' | ')[1] ? `Type | ${t('type', '').split(' | ')[1]}` : 'Type') : 'Type';
+    const typeLabel = isBilingual ? (t('type', '').split(' | ')[1] ? `Device Type | ${t('type', '').split(' | ')[1]}` : 'Device Type') : 'Device Type';
     const modelLabel = isBilingual ? (t('model', '').split(' | ')[1] ? `Model | ${t('model', '').split(' | ')[1]}` : 'Model') : 'Model';
     const capacityLabel = isBilingual ? (t('capacity', '').split(' | ')[1] ? `Capacity | ${t('capacity', '').split(' | ')[1]}` : 'Capacity') : 'Capacity';
-    const serialLabel = isBilingual ? (t('serialNumber', '').split(' | ')[1] ? `Serial No | ${t('serialNumber', '').split(' | ')[1]}` : 'Serial No') : 'Serial No';
+    const serialLabel = isBilingual ? (t('serialNumber', '').split(' | ')[1] ? `Serial Number | ${t('serialNumber', '').split(' | ')[1]}` : 'Serial Number') : 'Serial Number';
 
     const deviceInfoParts: string[] = [];
     if (deviceData.device_type) deviceInfoParts.push(`${typeLabel}: ${deviceData.device_type}`);
@@ -317,8 +320,8 @@ export function buildReportDocument(
 
     const deviceInfoText = deviceInfoParts.join(' | ');
 
-    const mediaDetailsContent: Content[] = [
-      mediaDetailsHeader,
+    const deviceDetailsContent: Content[] = [
+      deviceDetailsHeader,
       {
         text: deviceInfoText,
         fontSize: 8,
@@ -333,25 +336,31 @@ export function buildReportDocument(
         ? `Component Diagnostics | تشخيص المكونات`
         : 'Component Diagnostics';
 
-      mediaDetailsContent.push(
+      deviceDetailsContent.push(
         { text: diagnosticsTitle, fontSize: 9, bold: true, color: PDF_COLORS.text, margin: [0, 6, 0, 3] }
       );
 
+      const componentFields: Array<[keyof NonNullable<ReportData['diagnosticsData']>, string]> = [
+        ['heads_status', 'Heads'],
+        ['pcb_status', 'PCB'],
+        ['motor_status', 'Motor'],
+        ['preamp_status', 'Pre-Amplifier'],
+        ['surface_status', 'Surface'],
+        ['service_area_status', 'Service Area'],
+        ['controller_status', 'Controller'],
+        ['memory_chips_status', 'Memory Chips'],
+        ['storage_chip_status', 'Storage Chip'],
+        ['controller_model', 'Controller Model'],
+        ['nand_type', 'NAND Type'],
+      ];
       const diagnosticsParts: string[] = [];
-      if (diagnosticsData.device_type_category === 'hdd') {
-        if (diagnosticsData.heads_status) diagnosticsParts.push(`Heads: ${diagnosticsData.heads_status}`);
-        if (diagnosticsData.pcb_status) diagnosticsParts.push(`PCB: ${diagnosticsData.pcb_status}`);
-        if (diagnosticsData.motor_status) diagnosticsParts.push(`Motor: ${diagnosticsData.motor_status}`);
-        if (diagnosticsData.surface_status) diagnosticsParts.push(`Surface: ${diagnosticsData.surface_status}`);
-      } else if (diagnosticsData.device_type_category === 'ssd') {
-        if (diagnosticsData.controller_status) diagnosticsParts.push(`Controller: ${diagnosticsData.controller_status}`);
-        if (diagnosticsData.memory_chips_status) diagnosticsParts.push(`Memory Chips: ${diagnosticsData.memory_chips_status}`);
-        if (diagnosticsData.controller_model) diagnosticsParts.push(`Controller Model: ${diagnosticsData.controller_model}`);
-        if (diagnosticsData.nand_type) diagnosticsParts.push(`NAND Type: ${diagnosticsData.nand_type}`);
+      for (const [key, label] of componentFields) {
+        const val = diagnosticsData[key];
+        if (val) diagnosticsParts.push(`${label}: ${val}`);
       }
 
       if (diagnosticsParts.length > 0) {
-        mediaDetailsContent.push({
+        deviceDetailsContent.push({
           text: diagnosticsParts.join(' | '),
           fontSize: 8,
           color: PDF_COLORS.text,
@@ -365,7 +374,7 @@ export function buildReportDocument(
               ? `Physical Damage Notes | ${t('physicalDamageNotesLabel', '').split(' | ')[1].replace(/:$/, '')}`
               : 'Physical Damage Notes')
           : 'Physical Damage Notes';
-        mediaDetailsContent.push({
+        deviceDetailsContent.push({
           text: `${physicalDamageLabel}: ${diagnosticsData.physical_damage_notes}`,
           fontSize: 8,
           color: PDF_COLORS.text,
@@ -380,7 +389,7 @@ export function buildReportDocument(
         body: [
           [
             {
-              stack: mediaDetailsContent,
+              stack: deviceDetailsContent,
               fillColor: PDF_COLORS.background,
               margin: [6, 5, 6, 6],
             },

@@ -20,6 +20,9 @@ export interface DeviceDiagnostics {
   pcb_notes?: string;
   motor_status?: string;
   surface_status?: string;
+  preamp_status?: string;
+  service_area_status?: string;
+  storage_chip_status?: string;
   sa_access?: boolean;
   platter_condition?: string;
 
@@ -39,6 +42,11 @@ export interface DeviceDiagnostics {
   physical_damage_notes?: string;
   technical_notes?: string;
 
+  symptoms?: string;
+  diagnostic_status?: string;
+  recovery_chance?: string;
+  diagnostic_notes?: string;
+
   created_at?: string;
   updated_at?: string;
 }
@@ -57,6 +65,9 @@ const RESULT_FIELDS = [
   'pcb_notes',
   'motor_status',
   'surface_status',
+  'preamp_status',
+  'service_area_status',
+  'storage_chip_status',
   'sa_access',
   'platter_condition',
   'controller_status',
@@ -72,6 +83,10 @@ const RESULT_FIELDS = [
   'imaging_stats',
   'physical_damage_notes',
   'technical_notes',
+  'symptoms',
+  'diagnostic_status',
+  'recovery_chance',
+  'diagnostic_notes',
 ] as const;
 
 /** Collect the non-column inspection fields into the `result` jsonb payload. */

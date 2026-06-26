@@ -768,13 +768,13 @@ export function suggestFieldMapping(
   // Inventory-specific field name variations
   if (entityType === 'inventory') {
     Object.assign(synonyms, {
-      inventory_code: ['inv_code', 'item_code', 'code', 'inv_no', 'item_no'],
+      item_number: ['inv_code', 'item_code', 'inv_no', 'item_no', 'inventory_code'],
       sku_code: ['sku', 'part_code', 'product_code', 'item_sku'],
       serial_number: ['serial', 'sn', 'serial_no', 'serial_num', 'device_serial'],
       barcode: ['bar_code', 'upc', 'ean', 'barcode_number'],
       model: ['model_number', 'model_no', 'model_name', 'product_model'],
       brand_id: ['brand', 'manufacturer', 'make', 'brand_name'],
-      device_type_id: ['device_type', 'type', 'device', 'category'],
+      device_type_id: ['device_type', 'type', 'device'],
       capacity_id: ['capacity', 'size', 'storage', 'storage_size'],
       quantity_available: ['qty_available', 'available', 'in_stock', 'stock', 'quantity', 'qty'],
       quantity_in_use: ['qty_in_use', 'in_use', 'allocated', 'assigned', 'qty_allocated'],
@@ -790,7 +790,7 @@ export function suggestFieldMapping(
       supplier_contact: ['supplier_email', 'supplier_phone', 'vendor_contact'],
       condition_type_id: ['condition', 'condition_id', 'item_condition'],
       status_type_id: ['status', 'status_id', 'item_status'],
-      category_id: ['category', 'type', 'item_category'],
+      category_id: ['category', 'item_category'],
       interface_id: ['interface', 'connection', 'port', 'connector'],
       spindle_speed: ['rpm', 'speed', 'rotation_speed', 'spindle_rpm'],
       part_number: ['part_no', 'partnumber', 'part', 'component_number'],
@@ -1021,7 +1021,7 @@ export function generateTemplate(entityType: EntityType): string {
       'category_id',
 
       // Identification
-      'inventory_code',
+      'item_number',
       'serial_number',
 
       // Device Specifications
@@ -1450,7 +1450,7 @@ export function generateNameBasedTemplate(): string {
     'category_name',
 
     // Identification
-    'inventory_code',
+    'item_number',
     'serial_number',
 
     // Device Specifications (Name-Based)

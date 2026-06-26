@@ -374,7 +374,7 @@ export const CategoryDetail: React.FC = () => {
     if (!category) return;
 
     const confirmMessages: Record<string, string> = {
-      'device-media': 'This will populate all Device & Media tables with default data. This action cannot be undone. Continue?',
+      'device-media': 'This will populate all Devices & Inventory tables with default data. This action cannot be undone. Continue?',
       'client-financial': 'This will populate all Client & Financial tables with default data. This action cannot be undone. Continue?',
       'case-service': 'This will populate all Case & Service tables with default data. This action cannot be undone. Continue?',
     };

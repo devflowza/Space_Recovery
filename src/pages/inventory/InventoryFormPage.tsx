@@ -11,7 +11,7 @@ import {
   getInventoryConditionTypes,
   type InventoryItem,
   type InventoryItemInsert,
-  type InventoryItemCategory,
+  type InventoryCategory,
   type InventoryStatusType,
   type InventoryConditionType,
 } from '../../lib/inventoryService';
@@ -31,7 +31,7 @@ export default function InventoryFormPage() {
   const toast = useToast();
 
   const [saving, setSaving] = useState(false);
-  const [categories, setCategories] = useState<InventoryItemCategory[]>([]);
+  const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const [statusTypes, setStatusTypes] = useState<InventoryStatusType[]>([]);
   const [conditionTypes, setConditionTypes] = useState<InventoryConditionType[]>([]);
   const [brands, setBrands] = useState<BrandRow[]>([]);

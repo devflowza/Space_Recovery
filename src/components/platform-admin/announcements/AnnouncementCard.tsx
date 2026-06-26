@@ -129,7 +129,7 @@ export const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement
                       className="fixed inset-0 z-10"
                       onClick={() => setShowMenu(false)}
                     />
-                    <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
+                    <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-dropdown">
                       <button
                         onClick={() => {
                           onEdit(announcement);

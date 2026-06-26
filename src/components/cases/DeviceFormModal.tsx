@@ -1,25 +1,41 @@
 import React, { useState, useEffect, useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
+import { Dialog } from '../ui/Dialog';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Textarea } from '../ui/Textarea';
 import { SearchableSelect } from '../ui/SearchableSelect';
-import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
-import { HardDrive, Eye, EyeOff, Trash2, ChevronDown, ChevronUp, Cpu } from 'lucide-react';
+import { Tabs, type TabDef } from '../ui/Tabs';
+import { HardDrive, Stethoscope, Cpu, History, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { diagnosticsService } from '../../lib/diagnosticsService';
 import { setPrimaryDevice } from '../../lib/deviceService';
 import { logger } from '../../lib/logger';
 import type { Database } from '../../types/database.types';
+import { DeviceDetailsForm } from './device-form/DeviceDetailsForm';
+import { DeviceDiagnosticForm } from './device-form/DeviceDiagnosticForm';
+import { DeviceComponentsForm } from './device-form/DeviceComponentsForm';
+import { useDeviceFormCatalogs } from '../../lib/devices/deviceCatalogQueries';
+import {
+  hydrateDeviceForm,
+  serializeDeviceForm,
+  validateDeviceForm,
+  type LoadedDevice,
+} from '../../lib/devices/deviceFormSerialization';
+import { BASIC_FIELDS, getDeviceFamilyConfig } from '../../lib/devices/deviceFieldConfig';
+import { resolveDeviceFamily } from '../../lib/devices/deviceFamily';
 
 type CaseDeviceInsert = Database['public']['Tables']['case_devices']['Insert'];
 type CaseDeviceUpdate = Database['public']['Tables']['case_devices']['Update'];
 
 // Shape of `deviceData` accepted by this modal. Editing flow passes a row from
 // `case_devices` (uuid id, bigint device_role_id, uuid FK columns, etc.). The
-// optional shape keeps the prop tolerant of partial rows from callers.
+// optional shape keeps the prop tolerant of partial rows from callers; the modal
+// re-fetches the full row on edit so dynamic technical fields hydrate correctly.
 export interface DeviceFormDeviceData {
   id?: string;
   device_role_id?: number | string | null;
@@ -46,6 +62,8 @@ interface DeviceFormModalProps {
   onSuccess: () => void;
 }
 
+type DeviceTabId = 'details' | 'diagnostic' | 'components' | 'history';
+
 export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   isOpen,
   onClose,
@@ -54,28 +72,20 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   onSuccess,
 }) => {
   const isEditMode = !!deviceData;
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const toast = useToast();
+  const titleId = useId();
   const passwordId = useId();
-  const symptomsId = useId();
-  const recoveryNotesId = useId();
   const roleNotesId = useId();
-  const physicalDamageId = useId();
-  const technicalNotesId = useId();
 
+  // Structural fields owned by this modal: the role gate, custody secret
+  // (password) and role-specific notes. Device identity, technical and
+  // diagnostic config fields are owned by the dynamic forms and live in
+  // `detailState` (Device Problem / Recovery Requirement now ride there too).
   const [formData, setFormData] = useState({
     device_role_id: '',
-    device_type_id: '',
-    brand_id: '',
-    model: '',
-    serial_number: '',
-    capacity_id: '',
-    condition_id: '',
-    accessories: [] as string[],
-    symptoms: '',
-    recovery_notes: '',
     password: '',
-    encryption_id: '',
     is_primary: false,
     role_notes: '',
   });
@@ -83,78 +93,22 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [selectedDonorInventoryId, setSelectedDonorInventoryId] = useState('');
-  const [showDiagnosticsSection, setShowDiagnosticsSection] = useState(false);
-  const [diagnosticsFormData, setDiagnosticsFormData] = useState({
-    device_type_category: '' as 'hdd' | 'ssd' | 'hybrid' | 'other' | '',
-    heads_status: '',
-    pcb_status: '',
-    pcb_notes: '',
-    motor_status: '',
-    surface_status: '',
-    sa_access: false,
-    platter_condition: '',
-    controller_status: '',
-    controller_model: '',
-    memory_chips_status: '',
-    nand_type: '',
-    firmware_corruption: false,
-    trim_support: false,
-    wear_leveling_count: '',
-    firmware_version: '',
-    rom_version: '',
-    physical_damage_notes: '',
-    technical_notes: '',
-  });
+  const [activeTab, setActiveTab] = useState<DeviceTabId>('details');
 
-  const { data: deviceTypes = [] } = useQuery({
-    queryKey: ['device_types'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('catalog_device_types')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: brands = [] } = useQuery({
-    queryKey: ['brands'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('catalog_device_brands')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: capacities = [] } = useQuery({
-    queryKey: ['capacities'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('catalog_device_capacities')
-        .select('*')
-        .order('sort_order');
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: deviceConditions = [] } = useQuery({
-    queryKey: ['device_conditions'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('catalog_device_conditions')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // Dynamic per-family device form state. `detailState` is ALWAYS derived via
+  // hydrateDeviceForm (loads every ALL_FIELD_DEFS key) so serialize never NULLs a
+  // hidden-family column. `loadedRef` is the same {device, diagnostics} we
+  // hydrated from and is passed back to serializeDeviceForm to preserve hidden
+  // technical_details/result keys.
+  const { options: deviceCatalogs } = useDeviceFormCatalogs();
+  const [detailState, setDetailState] = useState<Record<string, unknown>>(
+    () => hydrateDeviceForm({ device: {}, diagnostics: null }),
+  );
+  const [detailErrors, setDetailErrors] = useState<Record<string, string>>({});
+  const [loadedRef, setLoadedRef] = useState<LoadedDevice>({ device: {}, diagnostics: null });
+  const onDetailChange = (key: string, value: unknown) =>
+    setDetailState(prev => ({ ...prev, [key]: value }));
 
   const { data: deviceRoles = [] } = useQuery({
     queryKey: ['device_roles'],
@@ -165,37 +119,6 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         .order('name');
       if (error) throw error;
       return data || [];
-    },
-  });
-
-  const { data: encryptionTypes = [] } = useQuery({
-    queryKey: ['device_encryption'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('catalog_device_encryption')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: accessories = [] } = useQuery({
-    queryKey: ['accessories'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('catalog_accessories')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const { data: componentStatuses = [] } = useQuery({
-    queryKey: ['component_statuses'],
-    queryFn: async () => {
-      return await diagnosticsService.getComponentStatuses();
     },
   });
 
@@ -227,144 +150,133 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     enabled: isOpen,
   });
 
+  // Load device + diagnostics and hydrate the dynamic form. On edit we fetch the
+  // FULL case_devices row (deviceData may be partial) so technical_details/dom/
+  // part_number/dcm hydrate; on add we start from an empty hydrated state.
   useEffect(() => {
-    if (deviceData) {
-      setFormData({
-        device_role_id: deviceData.device_role_id != null ? deviceData.device_role_id.toString() : '',
-        device_type_id: deviceData.device_type_id ?? '',
-        brand_id: deviceData.brand_id ?? '',
-        model: deviceData.model ?? '',
-        serial_number: deviceData.serial_number ?? '',
-        capacity_id: deviceData.capacity_id ?? '',
-        condition_id: deviceData.condition_id ?? '',
-        accessories: deviceData.accessories ?? [],
-        symptoms: deviceData.symptoms ?? '',
-        recovery_notes: deviceData.notes ?? '',
-        password: deviceData.password ?? '',
-        encryption_id: deviceData.encryption_id ?? '',
-        is_primary: deviceData.is_primary ?? false,
-        role_notes: deviceData.role_notes ?? '',
-      });
-      setSelectedDonorInventoryId('');
+    let cancelled = false;
+    setActiveTab('details');
 
-      // Load existing diagnostics if in edit mode
-      if (deviceData.id) {
-        void loadDiagnostics(deviceData.id);
+    async function load() {
+      if (deviceData?.id) {
+        const [{ data: fullRow }, diagnosticsRow] = await Promise.all([
+          supabase
+            .from('case_devices')
+            .select('*')
+            .eq('id', deviceData.id)
+            .is('deleted_at', null)
+            .maybeSingle(),
+          diagnosticsService
+            .getDiagnosticsWithDevice(deviceData.id)
+            .catch((error) => {
+              logger.error('Error loading diagnostics:', error);
+              return null;
+            }),
+        ]);
+
+        if (cancelled) return;
+
+        const device = (fullRow ?? {}) as Record<string, unknown>;
+        const diagnostics =
+          (diagnosticsRow?.result as Record<string, unknown> | undefined) ?? null;
+        const loaded: LoadedDevice = { device, diagnostics };
+        setLoadedRef(loaded);
+        setDetailState(hydrateDeviceForm(loaded));
+        setDetailErrors({});
+
+        const src = (fullRow ?? deviceData) as DeviceFormDeviceData;
+        setFormData({
+          device_role_id: src.device_role_id != null ? src.device_role_id.toString() : '',
+          password: src.password ?? '',
+          is_primary: src.is_primary ?? false,
+          role_notes: src.role_notes ?? '',
+        });
+        setSelectedDonorInventoryId('');
+      } else {
+        const loaded: LoadedDevice = { device: {}, diagnostics: null };
+        setLoadedRef(loaded);
+        setDetailState(hydrateDeviceForm(loaded));
+        setDetailErrors({});
+        setFormData({
+          device_role_id: '',
+          password: '',
+          is_primary: false,
+          role_notes: '',
+        });
+        setSelectedDonorInventoryId('');
       }
-    } else {
-      const patientRole = deviceRoles.find(r => r.name.toLowerCase() === 'patient');
-      setFormData({
-        device_role_id: patientRole?.id != null ? patientRole.id.toString() : '',
-        device_type_id: '',
-        brand_id: '',
-        model: '',
-        serial_number: '',
-        capacity_id: '',
-        condition_id: '',
-        accessories: [],
-        symptoms: '',
-        recovery_notes: '',
-        password: '',
-        encryption_id: '',
-        is_primary: false,
-        role_notes: '',
-      });
-      setSelectedDonorInventoryId('');
-      // Reset diagnostics for new device
-      setShowDiagnosticsSection(false);
-      setDiagnosticsFormData({
-        device_type_category: '',
-        heads_status: '',
-        pcb_status: '',
-        pcb_notes: '',
-        motor_status: '',
-        surface_status: '',
-        sa_access: false,
-        platter_condition: '',
-        controller_status: '',
-        controller_model: '',
-        memory_chips_status: '',
-        nand_type: '',
-        firmware_corruption: false,
-        trim_support: false,
-        wear_leveling_count: '',
-        firmware_version: '',
-        rom_version: '',
-        physical_damage_notes: '',
-        technical_notes: '',
-      });
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [deviceData]);
+
+  // Default new devices to the Patient role once the role catalog has loaded,
+  // without clobbering a role the user already picked.
+  useEffect(() => {
+    if (deviceData) return;
+    const patientRole = deviceRoles.find(r => r.name.toLowerCase() === 'patient');
+    if (patientRole?.id != null) {
+      setFormData(prev =>
+        prev.device_role_id ? prev : { ...prev, device_role_id: patientRole.id.toString() },
+      );
     }
   }, [deviceData, deviceRoles]);
 
-  // Load diagnostics data for editing
-  const loadDiagnostics = async (deviceId: string) => {
-    try {
-      const diagnostics = await diagnosticsService.getDeviceDiagnostics(deviceId);
-      if (diagnostics) {
-        setDiagnosticsFormData({
-          device_type_category: diagnostics.device_type_category || '',
-          heads_status: diagnostics.heads_status || '',
-          pcb_status: diagnostics.pcb_status || '',
-          pcb_notes: diagnostics.pcb_notes || '',
-          motor_status: diagnostics.motor_status || '',
-          surface_status: diagnostics.surface_status || '',
-          sa_access: diagnostics.sa_access || false,
-          platter_condition: diagnostics.platter_condition || '',
-          controller_status: diagnostics.controller_status || '',
-          controller_model: diagnostics.controller_model || '',
-          memory_chips_status: diagnostics.memory_chips_status || '',
-          nand_type: diagnostics.nand_type || '',
-          firmware_corruption: diagnostics.firmware_corruption || false,
-          trim_support: diagnostics.trim_support || false,
-          wear_leveling_count: diagnostics.wear_leveling_count?.toString() || '',
-          firmware_version: diagnostics.firmware_version || '',
-          rom_version: diagnostics.rom_version || '',
-          physical_damage_notes: diagnostics.physical_damage_notes || '',
-          technical_notes: diagnostics.technical_notes || '',
-        });
-        setShowDiagnosticsSection(true);
-      }
-    } catch (error) {
-      logger.error('Error loading diagnostics:', error);
-    }
-  };
+  const selectedRole = deviceRoles.find(r => r.id != null && r.id.toString() === formData.device_role_id);
+  const roleName = selectedRole?.name.toLowerCase() || '';
+  const isPatientRole = roleName === 'patient';
+  const isDonorRole = roleName === 'donor';
 
-  // Update device type category when device type changes
+  // Donor devices source identity from inventory and have no diagnostic/component
+  // workups, so those tabs are disabled — bounce the user back to Details if they
+  // were viewing one when the role flipped to donor.
   useEffect(() => {
-    if (formData.device_type_id && deviceTypes.length > 0) {
-      const deviceType = deviceTypes.find(dt => dt.id === formData.device_type_id);
-      if (deviceType) {
-        const category = diagnosticsService.determineDeviceCategory(deviceType.name);
-        setDiagnosticsFormData(prev => ({
-          ...prev,
-          device_type_category: category,
-        }));
-      }
+    if (isDonorRole && (activeTab === 'diagnostic' || activeTab === 'components')) {
+      setActiveTab('details');
     }
-  }, [formData.device_type_id, deviceTypes]);
-
-  // Check if any diagnostics data has been entered
-  const hasDiagnosticsData = () => {
-    return !!(
-      diagnosticsFormData.heads_status ||
-      diagnosticsFormData.pcb_status ||
-      diagnosticsFormData.motor_status ||
-      diagnosticsFormData.surface_status ||
-      diagnosticsFormData.controller_status ||
-      diagnosticsFormData.memory_chips_status ||
-      diagnosticsFormData.physical_damage_notes ||
-      diagnosticsFormData.technical_notes
-    );
-  };
+  }, [isDonorRole, activeTab]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const selectedRole = deviceRoles.find(r => r.id != null && r.id.toString() === formData.device_role_id);
-      const isDonorRole = selectedRole?.name.toLowerCase() === 'donor';
+      const submitIsDonorRole = isDonorRole;
 
-      // Build a strongly-typed payload matching the live case_devices schema.
-      const basePayload: CaseDeviceInsert = {
+      const typeName =
+        deviceCatalogs.device_types?.find(o => o.id === detailState.device_type_id)?.name ?? '';
+      const family = resolveDeviceFamily(typeName);
+
+      // Validate the visible dynamic fields (Basic + current family Technical).
+      // Donor identity is sourced from inventory, so the dynamic-form requireds
+      // (e.g. Device Type) do not apply to donor devices.
+      if (!submitIsDonorRole) {
+        const visible = [...BASIC_FIELDS, ...getDeviceFamilyConfig(family).technical];
+        const { ok, errors } = validateDeviceForm(detailState, visible);
+        setDetailErrors(errors);
+        if (!ok) {
+          // Surface the missing Device Type by switching to the Details tab, where
+          // the field (and the error dot on the tab) is visible.
+          if (errors.device_type_id) setActiveTab('details');
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        setDetailErrors({});
+      }
+
+      // Serialize from the hydrated state + the row we hydrated from (loadedRef) so
+      // hidden-family technical_details/result keys are preserved, never NULLed.
+      // Device Problem (→symptoms) and Recovery Requirement (→notes) are written
+      // here by devicePatch — the modal no longer writes them structurally.
+      const { devicePatch, diagnosticsPatch, hasDiagnostics } = serializeDeviceForm(
+        detailState,
+        loadedRef,
+      );
+
+      // Structural fields owned by the modal (unchanged behavior across roles).
+      const structural: Record<string, unknown> = {
         case_id: caseId,
         tenant_id: profile?.tenant_id ?? '',
         device_role_id: formData.device_role_id ? Number(formData.device_role_id) : null,
@@ -372,52 +284,43 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         role_notes: formData.role_notes || null,
       };
 
-      let devicePayload: CaseDeviceInsert;
-
-      if (isDonorRole && selectedDonorInventoryId) {
-        const donor = donorInventory.find(d => d.id === selectedDonorInventoryId);
-        if (donor) {
-          devicePayload = {
-            ...basePayload,
-            brand_id: donor.brand_id ?? null,
-            model: donor.model ?? null,
-            serial_number: donor.serial_number ?? null,
-            capacity_id: donor.capacity_id ?? null,
-          };
-        } else {
-          devicePayload = basePayload;
+      // Donor role: write ONLY structural + identity from the selected inventory
+      // item — never spread devicePatch (technical columns, technical_details jsonb,
+      // symptoms/notes/diagnosis/recovery_result must NOT be written for donors).
+      // Non-donor: full devicePatch as before.
+      let devicePayload: Record<string, unknown>;
+      if (submitIsDonorRole) {
+        devicePayload = { ...structural };
+        if (selectedDonorInventoryId) {
+          const donor = donorInventory.find(d => d.id === selectedDonorInventoryId);
+          if (donor) {
+            devicePayload = {
+              ...devicePayload,
+              brand_id: donor.brand_id ?? null,
+              model: donor.model ?? null,
+              serial_number: donor.serial_number ?? null,
+              capacity_id: donor.capacity_id ?? null,
+            };
+          }
         }
       } else {
-        devicePayload = {
-          ...basePayload,
-          device_type_id: formData.device_type_id || null,
-          brand_id: formData.brand_id || null,
-          model: formData.model || null,
-          serial_number: formData.serial_number || null,
-          capacity_id: formData.capacity_id || null,
-          condition_id: formData.condition_id || null,
-          accessories: formData.accessories.length > 0 ? formData.accessories : null,
-          symptoms: formData.symptoms || null,
-          notes: formData.recovery_notes || null,
-          encryption_id: formData.encryption_id || null,
-        };
+        devicePayload = { ...structural, ...devicePatch };
       }
 
       let deviceId: string | undefined = deviceData?.id;
 
       if (isEditMode && deviceData?.id) {
-        const updatePayload: CaseDeviceUpdate = { ...devicePayload };
         const { error } = await supabase
           .from('case_devices')
-          .update(updatePayload)
+          .update(devicePayload as CaseDeviceUpdate)
           .eq('id', deviceData.id);
 
         if (error) throw error;
       } else {
-        const insertPayload: CaseDeviceInsert = {
+        const insertPayload = {
           ...devicePayload,
           created_by: profile?.id ?? null,
-        };
+        } as CaseDeviceInsert;
         const { data: insertedDevice, error } = await supabase
           .from('case_devices')
           .insert([insertPayload])
@@ -432,7 +335,7 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         await setPrimaryDevice(deviceId, caseId);
       }
 
-      if (isDonorRole && selectedDonorInventoryId && deviceId) {
+      if (submitIsDonorRole && selectedDonorInventoryId && deviceId) {
         const donor = donorInventory.find(d => d.id === selectedDonorInventoryId);
         if (donor) {
           const { error: assignmentError } = await supabase
@@ -452,32 +355,17 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
         }
       }
 
-      // Save diagnostics data if patient role and diagnostics section has data
-      if (isPatientRole && deviceId && hasDiagnosticsData()) {
+      // Persist component diagnostics for non-donor roles only. Donors have no
+      // diagnostic workup — skip the upsert entirely to prevent a phantom
+      // device_diagnostics row from being minted for a donor device.
+      if (deviceId && hasDiagnostics && !submitIsDonorRole) {
         try {
-          const category = diagnosticsFormData.device_type_category || 'other';
+          const category = diagnosticsService.determineDeviceCategory(typeName);
           await diagnosticsService.upsertDeviceDiagnostics({
             case_device_id: deviceId,
-            device_type_category: category as 'hdd' | 'ssd' | 'hybrid' | 'other',
-            heads_status: diagnosticsFormData.heads_status || undefined,
-            pcb_status: diagnosticsFormData.pcb_status || undefined,
-            pcb_notes: diagnosticsFormData.pcb_notes || undefined,
-            motor_status: diagnosticsFormData.motor_status || undefined,
-            surface_status: diagnosticsFormData.surface_status || undefined,
-            sa_access: diagnosticsFormData.sa_access,
-            platter_condition: diagnosticsFormData.platter_condition || undefined,
-            controller_status: diagnosticsFormData.controller_status || undefined,
-            controller_model: diagnosticsFormData.controller_model || undefined,
-            memory_chips_status: diagnosticsFormData.memory_chips_status || undefined,
-            nand_type: diagnosticsFormData.nand_type || undefined,
-            firmware_corruption: diagnosticsFormData.firmware_corruption,
-            trim_support: diagnosticsFormData.trim_support,
-            wear_leveling_count: diagnosticsFormData.wear_leveling_count ? parseInt(diagnosticsFormData.wear_leveling_count) : undefined,
-            firmware_version: diagnosticsFormData.firmware_version || undefined,
-            rom_version: diagnosticsFormData.rom_version || undefined,
-            physical_damage_notes: diagnosticsFormData.physical_damage_notes || undefined,
-            technical_notes: diagnosticsFormData.technical_notes || undefined,
-          });
+            ...diagnosticsPatch,
+            device_type_category: category,
+          } as Parameters<typeof diagnosticsService.upsertDeviceDiagnostics>[0]);
         } catch (error) {
           logger.error('Error saving diagnostics:', error);
           // The device record itself saved; surface the inspection-save failure
@@ -523,542 +411,234 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
     }
   };
 
-  const selectedRole = deviceRoles.find(r => r.id != null && r.id.toString() === formData.device_role_id);
-  const roleName = selectedRole?.name.toLowerCase() || '';
-  const isPatientRole = roleName === 'patient';
-  const isDonorRole = roleName === 'donor';
-
   const availableDeviceRoles = deviceRoles.filter(r => r.name.toLowerCase() !== 'clone');
 
-  const isFormValid = formData.device_role_id && (
-    isDonorRole ? !!selectedDonorInventoryId : (formData.device_type_id || formData.serial_number)
+  const isFormValid = !!formData.device_role_id && (
+    isDonorRole
+      ? !!selectedDonorInventoryId
+      : !!detailState.device_type_id
   );
 
-  const handleDonorSelect = (donorId: string) => {
-    setSelectedDonorInventoryId(donorId);
-    const donor = donorInventory.find(d => d.id === donorId);
-    if (donor) {
-      setFormData({
-        ...formData,
-        // inventory_items no longer carries device_type_id; leave caller value.
-        brand_id: donor.brand_id ?? '',
-        model: donor.model ?? '',
-        serial_number: donor.serial_number ?? '',
-        capacity_id: donor.capacity_id ?? '',
-      });
-    }
-  };
+  const tabDefs: TabDef[] = [
+    { id: 'details', label: t('devices.tab.details', { defaultValue: 'Device Details' }), icon: HardDrive, colorToken: 'primary', hasError: detailErrors.device_type_id != null },
+    { id: 'diagnostic', label: t('devices.tab.diagnostic', { defaultValue: 'Diagnostic' }), icon: Stethoscope, colorToken: 'cat-5', disabled: isDonorRole },
+    { id: 'components', label: t('devices.tab.components', { defaultValue: 'Components' }), icon: Cpu, colorToken: 'cat-2', disabled: isDonorRole },
+    { id: 'history', label: t('devices.tab.history', { defaultValue: 'History / Activity' }), icon: History, colorToken: 'cat-6', disabled: true },
+  ];
+
+  // Custody secret + role notes — relocated from "Advanced Options" into the
+  // Details tab footer. Shown for every role (donor included).
+  const passwordAndRoleNotes = (
+    <div className="space-y-3 pt-3 border-t border-border">
+      <div>
+        <label htmlFor={passwordId} className="block text-sm font-medium text-slate-700 mb-1">
+          {t('devices.field.password', { defaultValue: 'Device Password' })}
+        </label>
+        <div className="flex items-start gap-2">
+          <Input
+            id={passwordId}
+            type={showPassword ? 'text' : 'password'}
+            size="sm"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            placeholder={t('devices.field.passwordPlaceholder', { defaultValue: 'Enter device password if applicable...' })}
+            autoComplete="off"
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowPassword(!showPassword)}
+            aria-label={showPassword
+              ? t('devices.field.hidePassword', { defaultValue: 'Hide password' })
+              : t('devices.field.showPassword', { defaultValue: 'Show password' })}
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </Button>
+        </div>
+      </div>
+
+      <Textarea
+        id={roleNotesId}
+        label={t('devices.field.role_notes', { defaultValue: 'Role-Specific Notes' })}
+        size="sm"
+        rows={2}
+        value={formData.role_notes}
+        onChange={(e) => setFormData({ ...formData, role_notes: e.target.value })}
+        placeholder={t('devices.field.roleNotesPlaceholder', { defaultValue: 'Additional notes specific to this device role...' })}
+      />
+    </div>
+  );
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title={isEditMode ? 'Edit Device' : 'Add Device'} maxWidth="4xl" closeOnBackdrop={false}>
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 mb-4 p-4 bg-slate-50 rounded-lg">
-            <HardDrive className="w-5 h-5 text-warning" />
-            <div>
-              <h3 className="font-semibold text-slate-900">
-                {isEditMode ? 'Update Device Information' : 'Add New Device to Case'}
-              </h3>
-              <p className="text-sm text-slate-600">
-                {isEditMode ? 'Modify the device details below' : 'Fill in the device details to add it to this case'}
-              </p>
-            </div>
+      <Dialog
+        open={isOpen}
+        onClose={onClose}
+        labelledBy={titleId}
+        closeOnBackdrop={false}
+        className="w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col rounded-xl bg-surface shadow-xl"
+      >
+        {/* Fixed header: title + role/primary context row + tabs */}
+        <div className="shrink-0 border-b border-border px-4 py-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 id={titleId} className="text-lg font-semibold text-slate-900">
+              {isEditMode
+                ? t('devices.action.editTitle', { defaultValue: 'Edit Device' })
+                : t('devices.action.addTitle', { defaultValue: 'Add Device' })}
+            </h2>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-3">
-              <SearchableSelect
-                label="Device Role"
-                value={formData.device_role_id}
-                onChange={(value) => {
-                  const role = deviceRoles.find(r => r.id != null && r.id.toString() === value);
-                  const newRoleName = role?.name.toLowerCase() || '';
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+            <SearchableSelect
+              label={t('devices.field.device_role', { defaultValue: 'Device Role' })}
+              size="sm"
+              value={formData.device_role_id}
+              onChange={(value) => {
+                const role = deviceRoles.find(r => r.id != null && r.id.toString() === value);
+                const newRoleName = role?.name.toLowerCase() || '';
 
-                  setFormData({
-                    ...formData,
-                    device_role_id: value,
-                    is_primary: newRoleName === 'patient' ? formData.is_primary : false,
-                    symptoms: newRoleName === 'backup' ? '' : formData.symptoms,
-                    recovery_notes: newRoleName === 'backup' ? '' : formData.recovery_notes,
-                  });
+                setFormData(prev => ({
+                  ...prev,
+                  device_role_id: value,
+                  is_primary: newRoleName === 'patient' ? prev.is_primary : false,
+                }));
 
-                  if (newRoleName === 'donor') {
-                    setSelectedDonorInventoryId('');
-                  }
-                }}
-                options={availableDeviceRoles.map(r => ({ id: r.id.toString(), name: r.name }))}
-                placeholder="Select device role..."
-                required
-                clearable={false}
-              />
-            </div>
+                if (newRoleName === 'donor') {
+                  setSelectedDonorInventoryId('');
+                }
+              }}
+              options={availableDeviceRoles.map(r => ({ id: r.id.toString(), name: r.name }))}
+              placeholder={t('devices.field.deviceRolePlaceholder', { defaultValue: 'Select device role...' })}
+              required
+              clearable={false}
+            />
 
-            {isDonorRole && (
-              <div className="col-span-3">
+            {isPatientRole && (
+              <label className="flex items-center gap-2 pb-1.5">
+                <input
+                  type="checkbox"
+                  checked={formData.is_primary}
+                  onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
+                  className="rounded border-slate-300 text-primary focus:ring-primary"
+                />
+                <span className="text-sm font-medium text-slate-700">
+                  {t('devices.field.markPrimary', { defaultValue: 'Mark as Primary Device' })}
+                </span>
+              </label>
+            )}
+          </div>
+
+          <Tabs tabs={tabDefs} activeId={activeTab} variant="pills" onChange={(id) => setActiveTab(id as DeviceTabId)} />
+        </div>
+
+        {/* Scrolling body */}
+        <div
+          className="flex-1 overflow-y-auto px-4 py-3"
+          id={`panel-${activeTab}`}
+          role="tabpanel"
+          aria-labelledby={`tab-${activeTab}`}
+        >
+          {activeTab === 'details' && (
+            isDonorRole ? (
+              <div className="space-y-3">
                 <SearchableSelect
-                  label="Select Donor from Inventory"
+                  label={t('devices.field.donorFromInventory', { defaultValue: 'Select Donor from Inventory' })}
+                  size="sm"
                   value={selectedDonorInventoryId}
-                  onChange={handleDonorSelect}
+                  onChange={setSelectedDonorInventoryId}
                   options={donorInventory.map(d => ({
                     id: d.id,
                     name: `${d.name}${d.model ? ` - ${d.model}` : ''}${d.serial_number ? ` (S/N: ${d.serial_number})` : ''} - Available: ${d.quantity}`,
                   }))}
-                  placeholder="Select donor device from inventory..."
+                  placeholder={t('devices.field.donorPlaceholder', { defaultValue: 'Select donor device from inventory...' })}
                   required
                   clearable={false}
                 />
+                {passwordAndRoleNotes}
               </div>
-            )}
+            ) : (
+              <DeviceDetailsForm
+                state={detailState}
+                onChange={onDetailChange}
+                options={deviceCatalogs}
+                errors={detailErrors}
+                extraFooter={passwordAndRoleNotes}
+              />
+            )
+          )}
 
-            {!isDonorRole && (
-              <>
-                <SearchableSelect
-                  label="Media Type"
-                  value={formData.device_type_id}
-                  onChange={(value) => setFormData({ ...formData, device_type_id: value })}
-                  options={deviceTypes.map(dt => ({ id: dt.id, name: dt.name }))}
-                  placeholder="Select device type..."
-                  clearable={false}
-                />
+          {activeTab === 'diagnostic' && (
+            <DeviceDiagnosticForm
+              state={detailState}
+              onChange={onDetailChange}
+              options={deviceCatalogs}
+              errors={detailErrors}
+            />
+          )}
 
-                <SearchableSelect
-                  label="Brand"
-                  value={formData.brand_id}
-                  onChange={(value) => setFormData({ ...formData, brand_id: value })}
-                  options={brands.map(b => ({ id: b.id, name: b.name }))}
-                  placeholder="Select brand..."
-                  clearable={false}
-                />
+          {activeTab === 'components' && (
+            <DeviceComponentsForm
+              state={detailState}
+              onChange={onDetailChange}
+              options={deviceCatalogs}
+              errors={detailErrors}
+            />
+          )}
 
-                <Input
-                  label="Model"
-                  value={formData.model}
-                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                  placeholder="Device model..."
-                />
-
-                <Input
-                  label="Serial Number"
-                  value={formData.serial_number}
-                  onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
-                  placeholder="Serial number..."
-                />
-
-                <SearchableSelect
-                  label="Capacity"
-                  value={formData.capacity_id}
-                  onChange={(value) => setFormData({ ...formData, capacity_id: value })}
-                  options={capacities.map(c => ({ id: c.id, name: c.name }))}
-                  placeholder="Select capacity..."
-                  clearable={false}
-                />
-
-                <SearchableSelect
-                  label="Condition"
-                  value={formData.condition_id}
-                  onChange={(value) => setFormData({ ...formData, condition_id: value })}
-                  options={deviceConditions.map(dc => ({ id: dc.id, name: dc.name }))}
-                  placeholder="Select condition..."
-                  clearable={false}
-                />
-              </>
-            )}
-
-            {!isDonorRole && (
-              <div className="col-span-3">
-                <MultiSelectDropdown
-                  label="Accessories"
-                  value={formData.accessories}
-                  onChange={(value) => setFormData({ ...formData, accessories: value })}
-                  options={accessories.map(a => ({ id: a.id, name: a.name }))}
-                  placeholder="Select accessories (optional)..."
-                  usePortal
-                />
-              </div>
-            )}
-
-            {isPatientRole && (
-              <div className="col-span-3">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_primary}
-                    onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
-                    className="rounded border-slate-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm font-medium text-slate-700">
-                    Mark as Primary Device
-                  </span>
-                </label>
-              </div>
-            )}
-
-            <div className="col-span-3">
-              <button
-                type="button"
-                onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
-              >
-                {showAdvancedOptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                Advanced Options
-              </button>
+          {activeTab === 'history' && (
+            <div className="text-sm text-slate-500 py-8 text-center">
+              {t('devices.tab.historySoon', { defaultValue: 'Device history & activity — coming soon.' })}
             </div>
+          )}
+        </div>
 
-            {showAdvancedOptions && (
-              <>
-                <div className="col-span-3">
-                  <label htmlFor={passwordId} className="block text-sm font-medium text-slate-700 mb-2">
-                    Device Password
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <form className="contents" onSubmit={(e) => e.preventDefault()}>
-                      <input
-                        id={passwordId}
-                        type={showPassword ? 'text' : 'password'}
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        placeholder="Enter device password if applicable..."
-                        autoComplete="off"
-                        className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </form>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-
-                {!isDonorRole && (
-                  <div className="col-span-3">
-                    <SearchableSelect
-                      label="Encryption Type"
-                      value={formData.encryption_id}
-                      onChange={(value) => setFormData({ ...formData, encryption_id: value })}
-                      options={encryptionTypes.map(et => ({ id: et.id, name: et.name }))}
-                      placeholder="Select encryption type (if applicable)..."
-                      clearable={true}
-                    />
-                  </div>
-                )}
-
-                {isPatientRole && (
-                  <>
-                    <div className="col-span-3">
-                      <label htmlFor={symptomsId} className="block text-sm font-medium text-slate-700 mb-2">
-                        Problem Description
-                      </label>
-                      <textarea
-                        id={symptomsId}
-                        value={formData.symptoms}
-                        onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
-                        placeholder="Describe the device problem or symptoms..."
-                        rows={2}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-
-                    <div className="col-span-3">
-                      <label htmlFor={recoveryNotesId} className="block text-sm font-medium text-slate-700 mb-2">
-                        Recovery Requirements
-                      </label>
-                      <textarea
-                        id={recoveryNotesId}
-                        value={formData.recovery_notes}
-                        onChange={(e) => setFormData({ ...formData, recovery_notes: e.target.value })}
-                        placeholder="Specify what data needs to be recovered..."
-                        rows={2}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div className="col-span-3">
-                  <label htmlFor={roleNotesId} className="block text-sm font-medium text-slate-700 mb-2">
-                    Role-Specific Notes
-                  </label>
-                  <textarea
-                    id={roleNotesId}
-                    value={formData.role_notes}
-                    onChange={(e) => setFormData({ ...formData, role_notes: e.target.value })}
-                    placeholder="Additional notes specific to this device role..."
-                    rows={2}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Component Diagnostics Section - Only for Patient Role */}
-            {isPatientRole && diagnosticsFormData.device_type_category && (
-              <>
-                <div className="col-span-3 mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowDiagnosticsSection(!showDiagnosticsSection)}
-                    className="flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors"
-                  >
-                    {showDiagnosticsSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    <Cpu className="w-4 h-4" />
-                    Component Diagnostics (Evaluation)
-                    <span className="ml-2 px-2 py-0.5 text-xs bg-info-muted text-info rounded">
-                      {diagnosticsFormData.device_type_category.toUpperCase()}
-                    </span>
-                  </button>
-                  <p className="text-xs text-slate-500 mt-1 ml-6">
-                    Optional: Record component-level diagnostics for evaluation reports
-                  </p>
-                </div>
-
-                {showDiagnosticsSection && (
-                  <div className="col-span-3 border border-slate-200 rounded-lg p-4 bg-slate-50 space-y-4">
-                    {/* HDD-Specific Fields */}
-                    {(diagnosticsFormData.device_type_category === 'hdd' || diagnosticsFormData.device_type_category === 'hybrid') && (
-                      <div className="space-y-3">
-                        <h4 className="font-semibold text-sm text-slate-800 flex items-center gap-2">
-                          <HardDrive className="w-4 h-4" />
-                          HDD Component Status
-                        </h4>
-                        <div className="grid grid-cols-2 gap-3">
-                          <SearchableSelect
-                            label="Heads Status"
-                            value={diagnosticsFormData.heads_status}
-                            onChange={(value) => setDiagnosticsFormData({ ...diagnosticsFormData, heads_status: value })}
-                            options={componentStatuses.map(s => ({ id: s.status_code, name: s.status_name }))}
-                            placeholder="Select status..."
-                            clearable={true}
-                          />
-                          <SearchableSelect
-                            label="PCB Status"
-                            value={diagnosticsFormData.pcb_status}
-                            onChange={(value) => setDiagnosticsFormData({ ...diagnosticsFormData, pcb_status: value })}
-                            options={componentStatuses.map(s => ({ id: s.status_code, name: s.status_name }))}
-                            placeholder="Select status..."
-                            clearable={true}
-                          />
-                          <SearchableSelect
-                            label="Motor Status"
-                            value={diagnosticsFormData.motor_status}
-                            onChange={(value) => setDiagnosticsFormData({ ...diagnosticsFormData, motor_status: value })}
-                            options={componentStatuses.map(s => ({ id: s.status_code, name: s.status_name }))}
-                            placeholder="Select status..."
-                            clearable={true}
-                          />
-                          <SearchableSelect
-                            label="Surface/Platter Status"
-                            value={diagnosticsFormData.surface_status}
-                            onChange={(value) => setDiagnosticsFormData({ ...diagnosticsFormData, surface_status: value })}
-                            options={componentStatuses.map(s => ({ id: s.status_code, name: s.status_name }))}
-                            placeholder="Select status..."
-                            clearable={true}
-                          />
-                          <div className="col-span-2">
-                            <Input
-                              label="PCB Notes"
-                              value={diagnosticsFormData.pcb_notes}
-                              onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, pcb_notes: e.target.value })}
-                              placeholder="PCB model, revision, swap notes..."
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <label className="flex items-center gap-2 text-sm">
-                              <input
-                                type="checkbox"
-                                checked={diagnosticsFormData.sa_access}
-                                onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, sa_access: e.target.checked })}
-                                className="rounded border-slate-300 text-primary focus:ring-primary"
-                              />
-                              <span className="font-medium text-slate-700">Service Area (SA) Access Available</span>
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* SSD-Specific Fields */}
-                    {(diagnosticsFormData.device_type_category === 'ssd' || diagnosticsFormData.device_type_category === 'hybrid') && (
-                      <div className="space-y-3">
-                        <h4 className="font-semibold text-sm text-slate-800 flex items-center gap-2">
-                          <Cpu className="w-4 h-4" />
-                          SSD Component Status
-                        </h4>
-                        <div className="grid grid-cols-2 gap-3">
-                          <SearchableSelect
-                            label="Controller Status"
-                            value={diagnosticsFormData.controller_status}
-                            onChange={(value) => setDiagnosticsFormData({ ...diagnosticsFormData, controller_status: value })}
-                            options={componentStatuses.map(s => ({ id: s.status_code, name: s.status_name }))}
-                            placeholder="Select status..."
-                            clearable={true}
-                          />
-                          <Input
-                            label="Controller Model"
-                            value={diagnosticsFormData.controller_model}
-                            onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, controller_model: e.target.value })}
-                            placeholder="Controller chip model..."
-                          />
-                          <SearchableSelect
-                            label="Memory Chips Status"
-                            value={diagnosticsFormData.memory_chips_status}
-                            onChange={(value) => setDiagnosticsFormData({ ...diagnosticsFormData, memory_chips_status: value })}
-                            options={componentStatuses.map(s => ({ id: s.status_code, name: s.status_name }))}
-                            placeholder="Select status..."
-                            clearable={true}
-                          />
-                          <SearchableSelect
-                            label="NAND Type"
-                            value={diagnosticsFormData.nand_type}
-                            onChange={(value) => setDiagnosticsFormData({ ...diagnosticsFormData, nand_type: value })}
-                            options={[
-                              { id: 'SLC', name: 'SLC (Single-Level Cell)' },
-                              { id: 'MLC', name: 'MLC (Multi-Level Cell)' },
-                              { id: 'TLC', name: 'TLC (Triple-Level Cell)' },
-                              { id: 'QLC', name: 'QLC (Quad-Level Cell)' },
-                              { id: 'Other', name: 'Other' },
-                            ]}
-                            placeholder="Select NAND type..."
-                            clearable={true}
-                          />
-                          <div className="col-span-2 space-y-2">
-                            <label className="flex items-center gap-2 text-sm">
-                              <input
-                                type="checkbox"
-                                checked={diagnosticsFormData.firmware_corruption}
-                                onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, firmware_corruption: e.target.checked })}
-                                className="rounded border-slate-300 text-primary focus:ring-primary"
-                              />
-                              <span className="font-medium text-slate-700">Firmware Corruption Detected</span>
-                            </label>
-                            <label className="flex items-center gap-2 text-sm">
-                              <input
-                                type="checkbox"
-                                checked={diagnosticsFormData.trim_support}
-                                onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, trim_support: e.target.checked })}
-                                className="rounded border-slate-300 text-primary focus:ring-primary"
-                              />
-                              <span className="font-medium text-slate-700">TRIM Support Enabled</span>
-                            </label>
-                          </div>
-                          <Input
-                            label="Wear Leveling Count"
-                            type="number"
-                            value={diagnosticsFormData.wear_leveling_count}
-                            onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, wear_leveling_count: e.target.value })}
-                            placeholder="Wear leveling count..."
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Common Diagnostic Fields */}
-                    <div className="space-y-3 border-t border-slate-200 pt-3">
-                      <h4 className="font-semibold text-sm text-slate-800">Common Diagnostics</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Input
-                          label="Firmware Version"
-                          value={diagnosticsFormData.firmware_version}
-                          onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, firmware_version: e.target.value })}
-                          placeholder="Firmware version..."
-                        />
-                        <Input
-                          label="ROM Version"
-                          value={diagnosticsFormData.rom_version}
-                          onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, rom_version: e.target.value })}
-                          placeholder="ROM version..."
-                        />
-                      </div>
-                    </div>
-
-                    {/* Physical Damage & Technical Notes */}
-                    <div className="space-y-3 border-t border-slate-200 pt-3">
-                      <h4 className="font-semibold text-sm text-slate-800">Additional Notes</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <label htmlFor={physicalDamageId} className="block text-sm font-medium text-slate-700 mb-2">
-                            Physical Damage Notes
-                          </label>
-                          <textarea
-                            id={physicalDamageId}
-                            value={diagnosticsFormData.physical_damage_notes}
-                            onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, physical_damage_notes: e.target.value })}
-                            placeholder="Describe any physical damage observed..."
-                            rows={2}
-                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor={technicalNotesId} className="block text-sm font-medium text-slate-700 mb-2">
-                            Technical Notes
-                          </label>
-                          <textarea
-                            id={technicalNotesId}
-                            value={diagnosticsFormData.technical_notes}
-                            onChange={(e) => setDiagnosticsFormData({ ...diagnosticsFormData, technical_notes: e.target.value })}
-                            placeholder="Additional technical observations..."
-                            rows={2}
-                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
+        {/* Sticky footer */}
+        <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 border-t border-border bg-surface-muted">
+          <div>
+            {isEditMode && (
+              <Button variant="danger" size="sm" onClick={() => setShowDeleteConfirm(true)} disabled={isSubmitting}>
+                <Trash2 className="w-4 h-4 me-1.5" />
+                {t('common.delete', { defaultValue: 'Delete' })}
+              </Button>
             )}
           </div>
-
-          <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-200">
-            <div>
-              {isEditMode && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="bg-danger-muted text-danger hover:bg-danger/15"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Device
-                </Button>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={!isFormValid || isSubmitting}
-                style={{ backgroundColor: 'rgb(var(--color-success))' }}
-              >
-                {isSubmitting ? 'Saving...' : isEditMode ? 'Update Device' : 'Add Device'}
-              </Button>
-            </div>
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
+              {t('common.cancel', { defaultValue: 'Cancel' })}
+            </Button>
+            <Button size="sm" onClick={handleSubmit} disabled={!isFormValid || isSubmitting}>
+              {isSubmitting
+                ? t('common.saving', { defaultValue: 'Saving...' })
+                : isEditMode
+                  ? t('devices.action.save', { defaultValue: 'Save Changes' })
+                  : t('devices.action.add', { defaultValue: 'Add Device' })}
+            </Button>
           </div>
         </div>
-      </Modal>
+      </Dialog>
 
       <Modal
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
-        title="Delete Device"
+        title={t('devices.action.deleteTitle', { defaultValue: 'Delete Device' })}
       >
         <div className="space-y-4">
           <p className="text-slate-700">
-            Are you sure you want to delete this device? This action cannot be undone.
+            {t('devices.action.deleteConfirm', { defaultValue: 'Are you sure you want to delete this device? This action cannot be undone.' })}
           </p>
           <div className="flex items-center justify-end gap-3">
             <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)} disabled={isSubmitting}>
-              Cancel
+              {t('common.cancel', { defaultValue: 'Cancel' })}
             </Button>
             <Button
+              variant="danger"
               onClick={handleDelete}
               disabled={isSubmitting}
-              className="bg-danger hover:bg-danger/90 text-danger-foreground"
             >
-              {isSubmitting ? 'Deleting...' : 'Delete Device'}
+              {isSubmitting
+                ? t('common.deleting', { defaultValue: 'Deleting...' })
+                : t('devices.action.deleteTitle', { defaultValue: 'Delete Device' })}
             </Button>
           </div>
         </div>

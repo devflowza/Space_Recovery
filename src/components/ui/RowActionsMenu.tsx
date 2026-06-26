@@ -82,7 +82,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({ actions, note, a
         createPortal(
           <>
             <div
-              className="fixed inset-0 z-40"
+              className="fixed inset-0 z-overlay"
               aria-hidden="true"
               onClick={(e) => {
                 e.stopPropagation();
@@ -93,7 +93,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({ actions, note, a
               role="menu"
               onClick={(e) => e.stopPropagation()}
               style={{ top: pos.top, left: pos.left, width: MENU_WIDTH }}
-              className="fixed z-50 rounded-xl border border-slate-200 bg-surface py-1 shadow-xl"
+              className="fixed z-modal rounded-xl border border-slate-200 bg-surface py-1 shadow-xl"
             >
               {actions.map((action) => (
                 <button

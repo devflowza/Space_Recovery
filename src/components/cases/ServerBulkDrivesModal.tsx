@@ -458,7 +458,7 @@ export const ServerBulkDrivesModal: React.FC<ServerBulkDrivesModalProps> = ({
                           value={drive.serial_no}
                           onChange={(e) => updateDrive(drive.id, 'serial_no', e.target.value)}
                           onKeyDown={(e) => handleKeyDown(e, drive.id, 'serial', index)}
-                          placeholder="Enter S/N..."
+                          placeholder="Enter serial number..."
                           className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary ${
                             hasDuplicateSerial
                               ? 'border-danger bg-danger-muted'

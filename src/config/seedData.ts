@@ -1,4 +1,4 @@
-export const DEVICE_MEDIA_SEED_DATA = {
+export const DEVICE_INVENTORY_SEED_DATA = {
   catalog_device_types: [
     '2.5" HDD',
     '3.5" HDD',
@@ -126,7 +126,7 @@ export const DEVICE_MEDIA_SEED_DATA = {
     'Thunderbolt Cable',
   ],
 
-  catalog_device_interfaces: [
+  catalog_interfaces: [
     'SATA I (1.5 Gb/s)',
     'SATA II (3 Gb/s)',
     'SATA III (6 Gb/s)',
@@ -255,6 +255,9 @@ export const DEVICE_MEDIA_SEED_DATA = {
     'Parts',
     'Supplies',
     'Other',
+    'Donor Drives',
+    'Head Assemblies',
+    'Motors',
   ],
 };
 
@@ -976,7 +979,7 @@ Reply YES to approve or call us with any questions.
 <div class="device-info">
 <h3>Device Information</h3>
 <table>
-<tr><td>Type:</td><td>{{device.type}}</td></tr>
+<tr><td>Device Type:</td><td>{{device.type}}</td></tr>
 <tr><td>Brand:</td><td>{{device.brand}}</td></tr>
 <tr><td>Model:</td><td>{{device.model}}</td></tr>
 <tr><td>Serial Number:</td><td>{{device.serial}}</td></tr>
@@ -1017,7 +1020,7 @@ Reply YES to approve or call us with any questions.
 <p><strong>Date Received:</strong> {{case.received_date}}</p>
 <p><strong>Device:</strong> {{device.brand}} {{device.type}}</p>
 <p><strong>Serial Number:</strong> {{device.serial}}</p>
-<p><strong>Physical Condition:</strong> {{device.condition}}</p>
+<p><strong>Condition:</strong> {{device.condition}}</p>
 </div>
 
 <div class="problem-analysis">
@@ -1061,11 +1064,11 @@ Reply YES to approve or call us with any questions.
     { category: 'case', key: 'case.received_date', name: 'Date Received', sample: '15/11/2025' },
 
     { category: 'device', key: 'device.type', name: 'Device Type', sample: '2.5" HDD' },
-    { category: 'device', key: 'device.brand', name: 'Device Brand', sample: 'Seagate' },
-    { category: 'device', key: 'device.model', name: 'Device Model', sample: 'ST1000LM035' },
+    { category: 'device', key: 'device.brand', name: 'Brand', sample: 'Seagate' },
+    { category: 'device', key: 'device.model', name: 'Model', sample: 'ST1000LM035' },
     { category: 'device', key: 'device.serial', name: 'Serial Number', sample: 'ABC123456' },
     { category: 'device', key: 'device.capacity', name: 'Capacity', sample: '1TB' },
-    { category: 'device', key: 'device.condition', name: 'Physical Condition', sample: 'Good - No Visible Damage' },
+    { category: 'device', key: 'device.condition', name: 'Condition', sample: 'Good - No Visible Damage' },
 
     { category: 'quote', key: 'quote.number', name: 'Quote Number', sample: 'QT-2025-00001' },
     { category: 'quote', key: 'quote.total', name: 'Quote Total', sample: '250.000' },

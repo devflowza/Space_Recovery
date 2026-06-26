@@ -18,7 +18,7 @@ import {
   getInventoryInsights,
   updateInventoryItem,
   deleteInventoryItem,
-  type InventoryItemCategory,
+  type InventoryCategory,
   type InventoryStatusType,
   type InventoryInsights,
 } from '../../lib/inventoryService';
@@ -27,12 +27,14 @@ import { logger } from '../../lib/logger';
 
 const PAGE_SIZE = 50;
 
+type InventoryRow = Awaited<ReturnType<typeof getInventoryItemsPage>>['rows'][number];
+
 export default function InventoryListPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [items, setItems] = useState<any[]>([]);
-  const [categories, setCategories] = useState<InventoryItemCategory[]>([]);
+  const [items, setItems] = useState<InventoryRow[]>([]);
+  const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const [statusTypes, setStatusTypes] = useState<InventoryStatusType[]>([]);
   const [statistics, setStatistics] = useState({
     totalItems: 0,
@@ -504,10 +506,10 @@ export default function InventoryListPage() {
                           <div className="font-semibold text-slate-900">
                             {item.brand?.name || 'Unknown'} {item.model || 'N/A'}
                           </div>
-                          {item.inventory_code && (
+                          {item.item_number && (
                             <div className="inline-flex items-center gap-1.5 bg-info-muted border border-info/30 rounded-md px-2.5 py-1">
                               <span className="text-xs font-medium text-info">INV#:</span>
-                              <span className="text-sm font-bold text-info font-mono tracking-wide">{item.inventory_code}</span>
+                              <span className="text-sm font-bold text-info font-mono tracking-wide">{item.item_number}</span>
                             </div>
                           )}
                           {item.serial_number && (
@@ -604,12 +606,12 @@ export default function InventoryListPage() {
                                 cursor: 'pointer',
                               }}
                             >
-                              {item.status_type?.name || item.status}
+                              {item.status_type?.name || 'N/A'}
                             </Badge>
                           </span>
 
                           {editingStatusId === item.id && (
-                            <div className="absolute z-10 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg">
+                            <div className="absolute z-dropdown mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg">
                               <div className="py-1 max-h-60 overflow-y-auto">
                                 {statusTypes.map((status) => (
                                   <button

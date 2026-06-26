@@ -24,7 +24,6 @@ export type MasterDataTable =
   | 'catalog_device_brands'
   | 'catalog_device_capacities'
   | 'catalog_accessories'
-  | 'catalog_device_interfaces'
   | 'catalog_device_made_in'
   | 'catalog_device_encryption'
   | 'catalog_device_platter_counts'
@@ -97,7 +96,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
   },
   {
     id: 'device-media',
-    title: 'Device & Media',
+    title: 'Devices & Inventory',
     icon: HardDrive,
     backgroundColor: '#3b82f6',
     borderColor: '#3b82f6',
@@ -106,7 +105,6 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
       'catalog_device_brands',
       'catalog_device_capacities',
       'catalog_accessories',
-      'catalog_device_interfaces',
       'catalog_interfaces',
       'catalog_device_made_in',
       'catalog_device_encryption',
@@ -296,15 +294,14 @@ export const TABLE_LABELS: Record<MasterDataTable, string> = {
   catalog_device_brands: 'Brands',
   catalog_device_capacities: 'Capacities',
   catalog_accessories: 'Accessories',
-  catalog_device_interfaces: 'Device Interface',
   catalog_interfaces: 'Interfaces',
-  catalog_device_made_in: 'Device Made In',
-  catalog_device_encryption: 'Device Encryption',
-  catalog_device_platter_counts: 'Device Platter No',
-  catalog_device_head_counts: 'Device Head No',
+  catalog_device_made_in: 'Made In',
+  catalog_device_encryption: 'Encryption',
+  catalog_device_platter_counts: 'Platter Count',
+  catalog_device_head_counts: 'Head Count',
   inventory_locations: 'Inventory Locations',
   catalog_service_types: 'Service Types',
-  catalog_service_problems: 'Device Problems',
+  catalog_service_problems: 'Service Problems',
   master_case_priorities: 'Case Priorities',
   master_case_statuses: 'Case Statuses',
   catalog_service_locations: 'Service Locations',
