@@ -28,4 +28,16 @@ describe('DeviceDetailsForm', () => {
     render(<DeviceDetailsForm state={{ device_type_id: '' }} onChange={vi.fn()} options={options} />);
     expect(screen.getByText(/Serial Number/i)).toBeInTheDocument();
   });
+
+  it('renders merged Basic+Technical in one grid with no CollapsibleSection chrome', () => {
+    render(<DeviceDetailsForm state={{ device_type_id: HDD_ID }} onChange={vi.fn()} options={options} />);
+    expect(screen.getByText(/Serial Number/i)).toBeInTheDocument();
+    expect(screen.getByText('Physical Head Map')).toBeInTheDocument();
+    expect(screen.queryByText('Component Diagnostics')).not.toBeInTheDocument();
+  });
+
+  it('does not render component-status fields (moved to Components tab)', () => {
+    render(<DeviceDetailsForm state={{ device_type_id: HDD_ID }} onChange={vi.fn()} options={options} />);
+    expect(screen.queryByText(/^Heads$/)).not.toBeInTheDocument();
+  });
 });
