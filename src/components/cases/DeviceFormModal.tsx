@@ -8,7 +8,7 @@ import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { Tabs, type TabDef } from '../ui/Tabs';
-import { HardDrive, Stethoscope, Cpu, History, X } from 'lucide-react';
+import { HardDrive, Stethoscope, Cpu, History, X, Save } from 'lucide-react';
 import { diagnosticsService } from '../../lib/diagnosticsService';
 import { setPrimaryDevice } from '../../lib/deviceService';
 import { logger } from '../../lib/logger';
@@ -403,94 +403,98 @@ export const DeviceFormModal: React.FC<DeviceFormModalProps> = ({
       onClose={onClose}
       labelledBy={titleId}
       closeOnBackdrop={false}
-      className="w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col rounded-xl bg-surface shadow-xl"
+      className="w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col rounded-2xl bg-surface border border-border shadow-[0_12px_40px_rgba(15,23,42,0.12)]"
     >
-      {/* Fixed header: title + close + tabs */}
-      <div className="shrink-0 border-b border-border px-4 py-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 id={titleId} className="text-lg font-semibold text-slate-900">
-            {isEditMode
-              ? t('devices.action.editTitle', { defaultValue: 'Edit Device' })
-              : t('devices.action.addTitle', { defaultValue: 'Add Device' })}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('common.close', { defaultValue: 'Close' })}
-            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-surface-muted hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+      {/* Fixed header: title + close, thin divider underneath */}
+      <div className="shrink-0 flex items-center justify-between px-8 h-[72px] border-b border-border">
+        <h2 id={titleId} className="text-[26px] font-bold tracking-tight text-slate-900">
+          {isEditMode
+            ? t('devices.action.editTitle', { defaultValue: 'Edit Device' })
+            : t('devices.action.addTitle', { defaultValue: 'Add Device' })}
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t('common.close', { defaultValue: 'Close' })}
+          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-surface-muted hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
+      {/* Fixed tab navigation (colored pills) */}
+      <div className="shrink-0 px-8 pt-6 pb-3">
         <Tabs tabs={tabDefs} activeId={activeTab} variant="pills" onChange={(id) => setActiveTab(id as DeviceTabId)} />
       </div>
 
-      {/* Scrolling body */}
+      {/* Scrolling body — light backdrop with a white form card */}
       <div
-        className="flex-1 overflow-y-auto px-4 py-3"
+        className="flex-1 overflow-y-auto bg-surface-muted px-6 pb-6 pt-1"
         id={`panel-${activeTab}`}
         role="tabpanel"
         aria-labelledby={`tab-${activeTab}`}
       >
-        {activeTab === 'details' && (
-          isDonorRole ? (
-            <div className="space-y-3">
-              <SearchableSelect
-                label={t('devices.field.donorFromInventory', { defaultValue: 'Select Donor from Inventory' })}
-                size="sm"
-                value={selectedDonorInventoryId}
-                onChange={setSelectedDonorInventoryId}
-                options={donorInventory.map(d => ({
-                  id: d.id,
-                  name: `${d.name}${d.model ? ` - ${d.model}` : ''}${d.serial_number ? ` (S/N: ${d.serial_number})` : ''} - Available: ${d.quantity}`,
-                }))}
-                placeholder={t('devices.field.donorPlaceholder', { defaultValue: 'Select donor device from inventory...' })}
-                required
-                clearable={false}
+        <div className="rounded-2xl border border-border bg-surface p-8 shadow-[0_2px_12px_rgba(15,23,42,0.06)]">
+          {activeTab === 'details' && (
+            isDonorRole ? (
+              <div className="space-y-3">
+                <SearchableSelect
+                  label={t('devices.field.donorFromInventory', { defaultValue: 'Select Donor from Inventory' })}
+                  size="lg"
+                  value={selectedDonorInventoryId}
+                  onChange={setSelectedDonorInventoryId}
+                  options={donorInventory.map(d => ({
+                    id: d.id,
+                    name: `${d.name}${d.model ? ` - ${d.model}` : ''}${d.serial_number ? ` (S/N: ${d.serial_number})` : ''} - Available: ${d.quantity}`,
+                  }))}
+                  placeholder={t('devices.field.donorPlaceholder', { defaultValue: 'Select donor device from inventory...' })}
+                  required
+                  clearable={false}
+                />
+              </div>
+            ) : (
+              <DeviceDetailsForm
+                state={detailState}
+                onChange={onDetailChange}
+                options={deviceCatalogs}
+                errors={detailErrors}
               />
-            </div>
-          ) : (
-            <DeviceDetailsForm
+            )
+          )}
+
+          {activeTab === 'diagnostic' && (
+            <DeviceDiagnosticForm
               state={detailState}
               onChange={onDetailChange}
               options={deviceCatalogs}
               errors={detailErrors}
             />
-          )
-        )}
+          )}
 
-        {activeTab === 'diagnostic' && (
-          <DeviceDiagnosticForm
-            state={detailState}
-            onChange={onDetailChange}
-            options={deviceCatalogs}
-            errors={detailErrors}
-          />
-        )}
+          {activeTab === 'components' && (
+            <DeviceComponentsForm
+              state={detailState}
+              onChange={onDetailChange}
+              options={deviceCatalogs}
+              errors={detailErrors}
+            />
+          )}
 
-        {activeTab === 'components' && (
-          <DeviceComponentsForm
-            state={detailState}
-            onChange={onDetailChange}
-            options={deviceCatalogs}
-            errors={detailErrors}
-          />
-        )}
-
-        {activeTab === 'history' && (
-          <div className="text-sm text-slate-500 py-8 text-center">
-            {t('devices.tab.historySoon', { defaultValue: 'Device history & activity — coming soon.' })}
-          </div>
-        )}
+          {activeTab === 'history' && (
+            <div className="text-sm text-slate-500 py-8 text-center">
+              {t('devices.tab.historySoon', { defaultValue: 'Device history & activity — coming soon.' })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Sticky footer */}
-      <div className="shrink-0 flex items-center justify-end gap-3 px-4 py-3 border-t border-border bg-surface-muted">
-        <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
+      <div className="shrink-0 flex items-center justify-end gap-3 px-8 h-[80px] border-t border-border bg-surface">
+        <Button variant="secondary" size="md" onClick={onClose} disabled={isSubmitting} className="h-12 rounded-[10px] px-6">
           {t('common.cancel', { defaultValue: 'Cancel' })}
         </Button>
-        <Button size="sm" onClick={handleSubmit} disabled={!isFormValid || isSubmitting}>
+        <Button size="md" onClick={handleSubmit} disabled={!isFormValid || isSubmitting} className="h-12 rounded-[10px] px-6 shadow-sm">
+          <Save className="w-[18px] h-[18px] me-2" />
           {isSubmitting
             ? t('common.saving', { defaultValue: 'Saving...' })
             : isEditMode
