@@ -36,6 +36,24 @@ import { toEngineData as chainOfCustodyToEngine } from './adapters/chainOfCustod
 import { toEngineData as payslipToEngine } from './adapters/payslipAdapter';
 import { toEngineData as reportToEngine } from './adapters/reportAdapter';
 import { toEngineData as stockLabelToEngine } from './adapters/stockLabelAdapter';
+import { createTranslationContext } from '../translationContext';
+import type { TranslationContext } from '../types';
+
+/**
+ * Derive a {@link TranslationContext} from the engine `config.language` for
+ * adapters that resolve labels through `ctx.t` (the report adapter). The engine's
+ * `language` only carries `mode` + `primary` ('en'|'ar'), so a bilingual config
+ * maps to the Arabic document-translation block (the only non-English secondary
+ * the engine config can express); pure English → english_only. The live PDF path
+ * (`reportPDFService`) builds the full `ctx` from the tenant's secondary language
+ * for any of the 13 languages — this is just the Studio preview's best effort.
+ */
+function previewCtxFromConfig(config: DocumentTemplateConfig): TranslationContext {
+  if (config.language && config.language.mode !== 'en') {
+    return createTranslationContext('bilingual', config.language.primary === 'ar' ? 'ar' : null);
+  }
+  return createTranslationContext('english_only', null);
+}
 
 /** Shared sample company identity used across every sample document. */
 const SAMPLE_COMPANY = {
@@ -349,7 +367,11 @@ export function buildPreviewEngineData(
     case 'payslip':
       return payslipToEngine(withCompany(samplePayslipData(), companySettings), config);
     case 'report':
-      return reportToEngine(withCompany(sampleReportData(), companySettings), config);
+      return reportToEngine(
+        withCompany(sampleReportData(), companySettings),
+        config,
+        previewCtxFromConfig(config),
+      );
     case 'stock_label':
       return stockLabelToEngine(sampleStockLabelData(), config);
     default:

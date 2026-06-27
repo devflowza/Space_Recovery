@@ -36,6 +36,7 @@ import type {
 } from '../../templateConfig';
 import { BUILT_IN_TEMPLATE_CONFIGS } from '../../templateConfig';
 import { formatDate, safeString } from '../../utils';
+import type { TranslationContext } from '../../types';
 import type {
   CustodyLogBlock,
   EngineDocData,
@@ -49,50 +50,75 @@ import type {
 } from '../types';
 
 // ---------------------------------------------------------------------------
-// Report-type title map — the 8 report types. EN = the uppercased document
-// title; AR = the Arabic title surfaced in bilingual modes.
+// Multilingual labels — EVERY human-readable title/label the report renders is
+// resolved here through the shared document-translation system (`ctx.t`), so it
+// works in english_only AND in bilingual mode for ALL 13 languages, instead of
+// the previous English+Arabic-only hardcoded maps. `ctx.t(translationKey, en)`
+// returns the English canonical in english_only mode, or the combined bilingual
+// string (`EN | translated`) in bilingual mode — see `pdf/translationContext.ts`
+// + `documentTranslations.ts`. The adapter emits FINAL strings (wrapped as a
+// single-`en` {@link LabelText} via {@link lt}); the section renderers stay dumb
+// and just render the supplied string, so RTL/bilingual is owned entirely by
+// `ctx.t`/`formatBilingualText` — never re-implemented here.
 // ---------------------------------------------------------------------------
 
-const REPORT_TYPE_TITLES: Record<string, LabelText> = {
-  evaluation: { en: 'EVALUATION REPORT', ar: 'تقرير التقييم' },
-  service: { en: 'SERVICE REPORT', ar: 'تقرير الخدمة' },
-  server: { en: 'SERVER RECOVERY REPORT', ar: 'تقرير استعادة الخادم' },
-  malware: { en: 'MALWARE ANALYSIS REPORT', ar: 'تقرير تحليل البرامج الضارة' },
-  forensic: { en: 'FORENSIC ANALYSIS REPORT', ar: 'تقرير التحليل الجنائي' },
-  data_destruction: { en: 'DATA DESTRUCTION CERTIFICATE', ar: 'شهادة تدمير البيانات' },
-  prevention: { en: 'PREVENTION & STRATEGY REPORT', ar: 'تقرير الوقاية والاستراتيجية' },
-  recovered_files: { en: 'RECOVERED FILES REPORT', ar: 'تقرير الملفات المستردة' },
-};
-
-/** Resolve the report-type title; unknown types degrade to the uppercased type. */
-function reportTypeTitle(reportType: string): LabelText {
-  return REPORT_TYPE_TITLES[reportType] ?? { en: (reportType || 'REPORT').toUpperCase() };
+/** Wrap an already-resolved (possibly bilingual) string as a single-`en` LabelText. */
+function lt(text: string): LabelText {
+  return { en: text };
 }
 
 // ---------------------------------------------------------------------------
-// Canonical Option B prose sections — title (EN+AR), status tone, and special
-// kind. Authored `case_report_sections` rows are matched to these by
-// `section_key` (with a small alias table for legacy keys), so the Option B tone
-// + bilingual title attach regardless of what title the author typed.
+// Report-type title map — the 8 report types. Each maps to a document-translation
+// key + the uppercased English canonical; resolved via `ctx.t` so the title
+// renders in any of the 13 languages.
+// ---------------------------------------------------------------------------
+
+const REPORT_TYPE_TITLES: Record<string, { tkey: string; en: string }> = {
+  evaluation: { tkey: 'evaluationReport', en: 'EVALUATION REPORT' },
+  service: { tkey: 'serviceReport', en: 'SERVICE REPORT' },
+  server: { tkey: 'serverReport', en: 'SERVER RECOVERY REPORT' },
+  malware: { tkey: 'malwareReport', en: 'MALWARE ANALYSIS REPORT' },
+  forensic: { tkey: 'forensicReport', en: 'FORENSIC ANALYSIS REPORT' },
+  data_destruction: { tkey: 'dataDestructionReport', en: 'DATA DESTRUCTION CERTIFICATE' },
+  prevention: { tkey: 'preventionReport', en: 'PREVENTION & STRATEGY REPORT' },
+  recovered_files: { tkey: 'recoveredFilesReport', en: 'RECOVERED FILES REPORT' },
+};
+
+/** Resolve the report-type document title via `ctx.t`; unknown types degrade to the uppercased type. */
+function reportTypeTitle(reportType: string, ctx: TranslationContext): LabelText {
+  const entry = REPORT_TYPE_TITLES[reportType];
+  if (!entry) return lt((reportType || 'REPORT').toUpperCase());
+  return lt(ctx.t(entry.tkey, entry.en));
+}
+
+// ---------------------------------------------------------------------------
+// Canonical Option B prose sections — document-translation key + English
+// canonical title, status tone, and special kind. Authored
+// `case_report_sections` rows are matched to these by `section_key` (with a
+// small alias table for legacy keys), so the Option B tone + multilingual title
+// attach regardless of what title the author typed.
 // ---------------------------------------------------------------------------
 
 interface CanonicalSection {
-  title: LabelText;
+  /** Document-translation key resolved via `ctx.t` (all 13 languages). */
+  tkey: string;
+  /** English canonical title (the `englishText` passed to `ctx.t`). */
+  en: string;
   tone: SectionTone;
   kind?: 'prose' | 'destruction_certificate' | 'custody';
 }
 
 const CANONICAL_SECTIONS: Record<string, CanonicalSection> = {
-  executive_summary: { title: { en: 'Executive Summary', ar: 'الملخص التنفيذي' }, tone: 'neutral' },
-  initial_assessment: { title: { en: 'Initial Assessment', ar: 'التقييم الأولي' }, tone: 'info' },
-  findings: { title: { en: 'Findings', ar: 'النتائج' }, tone: 'danger' },
-  recommendations: { title: { en: 'Recommendations', ar: 'التوصيات' }, tone: 'success' },
-  work_performed: { title: { en: 'Work Performed', ar: 'العمل المنجز' }, tone: 'info' },
-  recovery_results: { title: { en: 'Recovery Results', ar: 'نتائج الاسترداد' }, tone: 'success' },
-  security_analysis: { title: { en: 'Security Analysis', ar: 'تحليل الأمان' }, tone: 'warning' },
-  chain_of_custody_notes: { title: { en: 'Chain of Custody', ar: 'سلسلة الحيازة' }, tone: 'neutral', kind: 'custody' },
-  destruction_certificate: { title: { en: 'Certificate of Destruction', ar: 'شهادة التدمير' }, tone: 'neutral', kind: 'destruction_certificate' },
-  recovered_files_summary: { title: { en: 'Recovered Files Summary', ar: 'ملخص الملفات المستردة' }, tone: 'neutral' },
+  executive_summary: { tkey: 'executiveSummary', en: 'Executive Summary', tone: 'neutral' },
+  initial_assessment: { tkey: 'initialAssessment', en: 'Initial Assessment', tone: 'info' },
+  findings: { tkey: 'diagnosticFindings', en: 'Diagnostic Findings', tone: 'danger' },
+  recommendations: { tkey: 'proposedSolutions', en: 'Proposed Solution', tone: 'success' },
+  work_performed: { tkey: 'workPerformed', en: 'Work Performed', tone: 'info' },
+  recovery_results: { tkey: 'recoveryResults', en: 'Recovery Results', tone: 'success' },
+  security_analysis: { tkey: 'securityAnalysis', en: 'Security Analysis', tone: 'warning' },
+  chain_of_custody_notes: { tkey: 'chainOfCustody', en: 'Chain of Custody', tone: 'neutral', kind: 'custody' },
+  destruction_certificate: { tkey: 'certificateOfDestruction', en: 'Certificate of Destruction', tone: 'neutral', kind: 'destruction_certificate' },
+  recovered_files_summary: { tkey: 'recoveredFilesSummary', en: 'Recovered Files Summary', tone: 'neutral' },
 };
 
 /**
@@ -206,10 +232,19 @@ export function reportConfigForSubtype(reportType: string): DocumentTemplateConf
   }
   push({ key: 'reportFooter', visible: true });
 
+  // `config.labels.documentTitle` is metadata only — the RENDERED title flows
+  // through `toEngineData` (which has `ctx`) into `reportHeader.title` /
+  // `documentTitle`. Here we have no `ctx`, so we stamp the English canonical;
+  // the adapter overrides it with the `ctx.t`-resolved (multilingual) string.
+  const titleEntry = REPORT_TYPE_TITLES[reportType];
+  const documentTitle: LabelText = lt(
+    titleEntry ? titleEntry.en : (reportType || 'REPORT').toUpperCase(),
+  );
+
   return {
     ...base,
     sections,
-    labels: { ...base.labels, documentTitle: reportTypeTitle(reportType) },
+    labels: { ...base.labels, documentTitle },
   };
 }
 
@@ -270,13 +305,13 @@ const CUSTODY_COLUMN_ALIGN: Record<string, 'left' | 'center' | 'right'> = {
   occurredAt: 'center',
 };
 
-function baseCustodyColumns(): ResolvedColumn[] {
+function baseCustodyColumns(ctx: TranslationContext): ResolvedColumn[] {
   return [
-    { key: 'entry', visible: true, label: { en: 'Entry #', ar: 'رقم' }, width: 38, align: 'center' },
-    { key: 'action', visible: true, label: { en: 'Event', ar: 'الحدث' }, width: 90, align: 'left' },
-    { key: 'description', visible: true, label: { en: 'Description', ar: 'الوصف' }, align: 'left' },
-    { key: 'actor', visible: true, label: { en: 'Actor', ar: 'المنفّذ' }, width: 80, align: 'left' },
-    { key: 'occurredAt', visible: true, label: { en: 'Date/Time', ar: 'التاريخ/الوقت' }, width: 75, align: 'center' },
+    { key: 'entry', visible: true, label: lt(ctx.t('entryNum', 'Entry #')), width: 38, align: 'center' },
+    { key: 'action', visible: true, label: lt(ctx.t('actionType', 'Event')), width: 90, align: 'left' },
+    { key: 'description', visible: true, label: lt(ctx.t('description', 'Description')), align: 'left' },
+    { key: 'actor', visible: true, label: lt(ctx.t('actor', 'Actor')), width: 80, align: 'left' },
+    { key: 'occurredAt', visible: true, label: lt(ctx.t('dateTime', 'Date/Time')), width: 75, align: 'center' },
   ];
 }
 
@@ -285,8 +320,8 @@ function configColumns(config: DocumentTemplateConfig): ColumnConfig[] {
   return custody?.columns ?? [];
 }
 
-function resolveCustodyColumns(config: DocumentTemplateConfig): ResolvedColumn[] {
-  const cols = baseCustodyColumns();
+function resolveCustodyColumns(config: DocumentTemplateConfig, ctx: TranslationContext): ResolvedColumn[] {
+  const cols = baseCustodyColumns(ctx);
   const overrides = new Map(configColumns(config).map((c) => [c.key, c]));
   return cols.map((c) => {
     const ov = overrides.get(c.key);
@@ -309,9 +344,10 @@ function humanize(raw: string): string {
 function buildCustodyLog(
   events: ReportData['chainOfCustodyEvents'],
   config: DocumentTemplateConfig,
+  ctx: TranslationContext,
 ): CustodyLogBlock | null {
   if (!events || events.length === 0) return null;
-  const columns = resolveCustodyColumns(config);
+  const columns = resolveCustodyColumns(config, ctx);
   const rows = events.map((event, index) => ({
     entry: `#${String(index + 1).padStart(4, '0')}`,
     action: humanize(safeString(event.event_type)),
@@ -319,7 +355,7 @@ function buildCustodyLog(
     actor: event.actor?.full_name ? safeString(event.actor.full_name) : 'Unknown',
     occurredAt: formatDate(event.event_timestamp || event.event_date, 'dd MMM yyyy, HH:mm'),
   }));
-  return { title: { en: 'Chain of Custody', ar: 'سلسلة الحيازة' }, columns, rows };
+  return { title: lt(ctx.t('chainOfCustody', 'Chain of Custody')), columns, rows };
 }
 
 // ---------------------------------------------------------------------------
@@ -327,7 +363,7 @@ function buildCustodyLog(
 // ---------------------------------------------------------------------------
 
 /** The navy header band: company short identity + report title + Job line. */
-function buildReportHeader(data: ReportData): ReportHeaderBlock {
+function buildReportHeader(data: ReportData, ctx: TranslationContext): ReportHeaderBlock {
   const { companySettings, caseData, report } = data;
   const companyName =
     companySettings.basic_info?.legal_name ||
@@ -340,13 +376,13 @@ function buildReportHeader(data: ReportData): ReportHeaderBlock {
   return {
     companyName,
     ...(contactBits.length ? { companyTagline: contactBits.join('  ·  ') } : {}),
-    title: reportTypeTitle(report.report_type),
-    ...(caseNo ? { jobLine: `Job ${safeString(caseNo)}` } : {}),
+    title: reportTypeTitle(report.report_type, ctx),
+    ...(caseNo ? { jobLine: `${ctx.t('jobId', 'Job')} ${safeString(caseNo)}` } : {}),
   };
 }
 
 /** The summary tiles: Device · Fault · Recoverability (category) · ETA. */
-function buildReportSummary(data: ReportData): ReportSummaryBlock | null {
+function buildReportSummary(data: ReportData, ctx: TranslationContext): ReportSummaryBlock | null {
   const { deviceData, diagnosticsData, caseData, recoverability } = data;
   const hasDevice = subtypeHasDevice(data.report.report_type);
   const tiles: ReportSummaryTile[] = [];
@@ -355,7 +391,7 @@ function buildReportSummary(data: ReportData): ReportSummaryBlock | null {
   if (hasDevice && deviceData) {
     const bits = [deviceData.device_type, deviceData.brand].filter(Boolean).map((b) => safeString(b));
     if (bits.length) {
-      tiles.push({ caption: { en: 'Device', ar: 'الجهاز' }, value: bits.join(' · ') });
+      tiles.push({ caption: lt(ctx.t('device', 'Device')), value: bits.join(' · ') });
     }
   }
 
@@ -364,27 +400,27 @@ function buildReportSummary(data: ReportData): ReportSummaryBlock | null {
   if (fault) {
     const text = safeString(fault);
     const short = text.length > 48 ? `${text.slice(0, 45)}…` : text;
-    tiles.push({ caption: { en: 'Fault', ar: 'العطل' }, value: short });
+    tiles.push({ caption: lt(ctx.t('fault', 'Fault')), value: short });
   }
 
   // Recoverability tile (CATEGORY only — never a percentage). Warning tone.
   const recovLabel = recoverabilityLabel(recoverability);
   if (recovLabel) {
-    tiles.push({ caption: { en: 'Recoverability', ar: 'قابلية الاسترداد' }, value: recovLabel, tone: 'warning' });
+    tiles.push({ caption: lt(ctx.t('recoverability', 'Recoverability')), value: recovLabel, tone: 'warning' });
   }
 
   // ETA tile: estimated completion date, else priority as the SLA hint.
   if (caseData?.estimated_completion) {
-    tiles.push({ caption: { en: 'ETA', ar: 'الوقت المقدّر' }, value: formatDate(caseData.estimated_completion, 'dd MMM yyyy') });
+    tiles.push({ caption: lt(ctx.t('estimatedTime', 'ETA')), value: formatDate(caseData.estimated_completion, 'dd MMM yyyy') });
   } else if (caseData?.priority) {
-    tiles.push({ caption: { en: 'ETA', ar: 'الوقت المقدّر' }, value: `${humanize(safeString(caseData.priority))} priority` });
+    tiles.push({ caption: lt(ctx.t('estimatedTime', 'ETA')), value: `${humanize(safeString(caseData.priority))} ${ctx.t('priority', 'priority')}` });
   }
 
   return tiles.length ? { tiles: tiles.slice(0, 4) } : null;
 }
 
 /** The two-column General | Device info region. */
-function buildReportInfoColumns(data: ReportData): ReportInfoColumnsBlock {
+function buildReportInfoColumns(data: ReportData, ctx: TranslationContext): ReportInfoColumnsBlock {
   const { caseData, customerData, deviceData, report, preparedByName } = data;
 
   const customerName = customerData?.customer_name || caseData?.customer_name || 'N/A';
@@ -393,18 +429,18 @@ function buildReportInfoColumns(data: ReportData): ReportInfoColumnsBlock {
   const customerPhone = customerData?.mobile_number || caseData?.customer_phone || 'N/A';
 
   const generalRows: ReportInfoColumnsBlock['general']['rows'] = [
-    { label: { en: 'Name', ar: 'الاسم' }, value: safeString(customerName) },
-    { label: { en: 'Company', ar: 'الشركة' }, value: safeString(companyNameValue) },
-    { label: { en: 'Phone', ar: 'الهاتف' }, value: safeString(customerPhone) },
-    { label: { en: 'Email', ar: 'البريد' }, value: safeString(customerEmail) },
-    { label: { en: 'Client Ref', ar: 'مرجع العميل' }, value: safeString(caseData?.client_reference) },
-    { label: { en: 'Service', ar: 'الخدمة' }, value: safeString(caseData?.service_type) },
-    { label: { en: 'Priority', ar: 'الأولوية' }, value: caseData?.priority ? humanize(safeString(caseData.priority)) : '-' },
-    { label: { en: 'Date', ar: 'التاريخ' }, value: formatDate(report.created_at, 'dd MMM yyyy') },
-    { label: { en: 'Technician', ar: 'الفني' }, value: preparedByName || caseData?.assigned_engineer || 'N/A' },
+    { label: lt(ctx.t('name', 'Name')), value: safeString(customerName) },
+    { label: lt(ctx.t('company', 'Company')), value: safeString(companyNameValue) },
+    { label: lt(ctx.t('phone', 'Phone')), value: safeString(customerPhone) },
+    { label: lt(ctx.t('email', 'Email')), value: safeString(customerEmail) },
+    { label: lt(ctx.t('clientReference', 'Client Ref')), value: safeString(caseData?.client_reference) },
+    { label: lt(ctx.t('service', 'Service')), value: safeString(caseData?.service_type) },
+    { label: lt(ctx.t('priority', 'Priority')), value: caseData?.priority ? humanize(safeString(caseData.priority)) : '-' },
+    { label: lt(ctx.t('date', 'Date')), value: formatDate(report.created_at, 'dd MMM yyyy') },
+    { label: lt(ctx.t('technician', 'Technician')), value: preparedByName || caseData?.assigned_engineer || 'N/A' },
   ];
 
-  const general = { title: { en: 'General Details', ar: 'المعلومات العامة' }, rows: generalRows };
+  const general = { title: lt(ctx.t('generalDetails', 'General Details')), rows: generalRows };
 
   if (!subtypeHasDevice(data.report.report_type) || !deviceData) {
     return { general, device: null };
@@ -414,23 +450,23 @@ function buildReportInfoColumns(data: ReportData): ReportInfoColumnsBlock {
   const addDevice = (label: LabelText, value: string | undefined) => {
     if (value) deviceRows.push({ label, value: safeString(value) });
   };
-  addDevice({ en: 'Type', ar: 'النوع' }, deviceData.device_type);
-  addDevice({ en: 'Brand', ar: 'العلامة' }, deviceData.brand);
-  addDevice({ en: 'Model', ar: 'الطراز' }, deviceData.model);
-  addDevice({ en: 'Serial', ar: 'الرقم التسلسلي' }, deviceData.serial_number);
-  addDevice({ en: 'Capacity', ar: 'السعة' }, deviceData.capacity);
-  addDevice({ en: 'Interface', ar: 'الواجهة' }, deviceData.interface);
-  addDevice({ en: 'DOM', ar: 'تاريخ الصنع' }, deviceData.dom);
-  addDevice({ en: 'Encryption', ar: 'التشفير' }, deviceData.encryption);
+  addDevice(lt(ctx.t('type', 'Type')), deviceData.device_type);
+  addDevice(lt(ctx.t('brand', 'Brand')), deviceData.brand);
+  addDevice(lt(ctx.t('model', 'Model')), deviceData.model);
+  addDevice(lt(ctx.t('serialNumber', 'Serial')), deviceData.serial_number);
+  addDevice(lt(ctx.t('capacity', 'Capacity')), deviceData.capacity);
+  addDevice(lt(ctx.t('interface', 'Interface')), deviceData.interface);
+  addDevice(lt(ctx.t('dom', 'DOM')), deviceData.dom);
+  addDevice(lt(ctx.t('encryption', 'Encryption')), deviceData.encryption);
   const headPlatter = [deviceData.head_count, deviceData.platter_count].filter(Boolean).join(' / ');
-  addDevice({ en: 'Head/Platter', ar: 'الرؤوس/الأقراص' }, headPlatter || undefined);
+  addDevice(lt(ctx.t('headPlatter', 'Head/Platter')), headPlatter || undefined);
 
-  const device = { title: { en: 'Device Details', ar: 'تفاصيل الجهاز' }, rows: deviceRows };
+  const device = { title: lt(ctx.t('deviceInformation', 'Device Information')), rows: deviceRows };
   return { general, device };
 }
 
 /** Build the ordered toned prose sections for the subtype, sourced from authored content. */
-function buildReportSections(data: ReportData): ReportSectionsBlock {
+function buildReportSections(data: ReportData, ctx: TranslationContext): ReportSectionsBlock {
   const proseKeys = proseSectionKeysForSubtype(data.report.report_type).filter(
     (k) => k !== 'chain_of_custody_notes',
   );
@@ -452,8 +488,11 @@ function buildReportSections(data: ReportData): ReportSectionsBlock {
     // Skip empty prose sections (no authored content) UNLESS it is the
     // destruction certificate, whose signature slots are meaningful regardless.
     if (!content && !isCert) continue;
+    // Resolve the section title via `ctx.t` (multilingual); unknown keys degrade
+    // to the humanized section key.
+    const title = canonical ? lt(ctx.t(canonical.tkey, canonical.en)) : lt(humanize(key));
     sections.push({
-      title: canonical?.title ?? { en: humanize(key) },
+      title,
       content,
       order: order++,
       ...(canonical?.tone ? { tone: canonical.tone } : {}),
@@ -467,7 +506,7 @@ function buildReportSections(data: ReportData): ReportSectionsBlock {
 // Footer (confidentiality + copyright + Report ID / Generated line)
 // ---------------------------------------------------------------------------
 
-function buildReportFooter(data: ReportData): import('../types').ReportFooterBlock {
+function buildReportFooter(data: ReportData, ctx: TranslationContext): import('../types').ReportFooterBlock {
   const { report, companySettings } = data;
   const tenant =
     companySettings.basic_info?.legal_name ||
@@ -477,12 +516,16 @@ function buildReportFooter(data: ReportData): import('../types').ReportFooterBlo
   const reportId = report.report_number || report.id;
   const generated = formatDate(new Date().toISOString(), 'dd MMM yyyy, HH:mm');
   return {
-    confidentiality: {
-      en: 'This report is confidential and intended solely for the named recipient.',
-      ar: 'هذا التقرير سري ومخصص حصريًا للمستلم المذكور.',
-    },
+    confidentiality: lt(
+      ctx.t(
+        'reportConfidentiality',
+        'This report is confidential and intended solely for the named recipient.',
+      ),
+    ),
+    // `copyright`/`reportLine` are plain strings (not LabelText); the embedded
+    // labels (Report ID / Generated) route through `ctx.t` so they localize.
     copyright: `© ${year} ${tenant}. All rights reserved.`,
-    reportLine: `Report ID: ${safeString(reportId)} | Generated: ${generated}`,
+    reportLine: `${ctx.t('reportId', 'Report ID')}: ${safeString(reportId)} | ${ctx.t('generated', 'Generated')}: ${generated}`,
   };
 }
 
@@ -493,22 +536,23 @@ function buildReportFooter(data: ReportData): import('../types').ReportFooterBlo
 export function toEngineData(
   data: ReportData,
   config: DocumentTemplateConfig,
+  ctx: TranslationContext,
 ): EngineDocData {
   const { report, companySettings } = data;
 
-  const documentTitle = reportTypeTitle(report.report_type);
-  const custodyLog = buildCustodyLog(data.chainOfCustodyEvents, config);
+  const documentTitle = reportTypeTitle(report.report_type, ctx);
+  const custodyLog = buildCustodyLog(data.chainOfCustodyEvents, config, ctx);
 
   return {
     documentTitle,
     identity: companySettings,
     parties: {},
     meta: [],
-    reportHeader: buildReportHeader(data),
-    reportSummary: buildReportSummary(data),
-    reportInfoColumns: buildReportInfoColumns(data),
-    reportSections: buildReportSections(data),
-    reportFooter: buildReportFooter(data),
+    reportHeader: buildReportHeader(data, ctx),
+    reportSummary: buildReportSummary(data, ctx),
+    reportInfoColumns: buildReportInfoColumns(data, ctx),
+    reportSections: buildReportSections(data, ctx),
+    reportFooter: buildReportFooter(data, ctx),
     ...(custodyLog ? { custodyLog } : {}),
     // A case report carries no money, line items, or party blocks.
     paymentHistory: null,

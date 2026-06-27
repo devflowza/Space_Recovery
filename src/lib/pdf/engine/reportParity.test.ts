@@ -4,6 +4,7 @@ import { toEngineData, reportConfigForSubtype } from './adapters/reportAdapter';
 import { renderTemplate } from './renderTemplate';
 import type { ReportData } from '../documents/ReportDocument';
 import type { TranslationContext } from '../types';
+import { createTranslationContext } from '../translationContext';
 
 // ---------------------------------------------------------------------------
 // Option B report rendering — STRUCTURAL smoke test (the engine intentionally
@@ -165,7 +166,7 @@ function allTexts(def: TDocumentDefinitions): string[] {
 
 function renderEngine(data: ReportData): TDocumentDefinitions {
   const config = reportConfigForSubtype(data.report.report_type);
-  const engineData = toEngineData(data, config);
+  const engineData = toEngineData(data, config, englishCtx);
   return renderTemplate(config, engineData, englishCtx, TINY_PNG, TINY_PNG);
 }
 
@@ -189,20 +190,21 @@ describe('Option B report — universal shell', () => {
   it('renders the two-column General + Device info region', () => {
     const texts = allTexts(renderEngine(makeData())).join('|');
     expect(texts).toContain('General Details');
-    expect(texts).toContain('Device Details');
+    expect(texts).toContain('Device Information');
     for (const probe of ['Ahmed Customer', 'ABC Trading LLC', 'ST2000DM008', '2TB', 'SN-ABC-12345']) {
       expect(texts).toContain(probe);
     }
   });
 
-  it('renders the toned prose sections for the subtype', () => {
+  it('renders the toned prose sections for the subtype (canonical multilingual titles)', () => {
     const texts = allTexts(renderEngine(makeData()));
     for (const probe of [
       'Executive Summary',
       'Initial Assessment',
-      'Findings',
+      // Canonical section titles resolved via ctx.t in english_only mode.
+      'Diagnostic Findings',
       'Drive shows clicking; heads are degraded.',
-      'Recommendations',
+      'Proposed Solution',
       'Replace head stack in cleanroom and re-image.',
     ]) {
       expect(texts.some((t) => t.includes(probe))).toBe(true);
@@ -244,7 +246,7 @@ describe('Option B report — per-subtype coverage (all 8)', () => {
     for (const type of ['prevention', 'recovered_files']) {
       const data = makeData({ report: { ...makeData().report, report_type: type } });
       const config = reportConfigForSubtype(type);
-      const engineData = toEngineData(data, config);
+      const engineData = toEngineData(data, config, englishCtx);
       expect(engineData.reportInfoColumns?.device == null).toBe(true);
     }
   });
@@ -253,7 +255,7 @@ describe('Option B report — per-subtype coverage (all 8)', () => {
     for (const type of ['evaluation', 'service', 'server', 'malware', 'forensic', 'data_destruction']) {
       const data = makeData({ report: { ...makeData().report, report_type: type } });
       const config = reportConfigForSubtype(type);
-      const engineData = toEngineData(data, config);
+      const engineData = toEngineData(data, config, englishCtx);
       expect(engineData.reportInfoColumns?.device != null).toBe(true);
     }
   });
@@ -308,8 +310,83 @@ describe('Option B report — per-subtype coverage (all 8)', () => {
   it('omits the recoverability tile when no assessment is present', () => {
     const data = makeData({ recoverability: null });
     const config = reportConfigForSubtype('evaluation');
-    const engineData = toEngineData(data, config);
+    const engineData = toEngineData(data, config, englishCtx);
     const captions = (engineData.reportSummary?.tiles ?? []).map((t) => t.caption.en);
     expect(captions).not.toContain('Recoverability');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Multilingual labels (Option B) — every report title/label now routes through
+// the shared document-translation system (`ctx.t`) instead of English+Arabic-
+// only hardcoded maps. In english_only mode `ctx.t(key, en)` returns the English
+// canonical verbatim; in bilingual mode it returns the combined "EN | translated"
+// string, so the same titles render in any of the 13 languages.
+// ---------------------------------------------------------------------------
+
+describe('Option B report — multilingual labels via ctx.t', () => {
+  it('english_only: section titles + headers equal the English canonical', () => {
+    const config = reportConfigForSubtype('evaluation');
+    const engineData = toEngineData(makeData(), config, englishCtx);
+
+    // Two-column header titles.
+    expect(engineData.reportInfoColumns?.general.title.en).toBe('General Details');
+    expect(engineData.reportInfoColumns?.device?.title.en).toBe('Device Information');
+
+    // Summary tile captions.
+    const captions = (engineData.reportSummary?.tiles ?? []).map((t) => t.caption.en);
+    expect(captions).toEqual(
+      expect.arrayContaining(['Device', 'Fault', 'Recoverability', 'ETA']),
+    );
+
+    // Canonical section titles (resolved via ctx.t, not the authored titles).
+    const sectionTitles = (engineData.reportSections?.sections ?? []).map((s) => s.title.en);
+    expect(sectionTitles).toEqual(
+      expect.arrayContaining([
+        'Executive Summary',
+        'Initial Assessment',
+        'Diagnostic Findings',
+        'Proposed Solution',
+      ]),
+    );
+
+    // Document title + footer confidentiality.
+    expect(engineData.documentTitle.en).toBe('EVALUATION REPORT');
+    expect(engineData.reportFooter?.confidentiality.en).toBe(
+      'This report is confidential and intended solely for the named recipient.',
+    );
+  });
+
+  it('bilingual (Arabic): titles render as combined "EN | translated" strings', () => {
+    const arCtx = createTranslationContext('bilingual', 'ar');
+    const config = reportConfigForSubtype('evaluation');
+    const engineData = toEngineData(makeData(), config, arCtx);
+
+    // Document title carries BOTH the English canonical and the Arabic translation.
+    expect(engineData.documentTitle.en).toContain('EVALUATION REPORT');
+    expect(engineData.documentTitle.en).toContain('تقرير التقييم');
+
+    // A section title routed through ctx.t carries the Arabic translation too.
+    const findings = (engineData.reportSections?.sections ?? []).find((s) =>
+      s.title.en.includes('Diagnostic Findings'),
+    );
+    expect(findings?.title.en).toContain('النتائج التشخيصية');
+
+    // A summary tile caption is bilingual as well.
+    const recov = (engineData.reportSummary?.tiles ?? []).find((t) =>
+      t.caption.en.includes('Recoverability'),
+    );
+    expect(recov?.caption.en).toContain('قابلية الاسترداد');
+  });
+
+  it('bilingual (French): a non-Arabic language also localizes via ctx.t', () => {
+    const frCtx = createTranslationContext('bilingual', 'fr');
+    const config = reportConfigForSubtype('evaluation');
+    const engineData = toEngineData(makeData(), config, frCtx);
+
+    expect(engineData.documentTitle.en).toContain("Rapport d'Évaluation");
+    const general = engineData.reportInfoColumns?.general.title.en ?? '';
+    expect(general).toContain('General Details');
+    expect(general).toContain('Détails Généraux');
   });
 });

@@ -210,7 +210,7 @@ class ReportPDFService {
     // the engine renders bilingual/RTL when the tenant is configured for it.
     const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
 
-    const engineData = toReportEngineData(data, languageAwareConfig);
+    const engineData = toReportEngineData(data, languageAwareConfig, ctx);
     const qr = await resolveQrImage(qrCodeBase64, engineData.zatcaPayload ?? engineData.qrPayload);
     return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qr);
   }
