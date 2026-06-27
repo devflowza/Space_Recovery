@@ -188,6 +188,7 @@ export function useCaseQueries(
           device_role:catalog_device_roles(id, name)
         `)
         .eq('case_id', id)
+        .is('deleted_at', null)
         .order('is_primary', { ascending: false })
         .order('created_at');
 

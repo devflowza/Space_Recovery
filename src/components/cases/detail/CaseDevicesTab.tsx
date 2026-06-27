@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { HardDrive, Grid2x2 as Grid, History, Clock, Eye, EyeOff, Shield, Package, SquarePen as Edit } from 'lucide-react';
-import { ChainOfCustodyTab } from '../ChainOfCustodyTab';
+import { HardDrive, Grid2x2 as Grid, History, Clock, Eye, Package, SquarePen as Edit } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { DeviceRoleBadge } from '../../ui/DeviceRoleBadge';
 import { getDeviceIconComponent } from '@/lib/deviceIconMapper';
 import { formatDateTime } from '@/lib/format';
+import { DeviceDetailsModal } from './DeviceDetailsModal';
 
 type NamedUuidRef = { id: string; name: string } | null;
 type NameOnlyRef = { name: string } | null;
@@ -38,29 +38,17 @@ export interface CaseDeviceWithEmbeds {
 
 interface CaseDevicesTabProps {
   caseData: Record<string, unknown>;
-  caseId: string;
-  caseNumber: string;
   devices: CaseDeviceWithEmbeds[];
-  expandedDevices: Set<string>;
-  showPassword: boolean;
-  onToggleDeviceDetails: (deviceId: string) => void;
   onSetShowDeviceModal: (v: boolean) => void;
   onSetEditingDevice: (device: CaseDeviceWithEmbeds | null) => void;
-  onSetShowPassword: (v: boolean) => void;
 }
 
 export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
-  caseId,
-  caseNumber,
   devices,
-  expandedDevices,
-  showPassword,
-  onToggleDeviceDetails,
   onSetShowDeviceModal,
   onSetEditingDevice,
-  onSetShowPassword,
 }) => {
-  const [openHistory, setOpenHistory] = useState<string | null>(null);
+  const [details, setDetails] = useState<{ device: CaseDeviceWithEmbeds; index: number } | null>(null);
   const patientDevices = devices.filter(d => d.device_role?.name?.toLowerCase() === 'patient');
   const backupAndSupportDevices = devices.filter(d => {
     const roleName = d.device_role?.name?.toLowerCase();
@@ -68,12 +56,11 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
   });
 
   const renderDeviceCard = (device: CaseDeviceWithEmbeds, idx: number) => {
-    const isExpanded = expandedDevices.has(device.id);
     const DeviceIcon = getDeviceIconComponent(device.device_type?.name);
     return (
       <Card key={device.id}>
         <div className="p-4">
-          <div className="flex items-start justify-between mb-2">
+          <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
               <h4 className="font-semibold text-slate-900 text-sm flex items-center gap-1.5 mb-1">
                 <DeviceIcon className="w-4 h-4 text-slate-600 flex-shrink-0" />
@@ -91,11 +78,12 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => onToggleDeviceDetails(device.id)}
+                onClick={() => setDetails({ device, index: idx })}
                 className="!p-1.5"
-                title={isExpanded ? 'Hide details' : 'View details'}
+                title="View details"
+                aria-label="View device details"
               >
-                {isExpanded ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                <Eye className="w-3.5 h-3.5" />
               </Button>
               <Button
                 variant="secondary"
@@ -105,88 +93,13 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
                   onSetShowDeviceModal(true);
                 }}
                 className="!p-1.5"
+                title="Edit device"
+                aria-label="Edit device"
               >
                 <Edit className="w-3.5 h-3.5" />
               </Button>
             </div>
           </div>
-
-          {isExpanded && (
-            <div className="mt-3 pt-3 border-t border-slate-200 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                {device.capacity && (
-                  <div>
-                    <span className="text-slate-500 text-xs block mb-0.5">Capacity</span>
-                    <span className="text-slate-900 text-sm">{device.capacity.name}</span>
-                  </div>
-                )}
-                {device.condition && (
-                  <div>
-                    <span className="text-slate-500 text-xs block mb-0.5">Condition</span>
-                    <span className="text-slate-900 text-sm">{device.condition.name}</span>
-                  </div>
-                )}
-              </div>
-              {device.encryption_type && (
-                <div>
-                  <span className="text-slate-500 text-xs block mb-0.5">Encryption</span>
-                  <span className="text-slate-900 text-sm flex items-center gap-1">
-                    <Shield className="w-3 h-3 text-danger" />
-                    {device.encryption_type.name}
-                  </span>
-                </div>
-              )}
-              {device.symptoms && (
-                <div>
-                  <span className="text-slate-500 text-xs font-medium block mb-1">Device Problem</span>
-                  <p className="text-slate-900 text-xs leading-relaxed">{device.symptoms}</p>
-                </div>
-              )}
-              {device.notes && (
-                <div>
-                  <span className="text-slate-500 text-xs font-medium block mb-1">Recovery Requirements</span>
-                  <p className="text-slate-900 text-xs leading-relaxed">{device.notes}</p>
-                </div>
-              )}
-              {device.password && (
-                <div>
-                  <span className="text-slate-500 text-xs font-medium block mb-1.5">Device Password</span>
-                  <div className="flex items-center gap-1.5">
-                    <form className="contents" onSubmit={(e) => e.preventDefault()}>
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={device.password}
-                        readOnly
-                        autoComplete="off"
-                        className="font-mono text-xs bg-slate-50 px-2 py-1.5 rounded border border-slate-300 flex-1"
-                      />
-                    </form>
-                    <Button variant="secondary" size="sm" onClick={() => onSetShowPassword(!showPassword)} className="!p-1.5">
-                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setOpenHistory((cur) => (cur === device.id ? null : device.id))}
-            className="mt-2 flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80"
-            aria-expanded={openHistory === device.id}
-          >
-            <History className="h-4 w-4" /> {openHistory === device.id ? 'Hide history' : 'View history'}
-          </button>
-          {openHistory === device.id && (
-            <div className="mt-2 rounded-lg border border-slate-200">
-              <ChainOfCustodyTab
-                caseId={caseId}
-                caseNumber={caseNumber}
-                deviceId={device.id}
-              />
-            </div>
-          )}
         </div>
       </Card>
     );
@@ -356,6 +269,14 @@ export const CaseDevicesTab: React.FC<CaseDevicesTabProps> = ({
           </div>
         </div>
       )}
+
+      <DeviceDetailsModal
+        key={details?.device.id ?? 'none'}
+        device={details?.device ?? null}
+        deviceIndex={details?.index ?? 0}
+        isOpen={!!details}
+        onClose={() => setDetails(null)}
+      />
     </div>
   );
 };
