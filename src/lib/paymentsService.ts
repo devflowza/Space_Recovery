@@ -182,6 +182,18 @@ export const createPayment = async (
     throw new Error('A payment must be allocated to at least one invoice.');
   }
 
+  // Financial integrity: a recorded payment must name HOW it was paid and WHERE it
+  // lands, so it can be reconciled. The RecordPaymentModal enforces this in the UI;
+  // this is the service-layer backstop covering both payment-entry screens (case
+  // detail + global Payments). The shared record_payment RPC stays permissive on
+  // purpose — receiptsService calls it directly with its own rules.
+  if (!payment.payment_method_id) {
+    throw new Error('A payment method is required to record a payment.');
+  }
+  if (!payment.bank_account_id) {
+    throw new Error('A deposit account is required to record a payment.');
+  }
+
   // Resolve the payment-date rate client-side (honouring any manual override). The RPC
   // owns atomicity, FOR UPDATE locking, money-conservation validation, balance recompute,
   // and the (append-only) ledger posting — see record_payment in the DB.

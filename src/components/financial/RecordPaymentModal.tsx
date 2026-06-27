@@ -84,6 +84,9 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [allocations, setAllocations] = useState<InvoiceAllocation[]>([]);
+  // Surface the method/account "required" errors only after a submit attempt, so
+  // the form doesn't shout at the user before they've had a chance to fill it in.
+  const [showErrors, setShowErrors] = useState(false);
 
   const { data: casesWithInvoices = [] } = useQuery({
     queryKey: ['cases_with_unpaid_invoices'],
@@ -247,6 +250,13 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (totalAmount <= 0 || !selectedCaseId || isSubmitting) return;
+    // Financial integrity: every payment must record HOW it was paid and WHERE it
+    // lands so it can be reconciled. Block (with inline errors) rather than recording
+    // a payment with no method/account — createPayment enforces this server-side too.
+    if (!paymentMethodId || !bankAccountId) {
+      setShowErrors(true);
+      return;
+    }
     if (Math.abs(totalAllocated - totalAmount) > 1e-6) return;
 
     setIsSubmitting(true);
@@ -285,6 +295,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
     setReferenceNumber('');
     setNotes('');
     setAllocations([]);
+    setShowErrors(false);
     onClose();
   };
 
@@ -300,10 +311,13 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   // record_payment rejects any difference (money conservation) — block the
   // submit client-side and explain, instead of surfacing a server 400.
   const allocationMismatch = allocations.length > 0 && Math.abs(totalAllocated - totalAmount) > 1e-6;
+  // Required for financial integrity — a payment must name its method and deposit account.
+  const methodMissing = !paymentMethodId;
+  const accountMissing = !bankAccountId;
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Record Payment" size="lg" closeOnBackdrop={false}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div>
           <label htmlFor="payment-case" className="block text-sm font-medium text-slate-700 mb-1">
             Case <span className="text-danger">*</span>
@@ -333,20 +347,20 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
         </div>
 
         {selectedCase?.customer && (
-          <div className="bg-slate-50 rounded-lg px-3 py-2 flex items-center gap-2 text-sm">
-            <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
-            <span className="text-slate-500">Customer:</span>
+          <p className="flex items-center gap-1.5 text-xs text-slate-500 -mt-1">
+            <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+            <span>Customer</span>
             <span className="font-medium text-slate-900">{selectedCase.customer.customer_name}</span>
             {selectedCase.customer.email && (
-              <span className="text-slate-500 truncate">({selectedCase.customer.email})</span>
+              <span className="truncate">· {selectedCase.customer.email}</span>
             )}
-          </div>
+          </p>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Payment Date
+              Payment Date <span className="text-danger">*</span>
             </label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -362,7 +376,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Payment Amount
+              Payment Amount <span className="text-danger">*</span>
             </label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -382,10 +396,10 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="payment-method" className="block text-sm font-medium text-slate-700 mb-1">
-              Payment Method
+              Payment Method <span className="text-danger">*</span>
             </label>
             <div className="relative">
               <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
@@ -393,7 +407,11 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 id="payment-method"
                 value={paymentMethodId}
                 onChange={(e) => setPaymentMethodId(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                aria-invalid={showErrors && methodMissing}
+                className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
+                  showErrors && methodMissing ? 'border-danger bg-danger-muted/40' : 'border-slate-300'
+                }`}
+                required
               >
                 <option value="">Select Method</option>
                 {paymentMethods.map((method) => (
@@ -403,22 +421,31 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 ))}
               </select>
             </div>
-            {paymentMethods.length === 0 && (
+            {showErrors && methodMissing ? (
+              <p className="mt-1 flex items-center gap-1 text-xs text-danger" role="alert">
+                <AlertTriangle className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                Required for financial records
+              </p>
+            ) : paymentMethods.length === 0 ? (
               <p className="mt-1 text-xs text-warning">
                 No payment methods enabled. Enable them in Settings.
               </p>
-            )}
+            ) : null}
           </div>
 
           <div>
             <label htmlFor="payment-bank-account" className="block text-sm font-medium text-slate-700 mb-1">
-              Deposit To
+              Deposit To <span className="text-danger">*</span>
             </label>
             <select
               id="payment-bank-account"
               value={bankAccountId}
               onChange={(e) => setBankAccountId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+              aria-invalid={showErrors && accountMissing}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
+                showErrors && accountMissing ? 'border-danger bg-danger-muted/40' : 'border-slate-300'
+              }`}
+              required
             >
               <option value="">Select Account</option>
               {bankAccounts.map((account) => (
@@ -427,6 +454,16 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 </option>
               ))}
             </select>
+            {showErrors && accountMissing ? (
+              <p className="mt-1 flex items-center gap-1 text-xs text-danger" role="alert">
+                <AlertTriangle className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                Required — where the money lands
+              </p>
+            ) : bankAccounts.length === 0 ? (
+              <p className="mt-1 text-xs text-warning">
+                No deposit accounts found. Add one in Settings → Banking.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -445,7 +482,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-slate-700">
-              Invoice Allocation
+              Invoice Allocation <span className="text-danger">*</span>
             </label>
             {selectedCaseId && availableInvoices.length > 0 && (
               <select
@@ -575,8 +612,8 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               </table>
             </div>
           ) : (
-            <div className="border border-dashed border-slate-300 rounded-lg p-6 text-center">
-              <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <div className="border border-dashed border-slate-300 rounded-lg p-4 text-center">
+              <FileText className="w-7 h-7 text-slate-300 mx-auto mb-1.5" />
               <p className="text-sm text-slate-500">
                 {selectedCaseId && unpaidInvoices.length === 0
                   ? 'No payable invoices on this case. Draft invoices must be issued first — use Issue Invoice on the invoice.'
@@ -602,14 +639,26 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
           />
         </div>
 
-        <div className="flex justify-end gap-3 pt-3 border-t border-slate-200">
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+          {(methodMissing || accountMissing) && (
+            <span className="mr-auto flex items-center gap-1.5 text-xs font-medium text-danger">
+              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true" />
+              Select {methodMissing && accountMissing ? 'method & account' : methodMissing ? 'a payment method' : 'a deposit account'}
+            </span>
+          )}
           <Button type="button" variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || totalAmount <= 0 || !selectedCaseId || allocations.length === 0 || allocationMismatch}
-            title={allocationMismatch ? 'The allocation must equal the payment amount before recording' : undefined}
+            disabled={isSubmitting || totalAmount <= 0 || !selectedCaseId || allocations.length === 0 || allocationMismatch || methodMissing || accountMissing}
+            title={
+              allocationMismatch
+                ? 'The allocation must equal the payment amount before recording'
+                : (methodMissing || accountMissing)
+                  ? 'Select a payment method and deposit account before recording'
+                  : undefined
+            }
             className="flex items-center gap-2"
             variant="primary"
           >
