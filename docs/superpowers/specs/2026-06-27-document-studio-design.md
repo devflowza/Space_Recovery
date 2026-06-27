@@ -164,3 +164,32 @@ enforcing); multi-tenant isolation (RESTRICTIVE policy + same-tenant FK validati
 `npm run typecheck`=0; `npm run test` green (parity suite is the cutover gate); `npm run check:schema-drift` +
 `check:tokens` clean; localhost end-to-end per phase; Supabase MCP DB checks (RLS RESTRICTIVE, RPC rejects
 cross-tenant/unauthorized, custody/audit rows written, destruction-cert `evidence_hash` = `pdf_sha256`).
+
+## Reference output — sample Evaluation Report (provided by owner)
+
+The owner's existing single-page A4 evaluation report sets the quality bar (the new output should
+match-or-exceed it). Layout, top → bottom:
+
+1. **Letterhead** — logo left; company identity right (name, address, tel, email, website); divider rule.
+2. **Title block** — "EVALUATION REPORT" + Arabic subtitle (تقرير التقييم), centered; a **Job ID pill**
+   (= case number, e.g. "Job ID: 10003").
+3. **Two-column info cards** — *General Details* (المعلومات العامة) | *Device Details* (تفاصيل الجهاز),
+   each a card with a tinted header bar (icon + EN title + RTL AR title) and `Label : value` rows.
+   - General ← Name, Company, Phone, Email, Client Ref, Service, Priority, Date, Technician.
+   - Device ← Type, Brand, Model, Serial Number, Capacity, Interface, DOM, Encryption, Head/Platter.
+4. **Diagnostic Findings** (النتائج التشخيصية) — **danger-toned** card (red), prose lines ← `case_diagnostics.findings`.
+5. **Proposed Solution** (الحل المقترح) — **success-toned** card (green), prose ← `case_diagnostics.recommendations`.
+6. **Estimated Recovery Time** (الوقت التقديري للاسترداد) — **warning-toned** card (amber), e.g. "[Standard]
+   Minimum 3-5 business days" ← service SLA / `case.estimated_completion`.
+7. **Important Notice** — warning-bordered footer box: disclaimer paragraph + italic confidentiality line +
+   "© {year} {tenant} All rights reserved." + "**Report ID: {id} | Generated: {timestamp}**".
+
+**Design implications (refinements, not changes):**
+- Add a per-section **`tone`** (`neutral | info | success | warning | danger`) to the report `SectionConfig`.
+  PDF renders a fixed-hex tinted header bar per tone. Status hexes are theme-invariant, so this respects
+  "PDFs stay neutral across themes" (DESIGN.md) — the tints are status semantics, not brand.
+- Bilingual EN/AR section titles already supported by the engine (`bilingualLabelRuns`, `reportAdapter`
+  SECTION_TITLE_AR). The two-column General|Device cards map to the existing `caseInfo` + `reportDiagnostics`
+  section renderers; the three toned prose cards map to `reportSections`.
+- The footer "Report ID / Generated" binds to `document_instances.id` (or `document_number`) +
+  `pdf_generated_at`; `pdf_sha256` upgrades the old Mongo-ObjectId fake into a provable artifact hash.
