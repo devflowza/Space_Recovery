@@ -1083,15 +1083,9 @@ export const CaseDetail: React.FC = () => {
           {activeTab === 'devices' && (
             <CaseDevicesTab
               caseData={caseData}
-              caseId={id!}
-              caseNumber={caseData.case_no || caseData.case_number || ''}
               devices={devices || []}
-              expandedDevices={modals.expandedDevices}
-              showPassword={modals.showPassword}
-              onToggleDeviceDetails={modals.toggleDeviceDetails}
               onSetShowDeviceModal={modals.setShowDeviceModal}
               onSetEditingDevice={modals.setEditingDevice}
-              onSetShowPassword={modals.setShowPassword}
             />
           )}
 

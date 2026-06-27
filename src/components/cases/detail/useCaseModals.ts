@@ -33,8 +33,6 @@ export function useCaseModals() {
   const [reportTypeFilter, setReportTypeFilter] = useState<ReportType | 'all'>('all');
   const [reportStatusFilter, setReportStatusFilter] = useState<ReportStatus | 'all'>('all');
   const [showLatestOnly, setShowLatestOnly] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [expandedDevices, setExpandedDevices] = useState<Set<string>>(new Set());
   const [newNote, setNewNote] = useState('');
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -51,18 +49,6 @@ export function useCaseModals() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailPdfBlob, setEmailPdfBlob] = useState<Blob | null>(null);
   const [emailPdfFilename, setEmailPdfFilename] = useState<string>('');
-
-  const toggleDeviceDetails = (deviceId: string) => {
-    setExpandedDevices(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(deviceId)) {
-        newSet.delete(deviceId);
-      } else {
-        newSet.add(deviceId);
-      }
-      return newSet;
-    });
-  };
 
   return {
     showCheckoutModal, setShowCheckoutModal,
@@ -88,8 +74,6 @@ export function useCaseModals() {
     reportTypeFilter, setReportTypeFilter,
     reportStatusFilter, setReportStatusFilter,
     showLatestOnly, setShowLatestOnly,
-    showPassword, setShowPassword,
-    expandedDevices, setExpandedDevices,
     newNote, setNewNote,
     showQuoteModal, setShowQuoteModal,
     showInvoiceModal, setShowInvoiceModal,
@@ -106,6 +90,5 @@ export function useCaseModals() {
     showEmailModal, setShowEmailModal,
     emailPdfBlob, setEmailPdfBlob,
     emailPdfFilename, setEmailPdfFilename,
-    toggleDeviceDetails,
   };
 }
