@@ -197,3 +197,27 @@ match-or-exceed it). Layout, top → bottom:
   customer confusion / disputes). The Option B indicator is a category state (Full / Partial / Requires
   donor / Unrecoverable / Pending), not a numeric progress bar. `case_diagnostics.recoverability_pct`
   remains in the schema (unused, harmless) but is not captured in the UI or rendered on the report.
+
+### Report type coverage — all 8 (grounded in the live templates)
+
+Option B is a **universal shell** (navy header band, two-column General/Device, summary tiles, toned
+prose sections, provable footer). All 8 report types render through it; they differ only in title, which
+prose sections show, and a few special blocks. Section sets below are the live
+`report_template_section_mappings` (the migration into `document_template_versions` preserves them):
+
+| Report type (subtype) | Live sections | Auto-fill source | Special handling |
+|---|---|---|---|
+| evaluation | exec_summary · device · initial_assessment · findings · recommendations | case_diagnostics + recoverability category | milestone build |
+| service | exec_summary · device · work_performed · recovery_results · recommendations | case_recovery_attempts | — |
+| server | exec_summary · device · initial_assessment · work_performed · recovery_results · recommendations | case_devices (RAID members) + recovery_attempts | multi-device/RAID rendering (adapter currently one patient device) |
+| malware | exec_summary · device · security_analysis · findings · recommendations | diagnosis + notes | — |
+| forensic | exec_summary · device · chain_of_custody_notes · findings · recommendations | chain_of_custody + integrity_checks | custody timeline (exists) + signatures (Phase 6) |
+| data_destruction | exec_summary · device · destruction_certificate | device + destruction method | **certificate** — operator + witness signatures (Phase 6); no recoverability tile; = the `certificate_of_destruction` concept (data_destruction subtype is canonical; the extra enum value is a harmless alias) |
+| prevention | exec_summary · findings · recommendations (no device) | diagnosis recommendations / strategy | — |
+| recovered_files | exec_summary · recovered_files_summary · recommendations | recovery data | a true file **manifest** table does not exist (old manifestService was speculative); source from data_recovered until a manifest feature is built; ties to customer sign-off (Phase 9) |
+
+Section renderers Phase 7 must provide (shared across types): exec_summary, device_information,
+initial_assessment, findings, recommendations, work_performed, recovery_results, security_analysis,
+chain_of_custody_notes (timeline), destruction_certificate (with signature slots), recovered_files_summary,
+plus the recoverability **category** tile (recovery-oriented types only). Each of the 8 subtype configs
+sets title + visible-section list + `condition`s; no per-type bespoke code.
