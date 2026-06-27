@@ -1868,6 +1868,8 @@ export type Database = {
           performed_at: string | null
           performed_by: string | null
           recommendations: string | null
+          recoverability_assessment: string | null
+          recoverability_pct: number | null
           result: string | null
           tenant_id: string
           tool_used: string | null
@@ -1884,6 +1886,8 @@ export type Database = {
           performed_at?: string | null
           performed_by?: string | null
           recommendations?: string | null
+          recoverability_assessment?: string | null
+          recoverability_pct?: number | null
           result?: string | null
           tenant_id: string
           tool_used?: string | null
@@ -1900,6 +1904,8 @@ export type Database = {
           performed_at?: string | null
           performed_by?: string | null
           recommendations?: string | null
+          recoverability_assessment?: string | null
+          recoverability_pct?: number | null
           result?: string | null
           tenant_id?: string
           tool_used?: string | null
