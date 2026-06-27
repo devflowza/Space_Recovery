@@ -283,6 +283,24 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
   },
 ];
 
+export interface SettingsGroup {
+  id: string;
+  label: string;
+  categoryIds: string[];
+}
+
+// Ordered sections for the Settings dashboard. Every SettingsCategory id should
+// appear in exactly one group; the dashboard renders any unlisted category under
+// a trailing "More" section so nothing silently disappears.
+export const SETTINGS_GROUPS: SettingsGroup[] = [
+  { id: 'workspace', label: 'Workspace', categoryIds: ['appearance', 'table-columns', 'features', 'general-settings', 'notifications'] },
+  { id: 'operations', label: 'Operations', categoryIds: ['device-media', 'case-service', 'procurement'] },
+  { id: 'finance', label: 'Client & Finance', categoryIds: ['client-financial', 'currencies', 'localization'] },
+  { id: 'documents', label: 'Documents & Reports', categoryIds: ['templates', 'documents', 'report-sections'] },
+  { id: 'system', label: 'System & Data', categoryIds: ['system-numbers', 'import-export', 'client-portal'] },
+  { id: 'compliance', label: 'Security & Compliance', categoryIds: ['security', 'gdpr'] },
+];
+
 export const TENANT_SCOPED_TABLES: MasterDataTable[] = ['inventory_locations', 'customer_groups'];
 export const isTenantScopedTable = (table: MasterDataTable): boolean =>
   TENANT_SCOPED_TABLES.includes(table);
