@@ -30,12 +30,13 @@ function cfg(language: LanguageConfig) {
 }
 
 describe('assembleTypst', () => {
-  it('emits a Typst doc with fonts + rtl dir + resolved bilingual labels (AR primary)', () => {
+  it('emits a Typst doc with fonts + LTR dir + resolved bilingual labels (Arabic secondary)', () => {
     const language = { mode: 'bilingual_sidebyside', primary: 'ar', secondary: 'ar' } as LanguageConfig;
     const c = cfg(language);
     const out = assembleTypst(data, c, ctxFromLanguageConfig(c.language));
     expect(out).toContain('Tajawal');
-    expect(out).toContain('dir: rtl');
+    // Always LTR layout (Typst still bidi-orders the Arabic within each run).
+    expect(out).toContain('dir: ltr');
     expect(out).toContain('فاتورة ضريبية'); // title
     expect(out).toContain('معلومات العميل'); // party title
     expect(out).toContain('INV-0032'); // meta value

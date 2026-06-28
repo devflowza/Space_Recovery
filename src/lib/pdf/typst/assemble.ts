@@ -15,7 +15,6 @@
  * embedding + other doc types are added in later phases.
  */
 import { en, resolveLabel, fieldLabelLanguage, type TranslationGroup } from '../engine/labels';
-import { engineLayoutDirection } from '../engine/rtl';
 import { buildCompanyAddressLines, buildCompanyContactLine } from '../utils';
 import { resolveSecondary, secondaryText, type DocumentTemplateConfig, type LabelText } from '../templateConfig';
 import type { EngineDocData } from '../engine/types';
@@ -54,7 +53,11 @@ export function assembleTypst(
   opts: { logoPath?: string } = {},
 ): string {
   const language = config.language;
-  const dir = engineLayoutDirection(language);
+  // Always LTR — the document must use the SAME left-to-right layout as the other
+  // languages (logo placement, columns, alignment all unflipped). Typst still
+  // applies the Unicode bidi algorithm + shaping WITHIN each run, so the Arabic
+  // text itself renders correctly (right-to-left letters) inside an LTR page.
+  const dir = 'ltr';
   const E = (l: LabelText) => escapeTypst(en(l));
   // LOGICAL secondary (no reverseArabicText) — Typst does its own bidi, so feeding
   // it the pdfmake-reversed form via ar() would double-reverse and mangle it.
