@@ -53,3 +53,14 @@ export function isPdfEngineEnabled(documentType: string): boolean {
   const raw = (import.meta.env as Record<string, unknown>)[envKey];
   return raw === 'true';
 }
+
+/**
+ * Whether the experimental Typst renderer (correct Arabic/Thai/Korean via
+ * rustybuzz + Unicode bidi) is used instead of pdfmake for engine-rendered
+ * documents. Build-time, ALL-tenants, DEFAULT-OFF — only `VITE_PDF_TYPST==='true'`
+ * opts in. Per-tenant runtime rollout is a later milestone (see the spec).
+ * Lazy-loads a ~10 MB WASM only when on, so the default app is unaffected.
+ */
+export function isTypstEngineEnabled(): boolean {
+  return (import.meta.env as Record<string, unknown>).VITE_PDF_TYPST === 'true';
+}

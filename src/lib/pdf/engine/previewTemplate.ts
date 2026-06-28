@@ -23,6 +23,7 @@ import type { DocumentTemplateConfig, TemplateDocumentType } from '../templateCo
 import type { CompanySettingsData, TranslationContext } from '../types';
 import { renderTemplate } from './renderTemplate';
 import { applyTenantLanguage } from './applyTenantLanguage';
+import { isTypstEngineEnabled } from './featureFlag';
 import { createPdfWithFonts, initializePDFFonts } from '../fonts';
 import { ctxFromLanguageConfig, withTimeout } from '../translationContext';
 import { resolveSecondary } from '../templateConfig';
@@ -144,6 +145,20 @@ export async function previewTemplate(
   // reliable path (the same one tenant-uploaded QR images use).
   const { logo: previewLogo, warnings } = resolvePreviewLogo(logo);
   const qrImage = await resolveQrImage(null, engineData.zatcaPayload ?? engineData.qrPayload);
+
+  // Experimental Typst renderer (flag-gated, default off): correct Arabic/Thai/
+  // Korean via rustybuzz + Unicode bidi. Lazily imported so the WASM never enters
+  // the default bundle. Phase-1 slice: text/tables/totals (logo/QR images TBD).
+  if (isTypstEngineEnabled()) {
+    const [{ assembleTypst }, { renderTypstPdf }] = await Promise.all([
+      import('../typst/assemble'),
+      import('../typst/typstEngine'),
+    ]);
+    const markup = assembleTypst(engineData, effectiveConfig, effectiveCtx);
+    const blob = await withTimeout(renderTypstPdf(markup), PREVIEW_TIMEOUT_MS, 'Preview render timed out');
+    return { url: URL.createObjectURL(blob), warnings };
+  }
+
   const docDefinition = renderTemplate(
     effectiveConfig,
     engineData,
