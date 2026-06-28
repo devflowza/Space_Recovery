@@ -79,7 +79,25 @@ describe('translationPolicy — payment-history heading suppression', () => {
   it('system_only → the "Date" column header is primary-only (no English half)', () => {
     expect(renderWithHistory({ mode: 'system_only' })).not.toContain('"text":"التاريخ\\nDate"');
   });
-  it('custom { paymentHistory: false } → the section TITLE stays bilingual', () => {
-    expect(renderWithHistory({ mode: 'custom', groups: { paymentHistory: false } })).toContain('"text":"سجل الدفعات\\nPayment History"');
+  it('custom { paymentHistory: false } → the section HEADING follows the toggle (primary-only)', () => {
+    // The Payment-history toggle now controls the WHOLE block — heading + columns —
+    // so a tenant can keep the statement single-language (less clutter).
+    const out = renderWithHistory({ mode: 'custom', groups: { paymentHistory: false } });
+    expect(out).not.toContain('"text":"سجل الدفعات\\nPayment History"'); // no longer bilingual
+    expect(out).toContain('"text":"سجل الدفعات"');                        // heading is the Arabic primary
+  });
+});
+
+describe('translationPolicy — totals box suppression', () => {
+  // The grand-total label run carries the English "Total:"; it is present only
+  // while the totals labels render bilingually.
+  it('all → the totals labels are bilingual (English "Total:" run present)', () => {
+    expect(render({ mode: 'all' })).toContain('"text":"Total:"');
+  });
+  it('custom { totals: false } → the totals labels drop the English run (primary-only)', () => {
+    expect(render({ mode: 'custom', groups: { totals: false } })).not.toContain('"text":"Total:"');
+  });
+  it('system_only → the totals labels are primary-only', () => {
+    expect(render({ mode: 'system_only' })).not.toContain('"text":"Total:"');
   });
 });

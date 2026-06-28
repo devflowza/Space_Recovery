@@ -520,8 +520,10 @@ export interface TranslationPolicyGroups {
   collector?: boolean;
   payslip?: boolean;
   diagnostics?: boolean;
-  /** Payment-history statement column headers (financial documents). */
+  /** Payment-history statement heading + column headers (financial documents). */
   paymentHistory?: boolean;
+  /** Totals box labels — subtotal/VAT/total/etc (financial documents). */
+  totals?: boolean;
 }
 
 /** Controls which FIELD-ROW labels render bilingually (no effect on data values). */

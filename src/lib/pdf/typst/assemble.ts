@@ -14,7 +14,7 @@
  *
  * Phase 1 scope: the financial (invoice/quote/receipt) sections.
  */
-import { en, resolveLabel, fieldLabelLanguage, type TranslationGroup } from '../engine/labels';
+import { en, resolveLabel, fieldLabelLanguage, fieldLabelsBilingual, type TranslationGroup } from '../engine/labels';
 import { resolveOrganization } from '../engine/branding';
 import { buildCompanyAddress } from '../utils';
 import { resolveSecondary, secondaryText, type DocumentTemplateConfig, type LabelText } from '../templateConfig';
@@ -76,10 +76,12 @@ export function assembleTypst(
   // Inline bilingual label (title, column headers, totals): English first, each
   // language ISOLATED in its own #box so Typst's bidi lays them in document order
   // (English left, secondary right) — never letting a trailing RTL run jump to the
-  // visual left. Falls back to whichever single language is present.
-  const biLine = (l: LabelText) => {
+  // visual left. When a `group` is given, honour the translation policy: a block
+  // toggled off (or "System labels only") drops the secondary → single-language,
+  // so a tenant can keep e.g. the totals box / payment history uncluttered.
+  const biLine = (l: LabelText, group?: TranslationGroup) => {
     const e = E(l);
-    const s = A(l);
+    const s = group && !fieldLabelsBilingual(config.translationPolicy, group) ? '' : A(l);
     if (e && s) return `#box[${e}] | #box[${s}]`;
     if (s) return `#box[${s}]`;
     return e;
@@ -203,9 +205,9 @@ export function assembleTypst(
     const lines = data.totals
       .map((t) => {
         if (t.emphasis) {
-          return `block(width: 100%, fill: rgb("${SHADE}"), stroke: 0.5pt + rgb("${BORDER}"), inset: (x: 6pt, y: 3pt), grid(columns: (1fr, auto), column-gutter: 10pt, align(end + horizon, text(size: 10pt, weight: "bold", fill: rgb("${TEXT}"), [${biLine(t.label)}])), align(end + horizon, text(size: 11pt, weight: "bold", fill: rgb("${NAVY}"), [${V(t.value)}]))))`;
+          return `block(width: 100%, fill: rgb("${SHADE}"), stroke: 0.5pt + rgb("${BORDER}"), inset: (x: 6pt, y: 3pt), grid(columns: (1fr, auto), column-gutter: 10pt, align(end + horizon, text(size: 10pt, weight: "bold", fill: rgb("${TEXT}"), [${biLine(t.label, 'totals')}])), align(end + horizon, text(size: 11pt, weight: "bold", fill: rgb("${NAVY}"), [${V(t.value)}]))))`;
         }
-        return `grid(columns: (1fr, auto), column-gutter: 10pt, align(end, text(size: 9pt, fill: rgb("${MUTED}"), [${biLine(t.label)}])), align(end, text(size: 9pt, weight: "bold", fill: rgb("${TEXT}"), [${V(t.value)}])))`;
+        return `grid(columns: (1fr, auto), column-gutter: 10pt, align(end, text(size: 9pt, fill: rgb("${MUTED}"), [${biLine(t.label, 'totals')}])), align(end, text(size: 9pt, weight: "bold", fill: rgb("${TEXT}"), [${V(t.value)}])))`;
       })
       .join(', ');
     parts.push(`#align(end, block(width: 47%, stack(spacing: 4pt, ${lines})))`, '#v(8pt)');
@@ -226,14 +228,15 @@ export function assembleTypst(
   // ── Payment history — heading + light-header table ───────────────────────
   if (data.paymentHistory?.rows?.length) {
     const ph = data.paymentHistory;
+    const phSecondary = fieldLabelsBilingual(config.translationPolicy, 'paymentHistory') ? A(ph.title) : '';
     const heads = [ph.columns.date, ph.columns.document, ph.columns.method, ph.columns.reference, ph.columns.recordedBy, ph.columns.amount, ph.columns.balance];
     const headerCells = heads
-      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: 8pt, fill: rgb("${TEXT}"), [${biLine(c)}]))`)
+      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: 8pt, fill: rgb("${TEXT}"), [${biLine(c, 'paymentHistory')}]))`)
       .join(', ');
     const body = ph.rows
       .map((r) => [r.date, r.document, r.method, r.reference, r.recordedBy, r.amount, r.runningBalance].map((v) => `text(size: 8pt, fill: rgb("${TEXT}"), [${V(v)}])`).join(', '))
       .join(',\n');
-    parts.push(`#heading([${E(ph.title)}], [${A(ph.title)}])`, `#table(columns: 7, table.header(${headerCells}),\n${body})`, '#v(8pt)');
+    parts.push(`#heading([${E(ph.title)}], [${phSecondary}])`, `#table(columns: 7, table.header(${headerCells}),\n${body})`, '#v(8pt)');
   }
 
   // ── Signatures ───────────────────────────────────────────────────────────

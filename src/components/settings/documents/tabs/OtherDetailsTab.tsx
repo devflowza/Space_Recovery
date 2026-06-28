@@ -81,6 +81,7 @@ const TRANSLATION_BLOCKS: ReadonlyArray<
   ['payslip', 'payslipInfo', 'Payslip'],
   ['diagnostics', 'diagnostics', 'Diagnostics'],
   ['paymentHistory', 'paymentHistory', 'Payment history'],
+  ['totals', 'totals', 'Total box'],
 ];
 
 export const OtherDetailsTab: React.FC<{ api: StudioApi }> = ({ api }) => {

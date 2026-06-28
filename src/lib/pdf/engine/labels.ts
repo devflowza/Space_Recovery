@@ -75,7 +75,7 @@ export function ar(label: LabelText, language?: LanguageConfig): string | null {
  * the Arabic column.
  */
 export type TranslationGroup =
-  | 'parties' | 'meta' | 'caseInfo' | 'collector' | 'payslip' | 'diagnostics' | 'paymentHistory';
+  | 'parties' | 'meta' | 'caseInfo' | 'collector' | 'payslip' | 'diagnostics' | 'paymentHistory' | 'totals';
 
 /** Whether a data block's FIELD-ROW labels render bilingually under the policy. */
 export function fieldLabelsBilingual(

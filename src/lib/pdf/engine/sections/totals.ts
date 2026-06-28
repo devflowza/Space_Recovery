@@ -13,6 +13,7 @@
 import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS } from '../../styles';
 import { bilingualLabelRuns } from '../rtl';
+import { fieldLabelLanguage } from '../labels';
 import type { EngineContext, EngineDocData, SectionRenderer } from '../types';
 
 export const renderTotals: SectionRenderer = (
@@ -23,6 +24,10 @@ export const renderTotals: SectionRenderer = (
   if (!totals || totals.length === 0) return null;
 
   const { language } = engine.config;
+  // The totals labels follow the translation policy: under "System labels only"
+  // or a custom "Total box" toggle = off, they collapse to a single language so a
+  // tenant can keep the totals box uncluttered.
+  const labelLang = fieldLabelLanguage(language, engine.config.translationPolicy, 'totals');
   // English runs render in the tenant's Latin font; Arabic runs are pinned to
   // the Arabic family by `bilingualLabelRuns`. The currency/number value stays a
   // SEPARATE run so it keeps LTR ordering within the RTL flow (never reversed).
@@ -33,7 +38,7 @@ export const renderTotals: SectionRenderer = (
     // Per-run label so Arabic shapes in its own font even when the document
     // default is Latin (bilingual, English-primary). Totals are intrinsically
     // right-anchored, so labels stay right-aligned in BOTH LTR and RTL.
-    const labelRuns = bilingualLabelRuns(line.label, language, baseFont);
+    const labelRuns = bilingualLabelRuns(line.label, labelLang, baseFont);
 
     if (line.emphasis) {
       // Grand-total: boxed, larger, brand-colored value.
