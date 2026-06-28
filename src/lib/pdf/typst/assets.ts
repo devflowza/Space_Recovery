@@ -39,3 +39,15 @@ export function logoAsset(input: string | BrandingImage | null | undefined): Typ
   if (!ext) return null; // Typst can't decode it (e.g. webp) — skip the logo.
   return { path: `/logo.${ext}`, bytes: base64ToBytes(m[2]) };
 }
+
+/**
+ * Convert a generated QR image (a base64 PNG data URL, as produced by
+ * `resolveQrImage`) into a Typst asset. Returns null when absent or not a PNG
+ * data URL so the QR section is simply skipped rather than failing to compile.
+ */
+export function qrAsset(dataUrl: string | null | undefined): TypstAsset | null {
+  if (!dataUrl) return null;
+  const m = /^data:image\/png;base64,(.*)$/i.exec(dataUrl);
+  if (!m) return null;
+  return { path: '/qr.png', bytes: base64ToBytes(m[1]) };
+}

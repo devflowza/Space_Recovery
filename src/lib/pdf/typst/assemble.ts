@@ -60,7 +60,7 @@ export function assembleTypst(
   data: EngineDocData,
   config: DocumentTemplateConfig,
   _ctx: TranslationContext,
-  opts: { logoPath?: string } = {},
+  opts: { logoPath?: string; qrPath?: string } = {},
 ): string {
   const language = config.language;
   // Always LTR — the document uses the SAME left-to-right layout as the other
@@ -89,6 +89,16 @@ export function assembleTypst(
   // Field-row labels follow the translation policy (e.g. "System labels only").
   const fll = (group: TranslationGroup) => fieldLabelLanguage(language, config.translationPolicy, group);
   const fieldLbl = (l: LabelText, group: TranslationGroup) => escapeTypst(resolveLabel(l, fll(group)) ?? '');
+
+  // Section visibility + order come from config.sections (the Studio controls) —
+  // the SAME source the pdfmake renderer honours. A key absent from config
+  // defaults to visible (back-compat for minimal configs/tests).
+  const sections = config.sections ?? [];
+  const sectionCfg = (key: string) => sections.find((s) => s.key === key);
+  const isVisible = (key: string) => {
+    const s = sectionCfg(key);
+    return s ? s.visible : true;
+  };
 
   const parts: string[] = [preamble(dir), ''];
   // An info-box: icon + bilingual band title + field-row grid (label/value).
@@ -160,32 +170,31 @@ export function assembleTypst(
   const idAlign = placement === 'center' ? 'center' : logoLeft ? 'right' : 'left';
   const idBlock = `align(${idAlign}, stack(spacing: 2pt, ${idLines.length ? idLines.join(', ') : '[]'}))`;
 
+  // Assemble the letterhead (logo + identity) into the header fragment.
+  const headerParts: string[] = [];
   if (placement === 'center' || !useLogo) {
-    if (useLogo) parts.push(`#align(center, ${logoImg})`, '#v(4pt)');
-    parts.push(`#${idBlock}`);
+    if (useLogo) headerParts.push(`#align(center, ${logoImg})`, '#v(4pt)');
+    headerParts.push(`#${idBlock}`);
   } else if (logoLeft) {
-    parts.push(`#grid(columns: (auto, 1fr), column-gutter: 12pt, align: horizon, align(horizon, ${logoImg}), ${idBlock})`);
+    headerParts.push(`#grid(columns: (auto, 1fr), column-gutter: 12pt, align: horizon, align(horizon, ${logoImg}), ${idBlock})`);
   } else {
-    parts.push(`#grid(columns: (1fr, auto), column-gutter: 12pt, align: horizon, ${idBlock}, align(horizon, ${logoImg}))`);
+    headerParts.push(`#grid(columns: (1fr, auto), column-gutter: 12pt, align: horizon, ${idBlock}, align(horizon, ${logoImg}))`);
   }
-
   // Divider rule UNDER the letterhead, then the centred title (pdfmake order).
-  parts.push('#v(10pt)', `#line(length: 100%, stroke: 0.5pt + rgb("${NAVY}"))`, '#v(8pt)');
-  parts.push(`#align(center, text(size: 16pt, weight: "bold", fill: rgb("${PRIMARYDARK}"), [${biLine(data.documentTitle)}]))`, '#v(8pt)');
+  headerParts.push('#v(10pt)', `#line(length: 100%, stroke: 0.5pt + rgb("${NAVY}"))`, '#v(8pt)');
+  headerParts.push(`#align(center, text(size: 16pt, weight: "bold", fill: rgb("${PRIMARYDARK}"), [${biLine(data.documentTitle)}]))`, '#v(8pt)');
+  const headerMarkup = headerParts.join('\n');
 
-  // ── Customer (parties) + Details (meta) side by side ─────────────────────
-  const boxes: string[] = [];
-  if (data.parties?.to) {
-    const p = data.parties.to;
-    const rows = [...(p.name ? [{ label: { en: 'Name:', ar: 'الاسم:' }, value: p.name }] : []), ...p.rows];
-    boxes.push(infobox('iconUser', p.title, rows, 'parties'));
-  }
-  if (data.meta?.length) boxes.push(infobox('iconDoc', { en: 'Details', ar: 'التفاصيل' }, data.meta, 'meta'));
-  if (boxes.length) {
-    parts.push(`#grid(columns: (${boxes.map(() => '1fr').join(', ')}), gutter: 10pt, ${boxes.join(', ')})`, '#v(8pt)');
-  }
+  // ── Build each body section as a fragment keyed by its section key, then emit
+  // them in the order + visibility the Studio configured (config.sections). ───
+  const partyBox = data.parties?.to
+    ? infobox('iconUser', data.parties.to.title, [...(data.parties.to.name ? [{ label: { en: 'Name:', ar: 'الاسم:' }, value: data.parties.to.name }] : []), ...data.parties.to.rows], 'parties')
+    : '';
+  const metaBox = data.meta?.length ? infobox('iconDoc', { en: 'Details', ar: 'التفاصيل' }, data.meta, 'meta') : '';
 
-  // ── Line items — bilingual "Line Items" heading + light-header table ──────
+  const frag: Record<string, string> = {};
+
+  // Line items — bilingual heading + light-header table.
   if (data.lineItems?.columns?.some((c) => c.visible)) {
     const cols = data.lineItems.columns.filter((c) => c.visible);
     const colSpec = cols.map((c) => (c.width ? `${c.width}pt` : '1fr')).join(', ');
@@ -196,14 +205,12 @@ export function assembleTypst(
     const body = data.lineItems.rows
       .map((row) => cols.map((c) => `text(size: 8pt, fill: rgb("${TEXT}"), [${V(row[c.key])}])`).join(', '))
       .join(',\n');
-    parts.push(`#heading([Line Items], [البنود])`);
-    parts.push(`#table(columns: (${colSpec}), align: (${aligns}), table.header(${headerCells}),\n${body})`, '#v(6pt)');
+    frag.lineItems = `#heading([Line Items], [البنود])\n#table(columns: (${colSpec}), align: (${aligns}), table.header(${headerCells}),\n${body})\n#v(6pt)`;
   }
 
-  // ── Totals — a clean right-aligned summary: muted label + value rows, a
-  // hairline rule before the grand total, and the grand total in a full-width
-  // tinted band (bold navy value). Two fixed columns so every value right-aligns
-  // to the same edge. ───────────────────────────────────────────────────────
+  // Totals — muted label/value rows, a hairline rule before the grand total, and
+  // the grand total in a tinted band (bold navy value). Fixed value column so
+  // every amount right-aligns to the same edge.
   if (data.totals?.length) {
     const VALUE_W = '92pt';
     const rows: string[] = [];
@@ -224,26 +231,40 @@ export function assembleTypst(
         );
       }
     }
-    parts.push(`#align(end, block(width: 260pt, stack(spacing: 0pt, ${rows.join(', ')})))`, '#v(8pt)');
+    frag.totals = `#align(end, block(width: 260pt, stack(spacing: 0pt, ${rows.join(', ')})))\n#v(8pt)`;
   }
 
-  // ── Terms / Notes (no icon) ──────────────────────────────────────────────
+  // Terms / Notes (no icon).
   if (data.terms?.blocks?.length) {
-    for (const b of data.terms.blocks) {
-      parts.push(`#infobox(iconNone, [${E(b.title)}], [${A(b.title)}], text(size: 9pt, fill: rgb("${MUTED}"), [${htmlToTypst(b.body)}]))`, '#v(6pt)');
-    }
+    frag.terms = data.terms.blocks
+      .map((b) => `#infobox(iconNone, [${E(b.title)}], [${A(b.title)}], text(size: 9pt, fill: rgb("${MUTED}"), [${htmlToTypst(b.body)}]))\n#v(6pt)`)
+      .join('\n');
   } else if (data.terms?.body) {
-    parts.push(`#infobox(iconNone, [${E(data.terms.title)}], [${A(data.terms.title)}], text(size: 9pt, fill: rgb("${MUTED}"), [${htmlToTypst(data.terms.body)}]))`, '#v(6pt)');
+    frag.terms = `#infobox(iconNone, [${E(data.terms.title)}], [${A(data.terms.title)}], text(size: 9pt, fill: rgb("${MUTED}"), [${htmlToTypst(data.terms.body)}]))\n#v(6pt)`;
   }
 
-  // ── Bank account (document icon) ─────────────────────────────────────────
-  if (data.bank) parts.push(`#${infobox('iconDoc', data.bank.title, data.bank.rows, 'parties')}`, '#v(8pt)');
+  // Bank account — honours the Studio display style (boxed vs single line), box
+  // width (auto/half/full) and alignment.
+  if (data.bank) {
+    const bankCfg = sectionCfg('bank');
+    if (bankCfg?.bankStyle === 'inline') {
+      const inline = data.bank.rows.map((r) => `${E(r.label)} ${V(r.value)}`).join('  •  ');
+      frag.bank = `#block(width: 100%, inset: (y: 4pt), text(size: 9pt, [#text(weight: "bold", fill: rgb("${NAVY}"), [${E(data.bank.title)}]) #h(6pt) #text(fill: rgb("${MUTED}"), [${inline}])]))\n#v(8pt)`;
+    } else {
+      const box = infobox('iconDoc', data.bank.title, data.bank.rows, 'parties');
+      const width = bankCfg?.bankWidth ?? 'auto';
+      const align = bankCfg?.bankAlign ?? 'left';
+      frag.bank =
+        width === 'full'
+          ? `#${box}\n#v(8pt)`
+          : `#align(${align}, block(width: 250pt, ${box}))\n#v(8pt)`;
+    }
+  }
 
-  // ── Payment history — heading + light-header table ───────────────────────
+  // Payment history — bilingual heading; columns follow the 'paymentHistory'
+  // policy. Reference column is the flexible filler so the table never shrinks.
   if (data.paymentHistory?.rows?.length) {
     const ph = data.paymentHistory;
-    // The section HEADING stays bilingual regardless of the toggle; only the
-    // COLUMN labels follow the 'paymentHistory' policy (heading + box unchanged).
     const heads = [ph.columns.date, ph.columns.document, ph.columns.method, ph.columns.reference, ph.columns.recordedBy, ph.columns.amount, ph.columns.balance];
     const headerCells = heads
       .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: 8pt, fill: rgb("${TEXT}"), [${biLine(c, 'paymentHistory')}]))`)
@@ -251,16 +272,43 @@ export function assembleTypst(
     const body = ph.rows
       .map((r) => [r.date, r.document, r.method, r.reference, r.recordedBy, r.amount, r.runningBalance].map((v) => `text(size: 8pt, fill: rgb("${TEXT}"), [${V(v)}])`).join(', '))
       .join(',\n');
-    // Reference column is the flexible filler (matches the pdfmake '*' width), so
-    // the table stays FULL-WIDTH regardless of how long the column labels are —
-    // toggling the secondary off (or "System labels only") never shrinks the box.
-    parts.push(`#heading([${E(ph.title)}], [${A(ph.title)}])`, `#table(columns: (auto, auto, auto, 1fr, auto, auto, auto), table.header(${headerCells}),\n${body})`, '#v(8pt)');
+    frag.paymentHistory = `#heading([${E(ph.title)}], [${A(ph.title)}])\n#table(columns: (auto, auto, auto, 1fr, auto, auto, auto), table.header(${headerCells}),\n${body})\n#v(8pt)`;
   }
 
-  // ── Signatures ───────────────────────────────────────────────────────────
+  // Signatures.
   if (data.signatures?.length) {
     const cells = data.signatures.map((s) => `[#v(24pt) #line(length: 80%, stroke: 0.5pt + rgb("${MUTED}")) #muted([${L(s)}])]`).join(', ');
-    parts.push('#v(12pt)', `#grid(columns: (${data.signatures.map(() => '1fr').join(', ')}), gutter: 16pt, ${cells})`);
+    frag.signature = `#v(12pt)\n#grid(columns: (${data.signatures.map(() => '1fr').join(', ')}), gutter: 16pt, ${cells})`;
+  }
+
+  // QR code (verification) — rendered only when a QR asset was supplied.
+  if (opts.qrPath) {
+    frag.qr = `#v(8pt)\n#align(center, image("${opts.qrPath}", width: 72pt))`;
+  }
+
+  // ── Emit: header first, then the visible sections in config order ─────────
+  if (isVisible('header')) parts.push(headerMarkup);
+
+  const sideBySide =
+    !!config.layout?.partiesMetaSideBySide && !!partyBox && !!metaBox && isVisible('parties') && isVisible('meta');
+  const orderedKeys = [...sections].filter((s) => s.visible).sort((a, b) => a.order - b.order).map((s) => s.key);
+  const keys = orderedKeys.length
+    ? orderedKeys
+    : ['parties', 'meta', 'lineItems', 'totals', 'paymentHistory', 'terms', 'bank', 'signature', 'qr'];
+
+  for (const key of keys) {
+    if (key === 'header') continue;
+    if (key === 'meta' && sideBySide) continue; // emitted alongside parties
+    if (key === 'parties') {
+      if (sideBySide) parts.push(`#grid(columns: (1fr, 1fr), gutter: 10pt, ${partyBox}, ${metaBox})`, '#v(8pt)');
+      else if (partyBox) parts.push(`#${partyBox}`, '#v(8pt)');
+      continue;
+    }
+    if (key === 'meta') {
+      if (metaBox) parts.push(`#${metaBox}`, '#v(8pt)');
+      continue;
+    }
+    if (frag[key]) parts.push(frag[key]);
   }
 
   return parts.join('\n');
