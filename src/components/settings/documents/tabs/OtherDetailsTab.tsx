@@ -134,7 +134,7 @@ export const OtherDetailsTab: React.FC<{ api: StudioApi }> = ({ api }) => {
 
   return (
     <div className="space-y-7">
-      <FieldGroup title="Language" description="Add a secondary language (any of 13) and choose how the two languages are laid out. Reading direction (RTL) is set automatically.">
+      <FieldGroup title="Document language (this template)" description="Sets the language for THIS document type — overrides the workspace default in Settings → Localization Center. Add a secondary language (any of 13) and choose the layout; reading direction (RTL) is automatic.">
         <Select
           label="Secondary language"
           value={secondary ?? ''}
