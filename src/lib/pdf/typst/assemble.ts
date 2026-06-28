@@ -1,0 +1,136 @@
+/**
+ * Assemble a Typst markup document from the engine's normalized
+ * {@link EngineDocData}. Typst (rustybuzz shaping + Unicode bidi) does ALL
+ * RTL/shaping work, so — unlike the pdfmake renderer — this assembler carries no
+ * `reverseArabicText`, no column mirroring, and no per-run font pinning. Labels
+ * resolve through the EXISTING {@link resolveLabel}; values are escaped via
+ * {@link escapeTypst}. `start`/`end` alignments make the layout direction-aware
+ * automatically from the document `dir`.
+ *
+ * Phase 1 scope: the financial (invoice/quote/receipt) sections — title,
+ * company identity, parties + meta, line items, totals, terms, bank, payment
+ * history, signatures. Other doc-type sections are added in Phase 2.
+ */
+import { resolveLabel } from '../engine/labels';
+import { engineLayoutDirection } from '../engine/rtl';
+import type { DocumentTemplateConfig } from '../templateConfig';
+import type { EngineDocData } from '../engine/types';
+import type { TranslationContext } from '../types';
+import { escapeTypst } from './escape';
+
+const FONTS = '("Tajawal", "Noto Sans Arabic", "Noto Sans Thai", "Noto Sans KR", "Roboto")';
+const NAVY = '#162660';
+const MUTED = '#64748b';
+const BORDER = '#d0d5dd';
+const SHADE = '#f8fafc';
+
+/** Map an engine column alignment to a Typst direction-aware alignment. */
+function toAlign(a: 'left' | 'center' | 'right' | undefined): string {
+  return a === 'right' ? 'end' : a === 'center' ? 'center' : 'start';
+}
+
+function preamble(dir: string): string {
+  return [
+    '#set page(paper: "a4", margin: (x: 15mm, y: 16mm))',
+    `#set text(font: ${FONTS}, size: 10pt, dir: ${dir})`,
+    `#set table(stroke: 0.5pt + rgb("${BORDER}"), inset: 5pt)`,
+    `#let muted(b) = text(fill: rgb("${MUTED}"), b)`,
+    `#let kv(k, v) = grid(columns: (auto, 1fr), gutter: 6pt, muted(k), v)`,
+    `#let boxhead(t) = block(width: 100%, fill: rgb("${SHADE}"), inset: 6pt, text(weight: "bold", fill: rgb("${NAVY}"), t))`,
+    `#let infobox(t, body) = block(width: 100%, stroke: 0.5pt + rgb("${BORDER}"), boxhead(t) + block(inset: 6pt, body))`,
+  ].join('\n');
+}
+
+export function assembleTypst(
+  data: EngineDocData,
+  config: DocumentTemplateConfig,
+  _ctx: TranslationContext,
+): string {
+  const language = config.language;
+  const dir = engineLayoutDirection(language);
+  const L = (l: Parameters<typeof resolveLabel>[0]) => escapeTypst(resolveLabel(l, language) ?? '');
+  const V = (s: string | number | null | undefined) => escapeTypst(s == null ? '' : String(s));
+  const parts: string[] = [preamble(dir), ''];
+
+  // Title
+  parts.push(`#align(center, text(size: 18pt, weight: "bold", fill: rgb("${NAVY}"), [${L(data.documentTitle)}]))`);
+
+  // Company identity
+  const name = data.identity?.basic_info?.company_name;
+  if (name) parts.push(`#align(center, text(size: 13pt, weight: "bold", [${V(name)}]))`);
+  parts.push(`#line(length: 100%, stroke: 0.5pt + rgb("${NAVY}"))`, '#v(6pt)');
+
+  const kvBody = (rows: Array<{ label: Parameters<typeof L>[0]; value: string }>): string =>
+    rows.map((r) => `#kv([${L(r.label)}], [${V(r.value)}])`).join(' ');
+
+  // Parties (to) + meta side by side
+  const boxes: string[] = [];
+  if (data.meta?.length) boxes.push(`infobox([${L({ en: 'Details', ar: 'التفاصيل' })}], [${kvBody(data.meta)}])`);
+  if (data.parties?.to) {
+    const p = data.parties.to;
+    const rows = [
+      ...(p.name ? [{ label: { en: 'Name:', ar: 'الاسم:' }, value: p.name }] : []),
+      ...p.rows,
+    ];
+    boxes.push(`infobox([${L(p.title)}], [${kvBody(rows)}])`);
+  }
+  if (boxes.length) {
+    parts.push(`#grid(columns: (${boxes.map(() => '1fr').join(', ')}), gutter: 10pt, ${boxes.join(', ')})`, '#v(8pt)');
+  }
+
+  // Line items
+  if (data.lineItems?.columns?.some((c) => c.visible)) {
+    const cols = data.lineItems.columns.filter((c) => c.visible);
+    const colSpec = cols.map((c) => (c.width ? `${c.width}pt` : '1fr')).join(', ');
+    const aligns = cols.map((c) => toAlign(c.align)).join(', ');
+    const header = cols
+      .map((c) => `table.cell(fill: rgb("${NAVY}"), text(fill: white, weight: "bold", [${L(c.label)}]))`)
+      .join(', ');
+    const body = data.lineItems.rows
+      .map((row) => cols.map((c) => `[${V(row[c.key])}]`).join(', '))
+      .join(',\n');
+    parts.push(`#table(columns: (${colSpec}), align: (${aligns}), ${header},\n${body})`, '#v(6pt)');
+  }
+
+  // Totals (trailing edge)
+  if (data.totals?.length) {
+    const lines = data.totals
+      .map((t) => {
+        const style = t.emphasis ? `weight: "bold", size: 12pt, fill: rgb("${NAVY}"), ` : '';
+        return `#grid(columns: (1fr, auto), gutter: 10pt, muted([${L(t.label)}]), text(${style}[${V(t.value)}]))`;
+      })
+      .join('\n');
+    parts.push(`#align(end, block(width: 55%, [${lines}]))`, '#v(8pt)');
+  }
+
+  // Terms (blocks or legacy-flat)
+  if (data.terms?.blocks?.length) {
+    for (const b of data.terms.blocks) {
+      parts.push(`#boxhead([${L(b.title)}])`, `#block(inset: 6pt, [${V(b.body)}])`, '#v(4pt)');
+    }
+  } else if (data.terms?.body) {
+    parts.push(`#infobox([${L(data.terms.title)}], [${V(data.terms.body)}])`, '#v(4pt)');
+  }
+
+  // Bank
+  if (data.bank) parts.push(`#infobox([${L(data.bank.title)}], [${kvBody(data.bank.rows)}])`, '#v(8pt)');
+
+  // Payment history
+  if (data.paymentHistory?.rows?.length) {
+    const ph = data.paymentHistory;
+    const heads = [ph.columns.date, ph.columns.document, ph.columns.method, ph.columns.reference, ph.columns.recordedBy, ph.columns.amount, ph.columns.balance];
+    const header = heads.map((c) => `table.cell(fill: rgb("${NAVY}"), text(fill: white, weight: "bold", size: 8pt, [${L(c)}]))`).join(', ');
+    const body = ph.rows
+      .map((r) => [r.date, r.document, r.method, r.reference, r.recordedBy, r.amount, r.runningBalance].map((v) => `text(size: 8pt, [${V(v)}])`).join(', '))
+      .join(',\n');
+    parts.push(`#text(weight: "bold", fill: rgb("${NAVY}"), [${L(ph.title)}])`, '#v(3pt)', `#table(columns: 7, ${header},\n${body})`, '#v(8pt)');
+  }
+
+  // Signatures
+  if (data.signatures?.length) {
+    const cells = data.signatures.map((s) => `[#v(24pt) #line(length: 80%) #muted([${L(s)}])]`).join(', ');
+    parts.push('#v(12pt)', `#grid(columns: (${data.signatures.map(() => '1fr').join(', ')}), gutter: 16pt, ${cells})`);
+  }
+
+  return parts.join('\n');
+}
