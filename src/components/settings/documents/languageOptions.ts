@@ -10,7 +10,6 @@
  */
 import {
   SUPPORTED_LANGUAGES,
-  isRTLLanguage,
   type LanguageCode,
 } from '../../../lib/documentTranslations';
 import type { LanguageConfig, LanguageMode } from '../../../lib/pdf/templateConfig';
@@ -47,13 +46,16 @@ export function layoutOptions(secondary: LanguageCode | null): { value: StudioLa
 }
 
 /**
- * The `primary` slot for a (mode, secondary) pair: the secondary LEADS — legacy
- * `primary: 'ar'` — only when it is RTL (so the document flips to RTL); otherwise
- * English leads. This generalizes the legacy Arabic-lead rule to any RTL
- * secondary while keeping LTR languages English-led.
+ * The `primary` slot for a layout mode. Only the "secondary only" mode (`'ar'`)
+ * leads with the secondary; BOTH bilingual layouts always lead with English —
+ * matching the picker's "(English | X)" labels. This holds even when the
+ * secondary is RTL (Arabic): the secondary renders ALONGSIDE English in the same
+ * English-led, left-to-right layout, exactly like French/Polish/etc. (The
+ * document never flips to RTL just because Arabic is the secondary — Arabic text
+ * is still shaped/bidi-ordered correctly within its own run by the renderer.)
  */
-export function primaryFor(secondary: LanguageCode | null): LanguageConfig['primary'] {
-  return secondary && isRTLLanguage(secondary) ? 'ar' : 'en';
+export function primaryFor(mode: LanguageMode): LanguageConfig['primary'] {
+  return mode === 'ar' ? 'ar' : 'en';
 }
 
 /** Build the LanguageConfig patch for selecting a secondary language. Selecting
@@ -65,13 +67,13 @@ export function patchForSecondary(
 ): Partial<LanguageConfig> {
   if (!code) return { mode: 'en', primary: 'en', secondary: undefined };
   const mode: LanguageMode = currentMode === 'en' ? 'bilingual_stacked' : currentMode;
-  return { mode, secondary: code, primary: primaryFor(code) };
+  return { mode, secondary: code, primary: primaryFor(mode) };
 }
 
 /** Build the LanguageConfig patch for selecting a layout mode (secondary fixed). */
 export function patchForLayout(
   mode: StudioLayoutMode,
-  secondary: LanguageCode | null,
+  _secondary: LanguageCode | null,
 ): Partial<LanguageConfig> {
-  return { mode, primary: primaryFor(secondary) };
+  return { mode, primary: primaryFor(mode) };
 }

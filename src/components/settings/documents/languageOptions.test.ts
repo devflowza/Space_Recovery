@@ -39,12 +39,11 @@ describe('layoutOptions — neutral, language-aware labels', () => {
   });
 });
 
-describe('primaryFor — secondary leads only when RTL', () => {
-  it('returns "ar" (secondary leads) for an RTL secondary, "en" otherwise', () => {
-    expect(primaryFor('ar')).toBe('ar');
-    expect(primaryFor('fr')).toBe('en');
-    expect(primaryFor('ko')).toBe('en');
-    expect(primaryFor(null)).toBe('en');
+describe('primaryFor — only "secondary only" mode leads with the secondary', () => {
+  it('returns "ar" (secondary leads) ONLY for the secondary-only mode; both bilingual layouts lead with English', () => {
+    expect(primaryFor('ar')).toBe('ar'); // "secondary only" layout
+    expect(primaryFor('bilingual_stacked')).toBe('en');
+    expect(primaryFor('bilingual_sidebyside')).toBe('en'); // English leads even when the secondary is Arabic
   });
 });
 
@@ -69,7 +68,7 @@ describe('patchForSecondary', () => {
     expect(patchForSecondary('ar', 'bilingual_sidebyside')).toEqual({
       mode: 'bilingual_sidebyside',
       secondary: 'ar',
-      primary: 'ar', // RTL ⇒ secondary leads
+      primary: 'en', // bilingual ⇒ English leads, even for an RTL secondary (matches "English | Arabic")
     });
   });
 });
