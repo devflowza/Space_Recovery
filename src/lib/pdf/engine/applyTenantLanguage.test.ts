@@ -77,7 +77,7 @@ describe('applyTenantLanguage', () => {
     expect(out.language.primary).toBe('en');
   });
 
-  it('maps bilingual + Arabic secondary → bilingual_stacked with Arabic primary (RTL)', () => {
+  it('maps bilingual + Arabic secondary → bilingual_stacked, English primary (LTR; English leads, Arabic alongside)', () => {
     const cfg = baseConfig();
     const out = applyTenantLanguage(cfg, settings({
       mode: 'bilingual',
@@ -85,8 +85,23 @@ describe('applyTenantLanguage', () => {
       language_name: 'Arabic',
     }));
     expect(out.language.mode).toBe('bilingual_stacked');
-    expect(out.language.primary).toBe('ar');
-    expect(engineLayoutDirection(out.language)).toBe('rtl');
+    expect(out.language.primary).toBe('en');
+    expect(out.language.secondary).toBe('ar');
+    // Bilingual is English-led, so the document stays LTR (the renderer still
+    // shapes the Arabic within its own runs).
+    expect(engineLayoutDirection(out.language)).toBe('ltr');
+  });
+
+  it('normalizes a stale saved bilingual config with primary=ar back to English-lead', () => {
+    const cfg: DocumentTemplateConfig = {
+      ...baseConfig(),
+      language: { mode: 'bilingual_sidebyside', primary: 'ar', secondary: 'ar' },
+    };
+    const out = applyTenantLanguage(cfg, settings(undefined));
+    expect(out.language.mode).toBe('bilingual_sidebyside');
+    expect(out.language.primary).toBe('en'); // coerced — picker only exposes "English | Arabic"
+    expect(out.language.secondary).toBe('ar');
+    expect(engineLayoutDirection(out.language)).toBe('ltr');
   });
 
   it('maps bilingual + non-RTL secondary (e.g. French) → bilingual_stacked, English primary (LTR)', () => {
@@ -143,14 +158,15 @@ describe('applyTenantLanguage', () => {
   it('falls back to the tenant Localization when the template is at the English default', () => {
     // baseConfig()'s language is the built-in { mode: 'en' } default, so the
     // tenant-wide setting still governs — preserving back-compat for tenants who
-    // configure language in Settings, not the Studio picker.
+    // configure language in Settings, not the Studio picker. Bilingual leads with
+    // English regardless of the secondary's script.
     const out = applyTenantLanguage(baseConfig(), settings({
       mode: 'bilingual',
       secondary_language: 'ar',
       language_name: 'Arabic',
     }));
     expect(out.language.mode).toBe('bilingual_stacked');
-    expect(out.language.primary).toBe('ar');
+    expect(out.language.primary).toBe('en');
   });
 });
 
@@ -197,7 +213,7 @@ function minimalData(): EngineDocData {
 }
 
 describe('applyTenantLanguage → renderTemplate (build path)', () => {
-  it('a bilingual-Arabic tenant produces an RTL document (right-aligned, Arabic default font)', () => {
+  it('a bilingual-Arabic tenant produces an English-led LTR document with the Arabic-capable font', () => {
     const cfg = applyTenantLanguage(baseConfig(), settings({
       mode: 'bilingual',
       secondary_language: 'ar',
@@ -205,7 +221,9 @@ describe('applyTenantLanguage → renderTemplate (build path)', () => {
     }));
     const doc = renderTemplate(cfg, minimalData(), ctx);
     const defaultStyle = doc.defaultStyle as { font?: string; alignment?: string };
-    expect(defaultStyle.alignment).toBe('right');
+    // English leads → LTR (no right-alignment override), but the Arabic-capable
+    // font is still selected so the Arabic secondary shapes.
+    expect(defaultStyle.alignment).toBeUndefined();
     expect(defaultStyle.font).toBe('Tajawal');
   });
 

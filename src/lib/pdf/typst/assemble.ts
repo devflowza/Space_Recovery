@@ -73,6 +73,17 @@ export function assembleTypst(
   const A = (l: LabelText) => escapeTypst(secondaryText(l, resolveSecondary(language)) ?? '');
   const L = (l: LabelText) => escapeTypst(resolveLabel(l, language) ?? '');
   const V = (s: string | number | null | undefined) => escapeTypst(s == null ? '' : String(s));
+  // Inline bilingual label (title, column headers, totals): English first, each
+  // language ISOLATED in its own #box so Typst's bidi lays them in document order
+  // (English left, secondary right) — never letting a trailing RTL run jump to the
+  // visual left. Falls back to whichever single language is present.
+  const biLine = (l: LabelText) => {
+    const e = E(l);
+    const s = A(l);
+    if (e && s) return `#box[${e}] | #box[${s}]`;
+    if (s) return `#box[${s}]`;
+    return e;
+  };
   // Field-row labels follow the translation policy (e.g. "System labels only").
   const fll = (group: TranslationGroup) => fieldLabelLanguage(language, config.translationPolicy, group);
   const fieldLbl = (l: LabelText, group: TranslationGroup) => escapeTypst(resolveLabel(l, fll(group)) ?? '');
@@ -158,7 +169,7 @@ export function assembleTypst(
 
   // Divider rule UNDER the letterhead, then the centred title (pdfmake order).
   parts.push('#v(10pt)', `#line(length: 100%, stroke: 0.5pt + rgb("${NAVY}"))`, '#v(8pt)');
-  parts.push(`#align(center, text(size: 16pt, weight: "bold", fill: rgb("${PRIMARYDARK}"), [${L(data.documentTitle)}]))`, '#v(8pt)');
+  parts.push(`#align(center, text(size: 16pt, weight: "bold", fill: rgb("${PRIMARYDARK}"), [${biLine(data.documentTitle)}]))`, '#v(8pt)');
 
   // ── Customer (parties) + Details (meta) side by side ─────────────────────
   const boxes: string[] = [];
@@ -178,7 +189,7 @@ export function assembleTypst(
     const colSpec = cols.map((c) => (c.width ? `${c.width}pt` : '1fr')).join(', ');
     const aligns = cols.map((c) => toAlign(c.align)).join(', ');
     const headerCells = cols
-      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: 8pt, fill: rgb("${TEXT}"), [${L(c.label)}]))`)
+      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: 8pt, fill: rgb("${TEXT}"), [${biLine(c.label)}]))`)
       .join(', ');
     const body = data.lineItems.rows
       .map((row) => cols.map((c) => `text(size: 8pt, fill: rgb("${TEXT}"), [${V(row[c.key])}])`).join(', '))
@@ -192,9 +203,9 @@ export function assembleTypst(
     const lines = data.totals
       .map((t) => {
         if (t.emphasis) {
-          return `block(width: 100%, fill: rgb("${SHADE}"), stroke: 0.5pt + rgb("${BORDER}"), inset: (x: 6pt, y: 3pt), grid(columns: (1fr, auto), column-gutter: 10pt, align(end + horizon, text(size: 10pt, weight: "bold", fill: rgb("${TEXT}"), [${L(t.label)}])), align(end + horizon, text(size: 11pt, weight: "bold", fill: rgb("${NAVY}"), [${V(t.value)}]))))`;
+          return `block(width: 100%, fill: rgb("${SHADE}"), stroke: 0.5pt + rgb("${BORDER}"), inset: (x: 6pt, y: 3pt), grid(columns: (1fr, auto), column-gutter: 10pt, align(end + horizon, text(size: 10pt, weight: "bold", fill: rgb("${TEXT}"), [${biLine(t.label)}])), align(end + horizon, text(size: 11pt, weight: "bold", fill: rgb("${NAVY}"), [${V(t.value)}]))))`;
         }
-        return `grid(columns: (1fr, auto), column-gutter: 10pt, align(end, text(size: 9pt, fill: rgb("${MUTED}"), [${L(t.label)}])), align(end, text(size: 9pt, weight: "bold", fill: rgb("${TEXT}"), [${V(t.value)}])))`;
+        return `grid(columns: (1fr, auto), column-gutter: 10pt, align(end, text(size: 9pt, fill: rgb("${MUTED}"), [${biLine(t.label)}])), align(end, text(size: 9pt, weight: "bold", fill: rgb("${TEXT}"), [${V(t.value)}])))`;
       })
       .join(', ');
     parts.push(`#align(end, block(width: 47%, stack(spacing: 4pt, ${lines})))`, '#v(8pt)');
@@ -217,7 +228,7 @@ export function assembleTypst(
     const ph = data.paymentHistory;
     const heads = [ph.columns.date, ph.columns.document, ph.columns.method, ph.columns.reference, ph.columns.recordedBy, ph.columns.amount, ph.columns.balance];
     const headerCells = heads
-      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: 8pt, fill: rgb("${TEXT}"), [${L(c)}]))`)
+      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: 8pt, fill: rgb("${TEXT}"), [${biLine(c)}]))`)
       .join(', ');
     const body = ph.rows
       .map((r) => [r.date, r.document, r.method, r.reference, r.recordedBy, r.amount, r.runningBalance].map((v) => `text(size: 8pt, fill: rgb("${TEXT}"), [${V(v)}])`).join(', '))
