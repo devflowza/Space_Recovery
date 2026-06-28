@@ -114,3 +114,52 @@ describe('assembleTypst — typography (global scale + per-section sizes)', () =
     expect(out).not.toContain('size: 32pt'); // title is no longer the scaled default
   });
 });
+
+// The Typst header divider must honour config.header — style, colour, insets and
+// the vertical nudge — exactly like pdfmake's buildDivider. Before this it was a
+// hardcoded 0.5pt navy rule, always drawn.
+describe('assembleTypst — header divider', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderH = (header: any) => {
+    const c = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
+      language: { mode: 'en', primary: 'en' } as LanguageConfig,
+      header,
+    });
+    return assembleTypst(data, c, ctxFromLanguageConfig(c.language));
+  };
+
+  it('draws a thin rule by default (0.5pt, no inset)', () => {
+    const out = renderH({});
+    expect(out).toContain('#pad(left: 0pt, right: 0pt, line(length: 100%, stroke: 0.5pt + rgb(');
+  });
+
+  it('draws a thick rule when divider = thick', () => {
+    expect(renderH({ divider: 'thick' })).toContain('line(length: 100%, stroke: 2pt + rgb(');
+  });
+
+  it('omits the rule entirely when divider = none', () => {
+    const out = renderH({ divider: 'none' });
+    expect(out).not.toContain('#pad('); // the pad+line divider construct is gone
+  });
+
+  it('uses the opt-in divider colour over the accent', () => {
+    expect(renderH({ dividerColor: '#ef4444' })).toContain('stroke: 0.5pt + rgb("#ef4444")');
+  });
+
+  it('applies endpoint insets', () => {
+    expect(renderH({ dividerNudge: { start: 12, end: 6 } })).toContain('#pad(left: 12pt, right: 6pt,');
+  });
+
+  it('shifts the rule up/down with the vertical nudge (gap kept constant)', () => {
+    const out = renderH({ dividerNudge: { vertical: 4 } }); // before 10+4, after 8-4
+    expect(out).toContain('#v(14pt)');
+    expect(out).toContain('#v(4pt)');
+  });
+
+  it('clamps an extreme vertical nudge so the after-gap never goes negative', () => {
+    const out = renderH({ dividerNudge: { vertical: 50 } }); // clamped to +8 → after 8-8=0
+    expect(out).not.toContain('#v(-'); // no negative spacer overlapping the title
+    expect(out).toContain('#v(18pt)'); // before 10+8
+    expect(out).toContain('#v(0pt)'); // after 8-8
+  });
+});

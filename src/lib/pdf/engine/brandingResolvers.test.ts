@@ -138,6 +138,7 @@ describe('resolveHeader', () => {
     expect(h.logoWidth).toBe(130);
     expect(h.addressZone).toBe('right');
     expect(h.divider).toBe('thin');
+    expect(h.dividerColor).toBeNull(); // unset → follows the accent
     expect(h.dividerNudge).toEqual({ start: 0, end: 0, vertical: 0 });
   });
 
@@ -146,6 +147,18 @@ describe('resolveHeader', () => {
     expect(h.layout).toBe('split');
     expect(h.logoWidth).toBe(90);
     expect(h.dividerNudge).toEqual({ start: 10, end: 0, vertical: 0 });
+  });
+
+  it('validates the opt-in divider colour (good hex kept, malformed → null)', () => {
+    expect(resolveHeader({ header: { dividerColor: '#AB12CD' } }).dividerColor).toBe('#ab12cd');
+    expect(resolveHeader({ header: { dividerColor: 'not-a-hex' } }).dividerColor).toBeNull();
+  });
+
+  it('clamps the divider nudge to safe bands (insets 0–240, vertical ±8)', () => {
+    const big = resolveHeader({ header: { dividerNudge: { start: 9999, end: -50, vertical: 99 } } });
+    expect(big.dividerNudge).toEqual({ start: 240, end: 0, vertical: 8 });
+    const neg = resolveHeader({ header: { dividerNudge: { vertical: -99 } } });
+    expect(neg.dividerNudge.vertical).toBe(-8);
   });
 });
 

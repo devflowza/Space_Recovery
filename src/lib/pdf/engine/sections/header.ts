@@ -163,7 +163,7 @@ export const renderHeader: SectionRenderer = (
 
   const primaryName = org?.source === 'manual' ? org.manual.legalName ?? legalName : legalName;
   const out: Content[] = [buildLetterhead(header, brandLogo, identityLines, primaryName, nameColor)];
-  if (header.divider !== 'none') out.push(buildDivider(header, colors.accent));
+  if (header.divider !== 'none') out.push(buildDivider(header, header.dividerColor ?? colors.accent));
   out.push(titleBlock);
   return out;
 };
@@ -259,10 +259,14 @@ function buildLetterhead(
 function buildDivider(header: ResolvedHeader, color: string): Content {
   const lineWidth = header.divider === 'thick' ? 2 : 0.5;
   const x1 = header.dividerNudge.start;
-  const x2 = 525 - header.dividerNudge.end;
+  // Guard against an inverted rule if insets ever exceed the content width.
+  const x2 = Math.max(x1 + 1, 525 - header.dividerNudge.end);
   const y = header.dividerNudge.vertical;
+  // Draw the rule at the baseline and compensate the bottom margin so the TOTAL
+  // gap stays constant as the nudge shifts the rule down (+) / up (−) — the same
+  // constant-gap model the Typst renderer uses. At y=0 this is the prior [0,0,0,12].
   return {
     canvas: [{ type: 'line', x1, y1: y, x2, y2: y, lineWidth, lineColor: color }],
-    margin: [0, 0, 0, 12],
+    margin: [0, 0, 0, 12 - y],
   };
 }

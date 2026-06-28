@@ -49,6 +49,13 @@ function collectLineWidths(node: unknown, out: number[]): void {
   if (obj.type === 'line' && typeof obj.lineWidth === 'number') out.push(obj.lineWidth);
   Object.values(obj).forEach((v) => collectLineWidths(v, out));
 }
+function collectLineColors(node: unknown, out: string[]): void {
+  if (node == null || typeof node !== 'object') return;
+  if (Array.isArray(node)) return node.forEach((c) => collectLineColors(c, out));
+  const obj = node as Record<string, unknown>;
+  if (obj.type === 'line' && typeof obj.lineColor === 'string') out.push(obj.lineColor);
+  Object.values(obj).forEach((v) => collectLineColors(v, out));
+}
 function hasImage(node: unknown): boolean {
   if (node == null || typeof node !== 'object') return false;
   if (Array.isArray(node)) return node.some(hasImage);
@@ -93,6 +100,17 @@ describe('renderHeader — builder layouts', () => {
     const thick: number[] = [];
     collectLineWidths(renderHeader(engine({ header: { divider: 'thick' } }), data()), thick);
     expect(thick).toContain(2);
+  });
+
+  it('paints the divider with the opt-in colour, else the accent', () => {
+    const custom: string[] = [];
+    collectLineColors(renderHeader(engine({ header: { dividerColor: '#ef4444' } }), data()), custom);
+    expect(custom).toContain('#ef4444');
+
+    // Unset → the rule follows the resolved accent (neutral navy by default).
+    const dflt: string[] = [];
+    collectLineColors(renderHeader(engine({ header: { divider: 'thin' } }), data()), dflt);
+    expect(dflt).not.toContain('#ef4444');
   });
 
   it('hides the logo when organization.show.logo is false', () => {

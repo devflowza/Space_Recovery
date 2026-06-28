@@ -106,11 +106,20 @@ export const HeaderFooterTab: React.FC<{ api: StudioApi }> = ({ api }) => {
           ]}
         />
         {header?.divider !== 'none' && (
-          <div className="grid grid-cols-3 gap-2">
-            <NumberField label="Vertical" suffix="±" value={nudge?.vertical ?? 0} onChange={(v) => api.setHeaderNudge({ vertical: v })} />
-            <NumberField label="Start inset" value={nudge?.start ?? 0} min={0} onChange={(v) => api.setHeaderNudge({ start: v })} />
-            <NumberField label="End inset" value={nudge?.end ?? 0} min={0} onChange={(v) => api.setHeaderNudge({ end: v })} />
-          </div>
+          <>
+            <div className="grid grid-cols-3 gap-2">
+              <NumberField label="Vertical" suffix="±" value={nudge?.vertical ?? 0} min={-8} max={8} onChange={(v) => api.setHeaderNudge({ vertical: v })} />
+              <NumberField label="Start inset" value={nudge?.start ?? 0} min={0} max={240} onChange={(v) => api.setHeaderNudge({ start: v })} />
+              <NumberField label="End inset" value={nudge?.end ?? 0} min={0} max={240} onChange={(v) => api.setHeaderNudge({ end: v })} />
+            </div>
+            <ColorField
+              label="Divider color"
+              value={header?.dividerColor}
+              neutral={PDF_COLORS.primary}
+              onChange={(hex) => api.setHeader({ dividerColor: hex })}
+              againstLabel="on white"
+            />
+          </>
         )}
       </FieldGroup>
 

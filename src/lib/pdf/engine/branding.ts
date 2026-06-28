@@ -233,6 +233,8 @@ export interface ResolvedHeader {
   logoMaxHeight: number | null;
   addressZone: AddressZone;
   divider: DividerStyle;
+  /** Opt-in divider colour (validated hex), or `null` to follow the accent. */
+  dividerColor: string | null;
   dividerNudge: { start: number; end: number; vertical: number };
 }
 
@@ -249,12 +251,27 @@ export function resolveHeader(config: Pick<DocumentTemplateConfig, 'header'>): R
     logoMaxHeight: typeof h?.logoMaxHeight === 'number' && h.logoMaxHeight > 0 ? h.logoMaxHeight : null,
     addressZone: h?.addressZone ?? 'right',
     divider: h?.divider ?? 'thin',
+    dividerColor: normalizeHex(h?.dividerColor),
+    // Clamp to safe bands so neither renderer can draw a backwards/overflowing
+    // rule (insets) or pull the title up into the rule (a large vertical nudge).
+    // This is the single source of truth — both pdfmake and Typst read it.
     dividerNudge: {
-      start: typeof nudge?.start === 'number' ? nudge.start : 0,
-      end: typeof nudge?.end === 'number' ? nudge.end : 0,
-      vertical: typeof nudge?.vertical === 'number' ? nudge.vertical : 0,
+      start: typeof nudge?.start === 'number' ? clampDividerInset(nudge.start) : 0,
+      end: typeof nudge?.end === 'number' ? clampDividerInset(nudge.end) : 0,
+      vertical: typeof nudge?.vertical === 'number' ? clampDividerVertical(nudge.vertical) : 0,
     },
   };
+}
+
+/** Endpoint insets shorten the rule; clamp to [0, 240] so it can't invert/overflow the 525pt content width. */
+function clampDividerInset(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(240, Math.max(0, n));
+}
+/** Baseline nudge moves the rule up/down; clamp to ±8pt so the title never overlaps it. */
+function clampDividerVertical(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(8, Math.max(-8, n));
 }
 
 export interface ResolvedFooter {

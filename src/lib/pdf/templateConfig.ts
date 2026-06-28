@@ -376,6 +376,8 @@ export interface HeaderConfig {
   addressZone?: AddressZone;
   /** Divider rule under the letterhead. Default `'thin'` (0.5pt today). */
   divider?: DividerStyle;
+  /** Opt-in divider rule colour (hex). Unset → follows the accent (neutral navy by default). */
+  dividerColor?: string;
   /** Nudge the divider rule endpoints / baseline (points). Default 0/0/0. */
   dividerNudge?: { start?: number; end?: number; vertical?: number };
 }

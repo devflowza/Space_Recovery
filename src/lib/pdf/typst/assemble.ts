@@ -15,7 +15,7 @@
  * Phase 1 scope: the financial (invoice/quote/receipt) sections.
  */
 import { en, resolveLabel, fieldLabelLanguage, fieldLabelsBilingual, type TranslationGroup } from '../engine/labels';
-import { resolveOrganization, resolveTypography } from '../engine/branding';
+import { resolveOrganization, resolveTypography, resolveColors, resolveHeader } from '../engine/branding';
 import { buildCompanyAddress } from '../utils';
 import { resolveSecondary, secondaryText, type DocumentTemplateConfig, type LabelText, type TypographyStyleKey } from '../templateConfig';
 import type { EngineDocData } from '../engine/types';
@@ -221,7 +221,27 @@ export function assembleTypst(
     headerParts.push(`#grid(columns: (1fr, auto), column-gutter: 12pt, align: horizon, ${idBlock}, align(horizon, ${logoImg}))`);
   }
   // Divider rule UNDER the letterhead, then the centred title (pdfmake order).
-  headerParts.push('#v(10pt)', `#line(length: 100%, stroke: 0.5pt + rgb("${NAVY}"))`, '#v(8pt)');
+  // Honours config.header: style (thin/thick/none), opt-in colour (else the
+  // resolved accent — neutral navy by default), endpoint insets and the vertical
+  // nudge (positive = down). Mirrors pdfmake's buildDivider so both renderers
+  // stay 1:1 — before this the Typst rule was hardcoded 0.5pt navy, always drawn.
+  // Resolve the divider through the SHARED resolver so the colour (validated +
+  // lowercased), style and the clamped nudge are byte-for-byte what pdfmake uses.
+  const rh = resolveHeader(config);
+  if (rh.divider === 'none') {
+    headerParts.push('#v(10pt)');
+  } else {
+    const dColor = rh.dividerColor ?? resolveColors(config).accent;
+    const dWidth = rh.divider === 'thick' ? 2 : 0.5;
+    const { start: dStart, end: dEnd, vertical: dv } = rh.dividerNudge; // clamped
+    // Keep the total gap constant while the nudge shifts the rule up/down
+    // (+ = down). dv is clamped to ±8 so the after-gap never goes negative.
+    headerParts.push(
+      `#v(${round1(10 + dv)}pt)`,
+      `#pad(left: ${dStart}pt, right: ${dEnd}pt, line(length: 100%, stroke: ${dWidth}pt + rgb("${dColor}")))`,
+      `#v(${round1(8 - dv)}pt)`,
+    );
+  }
   headerParts.push(`#align(center, text(size: ${S.title}pt, weight: "bold", fill: rgb("${PRIMARYDARK}"), [${biLine(data.documentTitle)}]))`, '#v(8pt)');
   const headerMarkup = headerParts.join('\n');
 
