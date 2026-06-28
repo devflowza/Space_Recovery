@@ -251,7 +251,10 @@ export function assembleTypst(
     const body = ph.rows
       .map((r) => [r.date, r.document, r.method, r.reference, r.recordedBy, r.amount, r.runningBalance].map((v) => `text(size: 8pt, fill: rgb("${TEXT}"), [${V(v)}])`).join(', '))
       .join(',\n');
-    parts.push(`#heading([${E(ph.title)}], [${A(ph.title)}])`, `#table(columns: 7, table.header(${headerCells}),\n${body})`, '#v(8pt)');
+    // Reference column is the flexible filler (matches the pdfmake '*' width), so
+    // the table stays FULL-WIDTH regardless of how long the column labels are —
+    // toggling the secondary off (or "System labels only") never shrinks the box.
+    parts.push(`#heading([${E(ph.title)}], [${A(ph.title)}])`, `#table(columns: (auto, auto, auto, 1fr, auto, auto, auto), table.header(${headerCells}),\n${body})`, '#v(8pt)');
   }
 
   // ── Signatures ───────────────────────────────────────────────────────────
