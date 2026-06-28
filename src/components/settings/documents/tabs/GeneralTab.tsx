@@ -192,7 +192,7 @@ export const GeneralTab: React.FC<{ api: StudioApi }> = ({ api }) => {
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         {resolved.watermark?.text && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <NumberField
               label="Angle"
               suffix="°"
@@ -208,6 +208,14 @@ export const GeneralTab: React.FC<{ api: StudioApi }> = ({ api }) => {
               max={1}
               step={0.05}
               onChange={(v) => api.setWatermark({ opacity: v })}
+            />
+            <NumberField
+              label="Font size"
+              suffix="pt"
+              value={resolved.watermark?.fontSize ?? 60}
+              min={12}
+              max={160}
+              onChange={(v) => api.setWatermark({ fontSize: v })}
             />
           </div>
         )}

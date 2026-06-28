@@ -106,7 +106,7 @@ export interface StudioApi {
    *  (and mirrors `.ar` when the secondary is Arabic); pass the active `secondary`. */
   patchColumn: (
     key: string,
-    patch: { visible?: boolean; labelEn?: string; labelSecondary?: string; secondary?: LanguageCode | null },
+    patch: { visible?: boolean; labelEn?: string; labelSecondary?: string; secondary?: LanguageCode | null; width?: number },
   ) => void;
   /** Write a section heading. `lang` is `'en'` or a secondary `LanguageCode`;
    *  a secondary writes to `label.i18n[code]` (and mirrors to `.ar` for `'ar'`). */
@@ -406,6 +406,7 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
           const next = {
             ...existing,
             ...(patch.visible !== undefined ? { visible: patch.visible } : {}),
+            ...(patch.width !== undefined ? { width: patch.width > 0 ? patch.width : undefined } : {}),
             ...(writesLabel
               ? {
                   label: {

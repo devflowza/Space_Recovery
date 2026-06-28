@@ -1,7 +1,7 @@
 import React from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Input } from '../../../ui/Input';
-import { ColorField, FieldGroup, ToggleRow } from '../controls';
+import { ColorField, FieldGroup, NumberField, ToggleRow } from '../controls';
 import { PDF_COLORS } from '../../../../lib/pdf/styles';
 import { resolveSecondary, secondaryText } from '../../../../lib/pdf/templateConfig';
 import { isRTLLanguage } from '../../../../lib/documentTranslations';
@@ -52,6 +52,17 @@ export const TableTab: React.FC<{ api: StudioApi }> = ({ api }) => {
                       onChange={(e) => api.patchColumn(col.key, { labelSecondary: e.target.value, secondary })}
                     />
                   )}
+                </div>
+                <div className="mt-2">
+                  <NumberField
+                    label="Width"
+                    suffix="pt"
+                    value={col.width ?? 0}
+                    min={0}
+                    max={300}
+                    onChange={(v) => api.patchColumn(col.key, { width: v })}
+                  />
+                  <p className="mt-1 text-xs text-slate-400">0 = auto-fit to content.</p>
                 </div>
               </li>
             ))}
