@@ -30,6 +30,12 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 export const DOCUMENT_TRANSLATIONS = {
   ar: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'سجل الدفعات',
+    document: 'المستند',
+    method: 'الطريقة',
+    recordedBy: 'سجلها',
+    reference: 'المرجع',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'التفاصيل',
     vatRegNo: 'الرقم الضريبي',
@@ -310,6 +316,12 @@ export const DOCUMENT_TRANSLATIONS = {
     devicesReceivedHeader: 'الأجهزة المستلمة',
   },
   pl: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'Historia płatności',
+    document: 'Dokument',
+    method: 'Metoda',
+    recordedBy: 'Zarejestrował',
+    reference: 'Numer referencyjny',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'Szczegóły',
     vatRegNo: 'Nr rej. VAT',
@@ -591,6 +603,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: 'Podpisując jako upoważniony sygnatariusz, upoważniam do kontynuowania i potwierdzam, że Warunki mają zastosowanie do tego zlecenia. Papierowa kopia Warunków jest dostępna w recepcji na życzenie.',
   },
   ru: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'История платежей',
+    document: 'Документ',
+    method: 'Метод',
+    recordedBy: 'Записал',
+    reference: 'Референс',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'Детали',
     vatRegNo: 'Рег. № НДС',
@@ -872,6 +890,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: 'Подписывая как уполномоченный представитель, я разрешаю продолжить и подтверждаю, что Условия применяются к данному заказу. Печатная копия Условий доступна на стойке регистрации по запросу.',
   },
   fr: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'Historique des paiements',
+    document: 'Document',
+    method: 'Méthode',
+    recordedBy: 'Enregistré par',
+    reference: 'Référence',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'Détails',
     vatRegNo: 'N° TVA',
@@ -1153,6 +1177,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: 'En signant en tant que signataire autorisé, j\'autorise à procéder et reconnais que les Conditions Générales s\'appliquent à cet engagement. Une copie papier des Conditions est disponible à la réception sur demande.',
   },
   de: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'Zahlungsverlauf',
+    document: 'Dokument',
+    method: 'Methode',
+    recordedBy: 'Erfasst von',
+    reference: 'Referenz',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'Details',
     vatRegNo: 'USt-IdNr.',
@@ -1434,6 +1464,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: 'Durch meine Unterschrift als autorisierter Unterzeichner ermächtige ich zur Fortsetzung und bestätige, dass die AGB für diesen Auftrag gelten. Eine Papierkopie der AGB ist am Empfang auf Anfrage erhältlich.',
   },
   it: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'Cronologia pagamenti',
+    document: 'Documento',
+    method: 'Metodo',
+    recordedBy: 'Registrato da',
+    reference: 'Riferimento',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'Dettagli',
     vatRegNo: 'P. IVA',
@@ -1715,6 +1751,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: 'Firmando come firmatario autorizzato, autorizzo a procedere e riconosco che i Termini e Condizioni si applicano a questo incarico. Una copia cartacea dei T&C è disponibile alla reception su richiesta.',
   },
   es: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'Historial de pagos',
+    document: 'Documento',
+    method: 'Método',
+    recordedBy: 'Registrado por',
+    reference: 'Referencia',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'Detalles',
     vatRegNo: 'N.º IVA',
@@ -1996,6 +2038,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: 'Al firmar como signatario autorizado, autorizo a proceder y reconozco que los Términos y Condiciones aplican a este compromiso. Una copia impresa de los T&C está disponible en la recepción a solicitud.',
   },
   tr: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'Ödeme Geçmişi',
+    document: 'Belge',
+    method: 'Yöntem',
+    recordedBy: 'Kaydeden',
+    reference: 'Referans',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'Ayrıntılar',
     vatRegNo: 'KDV No',
@@ -2277,6 +2325,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: 'Yetkili imza sahibi olarak imzalayarak, devam etme yetkisi veriyorum ve Şartlar ve Koşulların bu iş için geçerli olduğunu kabul ediyorum. Şartlar ve Koşulların basılı bir kopyası talep üzerine resepsiyonda mevcuttur.',
   },
   ko: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: '결제 내역',
+    document: '문서',
+    method: '방법',
+    recordedBy: '기록자',
+    reference: '참조',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: '세부 정보',
     vatRegNo: 'VAT 등록번호',
@@ -2558,6 +2612,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: '공인 서명자로서 서명함으로써 진행을 승인하고 약관이 이 업무에 적용됨을 인정합니다. 약관의 인쇄본은 요청 시 접수처에서 이용 가능합니다.',
   },
   pt: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'Histórico de pagamentos',
+    document: 'Documento',
+    method: 'Método',
+    recordedBy: 'Registado por',
+    reference: 'Referência',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'Detalhes',
     vatRegNo: 'NIF/IVA',
@@ -2839,6 +2899,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: 'Ao assinar como signatário autorizado, autorizo a prosseguir e reconheço que os Termos e Condições se aplicam a este compromisso. Uma cópia impressa dos T&C está disponível na recepção mediante solicitação.',
   },
   uk: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'Історія платежів',
+    document: 'Документ',
+    method: 'Метод',
+    recordedBy: 'Записав',
+    reference: 'Референс',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'Деталі',
     vatRegNo: 'Рег. № ПДВ',
@@ -3120,6 +3186,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: 'Підписуючи як уповноважений представник, я дозволяю продовжити і визнаю, що Умови застосовуються до цього замовлення. Друкована копія Умов доступна на стійці реєстрації за запитом.',
   },
   cs: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'Historie plateb',
+    document: 'Dokument',
+    method: 'Metoda',
+    recordedBy: 'Zaznamenal',
+    reference: 'Reference',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'Podrobnosti',
     vatRegNo: 'DIČ',
@@ -3401,6 +3473,12 @@ export const DOCUMENT_TRANSLATIONS = {
     termsText: 'Podpisem jako oprávněný podepisující opravňuji k pokračování a potvrzuji, že se na tento závazek vztahují Obchodní podmínky. Papírová kopie OP je k dispozici na recepci na požádání.',
   },
   th: {
+    // NEW (2026-06-28): payment-history labels - pending native-speaker review
+    paymentHistory: 'ประวัติการชำระเงิน',
+    document: 'เอกสาร',
+    method: 'วิธี',
+    recordedBy: 'บันทึกโดย',
+    reference: 'อ้างอิง',
     // NEW (2026-06-28): renderer fallback labels - pending native-speaker review
     details: 'รายละเอียด',
     vatRegNo: 'เลขทะเบียน VAT',

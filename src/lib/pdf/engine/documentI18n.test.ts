@@ -49,6 +49,21 @@ describe('secondaryText', () => {
     expect(secondaryText({ en: 'Total:', ar: 'الإجمالي' }, 'fr')).toBeTruthy();
     expect(secondaryText({ en: 'Total:', ar: 'الإجمالي' }, 'ar')).toBe('الإجمالي');
   });
+
+  it('trims stray whitespace in legacy Arabic before joining', () => {
+    // Real tenant data had trailing-space Arabic ('الكمية ' / 'المجموع ') that
+    // silently broke the join; trimming repairs it.
+    expect(secondaryText({ en: 'Total', ar: 'المجموع ' }, 'fr')).toBeTruthy();
+    expect(secondaryText({ en: 'Qty', ar: 'الكمية ' }, 'fr')).toBeTruthy();
+  });
+
+  it('falls back to the English label name when Arabic is empty/missing', () => {
+    // A saved override that dropped the secondary (ar:'') must still translate —
+    // in every language, including Arabic — via the English-name → key join.
+    expect(secondaryText({ en: 'Invoice Terms', ar: '' }, 'fr')).toBeTruthy();
+    expect(secondaryText({ en: 'Invoice Terms', ar: '' }, 'ar')).toBe('شروط الفاتورة');
+    expect(secondaryText({ en: 'Invoice Terms' }, 'de')).toBeTruthy();
+  });
 });
 
 describe('resolveSecondary', () => {

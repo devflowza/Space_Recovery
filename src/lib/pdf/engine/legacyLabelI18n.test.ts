@@ -56,6 +56,17 @@ describe('legacy {en,ar} financial labels resolve to all secondary languages', (
         { en: 'VAT Reg. No.', ar: 'الرقم الضريبي' },
         { en: 'Terms & Conditions', ar: 'الشروط والأحكام' },
         { en: 'Notes', ar: 'ملاحظات' },
+        // Payment-history labels (sample data emits none, so assert explicitly).
+        { en: 'Payment History', ar: 'سجل الدفعات' },
+        { en: 'Document', ar: 'المستند' },
+        { en: 'Method', ar: 'الطريقة' },
+        { en: 'Recorded By', ar: 'سجلها' },
+        { en: 'Reference', ar: 'المرجع' },
+        // Saved-override defects seen in real tenant data: trailing-space Arabic
+        // and empty Arabic — both must still resolve (trim + English-name fallback).
+        { en: 'Qty', ar: 'الكمية ' },
+        { en: 'Total', ar: 'المجموع ' },
+        { en: 'Invoice Terms', ar: '' },
       );
       expect(labels.length).toBeGreaterThan(8); // sanity: labels were actually found
 

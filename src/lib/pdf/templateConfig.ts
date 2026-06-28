@@ -88,32 +88,71 @@ function keyForArabic(ar: string): TranslationKey | undefined {
   return arabicLabelKey(ar) ?? ARABIC_ALIASES[ar];
 }
 
+/** Normalize an English label to a comparison key: lowercase, strip non-alphanum
+ *  (drops spaces, ':' , '%', punctuation). 'Invoice Terms' / 'Net Amount:' →
+ *  'invoiceterms' / 'netamount'. */
+function normalizeEnglish(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+/**
+ * Reverse index normalized-English → key, built from the key NAMES (which ARE the
+ * English label in camelCase: `invoiceTerms`, `total`, `customerInformation`).
+ * The LAST-RESORT join when a label's Arabic is empty / whitespace / missing —
+ * e.g. a saved template override that dropped the secondary
+ * (`{ en:'Invoice Terms', ar:'' }`), or a label authored English-only. Works for
+ * Arabic too, so such a label still renders bilingually in an Arabic document.
+ */
+let _englishToKey: Map<string, TranslationKey> | null = null;
+function englishLabelKey(enText: string): TranslationKey | undefined {
+  if (_englishToKey === null) {
+    _englishToKey = new Map();
+    for (const key of Object.keys(DOCUMENT_TRANSLATIONS.ar)) {
+      const n = normalizeEnglish(key);
+      if (n && !_englishToKey.has(n)) _englishToKey.set(n, key as TranslationKey);
+    }
+  }
+  const n = normalizeEnglish(enText);
+  return n ? _englishToKey.get(n) : undefined;
+}
+
 export function secondaryText(
   label: SecondaryTextSource | undefined,
   lang: LanguageCode | null,
 ): string | undefined {
   if (!label || !lang) return undefined;
-  const direct = label.i18n?.[lang] ?? (lang === 'ar' ? label.ar : undefined);
+  const direct = label.i18n?.[lang] ?? (lang === 'ar' ? label.ar?.trim() || undefined : undefined);
   if (direct) return direct;
-  if (!label.ar || lang === 'ar') return undefined;
-  // Generalized fallback: a legacy `{ en, ar }` label carries only Arabic. Join
-  // that Arabic to the central translation table (direct value, then drift alias)
-  // so the chosen secondary (fr/it/…) resolves — this is what makes the invoice/
-  // quote/receipt/checkout adapters, which predate the i18n map, render
-  // bilingually in all 13 languages without a per-adapter rewrite.
-  const key = keyForArabic(label.ar);
-  if (key) {
-    const t = getTranslation(key, lang);
-    if (t) return t;
+  // Join the legacy Arabic to the central table — TRIMMED, because some authored
+  // labels carry stray whitespace ('الكمية ' / 'المجموع '), which silently broke
+  // the join. Then a drift alias; then an interpolated split ("VAT 5%:" → translate
+  // the term, keep the rate). This is what makes the invoice/quote/receipt/checkout
+  // adapters (legacy `{ en, ar }`, no i18n) render bilingually in all 13 languages.
+  const arTrim = label.ar?.trim();
+  if (arTrim && lang !== 'ar') {
+    const key = keyForArabic(arTrim);
+    if (key) {
+      const t = getTranslation(key, lang);
+      if (t) return t;
+    }
+    const m = arTrim.match(/^(.*?)(\s*\d+(?:[.,]\d+)?\s*%\s*:?)\s*$/);
+    if (m) {
+      const baseKey = keyForArabic(m[1].trim());
+      if (baseKey) {
+        const t = getTranslation(baseKey, lang);
+        if (t) return `${t}${m[2]}`;
+      }
+    }
   }
-  // Interpolated labels like "VAT 5%:" — translate the leading term and keep the
-  // trailing rate token (` 5%:`) verbatim, since digits/percent are language-neutral.
-  const m = label.ar.match(/^(.*?)(\s*\d+(?:[.,]\d+)?\s*%\s*:?)\s*$/);
-  if (m) {
-    const baseKey = keyForArabic(m[1].trim());
-    if (baseKey) {
-      const t = getTranslation(baseKey, lang);
-      if (t) return `${t}${m[2]}`;
+  // Last resort — join by the ENGLISH label name. Handles a label whose Arabic is
+  // empty / whitespace / missing (a saved override that stripped the secondary,
+  // e.g. config.labels.recordTerms = { en:'Invoice Terms', ar:'' }), in EVERY
+  // language including Arabic.
+  if (label.en) {
+    const key = englishLabelKey(label.en);
+    if (key) {
+      const t = getTranslation(key, lang);
+      if (t) return t;
     }
   }
   return undefined;
