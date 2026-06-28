@@ -79,12 +79,10 @@ describe('translationPolicy — payment-history heading suppression', () => {
   it('system_only → the "Date" column header is primary-only (no English half)', () => {
     expect(renderWithHistory({ mode: 'system_only' })).not.toContain('"text":"التاريخ\\nDate"');
   });
-  it('custom { paymentHistory: false } → the section HEADING follows the toggle (primary-only)', () => {
-    // The Payment-history toggle now controls the WHOLE block — heading + columns —
-    // so a tenant can keep the statement single-language (less clutter).
-    const out = renderWithHistory({ mode: 'custom', groups: { paymentHistory: false } });
-    expect(out).not.toContain('"text":"سجل الدفعات\\nPayment History"'); // no longer bilingual
-    expect(out).toContain('"text":"سجل الدفعات"');                        // heading is the Arabic primary
+  it('custom { paymentHistory: false } → the section HEADING stays bilingual (only columns toggle)', () => {
+    // The toggle controls ONLY the column labels; the heading + box are unchanged,
+    // so the section title stays bilingual.
+    expect(renderWithHistory({ mode: 'custom', groups: { paymentHistory: false } })).toContain('"text":"سجل الدفعات\\nPayment History"');
   });
 });
 

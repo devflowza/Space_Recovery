@@ -32,7 +32,10 @@ export const renderTotals: SectionRenderer = (
   // the Arabic family by `bilingualLabelRuns`. The currency/number value stays a
   // SEPARATE run so it keeps LTR ordering within the RTL flow (never reversed).
   const baseFont = engine.ctx.fontFamily;
+  // Fixed value column so every amount right-aligns to the same edge.
+  const VALUE_W = 92;
   const rows: Content[] = [];
+  let ruled = false;
 
   for (const line of totals) {
     // Per-run label so Arabic shapes in its own font even when the document
@@ -41,33 +44,37 @@ export const renderTotals: SectionRenderer = (
     const labelRuns = bilingualLabelRuns(line.label, labelLang, baseFont);
 
     if (line.emphasis) {
-      // Grand-total: boxed, larger, brand-colored value.
+      // A hairline rule separates the subtotals from the grand total.
+      if (!ruled) {
+        rows.push({ canvas: [{ type: 'line', x1: 0, y1: 0, x2: 245, y2: 0, lineWidth: 0.5, lineColor: PDF_COLORS.border }], margin: [0, 3, 0, 4] });
+        ruled = true;
+      }
+      // Grand total: a clean tinted band (no boxy border), bold brand-colored
+      // value, slightly larger — reads as the document's headline figure.
       rows.push({
         table: {
-          widths: ['*', 100],
+          widths: ['*', VALUE_W],
           body: [
             [
-              { text: labelRuns, fontSize: 10, bold: true, color: PDF_COLORS.text, alignment: 'right', border: [false, false, false, false], margin: [0, 3, 0, 3] },
-              { text: line.value, fontSize: 11, bold: true, color: PDF_COLORS.primary, alignment: 'right', border: [false, false, false, false], margin: [0, 3, 0, 3] },
+              { text: labelRuns, fontSize: 10.5, bold: true, color: PDF_COLORS.text, alignment: 'right', border: [false, false, false, false], margin: [0, 5, 8, 5] },
+              { text: line.value, fontSize: 12, bold: true, color: PDF_COLORS.primary, alignment: 'right', border: [false, false, false, false], margin: [0, 5, 8, 5] },
             ],
           ],
         },
         layout: {
           fillColor: () => PDF_COLORS.background,
-          hLineWidth: () => 0.5,
-          vLineWidth: () => 0.5,
-          hLineColor: () => PDF_COLORS.border,
-          vLineColor: () => PDF_COLORS.border,
+          hLineWidth: () => 0,
+          vLineWidth: () => 0,
         },
-        margin: [0, 4, 0, 0],
+        margin: [0, 0, 0, 0],
       });
     } else {
       rows.push({
         columns: [
           { text: labelRuns, fontSize: 9, color: PDF_COLORS.textLight, width: '*', alignment: 'right' },
-          { text: line.value, fontSize: 9, bold: true, color: PDF_COLORS.text, width: 100, alignment: 'right' },
+          { text: line.value, fontSize: 9, color: PDF_COLORS.text, width: VALUE_W, alignment: 'right' },
         ],
-        margin: [0, 2, 0, 2],
+        margin: [0, 2.5, 8, 2.5],
       });
     }
   }

@@ -96,9 +96,10 @@ export const renderPaymentHistory: SectionRenderer = (
     margin: [0, 10, 0, 0],
     stack: [
       {
-        // Heading follows the same policy as the column headers, so the
-        // "Payment history" toggle controls the whole block (heading + columns).
-        text: resolveLabel(history.title, labelLang),
+        // The section HEADING stays bilingual regardless of the toggle; only the
+        // COLUMN labels follow the 'paymentHistory' policy (so the box + heading
+        // are unchanged — only the column text drops its secondary language).
+        text: resolveLabel(history.title, language),
         fontSize: 10,
         bold: true,
         color: PDF_COLORS.text,

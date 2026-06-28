@@ -200,17 +200,31 @@ export function assembleTypst(
     parts.push(`#table(columns: (${colSpec}), align: (${aligns}), table.header(${headerCells}),\n${body})`, '#v(6pt)');
   }
 
-  // ── Totals — normal rows (muted label / bold value) + boxed grand total ───
+  // ── Totals — a clean right-aligned summary: muted label + value rows, a
+  // hairline rule before the grand total, and the grand total in a full-width
+  // tinted band (bold navy value). Two fixed columns so every value right-aligns
+  // to the same edge. ───────────────────────────────────────────────────────
   if (data.totals?.length) {
-    const lines = data.totals
-      .map((t) => {
-        if (t.emphasis) {
-          return `block(width: 100%, fill: rgb("${SHADE}"), stroke: 0.5pt + rgb("${BORDER}"), inset: (x: 6pt, y: 3pt), grid(columns: (1fr, auto), column-gutter: 10pt, align(end + horizon, text(size: 10pt, weight: "bold", fill: rgb("${TEXT}"), [${biLine(t.label, 'totals')}])), align(end + horizon, text(size: 11pt, weight: "bold", fill: rgb("${NAVY}"), [${V(t.value)}]))))`;
+    const VALUE_W = '92pt';
+    const rows: string[] = [];
+    let ruled = false;
+    for (const t of data.totals) {
+      const lbl = biLine(t.label, 'totals');
+      if (t.emphasis) {
+        if (!ruled) {
+          rows.push(`block(width: 100%, inset: (x: 8pt, y: 0pt), line(length: 100%, stroke: 0.5pt + rgb("${BORDER}")))`);
+          ruled = true;
         }
-        return `grid(columns: (1fr, auto), column-gutter: 10pt, align(end, text(size: 9pt, fill: rgb("${MUTED}"), [${biLine(t.label, 'totals')}])), align(end, text(size: 9pt, weight: "bold", fill: rgb("${TEXT}"), [${V(t.value)}])))`;
-      })
-      .join(', ');
-    parts.push(`#align(end, block(width: 47%, stack(spacing: 4pt, ${lines})))`, '#v(8pt)');
+        rows.push(
+          `block(width: 100%, fill: rgb("${SHADE}"), inset: (x: 8pt, y: 6pt), grid(columns: (1fr, ${VALUE_W}), column-gutter: 12pt, align(end + horizon, text(size: 10.5pt, weight: "bold", fill: rgb("${TEXT}"), [${lbl}])), align(end + horizon, text(size: 12pt, weight: "bold", fill: rgb("${NAVY}"), [${V(t.value)}]))))`,
+        );
+      } else {
+        rows.push(
+          `block(width: 100%, inset: (x: 8pt, y: 2.5pt), grid(columns: (1fr, ${VALUE_W}), column-gutter: 12pt, align(end, text(size: 9pt, fill: rgb("${MUTED}"), [${lbl}])), align(end, text(size: 9.5pt, fill: rgb("${TEXT}"), [${V(t.value)}]))))`,
+        );
+      }
+    }
+    parts.push(`#align(end, block(width: 260pt, stack(spacing: 0pt, ${rows.join(', ')})))`, '#v(8pt)');
   }
 
   // ── Terms / Notes (no icon) ──────────────────────────────────────────────
@@ -228,7 +242,8 @@ export function assembleTypst(
   // ── Payment history — heading + light-header table ───────────────────────
   if (data.paymentHistory?.rows?.length) {
     const ph = data.paymentHistory;
-    const phSecondary = fieldLabelsBilingual(config.translationPolicy, 'paymentHistory') ? A(ph.title) : '';
+    // The section HEADING stays bilingual regardless of the toggle; only the
+    // COLUMN labels follow the 'paymentHistory' policy (heading + box unchanged).
     const heads = [ph.columns.date, ph.columns.document, ph.columns.method, ph.columns.reference, ph.columns.recordedBy, ph.columns.amount, ph.columns.balance];
     const headerCells = heads
       .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: 8pt, fill: rgb("${TEXT}"), [${biLine(c, 'paymentHistory')}]))`)
@@ -236,7 +251,7 @@ export function assembleTypst(
     const body = ph.rows
       .map((r) => [r.date, r.document, r.method, r.reference, r.recordedBy, r.amount, r.runningBalance].map((v) => `text(size: 8pt, fill: rgb("${TEXT}"), [${V(v)}])`).join(', '))
       .join(',\n');
-    parts.push(`#heading([${E(ph.title)}], [${phSecondary}])`, `#table(columns: 7, table.header(${headerCells}),\n${body})`, '#v(8pt)');
+    parts.push(`#heading([${E(ph.title)}], [${A(ph.title)}])`, `#table(columns: 7, table.header(${headerCells}),\n${body})`, '#v(8pt)');
   }
 
   // ── Signatures ───────────────────────────────────────────────────────────
