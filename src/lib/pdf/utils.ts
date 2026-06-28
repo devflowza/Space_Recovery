@@ -58,6 +58,24 @@ export function formatCurrency(
   return useParens ? `(${body})` : body;
 }
 
+/**
+ * Format a money amount for the engine adapters with a thousands separator.
+ * The adapters read raw `accounting_locales` (symbol / decimal_places /
+ * position) and previously used a bare `amount.toFixed()` — which dropped the
+ * grouping separator (e.g. `2000.000 OMR`). This applies comma grouping (and a
+ * dot decimal) uniformly so every document reads one format (e.g.
+ * `2,000.000 OMR`). Mirrors the grouping in {@link formatCurrency}.
+ */
+export function formatEngineMoney(
+  amount: number,
+  opts: { symbol: string; decimalPlaces: number; position: 'before' | 'after' },
+): string {
+  const [intPart, decPart] = amount.toFixed(opts.decimalPlaces).split('.');
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const formatted = decPart ? `${grouped}.${decPart}` : grouped;
+  return opts.position === 'before' ? `${opts.symbol} ${formatted}` : `${formatted} ${opts.symbol}`;
+}
+
 export function formatCapacity(capacity: string | null | undefined): string {
   if (!capacity) return '-';
   const trimmed = capacity.trim();

@@ -40,7 +40,7 @@ const TINY_PNG =
 
 /**
  * Representative tax invoice WITH payment history, a discount, 5% VAT, and a
- * partial payment. Currency AED, 2 decimals, position 'after' → "1500.00 AED".
+ * partial payment. Currency AED, 2 decimals, position 'after' → "1,500.00 AED".
  * Numbers chosen so the math is easy to read:
  *   subtotal 1500.00, discount 100.00 → net 1400.00, VAT 5% = 70.00,
  *   total 1470.00, amount paid 470.00 → balance due 1000.00.
@@ -221,7 +221,7 @@ describe('invoice parity — engine output matches the legacy builder', () => {
       expect(engine.some((t) => t.includes(desc))).toBe(true);
     }
     // Line-item monetary values (AED, 2dp, 'after').
-    for (const val of ['1000.00 AED', '250.00 AED', '500.00 AED']) {
+    for (const val of ['1,000.00 AED', '250.00 AED', '500.00 AED']) {
       expect(engine.some((t) => t.includes(val))).toBe(true);
     }
   });
@@ -231,7 +231,7 @@ describe('invoice parity — engine output matches the legacy builder', () => {
     const engineJoined = allTexts(renderEngine(data)).join('|');
     const legacyJoined = allTexts(renderLegacy(data)).join('|');
 
-    for (const val of ['1500.00 AED', '100.00 AED', '1400.00 AED', '70.00 AED', '1470.00 AED']) {
+    for (const val of ['1,500.00 AED', '100.00 AED', '1,400.00 AED', '70.00 AED', '1,470.00 AED']) {
       expect(legacyJoined).toContain(val);
       expect(engineJoined).toContain(val);
     }
@@ -251,7 +251,7 @@ describe('invoice parity — engine output matches the legacy builder', () => {
     // Values: paid 470.00, balance 1000.00.
     const engineJoined = engine.join('|');
     expect(engineJoined).toContain('470.00 AED');
-    expect(engineJoined).toContain('1000.00 AED');
+    expect(engineJoined).toContain('1,000.00 AED');
   });
 
   it('renders every payment-history row (gap 4 — payment history)', () => {
@@ -267,8 +267,8 @@ describe('invoice parity — engine output matches the legacy builder', () => {
     }
     // Running balances (statement-style).
     const engineJoined = engine.join('|');
-    expect(engineJoined).toContain('1170.00 AED');
-    expect(engineJoined).toContain('1000.00 AED');
+    expect(engineJoined).toContain('1,170.00 AED');
+    expect(engineJoined).toContain('1,000.00 AED');
   });
 
   it('omits payment history + paid/balance on a proforma (parity)', () => {

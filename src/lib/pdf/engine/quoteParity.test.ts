@@ -42,7 +42,7 @@ const TINY_PNG =
 
 /**
  * Representative quote WITH an amount discount, 5% VAT, a bank box, terms and
- * notes. Currency AED, 2 decimals, position 'after' → "1500.00 AED".
+ * notes. Currency AED, 2 decimals, position 'after' → "1,500.00 AED".
  * Math (mirrors the legacy builder, discount_type 'amount'):
  *   subtotal 1500.00, discount 100.00 → net 1400.00, VAT 5% = 70.00,
  *   total 1470.00.
@@ -203,7 +203,7 @@ describe('quote parity — engine output matches the legacy builder', () => {
       expect(engine.some((t) => t.includes(desc))).toBe(true);
     }
     // Line-item monetary values (AED, 2dp, 'after').
-    for (const val of ['1000.00 AED', '250.00 AED', '500.00 AED']) {
+    for (const val of ['1,000.00 AED', '250.00 AED', '500.00 AED']) {
       expect(engine.some((t) => t.includes(val))).toBe(true);
     }
   });
@@ -213,7 +213,7 @@ describe('quote parity — engine output matches the legacy builder', () => {
     const engineJoined = allTexts(renderEngine(data)).join('|');
     const legacyJoined = allTexts(renderLegacy(data)).join('|');
 
-    for (const val of ['1500.00 AED', '100.00 AED', '1400.00 AED', '70.00 AED', '1470.00 AED']) {
+    for (const val of ['1,500.00 AED', '100.00 AED', '1,400.00 AED', '70.00 AED', '1,470.00 AED']) {
       expect(legacyJoined).toContain(val);
       expect(engineJoined).toContain(val);
     }
@@ -230,7 +230,7 @@ describe('quote parity — engine output matches the legacy builder', () => {
     const engineJoined = allTexts(renderEngine(data)).join('|');
     const legacyJoined = allTexts(renderLegacy(data)).join('|');
 
-    for (const val of ['150.00 AED', '1350.00 AED', '67.50 AED', '1417.50 AED']) {
+    for (const val of ['150.00 AED', '1,350.00 AED', '67.50 AED', '1,417.50 AED']) {
       expect(legacyJoined).toContain(val);
       expect(engineJoined).toContain(val);
     }

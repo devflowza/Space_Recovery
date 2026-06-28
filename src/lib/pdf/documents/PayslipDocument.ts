@@ -1,7 +1,7 @@
 import type { TDocumentDefinitions, Content, TableCell } from 'pdfmake/interfaces';
 import type { PayslipDocumentData, TranslationContext } from '../types';
 import { PDF_COLORS, getStylesWithFont, createBilingualSectionHeader } from '../styles';
-import { formatDate, safeString } from '../utils';
+import { formatDate, safeString, formatEngineMoney } from '../utils';
 
 export function buildPayslipDocument(
   data: PayslipDocumentData,
@@ -16,12 +16,8 @@ export function buildPayslipDocument(
   const decimalPlaces = payslipData.accounting_locales?.decimal_places || 2;
   const currencyPosition = payslipData.accounting_locales?.currency_position || 'after';
 
-  const formatCurrency = (amount: number): string => {
-    const formatted = amount.toFixed(decimalPlaces);
-    return currencyPosition === 'before'
-      ? `${currencySymbol} ${formatted}`
-      : `${formatted} ${currencySymbol}`;
-  };
+  const formatCurrency = (amount: number): string =>
+    formatEngineMoney(amount, { symbol: currencySymbol, decimalPlaces, position: currencyPosition });
 
   const earnings = payslipData.items?.filter((item) => item.component_type === 'earning') || [];
   const deductions = payslipData.items?.filter((item) => item.component_type === 'deduction') || [];

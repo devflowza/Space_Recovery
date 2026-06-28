@@ -6,7 +6,7 @@ import {
   createBilingualInfoBox,
   createBilingualSectionHeader,
 } from '../styles';
-import { formatDate, buildCompanyAddress, safeString } from '../utils';
+import { formatDate, buildCompanyAddress, safeString, formatEngineMoney } from '../utils';
 import { getGeneralIconSvg } from '../../deviceIconMapper';
 import { buildLogoNode } from '../brandingImage';
 
@@ -37,10 +37,12 @@ export function buildCreditNoteDocument(
 
   const decimalPlaces = cn.decimal_places ?? 2;
   const currencySymbol = cn.currency_symbol || 'USD';
-  const formatCurrency = (amount: number): string => {
-    const formatted = amount.toFixed(decimalPlaces);
-    return cn.currency_position === 'before' ? `${currencySymbol} ${formatted}` : `${formatted} ${currencySymbol}`;
-  };
+  const formatCurrency = (amount: number): string =>
+    formatEngineMoney(amount, {
+      symbol: currencySymbol,
+      decimalPlaces,
+      position: cn.currency_position === 'before' ? 'before' : 'after',
+    });
 
   const headerContent: Content[] = [];
 

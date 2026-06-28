@@ -18,7 +18,7 @@
 
 import type { QuoteDocumentData } from '../../types';
 import type { DocumentTemplateConfig, ColumnConfig } from '../../templateConfig';
-import { formatDate, safeString } from '../../utils';
+import { formatDate, safeString, formatEngineMoney } from '../../utils';
 import { amountInWordsAr, amountInWordsEn } from '../amountInWords';
 import type {
   BankBlock,
@@ -67,10 +67,8 @@ export function toEngineData(
   const currencySymbol = quoteData.accounting_locales?.currency_symbol || 'USD';
   const decimalPlaces = quoteData.accounting_locales?.decimal_places ?? 2;
   const currencyPosition = quoteData.accounting_locales?.currency_position || 'after';
-  const money = (amount: number): string => {
-    const formatted = amount.toFixed(decimalPlaces);
-    return currencyPosition === 'before' ? `${currencySymbol} ${formatted}` : `${formatted} ${currencySymbol}`;
-  };
+  const money = (amount: number): string =>
+    formatEngineMoney(amount, { symbol: currencySymbol, decimalPlaces, position: currencyPosition });
 
   // ---- Title ---------------------------------------------------------------
   const documentTitle: LabelText = { en: 'QUOTATION', ar: 'عرض أسعار' };
