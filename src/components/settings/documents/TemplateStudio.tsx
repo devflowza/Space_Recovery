@@ -38,6 +38,9 @@ import {
   type TermsContentConfig,
   type TemplateConfigOverride,
   type TemplateDocumentType,
+  type TotalsConfig,
+  type TotalsLineKey,
+  type TotalsRowColor,
   type TranslationPolicyConfig,
   type TypographyConfig,
   type TypographyStyleKey,
@@ -108,6 +111,12 @@ export interface StudioApi {
   setSectionLabel: (key: string, lang: 'en' | LanguageCode, value: string) => void;
   moveSection: (key: string, direction: -1 | 1) => void;
   setTotalsLine: (lineKey: string, on: boolean) => void;
+  /** Total-section customisation (style + highlight). */
+  setTotals: (patch: Partial<TotalsConfig>) => void;
+  /** Per-line label override (blank clears it → default wording). */
+  setTotalsLabel: (key: TotalsLineKey, value: string) => void;
+  /** Opt-in per-row colour for the grand total / balance-due / tax rows. */
+  setTotalsRowColor: (row: 'total' | 'balanceDue' | 'tax', patch: Partial<TotalsRowColor>) => void;
 }
 
 interface TemplateStudioProps {
@@ -461,6 +470,22 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
           sections[tIdx] = { ...totals, lines: { ...totals.lines, [lineKey]: on } };
           return { ...prev, sections };
         }),
+      setTotals: (patch) => mergeGroup('totals', patch),
+      setTotalsLabel: (key, value) =>
+        setOverride((prev) => {
+          const labels = { ...prev.totals?.labels };
+          if (value.trim() === '') delete labels[key];
+          else labels[key] = value;
+          return { ...prev, totals: { ...prev.totals, labels } };
+        }),
+      setTotalsRowColor: (row, patch) =>
+        setOverride((prev) => ({
+          ...prev,
+          totals: {
+            ...prev.totals,
+            rowColors: { ...prev.totals?.rowColors, [row]: { ...prev.totals?.rowColors?.[row], ...patch } },
+          },
+        })),
     };
   }, [docType, resolved, override]);
 

@@ -17,7 +17,7 @@
  */
 
 import type { QuoteDocumentData } from '../../types';
-import type { DocumentTemplateConfig, ColumnConfig } from '../../templateConfig';
+import type { DocumentTemplateConfig, ColumnConfig, TotalsLineKey } from '../../templateConfig';
 import { formatDate, safeString, formatEngineMoney } from '../../utils';
 import { amountInWordsAr, amountInWordsEn } from '../amountInWords';
 import type {
@@ -138,23 +138,33 @@ export function toEngineData(
   const lines = totalsLines(config);
   const on = (key: string): boolean => lines[key] !== false; // default-on unless explicitly false
 
+  // Per-line label override (Studio → Total) replaces the default English wording.
+  const tLabels = config.totals?.labels ?? {};
+  const tl = (key: TotalsLineKey, en: string, ar: string): { key: TotalsLineKey; label: LabelText } => ({
+    key,
+    label: { en: tLabels[key] ?? en, ar },
+  });
+
   const totals: NonNullable<EngineDocData['totals']> = [];
   if (on('subtotal')) {
-    totals.push({ label: { en: 'Subtotal:', ar: 'المجموع الفرعي:' }, value: money(subtotal) });
+    totals.push({ ...tl('subtotal', 'Subtotal:', 'المجموع الفرعي:'), value: money(subtotal) });
   }
   if (on('discount') && discountValue > 0) {
+    const dline = tl('discount', 'Discount:', 'الخصم:');
     const discountLabel: LabelText =
-      discountType === 'percentage'
-        ? { en: `Discount (${discountAmount}%):`, ar: `الخصم (${discountAmount}%):` }
-        : { en: 'Discount:', ar: 'الخصم:' };
-    totals.push({ label: discountLabel, value: `- ${money(discountValue)}` });
-    totals.push({ label: { en: 'Net Amount:', ar: 'صافي المبلغ:' }, value: money(discountedSubtotal) });
+      tLabels.discount
+        ? dline.label // explicit override wins, even for a percentage discount
+        : discountType === 'percentage'
+          ? { en: `Discount (${discountAmount}%):`, ar: `الخصم (${discountAmount}%):` }
+          : dline.label;
+    totals.push({ key: 'discount', label: discountLabel, value: `- ${money(discountValue)}` });
+    totals.push({ ...tl('netAmount', 'Net Amount:', 'صافي المبلغ:'), value: money(discountedSubtotal) });
   }
   if (on('vat')) {
-    totals.push({ label: { en: `VAT ${taxRate}%:`, ar: `ضريبة القيمة المضافة ${taxRate}%:` }, value: money(taxAmount) });
+    totals.push({ ...tl('tax', `VAT ${taxRate}%:`, `ضريبة القيمة المضافة ${taxRate}%:`), value: money(taxAmount) });
   }
   if (on('total')) {
-    totals.push({ label: { en: 'Total:', ar: 'الإجمالي:' }, value: money(totalAmount), emphasis: true });
+    totals.push({ ...tl('total', 'Total:', 'الإجمالي:'), value: money(totalAmount), emphasis: true });
   }
   // Amount in words (opt-in; off by default). Language-aware.
   if (lines.amountInWords === true) {
@@ -162,7 +172,7 @@ export function toEngineData(
     const enWords = amountInWordsEn(totalAmount, currencySymbol, decimalPlaces);
     const arWords = amountInWordsAr(totalAmount, currencySymbol, decimalPlaces);
     totals.push({
-      label: { en: 'Amount in Words:', ar: 'المبلغ بالحروف:' },
+      ...tl('amountInWords', 'Amount in Words:', 'المبلغ بالحروف:'),
       value: mode === 'ar' ? arWords : mode.startsWith('bilingual') ? `${enWords}  ·  ${arWords}` : enWords,
     });
   }

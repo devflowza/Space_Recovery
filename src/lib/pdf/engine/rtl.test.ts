@@ -365,11 +365,12 @@ describe('renderTemplate — bilingual_sidebyside Arabic content', () => {
       language: { mode: 'ar', primary: 'ar' },
     });
     const def = renderTemplate(config, makeData(), bilingualArCtx, null, null);
-    // The emphasised grand total renders as a 2-cell table row; its label cell
-    // must be right-aligned (already true in LTR, must remain so in RTL).
-    const totalsTable = findTableByHeader(def.content, 'الإجمالي');
+    // Totals render as a single right-aligned table (subtotal … grand total). Find
+    // it by its first row (subtotal) and assert EVERY cell stays right-aligned.
+    const totalsTable = findTableByHeader(def.content, 'المجموع الفرعي');
     expect(totalsTable).not.toBeNull();
-    const aligns = rowCellAligns(totalsTable!.table.body[0]);
+    const aligns = totalsTable!.table.body.flatMap((row) => rowCellAligns(row));
+    expect(aligns.length).toBeGreaterThan(0);
     expect(aligns.every((a) => a === 'right')).toBe(true);
   });
 });

@@ -11,7 +11,7 @@
  */
 
 import type { InvoiceDocumentData } from '../../types';
-import type { DocumentTemplateConfig, ColumnConfig } from '../../templateConfig';
+import type { DocumentTemplateConfig, ColumnConfig, TotalsLineKey } from '../../templateConfig';
 import { formatDate, safeString, formatEngineMoney } from '../../utils';
 import { amountInWordsAr, amountInWordsEn } from '../amountInWords';
 import { buildZatcaTlvBase64 } from '../zatcaQr';
@@ -150,28 +150,36 @@ export function toEngineData(
   const lines = totalsLines(config);
   const on = (key: string): boolean => lines[key] !== false; // default-on unless explicitly false
 
+  // Each line carries a stable `key`; the tenant's per-line label override (Studio
+  // → Total) replaces the default English wording, the secondary keeps its default.
+  const tLabels = config.totals?.labels ?? {};
+  const tl = (key: TotalsLineKey, en: string, ar: string): { key: TotalsLineKey; label: LabelText } => ({
+    key,
+    label: { en: tLabels[key] ?? en, ar },
+  });
+
   const totals: NonNullable<EngineDocData['totals']> = [];
   if (on('subtotal')) {
-    totals.push({ label: { en: 'Subtotal:', ar: 'المجموع الفرعي:' }, value: money(subtotal) });
+    totals.push({ ...tl('subtotal', 'Subtotal:', 'المجموع الفرعي:'), value: money(subtotal) });
   }
   if (on('discount') && discountAmount > 0) {
-    totals.push({ label: { en: 'Discount:', ar: 'الخصم:' }, value: `- ${money(discountAmount)}` });
-    totals.push({ label: { en: 'Net Amount:', ar: 'صافي المبلغ:' }, value: money(discountedSubtotal) });
+    totals.push({ ...tl('discount', 'Discount:', 'الخصم:'), value: `- ${money(discountAmount)}` });
+    totals.push({ ...tl('netAmount', 'Net Amount:', 'صافي المبلغ:'), value: money(discountedSubtotal) });
   }
   if (on('vat')) {
-    totals.push({ label: { en: `VAT ${taxRate}%:`, ar: `ضريبة القيمة المضافة ${taxRate}%:` }, value: money(taxAmount) });
+    totals.push({ ...tl('tax', `VAT ${taxRate}%:`, `ضريبة القيمة المضافة ${taxRate}%:`), value: money(taxAmount) });
   }
   if (on('total')) {
-    totals.push({ label: { en: 'Total:', ar: 'الإجمالي:' }, value: money(totalAmount), emphasis: true });
+    totals.push({ ...tl('total', 'Total:', 'الإجمالي:'), value: money(totalAmount), emphasis: true });
   }
   // Amount Paid / Balance Due — only on non-proforma invoices with a recorded
   // payment, matching InvoiceDocument.ts (lines ~296-314).
   if (!isProforma && amountPaid > 0) {
     if (on('amountPaid')) {
-      totals.push({ label: { en: 'Amount Paid:', ar: 'المبلغ المدفوع:' }, value: money(amountPaid) });
+      totals.push({ ...tl('amountPaid', 'Amount Paid:', 'المبلغ المدفوع:'), value: money(amountPaid) });
     }
     if (on('balanceDue')) {
-      totals.push({ label: { en: 'Balance Due:', ar: 'الرصيد المستحق:' }, value: money(balanceDue) });
+      totals.push({ ...tl('balanceDue', 'Balance Due:', 'الرصيد المستحق:'), value: money(balanceDue) });
     }
   }
   // Amount in words (opt-in; off by default). Language-aware: Arabic-lead modes
@@ -181,7 +189,7 @@ export function toEngineData(
     const enWords = amountInWordsEn(totalAmount, currencySymbol, decimalPlaces);
     const arWords = amountInWordsAr(totalAmount, currencySymbol, decimalPlaces);
     const value = mode === 'ar' ? arWords : mode.startsWith('bilingual') ? `${enWords}  ·  ${arWords}` : enWords;
-    totals.push({ label: { en: 'Amount in Words:', ar: 'المبلغ بالحروف:' }, value });
+    totals.push({ ...tl('amountInWords', 'Amount in Words:', 'المبلغ بالحروف:'), value });
   }
 
   // ---- Terms / notes (structured: Payment Terms + Notes stacks) ------------

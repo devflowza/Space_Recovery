@@ -38,6 +38,12 @@ function toAlign(a: 'left' | 'center' | 'right' | undefined): string {
   return a === 'right' ? 'end' : a === 'center' ? 'center' : 'start';
 }
 
+const HEX_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+/** Validate a hex colour (opt-in totals colours); null → fall back to neutral. */
+function hexColor(v: string | undefined): string | null {
+  return typeof v === 'string' && HEX_RE.test(v.trim()) ? v.trim() : null;
+}
+
 function preamble(dir: string): string {
   return [
     '#set page(paper: "a4", margin: 40pt)',
@@ -209,29 +215,40 @@ export function assembleTypst(
   }
 
   // Totals — muted label/value rows, a hairline rule before the grand total, and
-  // the grand total in a tinted band (bold navy value). Fixed value column so
-  // every amount right-aligns to the same edge.
+  // the grand total in a tinted band. Honours config.totals (per-row colours +
+  // table style); the value column auto-sizes so the amount never wraps yet still
+  // right-aligns to the same edge. Defaults reproduce the neutral clean look.
   if (data.totals?.length) {
-    const VALUE_W = '92pt';
+    const tcfg = config.totals ?? {};
+    const trc = tcfg.rowColors ?? {};
+    const tstyle = tcfg.style ?? 'plain';
+    const thighlight = tcfg.highlightTotal !== false;
     const rows: string[] = [];
     let ruled = false;
-    for (const t of data.totals) {
+    data.totals.forEach((t, i) => {
+      const isTotal = !!t.emphasis;
+      const key = isTotal ? 'total' : t.key === 'balanceDue' ? 'balanceDue' : t.key === 'tax' ? 'tax' : null;
+      const colors = key ? trc[key] : undefined;
+      const striped = tstyle === 'striped' && i % 2 === 0;
+      const bg = hexColor(colors?.background) ?? (isTotal ? (thighlight ? SHADE : null) : striped ? SHADE : null);
+      const lblColor = hexColor(colors?.text) ?? (isTotal ? TEXT : MUTED);
+      const valColor = hexColor(colors?.text) ?? (isTotal ? NAVY : TEXT);
       const lbl = biLine(t.label, 'totals');
-      if (t.emphasis) {
-        if (!ruled) {
-          rows.push(`block(width: 100%, inset: (x: 8pt, y: 0pt), line(length: 100%, stroke: 0.5pt + rgb("${BORDER}")))`);
-          ruled = true;
-        }
-        rows.push(
-          `block(width: 100%, fill: rgb("${SHADE}"), inset: (x: 8pt, y: 6pt), grid(columns: (1fr, ${VALUE_W}), column-gutter: 12pt, align(end + horizon, text(size: 10.5pt, weight: "bold", fill: rgb("${TEXT}"), [${lbl}])), align(end + horizon, text(size: 12pt, weight: "bold", fill: rgb("${NAVY}"), [${V(t.value)}]))))`,
-        );
-      } else {
-        rows.push(
-          `block(width: 100%, inset: (x: 8pt, y: 2.5pt), grid(columns: (1fr, ${VALUE_W}), column-gutter: 12pt, align(end, text(size: 9pt, fill: rgb("${MUTED}"), [${lbl}])), align(end, text(size: 9.5pt, fill: rgb("${TEXT}"), [${V(t.value)}]))))`,
-        );
+      if (isTotal && !ruled && tstyle !== 'bordered') {
+        rows.push(`block(width: 100%, inset: (x: 8pt, y: 0pt), line(length: 100%, stroke: 0.5pt + rgb("${BORDER}")))`);
+        ruled = true;
       }
-    }
-    frag.totals = `#align(end, block(width: 260pt, stack(spacing: 0pt, ${rows.join(', ')})))\n#v(8pt)`;
+      const fillArg = bg ? `fill: rgb("${bg}"), ` : '';
+      const strokeArg = tstyle === 'bordered' ? `stroke: (bottom: 0.5pt + rgb("${BORDER}")), ` : '';
+      const inset = isTotal ? '(x: 8pt, y: 6pt)' : '(x: 8pt, y: 2.5pt)';
+      const lblText = `text(size: ${isTotal ? '10.5pt' : '9pt'}, ${isTotal ? 'weight: "bold", ' : ''}fill: rgb("${lblColor}"), [${lbl}])`;
+      const valText = `text(size: ${isTotal ? '12pt' : '9.5pt'}, ${isTotal ? 'weight: "bold", ' : ''}fill: rgb("${valColor}"), [${V(t.value)}])`;
+      rows.push(
+        `block(width: 100%, ${fillArg}${strokeArg}inset: ${inset}, grid(columns: (1fr, auto), column-gutter: 12pt, align(end + horizon, ${lblText}), align(end + horizon, ${valText})))`,
+      );
+    });
+    const outerStroke = tstyle === 'bordered' ? `stroke: 0.5pt + rgb("${BORDER}"), ` : '';
+    frag.totals = `#align(end, block(width: 260pt, ${outerStroke}stack(spacing: 0pt, ${rows.join(', ')})))\n#v(8pt)`;
   }
 
   // Terms / Notes (no icon).

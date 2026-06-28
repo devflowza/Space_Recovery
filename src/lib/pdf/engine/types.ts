@@ -627,8 +627,9 @@ export interface EngineDocData {
     columns: ResolvedColumn[];
     rows: Array<Record<string, string | number>>;
   };
-  /** Totals lines (subtotal/vat/total/…). `emphasis` flags the grand total. */
-  totals?: Array<{ label: LabelText; value: string; emphasis?: boolean }>;
+  /** Totals lines (subtotal/vat/total/…). `emphasis` flags the grand total;
+   *  `key` is the stable line identifier for per-row label/colour overrides. */
+  totals?: Array<{ key?: string; label: LabelText; value: string; emphasis?: boolean }>;
   /**
    * Terms & conditions / notes block, or `null` to omit.
    *

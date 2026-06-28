@@ -534,6 +534,36 @@ export interface TranslationPolicyConfig {
   groups?: TranslationPolicyGroups;
 }
 
+/** The stable keys for the totals lines (used for label/colour overrides). */
+export type TotalsLineKey =
+  | 'subtotal' | 'discount' | 'netAmount' | 'tax' | 'total' | 'amountPaid' | 'balanceDue' | 'amountInWords';
+
+/** Opt-in background/text colour for a totals row (hex; absent = neutral). */
+export interface TotalsRowColor {
+  background?: string;
+  text?: string;
+}
+
+/**
+ * Per-template customisation of the Total section (all OPTIONAL → neutral/legacy
+ * when absent). Common to every language combination + both renderers.
+ */
+export interface TotalsConfig {
+  /** Custom English wording per line — overrides the default label (the secondary
+   *  translation, when bilingual, keeps its default). */
+  labels?: Partial<Record<TotalsLineKey, string>>;
+  /** Opt-in per-row colours for the grand total, balance-due and tax rows. */
+  rowColors?: {
+    total?: TotalsRowColor;
+    balanceDue?: TotalsRowColor;
+    tax?: TotalsRowColor;
+  };
+  /** Visual style of the totals block. Default `'plain'`. */
+  style?: 'plain' | 'bordered' | 'striped';
+  /** Tint the grand-total row with a band. Default true. */
+  highlightTotal?: boolean;
+}
+
 /** Resolved locale slice threaded by applyTenantLocale / the country layer
  *  (§8d/§8g). Absent = today's neutral PDF default (date 'dd MMM yyyy', Western
  *  grouping, document-currency decimals). */
@@ -598,6 +628,8 @@ export interface DocumentTemplateConfig {
   locale?: LocaleConfig;
   /** Per-document-type Terms & Conditions content (bilingual). */
   termsContent?: TermsContentConfig;
+  /** Total-section customisation (labels, per-row colours, style). */
+  totals?: TotalsConfig;
 }
 
 /**
@@ -653,6 +685,8 @@ export interface TemplateConfigOverride {
   locale?: LocaleConfig;
   /** Per-document-type Terms & Conditions content (deep-merged: terms + notes). */
   termsContent?: TermsContentConfig;
+  /** Total-section customisation (deep-merged: labels + rowColors by key). */
+  totals?: TotalsConfig;
 }
 
 /** Partial section override; `key` identifies the target section. */
@@ -1273,6 +1307,32 @@ function applyOverride(
     signatureImages: mergeSignatureImages(base.signatureImages, override.signatureImages),
     locale: mergeGroup(base.locale, override.locale),
     termsContent: mergeTermsContent(base.termsContent, override.termsContent),
+    totals: mergeTotals(base.totals, override.totals),
+  };
+}
+
+/** Merge totals customisation, deep-merging the `labels` + `rowColors` maps. */
+function mergeTotals(
+  base: TotalsConfig | undefined,
+  override: TotalsConfig | undefined,
+): TotalsConfig | undefined {
+  if (!base) return override;
+  if (!override) return base;
+  return {
+    ...base,
+    ...override,
+    ...(base.labels || override.labels ? { labels: { ...base.labels, ...override.labels } } : {}),
+    ...(base.rowColors || override.rowColors
+      ? {
+          rowColors: {
+            ...base.rowColors,
+            ...override.rowColors,
+            ...(base.rowColors?.total || override.rowColors?.total ? { total: { ...base.rowColors?.total, ...override.rowColors?.total } } : {}),
+            ...(base.rowColors?.balanceDue || override.rowColors?.balanceDue ? { balanceDue: { ...base.rowColors?.balanceDue, ...override.rowColors?.balanceDue } } : {}),
+            ...(base.rowColors?.tax || override.rowColors?.tax ? { tax: { ...base.rowColors?.tax, ...override.rowColors?.tax } } : {}),
+          },
+        }
+      : {}),
   };
 }
 
