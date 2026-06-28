@@ -119,7 +119,7 @@ export function assembleTypst(
   data: EngineDocData,
   config: DocumentTemplateConfig,
   _ctx: TranslationContext,
-  opts: { logoPath?: string; qrPath?: string } = {},
+  opts: { logoPath?: string; qrPath?: string; stampPath?: string; signaturePath?: string } = {},
 ): string {
   const language = config.language;
   // Always LTR — the document uses the SAME left-to-right layout as the other
@@ -596,10 +596,28 @@ export function assembleTypst(
     frag.paymentHistory = `#heading([${E(ph.title)}], [${A(ph.title)}])\n#table(columns: (auto, auto, auto, 1fr, auto, auto, auto), table.header(${headerCells}),\n${body})\n#v(8pt)`;
   }
 
-  // Signatures.
-  if (data.signatures?.length) {
-    const cells = data.signatures.map((s) => `[#v(24pt) #line(length: 80%, stroke: 0.5pt + rgb("${LABELC}")) #muted([${L(s)}])]`).join(', ');
-    frag.signature = `#v(12pt)\n#grid(columns: (${data.signatures.map(() => '1fr').join(', ')}), gutter: 16pt, ${cells})`;
+  // Signature area — optional company stamp / signature IMAGES (honouring
+  // signatureImages.{stamp,signature}.show/width/placement) above the signing
+  // lines. Mirrors signature.ts; Typst has no image opacity so stamp.opacity is
+  // not applied (documented limitation).
+  {
+    const sg = config.signatureImages;
+    const imgRow: string[] = [];
+    if (opts.stampPath && sg?.stamp?.show) {
+      imgRow.push(`align(${toAlign(sg.stamp.placement ?? 'right')}, image("${opts.stampPath}", width: ${sg.stamp.width ?? 110}pt))`);
+    }
+    if (opts.signaturePath && sg?.signature?.show) {
+      imgRow.push(`align(${toAlign(sg.signature.placement ?? 'left')}, image("${opts.signaturePath}", width: ${sg.signature.width ?? 140}pt))`);
+    }
+    const sigParts: string[] = [];
+    if (imgRow.length) {
+      sigParts.push(`#grid(columns: (${imgRow.map(() => '1fr').join(', ')}), gutter: 16pt, ${imgRow.join(', ')})`);
+    }
+    if (data.signatures?.length) {
+      const cells = data.signatures.map((s) => `[#v(24pt) #line(length: 80%, stroke: 0.5pt + rgb("${LABELC}")) #muted([${L(s)}])]`).join(', ');
+      sigParts.push(`#grid(columns: (${data.signatures.map(() => '1fr').join(', ')}), gutter: 16pt, ${cells})`);
+    }
+    if (sigParts.length) frag.signature = `#v(12pt)\n${sigParts.join('\n')}`;
   }
 
   // QR code (verification) — rendered only when a QR asset was supplied.

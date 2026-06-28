@@ -20,11 +20,13 @@ function base64ToBytes(b64: string): Uint8Array {
   return out;
 }
 
-export function logoAsset(input: string | BrandingImage | null | undefined): TypstAsset | null {
+/** Convert any branding image to a Typst asset at `/<base>.<ext>` (null if absent
+ *  or an undecodable raster format — the caller then skips that #image). */
+function imageAsset(input: string | BrandingImage | null | undefined, base: string): TypstAsset | null {
   const img = classifyLogo(input);
   if (img.kind === 'none') return null;
   if (img.kind === 'svg') {
-    return { path: '/logo.svg', bytes: new TextEncoder().encode(img.markup) };
+    return { path: `/${base}.svg`, bytes: new TextEncoder().encode(img.markup) };
   }
   const m = /^data:(image\/[a-z+]+);base64,(.*)$/i.exec(img.dataUrl);
   if (!m) return null;
@@ -36,8 +38,20 @@ export function logoAsset(input: string | BrandingImage | null | undefined): Typ
       : mime.includes('gif')
         ? 'gif'
         : null;
-  if (!ext) return null; // Typst can't decode it (e.g. webp) — skip the logo.
-  return { path: `/logo.${ext}`, bytes: base64ToBytes(m[2]) };
+  if (!ext) return null; // Typst can't decode it (e.g. webp) — skip the image.
+  return { path: `/${base}.${ext}`, bytes: base64ToBytes(m[2]) };
+}
+
+export function logoAsset(input: string | BrandingImage | null | undefined): TypstAsset | null {
+  return imageAsset(input, 'logo');
+}
+
+/** Company stamp / signature images for the signature area (preview parity). */
+export function stampAsset(input: string | BrandingImage | null | undefined): TypstAsset | null {
+  return imageAsset(input, 'stamp');
+}
+export function signatureAsset(input: string | BrandingImage | null | undefined): TypstAsset | null {
+  return imageAsset(input, 'signature');
 }
 
 /**

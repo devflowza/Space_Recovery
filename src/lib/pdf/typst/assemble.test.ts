@@ -200,6 +200,17 @@ describe('assembleTypst — page / font / density / colours wired', () => {
     expect(out).toContain('VAT Reg. No.: OM123');
   });
 
+  it('emits stamp/signature images when shown + paths supplied', () => {
+    const c = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
+      language: { mode: 'en', primary: 'en' } as LanguageConfig,
+      sections: [{ key: 'signature', visible: true }],
+      signatureImages: { stamp: { show: true, width: 100, placement: 'right' }, signature: { show: true, width: 120, placement: 'left' } },
+    });
+    const out = assembleTypst(data, c, ctxFromLanguageConfig(c.language), { stampPath: '/stamp.png', signaturePath: '/signature.png' });
+    expect(out).toContain('image("/stamp.png", width: 100pt)');
+    expect(out).toContain('image("/signature.png", width: 120pt)');
+  });
+
   it('renders standard Terms & Conditions from termsContent', () => {
     const out = renderC({ termsContent: { terms: { en: 'Pay within 14 days.' }, notes: { en: 'Thanks.' } } });
     expect(out).toContain('Pay within 14 days.');
