@@ -22,6 +22,8 @@ import {
   resolveHeader,
   resolvePageFitting,
   resolveTable,
+  resolveFooter,
+  resolvePageNumbers,
 } from '../engine/branding';
 import { buildCompanyAddress } from '../utils';
 import { resolveSecondary, secondaryText, type DocumentTemplateConfig, type LabelText, type TypographyStyleKey } from '../templateConfig';
@@ -58,6 +60,22 @@ const HEX_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 /** Validate a hex colour (opt-in totals colours); null → fall back to neutral. */
 function hexColor(v: string | undefined): string | null {
   return typeof v === 'string' && HEX_RE.test(v.trim()) ? v.trim() : null;
+}
+
+/** Turn a page-number format ("Page {page} of {pages}") into Typst content:
+ *  literal text is escaped; {page}/{pages} become live page counters. Caller
+ *  wraps the result in `context [...]` so the counters resolve. */
+function typstPageNumber(format: string): string {
+  return format
+    .split(/(\{page\}|\{pages\})/g)
+    .map((p) =>
+      p === '{page}'
+        ? '#counter(page).display()'
+        : p === '{pages}'
+          ? '#counter(page).final().first()'
+          : escapeTypst(p),
+    )
+    .join('');
 }
 
 interface PreambleOpts {
@@ -196,7 +214,25 @@ export function assembleTypst(
   const pageGeom = customDims
     ? `width: ${customDims[0]}pt, height: ${customDims[1]}pt`
     : `paper: "${paper?.size === 'Letter' ? 'us-letter' : 'a4'}"${paper?.orientation === 'landscape' ? ', flipped: true' : ''}`;
-  const pageLine = `#set page(${pageGeom}, margin: (top: ${pm[0]}pt, right: ${pm[1]}pt, bottom: ${pm[2]}pt, left: ${pm[3]}pt))`;
+  // Repeating page footer — custom footer text and/or page numbers, mirroring
+  // renderTemplate. Absent both → no footer arg (parity: Typst had none).
+  const ftr = resolveFooter(config);
+  const pn = resolvePageNumbers(config);
+  const footerLines: string[] = [];
+  if (ftr.customText) {
+    footerLines.push(
+      `align(${toAlign(ftr.alignment)}, text(size: ${round1(ftr.fontSize * fitScale)}pt, fill: rgb("${ftr.fontColor}"), [${escapeTypst(ftr.customText)}]))`,
+    );
+  }
+  if (pn.enabled) {
+    footerLines.push(
+      `align(${toAlign(pn.position)}, text(size: ${round1(8 * fitScale)}pt, fill: rgb("${LABELC}"), [${typstPageNumber(pn.format)}]))`,
+    );
+  }
+  const footerArg = footerLines.length
+    ? `, footer: context block(width: 100%, stack(spacing: 2pt, ${footerLines.join(', ')}))`
+    : '';
+  const pageLine = `#set page(${pageGeom}, margin: (top: ${pm[0]}pt, right: ${pm[1]}pt, bottom: ${pm[2]}pt, left: ${pm[3]}pt)${footerArg})`;
   // Font — the chosen family leads, with the Arabic-capable fallbacks behind it.
   const leadFont = FONT_TYPST[typo.fontFamily];
   const fonts = leadFont

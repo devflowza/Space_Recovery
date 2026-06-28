@@ -175,6 +175,22 @@ describe('assembleTypst — page / font / density / colours wired', () => {
     });
     expect(out).toContain('#heading([Services], [خدمات])');
   });
+
+  it('renders a footer with custom text when configured', () => {
+    const out = renderC({ footer: { customText: 'Thank you', alignment: 'center' } });
+    expect(out).toContain('footer: context block');
+    expect(out).toContain('Thank you');
+  });
+
+  it('renders page-number counters when pageNumbers.enabled', () => {
+    const out = renderC({ pageNumbers: { enabled: true, format: 'Page {page} of {pages}', position: 'right' } });
+    expect(out).toContain('#counter(page).display()');
+    expect(out).toContain('#counter(page).final().first()');
+  });
+
+  it('emits no footer arg by default (parity)', () => {
+    expect(renderC({})).not.toContain('footer:');
+  });
 });
 
 // The Typst header divider must honour config.header — style, colour, insets and

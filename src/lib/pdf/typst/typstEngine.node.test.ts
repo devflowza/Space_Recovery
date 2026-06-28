@@ -83,6 +83,25 @@ describe('typst node render', () => {
     expect(out.subarray(0, 5).toString()).toBe('%PDF-');
   });
 
+  it('compiles with footer text, page-number counters, density, landscape + zebra/rowNumbering', () => {
+    // Exercises the wired config branches through the real Typst compiler — a syntax
+    // error in the footer page-counter, page geometry or table fill markup fails here.
+    const c = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
+      language: { mode: 'bilingual_sidebyside', primary: 'en', secondary: 'ar' } as LanguageConfig,
+      footer: { customText: 'Thank you for your business', alignment: 'center', fontSize: 9 },
+      pageNumbers: { enabled: true, format: 'Page {page} of {pages}', position: 'right' },
+      pageFitting: { density: 'dense' },
+      paper: { size: 'Letter', orientation: 'landscape', margins: [30, 30, 30, 30] },
+      table: { zebra: true, rowNumbering: true },
+      colors: { accent: '#0f766e' },
+    });
+    const markup = assembleTypst(data, c, ctxFromLanguageConfig(c.language));
+    const compiler = NodeCompiler.create({ fontArgs: [{ fontPaths: [path.resolve('public/fonts')] }] });
+    const out = Buffer.from(compiler.pdf({ mainFileContent: markup }));
+    expect(out.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(out.length).toBeGreaterThan(2000);
+  });
+
   it('compiles with a mapped logo asset referenced via #image', () => {
     const c = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
       language: { mode: 'bilingual_sidebyside', primary: 'en', secondary: 'ar' } as LanguageConfig,
