@@ -2,10 +2,14 @@ import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { Button } from '../../../ui/Button';
 import { Select } from '../../../ui/Select';
+import { Input } from '../../../ui/Input';
 import { ColorField, FieldGroup, NumberField, SegmentedControl, ToggleRow } from '../controls';
 import { PDF_COLORS } from '../../../../lib/pdf/styles';
 import { generatePalette } from '../../../../lib/pdf/engine/palette';
+import { resolveSecondary, secondaryText } from '../../../../lib/pdf/templateConfig';
 import type { DensityPreset, PaperConfig, PdfFontFamily, TypographyStyleKey } from '../../../../lib/pdf/templateConfig';
+import { isRTLLanguage } from '../../../../lib/documentTranslations';
+import { languageName } from '../languageOptions';
 import type { StudioApi } from '../TemplateStudio';
 
 const FONT_OPTIONS = [
@@ -53,9 +57,31 @@ export const GeneralTab: React.FC<{ api: StudioApi }> = ({ api }) => {
   const typo = resolved.typography;
   const fitting = resolved.pageFitting;
   const seed = colors?.accent && colors.accent.startsWith('#') ? colors.accent : PDF_COLORS.primary;
+  const secondary = resolveSecondary(resolved.language);
+  const docTitle = resolved.labels?.documentTitle;
 
   return (
     <div className="space-y-7">
+      <FieldGroup title="Document title" description="The heading printed at the top (e.g. TAX INVOICE).">
+        <div className={`grid gap-2 ${secondary ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <Input
+            aria-label="Document title (English)"
+            placeholder="e.g. TAX INVOICE"
+            value={docTitle?.en ?? ''}
+            onChange={(e) => api.setSectionLabel('documentTitle', 'en', e.target.value)}
+          />
+          {secondary && (
+            <Input
+              aria-label={`Document title (${languageName(secondary)})`}
+              placeholder={`Title (${languageName(secondary)})`}
+              dir={isRTLLanguage(secondary) ? 'rtl' : undefined}
+              value={secondaryText(docTitle ?? {}, secondary) ?? ''}
+              onChange={(e) => api.setSectionLabel('documentTitle', secondary, e.target.value)}
+            />
+          )}
+        </div>
+      </FieldGroup>
+
       <FieldGroup title="Page" description="Sheet size, orientation, and margins.">
         <div className="grid grid-cols-2 gap-3">
           <Select
