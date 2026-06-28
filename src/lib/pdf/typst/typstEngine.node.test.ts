@@ -106,6 +106,23 @@ describe('typst node render', () => {
     expect(out.length).toBeGreaterThan(2000);
   });
 
+  it('compiles every header layout (modern/minimal/boxed/split/spreadsheet/classic)', () => {
+    const compiler = NodeCompiler.create({ fontArgs: [{ fontPaths: [path.resolve('public/fonts')] }] });
+    for (const layout of ['classic', 'modern', 'minimal', 'boxed', 'split', 'spreadsheet'] as const) {
+      const c = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
+        language: { mode: 'bilingual_sidebyside', primary: 'en', secondary: 'ar' } as LanguageConfig,
+        header: { layout },
+      });
+      const markup = assembleTypst(data, c, ctxFromLanguageConfig(c.language), { logoPath: '/logo.png' });
+      compiler.mapShadow(path.resolve('logo.png').replace(/\\/g, '/'), Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN48OABAAVEAqEuYekCAAAAAElFTkSuQmCC',
+        'base64',
+      ));
+      const out = Buffer.from(compiler.pdf({ mainFileContent: markup }));
+      expect(out.subarray(0, 5).toString(), `layout ${layout}`).toBe('%PDF-');
+    }
+  });
+
   it('compiles with a mapped logo asset referenced via #image', () => {
     const c = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
       language: { mode: 'bilingual_sidebyside', primary: 'en', secondary: 'ar' } as LanguageConfig,

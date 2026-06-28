@@ -207,6 +207,11 @@ describe('assembleTypst — page / font / density / colours wired', () => {
     expect(out).toContain('Thanks.');
   });
 
+  it('arranges the letterhead per header.layout', () => {
+    expect(renderC({ header: { layout: 'boxed' } })).toContain('inset: 8pt'); // bordered box
+    expect(renderC({ header: { layout: 'modern' } })).toContain('#align(center, stack(spacing:');
+  });
+
   it('renders a rotated, faded watermark when watermark.text is set', () => {
     const out = renderC({ watermark: { text: 'PAID', angle: -30, opacity: 0.2 } });
     expect(out).toContain('background: align(center + horizon, rotate(-30deg');

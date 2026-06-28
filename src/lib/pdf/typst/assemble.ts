@@ -287,7 +287,9 @@ export function assembleTypst(
   const placement = header.logoPlacement ?? 'left';
   const logoLeft = placement !== 'right';
   const logoMaxH = header.logoMaxHeight && header.logoMaxHeight > 0 ? header.logoMaxHeight : 0;
-  const logoSizeArg = logoMaxH ? `height: ${logoMaxH}pt` : `width: ${header.logoWidth ?? 130}pt`;
+  const logoH = header.logoHeight && header.logoHeight > 0 ? header.logoHeight : 0;
+  // maxHeight caps; else an explicit logoHeight; else width-driven (aspect kept).
+  const logoSizeArg = logoMaxH ? `height: ${logoMaxH}pt` : logoH ? `height: ${logoH}pt` : `width: ${header.logoWidth ?? 130}pt`;
 
   const info = data.identity?.basic_info;
   const contactInfo = data.identity?.contact_info;
@@ -327,19 +329,48 @@ export function assembleTypst(
     if (tax) idLines.push(`text(size: ${S.small}pt, fill: rgb("${LABELC}"), [VAT: ${V(tax)}])`);
   }
 
-  const idAlign = placement === 'center' ? 'center' : logoLeft ? 'right' : 'left';
-  const idBlock = `align(${idAlign}, stack(spacing: 2pt, ${idLines.length ? idLines.join(', ') : '[]'}))`;
+  // Letterhead arrangement — mirror buildLetterhead's SIX layouts (was classic-only).
+  const layout = header.layout ?? 'classic';
+  const idJoined = idLines.length ? idLines.join(', ') : '[]';
+  const idStack = (a: string) => `align(${a}, stack(spacing: 2pt, ${idJoined}))`;
+  const logoGap = round1(typeof header.logoMarginBottom === 'number' && header.logoMarginBottom >= 0 ? header.logoMarginBottom : 5);
+  const minimalName = V(pick(org?.manual.legalName, legalNameFallback));
 
-  // Assemble the letterhead (logo + identity) into the header fragment.
   const headerParts: string[] = [];
-  if (placement === 'center' || !useLogo) {
-    if (useLogo) headerParts.push(`#align(center, ${logoImg})`, '#v(4pt)');
-    headerParts.push(`#${idBlock}`);
+  let letterhead: string;
+  if (layout === 'modern') {
+    // Centred stack: logo on top, full identity centred below.
+    letterhead = useLogo
+      ? `#align(center, stack(spacing: ${logoGap}pt, ${logoImg}, ${idStack('center')}))`
+      : `#${idStack('center')}`;
+  } else if (layout === 'minimal') {
+    // Logo + the company name only (no full identity block).
+    const nameNode = `text(size: ${sz(13)}pt, weight: "bold", fill: rgb("${BODY}"), [${minimalName}])`;
+    letterhead = useLogo
+      ? `#grid(columns: (auto, 1fr), column-gutter: 8pt, align: horizon, align(horizon, ${logoImg}), ${nameNode})`
+      : `#${nameNode}`;
+  } else if (layout === 'boxed') {
+    // Centred stack inside a bordered box.
+    const inner = useLogo
+      ? `align(center, stack(spacing: ${logoGap}pt, ${logoImg}, ${idStack('center')}))`
+      : idStack('center');
+    letterhead = `#block(width: 100%, stroke: 0.5pt + rgb("${BORDER}"), inset: 8pt, ${inner})`;
+  } else if (layout === 'spreadsheet') {
+    // Small logo left + right-aligned identity, tight.
+    letterhead = useLogo
+      ? `#grid(columns: (auto, 1fr), column-gutter: 8pt, align: horizon, align(horizon, ${logoImg}), ${idStack('right')})`
+      : `#${idStack('right')}`;
+  } else if (placement === 'center' || !useLogo) {
+    // classic / split, centred (or logo-less).
+    letterhead = useLogo
+      ? `#align(center, stack(spacing: ${logoGap}pt, ${logoImg}, ${idStack('center')}))`
+      : `#${idStack('center')}`;
   } else if (logoLeft) {
-    headerParts.push(`#grid(columns: (auto, 1fr), column-gutter: 12pt, align: horizon, align(horizon, ${logoImg}), ${idBlock})`);
+    letterhead = `#grid(columns: (auto, 1fr), column-gutter: 12pt, align: horizon, align(horizon, ${logoImg}), ${idStack('right')})`;
   } else {
-    headerParts.push(`#grid(columns: (1fr, auto), column-gutter: 12pt, align: horizon, ${idBlock}, align(horizon, ${logoImg}))`);
+    letterhead = `#grid(columns: (1fr, auto), column-gutter: 12pt, align: horizon, ${idStack('left')}, align(horizon, ${logoImg}))`;
   }
+  headerParts.push(letterhead);
   // Divider rule UNDER the letterhead, then the centred title (pdfmake order).
   // Honours config.header: style (thin/thick/none), opt-in colour (else the
   // resolved accent — neutral navy by default), endpoint insets and the vertical
