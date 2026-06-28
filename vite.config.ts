@@ -36,7 +36,7 @@ export default defineConfig({
           // Preview CSP: production-like, no unsafe-eval. Matches index.html: blob:
           // frames/objects for the PDF preview + Google Fonts for the UI font and the
           // pdfmake CJK/Thai loader (gstatic in connect-src for the font fetch).
-          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com https://fonts.gstatic.com; frame-src 'self' blob:; object-src 'self' blob:; base-uri 'self'; form-action 'self';");
+          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com https://fonts.gstatic.com; frame-src 'self' blob:; object-src 'self' blob:; base-uri 'self'; form-action 'self';");
           next();
         };
         server.middlewares.use(securityHeaders);
