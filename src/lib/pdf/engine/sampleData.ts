@@ -36,23 +36,20 @@ import { toEngineData as chainOfCustodyToEngine } from './adapters/chainOfCustod
 import { toEngineData as payslipToEngine } from './adapters/payslipAdapter';
 import { toEngineData as reportToEngine } from './adapters/reportAdapter';
 import { toEngineData as stockLabelToEngine } from './adapters/stockLabelAdapter';
-import { createTranslationContext } from '../translationContext';
+import { ctxFromLanguageConfig } from '../translationContext';
 import type { TranslationContext } from '../types';
 
 /**
- * Derive a {@link TranslationContext} from the engine `config.language` for
- * adapters that resolve labels through `ctx.t` (the report adapter). The engine's
- * `language` only carries `mode` + `primary` ('en'|'ar'), so a bilingual config
- * maps to the Arabic document-translation block (the only non-English secondary
- * the engine config can express); pure English → english_only. The live PDF path
- * (`reportPDFService`) builds the full `ctx` from the tenant's secondary language
- * for any of the 13 languages — this is just the Studio preview's best effort.
+ * Derive a {@link TranslationContext} from the engine `config.language` for sample
+ * adapters that resolve labels through `ctx.t` (the report adapter). Routes through
+ * the canonical {@link ctxFromLanguageConfig}, which reads the per-template
+ * secondary via `resolveSecondary` — so the Studio preview honours ANY of the 13
+ * secondary languages (Italian/French/…), not just Arabic. (It previously mapped
+ * every non-Arabic secondary to English — the cause of "English-only" report
+ * previews for e.g. English + Italian.)
  */
 function previewCtxFromConfig(config: DocumentTemplateConfig): TranslationContext {
-  if (config.language && config.language.mode !== 'en') {
-    return createTranslationContext('bilingual', config.language.primary === 'ar' ? 'ar' : null);
-  }
-  return createTranslationContext('english_only', null);
+  return ctxFromLanguageConfig(config.language);
 }
 
 /** Shared sample company identity used across every sample document. */
