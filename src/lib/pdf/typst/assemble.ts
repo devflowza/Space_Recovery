@@ -15,9 +15,9 @@
  * Phase 1 scope: the financial (invoice/quote/receipt) sections.
  */
 import { en, resolveLabel, fieldLabelLanguage, fieldLabelsBilingual, type TranslationGroup } from '../engine/labels';
-import { resolveOrganization } from '../engine/branding';
+import { resolveOrganization, resolveTypography } from '../engine/branding';
 import { buildCompanyAddress } from '../utils';
-import { resolveSecondary, secondaryText, type DocumentTemplateConfig, type LabelText } from '../templateConfig';
+import { resolveSecondary, secondaryText, type DocumentTemplateConfig, type LabelText, type TypographyStyleKey } from '../templateConfig';
 import type { EngineDocData } from '../engine/types';
 import type { TranslationContext } from '../types';
 import { escapeTypst } from './escape';
@@ -44,21 +44,23 @@ function hexColor(v: string | undefined): string | null {
   return typeof v === 'string' && HEX_RE.test(v.trim()) ? v.trim() : null;
 }
 
-function preamble(dir: string): string {
+/** Preamble — `s` carries the typography-resolved sizes (base text, small/muted,
+ *  section heading) so the global scale + per-section overrides reach the helpers. */
+function preamble(dir: string, s: { base: number; small: number; heading: number }): string {
   return [
     '#set page(paper: "a4", margin: 40pt)',
-    `#set text(font: ${FONTS}, size: 9pt, fill: rgb("${TEXT}"), dir: ${dir})`,
+    `#set text(font: ${FONTS}, size: ${s.base}pt, fill: rgb("${TEXT}"), dir: ${dir})`,
     `#set table(stroke: 0.5pt + rgb("${BORDER}"), inset: (x: 5pt, y: 3.5pt))`,
     `#let iconUser = box(image(bytes("${ICON_USER_SVG}"), format: "svg", width: 13pt))`,
     `#let iconDoc = box(image(bytes("${ICON_DOC_SVG}"), format: "svg", width: 13pt))`,
     `#let iconNone = box(width: 0pt)`,
-    `#let muted(b) = text(size: 8pt, fill: rgb("${MUTED}"), b)`,
+    `#let muted(b) = text(size: ${s.small}pt, fill: rgb("${MUTED}"), b)`,
     // Info-box header band: [icon · English (start) · spacer · secondary (end)],
     // light fill, navy heading, 0.5pt bottom rule — mirrors createBilingualInfoBox.
-    `#let band(icon, a, b) = block(width: 100%, fill: rgb("${SHADE}"), stroke: (bottom: 0.5pt + rgb("${BORDER}")), inset: (x: 6pt, y: 4pt), grid(columns: (auto, auto, 1fr, auto), column-gutter: 6pt, align: horizon, icon, text(weight: "bold", size: 9pt, fill: rgb("${NAVY}"), a), [], align(end, text(weight: "bold", size: 9pt, fill: rgb("${NAVY}"), b))))`,
+    `#let band(icon, a, b) = block(width: 100%, fill: rgb("${SHADE}"), stroke: (bottom: 0.5pt + rgb("${BORDER}")), inset: (x: 6pt, y: 4pt), grid(columns: (auto, auto, 1fr, auto), column-gutter: 6pt, align: horizon, icon, text(weight: "bold", size: ${s.heading}pt, fill: rgb("${NAVY}"), a), [], align(end, text(weight: "bold", size: ${s.heading}pt, fill: rgb("${NAVY}"), b))))`,
     `#let infobox(icon, a, b, body) = block(width: 100%, stroke: 0.5pt + rgb("${BORDER}"), band(icon, a, b) + block(width: 100%, inset: (x: 8pt, y: 6pt), body))`,
     // Unboxed bilingual section heading (e.g. "Line Items") — no fill.
-    `#let heading(a, b) = block(width: 100%, inset: (top: 4pt, bottom: 5pt), grid(columns: (auto, 1fr, auto), column-gutter: 6pt, text(weight: "bold", size: 9pt, fill: rgb("${NAVY}"), a), [], align(end, text(weight: "bold", size: 9pt, fill: rgb("${NAVY}"), b))))`,
+    `#let heading(a, b) = block(width: 100%, inset: (top: 4pt, bottom: 5pt), grid(columns: (auto, 1fr, auto), column-gutter: 6pt, text(weight: "bold", size: ${s.heading}pt, fill: rgb("${NAVY}"), a), [], align(end, text(weight: "bold", size: ${s.heading}pt, fill: rgb("${NAVY}"), b))))`,
   ].join('\n');
 }
 
@@ -96,6 +98,38 @@ export function assembleTypst(
   const fll = (group: TranslationGroup) => fieldLabelLanguage(language, config.translationPolicy, group);
   const fieldLbl = (l: LabelText, group: TranslationGroup) => escapeTypst(resolveLabel(l, fll(group)) ?? '');
 
+  // Typography — honour config.typography so the Studio's font-size scale AND the
+  // per-section size overrides apply to the Typst (Arabic) render too, exactly
+  // like the pdfmake path (otherwise the controls would no-op on Arabic docs).
+  // `sz(base, key)` = the per-section override (absolute pt) when set, else the
+  // assembler's own base size multiplied by the clamped global scale (≤ 2×), so
+  // the scale-1 look is byte-for-byte preserved.
+  const typo = resolveTypography(config, 'Roboto');
+  const tSizes = config.typography?.sizes;
+  const round1 = (n: number) => Math.round(n * 10) / 10;
+  const sz = (base: number, key?: TypographyStyleKey): number => {
+    const o = key ? tSizes?.[key] : undefined;
+    return round1(typeof o === 'number' && o > 0 ? o : base * typo.scale);
+  };
+  const S = {
+    legal: sz(14),
+    legalAr: sz(12),
+    tagline: sz(9),
+    small: sz(8),
+    title: sz(16, 'documentTitle'),
+    heading: sz(9, 'sectionTitle'),
+    label: sz(8, 'label'),
+    value: sz(9, 'value'),
+    thead: sz(8, 'tableHeader'),
+    tcell: sz(8, 'tableCell'),
+    totLabel: sz(9),
+    totLabelBold: sz(10.5),
+    totValNormal: sz(9.5),
+    totValBold: sz(12, 'totalValue'),
+    terms: sz(9, 'termsText'),
+    taxWords: sz(7),
+  };
+
   // Section visibility + order come from config.sections (the Studio controls) —
   // the SAME source the pdfmake renderer honours. A key absent from config
   // defaults to visible (back-compat for minimal configs/tests).
@@ -106,7 +140,7 @@ export function assembleTypst(
     return s ? s.visible : true;
   };
 
-  const parts: string[] = [preamble(dir), ''];
+  const parts: string[] = [preamble(dir, { base: S.value, small: S.small, heading: S.heading }), ''];
   // An info-box: icon + bilingual band title + field-row grid (label/value).
   const infobox = (
     icon: 'iconUser' | 'iconDoc' | 'iconNone',
@@ -117,7 +151,7 @@ export function assembleTypst(
     const cells = rows
       .map(
         (r) =>
-          `text(size: 8pt, fill: rgb("${MUTED}"), [${fieldLbl(r.label, group)}]), text(size: 9pt, fill: rgb("${TEXT}"), [${V(r.value)}])`,
+          `text(size: ${S.label}pt, fill: rgb("${MUTED}"), [${fieldLbl(r.label, group)}]), text(size: ${S.value}pt, fill: rgb("${TEXT}"), [${V(r.value)}])`,
       )
       .join(', ');
     const grid = `grid(columns: (auto, 1fr), column-gutter: 10pt, row-gutter: 3pt, ${cells})`;
@@ -150,27 +184,27 @@ export function assembleTypst(
   const idLines: string[] = [];
   if (!org || org.show.legalName) {
     const v = pick(org?.manual.legalName, legalNameFallback);
-    if (v) idLines.push(`text(size: 14pt, weight: "bold", fill: rgb("${TEXT}"), [${V(v)}])`);
+    if (v) idLines.push(`text(size: ${S.legal}pt, weight: "bold", fill: rgb("${TEXT}"), [${V(v)}])`);
   }
   if (org?.show.legalNameAr && org.manual.legalNameAr) {
-    idLines.push(`text(size: 12pt, weight: "bold", fill: rgb("${TEXT}"), [${V(org.manual.legalNameAr)}])`);
+    idLines.push(`text(size: ${S.legalAr}pt, weight: "bold", fill: rgb("${TEXT}"), [${V(org.manual.legalNameAr)}])`);
   }
   if (org?.show.name) {
     const n = pick(org.manual.name, companyName);
-    if (n && n !== pick(org?.manual.legalName, legalNameFallback)) idLines.push(`text(size: 9pt, fill: rgb("${MUTED}"), [${V(n)}])`);
+    if (n && n !== pick(org?.manual.legalName, legalNameFallback)) idLines.push(`text(size: ${S.tagline}pt, fill: rgb("${MUTED}"), [${V(n)}])`);
   }
   if (org?.show.nameAr && org.manual.nameAr) {
-    idLines.push(`text(size: 9pt, fill: rgb("${MUTED}"), [${V(org.manual.nameAr)}])`);
+    idLines.push(`text(size: ${S.tagline}pt, fill: rgb("${MUTED}"), [${V(org.manual.nameAr)}])`);
   }
   if (!org || org.show.address) {
     const a = pick(org?.manual.address, companyAddress);
-    if (a) idLines.push(`text(size: ${addrSize}pt, fill: rgb("${MUTED}"), [${V(a)}])`);
+    if (a) idLines.push(`text(size: ${sz(addrSize)}pt, fill: rgb("${MUTED}"), [${V(a)}])`);
   }
-  if (contactInfo?.phone_primary) idLines.push(`text(size: 8pt, fill: rgb("${MUTED}"), [Tel: ${V(contactInfo.phone_primary)}])`);
-  if (contactInfo?.email_general) idLines.push(`text(size: 8pt, fill: rgb("${MUTED}"), [Email: ${V(contactInfo.email_general)}])`);
+  if (contactInfo?.phone_primary) idLines.push(`text(size: ${S.small}pt, fill: rgb("${MUTED}"), [Tel: ${V(contactInfo.phone_primary)}])`);
+  if (contactInfo?.email_general) idLines.push(`text(size: ${S.small}pt, fill: rgb("${MUTED}"), [Email: ${V(contactInfo.email_general)}])`);
   if (!org || org.show.taxId) {
     const tax = org?.source === 'manual' ? org.manual.taxId : info?.vat_number;
-    if (tax) idLines.push(`text(size: 8pt, fill: rgb("${MUTED}"), [VAT: ${V(tax)}])`);
+    if (tax) idLines.push(`text(size: ${S.small}pt, fill: rgb("${MUTED}"), [VAT: ${V(tax)}])`);
   }
 
   const idAlign = placement === 'center' ? 'center' : logoLeft ? 'right' : 'left';
@@ -188,7 +222,7 @@ export function assembleTypst(
   }
   // Divider rule UNDER the letterhead, then the centred title (pdfmake order).
   headerParts.push('#v(10pt)', `#line(length: 100%, stroke: 0.5pt + rgb("${NAVY}"))`, '#v(8pt)');
-  headerParts.push(`#align(center, text(size: 16pt, weight: "bold", fill: rgb("${PRIMARYDARK}"), [${biLine(data.documentTitle)}]))`, '#v(8pt)');
+  headerParts.push(`#align(center, text(size: ${S.title}pt, weight: "bold", fill: rgb("${PRIMARYDARK}"), [${biLine(data.documentTitle)}]))`, '#v(8pt)');
   const headerMarkup = headerParts.join('\n');
 
   // ── Build each body section as a fragment keyed by its section key, then emit
@@ -206,10 +240,10 @@ export function assembleTypst(
     const colSpec = cols.map((c) => (c.width ? `${c.width}pt` : '1fr')).join(', ');
     const aligns = cols.map((c) => toAlign(c.align)).join(', ');
     const headerCells = cols
-      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: 8pt, fill: rgb("${TEXT}"), [${biLine(c.label)}]))`)
+      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: ${S.thead}pt, fill: rgb("${TEXT}"), [${biLine(c.label)}]))`)
       .join(', ');
     const body = data.lineItems.rows
-      .map((row) => cols.map((c) => `text(size: 8pt, fill: rgb("${TEXT}"), [${V(row[c.key])}])`).join(', '))
+      .map((row) => cols.map((c) => `text(size: ${S.tcell}pt, fill: rgb("${TEXT}"), [${V(row[c.key])}])`).join(', '))
       .join(',\n');
     frag.lineItems = `#heading([Line Items], [البنود])\n#table(columns: (${colSpec}), align: (${aligns}), table.header(${headerCells}),\n${body})\n#v(6pt)`;
   }
@@ -241,8 +275,8 @@ export function assembleTypst(
       const fillArg = bg ? `fill: rgb("${bg}"), ` : '';
       const strokeArg = tstyle === 'bordered' ? `stroke: (bottom: 0.5pt + rgb("${BORDER}")), ` : '';
       const inset = isTotal ? '(x: 8pt, y: 6pt)' : '(x: 8pt, y: 2.5pt)';
-      const lblText = `text(size: ${isTotal ? '10.5pt' : '9pt'}, ${isTotal ? 'weight: "bold", ' : ''}fill: rgb("${lblColor}"), [${lbl}])`;
-      const valText = `text(size: ${isTotal ? '12pt' : '9.5pt'}, ${isTotal ? 'weight: "bold", ' : ''}fill: rgb("${valColor}"), [${V(t.value)}])`;
+      const lblText = `text(size: ${isTotal ? S.totLabelBold : S.totLabel}pt, ${isTotal ? 'weight: "bold", ' : ''}fill: rgb("${lblColor}"), [${lbl}])`;
+      const valText = `text(size: ${isTotal ? S.totValBold : S.totValNormal}pt, ${isTotal ? 'weight: "bold", ' : ''}fill: rgb("${valColor}"), [${V(t.value)}])`;
       rows.push(
         `block(width: 100%, ${fillArg}${strokeArg}inset: ${inset}, grid(columns: (1fr, auto), column-gutter: 12pt, align(end + horizon, ${lblText}), align(end + horizon, ${valText})))`,
       );
@@ -272,25 +306,25 @@ export function assembleTypst(
       `else { none }`,
     ].join(' ');
     const hdr = [ts.columns.rate, ts.columns.taxable, ts.columns.tax]
-      .map((c, i) => `table.cell(text(weight: "bold", size: 8pt, fill: rgb("${hText}"), [${L(c)}]))${i === 0 ? '' : ''}`)
+      .map((c, i) => `table.cell(text(weight: "bold", size: ${S.thead}pt, fill: rgb("${hText}"), [${L(c)}]))${i === 0 ? '' : ''}`)
       .join(', ');
     const aligns = '(start, end, end)';
     const bodyRows = ts.rows
-      .map((r) => `text(size: 8pt, fill: rgb("${bText}"), [${V(r.rate)}]), text(size: 8pt, fill: rgb("${bText}"), [${V(r.taxable)}]), text(size: 8pt, fill: rgb("${bText}"), [${V(r.tax)}])`)
+      .map((r) => `text(size: ${S.tcell}pt, fill: rgb("${bText}"), [${V(r.rate)}]), text(size: ${S.tcell}pt, fill: rgb("${bText}"), [${V(r.taxable)}]), text(size: ${S.tcell}pt, fill: rgb("${bText}"), [${V(r.tax)}])`)
       .join(',\n');
-    const totalRow = `text(weight: "bold", size: 8pt, fill: rgb("${bText}"), [${L(ts.total.label)}]), text(weight: "bold", size: 8pt, fill: rgb("${bText}"), [${V(ts.total.taxable)}]), text(weight: "bold", size: 8pt, fill: rgb("${bText}"), [${V(ts.total.tax)}])`;
+    const totalRow = `text(weight: "bold", size: ${S.tcell}pt, fill: rgb("${bText}"), [${L(ts.total.label)}]), text(weight: "bold", size: ${S.tcell}pt, fill: rgb("${bText}"), [${V(ts.total.taxable)}]), text(weight: "bold", size: ${S.tcell}pt, fill: rgb("${bText}"), [${V(ts.total.tax)}])`;
     let block = `#heading([${E(ts.title)}], [${A(ts.title)}])\n#table(columns: (1fr, 1fr, 1fr), align: ${aligns}, stroke: ${stroke}, fill: (_, y) => { ${fillBranches} }, table.header(${hdr}),\n${bodyRows},\n${totalRow})`;
-    if (ts.amountInWords) block += `\n#text(size: 7pt, style: "italic", fill: rgb("${MUTED}"), [${V(ts.amountInWords)}])`;
+    if (ts.amountInWords) block += `\n#text(size: ${S.taxWords}pt, style: "italic", fill: rgb("${MUTED}"), [${V(ts.amountInWords)}])`;
     frag.taxSummary = `${block}\n#v(8pt)`;
   }
 
   // Terms / Notes (no icon).
   if (data.terms?.blocks?.length) {
     frag.terms = data.terms.blocks
-      .map((b) => `#infobox(iconNone, [${E(b.title)}], [${A(b.title)}], text(size: 9pt, fill: rgb("${MUTED}"), [${htmlToTypst(b.body)}]))\n#v(6pt)`)
+      .map((b) => `#infobox(iconNone, [${E(b.title)}], [${A(b.title)}], text(size: ${S.terms}pt, fill: rgb("${MUTED}"), [${htmlToTypst(b.body)}]))\n#v(6pt)`)
       .join('\n');
   } else if (data.terms?.body) {
-    frag.terms = `#infobox(iconNone, [${E(data.terms.title)}], [${A(data.terms.title)}], text(size: 9pt, fill: rgb("${MUTED}"), [${htmlToTypst(data.terms.body)}]))\n#v(6pt)`;
+    frag.terms = `#infobox(iconNone, [${E(data.terms.title)}], [${A(data.terms.title)}], text(size: ${S.terms}pt, fill: rgb("${MUTED}"), [${htmlToTypst(data.terms.body)}]))\n#v(6pt)`;
   }
 
   // Bank account — honours the Studio display style (boxed vs single line), box
@@ -299,7 +333,7 @@ export function assembleTypst(
     const bankCfg = sectionCfg('bank');
     if (bankCfg?.bankStyle === 'inline') {
       const inline = data.bank.rows.map((r) => `${E(r.label)} ${V(r.value)}`).join('  •  ');
-      frag.bank = `#block(width: 100%, inset: (y: 4pt), text(size: 9pt, [#text(weight: "bold", fill: rgb("${NAVY}"), [${E(data.bank.title)}]) #h(6pt) #text(fill: rgb("${MUTED}"), [${inline}])]))\n#v(8pt)`;
+      frag.bank = `#block(width: 100%, inset: (y: 4pt), text(size: ${S.value}pt, [#text(weight: "bold", fill: rgb("${NAVY}"), [${E(data.bank.title)}]) #h(6pt) #text(fill: rgb("${MUTED}"), [${inline}])]))\n#v(8pt)`;
     } else {
       const box = infobox('iconDoc', data.bank.title, data.bank.rows, 'parties');
       const width = bankCfg?.bankWidth ?? 'auto';
@@ -317,10 +351,10 @@ export function assembleTypst(
     const ph = data.paymentHistory;
     const heads = [ph.columns.date, ph.columns.document, ph.columns.method, ph.columns.reference, ph.columns.recordedBy, ph.columns.amount, ph.columns.balance];
     const headerCells = heads
-      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: 8pt, fill: rgb("${TEXT}"), [${biLine(c, 'paymentHistory')}]))`)
+      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: ${S.thead}pt, fill: rgb("${TEXT}"), [${biLine(c, 'paymentHistory')}]))`)
       .join(', ');
     const body = ph.rows
-      .map((r) => [r.date, r.document, r.method, r.reference, r.recordedBy, r.amount, r.runningBalance].map((v) => `text(size: 8pt, fill: rgb("${TEXT}"), [${V(v)}])`).join(', '))
+      .map((r) => [r.date, r.document, r.method, r.reference, r.recordedBy, r.amount, r.runningBalance].map((v) => `text(size: ${S.tcell}pt, fill: rgb("${TEXT}"), [${V(v)}])`).join(', '))
       .join(',\n');
     frag.paymentHistory = `#heading([${E(ph.title)}], [${A(ph.title)}])\n#table(columns: (auto, auto, auto, 1fr, auto, auto, auto), table.header(${headerCells}),\n${body})\n#v(8pt)`;
   }

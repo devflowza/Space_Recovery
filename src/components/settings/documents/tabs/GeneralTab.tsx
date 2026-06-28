@@ -5,7 +5,7 @@ import { Select } from '../../../ui/Select';
 import { ColorField, FieldGroup, NumberField, SegmentedControl, ToggleRow } from '../controls';
 import { PDF_COLORS } from '../../../../lib/pdf/styles';
 import { generatePalette } from '../../../../lib/pdf/engine/palette';
-import type { DensityPreset, PaperConfig, PdfFontFamily } from '../../../../lib/pdf/templateConfig';
+import type { DensityPreset, PaperConfig, PdfFontFamily, TypographyStyleKey } from '../../../../lib/pdf/templateConfig';
 import type { StudioApi } from '../TemplateStudio';
 
 const FONT_OPTIONS = [
@@ -14,11 +14,15 @@ const FONT_OPTIONS = [
   { value: 'NotoSansArabic', label: 'Noto Sans Arabic' },
 ];
 
-const SIZE_KEYS: { key: 'documentTitle' | 'sectionTitle' | 'tableHeader' | 'tableCell'; label: string }[] = [
+const SIZE_KEYS: { key: TypographyStyleKey; label: string }[] = [
   { key: 'documentTitle', label: 'Document title' },
   { key: 'sectionTitle', label: 'Section titles' },
   { key: 'tableHeader', label: 'Table header' },
   { key: 'tableCell', label: 'Table cells' },
+  { key: 'label', label: 'Field labels' },
+  { key: 'value', label: 'Field values' },
+  { key: 'totalValue', label: 'Grand total' },
+  { key: 'termsText', label: 'Terms text' },
 ];
 
 // Document font-size presets → base scale (1.0 = the native, dense sizes).
@@ -108,15 +112,15 @@ export const GeneralTab: React.FC<{ api: StudioApi }> = ({ api }) => {
           <NumberField
             label="Fine-tune scale"
             value={typo?.baseScale ?? 1.2}
-            min={0.8}
-            max={1.75}
+            min={0.6}
+            max={2}
             step={0.05}
             onChange={(v) => api.setTypography({ baseScale: v })}
           />
         </div>
         <p className="text-xs text-slate-500">
-          Font size scales the whole document. The per-section sizes below override the scaled default for one section
-          — leave at 0 to follow the document size.
+          Font size scales the whole document (0.6×–2×). The per-section sizes below override the scaled default for
+          one section — leave at 0 to follow the document size.
         </p>
         <div className="grid grid-cols-2 gap-2">
           {SIZE_KEYS.map(({ key, label }) => (

@@ -66,3 +66,51 @@ describe('assembleTypst', () => {
     expect(assembleTypst(data, c, ctx)).not.toContain('#align(center, image(');
   });
 });
+
+// The Typst (Arabic) path must honour config.typography — both the global font
+// scale ("Fine-tune scale") and the per-section size overrides — exactly like the
+// pdfmake path. Before this, every size was hardcoded so the controls no-opped.
+describe('assembleTypst — typography (global scale + per-section sizes)', () => {
+  const cfgT = (typography: unknown) =>
+    resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
+      language: { mode: 'en', primary: 'en' } as LanguageConfig,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      typography: typography as any,
+    });
+  const render = (typography: unknown) => {
+    const c = cfgT(typography);
+    return assembleTypst(data, c, ctxFromLanguageConfig(c.language));
+  };
+
+  it('renders the assembler base sizes at scale 1', () => {
+    const out = render({ baseScale: 1 });
+    expect(out).toContain('size: 16pt'); // document title (16 * 1)
+    expect(out).toContain('size: 9pt'); // base / value (9 * 1)
+  });
+
+  it('honours the financial built-in default scale (1.2) on the Arabic path', () => {
+    // The bug: the hardcoded Typst path ignored config.typography, so the Arabic
+    // doc rendered at 1.0 while pdfmake used the built-in 1.2. Now it matches.
+    const out = render(undefined);
+    expect(out).toContain('size: 19.2pt'); // title 16 * 1.2
+    expect(out).toContain('size: 10.8pt'); // base 9 * 1.2
+  });
+
+  it('applies the global font scale to every size', () => {
+    const out = render({ baseScale: 2 });
+    expect(out).toContain('size: 32pt'); // title  16 * 2
+    expect(out).toContain('size: 18pt'); // base / value  9 * 2
+  });
+
+  it('clamps an out-of-legible-range scale to 2× (matches the pdfmake path)', () => {
+    const out = render({ baseScale: 2.5 }); // 2.5 → clamp(2)
+    expect(out).toContain('size: 32pt'); // title  16 * 2
+  });
+
+  it('honours a per-section size override as absolute pt, independent of scale', () => {
+    const out = render({ baseScale: 2, sizes: { documentTitle: 21 } });
+    expect(out).toContain('size: 21pt'); // title override wins over 16 * 2
+    expect(out).toContain('size: 18pt'); // other sizes still scaled (9 * 2)
+    expect(out).not.toContain('size: 32pt'); // title is no longer the scaled default
+  });
+});
