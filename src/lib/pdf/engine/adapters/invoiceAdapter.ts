@@ -192,6 +192,35 @@ export function toEngineData(
     totals.push({ ...tl('amountInWords', 'Amount in Words:', 'المبلغ بالحروف:'), value });
   }
 
+  // ---- Tax Summary (opt-in VAT/GST breakdown) ------------------------------
+  // Single-rate today (the invoice carries one tax_rate); structured for multi-
+  // rate. Emitted only when the tenant turns it on, so the section is a no-op
+  // otherwise.
+  const tsCfg = config.taxSummary;
+  const taxSummary =
+    tsCfg?.show && taxRate > 0
+      ? {
+          title: { en: tsCfg.title?.trim() || 'Tax Summary', ar: 'ملخص الضريبة' },
+          columns: {
+            rate: { en: 'Tax Rate', ar: 'نسبة الضريبة' },
+            taxable: { en: 'Taxable Amount', ar: 'المبلغ الخاضع للضريبة' },
+            tax: { en: 'Tax Amount', ar: 'مبلغ الضريبة' },
+          },
+          rows: [{ rate: `${taxRate}%`, taxable: money(discountedSubtotal), tax: money(taxAmount) }],
+          total: { label: { en: 'Total', ar: 'الإجمالي' }, taxable: money(discountedSubtotal), tax: money(taxAmount) },
+          ...(tsCfg.showAmountInWords
+            ? {
+                amountInWords:
+                  config.language.mode === 'ar'
+                    ? amountInWordsAr(taxAmount, currencySymbol, decimalPlaces)
+                    : config.language.mode.startsWith('bilingual')
+                      ? `${amountInWordsEn(taxAmount, currencySymbol, decimalPlaces)}  ·  ${amountInWordsAr(taxAmount, currencySymbol, decimalPlaces)}`
+                      : amountInWordsEn(taxAmount, currencySymbol, decimalPlaces),
+              }
+            : {}),
+        }
+      : undefined;
+
   // ---- Terms / notes (structured: Payment Terms + Notes stacks) ------------
   // Mirrors InvoiceDocument.ts's separate Payment Terms / Notes headings rather
   // than collapsing them into one flat string. The bank box (below) renders in
@@ -300,6 +329,7 @@ export function toEngineData(
     meta,
     lineItems: { columns, rows },
     totals,
+    taxSummary,
     paymentHistory,
     terms,
     bank,

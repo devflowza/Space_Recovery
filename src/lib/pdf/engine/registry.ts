@@ -43,6 +43,7 @@ import { renderNetPay } from './sections/netPay';
 import { renderStockLabel } from './sections/stockLabel';
 import { renderLineItems } from './sections/lineItemTable';
 import { renderTotals } from './sections/totals';
+import { renderTaxSummary } from './sections/taxSummary';
 import { renderPaymentHistory } from './sections/paymentHistory';
 import { renderTerms, renderRecordTerms } from './sections/terms';
 import { renderBank } from './sections/bank';
@@ -78,6 +79,7 @@ export const SECTION_REGISTRY: Record<string, SectionRenderer> = {
   taxBar: renderTaxBar,
   lineItems: renderLineItems,
   totals: renderTotals,
+  taxSummary: renderTaxSummary,
   paymentHistory: renderPaymentHistory,
   terms: renderTerms,
   recordTerms: renderRecordTerms,

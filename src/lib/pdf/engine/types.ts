@@ -630,6 +630,16 @@ export interface EngineDocData {
   /** Totals lines (subtotal/vat/total/…). `emphasis` flags the grand total;
    *  `key` is the stable line identifier for per-row label/colour overrides. */
   totals?: Array<{ key?: string; label: LabelText; value: string; emphasis?: boolean }>;
+  /** Standalone VAT/GST breakdown table (rate → taxable → tax). Present only
+   *  when `config.taxSummary.show` is on; the section renders nothing otherwise. */
+  taxSummary?: {
+    title: LabelText;
+    columns: { rate: LabelText; taxable: LabelText; tax: LabelText };
+    rows: Array<{ rate: string; taxable: string; tax: string }>;
+    total: { label: LabelText; taxable: string; tax: string };
+    /** Spelled-out total tax (when showAmountInWords). */
+    amountInWords?: string;
+  };
   /**
    * Terms & conditions / notes block, or `null` to omit.
    *

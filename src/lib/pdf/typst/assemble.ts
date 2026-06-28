@@ -251,6 +251,39 @@ export function assembleTypst(
     frag.totals = `#align(end, block(width: 260pt, ${outerStroke}stack(spacing: 0pt, ${rows.join(', ')})))\n#v(8pt)`;
   }
 
+  // Tax Summary — standalone VAT/GST breakdown table (rate → taxable → tax) with
+  // an emphasised totals row. Opt-in (data present only when config.taxSummary.show).
+  if (data.taxSummary?.rows?.length) {
+    const ts = data.taxSummary;
+    const sc = config.taxSummary ?? {};
+    const sStyle = sc.style ?? 'bordered';
+    const hBg = hexColor(sc.headerBackground) ?? NAVY;
+    const hText = hexColor(sc.headerText) ?? '#ffffff';
+    const bText = hexColor(sc.bodyText) ?? TEXT;
+    const tHi = sc.highlightTotalRow !== false;
+    const tBg = hexColor(sc.totalRowBackground) ?? SHADE;
+    const totalRowIdx = ts.rows.length + 1; // 0 = header, then rows, then total
+    const stroke =
+      sStyle === 'bordered' ? `0.5pt + rgb("${BORDER}")` : sStyle === 'borderless' ? 'none' : `(y: 0.5pt + rgb("${BORDER}"))`;
+    const fillBranches = [
+      `if y == 0 { rgb("${hBg}") }`,
+      `else if y == ${totalRowIdx} { ${tHi ? `rgb("${tBg}")` : 'none'} }`,
+      ...(sStyle === 'striped' ? [`else if calc.even(y) { rgb("${SHADE}") }`] : []),
+      `else { none }`,
+    ].join(' ');
+    const hdr = [ts.columns.rate, ts.columns.taxable, ts.columns.tax]
+      .map((c, i) => `table.cell(text(weight: "bold", size: 8pt, fill: rgb("${hText}"), [${L(c)}]))${i === 0 ? '' : ''}`)
+      .join(', ');
+    const aligns = '(start, end, end)';
+    const bodyRows = ts.rows
+      .map((r) => `text(size: 8pt, fill: rgb("${bText}"), [${V(r.rate)}]), text(size: 8pt, fill: rgb("${bText}"), [${V(r.taxable)}]), text(size: 8pt, fill: rgb("${bText}"), [${V(r.tax)}])`)
+      .join(',\n');
+    const totalRow = `text(weight: "bold", size: 8pt, fill: rgb("${bText}"), [${L(ts.total.label)}]), text(weight: "bold", size: 8pt, fill: rgb("${bText}"), [${V(ts.total.taxable)}]), text(weight: "bold", size: 8pt, fill: rgb("${bText}"), [${V(ts.total.tax)}])`;
+    let block = `#heading([${E(ts.title)}], [${A(ts.title)}])\n#table(columns: (1fr, 1fr, 1fr), align: ${aligns}, stroke: ${stroke}, fill: (_, y) => { ${fillBranches} }, table.header(${hdr}),\n${bodyRows},\n${totalRow})`;
+    if (ts.amountInWords) block += `\n#text(size: 7pt, style: "italic", fill: rgb("${MUTED}"), [${V(ts.amountInWords)}])`;
+    frag.taxSummary = `${block}\n#v(8pt)`;
+  }
+
   // Terms / Notes (no icon).
   if (data.terms?.blocks?.length) {
     frag.terms = data.terms.blocks

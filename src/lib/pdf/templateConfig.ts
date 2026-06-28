@@ -564,6 +564,31 @@ export interface TotalsConfig {
   highlightTotal?: boolean;
 }
 
+/**
+ * The standalone VAT/GST breakdown table (rate → taxable → tax). OPT-IN: the
+ * adapter only emits the data when `show` is true. All styling is optional →
+ * neutral defaults (navy header, bordered).
+ */
+export interface TaxSummaryConfig {
+  /** Render the tax-summary table. Default false. */
+  show?: boolean;
+  /** Heading override (English); blank → "Tax Summary". */
+  title?: string;
+  /** Table style. Default `'bordered'`. */
+  style?: 'bordered' | 'borderless' | 'striped';
+  /** Header fill + text colours (hex; default navy / white). */
+  headerBackground?: string;
+  headerText?: string;
+  /** Body text colour (hex; default dark slate). */
+  bodyText?: string;
+  /** Tint + emphasise the totals row. Default true. */
+  highlightTotalRow?: boolean;
+  /** Totals-row fill (hex; default the neutral shade). */
+  totalRowBackground?: string;
+  /** Spell the total tax out in words below the table. Default false. */
+  showAmountInWords?: boolean;
+}
+
 /** Resolved locale slice threaded by applyTenantLocale / the country layer
  *  (§8d/§8g). Absent = today's neutral PDF default (date 'dd MMM yyyy', Western
  *  grouping, document-currency decimals). */
@@ -630,6 +655,8 @@ export interface DocumentTemplateConfig {
   termsContent?: TermsContentConfig;
   /** Total-section customisation (labels, per-row colours, style). */
   totals?: TotalsConfig;
+  /** Standalone VAT/GST breakdown table (opt-in). */
+  taxSummary?: TaxSummaryConfig;
 }
 
 /**
@@ -687,6 +714,8 @@ export interface TemplateConfigOverride {
   termsContent?: TermsContentConfig;
   /** Total-section customisation (deep-merged: labels + rowColors by key). */
   totals?: TotalsConfig;
+  /** Standalone VAT/GST breakdown table (scalars; shallow-merged). */
+  taxSummary?: TaxSummaryConfig;
 }
 
 /** Partial section override; `key` identifies the target section. */
@@ -807,23 +836,26 @@ function financialSections(): SectionConfig[] {
         amountInWords: false,
       },
     }),
+    // VAT/GST breakdown table (rate → taxable → tax). Opt-in: renders nothing
+    // unless `config.taxSummary.show` (the adapter only emits the data then).
+    section('taxSummary', 6),
     // Payment-history statement — rendered between totals and terms, mirroring
     // the legacy InvoiceDocument layout. Returns null on docs with no history
     // (proforma, quotes), so it is harmless on the shared financial base.
-    section('paymentHistory', 6),
+    section('paymentHistory', 7),
     // Standard Terms & Conditions (Studio content only; omitted when blank).
-    section('terms', 7),
+    section('terms', 8),
     // Per-record "Quote Terms" / "Invoice Terms" — the terms entered on the
     // record (from Terms & Templates). Its own positionable section; omitted when
     // the record carries none.
-    section('recordTerms', 8),
+    section('recordTerms', 9),
     // Bank account as its own movable section — visible by default and rendered
     // here (no longer inline in terms). Reorder / show-hide like any section, with
     // a Boxed | Single line display style.
-    section('bank', 9, { bankStyle: 'boxed', bankWidth: 'auto', bankAlign: 'left' }),
-    section('signature', 10, { visible: false }),
-    section('qr', 11),
-    section('footer', 12),
+    section('bank', 10, { bankStyle: 'boxed', bankWidth: 'auto', bankAlign: 'left' }),
+    section('signature', 11, { visible: false }),
+    section('qr', 12),
+    section('footer', 13),
   ];
 }
 
@@ -1308,6 +1340,7 @@ function applyOverride(
     locale: mergeGroup(base.locale, override.locale),
     termsContent: mergeTermsContent(base.termsContent, override.termsContent),
     totals: mergeTotals(base.totals, override.totals),
+    taxSummary: mergeGroup(base.taxSummary, override.taxSummary),
   };
 }
 

@@ -36,6 +36,7 @@ import {
   type TaxBarConfig,
   type TermsBodyText,
   type TermsContentConfig,
+  type TaxSummaryConfig,
   type TemplateConfigOverride,
   type TemplateDocumentType,
   type TotalsConfig,
@@ -117,6 +118,8 @@ export interface StudioApi {
   setTotalsLabel: (key: TotalsLineKey, value: string) => void;
   /** Opt-in per-row colour for the grand total / balance-due / tax rows. */
   setTotalsRowColor: (row: 'total' | 'balanceDue' | 'tax', patch: Partial<TotalsRowColor>) => void;
+  /** Standalone VAT/GST breakdown table customisation. */
+  setTaxSummary: (patch: Partial<TaxSummaryConfig>) => void;
 }
 
 interface TemplateStudioProps {
@@ -486,6 +489,7 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
             rowColors: { ...prev.totals?.rowColors, [row]: { ...prev.totals?.rowColors?.[row], ...patch } },
           },
         })),
+      setTaxSummary: (patch) => mergeGroup('taxSummary', patch),
     };
   }, [docType, resolved, override]);
 

@@ -28,6 +28,7 @@ export const TotalTab: React.FC<{ api: StudioApi }> = ({ api }) => {
   const totals = api.resolved.sections.find((s) => s.key === 'totals');
   const lines = totals?.lines;
   const t = api.resolved.totals ?? {};
+  const ts = api.resolved.taxSummary ?? {};
 
   return (
     <div className="space-y-7">
@@ -110,6 +111,73 @@ export const TotalTab: React.FC<{ api: StudioApi }> = ({ api }) => {
                 </div>
               ))}
             </div>
+          </FieldGroup>
+
+          <FieldGroup title="Tax Summary table" description="A standalone VAT/GST breakdown (rate → taxable → tax). Off by default.">
+            <ToggleRow
+              label="Show tax summary"
+              checked={ts.show === true}
+              onChange={(v) => api.setTaxSummary({ show: v })}
+            />
+            {ts.show && (
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">Title</label>
+                  <Input
+                    value={ts.title ?? ''}
+                    placeholder="Tax Summary"
+                    onChange={(e) => api.setTaxSummary({ title: e.target.value })}
+                  />
+                </div>
+                <SegmentedControl
+                  label="Table style"
+                  value={ts.style ?? 'bordered'}
+                  onChange={(v) => api.setTaxSummary({ style: v })}
+                  options={[
+                    { value: 'bordered', label: 'Bordered' },
+                    { value: 'borderless', label: 'Borderless' },
+                    { value: 'striped', label: 'Striped' },
+                  ]}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <ColorField
+                    label="Header background"
+                    value={ts.headerBackground}
+                    neutral="#162660"
+                    onChange={(hex) => api.setTaxSummary({ headerBackground: hex })}
+                  />
+                  <ColorField
+                    label="Header text"
+                    value={ts.headerText}
+                    neutral="#ffffff"
+                    against={ts.headerBackground ?? '#162660'}
+                    onChange={(hex) => api.setTaxSummary({ headerText: hex })}
+                  />
+                </div>
+                <ColorField
+                  label="Body text"
+                  value={ts.bodyText}
+                  neutral="#1e293b"
+                  onChange={(hex) => api.setTaxSummary({ bodyText: hex })}
+                />
+                <ToggleRow
+                  label="Highlight the totals row"
+                  checked={ts.highlightTotalRow !== false}
+                  onChange={(v) => api.setTaxSummary({ highlightTotalRow: v })}
+                />
+                <ColorField
+                  label="Totals row background"
+                  value={ts.totalRowBackground}
+                  neutral="#f8fafc"
+                  onChange={(hex) => api.setTaxSummary({ totalRowBackground: hex })}
+                />
+                <ToggleRow
+                  label="Show tax amount in words"
+                  checked={ts.showAmountInWords === true}
+                  onChange={(v) => api.setTaxSummary({ showAmountInWords: v })}
+                />
+              </div>
+            )}
           </FieldGroup>
         </>
       )}

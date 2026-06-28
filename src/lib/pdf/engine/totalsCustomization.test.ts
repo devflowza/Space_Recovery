@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { BUILT_IN_TEMPLATE_CONFIGS, resolveTemplateConfig } from '../templateConfig';
 import { buildPreviewEngineData } from './sampleData';
 import { renderTotals } from './sections/totals';
+import { renderTaxSummary } from './sections/taxSummary';
 import { PDF_COLORS } from '../styles';
 import type { EngineContext, EngineDocData } from './types';
 import type { TranslationContext } from '../types';
@@ -97,5 +98,44 @@ describe('totals customization — table style', () => {
   it('striped: tints even subtotal rows', () => {
     const layout = layoutOf(renderTotals(engineFor({ style: 'striped' }), DATA));
     expect(layout.fillColor(0)).toBe(PDF_COLORS.background); // even → striped
+  });
+});
+
+const TS_DATA: EngineDocData = {
+  taxSummary: {
+    title: { en: 'Tax Summary', ar: 'ملخص' },
+    columns: { rate: { en: 'Rate' }, taxable: { en: 'Taxable' }, tax: { en: 'Tax' } },
+    rows: [{ rate: '5%', taxable: '100', tax: '5' }],
+    total: { label: { en: 'Total' }, taxable: '100', tax: '5' },
+  },
+} as EngineDocData;
+
+function taxEngine(taxSummary: unknown): EngineContext {
+  const config = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, { taxSummary } as never);
+  return { config, ctx } as EngineContext;
+}
+// renderTaxSummary returns { stack: [heading, tableNode], ... }; the table layout
+// is on stack[1].
+const taxLayout = (out: unknown): Layout => ((out as { stack: { layout?: Layout }[] }).stack[1].layout as Layout);
+
+describe('tax summary', () => {
+  it('adapter emits the breakdown only when show is on', () => {
+    const on = buildPreviewEngineData('invoice', resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, { taxSummary: { show: true } } as never));
+    expect(on.taxSummary?.rows.length).toBeGreaterThan(0);
+    expect(buildPreviewEngineData('invoice', BUILT_IN_TEMPLATE_CONFIGS.invoice).taxSummary).toBeUndefined();
+  });
+
+  it('applies the header colour + highlights the totals row', () => {
+    const layout = taxLayout(renderTaxSummary(taxEngine({ headerBackground: '#0F766E', totalRowBackground: '#CCFBF1' }), TS_DATA));
+    expect(layout.fillColor(0)).toBe('#0F766E'); // header
+    expect(layout.fillColor(2)).toBe('#CCFBF1'); // totals row (header + 1 row + total)
+  });
+
+  it('borderless style draws no lines', () => {
+    expect(taxLayout(renderTaxSummary(taxEngine({ style: 'borderless' }), TS_DATA)).hLineWidth(0)).toBe(0);
+  });
+
+  it('returns null without tax-summary data', () => {
+    expect(renderTaxSummary(taxEngine({}), {} as EngineDocData)).toBeNull();
   });
 });
