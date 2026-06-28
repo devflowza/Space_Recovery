@@ -50,6 +50,7 @@ export function assembleTypst(
   data: EngineDocData,
   config: DocumentTemplateConfig,
   _ctx: TranslationContext,
+  opts: { logoPath?: string } = {},
 ): string {
   const language = config.language;
   const dir = engineLayoutDirection(language);
@@ -68,7 +69,9 @@ export function assembleTypst(
   const kvBody = (rows: Array<{ label: LabelText; value: string }>, group: TranslationGroup) =>
     rows.map((r) => `#kv([${fieldLbl(r.label, group)}], [${V(r.value)}])`).join(' ');
 
-  // Company identity header (name + address + contact). Logo image: later phase.
+  // Company identity header: logo (mapped into the compiler by the caller) +
+  // name + address + contact.
+  if (opts.logoPath) parts.push(`#align(center, image("${opts.logoPath}", height: 42pt))`, '#v(4pt)');
   const idName = data.identity?.basic_info?.company_name;
   if (idName) parts.push(`#align(center, text(size: 13pt, weight: "bold", [${V(idName)}]))`);
   for (const line of buildCompanyAddressLines(data.identity?.location)) {

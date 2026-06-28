@@ -57,4 +57,11 @@ describe('assembleTypst', () => {
     const out = assembleTypst(d2, c, ctxFromLanguageConfig(c.language));
     expect(out).toContain('A\\#1\\[x\\]');
   });
+
+  it('emits an #image when a logoPath is provided, and none otherwise', () => {
+    const c = cfg({ mode: 'bilingual_sidebyside', primary: 'en', secondary: 'ar' } as LanguageConfig);
+    const ctx = ctxFromLanguageConfig(c.language);
+    expect(assembleTypst(data, c, ctx, { logoPath: '/logo.png' })).toContain('image("/logo.png"');
+    expect(assembleTypst(data, c, ctx)).not.toContain('#align(center, image(');
+  });
 });

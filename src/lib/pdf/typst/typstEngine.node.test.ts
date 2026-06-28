@@ -82,4 +82,24 @@ describe('typst node render', () => {
     const out = render({ mode: 'en', primary: 'en' } as LanguageConfig);
     expect(out.subarray(0, 5).toString()).toBe('%PDF-');
   });
+
+  it('compiles with a mapped logo asset referenced via #image', () => {
+    const c = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
+      language: { mode: 'bilingual_sidebyside', primary: 'en', secondary: 'ar' } as LanguageConfig,
+    });
+    const markup = assembleTypst(data, c, ctxFromLanguageConfig(c.language), { logoPath: '/logo.png' });
+    const compiler = NodeCompiler.create({ fontArgs: [{ fontPaths: [path.resolve('public/fonts')] }] });
+    // A valid 1×1 PNG (same asset the preview placeholder uses).
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN48OABAAVEAqEuYekCAAAAAElFTkSuQmCC',
+      'base64',
+    );
+    // The browser VFS roots at '/', so the engine maps '/logo.png' + image("/logo.png").
+    // The node-compiler roots its VFS at the real cwd, so image("/logo.png") resolves
+    // to <cwd>/logo.png — map there (forward slashes) for this environment.
+    compiler.mapShadow(path.resolve('logo.png').replace(/\\/g, '/'), png);
+    const out = Buffer.from(compiler.pdf({ mainFileContent: markup }));
+    expect(out.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(out.length).toBeGreaterThan(2000);
+  });
 });

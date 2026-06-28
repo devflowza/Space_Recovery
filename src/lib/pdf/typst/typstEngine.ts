@@ -8,6 +8,7 @@
  */
 import { $typst, preloadRemoteFonts } from '@myriaddreamin/typst.ts';
 import compilerWasmUrl from '@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm?url';
+import type { TypstAsset } from './assets';
 
 /**
  * The brand + script fonts served from `public/fonts` (at `/fonts/*`). Tajawal +
@@ -36,9 +37,14 @@ function ensureInit(): void {
   initialized = true;
 }
 
-/** Compile Typst markup to a PDF Blob (lazy WASM init on first call). */
-export async function renderTypstPdf(markup: string): Promise<Blob> {
+/**
+ * Compile Typst markup to a PDF Blob (lazy WASM init on first call). `assets`
+ * (e.g. the logo) are mapped into the compiler's virtual filesystem so the markup
+ * can reference them by path via `#image("<path>")`.
+ */
+export async function renderTypstPdf(markup: string, assets: TypstAsset[] = []): Promise<Blob> {
   ensureInit();
+  for (const a of assets) await $typst.mapShadow(a.path, a.bytes);
   const bytes = await $typst.pdf({ mainContent: markup });
   return new Blob([bytes as BlobPart], { type: 'application/pdf' });
 }

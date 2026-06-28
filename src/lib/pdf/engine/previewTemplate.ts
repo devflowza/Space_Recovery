@@ -152,12 +152,14 @@ export async function previewTemplate(
   // imported so the WASM never enters the default bundle. Phase-1: text/tables
   // (logo/QR images TBD).
   if (isTypstEngineEnabled() && secondary === 'ar') {
-    const [{ assembleTypst }, { renderTypstPdf }] = await Promise.all([
+    const [{ assembleTypst }, { renderTypstPdf }, { logoAsset }] = await Promise.all([
       import('../typst/assemble'),
       import('../typst/typstEngine'),
+      import('../typst/assets'),
     ]);
-    const markup = assembleTypst(engineData, effectiveConfig, effectiveCtx);
-    const blob = await withTimeout(renderTypstPdf(markup), PREVIEW_TIMEOUT_MS, 'Preview render timed out');
+    const logo = logoAsset(previewLogo);
+    const markup = assembleTypst(engineData, effectiveConfig, effectiveCtx, { logoPath: logo?.path });
+    const blob = await withTimeout(renderTypstPdf(markup, logo ? [logo] : []), PREVIEW_TIMEOUT_MS, 'Preview render timed out');
     return { url: URL.createObjectURL(blob), warnings };
   }
 
