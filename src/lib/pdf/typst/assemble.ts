@@ -15,7 +15,14 @@
  * Phase 1 scope: the financial (invoice/quote/receipt) sections.
  */
 import { en, resolveLabel, fieldLabelLanguage, fieldLabelsBilingual, type TranslationGroup } from '../engine/labels';
-import { resolveOrganization, resolveTypography, resolveColors, resolveHeader } from '../engine/branding';
+import {
+  resolveOrganization,
+  resolveTypography,
+  resolveColors,
+  resolveHeader,
+  resolvePageFitting,
+  resolveTable,
+} from '../engine/branding';
 import { buildCompanyAddress } from '../utils';
 import { resolveSecondary, secondaryText, type DocumentTemplateConfig, type LabelText, type TypographyStyleKey } from '../templateConfig';
 import type { EngineDocData } from '../engine/types';
@@ -25,14 +32,23 @@ import { htmlToTypst } from './htmlToTypst';
 import { ICON_USER_SVG, ICON_DOC_SVG } from './icons';
 
 const FONTS = '("Tajawal", "Noto Sans Arabic", "Noto Sans Thai", "Noto Sans KR", "Roboto")';
-// PDF_COLORS (styles.ts) — kept literal; PDFs stay neutral across themes.
-const NAVY = '#162660'; // primary — band/heading accent, total value, divider
+/** Map a Studio font-family choice to the Typst font name (else null → default set). */
+const FONT_TYPST: Record<string, string> = {
+  Roboto: 'Roboto',
+  Tajawal: 'Tajawal',
+  NotoSansArabic: 'Noto Sans Arabic',
+};
+/** Density → scale, mirroring renderTemplate.ts DENSITY_SCALE (the pdfmake path). */
+const DENSITY_SCALE: Record<'comfortable' | 'compact' | 'dense', number> = {
+  comfortable: 1,
+  compact: 0.88,
+  dense: 0.78,
+};
+// Fixed neutral surfaces (no config field). Themable colours come from
+// resolveColors()/resolveTable() at render time — see assembleTypst.
 const PRIMARYDARK = '#1E3A5F'; // document title
-const TEXT = '#1e293b'; // body text
-const MUTED = '#64748b'; // labels / textLight
 const BORDER = '#e2e8f0'; // borders
-const SHADE = '#f8fafc'; // info-box band fill / grand-total fill
-const HEADERBG = '#F1F5F9'; // table header fill
+const SHADE = '#f8fafc'; // info-box band fill / grand-total fill / zebra
 
 function toAlign(a: 'left' | 'center' | 'right' | undefined): string {
   return a === 'right' ? 'end' : a === 'center' ? 'center' : 'start';
@@ -44,23 +60,39 @@ function hexColor(v: string | undefined): string | null {
   return typeof v === 'string' && HEX_RE.test(v.trim()) ? v.trim() : null;
 }
 
-/** Preamble — `s` carries the typography-resolved sizes (base text, small/muted,
- *  section heading) so the global scale + per-section overrides reach the helpers. */
-function preamble(dir: string, s: { base: number; small: number; heading: number }): string {
+interface PreambleOpts {
+  dir: string;
+  /** Full resolved `#set page(...)` line (paper size / orientation / margins). */
+  pageLine: string;
+  /** Resolved font tuple (the chosen family leads, with Arabic-capable fallbacks). */
+  fonts: string;
+  baseSize: number;
+  smallSize: number;
+  headingSize: number;
+  /** Resolved themable colours (accent surfaces, body text, muted labels). */
+  accent: string;
+  body: string;
+  label: string;
+}
+
+/** Preamble — page/text setup + the shared layout helpers, all parameterised by
+ *  the resolved page geometry, font, typography sizes and colours so the Studio
+ *  controls reach the Typst (Arabic) render exactly as they reach pdfmake. */
+function preamble(o: PreambleOpts): string {
   return [
-    '#set page(paper: "a4", margin: 40pt)',
-    `#set text(font: ${FONTS}, size: ${s.base}pt, fill: rgb("${TEXT}"), dir: ${dir})`,
+    o.pageLine,
+    `#set text(font: ${o.fonts}, size: ${o.baseSize}pt, fill: rgb("${o.body}"), dir: ${o.dir})`,
     `#set table(stroke: 0.5pt + rgb("${BORDER}"), inset: (x: 5pt, y: 3.5pt))`,
     `#let iconUser = box(image(bytes("${ICON_USER_SVG}"), format: "svg", width: 13pt))`,
     `#let iconDoc = box(image(bytes("${ICON_DOC_SVG}"), format: "svg", width: 13pt))`,
     `#let iconNone = box(width: 0pt)`,
-    `#let muted(b) = text(size: ${s.small}pt, fill: rgb("${MUTED}"), b)`,
+    `#let muted(b) = text(size: ${o.smallSize}pt, fill: rgb("${o.label}"), b)`,
     // Info-box header band: [icon · English (start) · spacer · secondary (end)],
-    // light fill, navy heading, 0.5pt bottom rule — mirrors createBilingualInfoBox.
-    `#let band(icon, a, b) = block(width: 100%, fill: rgb("${SHADE}"), stroke: (bottom: 0.5pt + rgb("${BORDER}")), inset: (x: 6pt, y: 4pt), grid(columns: (auto, auto, 1fr, auto), column-gutter: 6pt, align: horizon, icon, text(weight: "bold", size: ${s.heading}pt, fill: rgb("${NAVY}"), a), [], align(end, text(weight: "bold", size: ${s.heading}pt, fill: rgb("${NAVY}"), b))))`,
+    // light fill, accent heading, 0.5pt bottom rule — mirrors createBilingualInfoBox.
+    `#let band(icon, a, b) = block(width: 100%, fill: rgb("${SHADE}"), stroke: (bottom: 0.5pt + rgb("${BORDER}")), inset: (x: 6pt, y: 4pt), grid(columns: (auto, auto, 1fr, auto), column-gutter: 6pt, align: horizon, icon, text(weight: "bold", size: ${o.headingSize}pt, fill: rgb("${o.accent}"), a), [], align(end, text(weight: "bold", size: ${o.headingSize}pt, fill: rgb("${o.accent}"), b))))`,
     `#let infobox(icon, a, b, body) = block(width: 100%, stroke: 0.5pt + rgb("${BORDER}"), band(icon, a, b) + block(width: 100%, inset: (x: 8pt, y: 6pt), body))`,
     // Unboxed bilingual section heading (e.g. "Line Items") — no fill.
-    `#let heading(a, b) = block(width: 100%, inset: (top: 4pt, bottom: 5pt), grid(columns: (auto, 1fr, auto), column-gutter: 6pt, text(weight: "bold", size: ${s.heading}pt, fill: rgb("${NAVY}"), a), [], align(end, text(weight: "bold", size: ${s.heading}pt, fill: rgb("${NAVY}"), b))))`,
+    `#let heading(a, b) = block(width: 100%, inset: (top: 4pt, bottom: 5pt), grid(columns: (auto, 1fr, auto), column-gutter: 6pt, text(weight: "bold", size: ${o.headingSize}pt, fill: rgb("${o.accent}"), a), [], align(end, text(weight: "bold", size: ${o.headingSize}pt, fill: rgb("${o.accent}"), b))))`,
   ].join('\n');
 }
 
@@ -107,10 +139,23 @@ export function assembleTypst(
   const typo = resolveTypography(config, 'Roboto');
   const tSizes = config.typography?.sizes;
   const round1 = (n: number) => Math.round(n * 10) / 10;
+  // Density / auto-fit — mirror renderTemplate: density tightens font sizes AND
+  // margins; auto-fit applies a further reduction down to the legibility floor.
+  const fit = resolvePageFitting(config);
+  const densityScale = DENSITY_SCALE[fit.density];
+  const fitScale = fit.autoFitOnePage ? Math.max(fit.minScale, densityScale * 0.9) : densityScale;
   const sz = (base: number, key?: TypographyStyleKey): number => {
     const o = key ? tSizes?.[key] : undefined;
-    return round1(typeof o === 'number' && o > 0 ? o : base * typo.scale);
+    const v = typeof o === 'number' && o > 0 ? o : base * typo.scale;
+    return round1(v * fitScale);
   };
+  // Themable colours (accent surfaces / body text / muted labels / table header)
+  // resolved exactly like pdfmake so the Studio colour controls reach Arabic docs.
+  const C = resolveColors(config);
+  const ACCENT = C.accent;
+  const BODY = C.text;
+  const LABELC = C.label;
+  const TABLEHEAD = resolveTable(config).headerBackground;
   const S = {
     legal: sz(14),
     legalAr: sz(12),
@@ -140,7 +185,37 @@ export function assembleTypst(
     return s ? s.visible : true;
   };
 
-  const parts: string[] = [preamble(dir, { base: S.value, small: S.small, heading: S.heading }), ''];
+  // Page geometry — honour config.paper (size / orientation / margins) and the
+  // density scale, mirroring renderTemplate. Custom dimensions (labels) use an
+  // explicit width/height; otherwise a named paper with `flipped` for landscape.
+  const paper = config.paper;
+  const m = paper?.margins ?? [40, 40, 40, 40];
+  const pm = m.map((x) => Math.round(x * fitScale));
+  const customDims = paper?.size === 'custom' ? paper?.dimensions : null;
+  const pageGeom = customDims
+    ? `width: ${customDims[0]}pt, height: ${customDims[1]}pt`
+    : `paper: "${paper?.size === 'Letter' ? 'us-letter' : 'a4'}"${paper?.orientation === 'landscape' ? ', flipped: true' : ''}`;
+  const pageLine = `#set page(${pageGeom}, margin: (top: ${pm[0]}pt, right: ${pm[1]}pt, bottom: ${pm[2]}pt, left: ${pm[3]}pt))`;
+  // Font — the chosen family leads, with the Arabic-capable fallbacks behind it.
+  const leadFont = FONT_TYPST[typo.fontFamily];
+  const fonts = leadFont
+    ? `("${leadFont}", "Tajawal", "Noto Sans Arabic", "Noto Sans Thai", "Noto Sans KR", "Roboto")`
+    : FONTS;
+
+  const parts: string[] = [
+    preamble({
+      dir,
+      pageLine,
+      fonts,
+      baseSize: S.value,
+      smallSize: S.small,
+      headingSize: S.heading,
+      accent: ACCENT,
+      body: BODY,
+      label: LABELC,
+    }),
+    '',
+  ];
   // An info-box: icon + bilingual band title + field-row grid (label/value).
   const infobox = (
     icon: 'iconUser' | 'iconDoc' | 'iconNone',
@@ -151,7 +226,7 @@ export function assembleTypst(
     const cells = rows
       .map(
         (r) =>
-          `text(size: ${S.label}pt, fill: rgb("${MUTED}"), [${fieldLbl(r.label, group)}]), text(size: ${S.value}pt, fill: rgb("${TEXT}"), [${V(r.value)}])`,
+          `text(size: ${S.label}pt, fill: rgb("${LABELC}"), [${fieldLbl(r.label, group)}]), text(size: ${S.value}pt, fill: rgb("${BODY}"), [${V(r.value)}])`,
       )
       .join(', ');
     const grid = `grid(columns: (auto, 1fr), column-gutter: 10pt, row-gutter: 3pt, ${cells})`;
@@ -184,27 +259,27 @@ export function assembleTypst(
   const idLines: string[] = [];
   if (!org || org.show.legalName) {
     const v = pick(org?.manual.legalName, legalNameFallback);
-    if (v) idLines.push(`text(size: ${S.legal}pt, weight: "bold", fill: rgb("${TEXT}"), [${V(v)}])`);
+    if (v) idLines.push(`text(size: ${S.legal}pt, weight: "bold", fill: rgb("${BODY}"), [${V(v)}])`);
   }
   if (org?.show.legalNameAr && org.manual.legalNameAr) {
-    idLines.push(`text(size: ${S.legalAr}pt, weight: "bold", fill: rgb("${TEXT}"), [${V(org.manual.legalNameAr)}])`);
+    idLines.push(`text(size: ${S.legalAr}pt, weight: "bold", fill: rgb("${BODY}"), [${V(org.manual.legalNameAr)}])`);
   }
   if (org?.show.name) {
     const n = pick(org.manual.name, companyName);
-    if (n && n !== pick(org?.manual.legalName, legalNameFallback)) idLines.push(`text(size: ${S.tagline}pt, fill: rgb("${MUTED}"), [${V(n)}])`);
+    if (n && n !== pick(org?.manual.legalName, legalNameFallback)) idLines.push(`text(size: ${S.tagline}pt, fill: rgb("${LABELC}"), [${V(n)}])`);
   }
   if (org?.show.nameAr && org.manual.nameAr) {
-    idLines.push(`text(size: ${S.tagline}pt, fill: rgb("${MUTED}"), [${V(org.manual.nameAr)}])`);
+    idLines.push(`text(size: ${S.tagline}pt, fill: rgb("${LABELC}"), [${V(org.manual.nameAr)}])`);
   }
   if (!org || org.show.address) {
     const a = pick(org?.manual.address, companyAddress);
-    if (a) idLines.push(`text(size: ${sz(addrSize)}pt, fill: rgb("${MUTED}"), [${V(a)}])`);
+    if (a) idLines.push(`text(size: ${sz(addrSize)}pt, fill: rgb("${LABELC}"), [${V(a)}])`);
   }
-  if (contactInfo?.phone_primary) idLines.push(`text(size: ${S.small}pt, fill: rgb("${MUTED}"), [Tel: ${V(contactInfo.phone_primary)}])`);
-  if (contactInfo?.email_general) idLines.push(`text(size: ${S.small}pt, fill: rgb("${MUTED}"), [Email: ${V(contactInfo.email_general)}])`);
+  if (contactInfo?.phone_primary) idLines.push(`text(size: ${S.small}pt, fill: rgb("${LABELC}"), [Tel: ${V(contactInfo.phone_primary)}])`);
+  if (contactInfo?.email_general) idLines.push(`text(size: ${S.small}pt, fill: rgb("${LABELC}"), [Email: ${V(contactInfo.email_general)}])`);
   if (!org || org.show.taxId) {
     const tax = org?.source === 'manual' ? org.manual.taxId : info?.vat_number;
-    if (tax) idLines.push(`text(size: ${S.small}pt, fill: rgb("${MUTED}"), [VAT: ${V(tax)}])`);
+    if (tax) idLines.push(`text(size: ${S.small}pt, fill: rgb("${LABELC}"), [VAT: ${V(tax)}])`);
   }
 
   const idAlign = placement === 'center' ? 'center' : logoLeft ? 'right' : 'left';
@@ -260,10 +335,10 @@ export function assembleTypst(
     const colSpec = cols.map((c) => (c.width ? `${c.width}pt` : '1fr')).join(', ');
     const aligns = cols.map((c) => toAlign(c.align)).join(', ');
     const headerCells = cols
-      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: ${S.thead}pt, fill: rgb("${TEXT}"), [${biLine(c.label)}]))`)
+      .map((c) => `table.cell(fill: rgb("${TABLEHEAD}"), text(weight: "bold", size: ${S.thead}pt, fill: rgb("${BODY}"), [${biLine(c.label)}]))`)
       .join(', ');
     const body = data.lineItems.rows
-      .map((row) => cols.map((c) => `text(size: ${S.tcell}pt, fill: rgb("${TEXT}"), [${V(row[c.key])}])`).join(', '))
+      .map((row) => cols.map((c) => `text(size: ${S.tcell}pt, fill: rgb("${BODY}"), [${V(row[c.key])}])`).join(', '))
       .join(',\n');
     frag.lineItems = `#heading([Line Items], [البنود])\n#table(columns: (${colSpec}), align: (${aligns}), table.header(${headerCells}),\n${body})\n#v(6pt)`;
   }
@@ -285,8 +360,8 @@ export function assembleTypst(
       const colors = key ? trc[key] : undefined;
       const striped = tstyle === 'striped' && i % 2 === 0;
       const bg = hexColor(colors?.background) ?? (isTotal ? (thighlight ? SHADE : null) : striped ? SHADE : null);
-      const lblColor = hexColor(colors?.text) ?? (isTotal ? TEXT : MUTED);
-      const valColor = hexColor(colors?.text) ?? (isTotal ? NAVY : TEXT);
+      const lblColor = hexColor(colors?.text) ?? (isTotal ? BODY : LABELC);
+      const valColor = hexColor(colors?.text) ?? (isTotal ? ACCENT : BODY);
       const lbl = biLine(t.label, 'totals');
       if (isTotal && !ruled && tstyle !== 'bordered') {
         rows.push(`block(width: 100%, inset: (x: 8pt, y: 0pt), line(length: 100%, stroke: 0.5pt + rgb("${BORDER}")))`);
@@ -311,9 +386,9 @@ export function assembleTypst(
     const ts = data.taxSummary;
     const sc = config.taxSummary ?? {};
     const sStyle = sc.style ?? 'bordered';
-    const hBg = hexColor(sc.headerBackground) ?? NAVY;
+    const hBg = hexColor(sc.headerBackground) ?? ACCENT;
     const hText = hexColor(sc.headerText) ?? '#ffffff';
-    const bText = hexColor(sc.bodyText) ?? TEXT;
+    const bText = hexColor(sc.bodyText) ?? BODY;
     const tHi = sc.highlightTotalRow !== false;
     const tBg = hexColor(sc.totalRowBackground) ?? SHADE;
     const totalRowIdx = ts.rows.length + 1; // 0 = header, then rows, then total
@@ -334,17 +409,17 @@ export function assembleTypst(
       .join(',\n');
     const totalRow = `text(weight: "bold", size: ${S.tcell}pt, fill: rgb("${bText}"), [${L(ts.total.label)}]), text(weight: "bold", size: ${S.tcell}pt, fill: rgb("${bText}"), [${V(ts.total.taxable)}]), text(weight: "bold", size: ${S.tcell}pt, fill: rgb("${bText}"), [${V(ts.total.tax)}])`;
     let block = `#heading([${E(ts.title)}], [${A(ts.title)}])\n#table(columns: (1fr, 1fr, 1fr), align: ${aligns}, stroke: ${stroke}, fill: (_, y) => { ${fillBranches} }, table.header(${hdr}),\n${bodyRows},\n${totalRow})`;
-    if (ts.amountInWords) block += `\n#text(size: ${S.taxWords}pt, style: "italic", fill: rgb("${MUTED}"), [${V(ts.amountInWords)}])`;
+    if (ts.amountInWords) block += `\n#text(size: ${S.taxWords}pt, style: "italic", fill: rgb("${LABELC}"), [${V(ts.amountInWords)}])`;
     frag.taxSummary = `${block}\n#v(8pt)`;
   }
 
   // Terms / Notes (no icon).
   if (data.terms?.blocks?.length) {
     frag.terms = data.terms.blocks
-      .map((b) => `#infobox(iconNone, [${E(b.title)}], [${A(b.title)}], text(size: ${S.terms}pt, fill: rgb("${MUTED}"), [${htmlToTypst(b.body)}]))\n#v(6pt)`)
+      .map((b) => `#infobox(iconNone, [${E(b.title)}], [${A(b.title)}], text(size: ${S.terms}pt, fill: rgb("${LABELC}"), [${htmlToTypst(b.body)}]))\n#v(6pt)`)
       .join('\n');
   } else if (data.terms?.body) {
-    frag.terms = `#infobox(iconNone, [${E(data.terms.title)}], [${A(data.terms.title)}], text(size: ${S.terms}pt, fill: rgb("${MUTED}"), [${htmlToTypst(data.terms.body)}]))\n#v(6pt)`;
+    frag.terms = `#infobox(iconNone, [${E(data.terms.title)}], [${A(data.terms.title)}], text(size: ${S.terms}pt, fill: rgb("${LABELC}"), [${htmlToTypst(data.terms.body)}]))\n#v(6pt)`;
   }
 
   // Bank account — honours the Studio display style (boxed vs single line), box
@@ -353,7 +428,7 @@ export function assembleTypst(
     const bankCfg = sectionCfg('bank');
     if (bankCfg?.bankStyle === 'inline') {
       const inline = data.bank.rows.map((r) => `${E(r.label)} ${V(r.value)}`).join('  •  ');
-      frag.bank = `#block(width: 100%, inset: (y: 4pt), text(size: ${S.value}pt, [#text(weight: "bold", fill: rgb("${NAVY}"), [${E(data.bank.title)}]) #h(6pt) #text(fill: rgb("${MUTED}"), [${inline}])]))\n#v(8pt)`;
+      frag.bank = `#block(width: 100%, inset: (y: 4pt), text(size: ${S.value}pt, [#text(weight: "bold", fill: rgb("${ACCENT}"), [${E(data.bank.title)}]) #h(6pt) #text(fill: rgb("${LABELC}"), [${inline}])]))\n#v(8pt)`;
     } else {
       const box = infobox('iconDoc', data.bank.title, data.bank.rows, 'parties');
       const width = bankCfg?.bankWidth ?? 'auto';
@@ -371,17 +446,17 @@ export function assembleTypst(
     const ph = data.paymentHistory;
     const heads = [ph.columns.date, ph.columns.document, ph.columns.method, ph.columns.reference, ph.columns.recordedBy, ph.columns.amount, ph.columns.balance];
     const headerCells = heads
-      .map((c) => `table.cell(fill: rgb("${HEADERBG}"), text(weight: "bold", size: ${S.thead}pt, fill: rgb("${TEXT}"), [${biLine(c, 'paymentHistory')}]))`)
+      .map((c) => `table.cell(fill: rgb("${TABLEHEAD}"), text(weight: "bold", size: ${S.thead}pt, fill: rgb("${BODY}"), [${biLine(c, 'paymentHistory')}]))`)
       .join(', ');
     const body = ph.rows
-      .map((r) => [r.date, r.document, r.method, r.reference, r.recordedBy, r.amount, r.runningBalance].map((v) => `text(size: ${S.tcell}pt, fill: rgb("${TEXT}"), [${V(v)}])`).join(', '))
+      .map((r) => [r.date, r.document, r.method, r.reference, r.recordedBy, r.amount, r.runningBalance].map((v) => `text(size: ${S.tcell}pt, fill: rgb("${BODY}"), [${V(v)}])`).join(', '))
       .join(',\n');
     frag.paymentHistory = `#heading([${E(ph.title)}], [${A(ph.title)}])\n#table(columns: (auto, auto, auto, 1fr, auto, auto, auto), table.header(${headerCells}),\n${body})\n#v(8pt)`;
   }
 
   // Signatures.
   if (data.signatures?.length) {
-    const cells = data.signatures.map((s) => `[#v(24pt) #line(length: 80%, stroke: 0.5pt + rgb("${MUTED}")) #muted([${L(s)}])]`).join(', ');
+    const cells = data.signatures.map((s) => `[#v(24pt) #line(length: 80%, stroke: 0.5pt + rgb("${LABELC}")) #muted([${L(s)}])]`).join(', ');
     frag.signature = `#v(12pt)\n#grid(columns: (${data.signatures.map(() => '1fr').join(', ')}), gutter: 16pt, ${cells})`;
   }
 

@@ -115,6 +115,49 @@ describe('assembleTypst — typography (global scale + per-section sizes)', () =
   });
 });
 
+// Page geometry, font family, density and colours must reach the Typst (Arabic)
+// render the same way they reach pdfmake — these were all hardcoded before.
+describe('assembleTypst — page / font / density / colours wired', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderC = (override: any) => {
+    const c = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
+      language: { mode: 'en', primary: 'en' } as LanguageConfig,
+      ...override,
+    });
+    return assembleTypst(data, c, ctxFromLanguageConfig(c.language));
+  };
+
+  it('honours paper size, orientation and per-side margins', () => {
+    const out = renderC({ paper: { size: 'Letter', orientation: 'landscape', margins: [10, 20, 30, 40] } });
+    expect(out).toContain('paper: "us-letter"');
+    expect(out).toContain('flipped: true');
+    expect(out).toContain('margin: (top: 10pt, right: 20pt, bottom: 30pt, left: 40pt)');
+  });
+
+  it('defaults to a4 portrait', () => {
+    const out = renderC({});
+    expect(out).toContain('paper: "a4"');
+    expect(out).not.toContain('flipped: true');
+  });
+
+  it('scales margins by the density preset', () => {
+    const out = renderC({ paper: { size: 'A4', orientation: 'portrait', margins: [50, 50, 50, 50] }, pageFitting: { density: 'dense' } });
+    expect(out).toContain('margin: (top: 39pt, right: 39pt, bottom: 39pt, left: 39pt)'); // 50 * 0.78
+  });
+
+  it('uses the chosen font family as the lead', () => {
+    expect(renderC({ typography: { fontFamily: 'Roboto' } })).toContain('font: ("Roboto", "Tajawal"');
+    expect(renderC({ typography: { fontFamily: 'NotoSansArabic' } })).toContain('font: ("Noto Sans Arabic", "Tajawal"');
+  });
+
+  it('honours accent / body / table-header colours', () => {
+    const out = renderC({ colors: { accent: '#aa0000', text: '#111111' }, table: { headerBackground: '#00ff00' } });
+    expect(out).toContain('rgb("#aa0000")'); // accent (band/heading)
+    expect(out).toContain('rgb("#111111")'); // body text
+    expect(out).toContain('rgb("#00ff00")'); // table header fill
+  });
+});
+
 // The Typst header divider must honour config.header — style, colour, insets and
 // the vertical nudge — exactly like pdfmake's buildDivider. Before this it was a
 // hardcoded 0.5pt navy rule, always drawn.
