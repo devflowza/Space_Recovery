@@ -204,7 +204,9 @@ describe('renderRecordTerms — header matches the other section boxes', () => {
     const texts: string[] = [];
     collectText(out, texts);
     expect(texts.some((t) => t.includes('Quote Terms'))).toBe(true);
-    expect(texts.some((t) => t.includes('شروط العرض'))).toBe(true); // Arabic translation
+    // Header band reverses RTL word order for pdfmake (no bidi pass) → assert both
+    // Arabic words are present rather than a fixed order.
+    expect(texts.some((t) => t.includes('شروط') && t.includes('العرض'))).toBe(true);
     expect(hasFill(out, PDF_COLORS.background)).toBe(true); // shaded header band
   });
 

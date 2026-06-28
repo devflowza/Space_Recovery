@@ -168,7 +168,8 @@ describe('renderBank — readability', () => {
   it('shows the Arabic bank title in bilingual mode — even on a narrow box', () => {
     const texts: string[] = [];
     collectText(renderBank(engineBilingual(), BANK_DATA), texts);
-    expect(texts.some((t) => t.includes('تفاصيل البنك'))).toBe(true);
+    // Header band reverses RTL word order for pdfmake → assert both words present.
+    expect(texts.some((t) => t.includes('تفاصيل') && t.includes('البنك'))).toBe(true);
   });
 });
 

@@ -30,7 +30,10 @@ describe('translationPolicy — field-label suppression', () => {
     expect(render({ mode: 'system_only' })).not.toContain('\\nName:');
   });
   it('system_only → a SYSTEM label (customer box TITLE) stays bilingual', () => {
-    expect(render({ mode: 'system_only' })).toContain('معلومات العميل');
+    // Header band reverses RTL word order for pdfmake → assert both words present.
+    const out = render({ mode: 'system_only' });
+    expect(out).toContain('معلومات');
+    expect(out).toContain('العميل');
   });
   it('custom parties:false → parties field label suppressed', () => {
     expect(render({ mode: 'custom', groups: { parties: false } })).not.toContain('\\nName:');

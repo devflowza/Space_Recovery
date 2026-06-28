@@ -354,7 +354,7 @@ describe('renderTemplate — bilingual_sidebyside Arabic content', () => {
     const def = renderTemplate(config, makeData(), bilingualArCtx, null, TINY_PNG);
     const texts = allTexts(def);
     // Customer Information box title — both languages must be present.
-    expect(texts.some((t) => t.includes('معلومات العميل'))).toBe(true);
+    expect(texts.some((t) => t.includes('معلومات') && t.includes('العميل'))).toBe(true);
     expect(texts.some((t) => t.includes('Customer Information'))).toBe(true);
     // Line-item heading Arabic ("Line Items" → البنود) present.
     expect(texts.some((t) => t.includes('البنود'))).toBe(true);
