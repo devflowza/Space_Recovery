@@ -29,7 +29,7 @@ import type { PreviewResult } from './engine/previewTemplate';
 const PREVIEW_TIMEOUT_MS = 15000;
 import type { EngineDocData } from './engine/types';
 import type { DocumentTemplateConfig, TemplateDocumentType } from './templateConfig';
-import type { CompanySettingsData, TranslationContext } from './types';
+import type { CompanySettingsData } from './types';
 
 /** Doc types that support previewing against a real record. */
 const RECORD_PREVIEW_TYPES: ReadonlySet<TemplateDocumentType> = new Set([
@@ -46,15 +46,6 @@ export interface PreviewRecordOption {
   id: string;
   label: string;
 }
-
-/** English/LTR context — the editing config's `language` still drives bilingual. */
-const PREVIEW_CTX_EN: TranslationContext = {
-  t: (_key: string, englishText: string) => englishText,
-  isRTL: false,
-  isBilingual: false,
-  languageCode: null,
-  fontFamily: 'Roboto',
-};
 
 /** List the most recent records for a doc type (id + a human label). */
 export async function listPreviewRecords(docType: TemplateDocumentType): Promise<PreviewRecordOption[]> {
@@ -149,7 +140,11 @@ export async function previewDocumentForRecord(
   // the translation context FROM that resolved language so the chosen secondary
   // (any of the 13) drives both layout and translation.
   const langConfig = companySettings ? applyTenantLanguage(config, companySettings) : config;
-  const ctx = companySettings ? ctxFromLanguageConfig(langConfig.language) : PREVIEW_CTX_EN;
+  // ctxFromLanguageConfig needs only `language` (never companySettings); `langConfig`
+  // is already `config` when no tenant settings were fetched, so deriving from it
+  // ALWAYS honours the per-template secondary — no English fallback that silently
+  // drops the chosen language.
+  const ctx = ctxFromLanguageConfig(langConfig.language);
   // Preload the chosen secondary's font so a non-Latin script shapes; non-fatal
   // (createPdfWithFonts also remaps an unresolved family to Roboto), so a missing
   // font degrades to Latin instead of crashing the preview.

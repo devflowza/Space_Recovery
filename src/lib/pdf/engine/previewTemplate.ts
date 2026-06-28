@@ -113,7 +113,18 @@ export async function previewTemplate(
   // Studio's secondary-language choice drives BOTH layout (config.language) AND
   // translation (ctx) — any of the 13 languages, not just the tenant-wide Arabic.
   // When no company settings are passed, honour the caller-supplied ctx (tests).
-  const effectiveCtx = companySettings ? ctxFromLanguageConfig(effectiveConfig.language) : ctx;
+  // Build the context from the RESOLVED per-template language. ctxFromLanguageConfig
+  // needs only `language` — NOT companySettings — so we derive it whenever the
+  // caller passes tenant settings (the live Studio + generators always do). The
+  // caller-supplied `ctx` fallback is honoured only when no tenant settings are
+  // given at all (unit tests). Deriving here means a bilingual template renders its
+  // secondary language on the FIRST paint, before the async company-settings fetch
+  // resolves — no English flash that then corrects to the chosen language.
+  const effectiveCtx = companySettings
+    ? ctxFromLanguageConfig(effectiveConfig.language)
+    : config.language.mode !== 'en'
+      ? ctxFromLanguageConfig(config.language)
+      : ctx;
   // Preload the chosen secondary's font so a non-Latin script (Arabic/Korean/Thai)
   // shapes in the preview. Non-fatal: initializePDFFonts swallows load failures
   // and degrades to the base font (createPdfWithFonts also remaps any unresolved
