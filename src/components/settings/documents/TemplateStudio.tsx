@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Calculator,
+  Download,
   LayoutGrid,
   LayoutPanelTop,
   Loader2,
@@ -568,6 +569,20 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
             <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-2.5">
               <span className="text-sm font-medium text-slate-700">Live preview</span>
               <div className="flex items-center gap-2">
+                {previewUrl && (
+                  <a
+                    href={previewUrl}
+                    download={`${DOC_TYPE_LABELS[docType]}${
+                      dataSource !== 'sample' ? `-${records.find((r) => r.id === dataSource)?.label ?? ''}` : ''
+                    }.pdf`.replace(/[^\w.\-]+/g, '-')}
+                    title="Download the rendered PDF"
+                    aria-label="Download the rendered PDF"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Download
+                  </a>
+                )}
                 {recordPreviewSupported && records.length > 0 && (
                   <select
                     aria-label="Preview data source"
