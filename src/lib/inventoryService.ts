@@ -112,19 +112,22 @@ function applyInventoryFilters(
     q = q.ilike('serial_number', `%${v}%`);
   }
 
+  // Specs live in technical_details jsonb (the wizard writes everything there by
+  // def.key — the legacy pcb_number/firmware_version/dcm columns are unused), so
+  // ALL spec filters must target technical_details, not the legacy columns.
   if (filters.pcb_number) {
     const v = sanitizeFilterValue(filters.pcb_number);
-    q = q.ilike('pcb_number', `%${v}%`);
+    q = q.ilike('technical_details->>pcb_number', `%${v}%`);
   }
 
   if (filters.firmware) {
     const v = sanitizeFilterValue(filters.firmware);
-    q = q.ilike('firmware_version', `%${v}%`);
+    q = q.ilike('technical_details->>firmware_version', `%${v}%`);
   }
 
   if (filters.dcm) {
     const v = sanitizeFilterValue(filters.dcm);
-    q = q.ilike('dcm', `%${v}%`);
+    q = q.ilike('technical_details->>dcm', `%${v}%`);
   }
 
   if (filters.controller) {

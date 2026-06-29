@@ -72,7 +72,7 @@ describe('applyInventoryFilters — spec field filters', () => {
     await getInventoryItems({ pcb_number: '2060-800001' });
 
     const ilikeCalls = calls.filter(([m]) => m === 'ilike');
-    const pcbCall = ilikeCalls.find(([, col]) => col === 'pcb_number');
+    const pcbCall = ilikeCalls.find(([, col]) => col === 'technical_details->>pcb_number');
     expect(pcbCall).toBeDefined();
     expect(pcbCall?.[2]).toBe('%2060-800001%');
   });
@@ -84,7 +84,7 @@ describe('applyInventoryFilters — spec field filters', () => {
     await getInventoryItems({ firmware: 'CC49' });
 
     const ilikeCalls = calls.filter(([m]) => m === 'ilike');
-    const fwCall = ilikeCalls.find(([, col]) => col === 'firmware_version');
+    const fwCall = ilikeCalls.find(([, col]) => col === 'technical_details->>firmware_version');
     expect(fwCall).toBeDefined();
     expect(fwCall?.[2]).toBe('%CC49%');
   });
@@ -96,7 +96,7 @@ describe('applyInventoryFilters — spec field filters', () => {
     await getInventoryItems({ dcm: 'HARNXT0' });
 
     const ilikeCalls = calls.filter(([m]) => m === 'ilike');
-    const dcmCall = ilikeCalls.find(([, col]) => col === 'dcm');
+    const dcmCall = ilikeCalls.find(([, col]) => col === 'technical_details->>dcm');
     expect(dcmCall).toBeDefined();
     expect(dcmCall?.[2]).toBe('%HARNXT0%');
   });
@@ -194,7 +194,7 @@ describe('getInventoryItemsPage — spec filters propagate', () => {
     await getInventoryItemsPage({ pcb_number: '2060', firmware: 'CC49', page: 0, pageSize: 50 });
 
     const ilikeCalls = calls.filter(([m]) => m === 'ilike');
-    expect(ilikeCalls.find(([, col]) => col === 'pcb_number')).toBeDefined();
-    expect(ilikeCalls.find(([, col]) => col === 'firmware_version')).toBeDefined();
+    expect(ilikeCalls.find(([, col]) => col === 'technical_details->>pcb_number')).toBeDefined();
+    expect(ilikeCalls.find(([, col]) => col === 'technical_details->>firmware_version')).toBeDefined();
   });
 });
