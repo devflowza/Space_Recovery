@@ -7579,6 +7579,7 @@ export type Database = {
       }
       inventory_items: {
         Row: {
+          barcode: string | null
           brand_id: string | null
           capacity_id: string | null
           category_id: string | null
@@ -7587,6 +7588,7 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           description: string | null
+          device_type_id: string | null
           donor_parts_available: Json | null
           firmware_version: string | null
           head_map: string | null
@@ -7604,15 +7606,18 @@ export type Database = {
           photos: string[] | null
           purchase_date: string | null
           purchase_price: number | null
+          qr_value: string | null
           quantity: number | null
           serial_number: string | null
           status_id: string | null
           supplier_id: string | null
+          technical_details: Json
           tenant_id: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          barcode?: string | null
           brand_id?: string | null
           capacity_id?: string | null
           category_id?: string | null
@@ -7621,6 +7626,7 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           description?: string | null
+          device_type_id?: string | null
           donor_parts_available?: Json | null
           firmware_version?: string | null
           head_map?: string | null
@@ -7638,15 +7644,18 @@ export type Database = {
           photos?: string[] | null
           purchase_date?: string | null
           purchase_price?: number | null
+          qr_value?: string | null
           quantity?: number | null
           serial_number?: string | null
           status_id?: string | null
           supplier_id?: string | null
+          technical_details?: Json
           tenant_id: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          barcode?: string | null
           brand_id?: string | null
           capacity_id?: string | null
           category_id?: string | null
@@ -7655,6 +7664,7 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           description?: string | null
+          device_type_id?: string | null
           donor_parts_available?: Json | null
           firmware_version?: string | null
           head_map?: string | null
@@ -7672,10 +7682,12 @@ export type Database = {
           photos?: string[] | null
           purchase_date?: string | null
           purchase_price?: number | null
+          qr_value?: string | null
           quantity?: number | null
           serial_number?: string | null
           status_id?: string | null
           supplier_id?: string | null
+          technical_details?: Json
           tenant_id?: string
           updated_at?: string
           updated_by?: string | null
@@ -7707,6 +7719,13 @@ export type Database = {
             columns: ["condition_id"]
             isOneToOne: false
             referencedRelation: "master_inventory_condition_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_device_type_id_fkey"
+            columns: ["device_type_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_device_types"
             referencedColumns: ["id"]
           },
           {
@@ -17758,6 +17777,7 @@ export type Database = {
       search_donor_drives: {
         Args: { p_criteria: Json }
         Returns: {
+          barcode: string | null
           brand_id: string | null
           capacity_id: string | null
           category_id: string | null
@@ -17766,6 +17786,7 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           description: string | null
+          device_type_id: string | null
           donor_parts_available: Json | null
           firmware_version: string | null
           head_map: string | null
@@ -17783,10 +17804,12 @@ export type Database = {
           photos: string[] | null
           purchase_date: string | null
           purchase_price: number | null
+          qr_value: string | null
           quantity: number | null
           serial_number: string | null
           status_id: string | null
           supplier_id: string | null
+          technical_details: Json
           tenant_id: string
           updated_at: string
           updated_by: string | null
