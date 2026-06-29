@@ -15,7 +15,7 @@
 
 import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS, createBilingualInfoBox } from '../../styles';
-import { resolveBandFill } from '../branding';
+import { resolveSectionFill, resolveHeaderText } from '../branding';
 import { safeString } from '../../utils';
 import { getGeneralIconSvg } from '../../../deviceIconMapper';
 import type {
@@ -61,12 +61,14 @@ export const renderCaseInfo: SectionRenderer = (
 
   const rows: object[] = caseInfo.rows.map((r) => infoRow(r.label, r.value, labelLang, labelWidth));
 
+  const fill = resolveSectionFill(engine.config, 'caseInfo');
   const box = createBilingualInfoBox(
     en(caseInfo.title, 'Case Details'),
     bilingual ? ar(caseInfo.title, language) : null,
     rows,
     fileIcon,
-    resolveBandFill(engine.config),
+    fill,
+    resolveHeaderText(engine.config, fill),
   ) as Content;
 
   return { stack: [box], margin: [0, 0, 0, 8] };

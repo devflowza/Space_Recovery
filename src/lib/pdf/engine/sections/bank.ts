@@ -14,7 +14,7 @@ import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS } from '../../styles';
 import { safeString } from '../../utils';
 import { isBilingualMode, en, ar } from '../labels';
-import { resolveBandFill } from '../branding';
+import { resolveSectionFill, resolveHeaderText } from '../branding';
 import { resolveSecondary } from '../../templateConfig';
 import type { BankBlock, EngineContext, EngineDocData, SectionRenderer } from '../types';
 
@@ -73,8 +73,10 @@ export function buildBankBox(bank: BankBlock, engine: EngineContext): Content {
   // boxes (Customer Information, Details): the shared `bilingualHeader` style
   // (accent), English title left and the Arabic translation right when bilingual.
   // Applied at every width so the heading always carries its translation.
+  const bandFill = resolveSectionFill(engine.config, 'bank');
+  const bandText = resolveHeaderText(engine.config, bandFill);
   const headerColumns: object[] = [
-    { text: en(bank.title, 'Bank Account'), style: 'bilingualHeader', width: 'auto' },
+    { text: en(bank.title, 'Bank Account'), style: 'bilingualHeader', color: bandText, width: 'auto' },
     { text: '', width: '*' },
   ];
   if (bilingual) {
@@ -86,6 +88,7 @@ export function buildBankBox(bank: BankBlock, engine: EngineContext): Content {
     headerColumns.push({
       text: secondaryTitle,
       style: 'bilingualHeader',
+      color: bandText,
       alignment: 'right',
       width: 'auto',
     });
@@ -93,7 +96,7 @@ export function buildBankBox(bank: BankBlock, engine: EngineContext): Content {
   const headerCell: Content = {
     columns: headerColumns,
     columnGap: 6,
-    fillColor: resolveBandFill(engine.config),
+    fillColor: bandFill,
     margin: [6, 4, 6, 4],
   } as Content;
 

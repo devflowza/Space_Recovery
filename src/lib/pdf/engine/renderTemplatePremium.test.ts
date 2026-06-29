@@ -70,6 +70,18 @@ function collectFills(node: unknown, out: string[]): void {
   for (const value of Object.values(obj)) collectFills(value, out);
 }
 
+/** Colours applied inline to cells of a given style (e.g. per-band heading text). */
+function collectStyledColors(node: unknown, style: string, out: string[]): void {
+  if (node == null || typeof node !== 'object') return;
+  if (Array.isArray(node)) {
+    for (const child of node) collectStyledColors(child, style, out);
+    return;
+  }
+  const obj = node as Record<string, unknown>;
+  if (obj.style === style && typeof obj.color === 'string') out.push(obj.color);
+  for (const value of Object.values(obj)) collectStyledColors(value, style, out);
+}
+
 function collectText(node: unknown, out: string[]): void {
   if (node == null || typeof node !== 'object') return;
   if (Array.isArray(node)) {
@@ -142,9 +154,12 @@ describe('renderTemplate — colors group', () => {
   });
 
   it('info-box bands follow colors.headerBackground, keeping the heading readable', () => {
-    // White accent on the default light band would vanish → readable fallback.
+    // White accent on the default light band would vanish → readable fallback (the
+    // per-band heading colour is inline on the bilingualHeader cells).
     const light = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, { colors: { accent: '#ffffff' } });
-    expect(styleColor(renderTemplate(light, makeData(), englishCtx, null, null), 'bilingualHeader')).not.toBe('#ffffff');
+    const lightColors: string[] = [];
+    collectStyledColors(renderTemplate(light, makeData(), englishCtx, null, null).content, 'bilingualHeader', lightColors);
+    expect(lightColors).not.toContain('#ffffff');
 
     // A coloured header background fills the bands; the white accent now contrasts.
     const blue = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
@@ -154,7 +169,18 @@ describe('renderTemplate — colors group', () => {
     const fills: string[] = [];
     collectFills(def.content, fills);
     expect(fills).toContain('#0080ff'); // band fill = headerBackground
-    expect(styleColor(def, 'bilingualHeader')).toBe('#ffffff'); // accent readable on blue
+    const headColors: string[] = [];
+    collectStyledColors(def.content, 'bilingualHeader', headColors);
+    expect(headColors).toContain('#ffffff'); // accent readable on blue (inline per-band)
+  });
+
+  it('honours a PER-SECTION headerBackground override', () => {
+    const cfg = resolveTemplateConfig(BUILT_IN_TEMPLATE_CONFIGS.invoice, undefined, {
+      sections: [{ key: 'parties', headerBackground: '#aa0000' }],
+    });
+    const fills: string[] = [];
+    collectFills(renderTemplate(cfg, makeData(), englishCtx, null, null).content, fills);
+    expect(fills).toContain('#aa0000'); // the parties band uses its own colour
   });
 });
 

@@ -21,6 +21,7 @@
  */
 
 import { PDF_COLORS, PDF_STYLES } from '../styles';
+import { contrastRatio, readableTextOn } from './palette';
 import type {
   BrandingConfig,
   ColorsConfig,
@@ -155,6 +156,33 @@ export function resolveColors(config: {
  */
 export function resolveBandFill(config: { colors?: ColorsConfig }): string {
   return normalizeHex(config.colors?.headerBackground) ?? PDF_COLORS.background;
+}
+
+/**
+ * Per-section header fill: the section's own `headerBackground` override → the
+ * global `colors.headerBackground` → the surface's neutral `fallback`. Lets each
+ * section take an independent header colour from the Studio.
+ */
+export function resolveSectionFill(
+  config: Pick<DocumentTemplateConfig, 'colors' | 'sections'>,
+  sectionKey: string,
+  fallback: string = PDF_COLORS.background,
+): string {
+  const section = config.sections?.find((s) => s.key === sectionKey);
+  return normalizeHex(section?.headerBackground) ?? normalizeHex(config.colors?.headerBackground) ?? fallback;
+}
+
+/**
+ * Heading/label text colour for a header surface with the given fill: the brand
+ * accent when it's readable on that fill (≥3:1), else an auto-contrast white/dark.
+ * Keeps per-section coloured bands legible.
+ */
+export function resolveHeaderText(
+  config: { colors?: ColorsConfig; branding?: Pick<BrandingConfig, 'accent'> },
+  fill: string,
+): string {
+  const accent = resolveColors(config).accent;
+  return contrastRatio(accent, fill) >= 3 ? accent : readableTextOn(fill);
 }
 
 export interface ResolvedTypography {

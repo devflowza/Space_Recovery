@@ -14,6 +14,7 @@
 
 import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS, createBilingualInfoBox } from '../../styles';
+import { resolveSectionFill, resolveHeaderText } from '../branding';
 import { safeString } from '../../utils';
 import { getGeneralIconSvg } from '../../../deviceIconMapper';
 import type {
@@ -58,11 +59,14 @@ export const renderPayslipInfo: SectionRenderer = (
 
   const rows: object[] = info.rows.map((r) => infoRow(r.label, r.value, labelLang, labelWidth));
 
+  const fill = resolveSectionFill(engine.config, 'payslipInfo');
   const box = createBilingualInfoBox(
     en(info.title, 'Employee Information'),
     bilingual ? ar(info.title, language) : null,
     rows,
     userIcon,
+    fill,
+    resolveHeaderText(engine.config, fill),
   ) as Content;
 
   return { stack: [box], margin: [0, 0, 0, 10] };

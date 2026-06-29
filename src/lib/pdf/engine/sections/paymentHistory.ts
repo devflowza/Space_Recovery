@@ -12,6 +12,8 @@
 import type { Content, TableCell, Size } from 'pdfmake/interfaces';
 import { PDF_COLORS } from '../../styles';
 import { resolveLabel, fieldLabelLanguage } from '../labels';
+import { resolveSectionFill } from '../branding';
+import { readableTextOn } from '../palette';
 import { engineLayoutDirection, mirrorAlign } from '../rtl';
 import type {
   EngineContext,
@@ -69,11 +71,16 @@ export const renderPaymentHistory: SectionRenderer = (
       ? [...baseColumns].reverse().map((c) => ({ ...c, align: mirrorAlign(c.align) as 'left' | 'right' }))
       : baseColumns;
 
+  // Per-section header fill (default keeps the subtle shade + muted text; a custom
+  // fill switches to auto-contrast text so it stays readable).
+  const headerFill = resolveSectionFill(engine.config, 'paymentHistory', PDF_COLORS.background);
+  const headerText = headerFill === PDF_COLORS.background ? PDF_COLORS.textLight : readableTextOn(headerFill);
+
   const headerRow: TableCell[] = ordered.map((c) => ({
     text: resolveLabel(c.label, labelLang),
     fontSize: 8,
     bold: true,
-    color: PDF_COLORS.textLight,
+    color: headerText,
     alignment: c.align,
   }));
 
@@ -112,7 +119,7 @@ export const renderPaymentHistory: SectionRenderer = (
           body,
         },
         layout: {
-          fillColor: (rowIndex: number) => (rowIndex === 0 ? PDF_COLORS.background : null),
+          fillColor: (rowIndex: number) => (rowIndex === 0 ? headerFill : null),
           hLineWidth: () => 0.5,
           vLineWidth: () => 0,
           hLineColor: () => PDF_COLORS.border,

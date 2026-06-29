@@ -528,6 +528,7 @@ export function createBilingualInfoBox(
   content: object[],
   iconSvg?: string,
   bandFill: string = PDF_COLORS.background,
+  bandTextColor?: string,
 ): object {
   return {
     table: {
@@ -537,9 +538,9 @@ export function createBilingualInfoBox(
           {
             columns: [
               iconSvg ? { svg: iconSvg, width: 13, height: 13, margin: [0, 0, 0, 0] } : { text: '', width: 0 },
-              { text: englishTitle, style: 'bilingualHeader', width: 'auto' },
+              { text: englishTitle, style: 'bilingualHeader', ...(bandTextColor ? { color: bandTextColor } : {}), width: 'auto' },
               { text: '', width: '*' },
-              arabicTitle ? { text: arabicTitle, style: 'bilingualHeader', alignment: 'right', width: 'auto' } : { text: '', width: 0 },
+              arabicTitle ? { text: arabicTitle, style: 'bilingualHeader', ...(bandTextColor ? { color: bandTextColor } : {}), alignment: 'right', width: 'auto' } : { text: '', width: 0 },
             ],
             columnGap: 6,
             fillColor: bandFill,

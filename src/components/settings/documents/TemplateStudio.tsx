@@ -100,6 +100,7 @@ export interface StudioApi {
       bankStyle?: 'boxed' | 'inline';
       bankWidth?: 'auto' | 'half' | 'full';
       bankAlign?: 'left' | 'center' | 'right';
+      headerBackground?: string;
     },
   ) => void;
   /** Patch a line-item column. `labelSecondary` writes to `label.i18n[secondary]`

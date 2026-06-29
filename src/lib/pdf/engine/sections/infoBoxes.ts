@@ -21,7 +21,7 @@ import type {
   SectionRenderer,
 } from '../types';
 import { isBilingualMode, en, ar, resolveLabel, fieldLabelLanguage } from '../labels';
-import { resolveBandFill } from '../branding';
+import { resolveSectionFill, resolveHeaderText } from '../branding';
 import { engineLayoutDirection } from '../rtl';
 
 function infoRow(
@@ -74,12 +74,14 @@ function partyBox(
   // Pass the real Arabic title when bilingual; null collapses the AR column.
   // The TITLE stays on `language` (always bilingual); the field rows use
   // `labelLang` so the policy can suppress the per-row Arabic labels.
+  const b = sectionBand(engine, 'parties');
   return createBilingualInfoBox(
     en(party.title),
     bilingual ? ar(party.title, language) : null,
     partyRows(party, labelLang),
     iconSvg,
-    resolveBandFill(engine.config),
+    b.fill,
+    b.text,
   ) as Content;
 }
 
@@ -112,12 +114,14 @@ function buildMetaBox(engine: EngineContext, data: EngineDocData): Content | nul
   const { language } = engine.config;
   const bilingual = isBilingualMode(language);
   const metaTitle = metaTitleLabel(engine);
+  const b = sectionBand(engine, 'meta');
   return createBilingualInfoBox(
     en(metaTitle),
     bilingual ? ar(metaTitle, language) : null,
     metaRows(engine, data),
     getGeneralIconSvg('fileText'),
-    resolveBandFill(engine.config),
+    b.fill,
+    b.text,
   ) as Content;
 }
 
@@ -126,16 +130,22 @@ function buildMetaBox(engine: EngineContext, data: EngineDocData): Content | nul
  * same arrangement `createBilingualInfoBox` uses, reused by the equal-height
  * split panel so both layouts look identical.
  */
-function bandHeaderColumns(iconSvg: string, titleEn: string, titleAr: string | null): object {
+function bandHeaderColumns(iconSvg: string, titleEn: string, titleAr: string | null, textColor?: string): object {
   return {
     columns: [
       iconSvg ? { svg: iconSvg, width: 13, height: 13, margin: [0, 0, 0, 0] } : { text: '', width: 0 },
-      { text: titleEn, style: 'bilingualHeader', width: 'auto' },
+      { text: titleEn, style: 'bilingualHeader', color: textColor, width: 'auto' },
       { text: '', width: '*' },
-      titleAr ? { text: titleAr, style: 'bilingualHeader', alignment: 'right', width: 'auto' } : { text: '', width: 0 },
+      titleAr ? { text: titleAr, style: 'bilingualHeader', color: textColor, alignment: 'right', width: 'auto' } : { text: '', width: 0 },
     ],
     columnGap: 6,
   };
+}
+
+/** Resolve a section's header band fill + readable heading text colour. */
+function sectionBand(engine: EngineContext, key: string): { fill: string; text: string } {
+  const fill = resolveSectionFill(engine.config, key);
+  return { fill, text: resolveHeaderText(engine.config, fill) };
 }
 
 /**
@@ -243,7 +253,11 @@ export function renderPartiesMeta(
 
   // One side missing → fall back to a single full-width box.
   if (!party && !details) return null;
+  // The details half is the financial meta box or the intake case-info box —
+  // resolve its own section colour accordingly.
+  const detailsKey = partiesDetailsKey(data) ?? 'meta';
   if (!party) {
+    const db = sectionBand(engine, detailsKey);
     return {
       stack: [
         createBilingualInfoBox(
@@ -251,7 +265,8 @@ export function renderPartiesMeta(
           bilingual ? ar(details!.title, language) : null,
           details!.rows,
           getGeneralIconSvg('fileText'),
-          resolveBandFill(engine.config),
+          db.fill,
+          db.text,
         ) as Content,
       ],
       margin: [0, 0, 0, 8],
@@ -259,16 +274,17 @@ export function renderPartiesMeta(
   }
   if (!details) return renderParties(engine, data);
 
-  const band = resolveBandFill(engine.config);
+  const partyB = sectionBand(engine, 'parties');
+  const detailsB = sectionBand(engine, detailsKey);
 
   const partyHeaderCell = {
-    ...bandHeaderColumns(partyIcon, en(party.title), bilingual ? ar(party.title, language) : null),
-    fillColor: band,
+    ...bandHeaderColumns(partyIcon, en(party.title), bilingual ? ar(party.title, language) : null, partyB.text),
+    fillColor: partyB.fill,
     margin: [6, 4, 6, 4],
   };
   const detailsHeaderCell = {
-    ...bandHeaderColumns(getGeneralIconSvg('fileText'), en(details.title), bilingual ? ar(details.title, language) : null),
-    fillColor: band,
+    ...bandHeaderColumns(getGeneralIconSvg('fileText'), en(details.title), bilingual ? ar(details.title, language) : null, detailsB.text),
+    fillColor: detailsB.fill,
     margin: [6, 4, 6, 4],
   };
   const partyContentCell = { stack: partyRows(party, partyLabelLang), margin: [8, 5, 8, 6] };

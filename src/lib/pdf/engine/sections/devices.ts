@@ -34,6 +34,8 @@ import type {
   SectionRenderer,
 } from '../types';
 import { isBilingualMode, en, ar, resolveLabel } from '../labels';
+import { resolveSectionFill } from '../branding';
+import { readableTextOn } from '../palette';
 import { engineLayoutDirection, mirrorColumns } from '../rtl';
 
 /** Build the coloured role-badge cell used for the `role` column. */
@@ -102,12 +104,15 @@ export const renderDevices: SectionRenderer = (
     bilingual ? ar(dev.title, language) : null,
   ) as Content;
 
-  // Header row: one cell per visible column, label resolved by language mode.
+  // Header row: per-section header fill (was hardcoded, so it ignored the Header
+  // background) + auto-contrast text — consistent with the line-item table.
+  const headerFill = resolveSectionFill(engine.config, 'devices', PDF_COLORS.headerBg);
+  const headerText = readableTextOn(headerFill);
   const headerRow: TableCell[] = columns.map((col) => ({
     text: resolveLabel(col.label, language),
     style: 'tableHeader',
-    fillColor: PDF_COLORS.headerBg,
-    color: PDF_COLORS.text,
+    fillColor: headerFill,
+    color: headerText,
     alignment: headerAlignment(col),
   }));
 

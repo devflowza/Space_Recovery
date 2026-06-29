@@ -302,6 +302,9 @@ export interface SectionConfig {
   bankWidth?: 'auto' | 'half' | 'full';
   /** Bank section, boxed non-full width only: horizontal placement of the box. */
   bankAlign?: 'left' | 'center' | 'right';
+  /** Per-section header band / table-header fill (hex). Overrides the global
+   *  `colors.headerBackground` for THIS section only; absent → global, then neutral. */
+  headerBackground?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -718,6 +721,7 @@ export interface SectionConfigOverride {
   bankAlign?: 'left' | 'center' | 'right';
   tone?: SectionTone;
   condition?: string;
+  headerBackground?: string;
 }
 
 /** Partial column override; `key` identifies the target column. */
@@ -1168,6 +1172,7 @@ function mergeSections(
         ...(ov.bankAlign !== undefined ? { bankAlign: ov.bankAlign } : {}),
         ...(ov.tone !== undefined ? { tone: ov.tone } : {}),
         ...(ov.condition !== undefined ? { condition: ov.condition } : {}),
+        ...(ov.headerBackground !== undefined ? { headerBackground: ov.headerBackground } : {}),
       });
     } else {
       // New section introduced by an override layer.
@@ -1182,6 +1187,7 @@ function mergeSections(
         ...(ov.bankAlign !== undefined ? { bankAlign: ov.bankAlign } : {}),
         ...(ov.tone !== undefined ? { tone: ov.tone } : {}),
         ...(ov.condition !== undefined ? { condition: ov.condition } : {}),
+        ...(ov.headerBackground !== undefined ? { headerBackground: ov.headerBackground } : {}),
       });
     }
   }

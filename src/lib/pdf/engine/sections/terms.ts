@@ -18,6 +18,7 @@
 
 import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS, createBilingualInfoBox } from '../../styles';
+import { resolveSectionFill, resolveHeaderText } from '../branding';
 import { htmlToPdfmake } from '../../htmlToPdfmake';
 import { decodeHtmlEntities } from '../../../sanitizeHtml';
 import { isBilingualMode, en, ar } from '../labels';
@@ -203,12 +204,14 @@ export const renderRecordTerms: SectionRenderer = (
   // Each block renders as a bordered box with a shaded bilingual header band —
   // the same `createBilingualInfoBox` treatment as Customer Information / Details,
   // so the heading carries its Arabic translation and matches the other sections.
+  const fill = resolveSectionFill(engine.config, 'recordTerms');
+  const headingColor = resolveHeaderText(engine.config, fill);
   const boxes: Content[] = [];
   for (const b of blocks) {
     const body = recordBodyNode(b);
     if (!body) continue;
     if (boxes.length > 0) boxes.push({ text: '', margin: [0, 4, 0, 0] as [number, number, number, number] });
-    boxes.push(createBilingualInfoBox(en(b.title), bilingual ? ar(b.title, language) ?? null : null, [body]) as Content);
+    boxes.push(createBilingualInfoBox(en(b.title), bilingual ? ar(b.title, language) ?? null : null, [body], undefined, fill, headingColor) as Content);
   }
   if (boxes.length === 0) return null;
   return { stack: boxes, margin: [0, 8, 0, 0] as [number, number, number, number] };

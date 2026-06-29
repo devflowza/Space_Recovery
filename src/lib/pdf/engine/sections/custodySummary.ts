@@ -17,7 +17,7 @@
 
 import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS, createBilingualInfoBox } from '../../styles';
-import { resolveBandFill } from '../branding';
+import { resolveSectionFill, resolveHeaderText } from '../branding';
 import { safeString } from '../../utils';
 import { getGeneralIconSvg } from '../../../deviceIconMapper';
 import type {
@@ -62,12 +62,14 @@ export const renderCustodySummary: SectionRenderer = (
 
   const rows: object[] = summary.rows.map((r) => infoRow(r.label, r.value, language, labelWidth));
 
+  const fill = resolveSectionFill(engine.config, 'custodySummary');
   const box = createBilingualInfoBox(
     en(summary.title, 'Summary'),
     bilingual ? ar(summary.title, language) : null,
     rows,
     summaryIcon,
-    resolveBandFill(engine.config),
+    fill,
+    resolveHeaderText(engine.config, fill),
   ) as Content;
 
   return { stack: [box], margin: [0, 0, 0, 10] };
