@@ -18,4 +18,9 @@ describe('reportSubtypeSections', () => {
   it('falls back to the evaluation set for an unknown subtype', () => {
     expect(reportSubtypeSections('nope')).toEqual(reportSubtypeSections('evaluation'));
   });
+
+  it('does NOT include device_information (auto-rendered two-column card, not a prose section)', () => {
+    const keys = reportSubtypeSections('evaluation').map((x) => x.key);
+    expect(keys).not.toContain('device_information');
+  });
 });
