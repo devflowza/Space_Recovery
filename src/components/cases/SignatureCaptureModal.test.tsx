@@ -21,6 +21,14 @@ describe('SignatureCaptureModal', () => {
     expect(onCapture).toHaveBeenCalledWith(expect.objectContaining({ method: 'click_to_accept' }));
   });
 
+  it('renders only the allowed methods when allowedMethods is set', () => {
+    render(<SignatureCaptureModal open onClose={vi.fn()} title="Sign" onCapture={vi.fn()} allowedMethods={['typed', 'click_to_accept']} />);
+    expect(screen.getByRole('button', { name: /type/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /accept/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /draw/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /upload/i })).not.toBeInTheDocument();
+  });
+
   it('resets to Typed method and empty inputs after close and re-open', () => {
     const { rerender } = render(
       <SignatureCaptureModal open onClose={vi.fn()} title="Approver signature" onCapture={vi.fn()} />,

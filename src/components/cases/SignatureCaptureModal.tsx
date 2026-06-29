@@ -2,8 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 
+export type CaptureMethod = 'typed' | 'drawn' | 'uploaded_image' | 'click_to_accept';
+
 export interface CapturedSignature {
-  method: 'typed' | 'drawn' | 'uploaded_image' | 'click_to_accept';
+  method: CaptureMethod;
   typedValue?: string;
   imageBlob?: Blob;
 }
@@ -13,19 +15,19 @@ interface SignatureCaptureModalProps {
   onClose: () => void;
   title: string;
   onCapture: (sig: CapturedSignature) => void;
+  allowedMethods?: CaptureMethod[];
 }
 
-type Method = 'typed' | 'drawn' | 'uploaded_image' | 'click_to_accept';
-
-const METHODS: { id: Method; label: string }[] = [
+const METHODS: { id: CaptureMethod; label: string }[] = [
   { id: 'typed', label: 'Type' },
   { id: 'drawn', label: 'Draw' },
   { id: 'uploaded_image', label: 'Upload' },
   { id: 'click_to_accept', label: 'Accept' },
 ];
 
-export function SignatureCaptureModal({ open, onClose, title, onCapture }: SignatureCaptureModalProps) {
-  const [method, setMethod] = useState<Method>('typed');
+export function SignatureCaptureModal({ open, onClose, title, onCapture, allowedMethods }: SignatureCaptureModalProps) {
+  const methods = METHODS.filter((m) => !allowedMethods || allowedMethods.includes(m.id));
+  const [method, setMethod] = useState<CaptureMethod>(methods[0]?.id ?? 'typed');
   const [typedValue, setTypedValue] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [accepted, setAccepted] = useState(false);
@@ -49,14 +51,14 @@ export function SignatureCaptureModal({ open, onClose, title, onCapture }: Signa
   // Reset to initial state whenever the modal is closed so re-opening starts clean.
   useEffect(() => {
     if (!open) {
-      setMethod('typed');
+      setMethod(methods[0]?.id ?? 'typed');
       resetState();
     }
-  // resetState is stable (no deps) — intentionally excluded
+  // resetState and methods are stable across renders — intentionally excluded
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  function handleMethodChange(m: Method) {
+  function handleMethodChange(m: CaptureMethod) {
     setMethod(m);
     resetState();
   }
@@ -140,7 +142,7 @@ export function SignatureCaptureModal({ open, onClose, title, onCapture }: Signa
 
         {/* Segmented control */}
         <div className="flex rounded-md border border-border overflow-hidden" role="group" aria-label="Signature method">
-          {METHODS.map((m) => (
+          {methods.map((m) => (
             <button
               key={m.id}
               type="button"
