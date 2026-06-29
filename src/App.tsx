@@ -160,7 +160,6 @@ const router = createBrowserRouter(
         <Route path="notifications" lazy={page(() => import('./pages/notifications/NotificationsHistory'), 'NotificationsHistory')} />
         <Route path="cases" lazy={page(() => import('./pages/cases/CasesList'), 'CasesList')} />
         <Route path="cases/:id" lazy={page(() => import('./pages/cases/CaseDetail'), 'CaseDetail')} />
-        <Route path="case-reports" lazy={page(() => import('./pages/cases/CaseReportsHub'), 'CaseReportsHub')} />
         <Route path="clients" lazy={page(() => import('./pages/clients/ClientsList'), 'ClientsList')} />
         <Route path="customers" lazy={page(() => import('./pages/customers/CustomersListPage'), 'CustomersListPage')} />
         <Route path="customers/:id" lazy={page(() => import('./pages/customers/CustomerProfilePage'), 'CustomerProfilePage')} />

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { type ReportType, type ReportStatus } from '@/lib/reportTypes';
 import type { DocumentType } from '@/lib/pdf/types';
 import type { CreateCloneDriveFormValues } from '../CreateCloneDriveModal';
 
@@ -25,14 +24,6 @@ export function useCaseModals() {
   const [pendingCloneCreate, setPendingCloneCreate] = useState<CreateCloneDriveFormValues | null>(null);
   const [selectedClone, setSelectedClone] = useState<any>(null);
   const [editingDevice, setEditingDevice] = useState<any>(null);
-  const [editingReport, setEditingReport] = useState<any>(null);
-  const [showReportTypeSelector, setShowReportTypeSelector] = useState(false);
-  const [selectedReportType, setSelectedReportType] = useState<ReportType | null>(null);
-  const [viewReportId, setViewReportId] = useState<string | null>(null);
-  const [reportVersioningId, setReportVersioningId] = useState<string | null>(null);
-  const [reportTypeFilter, setReportTypeFilter] = useState<ReportType | 'all'>('all');
-  const [reportStatusFilter, setReportStatusFilter] = useState<ReportStatus | 'all'>('all');
-  const [showLatestOnly, setShowLatestOnly] = useState(true);
   const [newNote, setNewNote] = useState('');
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -70,14 +61,6 @@ export function useCaseModals() {
     pendingCloneCreate, setPendingCloneCreate,
     selectedClone, setSelectedClone,
     editingDevice, setEditingDevice,
-    editingReport, setEditingReport,
-    showReportTypeSelector, setShowReportTypeSelector,
-    selectedReportType, setSelectedReportType,
-    viewReportId, setViewReportId,
-    reportVersioningId, setReportVersioningId,
-    reportTypeFilter, setReportTypeFilter,
-    reportStatusFilter, setReportStatusFilter,
-    showLatestOnly, setShowLatestOnly,
     newNote, setNewNote,
     showQuoteModal, setShowQuoteModal,
     showInvoiceModal, setShowInvoiceModal,
