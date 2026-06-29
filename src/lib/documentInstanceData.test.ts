@@ -50,4 +50,22 @@ describe('mapInstanceToReportData', () => {
     const rd = mapInstanceToReportData(instance, sections, { companySettings: {} });
     expect(rd.sections.map((s) => s.section_key)).toEqual(['a']);
   });
+
+  it('applies fallback defaults when case_id, document_number, and report_subtype are null', () => {
+    const instance = {
+      id: 'di-3',
+      case_id: null,
+      document_number: null,
+      report_subtype: null,
+      title: 'Untitled',
+      status: 'draft',
+      version_number: 1,
+      created_at: '2026-06-02T00:00:00Z',
+      created_by: null,
+    };
+    const rd = mapInstanceToReportData(instance, [], { companySettings: {} });
+    expect(rd.report.report_type).toBe('evaluation');
+    expect(rd.report.report_number).toBe('');
+    expect(rd.report.case_id).toBe('');
+  });
 });

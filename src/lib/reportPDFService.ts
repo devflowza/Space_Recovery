@@ -24,6 +24,7 @@ import {
   type TemplateConfigOverride,
 } from './pdf/templateConfig';
 import { getDeployedVersionByType, readConfig } from './documentTemplateService';
+import { fetchInstanceReportData } from './documentInstanceData.fetch';
 
 type CaseReportRow = Database['public']['Tables']['case_reports']['Row'];
 type CaseReportSectionRow = Database['public']['Tables']['case_report_sections']['Row'];
@@ -758,13 +759,21 @@ class ReportPDFService {
    */
   async generateDocumentInstanceAsBlob(instanceId: string): Promise<PDFBlobResult> {
     try {
-      const { fetchInstanceReportData } = await import('./documentInstanceData.fetch');
       const data = await withTimeout(fetchInstanceReportData(instanceId), 10000, 'Failed to fetch document data');
 
       const languageSettings = data.companySettings.localization?.document_language_settings;
-      const languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
-      await withTimeout(initializePDFFonts(languageCode), 15000, 'Font initialization timeout');
-      const ctx = createTranslationContext(languageSettings?.mode || 'english_only', languageCode);
+      let languageCode: LanguageCode | null = (languageSettings?.secondary_language as LanguageCode) || null;
+      let mode: 'english_only' | 'bilingual' = languageSettings?.mode || 'english_only';
+
+      const fontsLoaded = await withTimeout(initializePDFFonts(languageCode), 15000, 'Font initialization timeout');
+
+      if (!fontsLoaded && languageCode) {
+        logger.error(`[Report PDF Service] ${languageCode} fonts unavailable, falling back to English-only mode`);
+        languageCode = null;
+        mode = 'english_only';
+      }
+
+      const ctx = createTranslationContext(mode, languageCode);
 
       const [logoBase64, qrCodeBase64] = await Promise.all([
         data.companySettings.branding?.logo_url
