@@ -1,4 +1,4 @@
-import { it, expect, vi, beforeEach } from 'vitest';
+import { it, expect, vi, beforeEach, describe } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 const svc = vi.hoisted(() => ({
@@ -9,10 +9,11 @@ const svc = vi.hoisted(() => ({
   transitionDocument: vi.fn(),
 }));
 vi.mock('../../lib/documentInstanceService', () => svc);
-vi.mock('../../lib/documentSignatureService', () => ({
+const sigSvc = vi.hoisted(() => ({
   captureStaffSignature: vi.fn(async () => 'sig-1'),
-  listInstanceSignatures: vi.fn(async () => []),
+  listInstanceSignatures: vi.fn(async () => [] as { slot: string }[]),
 }));
+vi.mock('../../lib/documentSignatureService', () => sigSvc);
 vi.mock('./SignatureCaptureModal', () => ({
   SignatureCaptureModal: ({ open, onCapture }: { open: boolean; onCapture: (s: unknown) => void }) =>
     open ? <button onClick={() => onCapture({ method: 'typed', typedValue: 'Tech A' })}>mock-capture</button> : null,
@@ -92,11 +93,76 @@ it('creates a fresh instance when re-opened with a different subtype after close
 });
 
 it('captures an approver signature, then approves with the signatureId', async () => {
-  const svcSig = await import('../../lib/documentSignatureService');
   svc.getDocumentInstance.mockResolvedValue({ id: 'di-1', title: 'Eval', status: 'in_review', created_by: 'author', report_subtype: 'evaluation', case_id: 'c1' });
   render(<DocumentDraftReview isOpen onClose={vi.fn()} caseId="c1" instanceId="di-1" onSaved={vi.fn()} />);
   fireEvent.click(await screen.findByRole('button', { name: /approve/i }));   // opens capture modal
   fireEvent.click(await screen.findByText('mock-capture'));                    // fire onCapture
-  await waitFor(() => expect(svcSig.captureStaffSignature).toHaveBeenCalledWith(expect.objectContaining({ instanceId: 'di-1', slot: 'approver', method: 'typed' })));
+  await waitFor(() => expect(sigSvc.captureStaffSignature).toHaveBeenCalledWith(expect.objectContaining({ instanceId: 'di-1', slot: 'approver', method: 'typed' })));
   await waitFor(() => expect(svc.transitionDocument).toHaveBeenCalledWith('di-1', 'approved', expect.objectContaining({ signatureId: 'sig-1' })));
+});
+
+describe('data_destruction approval queue', () => {
+  it('drives engineer → witness → approver slots and transitions with approver signatureId', async () => {
+    svc.getDocumentInstance.mockResolvedValue({
+      id: 'di-dd',
+      title: 'Data Destruction Certificate',
+      status: 'in_review',
+      created_by: 'author',
+      report_subtype: 'data_destruction',
+      case_id: 'c1',
+    });
+    // No slots already signed
+    sigSvc.listInstanceSignatures.mockResolvedValue([]);
+    // Return distinct sig IDs per call: engineer='sig-eng', witness='sig-wit', approver='sig-app'
+    sigSvc.captureStaffSignature
+      .mockResolvedValueOnce('sig-eng')
+      .mockResolvedValueOnce('sig-wit')
+      .mockResolvedValueOnce('sig-app');
+
+    render(<DocumentDraftReview isOpen onClose={vi.fn()} caseId="c1" instanceId="di-dd" onSaved={vi.fn()} />);
+
+    // Click Approve to start the queue
+    fireEvent.click(await screen.findByRole('button', { name: /approve/i }));
+
+    // Slot 1: engineer
+    fireEvent.click(await screen.findByText('mock-capture'));
+    await waitFor(() =>
+      expect(sigSvc.captureStaffSignature).toHaveBeenCalledWith(
+        expect.objectContaining({ slot: 'engineer' }),
+      ),
+    );
+
+    // Slot 2: witness
+    fireEvent.click(await screen.findByText('mock-capture'));
+    await waitFor(() =>
+      expect(sigSvc.captureStaffSignature).toHaveBeenCalledWith(
+        expect.objectContaining({ slot: 'witness' }),
+      ),
+    );
+
+    // Slot 3: approver
+    fireEvent.click(await screen.findByText('mock-capture'));
+    await waitFor(() =>
+      expect(sigSvc.captureStaffSignature).toHaveBeenCalledWith(
+        expect.objectContaining({ slot: 'approver' }),
+      ),
+    );
+
+    // All three slots were captured
+    expect(sigSvc.captureStaffSignature).toHaveBeenCalledTimes(3);
+    const slots = sigSvc.captureStaffSignature.mock.calls.map(
+      (c: unknown[]) => (c[0] as { slot: string }).slot,
+    );
+    expect(slots).toEqual(['engineer', 'witness', 'approver']);
+
+    // transitionDocument called exactly once with 'approved' and the approver's signatureId
+    await waitFor(() =>
+      expect(svc.transitionDocument).toHaveBeenCalledTimes(1),
+    );
+    expect(svc.transitionDocument).toHaveBeenCalledWith(
+      'di-dd',
+      'approved',
+      expect.objectContaining({ signatureId: 'sig-app' }),
+    );
+  });
 });

@@ -95,6 +95,11 @@ export const DocumentDraftReview: React.FC<DocumentDraftReviewProps> = ({
     setPreviewUrl(null);
     setId(instanceId ?? null);
     createdRef.current = false;
+    // Phase-6 signature queue reset — clear refs and modal state so a re-open starts clean.
+    pendingSlots.current = [];
+    capturedIds.current = {};
+    setSigning(false);
+    setCurrentSlot(null);
   // previewUrl intentionally omitted — we only want this on isOpen toggle
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -252,7 +257,6 @@ export const DocumentDraftReview: React.FC<DocumentDraftReviewProps> = ({
   /** Called when SignatureCaptureModal fires onCapture for the current slot. */
   async function handleCapture(sig: CapturedSignature) {
     if (!id || !currentSlot) return;
-    setSigning(false);
     setBusy(true);
     try {
       const sigId = await captureStaffSignature({
@@ -264,7 +268,9 @@ export const DocumentDraftReview: React.FC<DocumentDraftReviewProps> = ({
         typedValue: sig.typedValue,
         imageBlob: sig.imageBlob,
       });
+      // Capture succeeded — record id and close modal for this slot.
       capturedIds.current[currentSlot.slot] = sigId;
+      setSigning(false);
 
       // Pop the captured slot and check if more remain.
       pendingSlots.current = pendingSlots.current.slice(1);
@@ -282,7 +288,10 @@ export const DocumentDraftReview: React.FC<DocumentDraftReviewProps> = ({
         onClose();
       }
     } catch (e) {
+      // Leave signing/currentSlot intact so the user can retry the failed slot.
+      // capturedIds.current is NOT cleared — already-captured slots are preserved.
       toast.error(e instanceof Error ? e.message : 'Approval failed');
+      setSigning(true);
     } finally {
       setBusy(false);
     }
