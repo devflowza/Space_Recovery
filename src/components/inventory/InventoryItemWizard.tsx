@@ -44,7 +44,7 @@ import { getItemDonorParts, setItemDonorParts } from '../../lib/inventory/donorP
 import type { DonorPartInput } from '../../lib/inventory/donorPartsService';
 import { Wrench } from 'lucide-react';
 import { HierarchicalLocationPicker } from './HierarchicalLocationPicker';
-import { getDeviceTypeSettings } from '../../lib/inventory/deviceTypeSettingsService';
+import { useDeviceTypeSettings } from '../../lib/inventory/deviceTypeSettingsService';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -160,11 +160,7 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
   const { data: suppliers = [] } = useInventorySuppliers();
 
   // Device type default location settings (for auto-populate in create mode)
-  const { data: deviceTypeSettingsMap } = useQuery({
-    queryKey: ['deviceTypeSettings'],
-    queryFn: getDeviceTypeSettings,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: deviceTypeSettingsMap } = useDeviceTypeSettings();
 
   // Status / condition types
   const { data: statusTypes = [] } = useQuery({
