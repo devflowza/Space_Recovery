@@ -94,7 +94,11 @@ describe('typst node render', () => {
       paper: { size: 'Letter', orientation: 'landscape', margins: [30, 30, 30, 30] },
       table: { zebra: true, rowNumbering: true },
       colors: { accent: '#0f766e' },
-      sections: [{ key: 'taxBar', visible: true }],
+      sections: [
+        { key: 'taxBar', visible: true },
+        { key: 'parties', headerBackground: '#0f766e' },
+        { key: 'lineItems', headerBackground: '#7c2d12' },
+      ],
       taxBar: { enabled: true, source: 'manual', value: 'OM1100110011', label: { en: 'VAT Reg. No.', ar: 'الرقم الضريبي' } },
       termsContent: { terms: { en: 'Net 14 days.\nLate fees apply.', ar: 'صافي ١٤ يومًا.' }, notes: { en: 'Thank you for your business.' } },
       watermark: { text: 'DRAFT', angle: -45, opacity: 0.12 },

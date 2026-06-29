@@ -157,6 +157,11 @@ describe('assembleTypst — page / font / density / colours wired', () => {
     expect(out).toContain('rgb("#00ff00")'); // table header fill
   });
 
+  it('honours a per-section header background (band fill)', () => {
+    const out = renderC({ sections: [{ key: 'parties', headerBackground: '#aa0000' }] });
+    expect(out).toContain('fill: rgb("#aa0000")'); // the parties band adopts its own colour
+  });
+
   it('adds an S/N column when table.rowNumbering', () => {
     const out = renderC({ table: { rowNumbering: true } });
     expect(out).toContain('columns: (24pt,'); // narrow serial column prepended
