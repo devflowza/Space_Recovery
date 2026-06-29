@@ -14,9 +14,8 @@
  * (`docs/superpowers/specs/2026-06-27-document-studio-design.md`).
  *
  * Gates the new Document Studio admin surface and the case-side Documents
- * run-time. The legacy Report Studio (`ReportSectionsPage`) and the current
- * report flow are now the fallback. Set `VITE_DOC_STUDIO=false` to disable
- * Document Studio and revert to the legacy flow.
+ * run-time. Set `VITE_DOC_STUDIO=false` as a kill switch to revert to
+ * the legacy report flow.
  */
 export function isDocStudioEnabled(): boolean {
   const raw = (import.meta.env as Record<string, unknown>).VITE_DOC_STUDIO;

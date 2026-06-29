@@ -258,8 +258,7 @@ const router = createBrowserRouter(
             <Route path="client-portal" lazy={page(() => import('./pages/settings/ClientPortalSettings'), 'ClientPortalSettings')} />
             <Route path="billing" lazy={page(() => import('./pages/settings/BillingPage'), 'default')} />
             <Route path="plans" lazy={page(() => import('./pages/settings/PlansPage'), 'default')} />
-            <Route path="report-sections" lazy={page(() => import('./pages/settings/ReportSectionsPage'), 'ReportSectionsPage')} />
-            <Route path="documents" lazy={page(() => import('./pages/settings/DocumentTemplatesPage'), 'DocumentTemplatesPage')} />
+<Route path="documents" lazy={page(() => import('./pages/settings/DocumentTemplatesPage'), 'DocumentTemplatesPage')} />
             <Route path="security" lazy={page(() => import('./pages/settings/SecuritySettingsPage'), 'SecuritySettingsPage')} />
             <Route path="gdpr" lazy={page(() => import('./pages/settings/GDPRCompliancePage'), 'GDPRCompliancePage')} />
             <Route path=":categoryId" lazy={page(() => import('./pages/settings/CategoryDetail'), 'CategoryDetail')} />
