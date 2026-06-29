@@ -242,6 +242,7 @@ export function reportConfigForSubtype(reportType: string): DocumentTemplateConf
   } else {
     push({ key: 'reportSections', visible: true });
   }
+  push({ key: 'reportApproval', visible: true });
   push({ key: 'reportFooter', visible: true });
 
   // `config.labels.documentTitle` is metadata only — the RENDERED title flows
