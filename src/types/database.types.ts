@@ -17180,6 +17180,10 @@ export type Database = {
       get_next_company_number: { Args: never; Returns: string }
       get_next_customer_number: { Args: never; Returns: string }
       get_next_disbursement_number: { Args: never; Returns: string }
+      get_next_inventory_number: {
+        Args: { p_device_type_id: string }
+        Returns: string
+      }
       get_next_invoice_number: { Args: never; Returns: string }
       get_next_number: { Args: { p_scope: string }; Returns: string }
       get_next_po_number: { Args: never; Returns: string }
