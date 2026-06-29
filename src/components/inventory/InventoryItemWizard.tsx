@@ -96,7 +96,11 @@ const EMPTY_FORM: InventoryForm = {
   location_id: '',
 };
 
-const SECTION_HEAD = 'text-xs font-bold uppercase tracking-[0.04em] text-primary mb-3';
+const SECTION_HEAD = 'text-xs font-bold uppercase tracking-wide text-primary mb-3';
+
+// Identity fields shown in inventory (device_type_id is rendered specially above).
+// Module-level: BASIC_FIELDS is a static constant, so this never needs recomputing per render.
+const IDENTITY_BASIC_FIELDS = BASIC_FIELDS.filter(d => d.key !== 'device_type_id');
 const FIELD_GRID = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3';
 
 // ---------------------------------------------------------------------------
@@ -355,11 +359,6 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
   // Build options map that DeviceFieldRenderer expects
   const catalogOptions = buildCatalogOptions(deviceCatalogs);
 
-  // BASIC_FIELDS: only those relevant to identity in inventory (skip device_type_id — we render it specially)
-  const identityBasicFields = BASIC_FIELDS.filter(
-    d => !['device_type_id'].includes(d.key)
-  );
-
   return (
     <Modal
       isOpen={isOpen}
@@ -441,7 +440,7 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
                 </div>
 
                 {/* Remaining basic identity fields via DeviceFieldRenderer */}
-                {identityBasicFields.map(def => (
+                {IDENTITY_BASIC_FIELDS.map(def => (
                   <div key={def.key} className={def.colSpan === 2 ? 'sm:col-span-2' : undefined}>
                     <DeviceFieldRenderer
                       def={def}

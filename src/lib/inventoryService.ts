@@ -274,6 +274,7 @@ export async function getNextInventoryNumber(deviceTypeId: string): Promise<stri
     p_device_type_id: deviceTypeId,
   });
   if (error) throw error;
+  if (!data) throw new Error('Could not allocate an inventory number for this device type');
   return data as string;
 }
 
