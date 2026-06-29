@@ -566,6 +566,7 @@ export function toEngineData(
     reportSections: buildReportSections(data, ctx),
     reportFooter: buildReportFooter(data, ctx),
     ...(custodyLog ? { custodyLog } : {}),
+    signatureBlocks: data.signatureBlocks,
     // A case report carries no money, line items, or party blocks.
     paymentHistory: null,
     terms: null,

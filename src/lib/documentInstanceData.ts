@@ -6,6 +6,7 @@
  * unchanged; only the SOURCE differs from the legacy case_reports flow.
  */
 import type { ReportData } from './pdf/documents/ReportDocument';
+import type { SignatureBlockData } from './pdf/engine/types';
 
 export interface InstanceLike {
   id: string;
@@ -37,6 +38,7 @@ export interface InstanceReportContext {
   companySettings: ReportData['companySettings'];
   recoverability?: string | null;
   preparedByName?: string;
+  signatureBlocks?: SignatureBlockData[];
 }
 
 export function mapInstanceToReportData(
@@ -75,5 +77,6 @@ export function mapInstanceToReportData(
     companySettings: ctx.companySettings,
     recoverability: ctx.recoverability ?? null,
     preparedByName: ctx.preparedByName,
+    signatureBlocks: ctx.signatureBlocks,
   };
 }

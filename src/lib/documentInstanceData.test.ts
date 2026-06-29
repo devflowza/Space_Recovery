@@ -68,4 +68,13 @@ describe('mapInstanceToReportData', () => {
     expect(rd.report.report_number).toBe('');
     expect(rd.report.case_id).toBe('');
   });
+
+  it('threads signatureBlocks from context onto ReportData', () => {
+    const rd = mapInstanceToReportData(
+      { id: 'di-1', case_id: 'c', document_number: 'R-1', report_subtype: 'data_destruction', title: 'Cert', status: 'draft', version_number: 1, created_at: '2026-06-02T00:00:00Z', created_by: 'u1' },
+      [],
+      { companySettings: {}, signatureBlocks: [{ slot: 'engineer', name: 'Op', role: 'Operator', method: 'drawn', imageDataUrl: 'data:image/png;base64,ZZ' }] },
+    );
+    expect(rd.signatureBlocks?.[0].slot).toBe('engineer');
+  });
 });

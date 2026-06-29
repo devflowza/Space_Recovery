@@ -4,6 +4,7 @@ import type { ReportData } from './pdf/documents/ReportDocument';
 import { mapInstanceToReportData } from './documentInstanceData';
 import { getDocumentInstance, getDocumentInstanceSections } from './documentInstanceService';
 import { getOrCreateCompanySettings, type CompanySettings } from './companySettingsService';
+import { resolveSignatureBlocks } from './documentSignatureService';
 
 export async function fetchInstanceReportData(instanceId: string): Promise<ReportData> {
   const instance = await getDocumentInstance(instanceId);
@@ -13,6 +14,7 @@ export async function fetchInstanceReportData(instanceId: string): Promise<Repor
   const caseCtx = instance.case_id ? await fetchCaseContext(instance.case_id) : {};
   const companySettingsRaw = await getOrCreateCompanySettings();
   const companySettings = mapCompanySettingsToReportData(companySettingsRaw);
+  const signatureBlocks = await resolveSignatureBlocks(instanceId);
 
   return mapInstanceToReportData(
     instance,
@@ -23,7 +25,7 @@ export async function fetchInstanceReportData(instanceId: string): Promise<Repor
       sort_order: s.sort_order,
       is_visible: s.is_visible,
     })),
-    { ...caseCtx, companySettings },
+    { ...caseCtx, companySettings, signatureBlocks },
   );
 }
 
