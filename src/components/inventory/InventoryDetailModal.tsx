@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit, Package, MapPin, History, TrendingUp, Info, Briefcase, CheckCircle2, XCircle, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { Edit, Package, MapPin, History, TrendingUp, Info, Briefcase, CheckCircle2, XCircle, ChevronDown, ChevronUp, Zap, Printer } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -25,6 +25,7 @@ import { CompleteAssignmentModal } from './CompleteAssignmentModal';
 import { AssignToCaseModal } from './AssignToCaseModal';
 import { format } from 'date-fns';
 import { logger } from '../../lib/logger';
+import { useToast } from '../../hooks/useToast';
 import type { Database } from '../../types/database.types';
 import { getItemDonorParts } from '../../lib/inventory/donorPartsService';
 import { getDonorParts } from '../../lib/inventory/donorParts';
@@ -70,6 +71,7 @@ export default function InventoryDetailModal({
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showAssignToCaseModal, setShowAssignToCaseModal] = useState(false);
 
+  const toast = useToast();
   const [cases, setCases] = useState<CaseOption[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string>('');
   const [assignmentNotes, setAssignmentNotes] = useState('');
@@ -77,6 +79,25 @@ export default function InventoryDetailModal({
   const [assignmentError, setAssignmentError] = useState<string | null>(null);
   const [availability, setAvailability] = useState<{ available: boolean; reason?: string } | null>(null);
   const [showAssignmentNotes, setShowAssignmentNotes] = useState(false);
+  const [isPrintingLabel, setIsPrintingLabel] = useState(false);
+
+  const handlePrintLabel = async (download = false) => {
+    if (!item) return;
+    setIsPrintingLabel(true);
+    try {
+      const { printInventoryLabel, downloadInventoryLabel } = await import('../../lib/inventory/inventoryLabelPrint');
+      if (download) {
+        await downloadInventoryLabel(item as Parameters<typeof downloadInventoryLabel>[0]);
+      } else {
+        await printInventoryLabel(item as Parameters<typeof printInventoryLabel>[0]);
+      }
+    } catch (err) {
+      logger.error('Error printing inventory label:', err);
+      toast.error('Failed to generate label PDF');
+    } finally {
+      setIsPrintingLabel(false);
+    }
+  };
 
 
   useEffect(() => {
@@ -212,12 +233,24 @@ export default function InventoryDetailModal({
         title={getItemDisplayName()}
         maxWidth="4xl"
         headerAction={
-          onEdit && (
-            <Button onClick={() => onEdit(itemId)} variant="ghost" size="sm">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => handlePrintLabel(false)}
+              variant="secondary"
+              size="sm"
+              disabled={isPrintingLabel || !item}
+              title="Open label PDF for printing"
+            >
+              <Printer className="w-4 h-4 mr-1.5" />
+              {isPrintingLabel ? 'Generating…' : 'Print Label'}
             </Button>
-          )
+            {onEdit && (
+              <Button onClick={() => onEdit(itemId)} variant="ghost" size="sm">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+            )}
+          </div>
         }
       >
         <div className="grid grid-cols-2 gap-6">

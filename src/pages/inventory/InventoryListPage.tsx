@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Package, Zap, Edit2, Trash2, RefreshCw, Filter, Upload, MapPin } from 'lucide-react';
+import { Plus, Search, Package, Zap, Edit2, Trash2, RefreshCw, Filter, Upload, MapPin, Printer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import { Button } from '../../components/ui/Button';
@@ -273,6 +273,17 @@ export default function InventoryListPage() {
     } catch (error) {
       logger.error('Error changing item status:', error);
       toast.error('Failed to change status. Please try again.');
+    }
+  };
+
+  const handlePrintLabel = async (item: InventoryRow, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { printInventoryLabel } = await import('../../lib/inventory/inventoryLabelPrint');
+      await printInventoryLabel(item as Parameters<typeof printInventoryLabel>[0]);
+    } catch (error) {
+      logger.error('Error printing inventory label:', error);
+      toast.error('Failed to generate label PDF');
     }
   };
 
@@ -704,6 +715,13 @@ export default function InventoryListPage() {
                             title="Edit item"
                           >
                             <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => handlePrintLabel(item, e)}
+                            className="action-button p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            title="Print label"
+                          >
+                            <Printer className="w-4 h-4" />
                           </button>
                           <button
                             onClick={(e) => {

@@ -414,6 +414,7 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
           tenant_id: tenantId,
           item_number: nextNumber,
           qr_value: nextNumber,
+          barcode: nextNumber,
         });
         if (!created) throw new Error('Failed to create inventory item');
         savedItemId = created.id;
