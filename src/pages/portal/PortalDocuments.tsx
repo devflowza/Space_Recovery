@@ -126,8 +126,10 @@ export const PortalDocuments: React.FC = () => {
                 <div className="flex flex-col items-end gap-2 shrink-0">
                   <Badge variant={statusBadgeVariant(doc.status)}>
                     {doc.status === 'signed_off'
-                      ? t('portal.documents.statusSignedOff', { defaultValue: 'Signed off' })
-                      : t('portal.documents.statusDelivered', { defaultValue: 'Delivered' })}
+                      ? t('portal.documents.status.signed_off', { defaultValue: 'Signed off' })
+                      : doc.status === 'delivered'
+                        ? t('portal.documents.status.delivered', { defaultValue: 'Delivered' })
+                        : t(`portal.documents.status.${doc.status}`, { defaultValue: doc.status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) })}
                   </Badge>
                   {doc.status === 'delivered' && (
                     <Button
@@ -158,8 +160,7 @@ export const PortalDocuments: React.FC = () => {
             <iframe
               title="Document"
               src={pdfUrl}
-              className="w-full rounded-lg border border-slate-200"
-              style={{ minHeight: '60vh' }}
+              className="w-full rounded-lg border border-slate-200 min-h-[60vh]"
             />
           ) : (
             <div className="w-full flex items-center justify-center py-16 text-slate-400">

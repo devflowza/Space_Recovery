@@ -35,3 +35,11 @@ it('shows an empty state when there are no documents', async () => {
   render(wrap(<PortalDocuments />));
   await waitFor(() => expect(screen.getByText(/no documents/i)).toBeInTheDocument());
 });
+
+it('shows the PDF iframe when a document card is clicked', async () => {
+  render(wrap(<PortalDocuments />));
+  await waitFor(() => expect(screen.getByText('Evaluation Report')).toBeInTheDocument());
+  fireEvent.click(screen.getByText('Evaluation Report'));
+  await waitFor(() => expect(svc.getPortalDocumentPdfUrl).toHaveBeenCalled());
+  expect(await screen.findByTitle('Document')).toBeInTheDocument();
+});
