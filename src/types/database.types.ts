@@ -15614,6 +15614,64 @@ export type Database = {
           },
         ]
       }
+      tenant_device_type_settings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          default_location_id: string | null
+          deleted_at: string | null
+          device_type_id: string
+          id: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          default_location_id?: string | null
+          deleted_at?: string | null
+          device_type_id: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          default_location_id?: string | null
+          deleted_at?: string | null
+          device_type_id?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_device_type_settings_default_location_id_fkey"
+            columns: ["default_location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_device_type_settings_device_type_id_fkey"
+            columns: ["device_type_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_device_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_device_type_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_health_metrics: {
         Row: {
           active_users_count: number | null
