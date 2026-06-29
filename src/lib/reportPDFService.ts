@@ -753,6 +753,46 @@ class ReportPDFService {
   }
 
   /**
+   * Document Studio: render a document_instance to a PDF Blob, reusing the SAME
+   * engine path as reports (buildReportDocViaEngine). Only the data source differs.
+   */
+  async generateDocumentInstanceAsBlob(instanceId: string): Promise<PDFBlobResult> {
+    try {
+      const { fetchInstanceReportData } = await import('./documentInstanceData.fetch');
+      const data = await withTimeout(fetchInstanceReportData(instanceId), 10000, 'Failed to fetch document data');
+
+      const languageSettings = data.companySettings.localization?.document_language_settings;
+      const languageCode = (languageSettings?.secondary_language as LanguageCode) || null;
+      await withTimeout(initializePDFFonts(languageCode), 15000, 'Font initialization timeout');
+      const ctx = createTranslationContext(languageSettings?.mode || 'english_only', languageCode);
+
+      const [logoBase64, qrCodeBase64] = await Promise.all([
+        data.companySettings.branding?.logo_url
+          ? withTimeout(loadImageAsBase64(data.companySettings.branding.logo_url), 5000, 'Logo timeout')
+          : Promise.resolve(null),
+        data.companySettings.branding?.qr_code_general_url
+          ? withTimeout(loadImageAsBase64(data.companySettings.branding.qr_code_general_url), 5000, 'QR timeout')
+          : Promise.resolve(null),
+      ]);
+
+      const docDefinition = await this.buildReportDocViaEngine(data, ctx, logoBase64, qrCodeBase64);
+      const filename = `Document_${data.report.report_number || 'Draft'}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+      const blob = await withTimeout(
+        new Promise<Blob>((resolve, reject) => {
+          createPdfWithFonts(docDefinition).getBlob((b: Blob) => resolve(b), undefined, (err: unknown) => reject(err));
+        }),
+        PDF_GENERATION_TIMEOUT,
+        'PDF blob generation timeout',
+      );
+      return { success: true, blob, blobUrl: URL.createObjectURL(blob), filename };
+    } catch (error) {
+      logger.error('[Report PDF Service] generateDocumentInstanceAsBlob failed:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  /**
    * Persist the exact PDF artifact released to the customer (provability —
    * the lab must be able to prove WHAT was delivered, lifecycle stages 12/16).
    * Uploads to the private case-report-pdfs bucket under
