@@ -3,7 +3,8 @@ import { ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { Input } from '../../../ui/Input';
 import { Select } from '../../../ui/Select';
 import { Textarea } from '../../../ui/Textarea';
-import { FieldGroup, SegmentedControl, ToggleRow } from '../controls';
+import { ColorField, FieldGroup, SegmentedControl, ToggleRow } from '../controls';
+import { PDF_COLORS } from '../../../../lib/pdf/styles';
 import { resolveSecondary, secondaryText, type SectionConfig, type TranslationPolicyConfig } from '../../../../lib/pdf/templateConfig';
 import { isRTLLanguage, type LanguageCode } from '../../../../lib/documentTranslations';
 import {
@@ -15,6 +16,13 @@ import {
   type StudioLayoutMode,
 } from '../languageOptions';
 import type { StudioApi } from '../TemplateStudio';
+
+/** Sections that render a coloured header band / table-header row, so a per-section
+ *  "Header background" picker actually does something. */
+const HEADER_SECTIONS = new Set<string>([
+  'parties', 'meta', 'caseInfo', 'bank', 'collector', 'custodySummary', 'payslipInfo', 'recordTerms',
+  'lineItems', 'devices', 'paymentHistory', 'custodyLog', 'earnings', 'deductions', 'taxBar',
+]);
 
 /** Sections whose content depends on record data — a hint avoids "I toggled it but nothing showed". */
 const DATA_DEPENDENT_HINTS: Record<string, string> = {
@@ -347,6 +355,19 @@ export const OtherDetailsTab: React.FC<{ api: StudioApi }> = ({ api }) => {
                         onChange={(e) => api.setSectionLabel(section.key, secondary, e.target.value)}
                       />
                     )}
+                  </div>
+                )}
+                {section.visible && HEADER_SECTIONS.has(section.key) && (
+                  <div className="mt-3">
+                    <ColorField
+                      label="Header background"
+                      value={section.headerBackground}
+                      neutral={api.resolved.colors?.headerBackground ?? PDF_COLORS.headerBg}
+                      onChange={(hex) => api.patchSection(section.key, { headerBackground: hex })}
+                      against={api.resolved.colors?.text ?? PDF_COLORS.text}
+                      againstLabel="vs text"
+                      hint="Overrides this template's Header background for THIS section only."
+                    />
                   </div>
                 )}
               </li>
