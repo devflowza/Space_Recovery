@@ -3178,33 +3178,65 @@ export type Database = {
       }
       catalog_device_types: {
         Row: {
+          barcode_prefix: string | null
           created_at: string
+          default_category_id: string | null
           description: string | null
+          family: string | null
+          icon: string | null
           id: string
+          inventory_padding: number
+          inventory_prefix: string | null
           is_active: boolean
+          is_inventory_tracked: boolean
           name: string
+          qr_prefix: string | null
           sort_order: number | null
           updated_at: string
         }
         Insert: {
+          barcode_prefix?: string | null
           created_at?: string
+          default_category_id?: string | null
           description?: string | null
+          family?: string | null
+          icon?: string | null
           id?: string
+          inventory_padding?: number
+          inventory_prefix?: string | null
           is_active?: boolean
+          is_inventory_tracked?: boolean
           name: string
+          qr_prefix?: string | null
           sort_order?: number | null
           updated_at?: string
         }
         Update: {
+          barcode_prefix?: string | null
           created_at?: string
+          default_category_id?: string | null
           description?: string | null
+          family?: string | null
+          icon?: string | null
           id?: string
+          inventory_padding?: number
+          inventory_prefix?: string | null
           is_active?: boolean
+          is_inventory_tracked?: boolean
           name?: string
+          qr_prefix?: string | null
           sort_order?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "catalog_device_types_default_category_id_fkey"
+            columns: ["default_category_id"]
+            isOneToOne: false
+            referencedRelation: "master_inventory_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       catalog_donor_compatibility_matrix: {
         Row: {
