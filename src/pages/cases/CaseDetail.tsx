@@ -50,6 +50,7 @@ import { useCaseQueries } from '../../components/cases/detail/useCaseQueries';
 import { useCaseMutations } from '../../components/cases/detail/useCaseMutations';
 import { isDocStudioEnabled } from '../../lib/featureFlags';
 import { DocumentDraftReview } from '../../components/cases/DocumentDraftReview';
+import { DocumentViewerModal } from '../../components/cases/DocumentViewerModal';
 import { REPORT_TYPES, type ReportType } from '../../lib/reportTypes';
 import { documentInstanceKeys } from '../../lib/queryKeys';
 
@@ -1447,6 +1448,15 @@ export const CaseDetail: React.FC = () => {
               queryClient.invalidateQueries({ queryKey: documentInstanceKeys.byCase(id!) })
             }
           />
+
+          {/* Viewer modal — read-only archived PDF + audit panel */}
+          {modals.viewDocumentId && (
+            <DocumentViewerModal
+              isOpen={!!modals.viewDocumentId}
+              onClose={() => modals.setViewDocumentId(null)}
+              instanceId={modals.viewDocumentId}
+            />
+          )}
         </>
       )}
 
