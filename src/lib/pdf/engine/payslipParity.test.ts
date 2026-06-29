@@ -152,11 +152,11 @@ describe('payslip parity — engine output matches the legacy builder', () => {
       expect(engine).toContain(name);
     }
     // Earnings amounts (AED, after-position, 2dp).
-    expect(legacy).toContain('7000.00 AED');
-    expect(engine).toContain('7000.00 AED');
+    expect(legacy).toContain('7,000.00 AED');
+    expect(engine).toContain('7,000.00 AED');
     // Total earnings = 7000 + 3000 = 10000.
-    expect(legacy).toContain('10000.00 AED');
-    expect(engine).toContain('10000.00 AED');
+    expect(legacy).toContain('10,000.00 AED');
+    expect(engine).toContain('10,000.00 AED');
   });
 
   it('renders every deductions row in both', () => {
@@ -168,16 +168,16 @@ describe('payslip parity — engine output matches the legacy builder', () => {
       expect(engine).toContain(name);
     }
     // Total deductions = 750 + 1000 = 1750.
-    expect(legacy).toContain('1750.00 AED');
-    expect(engine).toContain('1750.00 AED');
+    expect(legacy).toContain('1,750.00 AED');
+    expect(engine).toContain('1,750.00 AED');
   });
 
   it('renders the net salary in both', () => {
     const data = makePayslipData();
     const legacy = allTexts(buildPayslipDocument(data, englishCtx)).join('|');
     const engine = allTexts(renderEngine(data)).join('|');
-    expect(legacy).toContain('8250.00 AED');
-    expect(engine).toContain('8250.00 AED');
+    expect(legacy).toContain('8,250.00 AED');
+    expect(engine).toContain('8,250.00 AED');
   });
 
   it('falls back the calculation cell to "-" when a component has no basis', () => {

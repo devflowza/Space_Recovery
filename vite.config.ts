@@ -15,8 +15,12 @@ export default defineConfig({
           res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
           res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
           res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-          // Dev CSP: unsafe-inline/unsafe-eval required for Vite HMR
-          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ws: wss: https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';");
+          // Dev CSP: unsafe-inline/unsafe-eval required for Vite HMR. Mirrors the
+          // production index.html CSP allowances: blob: frames/objects for the PDF
+          // preview, and Google Fonts (stylesheet + gstatic fetch) for the Inter UI
+          // font and the pdfmake CJK/Thai font loader (fonts are fetched, so gstatic
+          // must be in connect-src, not only font-src).
+          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ws: wss: https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com https://fonts.gstatic.com; frame-src 'self' blob:; object-src 'self' blob:; base-uri 'self'; form-action 'self';");
           next();
         };
         server.middlewares.use(securityHeaders);
@@ -29,8 +33,10 @@ export default defineConfig({
           res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
           res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
           res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-          // Preview CSP: production-like, no unsafe-eval
-          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';");
+          // Preview CSP: production-like, no unsafe-eval. Matches index.html: blob:
+          // frames/objects for the PDF preview + Google Fonts for the UI font and the
+          // pdfmake CJK/Thai loader (gstatic in connect-src for the font fetch).
+          res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api-m.paypal.com https://api-m.sandbox.paypal.com https://fonts.gstatic.com; frame-src 'self' blob:; object-src 'self' blob:; base-uri 'self'; form-action 'self';");
           next();
         };
         server.middlewares.use(securityHeaders);

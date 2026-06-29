@@ -2,10 +2,14 @@ import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { Button } from '../../../ui/Button';
 import { Select } from '../../../ui/Select';
+import { Input } from '../../../ui/Input';
 import { ColorField, FieldGroup, NumberField, SegmentedControl, ToggleRow } from '../controls';
 import { PDF_COLORS } from '../../../../lib/pdf/styles';
 import { generatePalette } from '../../../../lib/pdf/engine/palette';
-import type { DensityPreset, PaperConfig, PdfFontFamily } from '../../../../lib/pdf/templateConfig';
+import { resolveSecondary, secondaryText } from '../../../../lib/pdf/templateConfig';
+import type { DensityPreset, PaperConfig, PdfFontFamily, TypographyStyleKey } from '../../../../lib/pdf/templateConfig';
+import { isRTLLanguage } from '../../../../lib/documentTranslations';
+import { languageName } from '../languageOptions';
 import type { StudioApi } from '../TemplateStudio';
 
 const FONT_OPTIONS = [
@@ -14,11 +18,15 @@ const FONT_OPTIONS = [
   { value: 'NotoSansArabic', label: 'Noto Sans Arabic' },
 ];
 
-const SIZE_KEYS: { key: 'documentTitle' | 'sectionTitle' | 'tableHeader' | 'tableCell'; label: string }[] = [
+const SIZE_KEYS: { key: TypographyStyleKey; label: string }[] = [
   { key: 'documentTitle', label: 'Document title' },
   { key: 'sectionTitle', label: 'Section titles' },
   { key: 'tableHeader', label: 'Table header' },
   { key: 'tableCell', label: 'Table cells' },
+  { key: 'label', label: 'Field labels' },
+  { key: 'value', label: 'Field values' },
+  { key: 'totalValue', label: 'Grand total' },
+  { key: 'termsText', label: 'Terms text' },
 ];
 
 // Document font-size presets → base scale (1.0 = the native, dense sizes).
@@ -49,9 +57,31 @@ export const GeneralTab: React.FC<{ api: StudioApi }> = ({ api }) => {
   const typo = resolved.typography;
   const fitting = resolved.pageFitting;
   const seed = colors?.accent && colors.accent.startsWith('#') ? colors.accent : PDF_COLORS.primary;
+  const secondary = resolveSecondary(resolved.language);
+  const docTitle = resolved.labels?.documentTitle;
 
   return (
     <div className="space-y-7">
+      <FieldGroup title="Document title" description="The heading printed at the top (e.g. TAX INVOICE).">
+        <div className={`grid gap-2 ${secondary ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <Input
+            aria-label="Document title (English)"
+            placeholder="e.g. TAX INVOICE"
+            value={docTitle?.en ?? ''}
+            onChange={(e) => api.setSectionLabel('documentTitle', 'en', e.target.value)}
+          />
+          {secondary && (
+            <Input
+              aria-label={`Document title (${languageName(secondary)})`}
+              placeholder={`Title (${languageName(secondary)})`}
+              dir={isRTLLanguage(secondary) ? 'rtl' : undefined}
+              value={secondaryText(docTitle ?? {}, secondary) ?? ''}
+              onChange={(e) => api.setSectionLabel('documentTitle', secondary, e.target.value)}
+            />
+          )}
+        </div>
+      </FieldGroup>
+
       <FieldGroup title="Page" description="Sheet size, orientation, and margins.">
         <div className="grid grid-cols-2 gap-3">
           <Select
@@ -108,15 +138,15 @@ export const GeneralTab: React.FC<{ api: StudioApi }> = ({ api }) => {
           <NumberField
             label="Fine-tune scale"
             value={typo?.baseScale ?? 1.2}
-            min={0.8}
-            max={1.75}
+            min={0.6}
+            max={2}
             step={0.05}
             onChange={(v) => api.setTypography({ baseScale: v })}
           />
         </div>
         <p className="text-xs text-slate-500">
-          Font size scales the whole document. The per-section sizes below override the scaled default for one section
-          — leave at 0 to follow the document size.
+          Font size scales the whole document (0.6×–2×). The per-section sizes below override the scaled default for
+          one section — leave at 0 to follow the document size.
         </p>
         <div className="grid grid-cols-2 gap-2">
           {SIZE_KEYS.map(({ key, label }) => (
@@ -188,7 +218,7 @@ export const GeneralTab: React.FC<{ api: StudioApi }> = ({ api }) => {
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         {resolved.watermark?.text && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <NumberField
               label="Angle"
               suffix="°"
@@ -204,6 +234,14 @@ export const GeneralTab: React.FC<{ api: StudioApi }> = ({ api }) => {
               max={1}
               step={0.05}
               onChange={(v) => api.setWatermark({ opacity: v })}
+            />
+            <NumberField
+              label="Font size"
+              suffix="pt"
+              value={resolved.watermark?.fontSize ?? 60}
+              min={12}
+              max={160}
+              onChange={(v) => api.setWatermark({ fontSize: v })}
             />
           </div>
         )}

@@ -6,7 +6,7 @@ import {
   createBilingualInfoBox,
   createBilingualSectionHeader,
 } from '../styles';
-import { formatDate, buildCompanyAddress, safeString } from '../utils';
+import { formatDate, buildCompanyAddress, safeString, formatEngineMoney } from '../utils';
 import { getGeneralIconSvg } from '../../deviceIconMapper';
 import { buildLogoNode } from '../brandingImage';
 
@@ -167,10 +167,8 @@ export function buildPaymentReceiptDocument(
   const decimalPlaces = paymentData.accounting_locales?.decimal_places || 2;
   const currencyPosition = paymentData.accounting_locales?.currency_position || 'after';
 
-  const formatCurrencyValue = (amount: number): string => {
-    const formatted = amount.toFixed(decimalPlaces);
-    return currencyPosition === 'before' ? `${currencySymbol} ${formatted}` : `${formatted} ${currencySymbol}`;
-  };
+  const formatCurrencyValue = (amount: number): string =>
+    formatEngineMoney(amount, { symbol: currencySymbol, decimalPlaces, position: currencyPosition });
 
   const amountPaidLabel = isBilingual ? 'Amount Paid | المبلغ المدفوع' : 'Amount Paid';
   const paidStatusLabel = isBilingual ? 'PAID | مدفوع' : 'PAID';

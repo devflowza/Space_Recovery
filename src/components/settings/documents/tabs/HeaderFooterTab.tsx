@@ -3,7 +3,6 @@ import { Select } from '../../../ui/Select';
 import { ColorField, FieldGroup, NumberField, SegmentedControl, ToggleRow } from '../controls';
 import { PDF_COLORS } from '../../../../lib/pdf/styles';
 import type {
-  AddressZone,
   DividerStyle,
   HeaderLayout,
   LogoPlacement,
@@ -35,28 +34,16 @@ export const HeaderFooterTab: React.FC<{ api: StudioApi }> = ({ api }) => {
           options={LAYOUTS}
           columns={3}
         />
-        <div className="grid grid-cols-2 gap-3">
-          <SegmentedControl<LogoPlacement>
-            label="Logo placement"
-            value={header?.logoPlacement ?? 'left'}
-            onChange={(v) => api.setHeader({ logoPlacement: v })}
-            options={[
-              { value: 'left', label: 'Left' },
-              { value: 'center', label: 'Center' },
-              { value: 'right', label: 'Right' },
-            ]}
-          />
-          <SegmentedControl<AddressZone>
-            label="Address zone"
-            value={header?.addressZone ?? 'right'}
-            onChange={(v) => api.setHeader({ addressZone: v })}
-            options={[
-              { value: 'left', label: 'Left' },
-              { value: 'right', label: 'Right' },
-              { value: 'hidden', label: 'Hidden' },
-            ]}
-          />
-        </div>
+        <SegmentedControl<LogoPlacement>
+          label="Logo placement"
+          value={header?.logoPlacement ?? 'left'}
+          onChange={(v) => api.setHeader({ logoPlacement: v })}
+          options={[
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' },
+          ]}
+        />
         <div className="grid grid-cols-2 gap-3">
           <NumberField
             label="Logo width"
@@ -106,11 +93,20 @@ export const HeaderFooterTab: React.FC<{ api: StudioApi }> = ({ api }) => {
           ]}
         />
         {header?.divider !== 'none' && (
-          <div className="grid grid-cols-3 gap-2">
-            <NumberField label="Vertical" suffix="±" value={nudge?.vertical ?? 0} onChange={(v) => api.setHeaderNudge({ vertical: v })} />
-            <NumberField label="Start inset" value={nudge?.start ?? 0} min={0} onChange={(v) => api.setHeaderNudge({ start: v })} />
-            <NumberField label="End inset" value={nudge?.end ?? 0} min={0} onChange={(v) => api.setHeaderNudge({ end: v })} />
-          </div>
+          <>
+            <div className="grid grid-cols-3 gap-2">
+              <NumberField label="Vertical" suffix="±" value={nudge?.vertical ?? 0} min={-8} max={8} onChange={(v) => api.setHeaderNudge({ vertical: v })} />
+              <NumberField label="Start inset" value={nudge?.start ?? 0} min={0} max={240} onChange={(v) => api.setHeaderNudge({ start: v })} />
+              <NumberField label="End inset" value={nudge?.end ?? 0} min={0} max={240} onChange={(v) => api.setHeaderNudge({ end: v })} />
+            </div>
+            <ColorField
+              label="Divider color"
+              value={header?.dividerColor}
+              neutral={PDF_COLORS.primary}
+              onChange={(hex) => api.setHeader({ dividerColor: hex })}
+              againstLabel="on white"
+            />
+          </>
         )}
       </FieldGroup>
 

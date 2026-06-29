@@ -402,6 +402,58 @@ export async function loadChineseFontsFromCDN(): Promise<FontLoadResult> {
   }
 }
 
+export async function loadKoreanFontsFromLocal(): Promise<FontLoadResult> {
+  try {
+    const [regularFont, boldFont] = await Promise.all([
+      loadFontFromURL('/fonts/NotoSansKR-Regular.ttf', 'NotoSansKR-Regular.ttf'),
+      loadFontFromURL('/fonts/NotoSansKR-Bold.ttf', 'NotoSansKR-Bold.ttf'),
+    ]);
+    if (!regularFont || !boldFont) {
+      return { success: false, error: 'Failed to load local Korean fonts', source: 'failed' };
+    }
+    return { success: true, fonts: [regularFont, boldFont], source: 'local' };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      source: 'failed',
+    };
+  }
+}
+
+export async function loadThaiFontsFromLocal(): Promise<FontLoadResult> {
+  try {
+    const [regularFont, boldFont] = await Promise.all([
+      loadFontFromURL('/fonts/NotoSansThai-Regular.ttf', 'NotoSansThai-Regular.ttf'),
+      loadFontFromURL('/fonts/NotoSansThai-Bold.ttf', 'NotoSansThai-Bold.ttf'),
+    ]);
+    if (!regularFont || !boldFont) {
+      return { success: false, error: 'Failed to load local Thai fonts', source: 'failed' };
+    }
+    return { success: true, fonts: [regularFont, boldFont], source: 'local' };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      source: 'failed',
+    };
+  }
+}
+
+// Local-first, CDN-fallback (mirrors loadArabicFonts). Self-host the TTFs in
+// public/fonts/ for offline + no third-party dependency; until then the gstatic
+// CDN is used (allowed in connect-src). Mixed-script content still degrades to
+// Roboto via createPdfWithFonts if neither source yields the font.
+export async function loadKoreanFonts(): Promise<FontLoadResult> {
+  const local = await loadKoreanFontsFromLocal();
+  return local.success ? local : loadKoreanFontsFromCDN();
+}
+
+export async function loadThaiFonts(): Promise<FontLoadResult> {
+  const local = await loadThaiFontsFromLocal();
+  return local.success ? local : loadThaiFontsFromCDN();
+}
+
 export async function loadFontsByFamily(family: FontFamily): Promise<FontLoadResult> {
   switch (family) {
     case 'roboto':
@@ -411,9 +463,9 @@ export async function loadFontsByFamily(family: FontFamily): Promise<FontLoadRes
     case 'arabic':
       return loadArabicFonts();
     case 'korean':
-      return loadKoreanFontsFromCDN();
+      return loadKoreanFonts();
     case 'thai':
-      return loadThaiFontsFromCDN();
+      return loadThaiFonts();
     case 'japanese':
       return loadJapaneseFontsFromCDN();
     case 'chinese':

@@ -295,6 +295,15 @@ export async function preloadAllFonts(): Promise<void> {
   if (!loadedFontFamilies.has('NotoSansArabic')) {
     await loadAndCacheFonts('arabic', 'NotoSansArabic');
   }
+  // KO/TH (NotoSansKR / NotoSansThai) are intentionally NOT eager-loaded here.
+  // Their binaries are not bundled and the raw-TTF CDN URL 404s, so eager-loading
+  // them failed on EVERY preview render — flooding the console AND adding the
+  // latency of 4 doomed fetches (local→SPA-HTML, then CDN→404) to each re-render,
+  // which is what made non-Arabic previews feel broken/laggy. They now load
+  // on-demand (previewTemplate → initializePDFFonts) ONLY when ko/th is the
+  // selected secondary, and degrade to the base font if the binary is absent.
+  // The 11 other languages (8 Latin via Roboto, ru/uk Cyrillic via Roboto, ar via
+  // local Tajawal/NotoSansArabic) need nothing further and now render cleanly+fast.
   initVFSWithBaseFont();
 }
 
@@ -326,9 +335,39 @@ export function getCurrentVFS(): Record<string, string> {
   };
 }
 
+/**
+ * A font table that is GUARANTEED consistent with the supplied VFS: any declared
+ * family whose face files are not present in the VFS is remapped to the Roboto
+ * faces (which are always loaded). This is the proven `Courier` remap (above)
+ * generalized to every family.
+ *
+ * Why it matters: the engine emits a DETERMINISTIC family name for a chosen
+ * secondary language (e.g. `NotoSansKR` / `NotoSansThai`) regardless of whether
+ * that font actually loaded. Korean/Thai fonts are fetched from a CDN
+ * (`fonts.gstatic.com`) which the app CSP `connect-src` blocks, so they never
+ * enter the VFS. pdfmake then throws "file not found" ASYNCHRONOUSLY during
+ * rasterization — which never fires the getBlob callback, so the Studio preview
+ * hangs and ultimately surfaces "Could not render the preview". Pointing the
+ * unresolved family at Roboto degrades a missing secondary script to legible
+ * Latin (English fallback) instead of crashing the render. The English half of a
+ * bilingual document is unaffected; a font that DID load is left untouched.
+ */
+export function fontTableForVFS(vfs: Record<string, string>): typeof PDF_FONTS {
+  const table: typeof PDF_FONTS = {};
+  for (const [family, faces] of Object.entries(PDF_FONTS)) {
+    const allPresent =
+      vfs[faces.normal] != null &&
+      vfs[faces.bold] != null &&
+      vfs[faces.italics] != null &&
+      vfs[faces.bolditalics] != null;
+    table[family] = allPresent ? faces : PDF_FONTS.Roboto;
+  }
+  return table;
+}
+
 export function createPdfWithFonts(docDefinition: any): any {
   const vfs = getCurrentVFS();
-  return pdfMake.createPdf(docDefinition, undefined, PDF_FONTS, vfs);
+  return pdfMake.createPdf(docDefinition, undefined, fontTableForVFS(vfs), vfs);
 }
 
 export { pdfMake };

@@ -21,8 +21,8 @@
  */
 
 import { PDF_COLORS, PDF_STYLES } from '../styles';
+import { contrastRatio, readableTextOn } from './palette';
 import type {
-  AddressZone,
   BrandingConfig,
   ColorsConfig,
   DensityPreset,
@@ -149,6 +149,42 @@ export function resolveColors(config: {
   };
 }
 
+/**
+ * Fill behind an info-box header band. Follows the opt-in `colors.headerBackground`
+ * (so the Studio "Header background" colours the info-box bands like the table
+ * header), else the neutral subtle shade — keeping the default look unchanged.
+ */
+export function resolveBandFill(config: { colors?: ColorsConfig }): string {
+  return normalizeHex(config.colors?.headerBackground) ?? PDF_COLORS.background;
+}
+
+/**
+ * Per-section header fill: the section's own `headerBackground` override → the
+ * global `colors.headerBackground` → the surface's neutral `fallback`. Lets each
+ * section take an independent header colour from the Studio.
+ */
+export function resolveSectionFill(
+  config: Pick<DocumentTemplateConfig, 'colors' | 'sections'>,
+  sectionKey: string,
+  fallback: string = PDF_COLORS.background,
+): string {
+  const section = config.sections?.find((s) => s.key === sectionKey);
+  return normalizeHex(section?.headerBackground) ?? normalizeHex(config.colors?.headerBackground) ?? fallback;
+}
+
+/**
+ * Heading/label text colour for a header surface with the given fill: the brand
+ * accent when it's readable on that fill (≥3:1), else an auto-contrast white/dark.
+ * Keeps per-section coloured bands legible.
+ */
+export function resolveHeaderText(
+  config: { colors?: ColorsConfig; branding?: Pick<BrandingConfig, 'accent'> },
+  fill: string,
+): string {
+  const accent = resolveColors(config).accent;
+  return contrastRatio(accent, fill) >= 3 ? accent : readableTextOn(fill);
+}
+
 export interface ResolvedTypography {
   fontFamily: string;
   /** The clamped base font scale (1 when absent) — applied to inline content too. */
@@ -231,8 +267,9 @@ export interface ResolvedHeader {
   logoHeight: number | null;
   logoMarginBottom: number;
   logoMaxHeight: number | null;
-  addressZone: AddressZone;
   divider: DividerStyle;
+  /** Opt-in divider colour (validated hex), or `null` to follow the accent. */
+  dividerColor: string | null;
   dividerNudge: { start: number; end: number; vertical: number };
 }
 
@@ -247,19 +284,32 @@ export function resolveHeader(config: Pick<DocumentTemplateConfig, 'header'>): R
     logoHeight: typeof h?.logoHeight === 'number' && h.logoHeight > 0 ? h.logoHeight : null,
     logoMarginBottom: typeof h?.logoMarginBottom === 'number' && h.logoMarginBottom >= 0 ? h.logoMarginBottom : 5,
     logoMaxHeight: typeof h?.logoMaxHeight === 'number' && h.logoMaxHeight > 0 ? h.logoMaxHeight : null,
-    addressZone: h?.addressZone ?? 'right',
     divider: h?.divider ?? 'thin',
+    dividerColor: normalizeHex(h?.dividerColor),
+    // Clamp to safe bands so neither renderer can draw a backwards/overflowing
+    // rule (insets) or pull the title up into the rule (a large vertical nudge).
+    // This is the single source of truth — both pdfmake and Typst read it.
     dividerNudge: {
-      start: typeof nudge?.start === 'number' ? nudge.start : 0,
-      end: typeof nudge?.end === 'number' ? nudge.end : 0,
-      vertical: typeof nudge?.vertical === 'number' ? nudge.vertical : 0,
+      start: typeof nudge?.start === 'number' ? clampDividerInset(nudge.start) : 0,
+      end: typeof nudge?.end === 'number' ? clampDividerInset(nudge.end) : 0,
+      vertical: typeof nudge?.vertical === 'number' ? clampDividerVertical(nudge.vertical) : 0,
     },
   };
 }
 
+/** Endpoint insets shorten the rule; clamp to [0, 240] so it can't invert/overflow the 525pt content width. */
+function clampDividerInset(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(240, Math.max(0, n));
+}
+/** Baseline nudge moves the rule up/down; clamp to ±8pt so the title never overlaps it. */
+function clampDividerVertical(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(8, Math.max(-8, n));
+}
+
 export interface ResolvedFooter {
   customText: string | null;
-  background: string | null;
   fontColor: string;
   fontSize: number;
   alignment: 'left' | 'center' | 'right';
@@ -272,7 +322,6 @@ export function resolveFooter(config: Pick<DocumentTemplateConfig, 'footer'>): R
     typeof f?.customText === 'string' && f.customText.trim() !== '' ? f.customText : null;
   return {
     customText,
-    background: normalizeHex(f?.background),
     fontColor: normalizeHex(f?.fontColor) ?? PDF_COLORS.textMuted,
     fontSize: typeof f?.fontSize === 'number' && f.fontSize > 0 ? f.fontSize : 8,
     alignment: f?.alignment ?? 'center',
@@ -312,7 +361,6 @@ export interface ResolvedOrganization {
     taxId: boolean;
   };
   addressFontSize: number;
-  columnWidth: 'auto' | number;
   manual: {
     name?: string;
     nameAr?: string;
@@ -345,7 +393,6 @@ export function resolveOrganization(
     },
     addressFontSize:
       typeof o?.addressFontSize === 'number' && o.addressFontSize > 0 ? o.addressFontSize : 8,
-    columnWidth: o?.columnWidth ?? 'auto',
     manual: o?.manual ?? {},
   };
 }
@@ -354,7 +401,6 @@ export interface ResolvedTable {
   headerBackground: string;
   rowNumbering: boolean;
   zebra: boolean;
-  sectionSubtotals: boolean;
 }
 
 /** Resolve table styling. Header fill precedence: table → colors → neutral. */
@@ -369,7 +415,6 @@ export function resolveTable(
       PDF_COLORS.headerBg,
     rowNumbering: t?.rowNumbering === true,
     zebra: t?.zebra === true,
-    sectionSubtotals: t?.sectionSubtotals === true,
   };
 }
 

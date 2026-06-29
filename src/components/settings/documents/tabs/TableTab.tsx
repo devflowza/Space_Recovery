@@ -1,14 +1,21 @@
 import React from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Input } from '../../../ui/Input';
-import { ColorField, FieldGroup, ToggleRow } from '../controls';
+import { ColorField, FieldGroup, NumberField, ToggleRow } from '../controls';
 import { PDF_COLORS } from '../../../../lib/pdf/styles';
+import { resolveSecondary, secondaryText } from '../../../../lib/pdf/templateConfig';
+import { isRTLLanguage } from '../../../../lib/documentTranslations';
+import { languageName } from '../languageOptions';
 import type { StudioApi } from '../TemplateStudio';
 
 export const TableTab: React.FC<{ api: StudioApi }> = ({ api }) => {
   const li = api.resolved.sections.find((s) => s.key === 'lineItems');
   const columns = li?.columns ?? [];
   const table = api.resolved.table;
+  const language = api.resolved.language;
+  const secondary = language.mode === 'en' ? null : resolveSecondary(language);
+  const secondaryName = languageName(secondary);
+  const secondaryRTL = secondary ? isRTLLanguage(secondary) : false;
 
   return (
     <div className="space-y-7">
@@ -34,9 +41,28 @@ export const TableTab: React.FC<{ api: StudioApi }> = ({ api }) => {
                     {col.visible ? 'Shown' : 'Hidden'}
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className={`grid gap-2 ${secondary ? 'grid-cols-2' : 'grid-cols-1'}`}>
                   <Input aria-label={`${col.label.en} label (English)`} placeholder="Label (EN)" value={col.label.en} onChange={(e) => api.patchColumn(col.key, { labelEn: e.target.value })} />
-                  <Input aria-label={`${col.label.en} label (Arabic)`} placeholder="التسمية (AR)" dir="rtl" value={col.label.ar ?? ''} onChange={(e) => api.patchColumn(col.key, { labelAr: e.target.value })} />
+                  {secondary && (
+                    <Input
+                      aria-label={`${col.label.en} label (${secondaryName})`}
+                      placeholder={`Label (${secondaryName})`}
+                      dir={secondaryRTL ? 'rtl' : undefined}
+                      value={secondaryText(col.label, secondary) ?? ''}
+                      onChange={(e) => api.patchColumn(col.key, { labelSecondary: e.target.value, secondary })}
+                    />
+                  )}
+                </div>
+                <div className="mt-2">
+                  <NumberField
+                    label="Width"
+                    suffix="pt"
+                    value={col.width ?? 0}
+                    min={0}
+                    max={300}
+                    onChange={(v) => api.patchColumn(col.key, { width: v })}
+                  />
+                  <p className="mt-1 text-xs text-slate-400">0 = auto-fit to content.</p>
                 </div>
               </li>
             ))}

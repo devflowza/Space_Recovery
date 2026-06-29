@@ -31,6 +31,10 @@ import { renderHashVerification } from './sections/hashVerification';
 import { renderDigitalSignatures } from './sections/digitalSignatures';
 import { renderDiagnostics } from './sections/reportDiagnostics';
 import { renderReportSections } from './sections/reportSections';
+import { renderReportHeader } from './sections/reportHeader';
+import { renderReportSummary } from './sections/reportSummary';
+import { renderReportInfoColumns } from './sections/reportInfoColumns';
+import { renderReportFooter } from './sections/reportFooter';
 import { renderCaseLabel } from './sections/caseLabel';
 import { renderPayslipInfo } from './sections/payslipInfo';
 import { renderEarnings } from './sections/earnings';
@@ -39,6 +43,7 @@ import { renderNetPay } from './sections/netPay';
 import { renderStockLabel } from './sections/stockLabel';
 import { renderLineItems } from './sections/lineItemTable';
 import { renderTotals } from './sections/totals';
+import { renderTaxSummary } from './sections/taxSummary';
 import { renderPaymentHistory } from './sections/paymentHistory';
 import { renderTerms, renderRecordTerms } from './sections/terms';
 import { renderBank } from './sections/bank';
@@ -61,6 +66,10 @@ export const SECTION_REGISTRY: Record<string, SectionRenderer> = {
   digitalSignatures: renderDigitalSignatures,
   diagnostics: renderDiagnostics,
   reportSections: renderReportSections,
+  reportHeader: renderReportHeader,
+  reportSummary: renderReportSummary,
+  reportInfoColumns: renderReportInfoColumns,
+  reportFooter: renderReportFooter,
   caseLabel: renderCaseLabel,
   payslipInfo: renderPayslipInfo,
   earnings: renderEarnings,
@@ -70,6 +79,7 @@ export const SECTION_REGISTRY: Record<string, SectionRenderer> = {
   taxBar: renderTaxBar,
   lineItems: renderLineItems,
   totals: renderTotals,
+  taxSummary: renderTaxSummary,
   paymentHistory: renderPaymentHistory,
   terms: renderTerms,
   recordTerms: renderRecordTerms,

@@ -21,6 +21,9 @@ dist-ssr
 *.sln
 *.sw?
 .env
+# Local env overrides (Vite convention): loaded per-mode, never committed.
+.env.local
+.env.*.local
 
 # Build/typecheck scratch output (never commit)
 *.out

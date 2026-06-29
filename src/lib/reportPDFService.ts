@@ -3,7 +3,7 @@ import { initializePDFFonts, createPdfWithFonts } from './pdf/fonts';
 import { buildReportDocument, type ReportData } from './pdf/documents/ReportDocument';
 import { loadImageAsBase64 } from './pdf/utils';
 import { logPDFGeneration } from './pdf/loggingService';
-import { withTimeout, createTranslationContext } from './pdf/translationContext';
+import { withTimeout, createTranslationContext, ctxFromLanguageConfig } from './pdf/translationContext';
 import { logger } from './logger';
 import type { Database, Json } from '../types/database.types';
 import { type LanguageCode } from './documentTranslations';
@@ -13,10 +13,13 @@ import { isPdfEngineEnabled } from './pdf/engine/featureFlag';
 import { renderTemplate } from './pdf/engine/renderTemplate';
 import { resolveQrImage } from './pdf/qrImage';
 import { applyTenantLanguage } from './pdf/engine/applyTenantLanguage';
-import { toEngineData as toReportEngineData } from './pdf/engine/adapters/reportAdapter';
 import {
-  BUILT_IN_TEMPLATE_CONFIGS,
+  toEngineData as toReportEngineData,
+  reportConfigForSubtype,
+} from './pdf/engine/adapters/reportAdapter';
+import {
   resolveTemplateConfig,
+  resolveSecondary,
   type DocumentTemplateConfig,
   type TemplateConfigOverride,
 } from './pdf/templateConfig';
@@ -175,7 +178,7 @@ class ReportPDFService {
    */
   private async buildReportDocViaEngine(
     data: ReportData,
-    ctx: TranslationContext,
+    _ctx: TranslationContext,
     logoBase64: string | null,
     qrCodeBase64: string | null,
   ): Promise<TDocumentDefinitions> {
@@ -192,8 +195,13 @@ class ReportPDFService {
       logger.error('[Report PDF Service] Report engine: template resolution failed, using built-in default:', err);
     }
 
+    // Option B: the built-in base is the per-SUBTYPE report config (navy band,
+    // summary tiles, two-column info, the subtype's ordered toned prose sections,
+    // and the report footer). The tenant's deployed report template still
+    // cascades on top as the doc-type override.
+    const subtypeBase = reportConfigForSubtype(data.report.report_type);
     const resolvedConfig: DocumentTemplateConfig = resolveTemplateConfig(
-      BUILT_IN_TEMPLATE_CONFIGS.report,
+      subtypeBase,
       /* theme */ undefined,
       /* docType */ docTypeOverride,
       /* instance */ undefined,
@@ -201,11 +209,17 @@ class ReportPDFService {
 
     // Bridge the tenant's document-language setting into the resolved config so
     // the engine renders bilingual/RTL when the tenant is configured for it.
-    const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
+    const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings, docTypeOverride?.language !== undefined);
 
-    const engineData = toReportEngineData(data, languageAwareConfig);
+    // Derive the translation context from the RESOLVED config so the per-template
+    // language drives BOTH layout (config.language) AND translation (ctx) — and
+    // load the resolved secondary's font (idempotent; degrades to Roboto safely).
+    const engineCtx = ctxFromLanguageConfig(languageAwareConfig.language);
+    await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
+
+    const engineData = toReportEngineData(data, languageAwareConfig, engineCtx);
     const qr = await resolveQrImage(qrCodeBase64, engineData.zatcaPayload ?? engineData.qrPayload);
-    return renderTemplate(languageAwareConfig, engineData, ctx, logoBase64, qr);
+    return renderTemplate(languageAwareConfig, engineData, engineCtx, logoBase64, qr);
   }
 
   /**
@@ -508,6 +522,7 @@ class ReportPDFService {
       status: string | null;
       created_at: string;
       client_reference: string | null;
+      estimated_completion: string | null;
       customers_enhanced: CustomerEmbed;
       companies: CompanyEmbed;
       profiles: ProfileNameEmbed;
@@ -523,6 +538,7 @@ class ReportPDFService {
         status,
         created_at,
         client_reference,
+        estimated_completion,
         customers_enhanced!customer_id(customer_name, email, mobile_number),
         companies!company_id(company_name),
         profiles!assigned_engineer_id(full_name)
@@ -551,6 +567,7 @@ class ReportPDFService {
       catalog_device_conditions: CatalogNameEmbed;
       device_role_id: number | null;
       is_primary: boolean | null;
+      recovery_result: string | null;
     };
 
     // Get device data - filter by Patient role
@@ -565,7 +582,8 @@ class ReportPDFService {
         serial_number,
         catalog_device_conditions!condition_id(name),
         device_role_id,
-        is_primary
+        is_primary,
+        recovery_result
       `)
       .eq('case_id', reportRaw.case_id);
 
@@ -584,6 +602,10 @@ class ReportPDFService {
 
     let deviceData: ReportData['deviceData'] = undefined;
     let diagnosticsData: ReportData['diagnosticsData'] = undefined;
+    // Recoverability for the Option B summary tile comes from the device's
+    // Evaluation Result (case_devices.recovery_result), set on the universal
+    // Edit Device -> Diagnostic tab. CATEGORY label only -- never a percentage.
+    let recoverability: string | null = null;
 
     if (devicesRaw && devicesRaw.length > 0) {
       const device = devicesRaw[0];
@@ -595,6 +617,7 @@ class ReportPDFService {
         serial_number: device.serial_number ?? undefined,
         condition: device.catalog_device_conditions?.name ?? undefined,
       };
+      recoverability = device.recovery_result ?? null;
 
       // Load diagnostics — device_diagnostics.device_id references case_devices.id
       const { data: diagnostics } = await supabase
@@ -683,6 +706,8 @@ class ReportPDFService {
           service_type: caseDataRaw.catalog_service_types?.name ?? undefined,
           assigned_engineer: caseDataRaw.profiles?.full_name ?? undefined,
           created_at: caseDataRaw.created_at,
+          priority: caseDataRaw.priority ?? undefined,
+          estimated_completion: caseDataRaw.estimated_completion ?? undefined,
         }
       : undefined;
 
@@ -723,6 +748,7 @@ class ReportPDFService {
       chainOfCustodyEvents,
       companySettings: mappedCompanySettings,
       preparedByName,
+      recoverability,
     };
   }
 

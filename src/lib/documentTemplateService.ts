@@ -70,6 +70,62 @@ function toJson(config: TemplateConfigPayload): Json {
 }
 
 /**
+ * The config groups that make up a template's visual STYLE — copied wholesale by
+ * {@link applyTemplateStyle}. Per-type CONTENT (sections, labels, language,
+ * translationPolicy, termsContent, locale, signatureImages) is deliberately NOT
+ * in this set, so copying a style never imposes one doc type's structure or
+ * wording on another.
+ */
+const STYLE_GROUPS = [
+  'paper', 'colors', 'typography', 'header', 'footer', 'pageNumbers',
+  'watermark', 'branding', 'table', 'layout', 'organization',
+] as const;
+
+/**
+ * Produce a config that adopts `source`'s visual style while keeping `target`'s
+ * own content. Each style group is REPLACED by the source's (or cleared when the
+ * source has none, so the target ends up matching the source); the totals + tax-
+ * summary groups copy only their visual sub-fields (the per-type labels / show /
+ * title stay with the target). Pure — no I/O. Powers "Copy template style".
+ */
+export function applyTemplateStyle(
+  target: TemplateConfigOverride,
+  source: TemplateConfigOverride,
+): TemplateConfigOverride {
+  const next: TemplateConfigOverride = { ...target };
+  for (const key of STYLE_GROUPS) {
+    if (source[key] !== undefined) next[key] = source[key] as never;
+    else delete next[key];
+  }
+  // Totals: copy the visual bits (rowColors / style / highlightTotal); keep the
+  // target's per-line label overrides.
+  const tTotals = {
+    ...(target.totals?.labels ? { labels: target.totals.labels } : {}),
+    ...(source.totals?.rowColors ? { rowColors: source.totals.rowColors } : {}),
+    ...(source.totals?.style ? { style: source.totals.style } : {}),
+    ...(source.totals?.highlightTotal !== undefined ? { highlightTotal: source.totals.highlightTotal } : {}),
+  };
+  if (Object.keys(tTotals).length) next.totals = tTotals;
+  else delete next.totals;
+  // Tax summary: copy the styling; keep the target's show + title (intent).
+  const s = source.taxSummary ?? {};
+  const tTax = {
+    ...(target.taxSummary?.show !== undefined ? { show: target.taxSummary.show } : {}),
+    ...(target.taxSummary?.title ? { title: target.taxSummary.title } : {}),
+    ...(s.style ? { style: s.style } : {}),
+    ...(s.headerBackground ? { headerBackground: s.headerBackground } : {}),
+    ...(s.headerText ? { headerText: s.headerText } : {}),
+    ...(s.bodyText ? { bodyText: s.bodyText } : {}),
+    ...(s.highlightTotalRow !== undefined ? { highlightTotalRow: s.highlightTotalRow } : {}),
+    ...(s.totalRowBackground ? { totalRowBackground: s.totalRowBackground } : {}),
+    ...(s.showAmountInWords !== undefined ? { showAmountInWords: s.showAmountInWords } : {}),
+  };
+  if (Object.keys(tTax).length) next.taxSummary = tTax;
+  else delete next.taxSummary;
+  return next;
+}
+
+/**
  * Seed a brand-new template's document `language` from the tenant-wide default
  * (Settings → Localization) when the template hasn't explicitly chosen one, so
  * the persisted config carries an explicit `language` from birth — the per-template
@@ -80,7 +136,10 @@ export function seedTemplateLanguage(
   config: TemplateConfigPayload,
   companySettings: CompanySettingsData,
 ): TemplateConfigPayload {
-  if (config.language && config.language.mode && config.language.mode !== 'en') {
+  // Any EXPLICIT per-template language wins — including an "English Only" choice
+  // (`mode: 'en'`), which must override a bilingual tenant default rather than be
+  // re-seeded from it. Only a template that never set a language is seeded.
+  if (config.language && config.language.mode) {
     return config;
   }
   return { ...config, language: resolveTenantLanguageConfig(companySettings) };

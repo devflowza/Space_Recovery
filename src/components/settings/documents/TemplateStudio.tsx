@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Calculator,
+  Download,
   LayoutGrid,
   LayoutPanelTop,
   Loader2,
@@ -23,7 +24,7 @@ import {
   type DocumentTemplateConfig,
   type FooterConfig,
   type HeaderConfig,
-  type LanguageMode,
+  type LanguageConfig,
   type LayoutConfig,
   type OrganizationConfig,
   type PageFittingConfig,
@@ -34,14 +35,20 @@ import {
   type StampImageOptions,
   type TableConfig,
   type TaxBarConfig,
+  type TermsBodyText,
   type TermsContentConfig,
+  type TaxSummaryConfig,
   type TemplateConfigOverride,
   type TemplateDocumentType,
+  type TotalsConfig,
+  type TotalsLineKey,
+  type TotalsRowColor,
   type TranslationPolicyConfig,
   type TypographyConfig,
   type TypographyStyleKey,
   type WatermarkConfig,
 } from '../../../lib/pdf/templateConfig';
+import type { LanguageCode } from '../../../lib/documentTranslations';
 import { DOC_TYPE_LABELS } from '../../../pages/settings/documentTypeMeta';
 import { getCompanyLogo, getCompanyStamp, getCompanySignature } from '../../../lib/fileStorageService';
 import { resolveBrandingImage, type BrandingImage } from '../../../lib/pdf/brandingImage';
@@ -60,7 +67,9 @@ export interface StudioApi {
   resolved: DocumentTemplateConfig;
   override: TemplateConfigOverride;
   setPaper: (patch: Partial<PaperConfig>) => void;
-  setLanguage: (mode: LanguageMode) => void;
+  /** Patch the document language (mode / secondary / primary) — persists all
+   *  three so the per-template secondary survives into the saved config. */
+  setLanguage: (patch: Partial<LanguageConfig>) => void;
   setColors: (patch: Partial<ColorsConfig>) => void;
   /** Replace the whole colors group (smart-palette / clear). */
   setColorsAll: (colors: ColorsConfig | undefined) => void;
@@ -91,12 +100,28 @@ export interface StudioApi {
       bankStyle?: 'boxed' | 'inline';
       bankWidth?: 'auto' | 'half' | 'full';
       bankAlign?: 'left' | 'center' | 'right';
+      headerBackground?: string;
     },
   ) => void;
-  patchColumn: (key: string, patch: { visible?: boolean; labelEn?: string; labelAr?: string }) => void;
-  setSectionLabel: (key: string, lang: 'en' | 'ar', value: string) => void;
+  /** Patch a line-item column. `labelSecondary` writes to `label.i18n[secondary]`
+   *  (and mirrors `.ar` when the secondary is Arabic); pass the active `secondary`. */
+  patchColumn: (
+    key: string,
+    patch: { visible?: boolean; labelEn?: string; labelSecondary?: string; secondary?: LanguageCode | null; width?: number },
+  ) => void;
+  /** Write a section heading. `lang` is `'en'` or a secondary `LanguageCode`;
+   *  a secondary writes to `label.i18n[code]` (and mirrors to `.ar` for `'ar'`). */
+  setSectionLabel: (key: string, lang: 'en' | LanguageCode, value: string) => void;
   moveSection: (key: string, direction: -1 | 1) => void;
   setTotalsLine: (lineKey: string, on: boolean) => void;
+  /** Total-section customisation (style + highlight). */
+  setTotals: (patch: Partial<TotalsConfig>) => void;
+  /** Per-line label override (blank clears it → default wording). */
+  setTotalsLabel: (key: TotalsLineKey, value: string) => void;
+  /** Opt-in per-row colour for the grand total / balance-due / tax rows. */
+  setTotalsRowColor: (row: 'total' | 'balanceDue' | 'tax', patch: Partial<TotalsRowColor>) => void;
+  /** Standalone VAT/GST breakdown table customisation. */
+  setTaxSummary: (patch: Partial<TaxSummaryConfig>) => void;
 }
 
 interface TemplateStudioProps {
@@ -149,6 +174,10 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
     () => resolveTemplateConfig(builtIn, undefined, override),
     [builtIn, override],
   );
+  // The user explicitly set a document language (incl. "English Only") iff the
+  // override carries one — that choice must override the tenant default in the
+  // preview, so the preview matches the picker (and the saved/generated PDF).
+  const languageExplicit = override.language !== undefined;
 
   // ---- Live preview (debounced, real pdfmake artifact) --------------------
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -176,10 +205,10 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
           // Pass the tenant's real company settings so the sample preview shows the
           // tenant's own header/branding/language (predicting the generated PDF),
           // not the neutral bilingual sample company.
-          ({ url, warnings } = await previewTemplate(docType, resolved, undefined, tenantLogo, tenantStamp, tenantSignature, companySettings ?? undefined));
+          ({ url, warnings } = await previewTemplate(docType, resolved, undefined, tenantLogo, tenantStamp, tenantSignature, companySettings ?? undefined, languageExplicit));
         } else {
           const { previewDocumentForRecord } = await import('../../../lib/pdf/previewRecord');
-          ({ url, warnings } = await previewDocumentForRecord(docType, dataSource, resolved));
+          ({ url, warnings } = await previewDocumentForRecord(docType, dataSource, resolved, languageExplicit));
         }
         if (cancelled) {
           URL.revokeObjectURL(url);
@@ -201,7 +230,7 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [resolved, dataSource, docType, tenantLogo, tenantStamp, tenantSignature, companySettings]);
+  }, [resolved, languageExplicit, dataSource, docType, tenantLogo, tenantStamp, tenantSignature, companySettings]);
 
   useEffect(() => () => {
     if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
@@ -266,11 +295,15 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
       resolved,
       override,
       setPaper: (patch) => mergeGroup('paper', patch),
-      setLanguage: (mode) =>
-        setOverride((prev) => ({
-          ...prev,
-          language: { ...prev.language, mode, primary: mode === 'ar' ? 'ar' : prev.language?.primary ?? 'en' },
-        })),
+      setLanguage: (patch) =>
+        setOverride((prev) => {
+          const base = prev.language ?? builtIn.language;
+          const next: LanguageConfig = { ...base, ...patch } as LanguageConfig;
+          // Selecting "English Only" clears the secondary so the config returns to
+          // the pure-English shape (no stray secondary lingering on a en/ar config).
+          if (next.mode === 'en' && patch.secondary === undefined) delete next.secondary;
+          return { ...prev, language: next };
+        }),
       setColors: (patch) => mergeGroup('colors', patch),
       setColorsAll: (colors) => setOverride((prev) => ({ ...prev, colors })),
       setTypography: (patch) => mergeGroup('typography', patch),
@@ -330,14 +363,29 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
           },
         })),
       setTermsContent: (patch) =>
-        setOverride((prev) => ({
-          ...prev,
-          termsContent: {
-            ...prev.termsContent,
-            ...(patch.terms ? { terms: { ...prev.termsContent?.terms, ...patch.terms } } : {}),
-            ...(patch.notes ? { notes: { ...prev.termsContent?.notes, ...patch.notes } } : {}),
-          },
-        })),
+        setOverride((prev) => {
+          // Deep-merge a Terms/Notes body so writing one language's i18n entry
+          // (e.g. French) never drops another (e.g. a previously-authored Arabic).
+          const mergeBody = (
+            base: TermsBodyText | undefined,
+            ov: TermsBodyText | undefined,
+          ): TermsBodyText | undefined => {
+            if (!ov) return base;
+            return {
+              ...base,
+              ...ov,
+              ...(base?.i18n || ov.i18n ? { i18n: { ...base?.i18n, ...ov.i18n } } : {}),
+            };
+          };
+          return {
+            ...prev,
+            termsContent: {
+              ...prev.termsContent,
+              ...(patch.terms ? { terms: mergeBody(prev.termsContent?.terms, patch.terms) } : {}),
+              ...(patch.notes ? { notes: mergeBody(prev.termsContent?.notes, patch.notes) } : {}),
+            },
+          };
+        }),
       setPageFitting: (patch) => mergeGroup('pageFitting', patch),
       patchSection: (key, patch) =>
         setOverride((prev) => {
@@ -358,15 +406,24 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
           const columns = [...(li.columns ?? [])];
           const cIdx = columns.findIndex((c) => c.key === columnKey);
           const existing = columns[cIdx] ?? { key: columnKey };
+          const secondary = patch.secondary ?? null;
+          const writesLabel = patch.labelEn !== undefined || patch.labelSecondary !== undefined;
           const next = {
             ...existing,
             ...(patch.visible !== undefined ? { visible: patch.visible } : {}),
-            ...(patch.labelEn !== undefined || patch.labelAr !== undefined
+            ...(patch.width !== undefined ? { width: patch.width > 0 ? patch.width : undefined } : {}),
+            ...(writesLabel
               ? {
                   label: {
                     ...existing.label,
                     ...(patch.labelEn !== undefined ? { en: patch.labelEn } : {}),
-                    ...(patch.labelAr !== undefined ? { ar: patch.labelAr } : {}),
+                    // Secondary column label → label.i18n[code] (mirror `.ar` for Arabic).
+                    ...(patch.labelSecondary !== undefined && secondary
+                      ? {
+                          i18n: { ...existing.label?.i18n, [secondary]: patch.labelSecondary },
+                          ...(secondary === 'ar' ? { ar: patch.labelSecondary } : {}),
+                        }
+                      : {}),
                   },
                 }
               : {}),
@@ -380,7 +437,18 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
       setSectionLabel: (key, lang, value) =>
         setOverride((prev) => {
           const labels = { ...(prev.labels ?? {}) };
-          labels[key] = { ...(labels[key] ?? { en: '' }), [lang]: value };
+          const existing = labels[key] ?? { en: '' };
+          if (lang === 'en') {
+            labels[key] = { ...existing, en: value };
+          } else {
+            // Secondary heading → label.i18n[code]; also mirror to the legacy `.ar`
+            // slot when the secondary is Arabic so deployed `{en,ar}` readers see it.
+            labels[key] = {
+              ...existing,
+              i18n: { ...existing.i18n, [lang]: value },
+              ...(lang === 'ar' ? { ar: value } : {}),
+            };
+          }
           return { ...prev, labels };
         }),
       moveSection: (key, direction) => {
@@ -412,6 +480,23 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
           sections[tIdx] = { ...totals, lines: { ...totals.lines, [lineKey]: on } };
           return { ...prev, sections };
         }),
+      setTotals: (patch) => mergeGroup('totals', patch),
+      setTotalsLabel: (key, value) =>
+        setOverride((prev) => {
+          const labels = { ...prev.totals?.labels };
+          if (value.trim() === '') delete labels[key];
+          else labels[key] = value;
+          return { ...prev, totals: { ...prev.totals, labels } };
+        }),
+      setTotalsRowColor: (row, patch) =>
+        setOverride((prev) => ({
+          ...prev,
+          totals: {
+            ...prev.totals,
+            rowColors: { ...prev.totals?.rowColors, [row]: { ...prev.totals?.rowColors?.[row], ...patch } },
+          },
+        })),
+      setTaxSummary: (patch) => mergeGroup('taxSummary', patch),
     };
   }, [docType, resolved, override]);
 
@@ -490,6 +575,20 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
             <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-2.5">
               <span className="text-sm font-medium text-slate-700">Live preview</span>
               <div className="flex items-center gap-2">
+                {previewUrl && (
+                  <a
+                    href={previewUrl}
+                    download={`${DOC_TYPE_LABELS[docType]}${
+                      dataSource !== 'sample' ? `-${records.find((r) => r.id === dataSource)?.label ?? ''}` : ''
+                    }.pdf`.replace(/[^\w.\-]+/g, '-')}
+                    title="Download the rendered PDF"
+                    aria-label="Download the rendered PDF"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Download
+                  </a>
+                )}
                 {recordPreviewSupported && records.length > 0 && (
                   <select
                     aria-label="Preview data source"
@@ -525,13 +624,20 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
                 ))}
               </div>
             )}
-            <div className="relative h-[calc(100vh-12rem)] min-h-[480px] bg-slate-100">
+            <div className="relative h-[calc(100vh-12rem)] min-h-[480px] bg-slate-200">
               {previewError ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
                   <p className="text-sm text-danger">{previewError}</p>
                 </div>
               ) : previewUrl ? (
-                <iframe src={previewUrl} title={`${DOC_TYPE_LABELS[docType]} preview`} className="h-full w-full border-0" />
+                // PDF open-parameters strip the native viewer's toolbar + thumbnail
+                // rail and fit the page to the pane width, so the preview shows the
+                // document large + clean instead of a small page inside dark chrome.
+                <iframe
+                  src={`${previewUrl}#toolbar=0&navpanes=0&statusbar=0&view=FitH`}
+                  title={`${DOC_TYPE_LABELS[docType]} preview`}
+                  className="h-full w-full border-0"
+                />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />

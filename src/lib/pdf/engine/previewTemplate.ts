@@ -23,9 +23,10 @@ import type { DocumentTemplateConfig, TemplateDocumentType } from '../templateCo
 import type { CompanySettingsData, TranslationContext } from '../types';
 import { renderTemplate } from './renderTemplate';
 import { applyTenantLanguage } from './applyTenantLanguage';
-import { buildTenantPreviewContext } from './tenantPreviewContext';
-import { createPdfWithFonts } from '../fonts';
-import { withTimeout } from '../translationContext';
+import { isTypstEngineEnabled } from './featureFlag';
+import { createPdfWithFonts, initializePDFFonts } from '../fonts';
+import { ctxFromLanguageConfig, withTimeout } from '../translationContext';
+import { resolveSecondary } from '../templateConfig';
 import { buildPreviewEngineData, sampleInvoiceData } from './sampleData';
 import { resolveQrImage } from '../qrImage';
 import { brandingImageWarning, placeholderLogoSvg, type BrandingImage } from '../brandingImage';
@@ -101,15 +102,43 @@ export async function previewTemplate(
   stampImage?: BrandingImage | null,
   signatureImage?: BrandingImage | null,
   companySettings?: CompanySettingsData,
+  languageExplicit = false,
 ): Promise<PreviewResult> {
   // When the tenant's company settings are supplied, render the way the generator
   // does: the tenant's real company replaces the sample company, and the config
-  // `language` + translation context follow the tenant's document-language
-  // settings — so the preview predicts the generated PDF instead of a neutral
-  // bilingual sample. Without it, the legacy sample-company + English-context
-  // behavior is preserved (callers/tests that pass no tenant settings).
-  const effectiveConfig = companySettings ? applyTenantLanguage(config, companySettings) : config;
-  const effectiveCtx = companySettings ? buildTenantPreviewContext(companySettings) : ctx;
+  // `language` follows the per-template Studio picker. `languageExplicit` (the user
+  // picked a language — including "English Only") makes that choice override the
+  // tenant default; only an unconfigured template falls back to the tenant setting.
+  // Without companySettings, the legacy sample-company behavior is preserved.
+  const effectiveConfig = companySettings ? applyTenantLanguage(config, companySettings, languageExplicit) : config;
+  // Derive the translation context from the RESOLVED per-template language so the
+  // Studio's secondary-language choice drives BOTH layout (config.language) AND
+  // translation (ctx) — any of the 13 languages, not just the tenant-wide Arabic.
+  // When no company settings are passed, honour the caller-supplied ctx (tests).
+  // Build the context from the RESOLVED per-template language. ctxFromLanguageConfig
+  // needs only `language` — NOT companySettings — so we derive it whenever the
+  // caller passes tenant settings (the live Studio + generators always do). The
+  // caller-supplied `ctx` fallback is honoured only when no tenant settings are
+  // given at all (unit tests). Deriving here means a bilingual template renders its
+  // secondary language on the FIRST paint, before the async company-settings fetch
+  // resolves — no English flash that then corrects to the chosen language.
+  const effectiveCtx = companySettings
+    ? ctxFromLanguageConfig(effectiveConfig.language)
+    : config.language.mode !== 'en'
+      ? ctxFromLanguageConfig(config.language)
+      : ctx;
+  // Preload the chosen secondary's font so a non-Latin script (Arabic/Korean/Thai)
+  // shapes in the preview. Non-fatal: initializePDFFonts swallows load failures
+  // and degrades to the base font (createPdfWithFonts also remaps any unresolved
+  // family to Roboto), so a CSP-blocked CDN font can never crash the preview.
+  const secondary = resolveSecondary(effectiveConfig.language);
+  if (secondary) {
+    try {
+      await initializePDFFonts(secondary);
+    } catch {
+      /* non-fatal: render proceeds with the base font */
+    }
+  }
   const engineData = buildPreviewEngineData(docType, effectiveConfig, companySettings);
   // Draw the real logo when resolved, else a labeled placeholder box. The QR is
   // auto-generated from the document's verification payload as a PNG image —
@@ -117,6 +146,25 @@ export async function previewTemplate(
   // reliable path (the same one tenant-uploaded QR images use).
   const { logo: previewLogo, warnings } = resolvePreviewLogo(logo);
   const qrImage = await resolveQrImage(null, engineData.zatcaPayload ?? engineData.qrPayload);
+
+  // Experimental Typst renderer (flag-gated, default off): correct Arabic via
+  // rustybuzz + Unicode bidi. Scoped to ARABIC documents only — the LTR
+  // languages already render cleanly through pdfmake, so they stay on it. Lazily
+  // imported so the WASM never enters the default bundle. Phase-1: text/tables
+  // (logo/QR images TBD).
+  if (isTypstEngineEnabled() && secondary === 'ar') {
+    const [{ assembleTypst }, { renderTypstPdf }, { logoAsset, qrAsset }] = await Promise.all([
+      import('../typst/assemble'),
+      import('../typst/typstEngine'),
+      import('../typst/assets'),
+    ]);
+    const logo = logoAsset(previewLogo);
+    const qrA = qrAsset(qrImage);
+    const markup = assembleTypst(engineData, effectiveConfig, effectiveCtx, { logoPath: logo?.path, qrPath: qrA?.path });
+    const blob = await withTimeout(renderTypstPdf(markup, [logo, qrA].filter((a): a is NonNullable<typeof a> => a !== null)), PREVIEW_TIMEOUT_MS, 'Preview render timed out');
+    return { url: URL.createObjectURL(blob), warnings };
+  }
+
   const docDefinition = renderTemplate(
     effectiveConfig,
     engineData,

@@ -16,4 +16,4 @@ import { buildPayComponentTable } from './payComponentTable';
 export const renderEarnings: SectionRenderer = (
   engine: EngineContext,
   data: EngineDocData,
-): Content | null => buildPayComponentTable(engine, data.earnings);
+): Content | null => buildPayComponentTable(engine, data.earnings, 'earnings');

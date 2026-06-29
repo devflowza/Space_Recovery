@@ -36,6 +36,21 @@ import { toEngineData as chainOfCustodyToEngine } from './adapters/chainOfCustod
 import { toEngineData as payslipToEngine } from './adapters/payslipAdapter';
 import { toEngineData as reportToEngine } from './adapters/reportAdapter';
 import { toEngineData as stockLabelToEngine } from './adapters/stockLabelAdapter';
+import { ctxFromLanguageConfig } from '../translationContext';
+import type { TranslationContext } from '../types';
+
+/**
+ * Derive a {@link TranslationContext} from the engine `config.language` for sample
+ * adapters that resolve labels through `ctx.t` (the report adapter). Routes through
+ * the canonical {@link ctxFromLanguageConfig}, which reads the per-template
+ * secondary via `resolveSecondary` — so the Studio preview honours ANY of the 13
+ * secondary languages (Italian/French/…), not just Arabic. (It previously mapped
+ * every non-Arabic secondary to English — the cause of "English-only" report
+ * previews for e.g. English + Italian.)
+ */
+function previewCtxFromConfig(config: DocumentTemplateConfig): TranslationContext {
+  return ctxFromLanguageConfig(config.language);
+}
 
 /** Shared sample company identity used across every sample document. */
 const SAMPLE_COMPANY = {
@@ -268,6 +283,7 @@ export function sampleReportData(): ReportData {
     ],
     companySettings: { ...SAMPLE_COMPANY, branding: { ...SAMPLE_COMPANY.branding, qr_code_general_caption: 'Scan for more information' } },
     preparedByName: 'Lina Engineer',
+    recoverability: 'partially_recoverable',
   };
 }
 
@@ -348,7 +364,11 @@ export function buildPreviewEngineData(
     case 'payslip':
       return payslipToEngine(withCompany(samplePayslipData(), companySettings), config);
     case 'report':
-      return reportToEngine(withCompany(sampleReportData(), companySettings), config);
+      return reportToEngine(
+        withCompany(sampleReportData(), companySettings),
+        config,
+        previewCtxFromConfig(config),
+      );
     case 'stock_label':
       return stockLabelToEngine(sampleStockLabelData(), config);
     default:

@@ -25,6 +25,7 @@ import type { EngineContext, EngineDocData } from './types';
 import { SECTION_REGISTRY } from './registry';
 import { renderPartiesMeta, partiesDetailsKey } from './sections/infoBoxes';
 import { buildPageFooter } from './sections/footer';
+import { buildReportPageFooter } from './sections/reportFooter';
 import { engineLayoutDirection, engineDefaultFont } from './rtl';
 import {
   resolveColors,
@@ -33,6 +34,7 @@ import {
   resolveTypography,
   resolveWatermarkSettings,
 } from './branding';
+import { contrastRatio, readableTextOn } from './palette';
 
 /** Spacing/size multiplier per density preset (comfortable = identity/legacy). */
 const DENSITY_SCALE: Record<'comfortable' | 'compact' | 'dense', number> = {
@@ -42,7 +44,7 @@ const DENSITY_SCALE: Record<'comfortable' | 'compact' | 'dense', number> = {
 };
 
 /** Section keys that can be promoted to the repeating page footer. */
-const PAGE_FOOTER_KEYS = new Set(['footer', 'qr']);
+const PAGE_FOOTER_KEYS = new Set(['footer', 'qr', 'reportFooter']);
 
 /** Named styles the typography group rescales when a tenant configures it. */
 const TYPOGRAPHY_STYLE_KEYS: TypographyStyleKey[] = [
@@ -102,7 +104,16 @@ export function renderTemplate(
     pageSize = config.paper.size === 'Letter' ? 'LETTER' : 'A4';
   }
   const pageOrientation: PageOrientation = config.paper.orientation;
-  let pageMargins: [number, number, number, number] = config.paper.margins;
+  // config.paper.margins is CSS order [top, right, bottom, left]; pdfmake's
+  // pageMargins is [left, top, right, bottom]. Reorder so each Studio input maps
+  // to its own side (without this, Top→Left, Right→Top, … rotate).
+  const cssMargins = config.paper.margins;
+  let pageMargins: [number, number, number, number] = [
+    cssMargins[3], // left
+    cssMargins[0], // top
+    cssMargins[1], // right
+    cssMargins[2], // bottom
+  ];
 
   // 2. Visible sections, ascending order, dispatched via the registry.
   const ordered = [...config.sections]
@@ -126,7 +137,11 @@ export function renderTemplate(
     }
   }
   const trailingKeys = ordered.slice(trailingFrom).map((s) => s.key);
-  const promoteToPageFooter = trailingKeys.includes('footer');
+  // A report uses its own page footer (confidentiality + Report ID line); other
+  // documents use the identity footer. Either trailing key promotes the run to a
+  // repeating page footer.
+  const promoteReportFooter = trailingKeys.includes('reportFooter');
+  const promoteToPageFooter = trailingKeys.includes('footer') || promoteReportFooter;
 
   // 3. Flatten the in-body sections. When the trailing run is promoted to the
   // page footer it is excluded here and emitted via the `footer:` callback
@@ -218,7 +233,14 @@ export function renderTemplate(
   // byte-for-byte unchanged.
   const colors = resolveColors(config);
   styles.sectionTitle = { ...styles.sectionTitle, color: colors.accent };
-  styles.bilingualHeader = { ...styles.bilingualHeader, color: colors.accent };
+  // Default band-heading colour — a SAFE fallback for any band that does NOT pass
+  // its own per-section heading colour (those compute it against their own fill).
+  // Computed against the NEUTRAL band default so such bands stay legible; the
+  // accent shows when it's readable on that neutral shade.
+  styles.bilingualHeader = {
+    ...styles.bilingualHeader,
+    color: contrastRatio(colors.accent, PDF_COLORS.background) >= 3 ? colors.accent : readableTextOn(PDF_COLORS.background),
+  };
   if (config.colors) {
     styles.value = { ...styles.value, color: colors.text };
     styles.valueBold = { ...styles.valueBold, color: colors.text };
@@ -240,12 +262,12 @@ export function renderTemplate(
     const scale = fitting.autoFitOnePage ? Math.max(fitting.minScale, densityScale * 0.9) : densityScale;
     densityFontScale = scale;
     if (scale !== 1) {
-      const m = config.paper.margins;
+      // Scale the already-reordered pdfmake [left, top, right, bottom] tuple.
       pageMargins = [
-        Math.round(m[0] * scale),
-        Math.round(m[1] * scale),
-        Math.round(m[2] * scale),
-        Math.round(m[3] * scale),
+        Math.round(pageMargins[0] * scale),
+        Math.round(pageMargins[1] * scale),
+        Math.round(pageMargins[2] * scale),
+        Math.round(pageMargins[3] * scale),
       ];
       for (const key of Object.keys(styles)) {
         const style = styles[key] as { fontSize?: number };
@@ -261,7 +283,11 @@ export function renderTemplate(
   // nothing to render. Page numbers (opt-in) append a line driven by
   // `pageNumbers.format`; when disabled (default) the footer is exactly the base
   // footer — parity preserved.
-  const baseFooter = promoteToPageFooter ? buildPageFooter(engine, data) : null;
+  const baseFooter = promoteReportFooter
+    ? buildReportPageFooter(engine, data)
+    : promoteToPageFooter
+      ? buildPageFooter(engine, data)
+      : null;
   const pageNumbers = resolvePageNumbers(config);
   let footer: DynamicContent | undefined;
   if (pageNumbers.enabled) {

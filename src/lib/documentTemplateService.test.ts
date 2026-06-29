@@ -91,8 +91,9 @@ vi.mock('./companySettingsService', () => ({
 // Import after mocks are in place
 // ---------------------------------------------------------------------------
 
-import { getDeployedVersionByType, seedTemplateLanguage, type TemplateConfigPayload } from './documentTemplateService';
+import { applyTemplateStyle, getDeployedVersionByType, seedTemplateLanguage, type TemplateConfigPayload } from './documentTemplateService';
 import { supabase } from './supabaseClient';
+import type { TemplateConfigOverride } from './pdf/templateConfig';
 import type { CompanySettingsData } from './pdf/types';
 
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
@@ -276,7 +277,15 @@ describe('seedTemplateLanguage', () => {
 
   it('seeds a new template language from a bilingual-Arabic tenant default', () => {
     const out = seedTemplateLanguage({}, tenant('bilingual', 'ar'));
-    expect(out.language).toEqual({ mode: 'bilingual_stacked', primary: 'ar' });
+    // Bilingual ALWAYS leads with English (the picker labels are "English | X");
+    // an RTL secondary like Arabic renders alongside in the same English-led layout.
+    expect(out.language).toEqual({ mode: 'bilingual_stacked', primary: 'en', secondary: 'ar' });
+  });
+
+  it('seeds a non-Arabic secondary (French) from a bilingual tenant default', () => {
+    const out = seedTemplateLanguage({}, tenant('bilingual', 'fr'));
+    // A non-RTL secondary keeps English in the lead, carrying the chosen language.
+    expect(out.language).toEqual({ mode: 'bilingual_stacked', primary: 'en', secondary: 'fr' });
   });
 
   it('seeds explicit English from an english_only tenant (was implicit default)', () => {
@@ -288,5 +297,72 @@ describe('seedTemplateLanguage', () => {
     const cfg = { language: { mode: 'bilingual_sidebyside', primary: 'en' } } as TemplateConfigPayload;
     const out = seedTemplateLanguage(cfg, tenant('bilingual', 'ar'));
     expect(out.language).toEqual({ mode: 'bilingual_sidebyside', primary: 'en' });
+  });
+
+  it('keeps an explicit "English Only" choice (does NOT re-seed from a bilingual tenant)', () => {
+    const cfg = { language: { mode: 'en', primary: 'en' } } as TemplateConfigPayload;
+    const out = seedTemplateLanguage(cfg, tenant('bilingual', 'it'));
+    expect(out.language).toEqual({ mode: 'en', primary: 'en' });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// applyTemplateStyle — "Copy template style": copy the visual groups, keep the
+// target's per-type content (sections, labels, language, terms, title).
+// ---------------------------------------------------------------------------
+
+describe('applyTemplateStyle', () => {
+  const source: TemplateConfigOverride = {
+    colors: { accent: '#0F766E' },
+    header: { logoPlacement: 'right' },
+    totals: { style: 'striped', rowColors: { total: { background: '#162660' } }, labels: { total: 'SOURCE TOTAL' } },
+    taxSummary: { show: true, style: 'striped', headerBackground: '#0F766E', title: 'Source Tax' },
+    sections: [{ key: 'totals', visible: true, order: 5 }],
+    labels: { documentTitle: { en: 'SOURCE INVOICE' } },
+    language: { mode: 'bilingual_sidebyside', primary: 'en', secondary: 'ar' },
+  };
+
+  it('copies the visual style groups from the source', () => {
+    const out = applyTemplateStyle({}, source);
+    expect(out.colors).toEqual({ accent: '#0F766E' });
+    expect(out.header).toEqual({ logoPlacement: 'right' });
+  });
+
+  it('copies the totals/tax STYLE but not their per-type labels/title/show', () => {
+    const out = applyTemplateStyle({}, source);
+    expect(out.totals?.style).toBe('striped');
+    expect(out.totals?.rowColors?.total?.background).toBe('#162660');
+    expect(out.totals?.labels).toBeUndefined();        // source labels NOT copied
+    expect(out.taxSummary?.style).toBe('striped');
+    expect(out.taxSummary?.headerBackground).toBe('#0F766E');
+    expect(out.taxSummary?.show).toBeUndefined();       // intent stays with target
+    expect(out.taxSummary?.title).toBeUndefined();
+  });
+
+  it('keeps the target content (sections, labels/title, language) untouched', () => {
+    const target: TemplateConfigOverride = {
+      colors: { accent: '#990000' },
+      sections: [{ key: 'lineItems', visible: true, order: 4 }],
+      labels: { documentTitle: { en: 'PAYSLIP' } },
+      language: { mode: 'en', primary: 'en' },
+      totals: { labels: { total: 'Net Pay' } },
+      taxSummary: { show: false, title: 'Target Tax' },
+    };
+    const out = applyTemplateStyle(target, source);
+    expect(out.colors).toEqual({ accent: '#0F766E' });             // style replaced
+    expect(out.sections).toEqual(target.sections);                 // content kept
+    expect(out.labels).toEqual({ documentTitle: { en: 'PAYSLIP' } }); // own title kept
+    expect(out.language).toEqual({ mode: 'en', primary: 'en' });    // own language kept
+    expect(out.totals?.labels).toEqual({ total: 'Net Pay' });      // own totals labels kept
+    expect(out.taxSummary?.show).toBe(false);                      // own show kept
+    expect(out.taxSummary?.title).toBe('Target Tax');             // own title kept
+    expect(out.taxSummary?.style).toBe('striped');                // style copied
+  });
+
+  it('clears a target style group the source lacks (target ends up matching source)', () => {
+    const target: TemplateConfigOverride = { footer: { customText: 'old footer' }, colors: { accent: '#111111' } };
+    const out = applyTemplateStyle(target, { colors: { accent: '#0F766E' } });
+    expect(out.footer).toBeUndefined(); // source has none → cleared
+    expect(out.colors).toEqual({ accent: '#0F766E' });
   });
 });

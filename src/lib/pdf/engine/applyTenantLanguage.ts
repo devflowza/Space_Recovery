@@ -32,7 +32,7 @@
  * a fresh config (with a fresh `language`) is returned.
  */
 
-import { isRTLLanguage } from '../../locale';
+import type { LanguageCode } from '../../documentTranslations';
 import type { CompanySettingsData } from '../types';
 import type { DocumentTemplateConfig, LanguageConfig } from '../templateConfig';
 
@@ -59,10 +59,32 @@ export function resolveTenantLanguageConfig(
     return { ...ENGLISH_ONLY_LANGUAGE };
   }
 
-  // Arabic (or any future RTL secondary) leads → RTL document. A non-RTL
-  // secondary (French, German, …) keeps English in the lead, secondary alongside.
-  const primary: LanguageConfig['primary'] = isRTLLanguage(secondary) ? 'ar' : 'en';
-  return { mode: DEFAULT_BILINGUAL_MODE, primary };
+  // Bilingual ALWAYS leads with English — the document shows "English | secondary"
+  // regardless of the secondary's script. An RTL secondary (Arabic) renders
+  // alongside English in the SAME English-led, left-to-right layout (the renderer
+  // still shapes/bidi-orders the Arabic within its own run); the document never
+  // flips to RTL just because the secondary is Arabic. (Genuinely Arabic-primary
+  // documents use the single-secondary 'ar' mode, not bilingual.)
+  return { mode: DEFAULT_BILINGUAL_MODE, primary: 'en', secondary: secondary as LanguageCode };
+}
+
+/**
+ * Coerce a bilingual config to English-lead. The Studio picker exposes only
+ * "English | <secondary>" bilingual layouts (never a secondary-lead bilingual),
+ * so a `primary: 'ar'` on a bilingual mode can only come from a stale saved config
+ * or the legacy tenant mapping. Left uncorrected it makes the title, column
+ * headers, totals, and "System labels only" field labels render secondary-FIRST —
+ * diverging from every other language combination. The single-secondary `'ar'`
+ * (secondary-only) mode is intentionally left untouched.
+ */
+function normalizeBilingualLead(language: LanguageConfig): LanguageConfig {
+  if (
+    (language.mode === 'bilingual_sidebyside' || language.mode === 'bilingual_stacked') &&
+    language.primary === 'ar'
+  ) {
+    return { ...language, primary: 'en' };
+  }
+  return language;
 }
 
 /**
@@ -72,26 +94,35 @@ export function resolveTenantLanguageConfig(
  *
  * PRECEDENCE: the Studio picker is authoritative once it selects a non-default —
  * i.e. non-English-only — document language. The picker can express
- * `bilingual_sidebyside` and Arabic-lead, neither of which the tenant setting can
- * represent, so it must NOT be clobbered. Only when the template is still at the
- * built-in English default (`mode: 'en'`) do we fall back to the tenant-wide
- * setting — preserving the legacy behavior for tenants who configure language in
+ * `bilingual_sidebyside` / `bilingual_stacked`, which the tenant setting cannot,
+ * so it must NOT be clobbered. Only when the template is still at the built-in
+ * English default (`mode: 'en'`) do we fall back to the tenant-wide setting —
+ * preserving the legacy behavior for tenants who configure language in
  * Settings → Localization rather than the Studio.
  *
- * Non-mutating: when the template wins we return it unchanged; otherwise a fresh
- * config with a fresh `language`. This is the ONE call every render path
- * (preview + every `build*ViaEngine`) funnels through, so the precedence holds
- * uniformly across the live preview and the generated PDF.
+ * In BOTH cases the final language is run through {@link normalizeBilingualLead}
+ * so a bilingual layout always leads with English — correcting stale saved configs
+ * (or the legacy tenant mapping) that carry `primary: 'ar'`, which otherwise make
+ * the title/headers/totals/field labels render secondary-first.
+ *
+ * Non-mutating: when the template wins AND is already normalized we return it
+ * unchanged; otherwise a fresh config with a fresh `language`. This is the ONE
+ * call every render path (preview + every `build*ViaEngine`) funnels through, so
+ * the precedence + normalization hold uniformly across preview and generated PDF.
  */
 export function applyTenantLanguage(
   config: DocumentTemplateConfig,
   companySettings: CompanySettingsData,
+  languageExplicit = false,
 ): DocumentTemplateConfig {
-  if (config.language && config.language.mode !== 'en') {
-    return config;
-  }
-  return {
-    ...config,
-    language: resolveTenantLanguageConfig(companySettings),
-  };
+  // The template language wins when it is a non-English layout OR was explicitly
+  // configured (`languageExplicit`) — the latter lets a per-template "English Only"
+  // choice override a bilingual tenant default, which a bare `mode: 'en'` cannot
+  // express (it is indistinguishable from an unconfigured template). Only an
+  // unconfigured template (`mode: 'en'` AND not explicit) falls back to the tenant.
+  const templateWins = languageExplicit || (config.language && config.language.mode !== 'en');
+  const resolved = templateWins ? config.language : resolveTenantLanguageConfig(companySettings);
+  const language = normalizeBilingualLead(resolved);
+  if (language === config.language) return config;
+  return { ...config, language };
 }

@@ -19,7 +19,8 @@ import type {
 } from '../types';
 import { isBilingualMode, en, ar, resolveLabel } from '../labels';
 import { engineLayoutDirection, mirrorColumns } from '../rtl';
-import { resolveTable } from '../branding';
+import { resolveTable, resolveSectionFill } from '../branding';
+import { readableTextOn } from '../palette';
 
 function headerAlignment(col: ResolvedColumn): 'left' | 'center' | 'right' {
   return col.align ?? 'left';
@@ -46,19 +47,23 @@ export const renderLineItems: SectionRenderer = (
   const headingLabel = engine.config.labels.lineItems ?? { en: 'Line Items', ar: 'البنود' };
   const heading = createBilingualSectionHeader(
     en(headingLabel, 'Line Items'),
-    bilingual ? ar(headingLabel) : null,
+    bilingual ? ar(headingLabel, language) : null,
   ) as Content;
 
   // Table styling. `headerBackground` defaults to the legacy `PDF_COLORS.headerBg`,
   // so an unconfigured table is unchanged; S/N + zebra are opt-in.
   const tableStyle = resolveTable(engine.config);
+  // Per-section header fill (sections-list override → global → the table default),
+  // with auto-contrast text so any custom/dark fill keeps the labels readable.
+  const headerFill = resolveSectionFill(engine.config, 'lineItems', tableStyle.headerBackground);
+  const headerText = readableTextOn(headerFill);
 
   // Header row: one cell per visible column, label resolved by language mode.
   const headerRow: TableCell[] = columns.map((col) => ({
     text: resolveLabel(col.label, language),
     style: 'tableHeader',
-    fillColor: tableStyle.headerBackground,
-    color: PDF_COLORS.text,
+    fillColor: headerFill,
+    color: headerText,
     alignment: headerAlignment(col),
   }));
 
@@ -84,7 +89,7 @@ export const renderLineItems: SectionRenderer = (
   // Opt-in S/N row-number column: a narrow serial column prepended to the header
   // and each body row.
   if (tableStyle.rowNumbering) {
-    headerRow.unshift({ text: '#', style: 'tableHeader', fillColor: tableStyle.headerBackground, color: PDF_COLORS.text, alignment: 'center' });
+    headerRow.unshift({ text: '#', style: 'tableHeader', fillColor: headerFill, color: headerText, alignment: 'center' });
     for (let r = 1; r < body.length; r++) {
       body[r].unshift({ text: String(r), style: 'tableCellCenter' });
     }

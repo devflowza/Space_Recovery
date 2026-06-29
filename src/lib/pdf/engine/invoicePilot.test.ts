@@ -176,8 +176,8 @@ describe('invoice pilot — engine renders a complete, valid invoice', () => {
 
   it('renders line-item values matching the input (currency-formatted)', () => {
     const texts = allTexts(renderInvoice(makeInvoiceData()));
-    // OMR, 3 decimals, position 'before' → "OMR 1000.000".
-    expect(texts.some((t) => t.includes('OMR 1000.000'))).toBe(true); // item 1 unit price + total
+    // OMR, 3 decimals, position 'before' → "OMR 1,000.000".
+    expect(texts.some((t) => t.includes('OMR 1,000.000'))).toBe(true); // item 1 unit price + total
     expect(texts.some((t) => t.includes('OMR 250.000'))).toBe(true); // item 2 unit price
     expect(texts.some((t) => t.includes('OMR 500.000'))).toBe(true); // item 2 line total (2 x 250)
   });
@@ -185,11 +185,11 @@ describe('invoice pilot — engine renders a complete, valid invoice', () => {
   it('computes totals (subtotal/discount/net/VAT/total) matching the input', () => {
     const texts = allTexts(renderInvoice(makeInvoiceData()));
     const joined = texts.join('');
-    expect(joined).toContain('OMR 1500.000'); // subtotal
+    expect(joined).toContain('OMR 1,500.000'); // subtotal
     expect(joined).toContain('OMR 100.000'); // discount
-    expect(joined).toContain('OMR 1400.000'); // net (subtotal - discount)
+    expect(joined).toContain('OMR 1,400.000'); // net (subtotal - discount)
     expect(joined).toContain('OMR 70.000'); // VAT 5% of 1400
-    expect(joined).toContain('OMR 1470.000'); // grand total
+    expect(joined).toContain('OMR 1,470.000'); // grand total
   });
 
   it('renders the proforma vs tax title from the adapter (title precedence)', () => {

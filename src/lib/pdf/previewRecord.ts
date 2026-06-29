@@ -18,9 +18,10 @@ import { toEngineData as toQuoteEngineData } from './engine/adapters/quoteAdapte
 import { toEngineData as toPaymentReceiptEngineData } from './engine/adapters/paymentReceiptAdapter';
 import { renderTemplate } from './engine/renderTemplate';
 import { applyTenantLanguage } from './engine/applyTenantLanguage';
-import { buildTenantPreviewContext } from './engine/tenantPreviewContext';
-import { createPdfWithFonts } from './fonts';
-import { withTimeout } from './translationContext';
+import { isTypstEngineEnabled } from './engine/featureFlag';
+import { createPdfWithFonts, initializePDFFonts } from './fonts';
+import { ctxFromLanguageConfig, withTimeout } from './translationContext';
+import { resolveSecondary } from './templateConfig';
 import { loadImageAsBase64 } from './utils';
 import { resolveBrandingImage, brandingImageWarning, type BrandingImage } from './brandingImage';
 import type { PreviewResult } from './engine/previewTemplate';
@@ -29,7 +30,7 @@ import type { PreviewResult } from './engine/previewTemplate';
 const PREVIEW_TIMEOUT_MS = 15000;
 import type { EngineDocData } from './engine/types';
 import type { DocumentTemplateConfig, TemplateDocumentType } from './templateConfig';
-import type { CompanySettingsData, TranslationContext } from './types';
+import type { CompanySettingsData } from './types';
 
 /** Doc types that support previewing against a real record. */
 const RECORD_PREVIEW_TYPES: ReadonlySet<TemplateDocumentType> = new Set([
@@ -46,15 +47,6 @@ export interface PreviewRecordOption {
   id: string;
   label: string;
 }
-
-/** English/LTR context — the editing config's `language` still drives bilingual. */
-const PREVIEW_CTX_EN: TranslationContext = {
-  t: (_key: string, englishText: string) => englishText,
-  isRTL: false,
-  isBilingual: false,
-  languageCode: null,
-  fontFamily: 'Roboto',
-};
 
 /** List the most recent records for a doc type (id + a human label). */
 export async function listPreviewRecords(docType: TemplateDocumentType): Promise<PreviewRecordOption[]> {
@@ -101,6 +93,7 @@ export async function previewDocumentForRecord(
   docType: TemplateDocumentType,
   recordId: string,
   config: DocumentTemplateConfig,
+  languageExplicit = false,
 ): Promise<PreviewResult> {
   let engineData: EngineDocData;
   let companySettings: CompanySettingsData | null = null;
@@ -144,10 +137,55 @@ export async function previewDocumentForRecord(
   }
 
   // Mirror the generator's language path so the preview's language matches the
-  // real PDF: derive the config's `language` and the translation context from the
-  // tenant's document-language settings (not the hard-coded English default).
-  const langConfig = companySettings ? applyTenantLanguage(config, companySettings) : config;
-  const ctx = companySettings ? buildTenantPreviewContext(companySettings) : PREVIEW_CTX_EN;
+  // real PDF: resolve the config's `language` (per-template Studio picker wins,
+  // tenant setting fills in only when the template is English-default), then build
+  // the translation context FROM that resolved language so the chosen secondary
+  // (any of the 13) drives both layout and translation.
+  const langConfig = companySettings ? applyTenantLanguage(config, companySettings, languageExplicit) : config;
+  // ctxFromLanguageConfig needs only `language` (never companySettings); `langConfig`
+  // is already `config` when no tenant settings were fetched, so deriving from it
+  // ALWAYS honours the per-template secondary — no English fallback that silently
+  // drops the chosen language.
+  const ctx = ctxFromLanguageConfig(langConfig.language);
+  // Preload the chosen secondary's font so a non-Latin script shapes; non-fatal
+  // (createPdfWithFonts also remaps an unresolved family to Roboto), so a missing
+  // font degrades to Latin instead of crashing the preview.
+  const secondary = resolveSecondary(langConfig.language);
+  if (secondary) {
+    try {
+      await initializePDFFonts(secondary);
+    } catch {
+      /* non-fatal: render proceeds with the base font */
+    }
+  }
+  // Arabic documents render through Typst (correct shaping + bidi); the LTR
+  // languages keep the proven pdfmake path. Lazily imported so the WASM never
+  // enters the default bundle. Phase-1: text/tables (logo/QR images TBD).
+  if (isTypstEngineEnabled() && secondary === 'ar') {
+    const [{ assembleTypst }, { renderTypstPdf }, { logoAsset, qrAsset, stampAsset, signatureAsset }] = await Promise.all([
+      import('./typst/assemble'),
+      import('./typst/typstEngine'),
+      import('./typst/assets'),
+    ]);
+    const logoA = logoAsset(logo);
+    const qrA = qrAsset(qr);
+    const stampA = stampAsset(stamp);
+    const signatureA = signatureAsset(signature);
+    const markup = assembleTypst(engineData, langConfig, ctx, {
+      logoPath: logoA?.path,
+      qrPath: qrA?.path,
+      stampPath: stampA?.path,
+      signaturePath: signatureA?.path,
+    });
+    const blob = await withTimeout(
+      renderTypstPdf(markup, [logoA, qrA, stampA, signatureA].filter((a): a is NonNullable<typeof a> => a !== null)),
+      PREVIEW_TIMEOUT_MS,
+      'Preview render timed out',
+    );
+    const w = brandingImageWarning(logo);
+    return { url: URL.createObjectURL(blob), warnings: w ? [w] : [] };
+  }
+
   const docDefinition = renderTemplate(langConfig, engineData, ctx, logo, qr, stamp, signature);
   const warning = brandingImageWarning(logo);
   const warnings = warning ? [warning] : [];

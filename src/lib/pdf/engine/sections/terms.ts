@@ -18,14 +18,17 @@
 
 import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS, createBilingualInfoBox } from '../../styles';
+import { resolveSectionFill, resolveHeaderText } from '../branding';
 import { htmlToPdfmake } from '../../htmlToPdfmake';
 import { decodeHtmlEntities } from '../../../sanitizeHtml';
 import { isBilingualMode, en, ar } from '../labels';
+import { isRTLLanguage } from '../../../documentTranslations';
+import { resolveSecondary, secondaryText, type LanguageConfig, type TermsBodyText } from '../../templateConfig';
 import type { EngineContext, EngineDocData, LabelText, SectionRenderer, TermsTextBlock } from '../types';
 
 interface TermsBlock {
   heading: LabelText;
-  body: { en?: string; ar?: string };
+  body: TermsBodyText;
 }
 
 const BORDER = {
@@ -51,16 +54,20 @@ function termsBox(enCol: Content[], arCol: Content[]): Content | null {
   return { stack: [box], margin: [0, 8, 0, 0] as [number, number, number, number] };
 }
 
-/** One language column of the standard terms box: heading + prose per non-empty block. */
-function languageColumn(blocks: TermsBlock[], lang: 'en' | 'ar'): Content[] {
-  const right = lang === 'ar';
+/** One language column of the standard terms box: heading + prose per non-empty
+ *  block. `lang` is `'en'` for the English column or `'secondary'` for the
+ *  secondary-language column (any of the 13, resolved from the document language —
+ *  legacy `.ar` content still surfaces when the secondary is Arabic). */
+function languageColumn(blocks: TermsBlock[], lang: 'en' | 'secondary', language: LanguageConfig): Content[] {
+  const right = lang === 'secondary' && isRTLLanguage(resolveSecondary(language));
   const align: 'left' | 'right' = right ? 'right' : 'left';
+  const secondaryLang = resolveSecondary(language);
   const stack: Content[] = [];
   for (const b of blocks) {
-    const body = (right ? b.body.ar : b.body.en)?.trim();
+    const body = (lang === 'secondary' ? secondaryText(b.body, secondaryLang) : b.body.en)?.trim();
     if (!body) continue;
     if (stack.length > 0) stack.push({ text: '', margin: [0, 4, 0, 0] as [number, number, number, number] });
-    const heading = right ? ar(b.heading) ?? en(b.heading) : en(b.heading);
+    const heading = lang === 'secondary' ? ar(b.heading, language) ?? en(b.heading) : en(b.heading);
     stack.push(
       { text: heading, fontSize: 9, bold: true, color: PDF_COLORS.text, alignment: align, margin: [0, 0, 0, 3] as [number, number, number, number] },
       { text: body, fontSize: 9, color: PDF_COLORS.textLight, lineHeight: 1.3, alignment: align },
@@ -161,14 +168,15 @@ function recordBodyNode(b: TermsTextBlock): object | null {
  * reads per-record terms, never falls back; omitted when the Studio content is blank.
  */
 export const renderTerms: SectionRenderer = (engine: EngineContext): Content | null => {
-  const bilingual = isBilingualMode(engine.config.language);
+  const { language } = engine.config;
+  const bilingual = isBilingualMode(language);
   const tc = engine.config.termsContent;
   const blocks: TermsBlock[] = [
     { heading: engine.config.labels.terms ?? { en: 'Terms & Conditions', ar: 'الشروط والأحكام' }, body: tc?.terms ?? {} },
     { heading: engine.config.labels.notes ?? { en: 'Notes', ar: 'ملاحظات' }, body: tc?.notes ?? {} },
   ];
-  const enCol = languageColumn(blocks, 'en');
-  const arCol = bilingual ? languageColumn(blocks, 'ar') : [];
+  const enCol = languageColumn(blocks, 'en', language);
+  const arCol = bilingual ? languageColumn(blocks, 'secondary', language) : [];
   return termsBox(enCol, arCol);
 };
 
@@ -184,7 +192,8 @@ export const renderRecordTerms: SectionRenderer = (
 ): Content | null => {
   const recordLabel = engine.config.labels.recordTerms;
   const notesLabel = engine.config.labels.notes ?? { en: 'Notes', ar: 'ملاحظات' };
-  const bilingual = isBilingualMode(engine.config.language);
+  const { language } = engine.config;
+  const bilingual = isBilingualMode(language);
   const rawBlocks = data.terms?.blocks ?? [];
   // A Studio rename overrides the per-record terms heading (but not the Notes block).
   const blocks = recordLabel
@@ -195,12 +204,14 @@ export const renderRecordTerms: SectionRenderer = (
   // Each block renders as a bordered box with a shaded bilingual header band —
   // the same `createBilingualInfoBox` treatment as Customer Information / Details,
   // so the heading carries its Arabic translation and matches the other sections.
+  const fill = resolveSectionFill(engine.config, 'recordTerms');
+  const headingColor = resolveHeaderText(engine.config, fill);
   const boxes: Content[] = [];
   for (const b of blocks) {
     const body = recordBodyNode(b);
     if (!body) continue;
     if (boxes.length > 0) boxes.push({ text: '', margin: [0, 4, 0, 0] as [number, number, number, number] });
-    boxes.push(createBilingualInfoBox(en(b.title), bilingual ? ar(b.title) ?? null : null, [body]) as Content);
+    boxes.push(createBilingualInfoBox(en(b.title), bilingual ? ar(b.title, language) ?? null : null, [body], undefined, fill, headingColor) as Content);
   }
   if (boxes.length === 0) return null;
   return { stack: boxes, margin: [0, 8, 0, 0] as [number, number, number, number] };

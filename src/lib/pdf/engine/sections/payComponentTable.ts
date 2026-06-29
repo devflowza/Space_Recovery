@@ -14,6 +14,8 @@
 
 import type { Content, TableCell } from 'pdfmake/interfaces';
 import { PDF_COLORS, createBilingualSectionHeader } from '../../styles';
+import { resolveSectionFill } from '../branding';
+import { readableTextOn } from '../palette';
 import { safeString } from '../../utils';
 import type { EngineContext, LabelText, PayComponentBlock } from '../types';
 import { isBilingualMode, en, ar, resolveLabel } from '../labels';
@@ -35,6 +37,7 @@ interface ComponentColumn {
 export function buildPayComponentTable(
   engine: EngineContext,
   block: PayComponentBlock | null | undefined,
+  sectionKey: string,
 ): Content | null {
   if (!block || block.rows.length === 0) return null;
 
@@ -64,14 +67,16 @@ export function buildPayComponentTable(
 
   const heading = createBilingualSectionHeader(
     en(block.title, 'Components'),
-    bilingual ? ar(block.title) : null,
+    bilingual ? ar(block.title, language) : null,
   ) as Content;
 
+  const headerFill = resolveSectionFill(engine.config, sectionKey, PDF_COLORS.headerBg);
+  const headerText = readableTextOn(headerFill);
   const headerRow: TableCell[] = ordered.map((c) => ({
     text: resolveLabel(c.label, language),
     style: 'tableHeader',
-    fillColor: PDF_COLORS.headerBg,
-    color: PDF_COLORS.text,
+    fillColor: headerFill,
+    color: headerText,
     alignment: c.align,
   }));
 

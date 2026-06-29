@@ -30,7 +30,10 @@ describe('translationPolicy — field-label suppression', () => {
     expect(render({ mode: 'system_only' })).not.toContain('\\nName:');
   });
   it('system_only → a SYSTEM label (customer box TITLE) stays bilingual', () => {
-    expect(render({ mode: 'system_only' })).toContain('معلومات العميل');
+    // Header band reverses RTL word order for pdfmake → assert both words present.
+    const out = render({ mode: 'system_only' });
+    expect(out).toContain('معلومات');
+    expect(out).toContain('العميل');
   });
   it('custom parties:false → parties field label suppressed', () => {
     expect(render({ mode: 'custom', groups: { parties: false } })).not.toContain('\\nName:');
@@ -76,7 +79,23 @@ describe('translationPolicy — payment-history heading suppression', () => {
   it('system_only → the "Date" column header is primary-only (no English half)', () => {
     expect(renderWithHistory({ mode: 'system_only' })).not.toContain('"text":"التاريخ\\nDate"');
   });
-  it('custom { paymentHistory: false } → the section TITLE stays bilingual', () => {
+  it('custom { paymentHistory: false } → the section HEADING stays bilingual (only columns toggle)', () => {
+    // The toggle controls ONLY the column labels; the heading + box are unchanged,
+    // so the section title stays bilingual.
     expect(renderWithHistory({ mode: 'custom', groups: { paymentHistory: false } })).toContain('"text":"سجل الدفعات\\nPayment History"');
+  });
+});
+
+describe('translationPolicy — totals box suppression', () => {
+  // The grand-total label run carries the English "Total:"; it is present only
+  // while the totals labels render bilingually.
+  it('all → the totals labels are bilingual (English "Total:" run present)', () => {
+    expect(render({ mode: 'all' })).toContain('"text":"Total:"');
+  });
+  it('custom { totals: false } → the totals labels drop the English run (primary-only)', () => {
+    expect(render({ mode: 'custom', groups: { totals: false } })).not.toContain('"text":"Total:"');
+  });
+  it('system_only → the totals labels are primary-only', () => {
+    expect(render({ mode: 'system_only' })).not.toContain('"text":"Total:"');
   });
 });

@@ -6,7 +6,7 @@ import {
   createBilingualInfoBox,
   createBilingualSectionHeader,
 } from '../styles';
-import { formatDate, buildCompanyAddress, safeString } from '../utils';
+import { formatDate, buildCompanyAddress, safeString, formatEngineMoney } from '../utils';
 import { getGeneralIconSvg } from '../../deviceIconMapper';
 import { buildLogoNode } from '../brandingImage';
 
@@ -174,10 +174,8 @@ export function buildInvoiceDocument(
   const decimalPlaces = invoiceData.accounting_locales?.decimal_places || 2;
   const currencyPosition = invoiceData.accounting_locales?.currency_position || 'after';
 
-  const formatCurrency = (amount: number): string => {
-    const formatted = amount.toFixed(decimalPlaces);
-    return currencyPosition === 'before' ? `${currencySymbol} ${formatted}` : `${formatted} ${currencySymbol}`;
-  };
+  const formatCurrency = (amount: number): string =>
+    formatEngineMoney(amount, { symbol: currencySymbol, decimalPlaces, position: currencyPosition });
 
   const lineItemsTableBody: TableCell[][] = [
     [

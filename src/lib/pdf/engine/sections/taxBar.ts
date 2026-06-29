@@ -12,7 +12,7 @@ import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS } from '../../styles';
 import type { EngineContext, EngineDocData, SectionRenderer } from '../types';
 import { resolveLabel } from '../labels';
-import { resolveColors } from '../branding';
+import { resolveSectionFill, resolveHeaderText } from '../branding';
 
 export const renderTaxBar: SectionRenderer = (
   engine: EngineContext,
@@ -29,8 +29,8 @@ export const renderTaxBar: SectionRenderer = (
     taxBar.label ?? { en: 'VAT Reg. No.', ar: 'الرقم الضريبي' },
     engine.config.language,
   );
-  const colors = resolveColors(engine.config);
-  const fill = engine.config.colors?.headerBackground ?? PDF_COLORS.headerBg;
+  const fill = resolveSectionFill(engine.config, 'taxBar', PDF_COLORS.headerBg);
+  const textColor = resolveHeaderText(engine.config, fill);
 
   return {
     table: {
@@ -41,7 +41,7 @@ export const renderTaxBar: SectionRenderer = (
             text: `${label}: ${number}`,
             fontSize: 9,
             bold: true,
-            color: colors.accent,
+            color: textColor,
             fillColor: fill,
             alignment: 'center',
             margin: [6, 4, 6, 4],

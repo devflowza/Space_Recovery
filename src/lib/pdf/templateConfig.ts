@@ -13,28 +13,216 @@
  * doc-type template → per-instance override. See {@link resolveTemplateConfig}.
  */
 
-/** Bilingual label. `en` is mandatory; `ar` is optional (Arabic/RTL). */
+import { DOCUMENT_TRANSLATIONS, getTranslation, type LanguageCode, type TranslationKey } from '../documentTranslations';
+
+/**
+ * Bilingual label. `en` is mandatory. A secondary translation can be supplied
+ * for ANY of the 13 supported languages via `i18n` (the generalized field).
+ *
+ * `ar` is the LEGACY Arabic-only secondary slot. It is kept for backward
+ * compatibility — deployed templates + `company_settings` store the old
+ * `{ en, ar }` shape — but is DEPRECATED in favor of `i18n.ar`. Read secondary
+ * text through {@link secondaryText}, which treats a legacy `.ar` as `i18n.ar`,
+ * so existing configs keep rendering byte-identically with no data migration.
+ */
 export interface LabelText {
   en: string;
+  /**
+   * @deprecated Use `i18n.ar`. Retained so legacy `{ en, ar }` configs render
+   * unchanged; {@link secondaryText} reads it as the Arabic secondary.
+   */
   ar?: string;
+  /** Generalized per-language secondary translations (any of the 13). */
+  i18n?: Partial<Record<LanguageCode, string>>;
+}
+
+/**
+ * Resolve the secondary-language string for a label, generalizing the legacy
+ * Arabic-only `LabelText.ar` to all 13 languages:
+ *
+ *   `label.i18n?.[lang] ?? (lang === 'ar' ? label.ar : undefined)`
+ *
+ * A label authored the new way (`{ en, i18n: { fr } }`) returns its French text
+ * for `lang === 'fr'`; a legacy label (`{ en, ar }`) still returns its Arabic
+ * text for `lang === 'ar'`. Returns `undefined` when no secondary is selected or
+ * none is authored for the requested language (callers degrade to English).
+ */
+/**
+ * Reverse index: Arabic value → translation key, built once (lazily) from the
+ * central {@link DOCUMENT_TRANSLATIONS} Arabic block. This is what lets a LEGACY
+ * `{ en, ar }` label — the shape the financial adapters (invoice/quote/receipt/
+ * checkout) still emit, with NO `i18n` map — be translated into ANY of the 13
+ * languages: we join the label's Arabic string back to its key, then read the
+ * requested language from the same table. First key wins on duplicate Arabic
+ * values (synonym keys share a translation, so the collision is harmless).
+ */
+let _arabicToKey: Map<string, TranslationKey> | null = null;
+function arabicLabelKey(ar: string): TranslationKey | undefined {
+  if (_arabicToKey === null) {
+    _arabicToKey = new Map();
+    const arBlock = DOCUMENT_TRANSLATIONS.ar as Record<string, string>;
+    for (const key of Object.keys(arBlock)) {
+      const value = arBlock[key];
+      if (value && !_arabicToKey.has(value)) _arabicToKey.set(value, key as TranslationKey);
+    }
+  }
+  return _arabicToKey.get(ar);
+}
+
+/**
+ * Hand-authored Arabic in the financial adapters drifted from the central table
+ * (synonyms / colon variants), so the pure value-join misses. These map the
+ * adapter's EXACT Arabic to the right key — the keys already exist in all 13
+ * languages, so no new translations are needed; only the join is repaired.
+ */
+const ARABIC_ALIASES: Record<string, TranslationKey> = {
+  'البريد:': 'emailLabel', // adapter "Email:" vs table 'البريد الإلكتروني:'
+  'الآيبان:': 'ibanLabel', // adapter "IBAN:" vs table 'آيبان:'
+  'تفاصيل البنك': 'bankAccount', // adapter "Bank Account" vs 'تفاصيل الحساب البنكي'
+  'عرض أسعار': 'quotation', // adapter "QUOTATION" (plural) vs 'عرض سعر'
+  'الإجمالي:': 'total', // adapter "Total:" (colon) vs 'الإجمالي'
+  المجموع: 'total', // adapter line-item "Total" column vs 'الإجمالي'
+};
+
+function keyForArabic(ar: string): TranslationKey | undefined {
+  return arabicLabelKey(ar) ?? ARABIC_ALIASES[ar];
+}
+
+/** Normalize an English label to a comparison key: lowercase, strip non-alphanum
+ *  (drops spaces, ':' , '%', punctuation). 'Invoice Terms' / 'Net Amount:' →
+ *  'invoiceterms' / 'netamount'. */
+function normalizeEnglish(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+/**
+ * Reverse index normalized-English → key, built from the key NAMES (which ARE the
+ * English label in camelCase: `invoiceTerms`, `total`, `customerInformation`).
+ * The LAST-RESORT join when a label's Arabic is empty / whitespace / missing —
+ * e.g. a saved template override that dropped the secondary
+ * (`{ en:'Invoice Terms', ar:'' }`), or a label authored English-only. Works for
+ * Arabic too, so such a label still renders bilingually in an Arabic document.
+ */
+let _englishToKey: Map<string, TranslationKey> | null = null;
+function englishLabelKey(enText: string): TranslationKey | undefined {
+  if (_englishToKey === null) {
+    _englishToKey = new Map();
+    for (const key of Object.keys(DOCUMENT_TRANSLATIONS.ar)) {
+      const n = normalizeEnglish(key);
+      if (n && !_englishToKey.has(n)) _englishToKey.set(n, key as TranslationKey);
+    }
+  }
+  const n = normalizeEnglish(enText);
+  return n ? _englishToKey.get(n) : undefined;
+}
+
+export function secondaryText(
+  label: SecondaryTextSource | undefined,
+  lang: LanguageCode | null,
+): string | undefined {
+  if (!label || !lang) return undefined;
+  const direct = label.i18n?.[lang] ?? (lang === 'ar' ? label.ar?.trim() || undefined : undefined);
+  if (direct) return direct;
+  // Join the legacy Arabic to the central table — TRIMMED, because some authored
+  // labels carry stray whitespace ('الكمية ' / 'المجموع '), which silently broke
+  // the join. Then a drift alias; then an interpolated split ("VAT 5%:" → translate
+  // the term, keep the rate). This is what makes the invoice/quote/receipt/checkout
+  // adapters (legacy `{ en, ar }`, no i18n) render bilingually in all 13 languages.
+  const arTrim = label.ar?.trim();
+  if (arTrim && lang !== 'ar') {
+    const key = keyForArabic(arTrim);
+    if (key) {
+      const t = getTranslation(key, lang);
+      if (t) return t;
+    }
+    const m = arTrim.match(/^(.*?)(\s*\d+(?:[.,]\d+)?\s*%\s*:?)\s*$/);
+    if (m) {
+      const baseKey = keyForArabic(m[1].trim());
+      if (baseKey) {
+        const t = getTranslation(baseKey, lang);
+        if (t) return `${t}${m[2]}`;
+      }
+    }
+  }
+  // Last resort — join by the ENGLISH label name. Handles a label whose Arabic is
+  // empty / whitespace / missing (a saved override that stripped the secondary,
+  // e.g. config.labels.recordTerms = { en:'Invoice Terms', ar:'' }), in EVERY
+  // language including Arabic.
+  if (label.en) {
+    const key = englishLabelKey(label.en);
+    if (key) {
+      const t = getTranslation(key, lang);
+      if (t) return t;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The minimal shape {@link secondaryText} reads — a legacy `.ar` slot plus the
+ * generalized `i18n` map. Both {@link LabelText} (heading: `en` required) and
+ * {@link TermsBodyText} (body: `en` optional) satisfy it, so the same resolver
+ * serves headings and prose bodies alike.
+ */
+export interface SecondaryTextSource {
+  /** Present on {@link LabelText} (required there) / {@link TermsBodyText}; not read here. */
+  en?: string;
+  ar?: string;
+  i18n?: Partial<Record<LanguageCode, string>>;
 }
 
 /**
  * Per-document language behavior.
- * - `en` / `ar`: single language.
- * - `bilingual_stacked`: EN then AR stacked vertically.
- * - `bilingual_sidebyside`: EN and AR mirrored side-by-side (RTL-aware).
+ * - `en`: single (English only).
+ * - `ar`: SECONDARY-only (single secondary language; legacy name = Arabic-only).
+ * - `bilingual_stacked`: English + secondary stacked vertically.
+ * - `bilingual_sidebyside`: English + secondary mirrored side-by-side (RTL-aware).
+ *
+ * NOTE: the `'ar'` literal is kept for backward-compat (many files switch on it);
+ * its SEMANTICS are "secondary-only", with the secondary chosen by
+ * {@link resolveSecondary} (Arabic when none is set).
  */
 export type LanguageMode = 'en' | 'ar' | 'bilingual_stacked' | 'bilingual_sidebyside';
 
 export interface LanguageConfig {
   mode: LanguageMode;
-  /** Which language leads when both are shown. */
+  /**
+   * Which language leads when both are shown. `'ar'` is the legacy "secondary
+   * leads" value; the union is intentionally unchanged for back-compat.
+   */
   primary: 'en' | 'ar';
+  /**
+   * Which of the 13 languages is the secondary. Undefined ⇒ Arabic (legacy
+   * behavior), resolved via {@link resolveSecondary}. A config with no
+   * `secondary` therefore behaves EXACTLY as today; `secondary: 'fr'` renders
+   * English + French.
+   */
+  secondary?: LanguageCode;
 }
 
 /**
- * Page geometry. `margins` is pdfmake order: [top, right, bottom, left].
+ * The effective secondary language for a config, generalizing the legacy
+ * Arabic-only model. Explicit `secondary` wins; otherwise any bilingual /
+ * secondary-only / Arabic-primary config falls back to Arabic (today's
+ * behavior); a pure-English config has no secondary (`null`).
+ */
+export function resolveSecondary(language: LanguageConfig): LanguageCode | null {
+  if (language.secondary) return language.secondary;
+  if (
+    language.mode === 'ar' ||
+    language.mode === 'bilingual_stacked' ||
+    language.mode === 'bilingual_sidebyside' ||
+    language.primary === 'ar'
+  ) {
+    return 'ar';
+  }
+  return null;
+}
+
+/**
+ * Page geometry. `margins` is CSS order: [top, right, bottom, left] (matching the
+ * Studio inputs). renderTemplate reorders to pdfmake's [left, top, right, bottom];
+ * the Typst assembler maps each side by name.
  *
  * `size` is normally a predefined sheet (`'A4'` / `'Letter'`). For physical
  * LABELS (stock / case labels), set `size: 'custom'` and supply `dimensions`
@@ -82,12 +270,30 @@ export interface ColumnConfig {
  * - `columns`: present on table-style sections (e.g. line items).
  * - `lines`: present on aggregate sections (e.g. totals) — per-line on/off toggles.
  */
+/**
+ * Status-tone for a section (Option B data-recovery REPORT design). Drives a
+ * fixed-hex tinted header bar / left accent rule per tone — theme-INVARIANT
+ * status semantics, never brand color (see `PDF_TONES` in `styles.ts`). Absent =
+ * `neutral`; sections without a `tone` behave exactly as today, so no other
+ * document type is affected.
+ */
+export type SectionTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+
 export interface SectionConfig {
   key: string;
   visible: boolean;
   order: number;
   columns?: ColumnConfig[];
   lines?: Record<string, boolean>;
+  /** Status-tone (Option B reports only). Absent → neutral; no effect on other doc types. */
+  tone?: SectionTone;
+  /**
+   * Optional named condition gate evaluated by the adapter when building the
+   * report config — e.g. omit the device column for subtypes without device
+   * data. Purely advisory metadata for adapter-built configs; the assembler does
+   * not read it (visibility is the gate the assembler honours). Absent = always.
+   */
+  condition?: string;
   /** Bank section only: how the bank-account details render — a bordered box
    *  (`'boxed'`, default) or a single compact pipe-separated line (`'inline'`). */
   bankStyle?: 'boxed' | 'inline';
@@ -96,6 +302,9 @@ export interface SectionConfig {
   bankWidth?: 'auto' | 'half' | 'full';
   /** Bank section, boxed non-full width only: horizontal placement of the box. */
   bankAlign?: 'left' | 'center' | 'right';
+  /** Per-section header band / table-header fill (hex). Overrides the global
+   *  `colors.headerBackground` for THIS section only; absent → global, then neutral. */
+  headerBackground?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,7 +362,6 @@ export interface ColorsConfig {
 
 export type HeaderLayout = 'classic' | 'modern' | 'minimal' | 'boxed' | 'split' | 'spreadsheet';
 export type LogoPlacement = 'left' | 'center' | 'right';
-export type AddressZone = 'left' | 'center' | 'right' | 'hidden';
 export type DividerStyle = 'thin' | 'thick' | 'none';
 
 export interface HeaderConfig {
@@ -168,10 +376,10 @@ export interface HeaderConfig {
   logoMarginBottom?: number;
   /** Cap the logo height in points (aspect-preserving via pdfmake `fit`). 0/undefined = no cap. */
   logoMaxHeight?: number;
-  /** Address zone in the 3-zone layouts. Default `'right'`. */
-  addressZone?: AddressZone;
   /** Divider rule under the letterhead. Default `'thin'` (0.5pt today). */
   divider?: DividerStyle;
+  /** Opt-in divider rule colour (hex). Unset → follows the accent (neutral navy by default). */
+  dividerColor?: string;
   /** Nudge the divider rule endpoints / baseline (points). Default 0/0/0. */
   dividerNudge?: { start?: number; end?: number; vertical?: number };
 }
@@ -179,8 +387,6 @@ export interface HeaderConfig {
 export interface FooterConfig {
   /** Custom footer text; empty/omitted uses the identity tagline + website. */
   customText?: string;
-  /** Fill behind the footer; omitted = none. */
-  background?: string;
   /** Footer text color. Default `PDF_COLORS.textMuted`. */
   fontColor?: string;
   /** Footer font size. Default 8. */
@@ -198,11 +404,6 @@ export interface PageNumbersConfig {
   format?: string;
 }
 
-export interface ContinuationConfig {
-  /** Suppress the full letterhead on pages 2+. Default false. */
-  suppressLetterhead?: boolean;
-}
-
 export interface OrganizationConfig {
   /** Where the header identity is sourced. Default `'company_info'`. */
   source?: 'company_info' | 'manual';
@@ -218,8 +419,6 @@ export interface OrganizationConfig {
   };
   /** Address font size. Default 8. */
   addressFontSize?: number;
-  /** Header address column width. Default `'auto'`. */
-  columnWidth?: 'auto' | number;
   /** Literal values used when `source === 'manual'`. */
   manual?: {
     name?: string;
@@ -248,8 +447,6 @@ export interface TableConfig {
   rowNumbering?: boolean;
   /** Alternating row fill. Default false. */
   zebra?: boolean;
-  /** Grouped section subtotals. Default false. */
-  sectionSubtotals?: boolean;
 }
 
 export type DensityPreset = 'comfortable' | 'compact' | 'dense';
@@ -316,8 +513,10 @@ export interface TranslationPolicyGroups {
   collector?: boolean;
   payslip?: boolean;
   diagnostics?: boolean;
-  /** Payment-history statement column headers (financial documents). */
+  /** Payment-history statement heading + column headers (financial documents). */
   paymentHistory?: boolean;
+  /** Totals box labels — subtotal/VAT/total/etc (financial documents). */
+  totals?: boolean;
 }
 
 /** Controls which FIELD-ROW labels render bilingually (no effect on data values). */
@@ -326,6 +525,61 @@ export interface TranslationPolicyConfig {
   mode?: TranslationPolicyMode;
   /** Per-group field-label toggle for mode === 'custom' (default true = bilingual). */
   groups?: TranslationPolicyGroups;
+}
+
+/** The stable keys for the totals lines (used for label/colour overrides). */
+export type TotalsLineKey =
+  | 'subtotal' | 'discount' | 'netAmount' | 'tax' | 'total' | 'amountPaid' | 'balanceDue' | 'amountInWords';
+
+/** Opt-in background/text colour for a totals row (hex; absent = neutral). */
+export interface TotalsRowColor {
+  background?: string;
+  text?: string;
+}
+
+/**
+ * Per-template customisation of the Total section (all OPTIONAL → neutral/legacy
+ * when absent). Common to every language combination + both renderers.
+ */
+export interface TotalsConfig {
+  /** Custom English wording per line — overrides the default label (the secondary
+   *  translation, when bilingual, keeps its default). */
+  labels?: Partial<Record<TotalsLineKey, string>>;
+  /** Opt-in per-row colours for the grand total, balance-due and tax rows. */
+  rowColors?: {
+    total?: TotalsRowColor;
+    balanceDue?: TotalsRowColor;
+    tax?: TotalsRowColor;
+  };
+  /** Visual style of the totals block. Default `'plain'`. */
+  style?: 'plain' | 'bordered' | 'striped';
+  /** Tint the grand-total row with a band. Default true. */
+  highlightTotal?: boolean;
+}
+
+/**
+ * The standalone VAT/GST breakdown table (rate → taxable → tax). OPT-IN: the
+ * adapter only emits the data when `show` is true. All styling is optional →
+ * neutral defaults (navy header, bordered).
+ */
+export interface TaxSummaryConfig {
+  /** Render the tax-summary table. Default false. */
+  show?: boolean;
+  /** Heading override (English); blank → "Tax Summary". */
+  title?: string;
+  /** Table style. Default `'bordered'`. */
+  style?: 'bordered' | 'borderless' | 'striped';
+  /** Header fill + text colours (hex; default navy / white). */
+  headerBackground?: string;
+  headerText?: string;
+  /** Body text colour (hex; default dark slate). */
+  bodyText?: string;
+  /** Tint + emphasise the totals row. Default true. */
+  highlightTotalRow?: boolean;
+  /** Totals-row fill (hex; default the neutral shade). */
+  totalRowBackground?: string;
+  /** Spell the total tax out in words below the table. Default false. */
+  showAmountInWords?: boolean;
 }
 
 /** Resolved locale slice threaded by applyTenantLocale / the country layer
@@ -338,6 +592,22 @@ export interface LocaleConfig {
 }
 
 /**
+ * A Terms/Notes body: mandatory(-ish) English text plus per-language secondary
+ * translations. Generalized from the legacy Arabic-only `{ en, ar }` shape to all
+ * 13 languages via `i18n` (same model as {@link LabelText}). `en` is optional
+ * here because a tenant may author only the secondary side, or leave a body
+ * blank; read the secondary through {@link secondaryText}, which treats a legacy
+ * `.ar` as `i18n.ar` so deployed `{ en, ar }` content keeps rendering unchanged.
+ */
+export interface TermsBodyText {
+  en?: string;
+  /** @deprecated Use `i18n.ar`. Retained for legacy `{ en, ar }` compatibility. */
+  ar?: string;
+  /** Generalized per-language secondary translations (any of the 13). */
+  i18n?: Partial<Record<LanguageCode, string>>;
+}
+
+/**
  * Per-document-type Terms & Conditions content (Studio-edited, bilingual).
  * Each document type's template carries its own — a Quote's terms differ from
  * an Invoice's. Rendered by the `terms` section; headings come from
@@ -345,8 +615,8 @@ export interface LocaleConfig {
  * (no tenant-wide or per-record override).
  */
 export interface TermsContentConfig {
-  terms?: { en?: string; ar?: string };
-  notes?: { en?: string; ar?: string };
+  terms?: TermsBodyText;
+  notes?: TermsBodyText;
 }
 
 /** The resolved, render-ready template configuration for one document. */
@@ -363,7 +633,6 @@ export interface DocumentTemplateConfig {
   header?: HeaderConfig;
   footer?: FooterConfig;
   pageNumbers?: PageNumbersConfig;
-  continuation?: ContinuationConfig;
   organization?: OrganizationConfig;
   taxBar?: TaxBarConfig;
   table?: TableConfig;
@@ -376,6 +645,10 @@ export interface DocumentTemplateConfig {
   locale?: LocaleConfig;
   /** Per-document-type Terms & Conditions content (bilingual). */
   termsContent?: TermsContentConfig;
+  /** Total-section customisation (labels, per-row colours, style). */
+  totals?: TotalsConfig;
+  /** Standalone VAT/GST breakdown table (opt-in). */
+  taxSummary?: TaxSummaryConfig;
 }
 
 /**
@@ -419,7 +692,6 @@ export interface TemplateConfigOverride {
   header?: HeaderConfig;
   footer?: FooterConfig;
   pageNumbers?: PageNumbersConfig;
-  continuation?: ContinuationConfig;
   organization?: OrganizationConfig;
   taxBar?: TaxBarConfig;
   table?: TableConfig;
@@ -431,6 +703,10 @@ export interface TemplateConfigOverride {
   locale?: LocaleConfig;
   /** Per-document-type Terms & Conditions content (deep-merged: terms + notes). */
   termsContent?: TermsContentConfig;
+  /** Total-section customisation (deep-merged: labels + rowColors by key). */
+  totals?: TotalsConfig;
+  /** Standalone VAT/GST breakdown table (scalars; shallow-merged). */
+  taxSummary?: TaxSummaryConfig;
 }
 
 /** Partial section override; `key` identifies the target section. */
@@ -443,6 +719,9 @@ export interface SectionConfigOverride {
   bankStyle?: 'boxed' | 'inline';
   bankWidth?: 'auto' | 'half' | 'full';
   bankAlign?: 'left' | 'center' | 'right';
+  tone?: SectionTone;
+  condition?: string;
+  headerBackground?: string;
 }
 
 /** Partial column override; `key` identifies the target column. */
@@ -509,7 +788,7 @@ function lineItemColumns(): ColumnConfig[] {
 function section(
   key: string,
   order: number,
-  extra?: Pick<SectionConfig, 'columns' | 'lines' | 'bankStyle' | 'bankWidth' | 'bankAlign'> & { visible?: boolean },
+  extra?: Pick<SectionConfig, 'columns' | 'lines' | 'bankStyle' | 'bankWidth' | 'bankAlign' | 'tone' | 'condition'> & { visible?: boolean },
 ): SectionConfig {
   return {
     key,
@@ -520,6 +799,8 @@ function section(
     ...(extra?.bankStyle ? { bankStyle: extra.bankStyle } : {}),
     ...(extra?.bankWidth ? { bankWidth: extra.bankWidth } : {}),
     ...(extra?.bankAlign ? { bankAlign: extra.bankAlign } : {}),
+    ...(extra?.tone ? { tone: extra.tone } : {}),
+    ...(extra?.condition ? { condition: extra.condition } : {}),
   };
 }
 
@@ -547,23 +828,26 @@ function financialSections(): SectionConfig[] {
         amountInWords: false,
       },
     }),
+    // VAT/GST breakdown table (rate → taxable → tax). Opt-in: renders nothing
+    // unless `config.taxSummary.show` (the adapter only emits the data then).
+    section('taxSummary', 6),
     // Payment-history statement — rendered between totals and terms, mirroring
     // the legacy InvoiceDocument layout. Returns null on docs with no history
     // (proforma, quotes), so it is harmless on the shared financial base.
-    section('paymentHistory', 6),
+    section('paymentHistory', 7),
     // Standard Terms & Conditions (Studio content only; omitted when blank).
-    section('terms', 7),
+    section('terms', 8),
     // Per-record "Quote Terms" / "Invoice Terms" — the terms entered on the
     // record (from Terms & Templates). Its own positionable section; omitted when
     // the record carries none.
-    section('recordTerms', 8),
+    section('recordTerms', 9),
     // Bank account as its own movable section — visible by default and rendered
     // here (no longer inline in terms). Reorder / show-hide like any section, with
     // a Boxed | Single line display style.
-    section('bank', 9, { bankStyle: 'boxed', bankWidth: 'auto', bankAlign: 'left' }),
-    section('signature', 10, { visible: false }),
-    section('qr', 11),
-    section('footer', 12),
+    section('bank', 10, { bankStyle: 'boxed', bankWidth: 'auto', bankAlign: 'left' }),
+    section('signature', 11, { visible: false }),
+    section('qr', 12),
+    section('footer', 13),
   ];
 }
 
@@ -612,7 +896,7 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
       return {
         ...base,
         sections: financialSections(),
-        labels: { documentTitle: { en: 'QUOTATION', ar: 'عرض سعر' } },
+        labels: { documentTitle: { en: 'QUOTATION', ar: 'عرض أسعار' } },
         layout: { partiesMetaSideBySide: true },
       };
     case 'payment_receipt':
@@ -632,7 +916,7 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
           section('qr', 7),
           section('footer', 8),
         ],
-        labels: { documentTitle: { en: 'PAYMENT RECEIPT', ar: 'إيصال دفع' } },
+        labels: { documentTitle: { en: 'PAYMENT RECEIPT', ar: 'إيصال الدفع' } },
         layout: { partiesMetaSideBySide: true },
       };
     case 'office_receipt':
@@ -754,17 +1038,22 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
         labels: { documentTitle: { en: 'CHAIN OF CUSTODY', ar: 'سلسلة الحيازة' } },
       };
     case 'report':
+      // The report built-in is the Option B "Modern lab" UNIVERSAL SHELL (the
+      // evaluation default): a navy header band, the summary-tile row, the
+      // two-column General | Device info region, the toned editorial prose
+      // sections, an optional forensic custody timeline, and the provable report
+      // footer. The per-SUBTYPE config (title + visible sections + tones) is
+      // built by `reportConfigForSubtype` in the report adapter, which cascades
+      // over this base; the Studio preview and any caller resolving this built-in
+      // get the Option B layout by default.
       return {
         ...base,
         sections: [
-          section('header', 0),
-          // caseInfo = customer + report meta in one bilingual info box
-          // (generalized from the legacy Customer Information + Report Details
-          // boxes). diagnostics = the HDD/SSD-aware Device Details / Component
-          // Diagnostics box. reportSections = the ordered DB-driven prose
-          // sections.
-          section('caseInfo', 1),
-          section('diagnostics', 2),
+          section('reportHeader', 0),
+          section('reportSummary', 1),
+          section('reportInfoColumns', 2),
+          // reportSections = the ordered, tone-stamped editorial prose sections
+          // (the adapter selects + orders + tones them per subtype).
           section('reportSections', 3),
           // custodyLog is OPTIONAL: only forensic reports with custody events
           // populate it (the adapter returns no block otherwise, so the section
@@ -780,7 +1069,7 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
               { key: 'occurredAt', visible: true, label: { en: 'Date/Time', ar: 'التاريخ/الوقت' }, width: 75 },
             ],
           }),
-          section('footer', 5),
+          section('reportFooter', 5),
         ],
         labels: { documentTitle: { en: 'CASE REPORT', ar: 'تقرير الحالة' } },
       };
@@ -839,7 +1128,11 @@ function mergeColumns(
       byKey.set(ov.key, {
         key: ov.key,
         visible: ov.visible ?? true,
-        label: { en: ov.label?.en ?? ov.key, ...(ov.label?.ar ? { ar: ov.label.ar } : {}) },
+        label: {
+          en: ov.label?.en ?? ov.key,
+          ...(ov.label?.ar ? { ar: ov.label.ar } : {}),
+          ...(ov.label?.i18n ? { i18n: ov.label.i18n } : {}),
+        },
         ...(ov.width !== undefined ? { width: ov.width } : {}),
       });
     }
@@ -877,6 +1170,9 @@ function mergeSections(
         ...(ov.bankStyle !== undefined ? { bankStyle: ov.bankStyle } : {}),
         ...(ov.bankWidth !== undefined ? { bankWidth: ov.bankWidth } : {}),
         ...(ov.bankAlign !== undefined ? { bankAlign: ov.bankAlign } : {}),
+        ...(ov.tone !== undefined ? { tone: ov.tone } : {}),
+        ...(ov.condition !== undefined ? { condition: ov.condition } : {}),
+        ...(ov.headerBackground !== undefined ? { headerBackground: ov.headerBackground } : {}),
       });
     } else {
       // New section introduced by an override layer.
@@ -889,6 +1185,9 @@ function mergeSections(
         ...(ov.bankStyle !== undefined ? { bankStyle: ov.bankStyle } : {}),
         ...(ov.bankWidth !== undefined ? { bankWidth: ov.bankWidth } : {}),
         ...(ov.bankAlign !== undefined ? { bankAlign: ov.bankAlign } : {}),
+        ...(ov.tone !== undefined ? { tone: ov.tone } : {}),
+        ...(ov.condition !== undefined ? { condition: ov.condition } : {}),
+        ...(ov.headerBackground !== undefined ? { headerBackground: ov.headerBackground } : {}),
       });
     }
   }
@@ -981,15 +1280,27 @@ function mergeTranslationPolicy(
   return { ...base, ...override, ...(groups ? { groups } : {}) };
 }
 
-/** Merge T&C content, deep-merging the `terms` and `notes` EN/AR bodies by key. */
+/** Merge one Terms/Notes body, deep-merging the per-language `i18n` map by key
+ *  (so a layer can add a French translation without dropping an existing Arabic). */
+function mergeTermsBody(
+  base: TermsBodyText | undefined,
+  override: TermsBodyText | undefined,
+): TermsBodyText | undefined {
+  if (!base) return override;
+  if (!override) return base;
+  const i18n = mergeGroup(base.i18n, override.i18n);
+  return { ...base, ...override, ...(i18n ? { i18n } : {}) };
+}
+
+/** Merge T&C content, deep-merging the `terms` and `notes` bodies (incl. i18n) by key. */
 function mergeTermsContent(
   base: TermsContentConfig | undefined,
   override: TermsContentConfig | undefined,
 ): TermsContentConfig | undefined {
   if (!base) return override;
   if (!override) return base;
-  const terms = mergeGroup(base.terms, override.terms);
-  const notes = mergeGroup(base.notes, override.notes);
+  const terms = mergeTermsBody(base.terms, override.terms);
+  const notes = mergeTermsBody(base.notes, override.notes);
   return { ...(terms ? { terms } : {}), ...(notes ? { notes } : {}) };
 }
 
@@ -1011,7 +1322,6 @@ function applyOverride(
     header: mergeHeader(base.header, override.header),
     footer: mergeGroup(base.footer, override.footer),
     pageNumbers: mergeGroup(base.pageNumbers, override.pageNumbers),
-    continuation: mergeGroup(base.continuation, override.continuation),
     organization: mergeOrganization(base.organization, override.organization),
     taxBar: mergeGroup(base.taxBar, override.taxBar),
     table: mergeGroup(base.table, override.table),
@@ -1022,6 +1332,33 @@ function applyOverride(
     signatureImages: mergeSignatureImages(base.signatureImages, override.signatureImages),
     locale: mergeGroup(base.locale, override.locale),
     termsContent: mergeTermsContent(base.termsContent, override.termsContent),
+    totals: mergeTotals(base.totals, override.totals),
+    taxSummary: mergeGroup(base.taxSummary, override.taxSummary),
+  };
+}
+
+/** Merge totals customisation, deep-merging the `labels` + `rowColors` maps. */
+function mergeTotals(
+  base: TotalsConfig | undefined,
+  override: TotalsConfig | undefined,
+): TotalsConfig | undefined {
+  if (!base) return override;
+  if (!override) return base;
+  return {
+    ...base,
+    ...override,
+    ...(base.labels || override.labels ? { labels: { ...base.labels, ...override.labels } } : {}),
+    ...(base.rowColors || override.rowColors
+      ? {
+          rowColors: {
+            ...base.rowColors,
+            ...override.rowColors,
+            ...(base.rowColors?.total || override.rowColors?.total ? { total: { ...base.rowColors?.total, ...override.rowColors?.total } } : {}),
+            ...(base.rowColors?.balanceDue || override.rowColors?.balanceDue ? { balanceDue: { ...base.rowColors?.balanceDue, ...override.rowColors?.balanceDue } } : {}),
+            ...(base.rowColors?.tax || override.rowColors?.tax ? { tax: { ...base.rowColors?.tax, ...override.rowColors?.tax } } : {}),
+          },
+        }
+      : {}),
   };
 }
 

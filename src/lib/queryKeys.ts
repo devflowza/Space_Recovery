@@ -52,6 +52,13 @@ export const creditNoteKeys = {
   byCase: (caseId: string) => [...creditNoteKeys.all, 'case', caseId] as const,
 };
 
+export const documentInstanceKeys = {
+  all: ['document_instances'] as const,
+  byCase: (caseId: string) => [...documentInstanceKeys.all, 'case', caseId] as const,
+  detail: (id: string) => [...documentInstanceKeys.all, 'detail', id] as const,
+  sections: (id: string) => [...documentInstanceKeys.all, 'sections', id] as const,
+};
+
 export const inventoryKeys = {
   all: ['inventory'] as const,
   lists: () => [...inventoryKeys.all, 'list'] as const,

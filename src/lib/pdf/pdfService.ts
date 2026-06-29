@@ -12,7 +12,7 @@ import { buildPayslipDocument } from './documents/PayslipDocument';
 import { buildChainOfCustodyDocument } from './documents/ChainOfCustodyDocument';
 import { loadImageAsBase64 } from './utils';
 import { logPDFGeneration } from './loggingService';
-import { withTimeout, createTranslationContext } from './translationContext';
+import { withTimeout, createTranslationContext, ctxFromLanguageConfig } from './translationContext';
 import type { DocumentType, InvoiceDocumentData, QuoteDocumentData, PaymentReceiptDocumentData, PayslipDocumentData, ChainOfCustodyDocumentData, ReceiptData, TranslationContext } from './types';
 import { type LanguageCode } from '../documentTranslations';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
@@ -50,6 +50,7 @@ import { toEngineData as toPayslipEngineData } from './engine/adapters/payslipAd
 import {
   BUILT_IN_TEMPLATE_CONFIGS,
   resolveTemplateConfig,
+  resolveSecondary,
   type DocumentTemplateConfig,
   type TemplateConfigOverride,
 } from './templateConfig';
@@ -94,7 +95,7 @@ async function resolveSignatureImagesConfig(
  */
 async function buildInvoiceDocumentViaEngine(
   data: InvoiceDocumentData,
-  ctx: TranslationContext,
+  _ctx: TranslationContext,
   logoBase64: string | null,
   qrCodeBase64: string | null,
 ): Promise<TDocumentDefinitions> {
@@ -120,10 +121,11 @@ async function buildInvoiceDocumentViaEngine(
 
   // Bridge the tenant's document-language setting into the resolved config so
   // the engine renders bilingual/RTL when the tenant is configured for it.
-  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
+  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings, docTypeOverride?.language !== undefined);
 
   const engineData = toEngineData(data, languageAwareConfig);
-  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+  await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
+  return renderWithQr(languageAwareConfig, engineData, ctxFromLanguageConfig(languageAwareConfig.language), logoBase64, qrCodeBase64);
 }
 
 /**
@@ -138,7 +140,7 @@ async function buildInvoiceDocumentViaEngine(
  */
 async function buildQuoteViaEngine(
   data: QuoteDocumentData,
-  ctx: TranslationContext,
+  _ctx: TranslationContext,
   logoBase64: string | null,
   qrCodeBase64: string | null,
 ): Promise<TDocumentDefinitions> {
@@ -159,10 +161,11 @@ async function buildQuoteViaEngine(
     /* instance */ undefined,
   );
 
-  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
+  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings, docTypeOverride?.language !== undefined);
 
   const engineData = toQuoteEngineData(data, languageAwareConfig);
-  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+  await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
+  return renderWithQr(languageAwareConfig, engineData, ctxFromLanguageConfig(languageAwareConfig.language), logoBase64, qrCodeBase64);
 }
 
 /**
@@ -174,7 +177,7 @@ async function buildQuoteViaEngine(
  */
 async function buildPaymentReceiptViaEngine(
   data: PaymentReceiptDocumentData,
-  ctx: TranslationContext,
+  _ctx: TranslationContext,
   logoBase64: string | null,
   qrCodeBase64: string | null,
 ): Promise<TDocumentDefinitions> {
@@ -195,10 +198,11 @@ async function buildPaymentReceiptViaEngine(
     /* instance */ undefined,
   );
 
-  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
+  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings, docTypeOverride?.language !== undefined);
 
   const engineData = toPaymentReceiptEngineData(data, languageAwareConfig);
-  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+  await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
+  return renderWithQr(languageAwareConfig, engineData, ctxFromLanguageConfig(languageAwareConfig.language), logoBase64, qrCodeBase64);
 }
 
 /**
@@ -211,7 +215,7 @@ async function buildPaymentReceiptViaEngine(
  */
 async function buildPayslipViaEngine(
   data: PayslipDocumentData,
-  ctx: TranslationContext,
+  _ctx: TranslationContext,
 ): Promise<TDocumentDefinitions> {
   let docTypeOverride: TemplateConfigOverride | undefined;
   try {
@@ -230,10 +234,11 @@ async function buildPayslipViaEngine(
     /* instance */ undefined,
   );
 
-  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
+  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings, docTypeOverride?.language !== undefined);
 
   const engineData = toPayslipEngineData(data, languageAwareConfig);
-  return renderTemplate(languageAwareConfig, engineData, ctx, null, null);
+  await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
+  return renderTemplate(languageAwareConfig, engineData, ctxFromLanguageConfig(languageAwareConfig.language), null, null);
 }
 
 /**
@@ -248,7 +253,7 @@ async function buildPayslipViaEngine(
  */
 async function buildOfficeReceiptViaEngine(
   data: ReceiptData,
-  ctx: TranslationContext,
+  _ctx: TranslationContext,
   logoBase64: string | null,
   qrCodeBase64: string | null,
   docType: 'office_receipt' | 'customer_copy',
@@ -273,10 +278,11 @@ async function buildOfficeReceiptViaEngine(
     /* instance */ undefined,
   );
 
-  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
+  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings, docTypeOverride?.language !== undefined);
 
   const engineData = toReceiptEngineData(data, languageAwareConfig, variant);
-  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64, stampImage, signatureImage);
+  await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
+  return renderWithQr(languageAwareConfig, engineData, ctxFromLanguageConfig(languageAwareConfig.language), logoBase64, qrCodeBase64, stampImage, signatureImage);
 }
 
 /**
@@ -314,7 +320,7 @@ function buildCustomerCopyViaEngine(
  */
 async function buildCheckoutFormViaEngine(
   data: ReceiptData,
-  ctx: TranslationContext,
+  _ctx: TranslationContext,
   logoBase64: string | null,
   qrCodeBase64: string | null,
   stampImage?: BrandingImage | string | null,
@@ -337,10 +343,11 @@ async function buildCheckoutFormViaEngine(
     /* instance */ undefined,
   );
 
-  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
+  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings, docTypeOverride?.language !== undefined);
 
   const engineData = toCheckoutEngineData(data, languageAwareConfig);
-  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64, stampImage, signatureImage);
+  await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
+  return renderWithQr(languageAwareConfig, engineData, ctxFromLanguageConfig(languageAwareConfig.language), logoBase64, qrCodeBase64, stampImage, signatureImage);
 }
 
 /**
@@ -355,7 +362,7 @@ async function buildCheckoutFormViaEngine(
  */
 async function buildCaseLabelViaEngine(
   data: ReceiptData,
-  ctx: TranslationContext,
+  _ctx: TranslationContext,
   logoBase64: string | null,
   qrCodeBase64: string | null,
 ): Promise<TDocumentDefinitions> {
@@ -376,10 +383,11 @@ async function buildCaseLabelViaEngine(
     /* instance */ undefined,
   );
 
-  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
+  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings, docTypeOverride?.language !== undefined);
 
   const engineData = toCaseLabelEngineData(data, languageAwareConfig);
-  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+  await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
+  return renderWithQr(languageAwareConfig, engineData, ctxFromLanguageConfig(languageAwareConfig.language), logoBase64, qrCodeBase64);
 }
 
 /**
@@ -395,7 +403,7 @@ async function buildCaseLabelViaEngine(
  */
 async function buildChainOfCustodyViaEngine(
   data: ChainOfCustodyDocumentData,
-  ctx: TranslationContext,
+  _ctx: TranslationContext,
   logoBase64: string | null,
   qrCodeBase64: string | null,
 ): Promise<TDocumentDefinitions> {
@@ -416,10 +424,11 @@ async function buildChainOfCustodyViaEngine(
     /* instance */ undefined,
   );
 
-  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings);
+  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings, docTypeOverride?.language !== undefined);
 
   const engineData = toChainOfCustodyEngineData(data, languageAwareConfig);
-  return renderWithQr(languageAwareConfig, engineData, ctx, logoBase64, qrCodeBase64);
+  await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
+  return renderWithQr(languageAwareConfig, engineData, ctxFromLanguageConfig(languageAwareConfig.language), logoBase64, qrCodeBase64);
 }
 
 const PDF_GENERATION_TIMEOUT = 45000; // 45 seconds

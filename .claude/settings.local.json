@@ -41,7 +41,15 @@
       "Bash(gh pr *)",
       "Bash(git branch *)",
       "Bash(xargs -n1 git branch -D)",
-      "WebSearch"
+      "WebSearch",
+      "PowerShell(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -in 5173,5174,3000,4173 } | Select-Object LocalPort, OwningProcess)",
+      "PowerShell(npm run dev)",
+      "PowerShell(npm install 2>&1)",
+      "PowerShell(\"---BRANCH---\")",
+      "PowerShell(\"---UNPUSHED---\")",
+      "mcp__c0de3041-287c-4030-9398-8ea61c49fb22__get_publishable_keys",
+      "PowerShell(git check-ignore .env)",
+      "PowerShell(if \\($LASTEXITCODE -eq 0\\) { \"OK: .env is gitignored\" } else { \"WARNING: .env is NOT gitignored\" })"
     ]
   },
   "enableAllProjectMcpServers": true,

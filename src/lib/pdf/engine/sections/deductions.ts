@@ -16,4 +16,4 @@ import { buildPayComponentTable } from './payComponentTable';
 export const renderDeductions: SectionRenderer = (
   engine: EngineContext,
   data: EngineDocData,
-): Content | null => buildPayComponentTable(engine, data.deductions);
+): Content | null => buildPayComponentTable(engine, data.deductions, 'deductions');

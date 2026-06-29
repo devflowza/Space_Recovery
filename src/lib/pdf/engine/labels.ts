@@ -7,7 +7,9 @@
  * `LabelText.ar` instead of passing `null` into the bilingual style helpers.
  */
 
-import type { LanguageConfig, TranslationPolicyConfig } from '../templateConfig';
+import { resolveSecondary, secondaryText, type LanguageConfig, type TranslationPolicyConfig } from '../templateConfig';
+import { reverseArabicText } from '../fonts';
+import { isRTLLanguage } from '../../documentTranslations';
 import type { LabelText } from './types';
 
 /** True when the document shows both languages (stacked or side-by-side). */
@@ -15,7 +17,11 @@ export function isBilingualMode(language: LanguageConfig): boolean {
   return language.mode === 'bilingual_stacked' || language.mode === 'bilingual_sidebyside';
 }
 
-/** True when the leading/only language is Arabic (drives RTL alignment). */
+/**
+ * True when the secondary language LEADS (drives RTL alignment when that
+ * secondary is RTL). The legacy name reflects that the secondary was always
+ * Arabic; the predicate is now general (it tests the leading SLOT, not Arabic).
+ */
 export function isArabicLead(language: LanguageConfig): boolean {
   return language.mode === 'ar' || (isBilingualMode(language) && language.primary === 'ar');
 }
@@ -29,11 +35,27 @@ export function en(label: LabelText, fallback = ''): string {
 }
 
 /**
- * The Arabic text for a label, or `null` when absent. Renderers pass this
- * straight into `createBilingual*` helpers — the whole point of the engine is
- * that this is the *real* Arabic string from config, never a hardcoded null.
+ * The SECONDARY-language text for a label, or `null` when absent. Renderers pass
+ * this straight into `createBilingual*` helpers — the whole point of the engine
+ * is that this is the *real* secondary string from config, never a hardcoded
+ * null.
+ *
+ * Generalized from Arabic-only: pass the document `language` so the correct
+ * secondary (any of the 13) is resolved via {@link secondaryText}. The
+ * `language`-less overload is kept for back-compat — it returns the legacy
+ * `label.ar`, byte-identical to before — so any caller not yet threading
+ * `language` still works for Arabic.
  */
-export function ar(label: LabelText): string | null {
+export function ar(label: LabelText, language?: LanguageConfig): string | null {
+  if (language) {
+    const code = resolveSecondary(language);
+    const s = secondaryText(label, code) ?? null;
+    // pdfmake has no bidi pass, so a multi-word RTL secondary (Arabic) in a header
+    // band renders with reversed words / collapsed spaces ('معلومات العميل' →
+    // 'العميلمعلومات'). Reverse the word order for RTL so pdfmake's LTR layout
+    // reads correctly; reverseArabicText no-ops on non-Arabic (Korean/Thai/Latin).
+    return s && code && isRTLLanguage(code) ? reverseArabicText(s) : s;
+  }
   return label.ar ?? null;
 }
 
@@ -53,7 +75,7 @@ export function ar(label: LabelText): string | null {
  * the Arabic column.
  */
 export type TranslationGroup =
-  | 'parties' | 'meta' | 'caseInfo' | 'collector' | 'payslip' | 'diagnostics' | 'paymentHistory';
+  | 'parties' | 'meta' | 'caseInfo' | 'collector' | 'payslip' | 'diagnostics' | 'paymentHistory' | 'totals';
 
 /** Whether a data block's FIELD-ROW labels render bilingually under the policy. */
 export function fieldLabelsBilingual(
@@ -76,22 +98,31 @@ export function fieldLabelLanguage(
   group: TranslationGroup,
 ): LanguageConfig {
   if (!isBilingualMode(language) || fieldLabelsBilingual(policy, group)) return language;
-  return { mode: language.primary === 'ar' ? 'ar' : 'en', primary: language.primary };
+  // Collapse to a single-language config for the field rows. Carry an EXPLICIT
+  // non-default `secondary` so a secondary-leading ('ar' mode) collapse still
+  // renders the correct secondary (any of the 13); a legacy config with no
+  // explicit secondary collapses to the byte-identical `{ mode, primary }`.
+  if (language.primary === 'ar') {
+    return language.secondary
+      ? { mode: 'ar', primary: 'ar', secondary: language.secondary }
+      : { mode: 'ar', primary: 'ar' };
+  }
+  return { mode: 'en', primary: 'en' };
 }
 
 export function resolveLabel(label: LabelText, language: LanguageConfig): string {
   const english = label.en ?? '';
-  const arabic = label.ar ?? null;
+  const secondary = secondaryText(label, resolveSecondary(language)) ?? null;
 
-  if (language.mode === 'ar') return arabic ?? english;
+  if (language.mode === 'ar') return secondary ?? english;
   if (language.mode === 'en') return english;
 
   // Bilingual: join both, primary first. Degrade gracefully if one side is
   // missing. Stacked uses a newline; side-by-side uses an inline separator.
-  if (!arabic) return english;
-  if (!english) return arabic;
+  if (!secondary) return english;
+  if (!english) return secondary;
   const separator = language.mode === 'bilingual_stacked' ? '\n' : ' | ';
   return language.primary === 'ar'
-    ? `${arabic}${separator}${english}`
-    : `${english}${separator}${arabic}`;
+    ? `${secondary}${separator}${english}`
+    : `${english}${separator}${secondary}`;
 }

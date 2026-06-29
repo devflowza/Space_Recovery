@@ -26,6 +26,8 @@
 
 import type { Content, TableCell } from 'pdfmake/interfaces';
 import { PDF_COLORS, createBilingualSectionHeader } from '../../styles';
+import { resolveSectionFill } from '../branding';
+import { readableTextOn } from '../palette';
 import type {
   EngineContext,
   EngineDocData,
@@ -119,13 +121,18 @@ export const renderCustodyLog: SectionRenderer = (
 
   const heading = createBilingualSectionHeader(
     en(log.title, 'Chain of Custody Entries'),
-    bilingual ? ar(log.title) : null,
+    bilingual ? ar(log.title, language) : null,
   ) as Content;
 
-  // Header row: one cell per visible column, label resolved by language mode.
+  // Header row: per-section fill (default keeps the navy 'tableHeader' look) with
+  // auto-contrast text so a custom fill stays readable.
+  const headerFill = resolveSectionFill(engine.config, 'custodyLog', PDF_COLORS.primary);
+  const headerText = readableTextOn(headerFill);
   const headerRow: TableCell[] = columns.map((col) => ({
     text: resolveLabel(col.label, language),
     style: 'tableHeader',
+    fillColor: headerFill,
+    color: headerText,
     alignment: headerAlignment(col),
   }));
 
