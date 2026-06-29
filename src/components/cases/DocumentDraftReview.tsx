@@ -224,31 +224,51 @@ export const DocumentDraftReview: React.FC<DocumentDraftReviewProps> = ({
     }
   }
 
-  /** Initiates the approve flow: builds the required-slot queue and starts it. */
+  /** Initiates the approve flow: builds the required-slot queue and starts it. Fully idempotent — safe to retry after any failure. */
   async function initiateApprove() {
     if (!id || !instance) return;
     setBusy(true);
     try {
-      const required: PendingSlot[] = [];
-      if (instance.report_subtype === 'data_destruction') {
-        // Need operator (engineer slot) + witness before approving.
-        const existing = await listInstanceSignatures(id);
-        const signedSlots = new Set(existing.map((s) => s.slot));
-        if (!signedSlots.has('engineer')) {
-          required.push({ slot: 'engineer', title: 'Operator signature', signerRole: 'Operator' });
-        }
-        if (!signedSlots.has('witness')) {
-          required.push({ slot: 'witness', title: 'Witness signature', signerRole: 'Witness' });
-        }
-      }
-      // Always end with the approver signature.
-      required.push({ slot: 'approver', title: 'Approver signature', signerRole: 'Approver' });
+      // Always read current signatures first so we skip already-captured slots on retry.
+      const existing = await listInstanceSignatures(id);
+      const existingSlots = new Set(existing.map((s) => s.slot));
 
-      pendingSlots.current = required;
-      capturedIds.current = {};
+      const allRequired: PendingSlot[] =
+        instance.report_subtype === 'data_destruction'
+          ? [
+              { slot: 'engineer', title: 'Operator signature', signerRole: 'Operator' },
+              { slot: 'witness', title: 'Witness signature', signerRole: 'Witness' },
+              { slot: 'approver', title: 'Approver signature', signerRole: 'Approver' },
+            ]
+          : [{ slot: 'approver', title: 'Approver signature', signerRole: 'Approver' }];
+
+      // Skip any slot that already has a persisted row (idempotency).
+      const toCapture = allRequired.filter((s) => !existingSlots.has(s.slot));
+
+      if (toCapture.length === 0) {
+        // Every required slot already signed — go straight to transition (retry path).
+        const approverRow = existing.find((s) => s.slot === 'approver');
+        const approverSigId = capturedIds.current['approver'] ?? approverRow?.id;
+        await transitionDocument(id, 'approved', { signatureId: approverSigId });
+        toast.success('Document approved');
+        onSaved();
+        onClose();
+        return;
+      }
+
+      pendingSlots.current = toCapture;
+      // Seed capturedIds with any approver row already persisted so handleCapture can find it.
+      const existingApprover = existing.find((s) => s.slot === 'approver');
+      if (existingApprover) {
+        capturedIds.current['approver'] = existingApprover.id;
+      }
       startNextCapture();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to start approval');
+      // Reset cleanly so the user can click Approve again.
+      setSigning(false);
+      setCurrentSlot(null);
+      pendingSlots.current = [];
     } finally {
       setBusy(false);
     }
@@ -288,10 +308,12 @@ export const DocumentDraftReview: React.FC<DocumentDraftReviewProps> = ({
         onClose();
       }
     } catch (e) {
-      // Leave signing/currentSlot intact so the user can retry the failed slot.
-      // capturedIds.current is NOT cleared — already-captured slots are preserved.
+      // On any failure, reset cleanly so the user can click Approve again.
+      // capturedIds.current is preserved — retry in initiateApprove will re-read DB and skip already-signed slots.
       toast.error(e instanceof Error ? e.message : 'Approval failed');
-      setSigning(true);
+      setSigning(false);
+      setCurrentSlot(null);
+      pendingSlots.current = [];
     } finally {
       setBusy(false);
     }

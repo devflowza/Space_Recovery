@@ -11,7 +11,7 @@ const svc = vi.hoisted(() => ({
 vi.mock('../../lib/documentInstanceService', () => svc);
 const sigSvc = vi.hoisted(() => ({
   captureStaffSignature: vi.fn(async () => 'sig-1'),
-  listInstanceSignatures: vi.fn(async () => [] as { slot: string }[]),
+  listInstanceSignatures: vi.fn(async () => [] as { slot: string; id: string; document_instance_id: string; signed_at: string }[]),
 }));
 vi.mock('../../lib/documentSignatureService', () => sigSvc);
 vi.mock('./SignatureCaptureModal', () => ({
@@ -163,6 +163,50 @@ describe('data_destruction approval queue', () => {
       'di-dd',
       'approved',
       expect.objectContaining({ signatureId: 'sig-app' }),
+    );
+  });
+});
+
+describe('idempotent approve — retry after transition failure', () => {
+  it('skips approver capture on retry and calls transitionDocument again when the slot is already persisted', async () => {
+    svc.getDocumentInstance.mockResolvedValue({
+      id: 'di-1',
+      title: 'Eval',
+      status: 'in_review',
+      created_by: 'author',
+      report_subtype: 'evaluation',
+      case_id: 'c1',
+    });
+
+    // First Approve attempt: no signatures exist yet, capture succeeds, but transition fails.
+    // Second Approve attempt: approver row now persisted in DB, transition succeeds.
+    sigSvc.listInstanceSignatures
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ slot: 'approver', id: 'sig-1', document_instance_id: 'di-1', signed_at: new Date().toISOString() }]);
+    sigSvc.captureStaffSignature.mockResolvedValue('sig-1');
+
+    svc.transitionDocument
+      .mockRejectedValueOnce(new Error('RPC rejected'))
+      .mockResolvedValueOnce(undefined);
+
+    render(<DocumentDraftReview isOpen onClose={vi.fn()} caseId="c1" instanceId="di-1" onSaved={vi.fn()} />);
+
+    // --- First attempt ---
+    fireEvent.click(await screen.findByRole('button', { name: /approve/i }));
+    fireEvent.click(await screen.findByText('mock-capture'));
+    // Transition fails → toast.error + state reset → Approve button re-enabled
+    await waitFor(() => expect(svc.transitionDocument).toHaveBeenCalledTimes(1));
+
+    // --- Second attempt — approver slot already persisted ---
+    fireEvent.click(await screen.findByRole('button', { name: /approve/i }));
+    // captureStaffSignature must NOT be called again for approver
+    await waitFor(() => expect(svc.transitionDocument).toHaveBeenCalledTimes(2));
+    // Only one capture call total (from the first attempt)
+    expect(sigSvc.captureStaffSignature).toHaveBeenCalledTimes(1);
+    expect(svc.transitionDocument).toHaveBeenLastCalledWith(
+      'di-1',
+      'approved',
+      expect.objectContaining({ signatureId: 'sig-1' }),
     );
   });
 });
