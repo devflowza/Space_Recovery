@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { supabase, getTenantId } from './supabaseClient';
 import { sanitizeFilterValue } from './postgrestSanitizer';
 import { logger } from './logger';
 import type { Database } from '../types/database.types';
@@ -54,13 +54,101 @@ export async function getInventoryConditionTypes() {
   return (data ?? []) as InventoryConditionType[];
 }
 
-export async function getInventoryItems(filters?: {
+export interface InventorySpecFilters {
+  device_type_id?: string;
+  pcb_number?: string;
+  firmware?: string;
+  controller?: string;
+  head_map?: string;
+  dcm?: string;
+  chipset?: string;
+  barcode?: string;
+  serial_number?: string;
+}
+
+export type InventoryFilters = {
   category_id?: string;
   status_id?: string;
   condition_id?: string;
   location_id?: string;
   search?: string;
-}) {
+} & InventorySpecFilters;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFilterBuilder = any;
+
+function applyInventoryFilters(
+  query: AnyFilterBuilder,
+  filters: InventoryFilters | undefined,
+): AnyFilterBuilder {
+  if (!filters) return query;
+
+  let q: AnyFilterBuilder = query;
+
+  if (filters.category_id) q = q.eq('category_id', filters.category_id);
+  if (filters.status_id) q = q.eq('status_id', filters.status_id);
+  if (filters.condition_id) q = q.eq('condition_id', filters.condition_id);
+  if (filters.location_id) q = q.eq('location_id', filters.location_id);
+  if (filters.device_type_id) q = q.eq('device_type_id', filters.device_type_id);
+
+  if (filters.search) {
+    const s = sanitizeFilterValue(filters.search);
+    q = q.or(
+      `name.ilike.%${s}%,` +
+      `item_number.ilike.%${s}%,` +
+      `serial_number.ilike.%${s}%,` +
+      `model.ilike.%${s}%,` +
+      `barcode.ilike.%${s}%`
+    );
+  }
+
+  if (filters.barcode) {
+    const b = sanitizeFilterValue(filters.barcode);
+    q = q.ilike('barcode', `%${b}%`);
+  }
+
+  if (filters.serial_number) {
+    const v = sanitizeFilterValue(filters.serial_number);
+    q = q.ilike('serial_number', `%${v}%`);
+  }
+
+  // Specs live in technical_details jsonb (the wizard writes everything there by
+  // def.key — the legacy pcb_number/firmware_version/dcm columns are unused), so
+  // ALL spec filters must target technical_details, not the legacy columns.
+  if (filters.pcb_number) {
+    const v = sanitizeFilterValue(filters.pcb_number);
+    q = q.ilike('technical_details->>pcb_number', `%${v}%`);
+  }
+
+  if (filters.firmware) {
+    const v = sanitizeFilterValue(filters.firmware);
+    q = q.ilike('technical_details->>firmware_version', `%${v}%`);
+  }
+
+  if (filters.dcm) {
+    const v = sanitizeFilterValue(filters.dcm);
+    q = q.ilike('technical_details->>dcm', `%${v}%`);
+  }
+
+  if (filters.controller) {
+    const v = sanitizeFilterValue(filters.controller);
+    q = q.ilike('technical_details->>controller', `%${v}%`);
+  }
+
+  if (filters.head_map) {
+    const v = sanitizeFilterValue(filters.head_map);
+    q = q.ilike('technical_details->>physical_head_map', `%${v}%`);
+  }
+
+  if (filters.chipset) {
+    const v = sanitizeFilterValue(filters.chipset);
+    q = q.ilike('technical_details->>chipset', `%${v}%`);
+  }
+
+  return q;
+}
+
+export async function getInventoryItems(filters?: InventoryFilters) {
   let query = supabase
     .from('inventory_items')
     .select(`
@@ -69,6 +157,7 @@ export async function getInventoryItems(filters?: {
       status_type:master_inventory_status_types(id, name, color_code, is_available_status),
       condition_type:master_inventory_condition_types(id, rating, name, color_code),
       brand:catalog_device_brands(id, name),
+      device_type:catalog_device_types(id, name),
       capacity:catalog_device_capacities(id, name, gb_value),
       storage_location:inventory_locations(id, name),
       interface:catalog_interfaces(id, name)
@@ -76,31 +165,7 @@ export async function getInventoryItems(filters?: {
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
-  if (filters?.category_id) {
-    query = query.eq('category_id', filters.category_id);
-  }
-
-  if (filters?.status_id) {
-    query = query.eq('status_id', filters.status_id);
-  }
-
-  if (filters?.condition_id) {
-    query = query.eq('condition_id', filters.condition_id);
-  }
-
-  if (filters?.location_id) {
-    query = query.eq('location_id', filters.location_id);
-  }
-
-  if (filters?.search) {
-    const s = sanitizeFilterValue(filters.search);
-    query = query.or(
-      `name.ilike.%${s}%,` +
-      `item_number.ilike.%${s}%,` +
-      `serial_number.ilike.%${s}%,` +
-      `model.ilike.%${s}%`
-    );
-  }
+  query = applyInventoryFilters(query, filters);
 
   const { data, error } = await query;
 
@@ -113,15 +178,7 @@ export async function getInventoryItems(filters?: {
   return await enrichItemsWithStockCount(items);
 }
 
-export async function getInventoryItemsPage(filters?: {
-  category_id?: string;
-  status_id?: string;
-  condition_id?: string;
-  location_id?: string;
-  search?: string;
-  page?: number;
-  pageSize?: number;
-}) {
+export async function getInventoryItemsPage(filters?: InventoryFilters & { page?: number; pageSize?: number }) {
   const pageSize = filters?.pageSize ?? 50;
   const page = filters?.page ?? 0;
 
@@ -133,6 +190,7 @@ export async function getInventoryItemsPage(filters?: {
       status_type:master_inventory_status_types(id, name, color_code, is_available_status),
       condition_type:master_inventory_condition_types(id, rating, name, color_code),
       brand:catalog_device_brands(id, name),
+      device_type:catalog_device_types(id, name),
       capacity:catalog_device_capacities(id, name, gb_value),
       storage_location:inventory_locations(id, name),
       interface:catalog_interfaces(id, name)
@@ -140,19 +198,7 @@ export async function getInventoryItemsPage(filters?: {
     .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
-  if (filters?.category_id) query = query.eq('category_id', filters.category_id);
-  if (filters?.status_id) query = query.eq('status_id', filters.status_id);
-  if (filters?.condition_id) query = query.eq('condition_id', filters.condition_id);
-  if (filters?.location_id) query = query.eq('location_id', filters.location_id);
-  if (filters?.search) {
-    const s = sanitizeFilterValue(filters.search);
-    query = query.or(
-      `name.ilike.%${s}%,` +
-      `item_number.ilike.%${s}%,` +
-      `serial_number.ilike.%${s}%,` +
-      `model.ilike.%${s}%`
-    );
-  }
+  query = applyInventoryFilters(query, filters);
 
   const { data, error, count } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
   if (error) {
@@ -219,6 +265,7 @@ export async function getInventoryItemById(id: string) {
       status_type:master_inventory_status_types(id, name, color_code),
       condition_type:master_inventory_condition_types(id, rating, name, color_code),
       brand:catalog_device_brands(id, name),
+      device_type:catalog_device_types(id, name),
       capacity:catalog_device_capacities(id, name, gb_value),
       storage_location:inventory_locations(id, name),
       interface:catalog_interfaces(id, name)
@@ -263,6 +310,19 @@ export async function deleteInventoryItem(id: string) {
     .eq('id', id);
 
   if (error) throw error;
+}
+
+/**
+ * Get next per-device-type inventory number via the `get_next_inventory_number` RPC.
+ * Returns a formatted string like "BIG-0001" ready to use as `item_number`.
+ */
+export async function getNextInventoryNumber(deviceTypeId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('get_next_inventory_number', {
+    p_device_type_id: deviceTypeId,
+  });
+  if (error) throw error;
+  if (!data) throw new Error('Could not allocate an inventory number for this device type');
+  return data as string;
 }
 
 type StatusTypeRef = { id: string; name: string | null; color_code: string | null };
@@ -463,6 +523,76 @@ export async function calculateTotalInventoryValue() {
 
   const rows = (data ?? []) as Array<{ quantity: number | null; purchase_price: number | null }>;
   return rows.reduce((sum, row) => sum + ((row.purchase_price ?? 0) * (row.quantity ?? 0)), 0);
+}
+
+export type InventorySearchTemplate = Database['public']['Tables']['inventory_search_templates']['Row'];
+
+export async function getInventorySearchTemplates(): Promise<InventorySearchTemplate[]> {
+  const { data, error } = await supabase
+    .from('inventory_search_templates')
+    .select('*')
+    .is('deleted_at', null)
+    .order('last_used_at', { ascending: false, nullsFirst: false });
+
+  if (error) {
+    logger.error('Error fetching inventory search templates:', error);
+    return [];
+  }
+  return data ?? [];
+}
+
+export async function saveInventorySearchTemplate(
+  name: string,
+  criteria: InventorySpecFilters & { search?: string; category_id?: string; status_id?: string; location_id?: string },
+): Promise<InventorySearchTemplate | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const tenantId = getTenantId();
+  if (!tenantId) throw new Error('Tenant not resolved');
+
+  const { data, error } = await supabase
+    .from('inventory_search_templates')
+    .insert({ name, criteria: criteria as Database['public']['Tables']['inventory_search_templates']['Insert']['criteria'], created_by: user.id, tenant_id: tenantId })
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteInventorySearchTemplate(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('inventory_search_templates')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function touchInventorySearchTemplate(id: string): Promise<void> {
+  const { data: existing, error: fetchErr } = await supabase
+    .from('inventory_search_templates')
+    .select('usage_count')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (fetchErr) {
+    logger.error('Error fetching template for touch:', fetchErr);
+    return;
+  }
+
+  const { error } = await supabase
+    .from('inventory_search_templates')
+    .update({
+      last_used_at: new Date().toISOString(),
+      usage_count: ((existing?.usage_count ?? 0) + 1),
+    })
+    .eq('id', id);
+
+  if (error) {
+    logger.error('Error touching inventory search template (non-fatal):', error);
+  }
 }
 
 export async function getInventoryStatistics() {

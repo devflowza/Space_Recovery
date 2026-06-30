@@ -3178,33 +3178,65 @@ export type Database = {
       }
       catalog_device_types: {
         Row: {
+          barcode_prefix: string | null
           created_at: string
+          default_category_id: string | null
           description: string | null
+          family: string | null
+          icon: string | null
           id: string
+          inventory_padding: number
+          inventory_prefix: string | null
           is_active: boolean
+          is_inventory_tracked: boolean
           name: string
+          qr_prefix: string | null
           sort_order: number | null
           updated_at: string
         }
         Insert: {
+          barcode_prefix?: string | null
           created_at?: string
+          default_category_id?: string | null
           description?: string | null
+          family?: string | null
+          icon?: string | null
           id?: string
+          inventory_padding?: number
+          inventory_prefix?: string | null
           is_active?: boolean
+          is_inventory_tracked?: boolean
           name: string
+          qr_prefix?: string | null
           sort_order?: number | null
           updated_at?: string
         }
         Update: {
+          barcode_prefix?: string | null
           created_at?: string
+          default_category_id?: string | null
           description?: string | null
+          family?: string | null
+          icon?: string | null
           id?: string
+          inventory_padding?: number
+          inventory_prefix?: string | null
           is_active?: boolean
+          is_inventory_tracked?: boolean
           name?: string
+          qr_prefix?: string | null
           sort_order?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "catalog_device_types_default_category_id_fkey"
+            columns: ["default_category_id"]
+            isOneToOne: false
+            referencedRelation: "master_inventory_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       catalog_donor_compatibility_matrix: {
         Row: {
@@ -7545,8 +7577,76 @@ export type Database = {
           },
         ]
       }
+      inventory_donor_parts: {
+        Row: {
+          condition_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          item_id: string
+          notes: string | null
+          part_type: string
+          quantity: number
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          condition_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          item_id: string
+          notes?: string | null
+          part_type: string
+          quantity?: number
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          condition_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          item_id?: string
+          notes?: string | null
+          part_type?: string
+          quantity?: number
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_donor_parts_condition_id_fkey"
+            columns: ["condition_id"]
+            isOneToOne: false
+            referencedRelation: "master_inventory_condition_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_donor_parts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_donor_parts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
+          barcode: string | null
           brand_id: string | null
           capacity_id: string | null
           category_id: string | null
@@ -7555,6 +7655,7 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           description: string | null
+          device_type_id: string | null
           donor_parts_available: Json | null
           firmware_version: string | null
           head_map: string | null
@@ -7572,15 +7673,18 @@ export type Database = {
           photos: string[] | null
           purchase_date: string | null
           purchase_price: number | null
+          qr_value: string | null
           quantity: number | null
           serial_number: string | null
           status_id: string | null
           supplier_id: string | null
+          technical_details: Json
           tenant_id: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          barcode?: string | null
           brand_id?: string | null
           capacity_id?: string | null
           category_id?: string | null
@@ -7589,6 +7693,7 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           description?: string | null
+          device_type_id?: string | null
           donor_parts_available?: Json | null
           firmware_version?: string | null
           head_map?: string | null
@@ -7606,15 +7711,18 @@ export type Database = {
           photos?: string[] | null
           purchase_date?: string | null
           purchase_price?: number | null
+          qr_value?: string | null
           quantity?: number | null
           serial_number?: string | null
           status_id?: string | null
           supplier_id?: string | null
+          technical_details?: Json
           tenant_id: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          barcode?: string | null
           brand_id?: string | null
           capacity_id?: string | null
           category_id?: string | null
@@ -7623,6 +7731,7 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           description?: string | null
+          device_type_id?: string | null
           donor_parts_available?: Json | null
           firmware_version?: string | null
           head_map?: string | null
@@ -7640,10 +7749,12 @@ export type Database = {
           photos?: string[] | null
           purchase_date?: string | null
           purchase_price?: number | null
+          qr_value?: string | null
           quantity?: number | null
           serial_number?: string | null
           status_id?: string | null
           supplier_id?: string | null
+          technical_details?: Json
           tenant_id?: string
           updated_at?: string
           updated_by?: string | null
@@ -7675,6 +7786,13 @@ export type Database = {
             columns: ["condition_id"]
             isOneToOne: false
             referencedRelation: "master_inventory_condition_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_device_type_id_fkey"
+            columns: ["device_type_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_device_types"
             referencedColumns: ["id"]
           },
           {
@@ -15496,6 +15614,64 @@ export type Database = {
           },
         ]
       }
+      tenant_device_type_settings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          default_location_id: string | null
+          deleted_at: string | null
+          device_type_id: string
+          id: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          default_location_id?: string | null
+          deleted_at?: string | null
+          device_type_id: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          default_location_id?: string | null
+          deleted_at?: string | null
+          device_type_id?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_device_type_settings_default_location_id_fkey"
+            columns: ["default_location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_device_type_settings_device_type_id_fkey"
+            columns: ["device_type_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_device_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_device_type_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_health_metrics: {
         Row: {
           active_users_count: number | null
@@ -17129,6 +17305,10 @@ export type Database = {
       get_next_company_number: { Args: never; Returns: string }
       get_next_customer_number: { Args: never; Returns: string }
       get_next_disbursement_number: { Args: never; Returns: string }
+      get_next_inventory_number: {
+        Args: { p_device_type_id: string }
+        Returns: string
+      }
       get_next_invoice_number: { Args: never; Returns: string }
       get_next_number: { Args: { p_scope: string }; Returns: string }
       get_next_po_number: { Args: never; Returns: string }
@@ -17726,6 +17906,7 @@ export type Database = {
       search_donor_drives: {
         Args: { p_criteria: Json }
         Returns: {
+          barcode: string | null
           brand_id: string | null
           capacity_id: string | null
           category_id: string | null
@@ -17734,6 +17915,7 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           description: string | null
+          device_type_id: string | null
           donor_parts_available: Json | null
           firmware_version: string | null
           head_map: string | null
@@ -17751,10 +17933,12 @@ export type Database = {
           photos: string[] | null
           purchase_date: string | null
           purchase_price: number | null
+          qr_value: string | null
           quantity: number | null
           serial_number: string | null
           status_id: string | null
           supplier_id: string | null
+          technical_details: Json
           tenant_id: string
           updated_at: string
           updated_by: string | null
