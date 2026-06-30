@@ -93,7 +93,9 @@ const CONDITIONS = ['Good', 'Fair', 'Poor', 'Damaged'];
 const STATUSES = ['pending', 'in_progress', 'completed', 'on_hold'];
 const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 const QUOTE_STATUSES = ['draft', 'sent', 'accepted', 'rejected'];
-const INVOICE_STATUSES = ['draft', 'issued', 'paid', 'overdue'];
+// Must match the live invoices_status_check CHECK constraint
+// (draft/sent/paid/partial/overdue/cancelled/void/converted).
+const INVOICE_STATUSES = ['draft', 'sent', 'paid', 'partial', 'overdue'];
 
 // ---------------------------------------------------------------------------
 // Helper: ISO timestamp offset by `offsetMs` from base

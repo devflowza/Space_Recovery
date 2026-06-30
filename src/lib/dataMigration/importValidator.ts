@@ -6,7 +6,9 @@ import {
   type ColumnDef,
   ENTITY_COLUMNS,
   IMPORT_ORDER,
+  WORKBOOK_SCHEMA_VERSION,
 } from './workbookContract';
+import type { ParsedWorkbookMeta } from './workbookParser';
 
 export interface ValidationIssue {
   entity: EntityType;
@@ -50,6 +52,20 @@ const UNIQUE_NUMBER: Partial<Record<EntityType, string>> = {
   invoices: 'invoice_number',
 };
 
+// Status enum guards. Only entities whose status column is constrained DB-side are
+// validated as ERRORS here so the failure surfaces client-side rather than as an
+// opaque per-row RPC failure. Verified against the live schema (2026-07-01):
+//   • invoices.status — hard CHECK (draft/sent/paid/partial/overdue/cancelled/void/converted).
+//   • quotes.status / cases.status — NO CHECK, NO FK; tenant-configurable free text in
+//     master_quote_statuses / master_case_statuses. NOT a fixed enum, so flagging a value
+//     here would be wrong (false positives on valid legacy data). Intentionally NOT guarded.
+const STATUS_ENUMS: Partial<Record<EntityType, { field: string; allowed: ReadonlySet<string> }>> = {
+  invoices: {
+    field: 'status',
+    allowed: new Set(['draft', 'sent', 'paid', 'partial', 'overdue', 'cancelled', 'void', 'converted']),
+  },
+};
+
 function isEmpty(v: unknown): boolean {
   return v === null || v === undefined || (typeof v === 'string' && v.trim() === '');
 }
@@ -66,6 +82,9 @@ function typeOk(value: unknown, type: ColType): boolean {
     case 'uuid':
     case 'string':
       return true;
+    default:
+      // Unhandled ColType: fail safe rather than silently accept.
+      return false;
   }
 }
 
@@ -112,6 +131,22 @@ export function validateWorkbook(wb: ParsedWorkbook): ValidationReport {
         }
       }
 
+      // status enum (DB-constrained columns only — see STATUS_ENUMS)
+      const statusGuard = STATUS_ENUMS[entity];
+      if (statusGuard && !isEmpty(row[statusGuard.field])) {
+        const value = String(row[statusGuard.field]);
+        if (!statusGuard.allowed.has(value.toLowerCase())) {
+          issues.push({
+            entity,
+            rowIndex,
+            legacyId,
+            severity: 'error',
+            field: statusGuard.field,
+            message: `Invalid status "${value}" (allowed: ${[...statusGuard.allowed].join(', ')})`,
+          });
+        }
+      }
+
       // unique business number within file
       if (numberField && !isEmpty(row[numberField])) {
         const n = String(row[numberField]);
@@ -137,4 +172,29 @@ export function validateWorkbook(wb: ParsedWorkbook): ValidationReport {
   }
 
   return { ok: issues.every((i) => i.severity !== 'error'), counts, issues };
+}
+
+export interface SchemaVersionCheck {
+  ok: boolean;
+  message?: string;
+}
+
+/**
+ * I3: validate the workbook's `_meta.schema_version` against the version this build
+ * understands (WORKBOOK_SCHEMA_VERSION). An incompatible (newer) version is rejected;
+ * a missing version is permitted (operator-authored files have no _meta sheet).
+ */
+export function validateSchemaVersion(meta: Pick<ParsedWorkbookMeta, 'schemaVersion'>): SchemaVersionCheck {
+  const v = meta.schemaVersion;
+  if (v == null) return { ok: true };
+  if (!Number.isInteger(v) || v < 1) {
+    return { ok: false, message: `Workbook schema_version "${v}" is not a valid version number.` };
+  }
+  if (v > WORKBOOK_SCHEMA_VERSION) {
+    return {
+      ok: false,
+      message: `Workbook schema_version ${v} is newer than this build supports (${WORKBOOK_SCHEMA_VERSION}). Upgrade before importing.`,
+    };
+  }
+  return { ok: true };
 }
