@@ -290,3 +290,56 @@ export const ENTITY_COLUMNS: Record<EntityType, ColumnDef[]> = {
     { key: 'created_at',     header: 'Performed At',   type: 'date' },
   ],
 };
+
+// ── Template / JSON-spec generator ───────────────────────────────────────────
+// Produces a plain-object snapshot of the workbook contract suitable for:
+//   • JSON download (the spec file that ships with the feature)
+//   • workbookBuilder's empty-template generation (P2)
+//   • UI column-hint rendering (P4)
+// The return value is intentionally free of any live module references so it
+// can be serialised, cached, or diffed without side effects.
+
+export interface ContractTemplateColumn {
+  key: string;
+  header: string;
+  type: ColType;
+  required?: boolean;
+  ref?: EntityType;
+}
+
+export interface ContractTemplateSheet {
+  sheetName: string;
+  columns: ContractTemplateColumn[];
+  requiredColumns: string[];
+}
+
+export interface ContractTemplate {
+  schemaVersion: number;
+  importOrder: EntityType[];
+  sheets: Record<EntityType, ContractTemplateSheet>;
+}
+
+export function exportContractAsTemplate(): ContractTemplate {
+  const sheets = {} as Record<EntityType, ContractTemplateSheet>;
+
+  for (const entity of IMPORT_ORDER) {
+    const cols = ENTITY_COLUMNS[entity];
+    sheets[entity] = {
+      sheetName: SHEET_NAMES[entity],
+      columns: cols.map(c => ({
+        key: c.key,
+        header: c.header,
+        type: c.type,
+        ...(c.required !== undefined ? { required: c.required } : {}),
+        ...(c.ref !== undefined ? { ref: c.ref } : {}),
+      })),
+      requiredColumns: cols.filter(c => c.required === true).map(c => c.key),
+    };
+  }
+
+  return {
+    schemaVersion: WORKBOOK_SCHEMA_VERSION,
+    importOrder: [...IMPORT_ORDER],
+    sheets,
+  };
+}
