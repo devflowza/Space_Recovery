@@ -660,7 +660,7 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
             </div>
 
             {/* Donor Parts + Location — side by side on one row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
             {/* ── Section 3b: Donor Parts ──────────────────────── */}
             {(form.is_donor as boolean) && getDonorParts(family).length > 0 && (
               <div className="rounded-lg border border-border bg-surface-muted p-4 space-y-3">
@@ -715,7 +715,6 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
                 <h3 className={SECTION_HEAD}>Location</h3>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">Storage Location</label>
                 <HierarchicalLocationPicker
                   value={(form.location_id as string) || null}
                   onChange={id => setField('location_id', id ?? '')}
