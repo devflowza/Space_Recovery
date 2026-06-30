@@ -26,11 +26,9 @@ export const DONOR_PARTS: Record<DeviceFamily, DonorPartDef[]> = {
     { key: 'controller', label: 'Controller Chip' },
     { key: 'power_ic',   label: 'Power IC' },
   ],
+  // NVMe aligned to SSD (owner): controller chip + power IC only.
   nvme: [
     { key: 'controller', label: 'Controller Chip' },
-    { key: 'nand',       label: 'NAND Flash' },
-    { key: 'dram',       label: 'DRAM Cache' },
-    { key: 'pcb',        label: 'PCB' },
     { key: 'power_ic',   label: 'Power IC' },
   ],
   usb_flash: [

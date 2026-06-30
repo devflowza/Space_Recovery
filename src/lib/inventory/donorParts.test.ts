@@ -33,10 +33,10 @@ describe('DONOR_PARTS vocabulary', () => {
     expect(keys).not.toContain('dram');
   });
 
-  it('nvme includes nand and power_ic', () => {
+  it('nvme matches the ssd lab-used set (controller, power_ic)', () => {
     const keys = DONOR_PARTS.nvme.map(p => p.key);
-    expect(keys).toContain('nand');
-    expect(keys).toContain('power_ic');
+    expect(keys).toEqual(['controller', 'power_ic']);
+    expect(keys).not.toContain('nand');
   });
 
   it('head_stack is non-empty and contains heads', () => {
