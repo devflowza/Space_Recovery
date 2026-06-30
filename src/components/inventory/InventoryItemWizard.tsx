@@ -554,7 +554,76 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
               </div>
             )}
 
-            {/* ── Section 3: Inventory Details ─────────────────── */}
+            {/* Donor Parts + Location — side by side on one row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+            {/* ── Donor Parts ──────────────────────── */}
+            {(form.is_donor as boolean) && getDonorParts(family).length > 0 && (
+              <div className="rounded-lg border border-border bg-surface-muted p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Wrench className="w-3.5 h-3.5 text-primary" />
+                  <h3 className={SECTION_HEAD}>Donor Parts Available</h3>
+                  <span className="text-xs text-slate-500 font-normal normal-case tracking-normal">
+                    — {family.toUpperCase()} parts
+                  </span>
+                </div>
+                {/* Compact coloured tick-cards on one wrapping row (tick = part available; qty defaults to 1). */}
+                <div className="flex flex-wrap gap-2.5">
+                  {getDonorParts(family).map(def => {
+                    const checked = donorPartChecked[def.key] ?? false;
+                    return (
+                      <label
+                        key={def.key}
+                        className={`inline-flex items-center gap-2 rounded-lg border px-3.5 py-2.5 min-h-[44px] cursor-pointer select-none transition-colors focus-within:ring-2 focus-within:ring-primary/40 focus-within:ring-offset-1 ${
+                          checked
+                            ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                            : 'border-border bg-surface text-slate-700 hover:border-primary/40 hover:bg-primary/5'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={checked}
+                          onChange={e => setDonorPartChecked(prev => ({ ...prev, [def.key]: e.target.checked }))}
+                        />
+                        <span
+                          aria-hidden="true"
+                          className={`flex items-center justify-center w-4 h-4 rounded border transition-colors ${
+                            checked ? 'border-primary bg-primary text-primary-foreground' : 'border-slate-300 bg-surface'
+                          }`}
+                        >
+                          {checked && <Check className="w-3 h-3" strokeWidth={3} />}
+                        </span>
+                        <span className="text-sm font-medium whitespace-nowrap">{def.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Location (spans full width when donor parts hidden) ─ */}
+            <div className={`rounded-lg border border-border bg-surface-muted p-4 space-y-3 ${
+              !((form.is_donor as boolean) && getDonorParts(family).length > 0) ? 'lg:col-span-2' : ''
+            }`}>
+              <div className="flex items-center gap-2">
+                <ChevronRight className="w-3.5 h-3.5 text-primary" />
+                <h3 className={SECTION_HEAD}>Location</h3>
+              </div>
+              <div>
+                <HierarchicalLocationPicker
+                  value={(form.location_id as string) || null}
+                  onChange={id => setField('location_id', id ?? '')}
+                  locations={locations}
+                  placeholder="Select location"
+                />
+                {autoLocationHint && (
+                  <p className="mt-1 text-xs text-primary/70">{autoLocationHint}</p>
+                )}
+              </div>
+            </div>
+            </div>
+
+            {/* ── Inventory Details ─────────────────── */}
             <div className="rounded-lg border border-border bg-surface-muted p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <ChevronRight className="w-3.5 h-3.5 text-primary" />
@@ -657,75 +726,6 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Donor Parts + Location — side by side on one row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-            {/* ── Section 3b: Donor Parts ──────────────────────── */}
-            {(form.is_donor as boolean) && getDonorParts(family).length > 0 && (
-              <div className="rounded-lg border border-border bg-surface-muted p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Wrench className="w-3.5 h-3.5 text-primary" />
-                  <h3 className={SECTION_HEAD}>Donor Parts Available</h3>
-                  <span className="text-xs text-slate-500 font-normal normal-case tracking-normal">
-                    — {family.toUpperCase()} parts
-                  </span>
-                </div>
-                {/* Compact coloured tick-cards on one wrapping row (tick = part available; qty defaults to 1). */}
-                <div className="flex flex-wrap gap-2.5">
-                  {getDonorParts(family).map(def => {
-                    const checked = donorPartChecked[def.key] ?? false;
-                    return (
-                      <label
-                        key={def.key}
-                        className={`inline-flex items-center gap-2 rounded-lg border px-3.5 py-2.5 min-h-[44px] cursor-pointer select-none transition-colors focus-within:ring-2 focus-within:ring-primary/40 focus-within:ring-offset-1 ${
-                          checked
-                            ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                            : 'border-border bg-surface text-slate-700 hover:border-primary/40 hover:bg-primary/5'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="sr-only"
-                          checked={checked}
-                          onChange={e => setDonorPartChecked(prev => ({ ...prev, [def.key]: e.target.checked }))}
-                        />
-                        <span
-                          aria-hidden="true"
-                          className={`flex items-center justify-center w-4 h-4 rounded border transition-colors ${
-                            checked ? 'border-primary bg-primary text-primary-foreground' : 'border-slate-300 bg-surface'
-                          }`}
-                        >
-                          {checked && <Check className="w-3 h-3" strokeWidth={3} />}
-                        </span>
-                        <span className="text-sm font-medium whitespace-nowrap">{def.label}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* ── Section 4: Location (spans full width when donor parts hidden) ─ */}
-            <div className={`rounded-lg border border-border bg-surface-muted p-4 space-y-3 ${
-              !((form.is_donor as boolean) && getDonorParts(family).length > 0) ? 'lg:col-span-2' : ''
-            }`}>
-              <div className="flex items-center gap-2">
-                <ChevronRight className="w-3.5 h-3.5 text-primary" />
-                <h3 className={SECTION_HEAD}>Location</h3>
-              </div>
-              <div>
-                <HierarchicalLocationPicker
-                  value={(form.location_id as string) || null}
-                  onChange={id => setField('location_id', id ?? '')}
-                  locations={locations}
-                  placeholder="Select location"
-                />
-                {autoLocationHint && (
-                  <p className="mt-1 text-xs text-primary/70">{autoLocationHint}</p>
-                )}
-              </div>
-            </div>
             </div>
 
             {/* ── Submit error ──────────────────────────────────── */}
