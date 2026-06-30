@@ -358,7 +358,9 @@ export const CategoryDetail: React.FC = () => {
   });
 
   const handleToggleActive = (item: MasterDataItem) => {
-    toggleActiveMutation.mutate({ id: item.id, isActive: !item.is_active });
+    // Mirror the button's render semantics (On === is_active !== false): treat a
+    // missing/null is_active as On, so the first click reliably turns it Off.
+    toggleActiveMutation.mutate({ id: item.id, isActive: item.is_active === false });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -482,6 +484,8 @@ export const CategoryDetail: React.FC = () => {
     }
   };
 
+  // master_payment_methods keeps its long-standing toggle (it lives in the client-financial
+  // category, not ACTIVE_TOGGLE_TABLES); the device + service catalogs get it via hasActiveToggle.
   const hasEnabledToggle = activeTable === 'master_payment_methods' || hasActiveToggle(activeTable);
 
   const columns = [
