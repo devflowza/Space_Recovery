@@ -37,6 +37,38 @@ export async function getItemDonorParts(itemId: string): Promise<DonorPartRow[]>
 }
 
 /**
+ * Batch-fetch non-deleted donor parts for multiple inventory items.
+ * Returns a Map keyed by item_id for O(1) lookup per result row.
+ * Avoids N+1 — one query for all ids.
+ */
+export async function getDonorPartsForItems(itemIds: string[]): Promise<Map<string, DonorPartRow[]>> {
+  const map = new Map<string, DonorPartRow[]>();
+  if (itemIds.length === 0) return map;
+
+  const { data, error } = await supabase
+    .from('inventory_donor_parts')
+    .select('*')
+    .in('item_id', itemIds)
+    .is('deleted_at', null)
+    .order('created_at');
+
+  if (error) {
+    logger.error('donorPartsService.getDonorPartsForItems error', error);
+    throw error;
+  }
+
+  for (const row of (data ?? []) as DonorPartRow[]) {
+    const existing = map.get(row.item_id);
+    if (existing) {
+      existing.push(row);
+    } else {
+      map.set(row.item_id, [row]);
+    }
+  }
+  return map;
+}
+
+/**
  * Reconcile the donor parts for an item.
  *
  * Strategy:

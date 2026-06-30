@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useId } from 'react';
-import { Search, Filter, Save, X, Star, AlertCircle } from 'lucide-react';
+import { Search, Filter, Save, X, Star, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
@@ -8,37 +8,52 @@ import { Badge } from '../../components/ui/Badge';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { supabase, getTenantId } from '../../lib/supabaseClient';
 import { logger } from '../../lib/logger';
+import { getDonorPartsForItems } from '../../lib/inventory/donorPartsService';
+import type { DonorPartRow } from '../../lib/inventory/donorPartsService';
+import { getDonorParts } from '../../lib/inventory/donorParts';
+import { resolveDeviceFamily } from '../../lib/devices/deviceFamily';
+import { useInventoryDeviceTypes } from '../../lib/inventory/inventoryCatalogQueries';
 import type { Database, Json } from '../../types/database.types';
 
 interface DonorSearchCriteria {
+  device_type_id: string;
   brand_id: string;
   model: string;
   capacity_id: string;
+  serial_number: string;
   pcb_number: string;
+  firmware: string;
   dcm: string;
-  firmware_version: string;
-  interface_id: string;
+  head_map: string;
+  controller: string;
+  chipset: string;
 }
 
 type DonorDrive = Database['public']['Functions']['search_donor_drives']['Returns'][number];
 type SearchTemplateRow = Database['public']['Tables']['inventory_search_templates']['Row'];
 
+const EMPTY_CRITERIA: DonorSearchCriteria = {
+  device_type_id: '',
+  brand_id: '',
+  model: '',
+  capacity_id: '',
+  serial_number: '',
+  pcb_number: '',
+  firmware: '',
+  dcm: '',
+  head_map: '',
+  controller: '',
+  chipset: '',
+};
+
 export default function DonorSearchPage() {
-  const [criteria, setCriteria] = useState<DonorSearchCriteria>({
-    brand_id: '',
-    model: '',
-    capacity_id: '',
-    pcb_number: '',
-    dcm: '',
-    firmware_version: '',
-    interface_id: '',
-  });
+  const [criteria, setCriteria] = useState<DonorSearchCriteria>(EMPTY_CRITERIA);
 
   const [results, setResults] = useState<DonorDrive[]>([]);
+  const [donorPartsMap, setDonorPartsMap] = useState<Map<string, DonorPartRow[]>>(new Map());
   const [loading, setLoading] = useState(false);
   const [brands, setBrands] = useState<Array<{ id: string; name: string }>>([]);
   const [capacities, setCapacities] = useState<Array<{ id: string; name: string }>>([]);
-  const [interfaces, setInterfaces] = useState<Array<{ id: string; name: string }>>([]);
   const [searchTemplates, setSearchTemplates] = useState<SearchTemplateRow[]>([]);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
@@ -47,6 +62,8 @@ export default function DonorSearchPage() {
   const templateNameId = useId();
   const templateDescriptionId = useId();
 
+  const { data: deviceTypes = [] } = useInventoryDeviceTypes();
+
   useEffect(() => {
     loadMasterData();
     loadSearchTemplates();
@@ -54,15 +71,13 @@ export default function DonorSearchPage() {
 
   const loadMasterData = async () => {
     try {
-      const [brandsRes, capacitiesRes, interfacesRes] = await Promise.all([
+      const [brandsRes, capacitiesRes] = await Promise.all([
         supabase.from('catalog_device_brands').select('*').eq('is_active', true).order('name'),
         supabase.from('catalog_device_capacities').select('*').eq('is_active', true).order('gb_value'),
-        supabase.from('catalog_interfaces').select('*').eq('is_active', true).order('sort_order'),
       ]);
 
       if (brandsRes.data) setBrands(brandsRes.data);
       if (capacitiesRes.data) setCapacities(capacitiesRes.data);
-      if (interfacesRes.data) setInterfaces(interfacesRes.data);
     } catch (error) {
       logger.error('Error loading master data:', error);
     }
@@ -84,40 +99,47 @@ export default function DonorSearchPage() {
   const handleSearch = async () => {
     setLoading(true);
     try {
-      const p_criteria: Json = {
-        brand_id: criteria.brand_id || null,
-        model: criteria.model || null,
-        capacity_id: criteria.capacity_id || null,
-        pcb_number: criteria.pcb_number || null,
-        dcm: criteria.dcm || null,
-        firmware: criteria.firmware_version || null,
-        interface_id: criteria.interface_id || null,
-        limit: 50,
-      };
+      const p_criteria: Json = Object.fromEntries(
+        Object.entries({
+          device_type_id: criteria.device_type_id || null,
+          brand_id: criteria.brand_id || null,
+          capacity_id: criteria.capacity_id || null,
+          model: criteria.model || null,
+          serial_number: criteria.serial_number || null,
+          pcb_number: criteria.pcb_number || null,
+          firmware: criteria.firmware || null,
+          dcm: criteria.dcm || null,
+          head_map: criteria.head_map || null,
+          controller: criteria.controller || null,
+          chipset: criteria.chipset || null,
+        }).filter(([, v]) => v !== null),
+      );
 
       const { data, error } = await supabase.rpc('search_donor_drives', { p_criteria });
 
       if (error) throw error;
-      setResults(data ?? []);
+      const rows = data ?? [];
+      setResults(rows);
+
+      if (rows.length > 0) {
+        const partsMap = await getDonorPartsForItems(rows.map(r => r.id));
+        setDonorPartsMap(partsMap);
+      } else {
+        setDonorPartsMap(new Map());
+      }
     } catch (error) {
       logger.error('Error searching donor drives:', error);
       setResults([]);
+      setDonorPartsMap(new Map());
     } finally {
       setLoading(false);
     }
   };
 
   const handleClearCriteria = () => {
-    setCriteria({
-      brand_id: '',
-      model: '',
-      capacity_id: '',
-      pcb_number: '',
-      dcm: '',
-      firmware_version: '',
-      interface_id: '',
-    });
+    setCriteria(EMPTY_CRITERIA);
     setResults([]);
+    setDonorPartsMap(new Map());
   };
 
   const handleSaveTemplate = async () => {
@@ -144,37 +166,77 @@ export default function DonorSearchPage() {
     }
   };
 
-  const handleLoadTemplate = async (template: SearchTemplateRow) => {
+  const handleLoadTemplate = (template: SearchTemplateRow) => {
     const raw = template.criteria as Record<string, unknown> | null;
     if (raw && typeof raw === 'object') {
       const loaded: DonorSearchCriteria = {
+        device_type_id: typeof raw.device_type_id === 'string' ? raw.device_type_id : '',
         brand_id: typeof raw.brand_id === 'string' ? raw.brand_id : '',
         model: typeof raw.model === 'string' ? raw.model : '',
         capacity_id: typeof raw.capacity_id === 'string' ? raw.capacity_id : '',
+        serial_number: typeof raw.serial_number === 'string' ? raw.serial_number : '',
         pcb_number: typeof raw.pcb_number === 'string' ? raw.pcb_number : '',
+        firmware: typeof raw.firmware === 'string' ? raw.firmware : '',
         dcm: typeof raw.dcm === 'string' ? raw.dcm : '',
-        firmware_version: typeof raw.firmware_version === 'string' ? raw.firmware_version : '',
-        interface_id: typeof raw.interface_id === 'string' ? raw.interface_id : '',
+        head_map: typeof raw.head_map === 'string' ? raw.head_map : '',
+        controller: typeof raw.controller === 'string' ? raw.controller : '',
+        chipset: typeof raw.chipset === 'string' ? raw.chipset : '',
       };
       setCriteria(loaded);
     }
   };
 
-  const renderUsableParts = (parts: Json | null) => {
-    if (!parts || typeof parts !== 'object' || Array.isArray(parts)) return null;
-    const usableParts = Object.entries(parts)
-      .filter(([, value]) => value === true)
-      .map(([key]) => key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+  /** Determine if a result row is an exact PCB/firmware match for the searched values. */
+  const isBestMatch = (drive: DonorDrive): boolean => {
+    const searchedPcb = criteria.pcb_number.trim();
+    const searchedFirmware = criteria.firmware.trim();
+    if (!searchedPcb && !searchedFirmware) return false;
+    const td = drive.technical_details as Record<string, unknown> | null;
+    const pcbMatch = searchedPcb
+      ? (drive.pcb_number ?? td?.pcb_number ?? '') === searchedPcb
+      : true;
+    const fwMatch = searchedFirmware
+      ? (drive.firmware_version ?? td?.firmware ?? '') === searchedFirmware
+      : true;
+    return pcbMatch && fwMatch;
+  };
 
-    if (usableParts.length === 0) return <span className="text-sm text-slate-400">No parts marked</span>;
+  /** Resolve the device family for a result row using the device_type_id → name lookup. */
+  const resolveFamily = (drive: DonorDrive) => {
+    const dt = deviceTypes.find(d => d.id === drive.device_type_id);
+    return resolveDeviceFamily(dt?.name ?? null);
+  };
+
+  const renderTechSpec = (label: string, value: string | null | undefined) => {
+    if (!value) return null;
+    return (
+      <div className="flex flex-col">
+        <span className="text-xs text-slate-500">{label}</span>
+        <span className="text-xs font-medium text-slate-800 font-mono">{value}</span>
+      </div>
+    );
+  };
+
+  const renderDonorParts = (drive: DonorDrive) => {
+    const parts = donorPartsMap.get(drive.id) ?? [];
+    const family = resolveFamily(drive);
+    const partDefs = getDonorParts(family);
+    const labelMap = new Map(partDefs.map(d => [d.key, d.label]));
+
+    if (parts.length === 0) {
+      return <span className="text-xs text-slate-400">No donor parts recorded</span>;
+    }
 
     return (
-      <div className="flex flex-wrap gap-1">
-        {usableParts.map((part, index) => (
-          <Badge key={index} variant="default" className="text-xs">
-            {part}
-          </Badge>
-        ))}
+      <div className="flex flex-wrap gap-1.5">
+        {parts.map(part => {
+          const label = labelMap.get(part.part_type) ?? part.part_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          return (
+            <Badge key={part.id} variant="default" className="text-xs">
+              {label}{part.quantity > 1 ? ` ×${part.quantity}` : ''}
+            </Badge>
+          );
+        })}
       </div>
     );
   };
@@ -242,6 +304,16 @@ export default function DonorSearchPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div>
             <SearchableSelect
+              label="Device Type"
+              options={deviceTypes.map(dt => ({ id: dt.id, name: dt.name }))}
+              value={criteria.device_type_id}
+              onChange={(value) => setCriteria(prev => ({ ...prev, device_type_id: value }))}
+              placeholder="Select device type"
+            />
+          </div>
+
+          <div>
+            <SearchableSelect
               label="Brand"
               options={brands.map(b => ({ id: b.id.toString(), name: b.name }))}
               value={criteria.brand_id}
@@ -271,6 +343,16 @@ export default function DonorSearchPage() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Serial Number</label>
+            <Input
+              type="text"
+              value={criteria.serial_number}
+              onChange={(e) => setCriteria(prev => ({ ...prev, serial_number: e.target.value }))}
+              placeholder="Enter serial number"
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
               PCB Number
             </label>
@@ -279,6 +361,16 @@ export default function DonorSearchPage() {
               value={criteria.pcb_number}
               onChange={(e) => setCriteria(prev => ({ ...prev, pcb_number: e.target.value }))}
               placeholder="Enter PCB number"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Firmware</label>
+            <Input
+              type="text"
+              value={criteria.firmware}
+              onChange={(e) => setCriteria(prev => ({ ...prev, firmware: e.target.value }))}
+              placeholder="Enter firmware version"
             />
           </div>
 
@@ -293,22 +385,32 @@ export default function DonorSearchPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Firmware</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Head Map</label>
             <Input
               type="text"
-              value={criteria.firmware_version}
-              onChange={(e) => setCriteria(prev => ({ ...prev, firmware_version: e.target.value }))}
-              placeholder="Enter firmware version"
+              value={criteria.head_map}
+              onChange={(e) => setCriteria(prev => ({ ...prev, head_map: e.target.value }))}
+              placeholder="Enter head map"
             />
           </div>
 
           <div>
-            <SearchableSelect
-              label="Interface"
-              options={interfaces.map(i => ({ id: i.id.toString(), name: i.name }))}
-              value={criteria.interface_id}
-              onChange={(value) => setCriteria(prev => ({ ...prev, interface_id: value }))}
-              placeholder="Select interface"
+            <label className="block text-sm font-medium text-slate-700 mb-2">Controller</label>
+            <Input
+              type="text"
+              value={criteria.controller}
+              onChange={(e) => setCriteria(prev => ({ ...prev, controller: e.target.value }))}
+              placeholder="Enter controller"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Chipset</label>
+            <Input
+              type="text"
+              value={criteria.chipset}
+              onChange={(e) => setCriteria(prev => ({ ...prev, chipset: e.target.value }))}
+              placeholder="Enter chipset"
             />
           </div>
         </div>
@@ -330,67 +432,81 @@ export default function DonorSearchPage() {
           </div>
 
           <div className="space-y-3">
-            {results.map((drive) => (
-              <div
-                key={drive.id}
-                className="border border-slate-200 rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all"
-              >
-                <div className="grid grid-cols-12 gap-4 items-start">
-                  <div className="col-span-12 lg:col-span-3">
-                    <div className="bg-info-muted border-l-4 border-info rounded px-3 py-2 mb-2">
-                      <div className="text-xs font-semibold text-info uppercase tracking-wider mb-0.5">Inventory ID</div>
-                      <div className="text-base font-bold text-info font-mono tracking-wide">
-                        {drive.item_number ?? drive.id.slice(0, 8)}
+            {results.map((drive) => {
+              const bestMatch = isBestMatch(drive);
+              const td = drive.technical_details as Record<string, unknown> | null;
+              return (
+                <div
+                  key={drive.id}
+                  className={`border rounded-lg p-4 hover:shadow-sm transition-all ${
+                    bestMatch
+                      ? 'border-success/50 bg-success-muted/30'
+                      : 'border-slate-200 hover:border-primary/50'
+                  }`}
+                >
+                  <div className="grid grid-cols-12 gap-4 items-start">
+                    <div className="col-span-12 lg:col-span-3">
+                      <div className="flex items-start gap-2 mb-2">
+                        {bestMatch && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-success text-success-foreground whitespace-nowrap">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Best match
+                          </span>
+                        )}
+                      </div>
+                      <div className="bg-info-muted border-l-4 border-info rounded px-3 py-2 mb-2">
+                        <div className="text-xs font-semibold text-info uppercase tracking-wider mb-0.5">Inventory ID</div>
+                        <div className="text-base font-bold text-info font-mono tracking-wide">
+                          {drive.item_number ?? drive.id.slice(0, 8)}
+                        </div>
+                      </div>
+                      <div className="text-xs text-slate-500">{drive.name}</div>
+                    </div>
+
+                    <div className="col-span-12 lg:col-span-4">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Identity</div>
+                      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                        <dt className="text-slate-500">Model:</dt>
+                        <dd className="font-medium text-slate-900">{drive.model || 'N/A'}</dd>
+
+                        <dt className="text-slate-500">Serial:</dt>
+                        <dd className="font-medium text-slate-900 font-mono text-xs">
+                          {drive.serial_number || 'N/A'}
+                        </dd>
+
+                        <dt className="text-slate-500">Quantity:</dt>
+                        <dd className={`font-bold ${(drive.quantity ?? 0) > 0 ? 'text-success' : 'text-danger'}`}>
+                          {drive.quantity ?? 0}
+                        </dd>
+                      </dl>
+                    </div>
+
+                    <div className="col-span-12 lg:col-span-4">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Technical Specs</div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                        {renderTechSpec('PCB', drive.pcb_number ?? (td?.pcb_number as string | null))}
+                        {renderTechSpec('Firmware', drive.firmware_version ?? (td?.firmware as string | null))}
+                        {renderTechSpec('DCM', td?.dcm as string | null)}
+                        {renderTechSpec('Head Map', drive.head_map ?? (td?.head_map as string | null))}
+                        {renderTechSpec('Controller', td?.controller as string | null)}
+                        {renderTechSpec('Chipset', td?.chipset as string | null)}
                       </div>
                     </div>
-                    <div className="text-xs text-slate-500">{drive.name}</div>
-                  </div>
 
-                  <div className="col-span-12 lg:col-span-4">
-                    <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                      <dt className="text-slate-500">Model:</dt>
-                      <dd className="font-medium text-slate-900">{drive.model || 'N/A'}</dd>
-
-                      <dt className="text-slate-500">Serial:</dt>
-                      <dd className="font-medium text-slate-900 font-mono text-xs">
-                        {drive.serial_number || 'N/A'}
-                      </dd>
-                    </dl>
-                  </div>
-
-                  <div className="col-span-12 lg:col-span-3">
-                    <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                      <dt className="text-slate-500">PCB:</dt>
-                      <dd className="font-medium text-slate-900 font-mono text-xs">
-                        {drive.pcb_number || 'N/A'}
-                      </dd>
-
-                      <dt className="text-slate-500">Firmware:</dt>
-                      <dd className="font-medium text-slate-900">{drive.firmware_version || 'N/A'}</dd>
-                    </dl>
-                  </div>
-
-                  <div className="col-span-12 lg:col-span-2">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-500">Quantity:</span>
-                        <span className={`font-bold ${(drive.quantity ?? 0) > 0 ? 'text-success' : 'text-danger'}`}>
-                          {drive.quantity ?? 0}
-                        </span>
-                      </div>
-                      <Button size="sm" className="w-full">
+                    <div className="col-span-12 lg:col-span-1 flex lg:flex-col lg:items-end gap-2">
+                      <Button size="sm" className="w-full lg:w-auto">
                         View Details
                       </Button>
                     </div>
-                  </div>
 
-                  <div className="col-span-12 border-t border-slate-100 pt-3">
-                    <div className="text-xs text-slate-600 mb-2">Usable Donor Parts:</div>
-                    {renderUsableParts(drive.donor_parts_available)}
+                    <div className="col-span-12 border-t border-slate-100 pt-3">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Donor Parts Available</div>
+                      {renderDonorParts(drive)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
       )}
