@@ -372,3 +372,9 @@ export const legalEntityKeys = {
   primary: (tenantId: string) => [...legalEntityKeys.all, 'primary', tenantId] as const,
   detail: (id: string) => [...legalEntityKeys.all, 'detail', id] as const,
 };
+
+export const dataMigrationKeys = {
+  all: ['dataMigration'] as const,
+  runs: () => [...dataMigrationKeys.all, 'runs'] as const,
+  run: (id: string) => [...dataMigrationKeys.all, 'run', id] as const,
+};
