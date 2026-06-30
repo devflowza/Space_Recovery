@@ -265,7 +265,7 @@ const router = createBrowserRouter(
             <Route path=":categoryId" lazy={page(() => import('./pages/settings/CategoryDetail'), 'CategoryDetail')} />
           </Route>
           <Route element={<ProtectedRoute allowedRoles={FINANCE_ROLES} />}>
-            <Route path="import-export" lazy={page(() => import('./pages/settings/ImportExport'), 'ImportExport')} />
+            <Route path="import-export" lazy={page(() => import('./pages/settings/ImportExportCenter'), 'ImportExportCenter')} />
           </Route>
           <Route path="notifications" lazy={page(() => import('./pages/settings/NotificationPreferences'), 'NotificationPreferences')} />
         </Route>

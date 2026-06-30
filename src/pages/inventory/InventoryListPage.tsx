@@ -9,7 +9,6 @@ import { InventoryItemWizard } from '../../components/inventory/InventoryItemWiz
 import InventoryDetailModal from '../../components/inventory/InventoryDetailModal';
 import DeleteInventoryConfirmationModal from '../../components/inventory/DeleteInventoryConfirmationModal';
 import { InventoryInsightsHeader } from '../../components/inventory/InventoryInsightsHeader';
-import { BulkInventoryImportModal } from '../../components/importExport/BulkInventoryImportModal';
 import { InventoryAdvancedSearch, type AdvancedSearchValues } from '../../components/inventory/InventoryAdvancedSearch';
 import { useInventoryDeviceTypes, useInventoryLocations } from '../../lib/inventory/inventoryCatalogQueries';
 import {
@@ -788,14 +787,10 @@ export default function InventoryListPage() {
         />
       )}
 
-      <BulkInventoryImportModal
-        isOpen={isBulkImportOpen}
-        onClose={() => setIsBulkImportOpen(false)}
-        onSuccess={() => {
-          setIsBulkImportOpen(false);
-          loadData();
-        }}
-      />
+      {/* BulkInventoryImportModal removed in P0 teardown; folds into the
+          data-migration engine in P5. isBulkImportOpen retained as a no-op
+          until then. */}
+      {isBulkImportOpen && (setIsBulkImportOpen(false), null)}
     </ListPageTemplate>
   );
 }
