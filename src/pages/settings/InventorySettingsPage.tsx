@@ -161,7 +161,7 @@ export default function InventorySettingsPage() {
         ) : deviceTypes.length === 0 ? (
           <p className="text-sm text-slate-400 py-6 text-center">No device types configured.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
             {deviceTypes.map(dt => {
               const currentLocationId = settingsMap?.get(dt.id) ?? null;
               const isSaving = saving[dt.id] ?? false;
@@ -240,7 +240,7 @@ export default function InventorySettingsPage() {
         ) : deviceTypes.length === 0 ? (
           <p className="text-sm text-slate-400 py-6 text-center">No device types configured.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
             {deviceTypes.map(dt => {
               const seq = sequences.find(s => s.scope === `inventory:${dt.id}`) ?? null;
               const effectivePrefix = seq?.prefix ?? dt.inventory_prefix ?? dt.name.replace(/\s+/g, '').toUpperCase().slice(0, 4);
