@@ -251,6 +251,9 @@ export const CategoryDetail: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.masterData(activeTable) });
       queryClient.invalidateQueries({ queryKey: ['settings', 'category-count'] });
+      // Device/inventory forms read these catalogs via masterDataKeys.* (['master', …]),
+      // a separate cache namespace — invalidate it so new items appear in the wizards immediately.
+      queryClient.invalidateQueries({ queryKey: ['master'] });
       setIsModalOpen(false);
       setFormValue('');
       setFormParentId(null);
@@ -277,6 +280,7 @@ export const CategoryDetail: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.masterData(activeTable) });
+      queryClient.invalidateQueries({ queryKey: ['master'] });
       setIsModalOpen(false);
       setEditingItem(null);
       setFormValue('');
@@ -311,6 +315,7 @@ export const CategoryDetail: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.masterData(activeTable) });
       queryClient.invalidateQueries({ queryKey: ['settings', 'category-count'] });
+      queryClient.invalidateQueries({ queryKey: ['master'] });
     },
     onError: (error: Error) => {
       logger.error('Delete master data error:', error);
@@ -356,6 +361,7 @@ export const CategoryDetail: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.masterData(activeTable) });
       queryClient.invalidateQueries({ queryKey: ['payment_methods_active'] });
+      queryClient.invalidateQueries({ queryKey: ['master'] });
     },
   });
 
@@ -588,26 +594,26 @@ export const CategoryDetail: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <button
         onClick={() => navigate('/settings')}
-        className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-8 transition-all hover:gap-3 font-medium"
+        className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 mb-3 transition-all hover:gap-2.5 font-medium"
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className="w-4 h-4" />
         <span>Back</span>
       </button>
 
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-          <div className="flex items-start gap-4">
+      <div className="mb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
             <div
-              className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center shadow-md flex-shrink-0"
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md flex-shrink-0"
               style={{
                 backgroundColor: category.backgroundColor,
                 boxShadow: `0 8px 24px -8px ${category.backgroundColor}80`
               }}
             >
-              <category.icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
+              <category.icon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 mb-1">{category.title}</h1>
+              <h1 className="text-xl font-bold text-slate-900 mb-0.5">{category.title}</h1>
               <p className="text-slate-600 text-sm">{category.description}</p>
             </div>
           </div>
