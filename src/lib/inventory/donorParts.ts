@@ -14,21 +14,16 @@ export interface DonorPartDef {
 }
 
 export const DONOR_PARTS: Record<DeviceFamily, DonorPartDef[]> = {
+  // Lab-used donor parts only (per owner): the other HDD parts (platters, motor,
+  // covers, magnets, voice coil) are never harvested as inventory in practice.
   hdd: [
-    { key: 'heads',         label: 'Read/Write Heads' },
-    { key: 'pcb',           label: 'PCB (Logic Board)' },
-    { key: 'platter',       label: 'Platters' },
-    { key: 'spindle_motor', label: 'Spindle Motor' },
-    { key: 'top_cover',     label: 'Top Cover' },
-    { key: 'bottom_cover',  label: 'Bottom Cover' },
-    { key: 'magnets',       label: 'Magnets' },
-    { key: 'voice_coil',    label: 'Voice Coil Assembly' },
+    { key: 'heads',     label: 'R/W Heads' },
+    { key: 'pcb',       label: 'PCB' },
+    { key: 'enclosure', label: 'Enclosure' },
   ],
+  // Lab-used SSD donor parts only (per owner): controller chip + power IC.
   ssd: [
     { key: 'controller', label: 'Controller Chip' },
-    { key: 'nand',       label: 'NAND Flash' },
-    { key: 'dram',       label: 'DRAM Cache' },
-    { key: 'pcb',        label: 'PCB' },
     { key: 'power_ic',   label: 'Power IC' },
   ],
   nvme: [

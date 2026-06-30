@@ -107,7 +107,10 @@ const SECTION_HEAD = 'text-xs font-bold uppercase tracking-wide text-primary mb-
 // Identity fields shown in inventory (device_type_id is rendered specially above).
 // Module-level: BASIC_FIELDS is a static constant, so this never needs recomputing per render.
 const IDENTITY_BASIC_FIELDS = BASIC_FIELDS.filter(d => d.key !== 'device_type_id');
-const FIELD_GRID = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3';
+// Wide responsive grid: the modal is maxWidth 7xl, so step up to 4–5 columns on
+// large screens to keep the whole form visible without scrolling, collapsing to
+// 3/2/1 on smaller widths so inputs stay usable (no cramped selects).
+const FIELD_GRID = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-3';
 
 // ---------------------------------------------------------------------------
 // Helpers

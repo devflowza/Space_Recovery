@@ -19,22 +19,18 @@ describe('DONOR_PARTS vocabulary', () => {
     }
   });
 
-  it('hdd includes platter and voice_coil', () => {
+  it('hdd is the lab-used set (heads, pcb, enclosure) and excludes unused parts', () => {
     const keys = DONOR_PARTS.hdd.map(p => p.key);
-    expect(keys).toContain('platter');
-    expect(keys).toContain('voice_coil');
+    expect(keys).toEqual(['heads', 'pcb', 'enclosure']);
+    expect(keys).not.toContain('platter');
+    expect(keys).not.toContain('voice_coil');
   });
 
-  it('hdd also includes heads and pcb', () => {
-    const keys = DONOR_PARTS.hdd.map(p => p.key);
-    expect(keys).toContain('heads');
-    expect(keys).toContain('pcb');
-  });
-
-  it('ssd includes nand and power_ic', () => {
+  it('ssd is the lab-used set (controller, power_ic) and excludes nand/dram/pcb', () => {
     const keys = DONOR_PARTS.ssd.map(p => p.key);
-    expect(keys).toContain('nand');
-    expect(keys).toContain('power_ic');
+    expect(keys).toEqual(['controller', 'power_ic']);
+    expect(keys).not.toContain('nand');
+    expect(keys).not.toContain('dram');
   });
 
   it('nvme includes nand and power_ic', () => {
