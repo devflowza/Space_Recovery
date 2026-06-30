@@ -58,7 +58,7 @@ describe('getDonorPartsForItems', () => {
       makePart({ id: 'p3', item_id: 'item-B', part_type: 'controller', quantity: 2 }),
     ];
 
-    vi.mocked(supabase.from).mockReturnValue(buildChain(rows) as ReturnType<typeof supabase.from>);
+    vi.mocked(supabase.from).mockReturnValue(buildChain(rows) as unknown as ReturnType<typeof supabase.from>);
 
     const result = await getDonorPartsForItems(['item-A', 'item-B']);
 
@@ -79,7 +79,7 @@ describe('getDonorPartsForItems', () => {
       makePart({ id: 'p1', item_id: 'item-A', part_type: 'heads', quantity: 1 }),
     ];
 
-    vi.mocked(supabase.from).mockReturnValue(buildChain(rows) as ReturnType<typeof supabase.from>);
+    vi.mocked(supabase.from).mockReturnValue(buildChain(rows) as unknown as ReturnType<typeof supabase.from>);
 
     const result = await getDonorPartsForItems(['item-A', 'item-B']);
 
@@ -97,7 +97,7 @@ describe('getDonorPartsForItems', () => {
       order: vi.fn().mockResolvedValue({ data: null, error: new Error('db error') }),
     };
 
-    vi.mocked(supabase.from).mockReturnValue(errorChain as ReturnType<typeof supabase.from>);
+    vi.mocked(supabase.from).mockReturnValue(errorChain as unknown as ReturnType<typeof supabase.from>);
 
     await expect(getDonorPartsForItems(['item-A'])).rejects.toThrow('db error');
   });
