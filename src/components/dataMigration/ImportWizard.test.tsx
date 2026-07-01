@@ -18,6 +18,9 @@ vi.mock('../../lib/dataMigration/workbookParser', () => ({
   readWorkbookMeta: mocks.readWorkbookMeta,
   computeFileHash: mocks.computeFileHash,
 }));
+vi.mock('../../lib/dataMigration/coerceWorkbook', () => ({
+  coerceWorkbook: (wb: unknown) => wb,
+}));
 vi.mock('../../lib/dataMigration/importValidator', () => ({
   validateWorkbook: mocks.validateWorkbook,
   validateSchemaVersion: mocks.validateSchemaVersion,

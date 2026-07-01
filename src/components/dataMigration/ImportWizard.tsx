@@ -13,6 +13,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { parseWorkbook, readWorkbookMeta, computeFileHash } from '../../lib/dataMigration/workbookParser';
+import { coerceWorkbook } from '../../lib/dataMigration/coerceWorkbook';
 import { buildTemplateWorkbook } from '../../lib/dataMigration/workbookBuilder';
 import { validateWorkbook, validateSchemaVersion } from '../../lib/dataMigration/importValidator';
 import { runImport } from '../../lib/dataMigration/importClient';
@@ -78,10 +79,13 @@ export const ImportWizard: React.FC<Props> = ({ domain, onClose }) => {
     setParsing(true);
     try {
       const buf = await file.arrayBuffer();
-      const [hash, wb] = await Promise.all([
+      const [hash, rawWb] = await Promise.all([
         computeFileHash(buf),
         Promise.resolve(parseWorkbook(buf)),
       ]);
+      // Normalise dates + invoice statuses BEFORE validating/importing so the client dry-run
+      // and the Postgres RPC agree (see coerceWorkbook). The SAME object feeds both.
+      const wb = coerceWorkbook(rawWb);
       const wbMeta = readWorkbookMeta(buf);
       const report = validateWorkbook(wb, domain);
       // I3: reject incompatible workbook schema versions before anything else.
