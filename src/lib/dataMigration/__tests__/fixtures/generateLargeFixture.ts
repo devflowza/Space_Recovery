@@ -135,6 +135,12 @@ export function generateLargeFixture(opts: FixtureOptions = {}): ParsedWorkbook 
       email: `info${i + 1}@company${i + 1}.example.com`,
       phone: `+1555${String(i).padStart(7, '0')}`,
       address: `${i + 1} Industrial Ave, Springfield`,
+      contact_person: `Contact ${i + 1}`,
+      contact_email: `contact${i + 1}@company${i + 1}.example.com`,
+      contact_phone: `+1999${String(i).padStart(7, '0')}`,
+      // Alternate so BOTH the explicit-false and the true paths round-trip — proves the
+      // import COALESCE((is_active)::boolean, true) does not clobber an explicit false.
+      is_active: i % 2 === 0,
       created_at: createdAt,
     });
   }

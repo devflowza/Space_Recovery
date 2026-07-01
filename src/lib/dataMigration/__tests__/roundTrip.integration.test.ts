@@ -17,6 +17,8 @@
 //  8. Idempotent re-run: submitting the same file_hash a second time inserts 0 new rows.
 //  9. Fabricating triggers did NOT fire: custody/VAT/portal-subscription row counts unchanged.
 // 10. Exactly one provenance entry (audit_trails row) was written by finalize.
+// 11. Company contact_person/contact_email/contact_phone/is_active survive the round-trip
+//     (B1) and carry metadata.legacy_id provenance (B2); explicit is_active=false stays false.
 //
 // The import is driven THROUGH the file boundary: the in-memory fixture is serialised with
 // buildWorkbook, then re-read with parseWorkbook, and THAT parsed result is imported — so the
@@ -180,6 +182,43 @@ describe('Round-trip integration — export → import → verify', { timeout: 3
   it('all companies were inserted', () => {
     expect(summary.counts['companies']?.inserted).toBe(fixtureWb.companies.length);
     expect(summary.counts['companies']?.error).toBe(0);
+  });
+
+  it('company contact fields + is_active survive the round-trip (B1) with provenance (B2)', async () => {
+    // Before B1 the export/import dropped these 4 fields; before B2 companies had no
+    // metadata column so the run_id filter below matched nothing. Both are now fixed.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rows } = await (client as any)
+      .from('companies')
+      .select('contact_person, contact_email, contact_phone, is_active, metadata')
+      .filter('metadata->>data_migration_run_id', 'eq', runId)
+      .is('deleted_at', null)
+      .limit(25) as { data: Array<{ contact_person: string | null; contact_email: string | null; contact_phone: string | null; is_active: boolean | null; metadata: Record<string, unknown> | null }> | null };
+
+    expect(rows).not.toBeNull();
+    expect((rows ?? []).length).toBeGreaterThan(0);
+    for (const r of rows ?? []) {
+      const legacyId = r.metadata?.['legacy_id'] as string;
+      expect(legacyId).toBeTruthy();                       // B2: provenance stamped on companies
+      const fixture = fixtureWb.companies.find(c => c['legacy_id'] === legacyId);
+      expect(fixture).toBeTruthy();
+      expect(r.contact_person).toBe(fixture!['contact_person']);   // B1: all four survive
+      expect(r.contact_email).toBe(fixture!['contact_email']);
+      expect(r.contact_phone).toBe(fixture!['contact_phone']);
+      expect(r.is_active).toBe(fixture!['is_active']);
+    }
+
+    // Deterministic: every explicit is_active=false company must import as false (the
+    // COALESCE default must not turn them true). Scoped to this run's companies.
+    const falseInFixture = fixtureWb.companies.filter(c => c['is_active'] === false).length;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { count: falseImported } = await (client as any)
+      .from('companies')
+      .select('*', { count: 'exact', head: true })
+      .filter('metadata->>data_migration_run_id', 'eq', runId)
+      .eq('is_active', false)
+      .is('deleted_at', null);
+    expect(falseImported).toBe(falseInFixture);
   });
 
   it('all cases were inserted', () => {
