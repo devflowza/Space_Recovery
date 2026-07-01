@@ -141,6 +141,9 @@ export function generateLargeFixture(opts: FixtureOptions = {}): ParsedWorkbook 
       // Alternate so BOTH the explicit-false and the true paths round-trip — proves the
       // import COALESCE((is_active)::boolean, true) does not clobber an explicit false.
       is_active: i % 2 === 0,
+      // Half supply a company_number (must be preserved), half leave it blank (must be
+      // auto-filled by finalize). Customers below leave customer_number blank entirely.
+      ...(i % 2 === 0 ? { company_number: `CMP-SUP-${i}` } : {}),
       created_at: createdAt,
     });
   }

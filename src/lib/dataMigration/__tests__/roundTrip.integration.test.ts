@@ -21,6 +21,8 @@
 //     (B1) and carry metadata.legacy_id provenance (B2); explicit is_active=false stays false.
 // 12. Device serial_number + forensic fields (part_number/firmware_version/pcb_number/dcm/dom/
 //     diagnosis/recovery_result/…) and the is_primary "patient" designation survive the round-trip.
+// 13. Human-readable numbers: file-supplied case/company numbers are preserved; blank
+//     customer/company numbers are auto-filled by finalize (unique, above the max supplied).
 //
 // The import is driven THROUGH the file boundary: the in-memory fixture is serialised with
 // buildWorkbook, then re-read with parseWorkbook, and THAT parsed result is imported — so the
@@ -221,6 +223,40 @@ describe('Round-trip integration — export → import → verify', { timeout: 3
       .eq('is_active', false)
       .is('deleted_at', null);
     expect(falseImported).toBe(falseInFixture);
+  });
+
+  it('human-readable numbers: supplied preserved, blanks auto-filled and unique', async () => {
+    // Companies: the fixture supplies company_number on half (CMP-SUP-*) and leaves half blank.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: comps } = await (client as any)
+      .from('companies').select('company_number, metadata')
+      .filter('metadata->>data_migration_run_id', 'eq', runId)
+      .is('deleted_at', null) as { data: Array<{ company_number: string | null; metadata: Record<string, unknown> | null }> | null };
+    const companies = comps ?? [];
+    expect(companies.length).toBeGreaterThan(0);
+    // every company ends up with a number (blanks were auto-filled by finalize) and all are unique
+    expect(companies.every(c => (c.company_number ?? '').length > 0)).toBe(true);
+    const compNums = companies.map(c => c.company_number);
+    expect(new Set(compNums).size).toBe(compNums.length);
+    // supplied company_numbers preserved exactly (matched to the fixture by legacy_id)
+    for (const c of companies) {
+      const legacyId = c.metadata?.['legacy_id'] as string;
+      const fixture = fixtureWb.companies.find(f => f['legacy_id'] === legacyId);
+      if (fixture?.['company_number']) {
+        expect(c.company_number).toBe(fixture['company_number']);
+      }
+    }
+
+    // Customers: the fixture leaves customer_number blank → every one must be auto-filled + unique.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: custs } = await (client as any)
+      .from('customers_enhanced').select('customer_number')
+      .filter('metadata->>data_migration_run_id', 'eq', runId)
+      .is('deleted_at', null) as { data: Array<{ customer_number: string | null }> | null };
+    const custNums = (custs ?? []).map(c => c.customer_number);
+    expect(custNums.length).toBeGreaterThan(0);
+    expect(custNums.every(n => (n ?? '').length > 0)).toBe(true);
+    expect(new Set(custNums).size).toBe(custNums.length);
   });
 
   it('all cases were inserted', () => {
