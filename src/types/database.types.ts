@@ -4073,6 +4073,7 @@ export type Database = {
           industry_id: string | null
           is_active: boolean | null
           logo_url: string | null
+          metadata: Json
           name: string
           notes: string | null
           phone: string | null
@@ -4100,6 +4101,7 @@ export type Database = {
           industry_id?: string | null
           is_active?: boolean | null
           logo_url?: string | null
+          metadata?: Json
           name: string
           notes?: string | null
           phone?: string | null
@@ -4127,6 +4129,7 @@ export type Database = {
           industry_id?: string | null
           is_active?: boolean | null
           logo_url?: string | null
+          metadata?: Json
           name?: string
           notes?: string | null
           phone?: string | null
@@ -11892,6 +11895,72 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_tenant_code_prefixes: {
+        Row: {
+          country_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          prefix: string
+          region_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          country_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          prefix: string
+          region_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          prefix?: string
+          region_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_tenant_code_prefixes_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tenant_code_prefixes_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "geo_regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_tenant_code_sequences: {
+        Row: {
+          current_value: number
+          prefix: string
+          updated_at: string
+        }
+        Insert: {
+          current_value?: number
+          prefix: string
+          updated_at?: string
+        }
+        Update: {
+          current_value?: number
+          prefix?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portal_link_history: {
         Row: {
           action: string
@@ -15979,6 +16048,7 @@ export type Database = {
           tax_number: string | null
           tax_number_label: string
           tax_system: string
+          tenant_code: string | null
           theme: string
           timezone: string
           trial_ends_at: string | null
@@ -16022,6 +16092,7 @@ export type Database = {
           tax_number?: string | null
           tax_number_label?: string
           tax_system?: string
+          tenant_code?: string | null
           theme?: string
           timezone?: string
           trial_ends_at?: string | null
@@ -16065,6 +16136,7 @@ export type Database = {
           tax_number?: string | null
           tax_number_label?: string
           tax_system?: string
+          tenant_code?: string | null
           theme?: string
           timezone?: string
           trial_ends_at?: string | null
@@ -17078,6 +17150,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      assign_tenant_code: { Args: { p_tenant_id: string }; Returns: string }
       authenticate_portal_customer: {
         Args: { p_email: string; p_password: string }
         Returns: Json
