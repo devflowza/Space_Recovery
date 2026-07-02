@@ -31,11 +31,11 @@ export const LoginForm = ({ onSubmit, error, loading }: LoginFormProps) => {
         transition={{ duration: 0.5, delay: 0.1 }}
         className="text-center mb-8"
       >
-        <h1 className="font-display text-3xl text-slate-900 tracking-tight">xSuite</h1>
-        <h2 className="mt-5 text-2xl font-semibold text-slate-900 font-body">
+        <h1 className="text-3xl text-slate-900 tracking-tight">xSuite</h1>
+        <h2 className="mt-5 text-2xl font-semibold text-slate-900">
           Welcome back
         </h2>
-        <p className="mt-2 text-slate-500 font-body">
+        <p className="mt-2 text-slate-500">
           Sign in to access your lab dashboard
         </p>
       </motion.div>

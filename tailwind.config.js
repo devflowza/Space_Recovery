@@ -40,11 +40,22 @@ export default {
       },
       fontFamily: {
         // App-wide typeface: Inter. `sans` is set so Tailwind Preflight applies
-        // it to <html>, making Inter the global default; `body`/`display` resolve
-        // to Inter too so existing font-body/font-display usages follow suit.
+        // it to <html>, making Inter the global default. The legacy body/display
+        // aliases (both = Inter) were removed 2026-07-02 (DESIGN.md → Typography).
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        body: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Inter', 'system-ui', 'sans-serif'],
+        // Platform monospace — for character-verified strings only (serials,
+        // hashes, SKUs, codes, OTP, JSON, kbd). Same stack as the Tailwind
+        // default, pinned here so the token is explicit per DESIGN.md.
+        mono: [
+          'ui-monospace',
+          'SFMono-Regular',
+          'Menlo',
+          'Monaco',
+          'Consolas',
+          '"Liberation Mono"',
+          '"Courier New"',
+          'monospace',
+        ],
       },
       spacing: {
         '4.5': '1.125rem',

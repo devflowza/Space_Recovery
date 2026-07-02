@@ -37,8 +37,8 @@ export const PasswordStrength = ({ password }: PasswordStrengthProps) => {
     <div className="mt-3 space-y-3">
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs text-slate-500 font-body">Strength</span>
-          <span className={`text-xs font-medium font-body ${
+          <span className="text-xs text-slate-500">Strength</span>
+          <span className={`text-xs font-medium ${
             strength.level === 1 ? 'text-danger' :
             strength.level === 2 ? 'text-warning' :
             'text-success'
@@ -64,7 +64,7 @@ export const PasswordStrength = ({ password }: PasswordStrengthProps) => {
         {REQUIREMENTS.map(req => {
           const met = req.test(password);
           return (
-            <li key={req.label} className="flex items-center gap-2 text-xs font-body">
+            <li key={req.label} className="flex items-center gap-2 text-xs">
               <motion.div
                 initial={false}
                 animate={{ scale: met ? [1.3, 1] : 1 }}

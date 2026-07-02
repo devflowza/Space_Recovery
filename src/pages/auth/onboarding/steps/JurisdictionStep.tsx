@@ -19,7 +19,7 @@ const LEGAL_ENTITY_TYPES = [
 ];
 
 const inputClasses = (hasError: boolean) =>
-  `w-full bg-slate-800/50 border ${hasError ? 'border-danger/60' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-600 font-body text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all appearance-none`;
+  `w-full bg-slate-800/50 border ${hasError ? 'border-danger/60' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-600 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all appearance-none`;
 
 /**
  * Jurisdiction capture, rendered only when the selected country has a real tax
@@ -45,13 +45,13 @@ export const JurisdictionStep = ({ formData, country, updateField }: Jurisdictio
       <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-4 space-y-4">
         <div className="flex items-center gap-2">
           <Receipt className="w-4 h-4 text-primary" />
-          <p className="text-xs text-slate-400 font-body uppercase tracking-wider font-medium">
+          <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">
             Tax & legal identity ({country.tax_label || country.tax_system})
           </p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 font-body mb-2">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
             Legal entity type <span className="text-primary">*</span>
           </label>
           <div className="relative">
@@ -70,7 +70,7 @@ export const JurisdictionStep = ({ formData, country, updateField }: Jurisdictio
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 font-body mb-2">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
             {taxLabel} <span className="text-primary">*</span>
           </label>
           <input
@@ -81,12 +81,12 @@ export const JurisdictionStep = ({ formData, country, updateField }: Jurisdictio
             className={inputClasses(!taxCheck.ok)}
           />
           {!taxCheck.ok && (
-            <p className="text-danger text-xs mt-1 font-body">{taxCheck.message}</p>
+            <p className="text-danger text-xs mt-1">{taxCheck.message}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 font-body mb-2">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
             Fiscal year starts in
           </label>
           <select
@@ -100,7 +100,7 @@ export const JurisdictionStep = ({ formData, country, updateField }: Jurisdictio
               </option>
             ))}
           </select>
-          <p className="text-xs text-slate-500 font-body mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Defaulted from {country.name}. You can change this later in Settings.
           </p>
         </div>
