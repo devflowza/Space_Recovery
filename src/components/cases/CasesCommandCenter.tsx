@@ -1,9 +1,20 @@
 import React from 'react';
-import { AlertCircle, ArrowDown, ArrowUp } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  Briefcase,
+  CheckCircle2,
+  FilePlus2,
+  Microscope,
+  PackageCheck,
+} from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { CASE_PERIOD_OPTIONS, type CasePeriod, type Trend } from '../../lib/casePeriods';
 import type { CaseCommandStats } from '../../hooks/useCaseCommandStats';
 import type { CaseBucket } from '../../lib/caseLifecycle';
+import type { StatCardStyle } from '../../lib/statCardStyleService';
+import { GradientStatCard } from '../shared/GradientStatCard';
 
 interface CasesCommandCenterProps {
   period: CasePeriod;
@@ -17,6 +28,10 @@ interface CasesCommandCenterProps {
   /** Snapshot bucket the list is filtered to; null = no bucket filter. */
   activeBucket: CaseBucket | null;
   onBucketChange: (bucket: CaseBucket | null) => void;
+  /** Tenant card style (Settings → Appearance): compact chips or vivid tiles. */
+  cardStyle?: StatCardStyle;
+  /** Vivid Urgent tile click — the page filters by priority. */
+  onUrgentFilter?: () => void;
 }
 
 const PeriodToggle: React.FC<{ period: CasePeriod; onChange: (p: CasePeriod) => void }> = ({
@@ -86,8 +101,11 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
   note,
   activeBucket,
   onBucketChange,
+  cardStyle = 'compact',
+  onUrgentFilter,
 }) => {
   const periodLabel = CASE_PERIOD_OPTIONS.find((o) => o.value === period)?.label ?? '';
+  const activeRing = 'ring-2 ring-primary ring-offset-2';
 
   return (
     <div className="mb-4">
@@ -140,6 +158,72 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
         </div>
       </div>
 
+      {cardStyle === 'vivid' ? (
+        <div
+          className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6"
+          role="group"
+          aria-label="Filter cases by lifecycle stage"
+        >
+          <GradientStatCard
+            tone="primary"
+            icon={FilePlus2}
+            label="New"
+            value={stats?.buckets.new ?? 0}
+            denom={stats?.total}
+            loading={loading}
+            onClick={() => onBucketChange(activeBucket === 'new' ? null : 'new')}
+            className={cn(activeBucket === 'new' && activeRing)}
+          />
+          <GradientStatCard
+            tone="info"
+            icon={Briefcase}
+            label="Active"
+            value={stats?.active ?? 0}
+            denom={stats?.total}
+            loading={loading}
+            onClick={() => onBucketChange(null)}
+          />
+          <GradientStatCard
+            tone="danger"
+            icon={AlertCircle}
+            label="Urgent"
+            value={stats?.urgent ?? 0}
+            denom={stats?.total}
+            loading={loading}
+            onClick={onUrgentFilter}
+          />
+          <GradientStatCard
+            tone="warning"
+            icon={Microscope}
+            label="In Diagnosis"
+            value={stats?.buckets.diagnosis ?? 0}
+            denom={stats?.total}
+            loading={loading}
+            onClick={() => onBucketChange(activeBucket === 'diagnosis' ? null : 'diagnosis')}
+            className={cn(activeBucket === 'diagnosis' && activeRing)}
+          />
+          <GradientStatCard
+            tone="success"
+            icon={CheckCircle2}
+            label="Ready"
+            value={stats?.buckets.ready ?? 0}
+            denom={stats?.total}
+            loading={loading}
+            onClick={() => onBucketChange(activeBucket === 'ready' ? null : 'ready')}
+            className={cn(activeBucket === 'ready' && activeRing)}
+          />
+          <GradientStatCard
+            tone="cat-2"
+            icon={PackageCheck}
+            label="Delivered"
+            value={stats?.buckets.delivered ?? 0}
+            denom={stats?.total}
+            loading={loading}
+            onClick={() => onBucketChange(activeBucket === 'delivered' ? null : 'delivered')}
+            className={cn(activeBucket === 'delivered' && activeRing)}
+          />
+        </div>
+      ) : (
       <div
         className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6"
         role="group"
@@ -176,6 +260,7 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
           );
         })}
       </div>
+      )}
     </div>
   );
 };

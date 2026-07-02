@@ -20,6 +20,7 @@ import { useListSelectionEnabled } from '../../hooks/useListSelectionEnabled';
 import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
 import { statusNamesForBucket, type CaseBucket } from '../../lib/caseLifecycle';
 import { pageWindow } from '../../lib/pagination';
+import { useStatCardStyle } from '../../hooks/useStatCardStyle';
 import { CaseViewsMenu } from '../../components/cases/CaseViewsMenu';
 import { CasePeekPanel } from '../../components/cases/CasePeekPanel';
 import { CreateCaseWizard } from '../../components/cases/CreateCaseWizard';
@@ -114,6 +115,7 @@ export const CasesList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const casesPerPage = useListPageSize();
   const selectionEnabled = useListSelectionEnabled();
+  const statCardStyle = useStatCardStyle();
   const [bucketFilter, setBucketFilter] = useState<CaseBucket | null>(null);
   const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' }>({
     key: 'created_at',
@@ -585,6 +587,12 @@ export const CasesList: React.FC = () => {
         onBucketChange={(bucket) => {
           setBucketFilter(bucket);
           if (bucket) setFilterStatus('all');
+        }}
+        cardStyle={statCardStyle}
+        onUrgentFilter={() => {
+          setBucketFilter(null);
+          setFilterStatus('all');
+          setFilterPriority(filterPriority === 'urgent' ? 'all' : 'urgent');
         }}
         note={
           caseUsage && caseUsage.limit
