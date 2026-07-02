@@ -102,6 +102,7 @@ export const PaymentsList: React.FC = () => {
           notes,
           payment_method_id,
           customer:customers_enhanced(id, customer_name, email),
+          case:cases(id, case_number),
           payment_method:master_payment_methods(id, name),
           bank_account:bank_accounts(account_name:name),
           allocations:payment_allocations(
@@ -522,8 +523,11 @@ export const PaymentsList: React.FC = () => {
                       {payment.payment_date ? formatDate(payment.payment_date) : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {/* payments has no case_id column in v1.0.0 (linkage flows via invoice.case_id). */}
-                      <span className="text-sm text-slate-400">-</span>
+                      {payment.case?.case_number ? (
+                        <span className="text-sm font-medium text-slate-700">{payment.case.case_number}</span>
+                      ) : (
+                        <span className="text-sm text-slate-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
@@ -607,7 +611,6 @@ export const PaymentsList: React.FC = () => {
                                   <Eye className="w-4 h-4" />
                                   View Full Details
                                 </button>
-                                {/* payments has no case_id column in v1.0.0 — case linkage is via invoice. */}
                                 <div className="border-t border-slate-200 my-1" />
                                 {payment.status === 'completed' && (
                                   <button
