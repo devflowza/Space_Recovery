@@ -144,6 +144,7 @@ jobs:
       - run: npm run check:provisioning-ghost-scalars
       - run: npm run check:registry-mapper-parity
       - run: npm run check:signup-smoke
+      - run: npm run check:vat-contra-reversal
 
   token-guard:
     runs-on: ubuntu-latest
