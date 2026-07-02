@@ -136,6 +136,53 @@ export function writeListPageSizeHint(size: number): void {
   }
 }
 
+/**
+ * Tenant-wide visibility of the bulk-selection checkboxes on list tables
+ * (company_settings.metadata.list_selection_checkboxes). Hidden = lists render
+ * without the checkbox column; bulk actions stay dormant.
+ */
+export function normalizeListSelectionEnabled(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') return value;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return undefined;
+}
+
+export async function getTenantListSelectionEnabled(): Promise<boolean | undefined> {
+  const settings = await getOrCreateCompanySettings();
+  const metadata = (settings.metadata ?? {}) as Record<string, unknown>;
+  return normalizeListSelectionEnabled(metadata.list_selection_checkboxes);
+}
+
+export async function setTenantListSelectionEnabled(enabled: boolean): Promise<void> {
+  const settings = await getOrCreateCompanySettings();
+  const metadata = {
+    ...((settings.metadata ?? {}) as Record<string, unknown>),
+    list_selection_checkboxes: enabled,
+  };
+  await updateCompanySettings({ metadata: metadata as Json });
+  invalidateCompanySettingsCache();
+  writeListSelectionHint(enabled);
+}
+
+const LIST_SELECTION_HINT_KEY = 'xsuite_list_selection';
+
+export function readListSelectionHint(): boolean | undefined {
+  try {
+    return normalizeListSelectionEnabled(localStorage.getItem(LIST_SELECTION_HINT_KEY));
+  } catch {
+    return undefined;
+  }
+}
+
+export function writeListSelectionHint(enabled: boolean): void {
+  try {
+    localStorage.setItem(LIST_SELECTION_HINT_KEY, String(enabled));
+  } catch {
+    // Best-effort hint only.
+  }
+}
+
 const hintKey = (tableKey: string) => `xsuite_tablecols_${tableKey}`;
 
 /** localStorage hint so the table renders with the user's columns on first paint. */

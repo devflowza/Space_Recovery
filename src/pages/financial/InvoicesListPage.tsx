@@ -21,6 +21,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
 import { useListPage } from '../../hooks/useListPage';
 import { useListPageSize } from '../../hooks/useListPageSize';
+import { useListSelectionEnabled } from '../../hooks/useListSelectionEnabled';
 import { ListPageTemplate } from '../../components/templates/ListPageTemplate';
 import { KpiRow } from '../../components/templates/KpiRow';
 import { InvoicesFilterBar } from '../../components/financial/InvoicesFilterBar';
@@ -54,6 +55,7 @@ export const InvoicesListPage: React.FC<unknown> = () => {
   const [paymentInvoice, setPaymentInvoice] = useState<InvoiceWithDetails | null>(null);
 
   const pageSize = useListPageSize();
+  const selectionEnabled = useListSelectionEnabled();
   const list = useListPage<InvoiceWithDetails, { status?: string; invoiceType?: string }>({
     queryKey: ['invoices'],
     filters: {
@@ -76,6 +78,12 @@ export const InvoicesListPage: React.FC<unknown> = () => {
       setSearchParams(next, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  // Hiding checkboxes (tenant preference) drops any in-flight selection so
+  // bulk actions can't act on rows the user can no longer see or unselect.
+  useEffect(() => {
+    if (!selectionEnabled) selection.clear();
+  }, [selectionEnabled, selection.clear]);
 
   const { data: stats } = useQuery({
     queryKey: ['invoice_stats'],
@@ -339,7 +347,7 @@ export const InvoicesListPage: React.FC<unknown> = () => {
       table={
         <InvoicesTable
           rows={invoices}
-          selection={selection}
+          selection={selectionEnabled ? selection : undefined}
           navigate={navigate}
           formatCurrency={formatCurrency}
           getClientName={getClientName}

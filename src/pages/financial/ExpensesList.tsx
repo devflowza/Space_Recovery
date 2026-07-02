@@ -41,6 +41,7 @@ import { downloadCSV } from '../../lib/csvExport';
 import { useToast } from '../../hooks/useToast';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useListPageSize } from '../../hooks/useListPageSize';
+import { useListSelectionEnabled } from '../../hooks/useListSelectionEnabled';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { logger } from '../../lib/logger';
 import type { Database } from '../../types/database.types';
@@ -102,6 +103,7 @@ export const ExpensesList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const pageSize = useListPageSize();
+  const selectionEnabled = useListSelectionEnabled();
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
@@ -125,6 +127,12 @@ export const ExpensesList: React.FC = () => {
   useEffect(() => {
     setPage(0);
   }, [searchTerm, statusFilter, pageSize]);
+
+  // Hiding checkboxes (tenant preference) drops any in-flight selection so
+  // bulk actions can't act on rows the user can no longer see or unselect.
+  useEffect(() => {
+    if (!selectionEnabled) selection.clear();
+  }, [selectionEnabled, selection.clear]);
 
   // Mirror the server has_role('accounts') set (owner/admin/manager/accounts) so the
   // Approve/Reject/Mark-as-Paid affordances match what RLS+service actually permit (EXP-012).
@@ -598,6 +606,7 @@ export const ExpensesList: React.FC = () => {
             <table className="w-full">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
+                  {selectionEnabled && (
                   <th className="px-4 py-4 w-10">
                     <input
                       type="checkbox"
@@ -613,6 +622,7 @@ export const ExpensesList: React.FC = () => {
                       aria-label="Select all on this page"
                     />
                   </th>
+                  )}
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Expense #</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Date</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Description</th>
@@ -631,15 +641,17 @@ export const ExpensesList: React.FC = () => {
                       selection.isSelected(expense.id) ? 'bg-info-muted/30' : ''
                     }`}
                   >
-                    <td className="px-4 py-4 w-10">
-                      <input
-                        type="checkbox"
-                        checked={selection.isSelected(expense.id)}
-                        onChange={() => selection.toggle(expense.id)}
-                        className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
-                        aria-label={`Select expense ${expense.expense_number ?? expense.id}`}
-                      />
-                    </td>
+                    {selectionEnabled && (
+                      <td className="px-4 py-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selection.isSelected(expense.id)}
+                          onChange={() => selection.toggle(expense.id)}
+                          className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                          aria-label={`Select expense ${expense.expense_number ?? expense.id}`}
+                        />
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-semibold text-primary">{expense.expense_number ?? '-'}</span>
                     </td>

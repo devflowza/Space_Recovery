@@ -17,6 +17,7 @@ import { casesColumns, casesRegistryMeta, pickPrimaryDevice, CASES_TABLE_KEY } f
 import type { CaseListRow } from '../../lib/tables/casesColumns';
 import { useTableViewPrefs } from '../../hooks/useTableViewPrefs';
 import { useListPageSize } from '../../hooks/useListPageSize';
+import { useListSelectionEnabled } from '../../hooks/useListSelectionEnabled';
 import { CreateCaseWizard } from '../../components/cases/CreateCaseWizard';
 import { useCasesRealtime } from '../../hooks/useCasesRealtime';
 import { useAuth } from '../../contexts/AuthContext';
@@ -104,6 +105,7 @@ export const CasesList: React.FC = () => {
   const [period, setPeriod] = useState<CasePeriod>('month');
   const [currentPage, setCurrentPage] = useState(1);
   const casesPerPage = useListPageSize();
+  const selectionEnabled = useListSelectionEnabled();
 
   const queryClient = useQueryClient();
   useCasesRealtime();
@@ -111,6 +113,12 @@ export const CasesList: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterStatus, filterPriority, casesPerPage]);
+
+  // Hiding checkboxes (tenant preference) drops any in-flight selection so
+  // bulk actions can't act on rows the user can no longer see or unselect.
+  useEffect(() => {
+    if (!selectionEnabled) selection.clear();
+  }, [selectionEnabled, selection.clear]);
 
   // Search spans case_no / client_reference / subject plus customer (name, email, mobile,
   // number) and device serials — the latter two pre-resolved to ids (see caseSearch.ts).
@@ -690,7 +698,7 @@ export const CasesList: React.FC = () => {
               view={view}
               rowKey={(r) => r.id}
               onRowClick={(r) => navigate(`/cases/${r.id}`)}
-              selection={selection}
+              selection={selectionEnabled ? selection : undefined}
               onWidthsChange={setWidths}
               rowAriaLabel={(r) => `case ${r.case_no}`}
             />

@@ -4,8 +4,11 @@ import {
   DEFAULT_LIST_PAGE_SIZE,
   LIST_PAGE_SIZE_OPTIONS,
   normalizeListPageSize,
+  normalizeListSelectionEnabled,
   readListPageSizeHint,
+  readListSelectionHint,
   writeListPageSizeHint,
+  writeListSelectionHint,
 } from './tablePrefsService';
 
 describe('normalizeListPageSize', () => {
@@ -55,5 +58,40 @@ describe('list page size hint', () => {
   it('ignores a corrupt stored hint', () => {
     localStorage.setItem('xsuite_list_page_size', 'not-a-number');
     expect(readListPageSizeHint()).toBeUndefined();
+  });
+});
+
+describe('normalizeListSelectionEnabled', () => {
+  it('passes booleans through', () => {
+    expect(normalizeListSelectionEnabled(true)).toBe(true);
+    expect(normalizeListSelectionEnabled(false)).toBe(false);
+  });
+
+  it('accepts boolean strings (localStorage round-trip)', () => {
+    expect(normalizeListSelectionEnabled('true')).toBe(true);
+    expect(normalizeListSelectionEnabled('false')).toBe(false);
+  });
+
+  it('rejects anything else from corrupt metadata', () => {
+    expect(normalizeListSelectionEnabled(null)).toBeUndefined();
+    expect(normalizeListSelectionEnabled(undefined)).toBeUndefined();
+    expect(normalizeListSelectionEnabled(1)).toBeUndefined();
+    expect(normalizeListSelectionEnabled('yes')).toBeUndefined();
+    expect(normalizeListSelectionEnabled({})).toBeUndefined();
+  });
+});
+
+describe('list selection hint', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('round-trips both values through localStorage', () => {
+    writeListSelectionHint(false);
+    expect(readListSelectionHint()).toBe(false);
+    writeListSelectionHint(true);
+    expect(readListSelectionHint()).toBe(true);
+  });
+
+  it('returns undefined when no hint stored', () => {
+    expect(readListSelectionHint()).toBeUndefined();
   });
 });
