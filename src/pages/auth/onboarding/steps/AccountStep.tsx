@@ -76,7 +76,7 @@ export const AccountStep = ({
   };
 
   const inputClasses = (hasError: boolean) =>
-    `w-full bg-slate-800/50 border ${hasError ? 'border-danger/60' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-600 font-body text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all`;
+    `w-full bg-slate-800/50 border ${hasError ? 'border-danger/60' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-600 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all`;
 
   return (
     <div className="space-y-4">
@@ -85,7 +85,7 @@ export const AccountStep = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <label className="block text-sm font-medium text-slate-300 font-body mb-2">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
           Full Name <span className="text-primary">*</span>
         </label>
         <input
@@ -95,7 +95,7 @@ export const AccountStep = ({
           placeholder="John Doe"
           className={inputClasses(!!errors.fullName)}
         />
-        {errors.fullName && <p className="text-danger text-xs mt-1 font-body">{errors.fullName}</p>}
+        {errors.fullName && <p className="text-danger text-xs mt-1">{errors.fullName}</p>}
       </motion.div>
 
       <motion.div
@@ -103,7 +103,7 @@ export const AccountStep = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <label className="block text-sm font-medium text-slate-300 font-body mb-2">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
           Email Address <span className="text-primary">*</span>
         </label>
         <div className="relative">
@@ -117,7 +117,7 @@ export const AccountStep = ({
             className={`${inputClasses(!!errors.email)} pl-10 ${formData.emailVerified ? 'pr-28 opacity-70' : 'pr-28'}`}
           />
           {formData.emailVerified ? (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-success text-xs font-body font-medium">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-success text-xs font-medium">
               <CheckCircle2 className="w-4 h-4" /> Verified
             </span>
           ) : (
@@ -125,7 +125,7 @@ export const AccountStep = ({
               type="button"
               onClick={handleSendOtp}
               disabled={!emailLooksValid || otpSending}
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-xs font-body font-medium hover:bg-primary/25 disabled:opacity-40 transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-xs font-medium hover:bg-primary/25 disabled:opacity-40 transition-colors"
             >
               {otpSending ? (
                 <span className="flex items-center gap-1"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Sending</span>
@@ -135,7 +135,7 @@ export const AccountStep = ({
             </button>
           )}
         </div>
-        {errors.email && <p className="text-danger text-xs mt-1 font-body">{errors.email}</p>}
+        {errors.email && <p className="text-danger text-xs mt-1">{errors.email}</p>}
 
         {otpSent && !formData.emailVerified && (
           <motion.div
@@ -143,7 +143,7 @@ export const AccountStep = ({
             animate={{ opacity: 1, height: 'auto' }}
             className="mt-3 overflow-hidden"
           >
-            <label className="block text-xs font-medium text-slate-400 font-body mb-2">
+            <label className="block text-xs font-medium text-slate-400 mb-2">
               Enter the 6-digit code we emailed you
             </label>
             <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export const AccountStep = ({
               />
               {otpVerifying && <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />}
             </div>
-            {otpError && <p className="text-danger text-xs mt-1 font-body" role="alert">{otpError}</p>}
+            {otpError && <p className="text-danger text-xs mt-1" role="alert">{otpError}</p>}
           </motion.div>
         )}
       </motion.div>
@@ -173,7 +173,7 @@ export const AccountStep = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <label className="block text-sm font-medium text-slate-300 font-body mb-2">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
           Password <span className="text-primary">*</span>
         </label>
         <div className="relative">
@@ -192,7 +192,7 @@ export const AccountStep = ({
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-        {errors.password && <p className="text-danger text-xs mt-1 font-body">{errors.password}</p>}
+        {errors.password && <p className="text-danger text-xs mt-1">{errors.password}</p>}
         <PasswordStrength password={formData.password} />
       </motion.div>
 
@@ -201,7 +201,7 @@ export const AccountStep = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
       >
-        <label className="block text-sm font-medium text-slate-300 font-body mb-2">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
           Confirm Password <span className="text-primary">*</span>
         </label>
         <div className="relative">
@@ -220,7 +220,7 @@ export const AccountStep = ({
             {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
-        {errors.confirmPassword && <p className="text-danger text-xs mt-1 font-body">{errors.confirmPassword}</p>}
+        {errors.confirmPassword && <p className="text-danger text-xs mt-1">{errors.confirmPassword}</p>}
       </motion.div>
 
       <motion.div
@@ -230,7 +230,7 @@ export const AccountStep = ({
         className="flex items-center gap-2 pt-1"
       >
         <Lock className="w-3.5 h-3.5 text-slate-600" />
-        <span className="text-xs text-slate-600 font-body">256-bit encryption &middot; GDPR compliant</span>
+        <span className="text-xs text-slate-600">256-bit encryption &middot; GDPR compliant</span>
       </motion.div>
 
       <motion.div
@@ -242,14 +242,14 @@ export const AccountStep = ({
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 font-body text-sm hover:border-slate-600 hover:text-slate-300 transition-all"
+          className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 text-sm hover:border-slate-600 hover:text-slate-300 transition-all"
         >
           Back
         </button>
         <Button
           onClick={onNext}
           disabled={!formData.emailVerified}
-          className="flex-1 !bg-primary hover:!bg-primary/90 !text-primary-foreground !rounded-xl !py-3 !font-body disabled:!opacity-40"
+          className="flex-1 !bg-primary hover:!bg-primary/90 !text-primary-foreground !rounded-xl !py-3 ! disabled:!opacity-40"
         >
           {formData.emailVerified ? 'Continue' : 'Verify email to continue'}
         </Button>

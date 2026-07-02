@@ -58,7 +58,7 @@ export const StepContainer = ({ step, stepIndex, direction, children }: StepCont
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="font-display text-xl text-slate-400 italic leading-relaxed"
+            className="text-xl text-slate-400 italic leading-relaxed"
           >
             {step.tagline}
           </motion.p>
@@ -77,10 +77,10 @@ export const StepContainer = ({ step, stepIndex, direction, children }: StepCont
             >
               <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xl">
                 <div className="mb-6">
-                  <h2 className="font-display text-2xl sm:text-3xl text-white mb-2">
+                  <h2 className="text-2xl sm:text-3xl text-white mb-2">
                     {step.title}
                   </h2>
-                  <p className="font-body text-slate-400 text-sm">
+                  <p className="text-slate-400 text-sm">
                     {step.subtitle}
                   </p>
                 </div>

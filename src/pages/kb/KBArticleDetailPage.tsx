@@ -20,7 +20,7 @@ import { useToast } from '../../hooks/useToast';
 const STATUS_COLORS: Record<string, string> = {
   published: 'bg-success-muted text-success',
   draft: 'bg-warning-muted text-warning',
-  archived: 'bg-gray-100 text-gray-500',
+  archived: 'bg-slate-100 text-slate-500',
 };
 
 function VersionItem({
@@ -35,38 +35,38 @@ function VersionItem({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="border border-gray-100 rounded-lg overflow-hidden mb-2">
+    <div className="border border-slate-100 rounded-lg overflow-hidden mb-2">
       <div
-        className="flex items-center justify-between px-3 py-2.5 bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+        className="flex items-center justify-between px-3 py-2.5 bg-white cursor-pointer hover:bg-slate-50 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isLatest ? 'bg-primary text-primary-foreground' : 'bg-gray-100 text-gray-600'}`}>
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isLatest ? 'bg-primary text-primary-foreground' : 'bg-slate-100 text-slate-600'}`}>
             {version.version_number}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-gray-500">{formatDate(version.created_at || '')}</div>
+            <div className="text-xs text-slate-500">{formatDate(version.created_at || '')}</div>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
           {!isLatest && (
             <button
               onClick={(e) => { e.stopPropagation(); onRestore(version); }}
-              className="p-1 text-gray-400 hover:text-primary hover:bg-primary/10 rounded transition-colors"
+              className="p-1 text-slate-400 hover:text-primary hover:bg-primary/10 rounded transition-colors"
               title="Restore this version"
             >
               <RotateCcw className="w-3 h-3" />
             </button>
           )}
           {isLatest && <span className="text-xs text-primary font-medium">Current</span>}
-          {expanded ? <ChevronDown className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
+          {expanded ? <ChevronDown className="w-3 h-3 text-slate-400" /> : <ChevronRight className="w-3 h-3 text-slate-400" />}
         </div>
       </div>
       {expanded && (
-        <div className="px-3 py-2.5 border-t border-gray-100 bg-gray-50">
-          <div className="text-xs font-medium text-gray-700 mb-1">{version.title}</div>
+        <div className="px-3 py-2.5 border-t border-slate-100 bg-slate-50">
+          <div className="text-xs font-medium text-slate-700 mb-1">{version.title}</div>
           <div
-            className="text-xs text-gray-500 line-clamp-4 prose-sm"
+            className="text-xs text-slate-500 line-clamp-4 prose-sm"
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(version.content?.substring(0, 300) + (version.content && version.content.length > 300 ? '...' : '') || '') }}
           />
         </div>
@@ -119,10 +119,10 @@ export const KBArticleDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <BookOpen className="w-10 h-10 text-gray-300 mx-auto mb-3 animate-pulse" />
-          <p className="text-sm text-gray-400">Loading article...</p>
+          <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3 animate-pulse" />
+          <p className="text-sm text-slate-400">Loading article...</p>
         </div>
       </div>
     );
@@ -130,10 +130,10 @@ export const KBArticleDetailPage: React.FC = () => {
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <BookOpen className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <h2 className="text-base font-semibold text-gray-700 mb-2">Article not found</h2>
+          <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+          <h2 className="text-base font-semibold text-slate-700 mb-2">Article not found</h2>
           <Button variant="secondary" size="sm" onClick={() => navigate('/procedures')}>
             <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
             Back to KB Center
@@ -146,12 +146,12 @@ export const KBArticleDetailPage: React.FC = () => {
   const catColor = article.kb_categories?.color || '#64748b';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate('/procedures')}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             KB Center
@@ -162,7 +162,7 @@ export const KBArticleDetailPage: React.FC = () => {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                 isVersionHistoryOpen
                   ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
               }`}
             >
               <History className="w-3.5 h-3.5" />
@@ -204,9 +204,9 @@ export const KBArticleDetailPage: React.FC = () => {
               </span>
             </div>
 
-            <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-4">{article.title}</h1>
+            <h1 className="text-2xl font-bold text-slate-900 leading-tight mb-4">{article.title}</h1>
 
-            <div className="flex items-center gap-4 text-sm text-gray-500 flex-wrap">
+            <div className="flex items-center gap-4 text-sm text-slate-500 flex-wrap">
               {article.profiles?.full_name && (
                 <span className="flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5" />
@@ -239,7 +239,7 @@ export const KBArticleDetailPage: React.FC = () => {
           {article.tags && article.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-6">
               {article.tags.map((tag) => (
-                <span key={tag.id} className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">
+                <span key={tag.id} className="inline-flex items-center gap-1 text-xs text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
                   <Tag className="w-3 h-3" />
                   {tag.name}
                 </span>
@@ -248,7 +248,7 @@ export const KBArticleDetailPage: React.FC = () => {
           )}
 
           <div
-            className="prose prose-sm max-w-none text-gray-800 leading-relaxed"
+            className="prose prose-sm max-w-none text-slate-800 leading-relaxed"
             style={{
               fontFamily: 'inherit',
             }}
@@ -257,13 +257,13 @@ export const KBArticleDetailPage: React.FC = () => {
         </div>
 
         {isVersionHistoryOpen && (
-          <div className="w-72 flex-shrink-0 border-l border-gray-200 bg-white px-4 py-5">
+          <div className="w-72 flex-shrink-0 border-l border-slate-200 bg-white px-4 py-5">
             <div className="flex items-center gap-2 mb-4">
-              <History className="w-4 h-4 text-gray-500" />
-              <h3 className="text-sm font-semibold text-gray-700">Version History</h3>
+              <History className="w-4 h-4 text-slate-500" />
+              <h3 className="text-sm font-semibold text-slate-700">Version History</h3>
             </div>
             {versions.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-4">No version history yet</p>
+              <p className="text-xs text-slate-400 text-center py-4">No version history yet</p>
             ) : (
               <div>
                 {versions.map((version, idx) => (

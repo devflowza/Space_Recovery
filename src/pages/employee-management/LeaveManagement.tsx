@@ -9,6 +9,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { KpiRow } from '../../components/templates/KpiRow';
+import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
 import type { Database } from '../../types/database.types';
@@ -682,50 +683,31 @@ export const LeaveManagement: React.FC = () => {
   ];
 
   return (
-    <div className="p-8 max-w-[1800px] mx-auto">
-      <div className="mb-8 flex items-start justify-between">
-        <div className="flex items-start gap-6">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-primary shadow-primary/40">
-            <CalendarDays className="w-7 h-7 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 mb-2">Leave Management</h1>
-            <p className="text-slate-600 text-base">Manage employee leave requests, balances, and policies</p>
-            <div className="flex gap-4 mt-3">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-warning"></div>
-                <span className="text-slate-600">{stats?.pendingApprovals ?? 0} Pending</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-info"></div>
-                <span className="text-slate-600">{stats?.employeesOnLeaveToday ?? 0} On Leave Today</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-success"></div>
-                <span className="text-slate-600">{stats?.approvedThisMonth ?? 0} Approved This Month</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => { invalidateAll(); }}
-            variant="secondary"
-            size="sm"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          <Button
-            onClick={() => setShowRequestModal(true)}
-            size="sm"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Request Leave
-          </Button>
-        </div>
-      </div>
+    <div className="px-6 py-5 max-w-[1800px] mx-auto">
+      <PageHeaderSlot
+        title="Leave Management"
+        icon={CalendarDays}
+        actions={
+          <>
+            <Button
+              onClick={() => { invalidateAll(); }}
+              variant="secondary"
+              size="sm"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+            <Button
+              onClick={() => setShowRequestModal(true)}
+              size="sm"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Request Leave
+            </Button>
+          </>
+        }
+      />
 
       <KpiRow
         cols="grid-cols-2 md:grid-cols-4"
@@ -870,21 +852,21 @@ export const LeaveManagement: React.FC = () => {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200">
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Employee</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Leave Type</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Duration</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Days</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Reason</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Status</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Submitted</th>
-                        {isAdmin && <th className="text-right py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Actions</th>}
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Employee</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Leave Type</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Duration</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Days</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Reason</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Status</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Submitted</th>
+                        {isAdmin && <th className="text-right py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Actions</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {filteredRequests.map(req => (
                         <tr key={req.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                           <td className="py-3 px-4">
-                            <div className="font-medium text-slate-900">
+                            <div className="text-sm font-semibold text-slate-900">
                               {req.employee?.first_name} {req.employee?.last_name}
                             </div>
                             {req.employee?.employee_number && (
@@ -904,7 +886,7 @@ export const LeaveManagement: React.FC = () => {
                             <div className="text-xs text-slate-400">to {req.end_date}</div>
                           </td>
                           <td className="py-3 px-4">
-                            <span className="font-semibold text-slate-900">{req.days ?? 0}</span>
+                            <span className="text-sm font-semibold text-slate-900 tabular-nums">{req.days ?? 0}</span>
                             <span className="text-slate-500 text-xs ml-1">day{(req.days ?? 0) !== 1 ? 's' : ''}</span>
                           </td>
                           <td className="py-3 px-4 max-w-[180px]">
@@ -1000,13 +982,13 @@ export const LeaveManagement: React.FC = () => {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200">
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Employee</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Leave Type</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Year</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Allocated</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Used</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Remaining</th>
-                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wide">Usage</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Employee</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Leave Type</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Year</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Allocated</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Used</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Remaining</th>
+                        <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Usage</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1021,7 +1003,7 @@ export const LeaveManagement: React.FC = () => {
                         return (
                           <tr key={bal.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                             <td className="py-3 px-4">
-                              <div className="font-medium text-slate-900">
+                              <div className="text-sm font-semibold text-slate-900">
                                 {bal.employee?.first_name} {bal.employee?.last_name}
                               </div>
                               {bal.employee?.employee_number && (

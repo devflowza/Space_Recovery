@@ -77,7 +77,7 @@ export const LocationStep = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <label className="block text-sm font-medium text-slate-300 font-body mb-2">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
           Country <span className="text-primary">*</span>
         </label>
         <div className="relative">
@@ -85,7 +85,7 @@ export const LocationStep = ({
           <select
             value={formData.countryId}
             onChange={e => handleCountryChange(e.target.value)}
-            className="w-full bg-slate-800/50 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white font-body text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all appearance-none"
+            className="w-full bg-slate-800/50 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all appearance-none"
           >
             <option value="" className="bg-slate-900">Select your country...</option>
             {countries.map(c => (
@@ -96,7 +96,7 @@ export const LocationStep = ({
           </select>
         </div>
         {errors.countryId && (
-          <p className="text-danger text-xs mt-1 font-body">{errors.countryId}</p>
+          <p className="text-danger text-xs mt-1">{errors.countryId}</p>
         )}
       </motion.div>
 
@@ -110,24 +110,24 @@ export const LocationStep = ({
             className="overflow-hidden"
           >
             <div className="rounded-xl bg-slate-800/40 border border-slate-700/50 p-4 space-y-3">
-              <p className="text-xs text-slate-500 font-body uppercase tracking-wider font-medium">
+              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium">
                 Auto-configured for your region
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-slate-500 font-body">Currency</p>
-                  <p className="text-sm text-white font-body font-medium">
+                  <p className="text-xs text-slate-500">Currency</p>
+                  <p className="text-sm text-white font-medium">
                     {selectedCountry.currency_symbol || '—'} {selectedCountry.currency_code || 'N/A'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 font-body">Tax System</p>
-                  <p className="text-sm text-white font-body font-medium">
+                  <p className="text-xs text-slate-500">Tax System</p>
+                  <p className="text-sm text-white font-medium">
                     {selectedCountry.tax_label || 'None'}
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-slate-500 font-body">
+              <p className="text-xs text-slate-500">
                 Currency, tax labels, and date formats will be automatically configured. You can change these later in Settings.
               </p>
             </div>
@@ -142,7 +142,7 @@ export const LocationStep = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
-            <label className="block text-sm font-medium text-slate-300 font-body mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               <span className="inline-flex items-center gap-1.5">
                 <Languages className="w-4 h-4 text-slate-500" /> Interface language
               </span>
@@ -156,7 +156,7 @@ export const LocationStep = ({
                     type="button"
                     aria-pressed={active}
                     onClick={() => updateField('uiLanguage', opt.value)}
-                    className={`py-3 rounded-xl border font-body text-sm transition-all ${
+                    className={`py-3 rounded-xl border text-sm transition-all ${
                       active
                         ? 'border-primary bg-primary/15 text-white'
                         : 'border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
@@ -167,7 +167,7 @@ export const LocationStep = ({
                 );
               })}
             </div>
-            <p className="text-xs text-slate-500 font-body mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Defaulted from {selectedCountry.name}. You can change this anytime.
             </p>
           </motion.div>
@@ -189,13 +189,13 @@ export const LocationStep = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <label className="block text-sm font-medium text-slate-300 font-body mb-2">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
           Base (reporting) currency <span className="text-primary">*</span>
         </label>
         <select
           value={formData.baseCurrencyCode}
           onChange={(e) => updateField('baseCurrencyCode', e.target.value)}
-          className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white font-body text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all appearance-none"
+          className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all appearance-none"
         >
           {formData.baseCurrencyCode === '' && (
             <option value="" className="bg-slate-900">Select a country first...</option>
@@ -207,9 +207,9 @@ export const LocationStep = ({
           ))}
         </select>
         {errors.baseCurrencyCode && (
-          <p className="text-danger text-xs mt-1 font-body">{errors.baseCurrencyCode}</p>
+          <p className="text-danger text-xs mt-1">{errors.baseCurrencyCode}</p>
         )}
-        <p className="text-xs text-slate-500 font-body mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           Locked once you have financial documents.
         </p>
       </motion.div>
@@ -223,14 +223,14 @@ export const LocationStep = ({
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 font-body text-sm hover:border-slate-600 hover:text-slate-300 transition-all"
+          className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 text-sm hover:border-slate-600 hover:text-slate-300 transition-all"
         >
           Back
         </button>
         <Button
           onClick={onNext}
           disabled={!formData.countryId || !jurisdictionComplete}
-          className="flex-1 !bg-primary hover:!bg-primary/90 !text-primary-foreground !rounded-xl !py-3 !font-body disabled:!opacity-40"
+          className="flex-1 !bg-primary hover:!bg-primary/90 !text-primary-foreground !rounded-xl !py-3 ! disabled:!opacity-40"
         >
           Continue
         </Button>

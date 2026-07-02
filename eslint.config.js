@@ -11,6 +11,8 @@
   import noUnfilteredItemEmbed from './eslint-rules/no-unfiltered-item-embed.js';
   import noRawCurrencyAggregation from './eslint-rules/no-raw-currency-aggregation.js';
   import noHardcodedLocaleFormat from './eslint-rules/no-hardcoded-locale-format.js';
+  import noGrayPalette from './eslint-rules/no-gray-palette.js';
+  import noArbitraryTypography from './eslint-rules/no-arbitrary-typography.js';
 
   // Hoisted so the main config and the fixed-surface override below share one
   // identical xsuite plugin object (flat config resolves plugin rules per block).
@@ -23,6 +25,8 @@
       'no-unfiltered-item-embed': noUnfilteredItemEmbed,
       'no-raw-currency-aggregation': noRawCurrencyAggregation,
       'no-hardcoded-locale-format': noHardcodedLocaleFormat,
+      'no-gray-palette': noGrayPalette,
+      'no-arbitrary-typography': noArbitraryTypography,
     },
   };
 
@@ -96,6 +100,15 @@
         // down across other P4 slices — like no-untranslated-jsx-text, this
         // surfaces NEW violations in review without failing CI on existing debt.
         'xsuite/no-hardcoded-locale-format': 'warn',
+        // Typography standard (DESIGN.md → Typography, 2026-07-02): the house
+        // neutral is slate — gray-* was swept to zero and stays there (no
+        // baseline)…
+        'xsuite/no-gray-palette': 'error',
+        // …and arbitrary text-[Npx]/tracking-[…] literals are banned (named
+        // scale + text-xxs only; tracking-[0.5em] OTP exception is built into
+        // the rule). Pre-existing offenders are baselined OFF per-file below
+        // and ratchet down via the typography standardization program.
+        'xsuite/no-arbitrary-typography': 'error',
         '@typescript-eslint/no-unused-vars': ['error', {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',

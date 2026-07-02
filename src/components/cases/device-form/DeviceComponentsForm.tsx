@@ -36,13 +36,13 @@ function SectionHeader({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-center gap-2 mb-3">
       <span className="w-1 h-4 rounded-full bg-cat-2" aria-hidden="true" />
-      <h3 className="text-sm font-bold uppercase tracking-[0.04em] text-slate-800">{children}</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">{children}</h3>
     </div>
   );
 }
 
 function MetaLabel({ children }: { children: ReactNode }) {
-  return <span className="block text-[11px] font-semibold uppercase tracking-[0.05em] text-slate-400 mb-1">{children}</span>;
+  return <span className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">{children}</span>;
 }
 
 export function DeviceComponentsForm({
@@ -160,7 +160,6 @@ export function DeviceComponentsForm({
                 value={filter}
                 onChange={setFilter}
                 options={filterOptions}
-                clearable={false}
                 size="sm"
                 usePortal
                 aria-label={t('devices.components.filterByStatus', { defaultValue: 'Filter by status' })}
@@ -169,7 +168,7 @@ export function DeviceComponentsForm({
           </div>
 
           <div className="mt-4">
-            <div className="grid grid-cols-[1fr_auto_1.4fr_auto] items-center gap-3 px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.05em] text-slate-400">
+            <div className="grid grid-cols-[1fr_auto_1.4fr_auto] items-center gap-3 px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
               <span>{t('devices.components.colComponent', { defaultValue: 'Component' })}</span>
               <span>{t('devices.components.colStatus', { defaultValue: 'Status' })}</span>
               <span>{t('devices.components.colDetails', { defaultValue: 'Details' })}</span>
@@ -279,7 +278,6 @@ export function DeviceComponentsForm({
                       value={str(state[selectedDef.key])}
                       onChange={(v) => setStatus(selectedDef, v)}
                       options={statusOptions}
-                      clearable={false}
                       placeholder={t('ui.select.placeholder', { defaultValue: 'Select…' })}
                       size="sm"
                       usePortal
@@ -305,7 +303,6 @@ export function DeviceComponentsForm({
                       value={str(cm.result)}
                       onChange={(v) => updateMeta(ck, { result: v })}
                       options={COMPONENT_RESULT_OPTIONS}
-                      clearable={false}
                       placeholder={t('ui.select.placeholder', { defaultValue: 'Select…' })}
                       size="sm"
                       usePortal
@@ -359,7 +356,7 @@ export function DeviceComponentsForm({
                   <div className="pt-3 border-t border-border">
                     <MetaLabel>{t('devices.components.lastUpdated', { defaultValue: 'Last Updated' })}</MetaLabel>
                     <div className="flex items-center gap-2.5">
-                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-cat-2 text-white text-[11px] font-semibold">
+                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-cat-2 text-white text-xs font-semibold">
                         {(updatedByName || '—').trim().split(/\s+/).map(p => p[0] ?? '').slice(0, 2).join('').toUpperCase() || '—'}
                       </span>
                       <div className="text-sm">

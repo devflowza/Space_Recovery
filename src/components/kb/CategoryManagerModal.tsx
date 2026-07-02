@@ -216,7 +216,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
                       {...c}
                       value={form.parent_id}
                       onChange={(e) => setForm({ ...form, parent_id: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white"
                     >
                       <option value="">None (top-level)</option>
                       {parentOptions.map((cat) => (
@@ -252,7 +252,7 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
                 </FormField>
               </div>
               <div className="flex justify-end gap-2 pt-1">
-                <Button variant="ghost" size="sm" onClick={cancelForm}>Cancel</Button>
+                <Button variant="secondary" size="sm" onClick={cancelForm}>Cancel</Button>
                 <Button variant="primary" size="sm" onClick={handleSubmit} disabled={isPending}>
                   {editingId ? 'Update' : 'Create'}
                 </Button>
@@ -261,47 +261,47 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({ isOp
           )}
 
           {isLoading ? (
-            <div className="text-center py-8 text-gray-400 text-sm">Loading categories...</div>
+            <div className="text-center py-8 text-slate-400 text-sm">Loading categories...</div>
           ) : categories.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 text-sm">No categories yet. Create your first one.</div>
+            <div className="text-center py-8 text-slate-400 text-sm">No categories yet. Create your first one.</div>
           ) : (
-            <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 overflow-hidden">
+            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden">
               {categories.map((cat) => (
-                <div key={cat.id} className={`flex items-center gap-3 px-4 py-3 bg-white hover:bg-gray-50 transition-colors ${!cat.is_active ? 'opacity-50' : ''}`}>
+                <div key={cat.id} className={`flex items-center gap-3 px-4 py-3 bg-white hover:bg-slate-50 transition-colors ${!cat.is_active ? 'opacity-50' : ''}`}>
                   <div
                     className="w-3 h-3 rounded-full flex-shrink-0"
                     style={{ backgroundColor: cat.color || '#64748b' }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-900 truncate">{cat.name}</span>
+                      <span className="text-sm font-medium text-slate-900 truncate">{cat.name}</span>
                       {cat.parent_id && (
-                        <ChevronDown className="w-3 h-3 text-gray-400 rotate-[-90deg]" />
+                        <ChevronDown className="w-3 h-3 text-slate-400 rotate-[-90deg]" />
                       )}
                       {!cat.is_active && (
-                        <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">inactive</span>
+                        <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">inactive</span>
                       )}
                     </div>
                     {cat.description && (
-                      <p className="text-xs text-gray-500 truncate mt-0.5">{cat.description}</p>
+                      <p className="text-xs text-slate-500 truncate mt-0.5">{cat.description}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => toggleActiveMutation.mutate({ id: cat.id, is_active: !cat.is_active })}
-                      className={`text-xs px-2 py-0.5 rounded transition-colors ${cat.is_active ? 'text-success bg-success-muted hover:bg-success/20' : 'text-gray-500 bg-gray-100 hover:bg-gray-200'}`}
+                      className={`text-xs px-2 py-0.5 rounded transition-colors ${cat.is_active ? 'text-success bg-success-muted hover:bg-success/20' : 'text-slate-500 bg-slate-100 hover:bg-slate-200'}`}
                     >
                       {cat.is_active ? 'Active' : 'Inactive'}
                     </button>
                     <button
                       onClick={() => startEdit(cat)}
-                      className="p-1.5 text-gray-400 hover:text-primary hover:bg-info-muted rounded transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-primary hover:bg-info-muted rounded transition-colors"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setDeleteConfirmId(cat.id)}
-                      className="p-1.5 text-gray-400 hover:text-danger hover:bg-danger-muted rounded transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-danger hover:bg-danger-muted rounded transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

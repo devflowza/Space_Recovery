@@ -109,14 +109,14 @@ export const PlansManagementPage: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Plan</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Code</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Monthly</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Yearly</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Trial</th>
-                <th className="text-center text-xs font-medium text-slate-500 uppercase px-6 py-3">Status</th>
-                <th className="text-center text-xs font-medium text-slate-500 uppercase px-6 py-3">Features</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase px-6 py-3">Actions</th>
+                <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-3">Plan</th>
+                <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-3">Code</th>
+                <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-3">Monthly</th>
+                <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-3">Yearly</th>
+                <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-3">Trial</th>
+                <th className="text-center text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-3">Status</th>
+                <th className="text-center text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-3">Features</th>
+                <th className="text-right text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -167,7 +167,7 @@ const PlanRow: React.FC<{
     <tr className="hover:bg-slate-50 cursor-pointer" onClick={onNavigate}>
       <td className="px-6 py-4">
         <div>
-          <p className="font-medium text-slate-900">{plan.name}</p>
+          <p className="text-sm font-semibold text-slate-900">{plan.name}</p>
           {plan.description && (
             <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{plan.description}</p>
           )}

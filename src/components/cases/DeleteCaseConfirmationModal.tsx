@@ -51,20 +51,20 @@ export const DeleteCaseConfirmationModal: React.FC<DeleteCaseConfirmationModalPr
           </div>
         </div>
 
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
           <div className="mb-2">
-            <span className="text-sm font-medium text-gray-700">Case:</span>
-            <span className="ml-2 text-sm font-semibold text-gray-900">{caseNumber}</span>
+            <span className="text-sm font-medium text-slate-700">Case:</span>
+            <span className="ml-2 text-sm font-semibold text-slate-900">{caseNumber}</span>
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-700">Title:</span>
-            <span className="ml-2 text-sm text-gray-900">{caseTitle}</span>
+            <span className="text-sm font-medium text-slate-700">Title:</span>
+            <span className="ml-2 text-sm text-slate-900">{caseTitle}</span>
           </div>
         </div>
 
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-          <p className="text-xs font-medium text-gray-700 mb-2">The following will be permanently deleted:</p>
-          <ul className="text-xs text-gray-600 space-y-1">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+          <p className="text-xs font-medium text-slate-700 mb-2">The following will be permanently deleted:</p>
+          <ul className="text-xs text-slate-600 space-y-1">
             <li>• All devices and device information</li>
             <li>• All attachments and documents</li>
             <li>• All communications and notes</li>
@@ -75,8 +75,8 @@ export const DeleteCaseConfirmationModal: React.FC<DeleteCaseConfirmationModalPr
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Type <span className="font-semibold text-gray-900">{caseNumber}</span> to confirm
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Type <span className="font-semibold text-slate-900">{caseNumber}</span> to confirm
           </label>
           <Input
             type="text"

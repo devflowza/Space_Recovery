@@ -491,7 +491,7 @@ export const CustomersListPage: React.FC = () => {
                 placeholder="Search customers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary"
               />
             </div>
 
@@ -531,6 +531,7 @@ export const CustomersListPage: React.FC = () => {
 
             <Button
               variant="secondary"
+              size="sm"
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 flex-shrink-0"
             >
@@ -725,7 +726,7 @@ export const CustomersListPage: React.FC = () => {
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-semibold text-primary">
+                        <span className="text-sm font-semibold text-primary">
                           {customer.customer_number}
                         </span>
                       </td>
@@ -738,7 +739,7 @@ export const CustomersListPage: React.FC = () => {
                             size="sm"
                           />
                           <div>
-                            <div className="font-medium text-slate-900">
+                            <div className="text-sm font-semibold text-slate-900">
                               {customer.customer_name}
                             </div>
                           </div>
@@ -902,7 +903,7 @@ export const CustomersListPage: React.FC = () => {
               label="Customer Group"
               value={formData.customer_group_id}
               onChange={(value) => setFormData({ ...formData, customer_group_id: value })}
-              options={customerGroups.map((g) => ({ id: g.id, name: g.name }))}
+              options={[{ id: '', name: 'No group' }, ...customerGroups.map((g) => ({ id: g.id, name: g.name }))]}
               placeholder="Select Group"
             />
 
@@ -910,7 +911,10 @@ export const CustomersListPage: React.FC = () => {
               label="Company (Optional)"
               value={formData.company_id}
               onChange={(value) => setFormData({ ...formData, company_id: value })}
-              options={companies.map((c) => ({ id: c.id, name: `${c.company_name} (${c.company_number})` }))}
+              options={[
+                { id: '', name: 'No Company' },
+                ...companies.map((c) => ({ id: c.id, name: `${c.company_name} (${c.company_number})` })),
+              ]}
               placeholder="No Company"
               onAddNew={handleAddNewCompany}
               addNewLabel="Add New Company"
@@ -924,14 +928,14 @@ export const CustomersListPage: React.FC = () => {
               onChange={(value) => {
                 setFormData({ ...formData, country_id: value, city_id: '' });
               }}
-              options={countries.map((c) => ({ id: c.id, name: c.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...countries.map((c) => ({ id: c.id, name: c.name }))]}
               placeholder="Select Country"
             />
             <SearchableSelect
               label="City"
               value={formData.city_id}
               onChange={(value) => setFormData({ ...formData, city_id: value })}
-              options={filteredCities.map((c) => ({ id: c.id, name: c.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...filteredCities.map((c) => ({ id: c.id, name: c.name }))]}
               placeholder="Select City"
               disabled={!formData.country_id}
             />
@@ -1076,7 +1080,7 @@ export const CustomersListPage: React.FC = () => {
             label="Customer Group"
             value={editFormData.customer_group_id}
             onChange={(value) => setEditFormData({ ...editFormData, customer_group_id: value })}
-            options={customerGroups.map((g) => ({ id: g.id, name: g.name }))}
+            options={[{ id: '', name: 'No group' }, ...customerGroups.map((g) => ({ id: g.id, name: g.name }))]}
             placeholder="Select Group"
           />
 
@@ -1087,14 +1091,14 @@ export const CustomersListPage: React.FC = () => {
               onChange={(value) => {
                 setEditFormData({ ...editFormData, country_id: value, city_id: '' });
               }}
-              options={countries.map((c) => ({ id: c.id, name: c.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...countries.map((c) => ({ id: c.id, name: c.name }))]}
               placeholder="Select Country"
             />
             <SearchableSelect
               label="City"
               value={editFormData.city_id}
               onChange={(value) => setEditFormData({ ...editFormData, city_id: value })}
-              options={filteredCities.map((c) => ({ id: c.id, name: c.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...filteredCities.map((c) => ({ id: c.id, name: c.name }))]}
               placeholder="Select City"
               disabled={!editFormData.country_id}
             />

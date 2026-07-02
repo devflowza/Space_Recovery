@@ -120,7 +120,7 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
     <Modal isOpen={isOpen} onClose={onClose} title={communication ? 'Edit Communication' : 'Log Communication'} closeOnBackdrop={false}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-slate-700 mb-2">
             Communication Type *
           </label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -135,7 +135,7 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
                     flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all
                     ${formData.type === type.value
                       ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-gray-200 hover:border-gray-300'
+                      : 'border-slate-200 hover:border-slate-300'
                     }
                   `}
                 >
@@ -148,7 +148,7 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-slate-700 mb-1">
             Subject / Topic *
           </label>
           <Input
@@ -160,7 +160,7 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-slate-700 mb-1">
             <Calendar className="inline w-4 h-4 mr-1" />
             Communication Date *
           </label>
@@ -173,14 +173,14 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
         </div>
 
         <div>
-          <label htmlFor="supplier-comm-notes" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="supplier-comm-notes" className="block text-sm font-medium text-slate-700 mb-1">
             Notes / Details *
           </label>
           <textarea
             id="supplier-comm-notes"
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             rows={4}
             required
             placeholder="Detailed notes about the communication..."
@@ -193,14 +193,14 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
               type="checkbox"
               checked={formData.follow_up_required}
               onChange={(e) => setFormData({ ...formData, follow_up_required: e.target.checked })}
-              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+              className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
-            <span className="text-sm font-medium text-gray-700">Follow-up required</span>
+            <span className="text-sm font-medium text-slate-700">Follow-up required</span>
           </label>
 
           {formData.follow_up_required && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
                 Follow-up Date
               </label>
               <Input
@@ -214,7 +214,7 @@ export default function CommunicationFormModal({ isOpen, onClose, onSuccess, sup
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
           <Button type="submit" disabled={loading}>

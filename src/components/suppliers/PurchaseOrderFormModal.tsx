@@ -227,11 +227,27 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
   const totals = calculateTotals();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={purchaseOrder ? 'Edit Purchase Order' : 'Create Purchase Order'} size="xl" closeOnBackdrop={false}>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={purchaseOrder ? 'Edit Purchase Order' : 'Create Purchase Order'}
+      maxWidth="5xl"
+      closeOnBackdrop={false}
+      footer={
+        <div className="flex items-center justify-end gap-3">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type="submit" form="purchaseOrderForm" disabled={loading}>
+            {loading ? 'Saving...' : purchaseOrder ? 'Update Purchase Order' : 'Create Purchase Order'}
+          </Button>
+        </div>
+      }
+    >
+      <form id="purchaseOrderForm" onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               PO Number *
             </label>
             <Input
@@ -244,7 +260,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
           </div>
 
           <div>
-            <label htmlFor="po-supplier" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="po-supplier" className="block text-sm font-medium text-slate-700 mb-1">
               <Package className="inline w-4 h-4 mr-1" />
               Supplier *
             </label>
@@ -252,7 +268,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
               id="po-supplier"
               value={formData.supplier_id}
               onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               required
               disabled={!!supplierId}
             >
@@ -266,7 +282,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               <Calendar className="inline w-4 h-4 mr-1" />
               Order Date *
             </label>
@@ -279,7 +295,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Expected Delivery
             </label>
             <Input
@@ -291,14 +307,14 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
           </div>
 
           <div>
-            <label htmlFor="po-status" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="po-status" className="block text-sm font-medium text-slate-700 mb-1">
               Status *
             </label>
             <select
               id="po-status"
               value={formData.status_id}
               onChange={(e) => setFormData({ ...formData, status_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               required
             >
               <option value="">Select Status</option>
@@ -311,7 +327,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Shipping Method
             </label>
             <Input
@@ -321,15 +337,15 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
             />
           </div>
 
-          <div className="md:col-span-2">
-            <label htmlFor="po-shipping-address" className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="md:col-span-2 lg:col-span-3">
+            <label htmlFor="po-shipping-address" className="block text-sm font-medium text-slate-700 mb-1">
               Shipping Address
             </label>
             <textarea
               id="po-shipping-address"
               value={formData.shipping_address}
               onChange={(e) => setFormData({ ...formData, shipping_address: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={2}
               placeholder="Complete shipping address..."
             />
@@ -338,7 +354,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
 
         <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-slate-900">
               <DollarSign className="inline w-5 h-5 mr-1" />
               Line Items
             </h3>
@@ -406,11 +422,11 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
           <div className="mt-4 pt-4 border-t">
             <div className="flex flex-col items-end space-y-2">
               <div className="flex justify-between w-64">
-                <span className="text-gray-600">Subtotal:</span>
+                <span className="text-slate-600">Subtotal:</span>
                 <span className="font-semibold">{formatCurrency(totals.subtotal)}</span>
               </div>
               <div className="flex justify-between w-64">
-                <span className="text-gray-600">{taxConfig.label} ({taxConfig.defaultRate}%):</span>
+                <span className="text-slate-600">{taxConfig.label} ({taxConfig.defaultRate}%):</span>
                 <span className="font-semibold">{formatCurrency(totals.tax)}</span>
               </div>
               <div className="flex justify-between w-64 text-lg border-t pt-2">
@@ -423,7 +439,7 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="po-notes" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="po-notes" className="block text-sm font-medium text-slate-700 mb-1">
               <FileText className="inline w-4 h-4 mr-1" />
               Notes (Visible to Supplier)
             </label>
@@ -431,35 +447,27 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
               id="po-notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={3}
               placeholder="Notes for the supplier..."
             />
           </div>
 
           <div>
-            <label htmlFor="po-internal-notes" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="po-internal-notes" className="block text-sm font-medium text-slate-700 mb-1">
               Internal Notes (Private)
             </label>
             <textarea
               id="po-internal-notes"
               value={formData.internal_notes}
               onChange={(e) => setFormData({ ...formData, internal_notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={3}
               placeholder="Internal notes (not visible to supplier)..."
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Saving...' : purchaseOrder ? 'Update Purchase Order' : 'Create Purchase Order'}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

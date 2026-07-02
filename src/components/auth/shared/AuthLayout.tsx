@@ -8,7 +8,7 @@ interface AuthLayoutProps {
 
 export const AuthLayout = ({ leftContent, rightContent }: AuthLayoutProps) => {
   return (
-    <div className="min-h-screen flex font-body">
+    <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-[60%] relative overflow-hidden">
         <AuthBackground />
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 py-12 w-full">

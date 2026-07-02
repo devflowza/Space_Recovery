@@ -324,18 +324,15 @@ export const DocumentDraftReview: React.FC<DocumentDraftReviewProps> = ({
       open={isOpen}
       onClose={onClose}
       label={instance?.title ?? 'Document'}
-      className="max-w-5xl w-full"
+      className="max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden"
     >
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-slate-900">
-            {instance?.title ?? 'Document'}
-          </h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Close
-          </Button>
-        </div>
+      <div className="shrink-0 px-6 pt-6 pb-4">
+        <h2 className="text-lg font-semibold text-slate-900">
+          {instance?.title ?? 'Document'}
+        </h2>
+      </div>
 
+      <div className="px-6 pb-6 overflow-y-auto flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left: editable sections */}
           <div className="space-y-4">
@@ -357,42 +354,6 @@ export const DocumentDraftReview: React.FC<DocumentDraftReviewProps> = ({
               </div>
             ))}
 
-            <div className="flex flex-wrap gap-2 pt-2">
-              <Button onClick={saveSections} disabled={busy} size="sm">
-                Save
-              </Button>
-              <Button variant="secondary" onClick={preview} disabled={busy} size="sm">
-                Preview
-              </Button>
-              {status === 'draft' && (
-                <Button
-                  size="sm"
-                  onClick={runSubmit}
-                  disabled={busy}
-                >
-                  Submit for Review
-                </Button>
-              )}
-              {status === 'in_review' && (
-                <Button
-                  size="sm"
-                  onClick={initiateApprove}
-                  disabled={busy || isAuthor}
-                  title={
-                    isAuthor
-                      ? 'The approver must be different from the author'
-                      : undefined
-                  }
-                >
-                  Approve
-                </Button>
-              )}
-              {status === 'approved' && (
-                <Button size="sm" onClick={runSend} disabled={busy}>
-                  Send to Customer
-                </Button>
-              )}
-            </div>
           </div>
 
           {/* Right: PDF preview iframe */}
@@ -410,6 +371,41 @@ export const DocumentDraftReview: React.FC<DocumentDraftReviewProps> = ({
             )}
           </div>
         </div>
+      </div>
+
+      {/* Pinned footer — workflow actions + dismiss */}
+      <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-t border-border px-6 py-3">
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={saveSections} disabled={busy} size="sm">
+            Save
+          </Button>
+          <Button variant="secondary" onClick={preview} disabled={busy} size="sm">
+            Preview
+          </Button>
+          {status === 'draft' && (
+            <Button size="sm" onClick={runSubmit} disabled={busy}>
+              Submit for Review
+            </Button>
+          )}
+          {status === 'in_review' && (
+            <Button
+              size="sm"
+              onClick={initiateApprove}
+              disabled={busy || isAuthor}
+              title={isAuthor ? 'The approver must be different from the author' : undefined}
+            >
+              Approve
+            </Button>
+          )}
+          {status === 'approved' && (
+            <Button size="sm" onClick={runSend} disabled={busy}>
+              Send to Customer
+            </Button>
+          )}
+        </div>
+        <Button variant="secondary" size="sm" onClick={onClose}>
+          Close
+        </Button>
       </div>
 
       {currentSlot && (

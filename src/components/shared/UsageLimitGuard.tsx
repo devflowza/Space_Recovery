@@ -61,9 +61,9 @@ export function UsageLimitGuard({
         <AlertTriangle className="w-6 h-6 text-warning" />
       </div>
 
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">Plan Limit Reached</h3>
+      <h3 className="text-lg font-semibold text-slate-900 mb-2">Plan Limit Reached</h3>
 
-      <p className="text-gray-600 mb-4">{checkResult.message}</p>
+      <p className="text-slate-600 mb-4">{checkResult.message}</p>
 
       <Button onClick={() => navigate('/settings/plans')} variant="outline" className="gap-2">
         <TrendingUp className="w-4 h-4" />

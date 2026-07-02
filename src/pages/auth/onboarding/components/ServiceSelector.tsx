@@ -42,10 +42,10 @@ export const ServiceSelector = ({ selected, onChange }: ServiceSelectorProps) =>
               <Icon className={`w-4.5 h-4.5 ${isSelected ? 'text-primary' : 'text-slate-500'}`} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium font-body ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+              <p className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-slate-300'}`}>
                 {service.label}
               </p>
-              <p className="text-xs text-slate-500 font-body mt-0.5">{service.description}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{service.description}</p>
             </div>
             {isSelected && (
               <motion.div

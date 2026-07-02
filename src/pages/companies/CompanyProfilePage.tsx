@@ -588,7 +588,7 @@ export const CompanyProfilePage: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all whitespace-nowrap ${
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-primary/10 text-primary shadow-sm'
                     : 'text-slate-600 hover:bg-slate-50'
@@ -862,7 +862,7 @@ export const CompanyProfilePage: React.FC = () => {
               label="Industry"
               value={editFormData.industry_id}
               onChange={(value) => setEditFormData({ ...editFormData, industry_id: value })}
-              options={industries.map((i: { id: string; name: string }) => ({ id: i.id, name: i.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...industries.map((i: { id: string; name: string }) => ({ id: i.id, name: i.name }))]}
               placeholder="Select Industry"
             />
           </div>
@@ -895,14 +895,14 @@ export const CompanyProfilePage: React.FC = () => {
               onChange={(value) => {
                 setEditFormData({ ...editFormData, country_id: value, city_id: '' });
               }}
-              options={countries.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...countries.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))]}
               placeholder="Select Country"
             />
             <SearchableSelect
               label="City"
               value={editFormData.city_id}
               onChange={(value) => setEditFormData({ ...editFormData, city_id: value })}
-              options={filteredCities.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...filteredCities.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))]}
               placeholder="Select City"
               disabled={!editFormData.country_id}
             />

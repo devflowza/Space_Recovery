@@ -234,7 +234,7 @@ export default function InventoryListPage() {
   const getStockColor = (count: number) => {
     if (count === 0) return 'text-danger';
     if (count <= 2) return 'text-warning';
-    return 'text-gray-900';
+    return 'text-slate-900';
   };
 
   const formatDate = (dateString: string) => {
@@ -561,7 +561,7 @@ export default function InventoryListPage() {
                     >
                       <td className="px-6 py-4">
                         <div className="space-y-1.5">
-                          <div className="font-semibold text-slate-900">
+                          <div className="text-sm font-semibold text-slate-900">
                             {item.brand?.name || 'Unknown'} {item.model || 'N/A'}
                           </div>
                           {item.item_number && (

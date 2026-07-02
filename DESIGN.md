@@ -34,10 +34,79 @@
 ## Typography
 Fonts load via Google Fonts in `index.html` (CSP allows `fonts.googleapis.com` / `fonts.gstatic.com`). Family tokens are defined in `tailwind.config.js` (`fontFamily`); the default `sans` is set to Inter so unclassed elements inherit it via Tailwind Preflight (`html`).
 
-- **All UI (Display / Body / Labels / Data):** `Inter` — the single app-wide typeface. Tailwind `font-sans` (default), `font-body`, and `font-display` all resolve to Inter, so the whole app is consistent and the existing `font-body`/`font-display` usages need no changes.
-- **Code:** none defined. Do not introduce a mono font without updating this doc.
+> Full baseline + evidence: `docs/typography-audit-2026-07-02.md`. The role table below was codified
+> 2026-07-02 (see Decisions Log) — values match the codebase majority so most surfaces are already
+> conformant; deviations are burned down by the typography standardization program and held by lint.
+
+### Families
+- **All UI (Display / Body / Labels / Data):** `Inter` — the single app-wide typeface via `font-sans`
+  (Preflight default). The legacy `font-body`/`font-display` aliases (both = Inter) are **removed** —
+  do not reintroduce them; unclassed text already inherits Inter.
+- **Code / character-verified data:** `font-mono` — tokenized in `tailwind.config.js` as the platform
+  monospace stack. **Mono is for strings a human verifies character-by-character**: device serials,
+  custody hashes, SKUs, tenant/plan codes, OTP inputs, JSON/raw payloads, `kbd` shortcuts. Business
+  document numbers (CASE/INV/EXP/CUST/QUO-…) are **not** mono — they render proportional per the
+  table-cell roles below.
 - **Arabic / RTL (PDF only):** Noto Sans Arabic + Tajawal, in `public/fonts/` (see `src/lib/pdf/fontLoader.ts`). On-screen Arabic falls back to the system Arabic face (Inter ships no Arabic glyphs); PDFs are unaffected.
-- **Custom sizes:** `text-xxs` = `0.625rem` (10px) for ultra-dense table metadata. Everything else uses the default Tailwind type scale — do not add sizes ad hoc.
+
+### Sizes
+- Default Tailwind type scale only. **Arbitrary sizes (`text-[Npx]`) are banned** (lint:
+  `xsuite/no-arbitrary-typography`; pre-existing offenders are baselined per-file and ratchet down).
+- `text-xxs` = `0.625rem` (10px) — sanctioned **only** for KPI-tile microlabels/pills and app-chrome
+  metadata (nav count bubbles, kbd hints). Never for content labels or body text.
+- `text-nav` = `0.8125rem/1.25rem` (13px/20px) — the **app-chrome tier** (top-bar title + crumbs,
+  sidebar nav items/user name). Chrome-only; content surfaces never use it.
+- **Content floor is 12px (`text-xs`).** 9/10/11/13/15px arbitrary values are fully retired (93 → 0,
+  2026-07-02); the chrome ramp is tokenized (`text-nav`/`text-xxs`; wordmark `text-sm`).
+- **Explicit size on table/tab text is mandatory.** Unsized `<td>`/`<span>`/tab text inherits the 16px
+  root and silently breaks the 14px rhythm (the audit's F-4 class of bugs).
+
+### Type roles (locked)
+| Role | Spec |
+|---|---|
+| Page title — AppLayout list pages | Top-bar slot only (`usePageHeaderSlot`); **no in-content page header** (H2 pattern) |
+| Page title — detail pages | `DetailPageHeader` h1: `text-2xl font-bold text-slate-900` |
+| Page title — portal / platform-admin shells | `PageHeader` (`text-lg font-semibold`) for list-level; `DetailPageHeader` for detail-level; `text-3xl` retired |
+| Section / card heading | `text-lg font-semibold text-slate-900`; sub-section `text-base font-semibold`; `font-bold` is not a heading weight at these sizes |
+| Modal title | `text-lg font-semibold text-slate-900` (`Modal`/`ConfirmDialog`) — all surfaces incl. portal |
+| Table header (th) | `text-xs font-semibold uppercase tracking-wider text-slate-600` |
+| Table body cell | `text-sm text-slate-700`; identity/emphasis cells `text-sm font-semibold text-slate-900` (or `text-primary` for linked numbers) — size always explicit |
+| Money / quantity | `text-sm font-semibold text-slate-900 tabular-nums`; `font-bold` reserved for totals rows; `tabular-nums` on every numeric column/figure |
+| Button | `font-medium`; sm `text-sm`, **md (default) `text-sm`**, lg `text-base` — 14px is the platform button size |
+| Badge / chip | `ui/Badge` only (`font-semibold`; sm `text-xs`, md `text-sm`); no hand-rolled 9–11px chips |
+| Form label | `text-sm font-medium text-slate-700` (the settings `font-semibold` variant is retired) |
+| Hint / helper | `text-xs text-slate-500` |
+| Error | `text-xs text-danger` + `AlertCircle` icon + `role="alert"` (the `FormField` spec — universal) |
+| Uppercase micro-label / form section header | `text-xs font-semibold uppercase tracking-wider` (+ `text-primary` for form section dividers, `text-slate-500` elsewhere) |
+| KPI cards | the two `StatCard` styles only — compact (label `text-xs font-medium text-slate-500`, value `text-xl font-bold tabular-nums`) and vivid `GradientStatCard` (label `text-xxs font-semibold uppercase tracking-wider`, value `text-xl/2xl font-bold tabular-nums`); no hand-rolled KPI markup |
+| Empty state | `shared/EmptyState` (`text-lg font-semibold` + `text-sm`) |
+| Pagination | `ui/Pager` (`text-sm text-slate-600`) |
+| Breadcrumbs | top-bar `text-nav` (chrome); `DetailPageHeader` crumbs `text-sm text-slate-500` — surface-specific, both sanctioned |
+
+### Neutral text (slate only)
+`text-gray-*` (and every `*-gray-*` utility) is **banned** in `src/` — lint `xsuite/no-gray-palette`.
+Shade roles: primary content `slate-900` · body `slate-700` · secondary `slate-600` · captions/hints
+`slate-500` · decorative/disabled only `slate-400` (≈3:1 on white — never for meaningful text).
+
+### Tracking & transforms
+- Uppercase labels always pair with `tracking-wider`. `tracking-wide` is retired from the uppercase
+  micro-label role; arbitrary `tracking-[…]` literals are banned — sole exception `tracking-[0.5em]`
+  on OTP/code inputs (built into the lint rule).
+- `italic` only for quoted/testimonial content and notes.
+
+### Portal surface (customer-facing — sanctioned larger ramp)
+The customer portal (`src/pages/portal/**`, `PortalLayout`) is read by customers like a website, not a
+dense ops tool, so it keeps its own **larger sanctioned ramp** (owner decision 2026-07-02, "Option A"):
+in-page page titles `text-2xl font-bold`, card headings `text-lg font-bold`, stat values up to
+`text-3xl`. Everything else follows the shared roles — table headers use the standard th spec, labels/
+hints/errors/badges/buttons use the shared primitives and specs, uppercase labels use `tracking-wider`,
+money uses `tabular-nums`. Do not import the portal ramp into the ops app, and do not "fix" portal
+titles down to ops sizes.
+
+### Enforcement
+`eslint-rules/no-gray-palette.js` and `eslint-rules/no-arbitrary-typography.js` — both `error` with
+**no baseline** (fully enforced since 2026-07-02; the sole in-rule exception is OTP
+`tracking-[0.5em]`). Same operating model as the raw-color rules.
 
 ## Color
 Every brand/status token is an **RGB triplet** CSS variable (e.g. `--color-primary: 22 38 96`) so Tailwind's `<alpha-value>` opacity syntax works. The 14 semantic tokens are wired in `tailwind.config.js`; values live in `src/index.css`. **Use semantic tokens only — never raw Tailwind brand colors or hex in `src/`.**
@@ -126,12 +195,16 @@ The platform-standard overlay is a **three-region modal**: a pinned header, a si
 
 > **Status — shipped.** The three-region primitives are the canonical surface (`Modal` / `Dialog` / `CommandPalette`), and the two former gaps are now implemented: the **colored-pill tab bar** (`ui/Tabs` `variant="pills"`, applied to `DeviceFormModal`) and the **`bg-slate-900/40` scrim** (the `Dialog` default). Apply this standard to *new and edited* surfaces; what remains tracked is forward-only — the responsive full-screen/bottom-sheet behaviour below `sm`, and extracting the shared `TabbedFormModal`/footer-slot scaffold for the remaining modals.
 
-- **Primitives:** `ui/Modal.tsx` wraps `ui/Dialog.tsx` and is the canonical surface for header-pinned forms — it passes `flex flex-col overflow-hidden` to the panel and renders children in a `p-4 overflow-y-auto flex-1` body, so the header stays pinned (`Modal.tsx:71`/`:104`). `ui/Dialog.tsx` is the low-level container: React portal to `document.body`, `useFocusTrap` (focus trap + restore), and a **ref-counted** body scroll-lock so stacked dialogs don't unlock early (`Dialog.tsx:20-64`). **The pinned behavior is not a property of `Dialog` itself** — `Dialog`'s own panel is a single whole-panel scroller (`max-h-[90vh] overflow-y-auto`, `Dialog.tsx:101`). The three-region layout comes from the *consumer* layering `flex flex-col overflow-hidden` on the panel and splitting children into intrinsic-height header/footer + a `flex-1 overflow-y-auto` body. **Do not render plain children straight into `Dialog`** — that whole-panel scroll lets the header and actions scroll away (retired for forms). `Modal` pins the header but **has no footer slot today**, so a form that needs a pinned footer composes `Dialog` directly with the three-region flex-column pattern — exactly as `shared/CommandPalette.tsx` (pinned header **and** footer) and `cases/DeviceFormModal.tsx` do. Mirror them.
+- **Primitives:** `ui/Modal.tsx` wraps `ui/Dialog.tsx` and is the canonical surface for header-pinned forms — it passes `flex flex-col overflow-hidden` to the panel and renders children in a `p-4 overflow-y-auto flex-1` body, so the header stays pinned (`Modal.tsx:71`/`:104`). `ui/Dialog.tsx` is the low-level container: React portal to `document.body`, `useFocusTrap` (focus trap + restore), and a **ref-counted** body scroll-lock so stacked dialogs don't unlock early (`Dialog.tsx:20-64`). **The pinned behavior is not a property of `Dialog` itself** — `Dialog`'s own panel is a single whole-panel scroller (`max-h-[90vh] overflow-y-auto`, `Dialog.tsx:101`). The three-region layout comes from the *consumer* layering `flex flex-col overflow-hidden` on the panel and splitting children into intrinsic-height header/footer + a `flex-1 overflow-y-auto` body. **Do not render plain children straight into `Dialog`** — that whole-panel scroll lets the header and actions scroll away (retired for forms). **`Modal` now ships a pinned `footer` slot** (2026-07-02: `shrink-0 border-t px-4 py-3`), so ordinary forms get the three-region layout from `Modal` alone; only Workspace-tier surfaces with custom chrome (tab bars, split panes) still compose `Dialog` directly — as `shared/CommandPalette.tsx` and `cases/DeviceFormModal.tsx` do. Mirror them.
 - **Anatomy:**
-  1. **Pinned header** — title + optional icon/badges + close button.
+  1. **Pinned header** — title + optional icon/badges. **No top-right X**: the close-icon pattern was
+     removed platform-wide 2026-07-02; dismissal is footer buttons + ESC + backdrop (each opt-out via
+     `closeOnEscape`/`closeOnBackdrop`). **Every modal MUST therefore carry at least one explicit
+     footer close/cancel action** (View modals: a single "Close").
   2. **Optional pinned sub-header** — the tab bar and/or a fixed control row (e.g. the Device Role select + "Mark as Primary" checkbox in `DeviceFormModal`). Stays put with the header.
   3. **Scrolling body** — the *only* scroll region (`flex-1 overflow-y-auto`).
-  4. **Pinned footer** — destructive action left (e.g. Delete), Cancel + primary action right, separated by a `border-t`. Pinned via flex `shrink-0`, **not** CSS `sticky`/`position`.
+  4. **Pinned footer** — destructive action left (e.g. Delete), Cancel + primary action right, separated by a `border-t`. Pinned via flex `shrink-0`, **not** CSS `sticky`/`position`. **`Modal` now provides this as the `footer` slot** (2026-07-02): a pinned `shrink-0 border-t px-4 py-3` region; consumers render their own button row inside (`flex items-center justify-end gap-3`; `justify-between` when a destructive action sits left). Footers must never live inside the scrolling body on forms that can scroll.
+     - **Cancel / Close / Done = `variant="secondary"`** (the platform standard, matching the `DeviceFormModal` reference; unified 2026-07-02). The primary/confirm action carries its own tone (`primary`, or `success`/`danger`/`warning` where semantic). Never `ghost` for a footer dismiss — `ghost` is for tertiary/toolbar actions, not the Cancel-in-a-pair role.
 - **Height:** cap the panel at `max-h-[90vh]`, but the **body** carries the scroll, never the panel. The header, sub-header, and footer never scroll.
 - **Size tiers** (semantic names over `Modal`'s raw `size`/`maxWidth` props; verified mappings in `Modal.tsx:24-40`):
 
@@ -179,7 +252,7 @@ Layers are defined in **`src/lib/ui/zIndex.ts`** (the `Z` constants, for JS/`sty
 
 | Layer | Token | Value | Members (shipped) |
 |---|---|---|---|
-| base | — | 0–10 | page content; `Dialog`/`Modal` panel + close buttons (`z-10` *within* the overlay's own stacking context) |
+| base | — | 0–10 | page content; `Dialog`/`Modal` panel internals (`z-10` *within* the overlay's own stacking context) |
 | sticky | `z-sticky` | 20 | in-page fixed/sticky save bars (`FeaturesSettings`, `AccountingLocales`); reserve for sticky table headers |
 | dropdown | `z-dropdown` | 30 | lightweight trigger-attached inline menus — `VariableInsertMenu`, and legacy inline row menus (`PaymentsList`, `AnnouncementCard`, `InventoryListPage`, `ChainOfCustodyTab`) whose dismiss layer is a base-layer `z-10` transparent click-catcher, not an elevated backdrop |
 | overlay | `z-overlay` | 40 | page-popover backdrops / click-catchers (`RowActionsMenu`, `ColumnPickerPopover`), `BulkActionsBar` |
@@ -213,10 +286,29 @@ Documents the field-grouping the redesign introduces, plus the existing `FormFie
 > **Status — partly leads the code.** The `FormField` + `ui/` field primitives below exist and are the standard for labels/errors/a11y. The **4-column Workspace grid** and **uppercase section-header dividers** are **net-new prescriptions** — no form uses them yet (the closest shipped grid is `DeviceDetailsForm`'s `sm:grid-cols-2 lg:grid-cols-4`; tab bodies vary at `lg:grid-cols-3`). Apply them to new and edited Workspace forms; existing forms are tracked, not assumed.
 
 - **Grid:** Workspace-tier forms use a responsive 4-column grid — `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-5`. Wide = 2 columns, Standard = 1 column. **The multi-column grid is the primary scroll-reducer:** ~35 fields in 4 columns is ~9 rows versus ~18 in two. *(Shipped device-form bodies currently break at `sm:` rather than `md:` and some use 3 columns; converge new work on the 4-column `md:`/`lg:` grid.)*
-- **Section headers:** group related fields under uppercase labelled dividers — `text-xs font-semibold uppercase tracking-wide text-primary` + a `border-b border-border` rule, spaced above (e.g. "BASIC INFORMATION", "TECHNICAL INFORMATION"). A flat wall of fields is not acceptable for 15+ field forms.
+- **Section headers:** group related fields under uppercase labelled dividers — `text-xs font-semibold uppercase tracking-wider text-primary` + a `border-b border-border` rule, spaced above (e.g. "BASIC INFORMATION", "TECHNICAL INFORMATION"). A flat wall of fields is not acceptable for 15+ field forms. *(Tracking harmonized to `tracking-wider` 2026-07-02 — one spacing for every uppercase label.)*
 - **Full-width fields:** long or multi-value controls (chip/multi-select Accessories, Device Password, Role-Specific Notes, rich-text terms) span all columns (`col-span-full`).
 - **Primitives:** use `ui/FormField.tsx` (owns label / required `*` / error / hint + a11y via `useFieldA11y`, `src/hooks/useFieldA11y.ts`) with the `ui/` field primitives (`Input`, `Select`, `SearchableSelect`, `Textarea`, `Checkbox`, `ChipInput`, `PhoneInput`, `RichTextEditor`). Verified `FormField` classes: label `block text-sm font-medium text-slate-700`; error `<p>` `text-xs text-danger flex items-center gap-1` with `role="alert"` on the `<p>` (via `useFieldA11y`) and a decorative `aria-hidden` `AlertCircle` (`w-3 h-3 shrink-0`); hint `text-xs text-slate-500`. **This is a presentational standard — it does not require rewriting a form's state model.** Three form patterns coexist today (plain `useState`; `react-hook-form` + `register`; `FormField` render-prop); converge *new and edited* forms on `FormField` for consistent labels and error rendering, without a forced migration.
 - **Density:** comfortable, not bloated. Tune row gap so more of a tab is visible per viewport — the goal is **fewer scroll events**, not maximum whitespace.
+- **No clear/reset (×) affordances inside form controls** (owner decision 2026-07-02). Select-type
+  controls (`SearchableSelect`, `MultiSelectDropdown`, and any lookup/combobox) render **only the
+  chevron**; a value is changed by picking a different option, and a multi-select deselects by
+  toggling the option in its list. Optional lookups that must support "no value" do it with an
+  explicit **"None"-style option** in the list, never an × button. *(Distinct pattern, unaffected:
+  free-text tag inputs — `ChipInput`/`TagInput` — keep per-chip removal; their chips ARE the value
+  editor, not a selection mirror.)*
+  - **Sentinel labeling convention:** prepend `{ id: '', name: '<Label>' }` to the options array.
+    Named-entity relationships (Company, Customer Group, Primary Contact, Supplier) → **"No
+    &lt;Entity&gt;"**; catalog attributes and geography (Brand, Capacity, Interface, Condition,
+    Industry, Country, City) → **"Not specified"** (avoids colliding with a catalog row that is
+    itself semantically "None", e.g. an encryption-type catalog's real "Unencrypted" entry).
+  - **Not every optional field gets a sentinel.** Skip it where the catalog already carries its own
+    "not yet known" row (e.g. a Pending/Untested status option), where the field is a list-page
+    filter (an empty filter already reads as "no filter" via its placeholder), or where the control
+    is a single-purpose action picker whose only "nothing selected" state is Cancel (e.g. "assign to
+    case", "transfer custody to"). Do not add a sentinel to a field that must always carry a value
+    for the record to make sense (e.g. case priority) — that isn't a clearable relationship, and
+    restoring the removed × there would just reintroduce an invalid state.
 
 ## Motion
 `tailwind.config.js` `animation` / `keyframes`. Keep motion functional and short.
@@ -275,3 +367,9 @@ Captured 2026-06-01 from a code audit; drifts #1–#3 resolved 2026-06-02. **A 2
 | 2026-06-26 | Added a **Z-Index Scale** (`src/lib/ui/zIndex.ts` + Tailwind tokens: dropdown 30 / overlay 40 / modal 50 / popover 60 / toast 70) and an **Elevation** ladder (resting `shadow-sm` → overlay `shadow-xl`). The z-index scale leads the code (it does not exist yet); the elevation ladder documents the live `shadow-*` vocabulary and flags the dead custom tokens for removal. | The recon found `z-50` saturated with ad-hoc `z-[60]`/`z-[100]`/`z-[9999]` overrides and no governance, and the custom shadow scale unused (1 usage) with depth leaning ~5:1 on borders (~2000 vs ~400). Both are now named layers/levels so overlays stack predictably and depth is intentional; the scale file + token migration and the dead-shadow cleanup are tracked (Known Deviations #10–#11). Toast layering is governed by `react-hot-toast`'s default today, not an app token — flagged in the Z-Index section. |
 | 2026-06-26 | Added a **Forms & Field Layout** section: responsive 4-column grid for Workspace forms, uppercase section-header dividers, `col-span-full` for long fields, `ui/FormField` + `ui/` primitives as the presentational standard. | Documents the field-grouping the redesign introduces and the existing `FormField` conventions (verified at `ui/FormField.tsx`, not `shared/`) the doc never captured. The 4-column grid is the main scroll-reducer (≈ ¼ the rows of a single column). The grid + dividers are net-new prescriptions (no form uses them yet), applied to new/edited work; field state-model migration is not forced. |
 | 2026-06-26 | **Implemented Known Deviations #8–#11** the same day they were codified: `Dialog` scrim → `bg-slate-900/40` (+ `CommandPalette`/`MobileNavDrawer` reconcile); opt-in `ui/Tabs` `variant="pills"` adopted by `DeviceFormModal`; named z-index scale (`src/lib/ui/zIndex.ts` + Tailwind tokens, `cn()`/twMerge extended, magic numbers migrated, Toaster wired); removed the two dead `boxShadow` tokens (retained `glow-primary`). Doc reconciled — #8–#11 ✅, the Overlays / Z-Index / Tabbed-form "Status — leads the code" notes now read "shipped". | The owner asked to proceed with the tracked items; doing the code in the same change set keeps the contract honest (no "shipped" claim ahead of code). The z-index migration was behavior-preserving and **corrected the scale's latent regression**: page menus-with-backdrop (`RowActionsMenu`/`ColumnPickerPopover`) coexist with `BulkActionsBar` (overlay 40) so they map to `z-modal` (50)/`z-overlay` (40), not `z-dropdown` (30); `Select` is a native element (no z-index) and was dropped from the field-listbox set. tsc 0; full suite green except 2 pre-existing invoicePilot PDF failures. |
+| 2026-07-02 | **Clear-× removed from all select-type form controls.** `SearchableSelect` lost its single-value clear button **and the `clearable` prop entirely** (30 `clearable={false}` opt-outs across 10 files deleted); `MultiSelectDropdown` chips are now plain labels (deselection = toggling the option in the list, which already worked via click + keyboard). Only the chevron remains inside the trigger. Codified under **Forms & Field Layout**; free-text tag inputs (`ChipInput`/`TagInput`) explicitly keep chip removal — different pattern. | Owner directive (screenshot-flagged): no reset affordances inside fields; values change by selecting another option, optional lookups clear via an explicit "None" option. Removing the behavior at the two shared components makes it disappear app-wide with zero page-by-page edits. |
+| 2026-07-02 | **Modal M-P3 — zero-scroll layout pass.** Widened + multi-columned the fixed-field forms the audit named as worst scroll offenders and pinned their footers: `SupplierFormModal` (lg→4xl, 2-col→lg:3-col, ~1,200px→~700px), `PurchaseOrderFormModal` (xl→5xl, header grid→3-col, footer pinned; line-item table + notes stay), `AccountFormModal` (footer pinned; conditional grids kept). Line-item document bodies (Invoice/Quote/PO items) are legitimately long — the goal is that fixed fields fit and actions never scroll, both now met. **Deferred (own pass):** the `TabbedFormModal` scaffold + tab-restructuring the ~1,100-line Invoice/Quote forms — their footers already pin (M-P2), so a full tab reorg of live financial-calc forms is high-risk for marginal gain. | Owner directive "zero scrolling wherever reasonably possible" — the two 1,200–1,600px fixed-field forms were the egregious cases; widening + the 4-col Workspace grid + pinned footers address them without the risk of restructuring the app's most complex forms. |
+| 2026-07-02 | **Modal M-P2 — pinned footers + Cancel variant unified.** The 5 forms whose action rows scrolled away with the body (audit M-3: InvoiceFormModal, QuoteFormModal, EmailDocumentModal, SignatureCaptureModal, DocumentDraftReview) now pin their footers — the two `Modal`-based ones via the new `footer` slot (submit reaches the form via the HTML `form=` attribute), the two `Dialog`-direct ones via the three-region flex-column layout, and Email's footer is conditional on `!success`. Cancel/Close/Done normalized to `variant="secondary"` app-wide (23 ghost/outline footer buttons flipped + `ConfirmDialog`), matching the `DeviceFormModal` reference and the pre-existing majority (69). Invoice/Quote nested catalog pickers lost a leftover hand-rolled X (M-1 miss) and gained a "Done" footer; Quote submit dropped an inline `backgroundColor` for `variant="success"`. | Footers-inside-scroll was the audit's #1 usability defect on the long forms; the `form=` attribute keeps native submit/Enter working with the button outside the `<form>`. Cancel=secondary is one uniform rule (the audit found a ~even ghost/secondary split); chose secondary as the lower-churn, reference-aligned, clearer-affordance option. |
+| 2026-07-02 | **Modal foundation (M-P1) — X pattern removed, footer slot shipped, ConfirmDialog repaired.** Per owner directive (modal audit `docs/modal-audit-2026-07-02.md`): the top-right X close was removed platform-wide — `Modal` no longer renders it (prop `showCloseButton` deleted), `ConfirmDialog`/`DeviceFormModal`/`AnnouncementFormModal`/`MFAEnrollment`/`MobileNavDrawer`/`CasePeekPanel` hand-rolled X's deleted, `PhotoViewerModal` + `EmailDocumentModal` preview get a "Close" text pill. Dismissal standard: **footer buttons + ESC + backdrop; every modal must carry an explicit footer close/cancel** — the X-only View modals (ExpenseDetail, PaymentReceipt, PortalCases/Quotes detail, InventoryDetail, ManageCompanies, DeviceDetails) gained ghost-Close footers via the **new `Modal` `footer` slot** (pinned `shrink-0 border-t px-4 py-3`). `Button` gained `warning`/`info` variants; `ConfirmDialog`'s confirm action moved from a raw 16px button onto `Button` (fixes the P2b-era size mismatch beside its ghost Cancel). PaymentReceiptModal's dead `headerAction` (empty title never rendered the header) fixed with a real title. | The audit found the X centralized (~110 default renders, 1 suppressor, 7 hand-rolled in 3 visual specs) and ~10 View modals with no other dismissal — the ordered removal (footers first, then the X) keeps every surface dismissible; SearchableSelect's in-control clear-× is a separate pattern, deliberately untouched pending an owner call. |
+| 2026-07-02 | **Typography standardization program executed end-to-end (P1–P5), same day the standard was codified.** Final state: gray palette 477→0 (30 files); dead Inter aliases removed + `font-mono`/`text-nav` tokenized; ui/ primitives converged (universal `FormField` error/hint spec, one th tracking, Button md=14px with preserved control heights); F-4 unsized identity cells fixed across all list tables; ONE table-header spec app-wide; uppercase-tracking fork 285/104→`tracking-wider` only; money = `font-semibold tabular-nums` (totals bold+tabular); 24 pages migrated onto the standard header system (19 → top-bar `PageHeaderSlot` incl. the full Banking migration; platform-admin 5 → `PageHeader`/`DetailPageHeader`); rogue KPI grids → shared `KpiRow`; arbitrary sizes 93→0 (chrome tokenized as `text-nav`/`text-xxs`); **both lint rules enforced with no baseline**. **Portal = Option A** (owner): keeps its larger customer-facing ramp, documented above; its table headers/labels aligned to shared specs. Known small leftovers (tracked, not hidden): `TemplateTypeDetail` uses a size-aligned h1 rather than `DetailPageHeader`; hand-rolled empty-state/pagination markup remains in a few pages (class-conformant, component adoption optional). | One program, one operating model (sweep → lint `error` → ratchet → delete baseline), copying the raw-color burndown. Verification at every phase: tsc 0, suite 2,250 passing (typst PDF test is load-flaky, passes isolated), lint delta = 0 new problems. Full before/after inventory: `docs/typography-audit-2026-07-02.md` (incl. program-outcome addendum). |
+| 2026-07-02 | **Typography role standard codified** (Typography section rewritten with the locked role table): page titles per surface, headings, modal titles, table th/td, **Button md = 14px**, badges, labels/hints/errors (`FormField` spec universal), uppercase micro-labels on `tracking-wider`, KPI two-style rule, money = `font-semibold tabular-nums`, mono policy (character-verified strings only), 12px content floor, slate-only neutrals with shade roles. Banned: `text-[Npx]`, all `*-gray-*` utilities, arbitrary `tracking-[…]` (OTP `0.5em` exception) — enforced by `xsuite/no-gray-palette` (no baseline) + `xsuite/no-arbitrary-typography` (per-file ratchet baseline). §Forms section-header tracking harmonized `wide`→`wider`. | The 2026-07-02 typography audit (`docs/typography-audit-2026-07-02.md`) found role-level spec absence as the root cause of 5 page-title specs, 7 table-header specs, a 30-file gray fork, 93 arbitrary sizes, and error/hint splits inside `ui/` itself. Standard values were chosen to match the codebase **majority** (minimum visual churn); deviations burn down via the phased standardization program (P1 mechanical sweeps → P2 primitive convergence → P3 high-traffic tables → P4 structural header/KPI migrations → P5 chrome tokenization + portal), copying the proven raw-color-burndown operating model (sweep → lint `error` → ratchet). |

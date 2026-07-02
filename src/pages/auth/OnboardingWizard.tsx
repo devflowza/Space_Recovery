@@ -20,16 +20,16 @@ export const OnboardingWizard = () => {
   const currentStepMeta = STEPS[flow.step];
 
   return (
-    <div className="min-h-screen flex flex-col font-body relative">
+    <div className="min-h-screen flex flex-col relative">
       <AnimatedBackground />
 
       <header className="relative z-10 flex items-center justify-between px-6 py-5">
-        <span className="font-display text-xl text-white tracking-tight">
+        <span className="text-xl text-white tracking-tight">
           xSuite
         </span>
         <Link
           to="/login"
-          className="text-sm text-slate-400 hover:text-slate-200 transition-colors font-body"
+          className="text-sm text-slate-400 hover:text-slate-200 transition-colors"
         >
           Already have an account? <span className="text-primary">Log in</span>
         </Link>

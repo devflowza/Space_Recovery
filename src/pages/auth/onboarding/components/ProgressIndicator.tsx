@@ -42,7 +42,7 @@ export const ProgressIndicator = ({ currentStep }: ProgressIndicatorProps) => {
                   <Icon className={`w-5 h-5 ${isCurrent ? 'text-primary' : 'text-slate-500'}`} />
                 )}
               </motion.div>
-              <span className={`hidden sm:block text-xs mt-2 font-body transition-colors duration-300 ${
+              <span className={`hidden sm:block text-xs mt-2 transition-colors duration-300 ${
                 isCurrent ? 'text-primary font-medium' : isCompleted ? 'text-success/70' : 'text-slate-600'
               }`}>
                 {s.id.charAt(0).toUpperCase() + s.id.slice(1)}

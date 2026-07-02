@@ -5,6 +5,7 @@ import { payrollService } from '../../lib/payrollService';
 import { payrollKeys } from '../../lib/queryKeys';
 import { Button } from '../../components/ui/Button';
 import { StatCard } from '../../components/shared/StatCard';
+import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
 import { useCurrency } from '../../hooks/useCurrency';
 import { format } from 'date-fns';
 
@@ -31,53 +32,44 @@ export const PayrollDashboard = () => {
     queryFn: () => payrollService.getPendingAdjustments(),
   });
 
-  const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
-
   return (
-    <div className="p-8 max-w-[1800px] mx-auto">
-      <div className="mb-8 flex items-start justify-between">
-        <div className="flex items-start gap-6">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg bg-primary shadow-primary/40">
-            <DollarSign className="w-7 h-7 text-primary-foreground" />
+    <div className="px-6 py-5 max-w-[1800px] mx-auto">
+      <PageHeaderSlot
+        title="Payroll Management"
+        icon={DollarSign}
+        actions={
+          <>
+            <Link to="/payroll/history">
+              <Button variant="secondary" size="sm">
+                <History className="w-4 h-4 mr-2" />
+                History
+              </Button>
+            </Link>
+            <Link to="/payroll/process">
+              <Button size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Process Payroll
+              </Button>
+            </Link>
+          </>
+        }
+      />
+      {currentPeriod && (
+        <div className="mb-4 flex gap-4">
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-2 h-2 rounded-full bg-success"></div>
+            <span className="text-slate-600">
+              Current Period: {format(new Date(currentPeriod.start_date), 'MMM d')} - {format(new Date(currentPeriod.end_date), 'MMM d, yyyy')}
+            </span>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 mb-2">Payroll Management</h1>
-            <p className="text-slate-600 text-base">
-              Process and manage employee compensation for {currentMonth}
-            </p>
-            {currentPeriod && (
-              <div className="flex gap-4 mt-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 rounded-full bg-success"></div>
-                  <span className="text-slate-600">
-                    Current Period: {format(new Date(currentPeriod.start_date), 'MMM d')} - {format(new Date(currentPeriod.end_date), 'MMM d, yyyy')}
-                  </span>
-                </div>
-                {currentPeriod.payment_date && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="w-2 h-2 rounded-full bg-info"></div>
-                    <span className="text-slate-600">Payment: {format(new Date(currentPeriod.payment_date), 'MMM d, yyyy')}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {currentPeriod.payment_date && (
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-2 h-2 rounded-full bg-info"></div>
+              <span className="text-slate-600">Payment: {format(new Date(currentPeriod.payment_date), 'MMM d, yyyy')}</span>
+            </div>
+          )}
         </div>
-        <div className="flex gap-2">
-          <Link to="/payroll/history">
-            <Button variant="secondary">
-              <History className="w-4 h-4 mr-2" />
-              History
-            </Button>
-          </Link>
-          <Link to="/payroll/process">
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Process Payroll
-            </Button>
-          </Link>
-        </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
@@ -185,7 +177,7 @@ export const PayrollDashboard = () => {
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-sm text-slate-600">Average Salary</span>
-                  <span className="text-lg font-semibold text-slate-900">
+                  <span className="text-lg font-semibold text-slate-900 tabular-nums">
                     {isLoading ? '...' : formatCurrency(stats?.avgSalary || 0)}
                   </span>
                 </div>
@@ -245,12 +237,12 @@ export const PayrollDashboard = () => {
               <table className="w-full">
                 <thead className="bg-slate-50 border-y border-slate-200">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Period</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Dates</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Employees</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Total Payroll</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-600 uppercase">Actions</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Period</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Dates</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Employees</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Total Payroll</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
@@ -261,7 +253,7 @@ export const PayrollDashboard = () => {
                         {format(new Date(period.start_date), 'MMM d')} - {format(new Date(period.end_date), 'MMM d, yyyy')}
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-600">{period.employee_count}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-slate-900">{formatCurrency(period.total_net ?? 0)}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-slate-900 tabular-nums">{formatCurrency(period.total_net ?? 0)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
                           period.status === 'paid'

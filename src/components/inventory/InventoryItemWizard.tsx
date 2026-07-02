@@ -101,7 +101,7 @@ const EMPTY_FORM: InventoryForm = {
   location_id: '',
 };
 
-const SECTION_HEAD = 'text-xs font-bold uppercase tracking-wide text-primary mb-3';
+const SECTION_HEAD = 'text-xs font-bold uppercase tracking-wider text-primary mb-3';
 
 // Identity fields shown in inventory (device_type_id is rendered specially above).
 // Module-level: BASIC_FIELDS is a static constant, so this never needs recomputing per render.
@@ -504,7 +504,6 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
                     onChange={handleDeviceTypeChange}
                     options={deviceTypes ?? []}
                     required
-                    clearable={false}
                     error={errors.device_type_id}
                     placeholder="Select device type"
                     size="sm"
@@ -519,7 +518,6 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
                     onChange={v => setField('category_id', v)}
                     options={inventoryCategories}
                     required
-                    clearable={false}
                     error={errors.category_id}
                     placeholder="Select category"
                     size="sm"
@@ -654,7 +652,6 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
                     value={form.status_id as string}
                     onChange={v => setField('status_id', v)}
                     options={statusTypes}
-                    clearable={false}
                     placeholder="Select status"
                     size="sm"
                     usePortal
@@ -712,8 +709,7 @@ export function InventoryItemWizard({ isOpen, onClose, onSuccess, itemId }: Prop
                     label="Supplier"
                     value={form.supplier_id as string}
                     onChange={v => setField('supplier_id', v)}
-                    options={suppliers}
-                    clearable={false}
+                    options={[{ id: '', name: 'Not specified' }, ...suppliers]}
                     placeholder="Select supplier"
                     size="sm"
                     usePortal

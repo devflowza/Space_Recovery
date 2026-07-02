@@ -3,7 +3,7 @@ import Cropper, { Point, Area } from 'react-easy-crop';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { AlertCircle, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { logger } from '../../lib/logger';
 
 interface ImageCropModalProps {
@@ -195,7 +195,7 @@ export function ImageCropModal({
         </div>
 
         {cropError && (
-          <p className="text-sm text-danger" role="alert">{cropError}</p>
+          <p className="text-xs text-danger flex items-center gap-1" role="alert"><AlertCircle aria-hidden="true" className="w-3 h-3 shrink-0" />{cropError}</p>
         )}
 
         <div className="flex gap-3 justify-end pt-3 border-t border-border">

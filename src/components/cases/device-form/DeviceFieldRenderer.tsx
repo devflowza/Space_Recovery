@@ -22,11 +22,16 @@ export function DeviceFieldRenderer({ def, value, onChange, options, error }: Pr
   switch (def.control) {
     case 'select':
     case 'component-status': {
-      const opts = def.staticOptions ?? options;
+      const baseOpts = def.staticOptions ?? options;
+      // Optional attribute fields get an explicit "Not specified" sentinel so a
+      // value can be cleared by selection — no in-field clear (×) affordance.
+      const opts = def.required
+        ? baseOpts
+        : [{ id: '', name: t('ui.select.notSpecified', { defaultValue: 'Not specified' }) }, ...baseOpts];
       return (
         <SearchableSelect
           label={label} value={str} onChange={(v) => onChange(def.key, v)}
-          options={opts} required={def.required} error={error} clearable={false}
+          options={opts} required={def.required} error={error}
           placeholder={t('ui.select.placeholder', { defaultValue: 'Select...' })}
           size="sm" usePortal
         />

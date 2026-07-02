@@ -28,6 +28,7 @@ import {
 } from '../../lib/financialReportsService';
 import { logger } from '../../lib/logger';
 import { KpiRow } from '../../components/templates/KpiRow';
+import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
 import {
   BarChart3,
   TrendingUp,
@@ -408,7 +409,7 @@ export const ReportsDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-8 max-w-[1800px] mx-auto space-y-6">
+      <div className="px-6 py-5 max-w-[1800px] mx-auto space-y-6">
         <Skeleton className="h-12 w-64 rounded-lg" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -420,56 +421,29 @@ export const ReportsDashboard: React.FC = () => {
   }
 
   return (
-    <div className="p-8 max-w-[1800px] mx-auto">
-      <div className="mb-8 flex items-start justify-between">
-        <div className="flex items-start gap-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{
-              backgroundColor: 'rgb(var(--color-primary))',
-              boxShadow: '0 10px 40px -10px rgba(var(--color-primary) / 0.5)',
-            }}
-          >
-            <BarChart3 className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 mb-2">Financial Reports</h1>
-            <p className="text-slate-600 text-base">
-              Comprehensive financial analysis and insights
-            </p>
-            <div className="flex gap-4 mt-3">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-success"></div>
-                <span className="text-slate-600">{formatCurrency(reportData?.totalRevenue || 0)} Revenue</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-danger"></div>
-                <span className="text-slate-600">{formatCurrency(reportData?.totalExpenses || 0)} Expenses</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-info"></div>
-                <span className="text-slate-600">{formatCurrency(reportData?.netProfit || 0)} Net Profit</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          >
-            <option value="thisMonth">This Month</option>
-            <option value="lastMonth">Last Month</option>
-            <option value="thisQuarter">This Quarter</option>
-            <option value="thisYear">This Year</option>
-            <option value="lastYear">Last Year</option>
-          </select>
-          <Button variant="secondary" className="flex items-center gap-2">
+    <div className="px-6 py-5 max-w-[1800px] mx-auto">
+      <PageHeaderSlot
+        title="Financial Reports"
+        icon={BarChart3}
+        actions={
+          <Button variant="secondary" size="sm" className="flex items-center gap-2">
             <Download className="w-4 h-4 mr-2" />
             Export All
           </Button>
-        </div>
+        }
+      />
+      <div className="mb-4 flex justify-end">
+        <select
+          value={dateRange}
+          onChange={(e) => setDateRange(e.target.value)}
+          className="px-3 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+        >
+          <option value="thisMonth">This Month</option>
+          <option value="lastMonth">Last Month</option>
+          <option value="thisQuarter">This Quarter</option>
+          <option value="thisYear">This Year</option>
+          <option value="lastYear">Last Year</option>
+        </select>
       </div>
 
       <KpiRow
@@ -655,22 +629,22 @@ export const ReportsDashboard: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-success-muted rounded-xl p-4 border border-success/30">
                       <p className="text-sm font-medium text-success">Total Revenue</p>
-                      <p className="text-2xl font-bold text-success">{formatCurrency(profitLossData.revenue.total)}</p>
+                      <p className="text-2xl font-bold text-success tabular-nums">{formatCurrency(profitLossData.revenue.total)}</p>
                     </div>
                     <div className="bg-danger-muted rounded-xl p-4 border border-danger/30">
                       <p className="text-sm font-medium text-danger">Total Expenses</p>
-                      <p className="text-2xl font-bold text-danger">{formatCurrency(profitLossData.expenses.total)}</p>
+                      <p className="text-2xl font-bold text-danger tabular-nums">{formatCurrency(profitLossData.expenses.total)}</p>
                     </div>
                   </div>
                   <div className="bg-info-muted rounded-xl p-4 border border-info/30">
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="text-sm font-medium text-info">Net Profit</p>
-                        <p className="text-2xl font-bold text-info">{formatCurrency(profitLossData.netProfit)}</p>
+                        <p className="text-2xl font-bold text-info tabular-nums">{formatCurrency(profitLossData.netProfit)}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium text-info">Profit Margin</p>
-                        <p className="text-2xl font-bold text-info">{profitLossData.profitMargin.toFixed(2)}%</p>
+                        <p className="text-2xl font-bold text-info tabular-nums">{profitLossData.profitMargin.toFixed(2)}%</p>
                       </div>
                     </div>
                   </div>
@@ -681,7 +655,7 @@ export const ReportsDashboard: React.FC = () => {
                         {profitLossData.expenses.byCategory.map((cat, i) => (
                           <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100">
                             <span className="text-sm text-slate-600">{cat.category}</span>
-                            <span className="text-sm font-semibold text-slate-900">{formatCurrency(cat.amount)}</span>
+                            <span className="text-sm font-semibold text-slate-900 tabular-nums">{formatCurrency(cat.amount)}</span>
                           </div>
                         ))}
                       </div>
@@ -728,15 +702,15 @@ export const ReportsDashboard: React.FC = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-sm text-slate-600">Cash Receipts</span>
-                        <span className="text-sm font-semibold text-success">+{formatCurrency(cashFlowData.operatingActivities.receipts)}</span>
+                        <span className="text-sm font-semibold text-success tabular-nums">+{formatCurrency(cashFlowData.operatingActivities.receipts)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-slate-600">Cash Payments</span>
-                        <span className="text-sm font-semibold text-danger">-{formatCurrency(cashFlowData.operatingActivities.payments)}</span>
+                        <span className="text-sm font-semibold text-danger tabular-nums">-{formatCurrency(cashFlowData.operatingActivities.payments)}</span>
                       </div>
                       <div className="flex justify-between pt-2 border-t border-slate-200">
                         <span className="text-sm font-medium text-slate-700">Net Operating</span>
-                        <span className={`text-sm font-bold ${cashFlowData.operatingActivities.net >= 0 ? 'text-success' : 'text-danger'}`}>
+                        <span className={`text-sm font-bold tabular-nums ${cashFlowData.operatingActivities.net >= 0 ? 'text-success' : 'text-danger'}`}>
                           {formatCurrency(cashFlowData.operatingActivities.net)}
                         </span>
                       </div>
@@ -786,7 +760,7 @@ export const ReportsDashboard: React.FC = () => {
                               <Badge variant="secondary" className="capitalize">{status.status}</Badge>
                               <span className="text-sm text-slate-600">{status.count} invoices</span>
                             </div>
-                            <span className="text-sm font-semibold text-slate-900">{formatCurrency(status.amount)}</span>
+                            <span className="text-sm font-semibold text-slate-900 tabular-nums">{formatCurrency(status.amount)}</span>
                           </div>
                         ))}
                       </div>
@@ -851,7 +825,7 @@ export const ReportsDashboard: React.FC = () => {
                           <div className="flex-1">
                             <div className="flex justify-between items-baseline">
                               <span className="text-sm font-medium text-slate-700">{row.category}</span>
-                              <span className="text-sm font-semibold text-slate-900">{formatCurrency(row.amount)}</span>
+                              <span className="text-sm font-semibold text-slate-900 tabular-nums">{formatCurrency(row.amount)}</span>
                             </div>
                             {/* Inline percentage bar — visualizes share at a glance. */}
                             <div className="w-full h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
@@ -896,10 +870,10 @@ export const ReportsDashboard: React.FC = () => {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-slate-200">
-                            <th className="text-left py-2 font-medium text-slate-600">Month</th>
-                            <th className="text-right py-2 font-medium text-slate-600">Revenue</th>
-                            <th className="text-right py-2 font-medium text-slate-600">Expense</th>
-                            <th className="text-right py-2 font-medium text-slate-600">Net</th>
+                            <th className="text-left py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Month</th>
+                            <th className="text-right py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Revenue</th>
+                            <th className="text-right py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Expense</th>
+                            <th className="text-right py-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Net</th>
                           </tr>
                         </thead>
                         <tbody>

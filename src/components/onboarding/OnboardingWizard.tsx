@@ -59,11 +59,11 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-3xl w-full">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to xSuite</h1>
-          <p className="text-gray-600">Let's get your data recovery lab set up in just a few steps</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome to xSuite</h1>
+          <p className="text-slate-600">Let's get your data recovery lab set up in just a few steps</p>
         </div>
 
         <div className="mb-8">
@@ -82,7 +82,7 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
                           ? 'bg-success text-success-foreground'
                           : isActive
                           ? 'bg-primary text-primary-foreground'
-                          : 'bg-gray-200 text-gray-400'
+                          : 'bg-slate-200 text-slate-400'
                       }`}
                     >
                       {isCompleted ? (
@@ -93,7 +93,7 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
                     </div>
                     <span
                       className={`text-xs mt-2 text-center ${
-                        isActive ? 'font-semibold text-gray-900' : 'text-gray-500'
+                        isActive ? 'font-semibold text-slate-900' : 'text-slate-500'
                       }`}
                     >
                       {step.title}
@@ -102,7 +102,7 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
                   {index < totalSteps - 1 && (
                     <div
                       className={`h-1 flex-1 mx-2 ${
-                        isCompleted ? 'bg-success' : 'bg-gray-200'
+                        isCompleted ? 'bg-success' : 'bg-slate-200'
                       }`}
                     />
                   )}
@@ -111,7 +111,7 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
             })}
           </div>
 
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
+          <div className="w-full bg-slate-200 rounded-full h-2 mt-4">
             <div
               className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -129,7 +129,7 @@ export const OnboardingWizard = ({ tenantId, onComplete }: OnboardingWizardProps
           />
         </Card>
 
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center text-sm text-slate-500">
           Step {currentStepIndex + 1} of {totalSteps}
         </div>
       </div>
@@ -169,7 +169,7 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip: _onSkip, loading }: Ste
       return (
         <div>
           <h2 className="text-2xl font-bold mb-4">Company Information</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-slate-600 mb-6">
             Set up your company profile to personalize invoices, quotes, and reports.
           </p>
           <div className="bg-info-muted border border-info/30 rounded-lg p-4 mb-6">
@@ -195,7 +195,7 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip: _onSkip, loading }: Ste
       return (
         <div>
           <h2 className="text-2xl font-bold mb-4">Default Settings</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-slate-600 mb-6">
             Configure your preferred currency, timezone, and date format for the entire system.
           </p>
           <div className="bg-info-muted border border-info/30 rounded-lg p-4 mb-6">
@@ -221,7 +221,7 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip: _onSkip, loading }: Ste
       return (
         <div>
           <h2 className="text-2xl font-bold mb-4">Sample Data</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-slate-600 mb-6">
             Would you like to load sample data to explore xSuite features? This includes a demo customer and case.
           </p>
           <div className="bg-warning-muted border border-warning/30 rounded-lg p-4 mb-6">
@@ -248,7 +248,7 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip: _onSkip, loading }: Ste
       return (
         <div>
           <h2 className="text-2xl font-bold mb-4">Invite Your Team</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-slate-600 mb-6">
             Collaborate with your team by inviting technicians, sales staff, and accountants.
           </p>
           <div className="bg-info-muted border border-info/30 rounded-lg p-4 mb-6">
@@ -275,7 +275,7 @@ const StepContent = ({ stepId, tenantId, onNext, onSkip: _onSkip, loading }: Ste
         <div className="text-center">
           <CheckCircle2 className="w-16 h-16 text-success mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-4">You're All Set!</h2>
-          <p className="text-gray-600 mb-8">
+          <p className="text-slate-600 mb-8">
             Your xSuite account is ready. Start managing your data recovery cases, customers, and operations.
           </p>
           <Button onClick={() => navigate('/dashboard')} size="lg">

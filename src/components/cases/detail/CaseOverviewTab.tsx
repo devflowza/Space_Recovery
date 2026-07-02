@@ -373,7 +373,6 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                     onChange={(value) => setEditedCaseData((prev) => ({ ...prev, service_type_id: value }))}
                     options={serviceTypes.map(st => ({ id: st.id, name: st.name }))}
                     placeholder="Select service..."
-                    clearable={false}
                   />
                 </div>
               ) : (
@@ -573,10 +572,9 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
                       <SearchableSelect
                         value={editedDeviceData.capacity_id ?? devices[0]?.capacity_id ?? ''}
                         onChange={(value) => handleDeviceFieldChange('capacity_id', value || null)}
-                        options={capacities.map((cap) => ({ id: cap.id, name: cap.name }))}
+                        options={[{ id: '', name: 'Not specified' }, ...capacities.map((cap) => ({ id: cap.id, name: cap.name }))]}
                         placeholder="Select capacity..."
                         usePortal
-                        clearable={false}
                       />
                     </div>
                   ) : (

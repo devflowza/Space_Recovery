@@ -335,6 +335,35 @@ export const PortalQuotes: React.FC = () => {
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         title={t('portal.quotes.quoteDetails')}
+        footer={
+          <div className="flex items-center justify-end gap-3">
+            <Button variant="ghost" onClick={() => setIsDetailModalOpen(false)}>{t('ui.close')}</Button>
+            {selectedQuote?.status === 'pending_approval' && (
+              <>
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    setIsDetailModalOpen(false);
+                    setIsRejectModalOpen(true);
+                  }}
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  {t('portal.quotes.rejectQuote')}
+                </Button>
+                <Button
+                  variant="success"
+                  onClick={() => {
+                    setIsDetailModalOpen(false);
+                    setIsApproveModalOpen(true);
+                  }}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  {t('portal.quotes.approveQuote')}
+                </Button>
+              </>
+            )}
+          </div>
+        }
       >
         {selectedQuote && (
           <div className="space-y-6">
@@ -363,10 +392,10 @@ export const PortalQuotes: React.FC = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="text-left p-3 font-semibold text-slate-700">{t('portal.quotes.tableItem')}</th>
-                        <th className="text-center p-3 font-semibold text-slate-700">{t('portal.quotes.tableQty')}</th>
-                        <th className="text-right p-3 font-semibold text-slate-700">{t('portal.quotes.tableUnitPrice')}</th>
-                        <th className="text-right p-3 font-semibold text-slate-700">{t('portal.quotes.tableTotal')}</th>
+                        <th className="text-left p-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">{t('portal.quotes.tableItem')}</th>
+                        <th className="text-center p-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">{t('portal.quotes.tableQty')}</th>
+                        <th className="text-right p-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">{t('portal.quotes.tableUnitPrice')}</th>
+                        <th className="text-right p-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">{t('portal.quotes.tableTotal')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -428,31 +457,6 @@ export const PortalQuotes: React.FC = () => {
               </div>
             )}
 
-            {selectedQuote.status === 'pending_approval' && (
-              <div className="flex gap-3 pt-4 border-t border-slate-200">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setIsDetailModalOpen(false);
-                    setIsRejectModalOpen(true);
-                  }}
-                  className="flex-1 text-danger hover:bg-danger-muted"
-                >
-                  <XCircle className="w-4 h-4 mr-2" />
-                  {t('portal.quotes.rejectQuote')}
-                </Button>
-                <Button
-                  onClick={() => {
-                    setIsDetailModalOpen(false);
-                    setIsApproveModalOpen(true);
-                  }}
-                  className="flex-1 bg-success hover:bg-success/90"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  {t('portal.quotes.approveQuote')}
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </Modal>
@@ -480,9 +484,9 @@ export const PortalQuotes: React.FC = () => {
               {t('portal.quotes.approveModal.cancel')}
             </Button>
             <Button
+              variant="success"
               onClick={handleApprove}
               disabled={approveMutation.isPending}
-              className="bg-success hover:bg-success/90"
             >
               {approveMutation.isPending ? t('portal.quotes.approveModal.approving') : t('portal.quotes.approveModal.confirmApproval')}
             </Button>
@@ -525,9 +529,9 @@ export const PortalQuotes: React.FC = () => {
               {t('portal.quotes.rejectModal.cancel')}
             </Button>
             <Button
+              variant="danger"
               onClick={handleReject}
               disabled={rejectMutation.isPending}
-              className="bg-danger hover:bg-danger/90"
             >
               {rejectMutation.isPending ? t('portal.quotes.rejectModal.rejecting') : t('portal.quotes.rejectModal.confirmRejection')}
             </Button>

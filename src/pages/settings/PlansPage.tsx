@@ -56,7 +56,7 @@ export default function PlansPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64 p-6">
-        <div className="text-gray-500">Loading plans...</div>
+        <div className="text-slate-500">Loading plans...</div>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function PlansPage() {
             'px-6 py-2 rounded-lg font-medium transition-colors',
             billingInterval === 'month'
               ? 'bg-primary text-primary-foreground'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           )}
         >
           Monthly
@@ -93,7 +93,7 @@ export default function PlansPage() {
             'px-6 py-2 rounded-lg font-medium transition-colors relative',
             billingInterval === 'year'
               ? 'bg-primary text-primary-foreground'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           )}
         >
           Yearly
@@ -142,7 +142,7 @@ export default function PlansPage() {
               <div className="p-6 space-y-6">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                    <h3 className="text-2xl font-bold text-slate-900">{plan.name}</h3>
                     {isCurrentPlan && (
                       <Badge variant="success">
                         <CheckCircle className="w-3 h-3 mr-1" />
@@ -150,27 +150,27 @@ export default function PlansPage() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-gray-600">{plan.description}</p>
+                  <p className="text-slate-600">{plan.description}</p>
                 </div>
 
                 <div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-gray-900">
+                    <span className="text-4xl font-bold text-slate-900">
                       ${monthlyDisplayPrice.toFixed(0)}
                     </span>
-                    <span className="text-gray-600">/month</span>
+                    <span className="text-slate-600">/month</span>
                   </div>
                   {billingInterval === 'year' && (
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-slate-500 mt-1">
                       Billed ${yearlyTotal.toFixed(0)}/year
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-3">
-                  <div className="text-sm font-medium text-gray-700">Key Features:</div>
+                  <div className="text-sm font-medium text-slate-700">Key Features:</div>
                   {maxUsersLimit !== null && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
                       <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span>
                         {maxUsersLimit === 999999 ? 'Unlimited' : maxUsersLimit} team members
@@ -178,7 +178,7 @@ export default function PlansPage() {
                     </div>
                   )}
                   {maxCasesLimit !== null && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
                       <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span>
                         {maxCasesLimit === 999999 ? 'Unlimited' : maxCasesLimit} cases/month
@@ -186,7 +186,7 @@ export default function PlansPage() {
                     </div>
                   )}
                   {storageGbLimit !== null && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
                       <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span>
                         {storageGbLimit === 999999 ? 'Unlimited' : `${storageGbLimit}GB`} storage
@@ -194,7 +194,7 @@ export default function PlansPage() {
                     </div>
                   )}
                   {displayFeatures.map((feature) => (
-                    <div key={feature.id} className="flex items-center gap-2 text-sm text-gray-600">
+                    <div key={feature.id} className="flex items-center gap-2 text-sm text-slate-600">
                       <Check className="w-4 h-4 text-success flex-shrink-0" />
                       <span className={feature.is_highlighted ? 'font-medium' : ''}>
                         {feature.feature_name}
@@ -239,30 +239,30 @@ export default function PlansPage() {
         })}
       </div>
 
-      <div className="bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Frequently Asked Questions</h3>
+      <div className="bg-slate-50 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Frequently Asked Questions</h3>
         <div className="space-y-4">
           <div>
-            <h4 className="font-medium text-gray-900 mb-1">Can I change plans later?</h4>
-            <p className="text-sm text-gray-600">
+            <h4 className="font-medium text-slate-900 mb-1">Can I change plans later?</h4>
+            <p className="text-sm text-slate-600">
               Yes, you can upgrade or downgrade your plan at any time from the billing settings.
             </p>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900 mb-1">What payment methods do you accept?</h4>
-            <p className="text-sm text-gray-600">
+            <h4 className="font-medium text-slate-900 mb-1">What payment methods do you accept?</h4>
+            <p className="text-sm text-slate-600">
               We accept all major credit cards and PayPal through our secure payment processor.
             </p>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900 mb-1">Is there a free trial?</h4>
-            <p className="text-sm text-gray-600">
+            <h4 className="font-medium text-slate-900 mb-1">Is there a free trial?</h4>
+            <p className="text-sm text-slate-600">
               Yes, all plans include a 14-day free trial. No credit card required.
             </p>
           </div>
           <div>
-            <h4 className="font-medium text-gray-900 mb-1">Need help choosing?</h4>
-            <p className="text-sm text-gray-600">
+            <h4 className="font-medium text-slate-900 mb-1">Need help choosing?</h4>
+            <p className="text-sm text-slate-600">
               Contact our team at{' '}
               <a
                 href="mailto:support@xsuite.space"

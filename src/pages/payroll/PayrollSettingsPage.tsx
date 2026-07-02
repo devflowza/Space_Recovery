@@ -131,7 +131,7 @@ export const PayrollSettingsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-gray-500">Loading payroll settings...</div>
+      <div className="p-8 text-center text-slate-500">Loading payroll settings...</div>
     );
   }
 
@@ -164,16 +164,16 @@ export const PayrollSettingsPage: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Working Hours Configuration</h3>
-            <p className="text-sm text-gray-600 mt-1">
+          <div className="p-6 border-b border-slate-200">
+            <h3 className="text-lg font-semibold text-slate-900">Working Hours Configuration</h3>
+            <p className="text-sm text-slate-600 mt-1">
               Set default working hours used for salary calculations
             </p>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Working Days per Month
                 </label>
                 <Input
@@ -186,12 +186,12 @@ export const PayrollSettingsPage: React.FC = () => {
                   }
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Typically 22 days for 5-day workweek
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Working Hours per Day
                 </label>
                 <Input
@@ -204,23 +204,23 @@ export const PayrollSettingsPage: React.FC = () => {
                   }
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Standard daily working hours</p>
+                <p className="text-xs text-slate-500 mt-1">Standard daily working hours</p>
               </div>
             </div>
           </div>
         </Card>
 
         <Card>
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Overtime Rate Multipliers</h3>
-            <p className="text-sm text-gray-600 mt-1">
+          <div className="p-6 border-b border-slate-200">
+            <h3 className="text-lg font-semibold text-slate-900">Overtime Rate Multipliers</h3>
+            <p className="text-sm text-slate-600 mt-1">
               Set multipliers for different types of overtime pay
             </p>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Regular Overtime
                 </label>
                 <Input
@@ -234,12 +234,12 @@ export const PayrollSettingsPage: React.FC = () => {
                   }
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Weekday overtime multiplier (e.g., 1.25 = 125%)
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Weekend Overtime
                 </label>
                 <Input
@@ -253,10 +253,10 @@ export const PayrollSettingsPage: React.FC = () => {
                   }
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Weekend overtime multiplier</p>
+                <p className="text-xs text-slate-500 mt-1">Weekend overtime multiplier</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Holiday Overtime
                 </label>
                 <Input
@@ -270,23 +270,23 @@ export const PayrollSettingsPage: React.FC = () => {
                   }
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Holiday overtime multiplier</p>
+                <p className="text-xs text-slate-500 mt-1">Holiday overtime multiplier</p>
               </div>
             </div>
           </div>
         </Card>
 
         <Card>
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Currency & Payment Settings</h3>
-            <p className="text-sm text-gray-600 mt-1">
+          <div className="p-6 border-b border-slate-200">
+            <h3 className="text-lg font-semibold text-slate-900">Currency & Payment Settings</h3>
+            <p className="text-sm text-slate-600 mt-1">
               Configure currency display and payment defaults
             </p>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Currency Code
                 </label>
                 <select
@@ -298,7 +298,7 @@ export const PayrollSettingsPage: React.FC = () => {
                     handleChange('currency_symbol', selected?.symbol ?? code);
                     handleChange('currency_decimals', selected?.decimals ?? 2);
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 >
                   {currencyOptions.map((o) => (
@@ -309,7 +309,7 @@ export const PayrollSettingsPage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Currency Symbol
                 </label>
                 <Input
@@ -320,7 +320,7 @@ export const PayrollSettingsPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Decimal Places
                 </label>
                 <Input
@@ -333,10 +333,10 @@ export const PayrollSettingsPage: React.FC = () => {
                   }
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Number of decimal places to display</p>
+                <p className="text-xs text-slate-500 mt-1">Number of decimal places to display</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Default Payment Day
                 </label>
                 <Input
@@ -347,7 +347,7 @@ export const PayrollSettingsPage: React.FC = () => {
                   onChange={(e) => handleChange('payment_day', parseInt(e.target.value))}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Day of month for salary payments</p>
+                <p className="text-xs text-slate-500 mt-1">Day of month for salary payments</p>
               </div>
             </div>
           </div>

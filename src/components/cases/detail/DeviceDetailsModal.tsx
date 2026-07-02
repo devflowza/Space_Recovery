@@ -1,7 +1,7 @@
 import { useEffect, useId, useState, type ComponentType, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Cpu, Database, Eye, EyeOff, Info, KeyRound, Package, Shield, Star, Stethoscope, X } from 'lucide-react';
+import { Cpu, Database, Eye, EyeOff, Info, KeyRound, Package, Shield, Star, Stethoscope } from 'lucide-react';
 import { Dialog } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
@@ -40,7 +40,7 @@ const EMPTY = '—';
 function Field({ label, mono, children }: { label: string; mono?: boolean; children: ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="mb-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</dt>
+      <dt className="mb-0.5 text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</dt>
       <dd className={cn('break-words text-sm text-slate-900', mono && 'font-mono text-xs')}>{children}</dd>
     </div>
   );
@@ -300,14 +300,6 @@ export function DeviceDetailsModal({ device, deviceIndex, caseId, isOpen, onClos
                 {t('devices.detail.markBackup', { defaultValue: 'Mark as Backup' })}
               </Button>
             )}
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={t('common.close', { defaultValue: 'Close' })}
-              className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-surface/70 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <X className="h-5 w-5" />
-            </button>
           </div>
         </div>
       </div>
@@ -396,7 +388,7 @@ export function DeviceDetailsModal({ device, deviceIndex, caseId, isOpen, onClos
 
           {device.password && (
             <Section icon={KeyRound} title={t('devices.section.security', { defaultValue: 'Security' })} tone="bg-danger-muted text-danger">
-              <dt className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              <dt className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
                 {t('devices.field.password', { defaultValue: 'Device Password' })}
               </dt>
               <div className="flex items-center gap-2">
@@ -436,7 +428,7 @@ export function DeviceDetailsModal({ device, deviceIndex, caseId, isOpen, onClos
           createdByName={device.created_by_profile?.full_name ?? null}
           createdLabel={t('devices.detail.added', { defaultValue: 'Added' })}
         />
-        <Button variant="secondary" size="md" onClick={onClose} disabled={busy} className="h-10 rounded-[10px] px-5">
+        <Button variant="ghost" onClick={onClose} disabled={busy}>
           {t('common.close', { defaultValue: 'Close' })}
         </Button>
       </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Trash2, Search, FileText, Download, DollarSign, FileBarChart, Briefcase, Calculator, Package, Info, X, Percent, Lock } from 'lucide-react';
+import { Plus, Trash2, Search, FileText, Download, DollarSign, FileBarChart, Briefcase, Calculator, Package, Info, Percent, Lock } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
@@ -552,8 +552,33 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
       size="xl"
       headerBadges={headerBadges}
       closeOnBackdrop={false}
+      footer={
+        <div className="flex items-center justify-end gap-3">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="invoiceForm"
+            disabled={isSubmitting}
+            className="shadow-md hover:shadow-lg transition-shadow"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FileText className="w-5 h-5 mr-2" />
+                {initialData ? 'Update Invoice' : 'Create Invoice'}
+              </>
+            )}
+          </Button>
+        </div>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form id="invoiceForm" onSubmit={handleSubmit} className="space-y-3">
 
         {isRestricted && (
           <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-muted px-3 py-2 text-sm text-warning">
@@ -1058,28 +1083,6 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
           </div>
         </div>
 
-        <div className="flex gap-3 justify-end pt-3 border-t border-slate-200 mt-1">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="shadow-md hover:shadow-lg transition-shadow"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <FileText className="w-5 h-5 mr-2" />
-                {initialData ? 'Update Invoice' : 'Create Invoice'}
-              </>
-            )}
-          </Button>
-        </div>
       </form>
 
       <Dialog
@@ -1088,17 +1091,9 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
         label="Catalog"
         className="max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
       >
-            <div className="flex items-center justify-between p-4 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <Search className="w-5 h-5 text-primary" />
-                <h3 className="text-lg font-semibold text-slate-900">Quick Add from Catalog</h3>
-              </div>
-              <button
-                onClick={() => setShowCatalog(false)}
-                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            <div className="flex items-center gap-2 p-4 border-b border-slate-200">
+              <Search className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold text-slate-900">Quick Add from Catalog</h3>
             </div>
             <div className="p-4">
               <Input
@@ -1149,6 +1144,11 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                   ))
                 )}
               </div>
+            </div>
+            <div className="shrink-0 flex items-center justify-end gap-3 border-t border-slate-200 px-4 py-3">
+              <Button type="button" variant="secondary" onClick={() => setShowCatalog(false)}>
+                Done
+              </Button>
             </div>
       </Dialog>
     </Modal>

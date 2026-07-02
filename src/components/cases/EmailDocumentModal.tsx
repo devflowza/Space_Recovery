@@ -165,6 +165,28 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
       size="lg"
       closeOnBackdrop={false}
       initialFocusRef={firstFieldRef}
+      footer={
+        success ? undefined : (
+          <div className="flex items-center justify-end gap-3">
+            <Button variant="secondary" onClick={handleClose} disabled={isSending}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleSend} disabled={isSending || !to.trim()}>
+              {isSending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Send Email
+                </>
+              )}
+            </Button>
+          </div>
+        )
+      }
     >
       {success ? (
         <div className="flex flex-col items-center justify-center py-12">
@@ -342,32 +364,6 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
             </div>
           )}
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={isSending}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSend}
-              disabled={isSending || !to.trim()}
-            >
-              {isSending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 mr-2" />
-                  Send Email
-                </>
-              )}
-            </Button>
-          </div>
         </div>
       )}
 
@@ -387,10 +383,10 @@ export const EmailDocumentModal: React.FC<EmailDocumentModalProps> = ({
           </div>
           <button
             onClick={() => setShowPdfPreview(false)}
-            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+            className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
             aria-label="Close preview"
           >
-            <XIcon className="w-5 h-5" />
+            Close
           </button>
         </div>
         <div className="flex-1 p-4 overflow-hidden">

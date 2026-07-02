@@ -322,7 +322,7 @@ export default function SupplierProfilePage() {
         </>
       }
     >
-      <div className="border-b border-gray-200">
+      <div className="border-b border-slate-200">
         <nav className="flex space-x-8 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -334,7 +334,7 @@ export default function SupplierProfilePage() {
                   flex items-center gap-2 px-1 py-4 border-b-2 font-medium text-sm whitespace-nowrap
                   ${activeTab === tab.id
                     ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                   }
                 `}
               >
@@ -342,7 +342,7 @@ export default function SupplierProfilePage() {
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
                   <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
-                    activeTab === tab.id ? 'bg-info-muted text-info' : 'bg-gray-100 text-gray-600'
+                    activeTab === tab.id ? 'bg-info-muted text-info' : 'bg-slate-100 text-slate-600'
                   }`}>
                     {tab.count}
                   </span>
@@ -395,22 +395,22 @@ function OverviewTab({ supplier }: { supplier: SupplierWithRelations }) {
       <div className="lg:col-span-2 space-y-6">
         <Card>
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Company Information</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Company Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm text-gray-500">Category</label>
+                <label className="text-sm text-slate-500">Category</label>
                 <p className="font-medium">{supplier.category?.name ?? '-'}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Payment Terms</label>
+                <label className="text-sm text-slate-500">Payment Terms</label>
                 <p className="font-medium">{supplier.payment_terms?.name ?? '-'}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Tax Number / VAT</label>
+                <label className="text-sm text-slate-500">Tax Number / VAT</label>
                 <p className="font-medium">{supplier.tax_number ?? '-'}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Website</label>
+                <label className="text-sm text-slate-500">Website</label>
                 {supplier.website ? (
                   <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                     <Globe className="inline w-4 h-4 mr-1" />
@@ -421,18 +421,18 @@ function OverviewTab({ supplier }: { supplier: SupplierWithRelations }) {
                 )}
               </div>
               <div>
-                <label className="text-sm text-gray-500">Registration Number</label>
+                <label className="text-sm text-slate-500">Registration Number</label>
                 <p className="font-medium">{supplier.registration_number ?? '-'}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Rating</label>
+                <label className="text-sm text-slate-500">Rating</label>
                 <p className="font-medium">{supplier.rating != null ? `${supplier.rating}/5` : '-'}</p>
               </div>
             </div>
             {supplier.notes && (
               <div className="mt-4">
-                <label className="text-sm text-gray-500">Notes</label>
-                <p className="mt-1 text-gray-700">{supplier.notes}</p>
+                <label className="text-sm text-slate-500">Notes</label>
+                <p className="mt-1 text-slate-700">{supplier.notes}</p>
               </div>
             )}
           </div>
@@ -440,26 +440,26 @@ function OverviewTab({ supplier }: { supplier: SupplierWithRelations }) {
 
         <Card>
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Contact Information</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
+                <Mail className="w-5 h-5 text-slate-400 mt-0.5" />
                 <div>
-                  <label className="text-sm text-gray-500">Email</label>
+                  <label className="text-sm text-slate-500">Email</label>
                   <p className="font-medium">{supplier.email ?? '-'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
+                <Phone className="w-5 h-5 text-slate-400 mt-0.5" />
                 <div>
-                  <label className="text-sm text-gray-500">Phone</label>
+                  <label className="text-sm text-slate-500">Phone</label>
                   <p className="font-medium">{supplier.phone ?? '-'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
                 <div>
-                  <label className="text-sm text-gray-500">Address</label>
+                  <label className="text-sm text-slate-500">Address</label>
                   <p className="font-medium">{supplier.address ?? '-'}</p>
                 </div>
               </div>
@@ -470,18 +470,18 @@ function OverviewTab({ supplier }: { supplier: SupplierWithRelations }) {
         {(supplier.contact_person || supplier.contact_email) && (
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Primary Contact</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Primary Contact</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-gray-500">Name</label>
+                  <label className="text-sm text-slate-500">Name</label>
                   <p className="font-medium">{supplier.contact_person ?? '-'}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">Email</label>
+                  <label className="text-sm text-slate-500">Email</label>
                   <p className="font-medium">{supplier.contact_email ?? '-'}</p>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-500">Phone</label>
+                  <label className="text-sm text-slate-500">Phone</label>
                   <p className="font-medium">{supplier.contact_phone ?? '-'}</p>
                 </div>
               </div>
@@ -493,22 +493,22 @@ function OverviewTab({ supplier }: { supplier: SupplierWithRelations }) {
       <div className="space-y-6">
         <Card>
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Financial</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Financial</h3>
             <div className="space-y-3">
               <div>
-                <label className="text-sm text-gray-500">Credit Limit</label>
+                <label className="text-sm text-slate-500">Credit Limit</label>
                 <p className="font-medium">{supplier.credit_limit != null ? formatCurrency(supplier.credit_limit) : '-'}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Outstanding Balance</label>
+                <label className="text-sm text-slate-500">Outstanding Balance</label>
                 <p className="font-medium">{supplier.outstanding_balance != null ? formatCurrency(supplier.outstanding_balance) : '-'}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Bank</label>
+                <label className="text-sm text-slate-500">Bank</label>
                 <p className="font-medium">{supplier.bank_name ?? '-'}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Account</label>
+                <label className="text-sm text-slate-500">Account</label>
                 <p className="font-medium">{supplier.bank_account ?? '-'}</p>
               </div>
             </div>
@@ -517,15 +517,15 @@ function OverviewTab({ supplier }: { supplier: SupplierWithRelations }) {
 
         <Card>
           <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Info</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Additional Info</h3>
             <div className="space-y-3">
               <div>
-                <label className="text-sm text-gray-500">Created</label>
+                <label className="text-sm text-slate-500">Created</label>
                 <p className="font-medium">{format(new Date(supplier.created_at), 'MMM dd, yyyy')}</p>
               </div>
               {supplier.updated_at && (
                 <div>
-                  <label className="text-sm text-gray-500">Last Updated</label>
+                  <label className="text-sm text-slate-500">Last Updated</label>
                   <p className="font-medium">{format(new Date(supplier.updated_at), 'MMM dd, yyyy')}</p>
                 </div>
               )}
@@ -550,40 +550,40 @@ function ContactsTab({
     <Card>
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Contacts</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Contacts</h3>
           <Button size="sm" onClick={onAdd}>
             <User className="w-4 h-4 mr-2" />
             Add Contact
           </Button>
         </div>
         {contacts.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-slate-500">
             No contacts added yet
           </div>
         ) : (
           <div className="space-y-4">
             {contacts.map((contact) => (
-              <div key={contact.id} className="border border-gray-200 rounded-lg p-4">
+              <div key={contact.id} className="border border-slate-200 rounded-lg p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-gray-900">{contact.name}</h4>
+                      <h4 className="font-semibold text-slate-900">{contact.name}</h4>
                       {contact.is_primary && (
                         <Badge variant="info" size="sm">Primary</Badge>
                       )}
                     </div>
                     {contact.title && (
-                      <p className="text-sm text-gray-600 mt-1">{contact.title}</p>
+                      <p className="text-sm text-slate-600 mt-1">{contact.title}</p>
                     )}
                     <div className="mt-3 space-y-1">
                       {contact.email && (
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-slate-600">
                           <Mail className="inline w-4 h-4 mr-1" />
                           {contact.email}
                         </p>
                       )}
                       {contact.phone && (
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-slate-600">
                           <Phone className="inline w-4 h-4 mr-1" />
                           {contact.phone}
                         </p>
@@ -619,33 +619,33 @@ function CommunicationsTab({
     <Card>
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Communications</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Communications</h3>
           <Button size="sm" onClick={onAdd}>
             <MessageSquare className="w-4 h-4 mr-2" />
             Add Communication
           </Button>
         </div>
         {communications.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-slate-500">
             No communications logged yet
           </div>
         ) : (
           <div className="space-y-4">
             {communications.map((comm) => (
-              <div key={comm.id} className="border-l-4 border-primary bg-gray-50 p-4 rounded">
+              <div key={comm.id} className="border-l-4 border-primary bg-slate-50 p-4 rounded">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Badge variant={comm.type === 'email' ? 'info' : comm.type === 'phone' ? 'warning' : 'default'}>
                         {comm.type}
                       </Badge>
-                      <span className="text-sm text-gray-500">{format(new Date(comm.created_at), 'MMM dd, yyyy HH:mm')}</span>
+                      <span className="text-sm text-slate-500">{format(new Date(comm.created_at), 'MMM dd, yyyy HH:mm')}</span>
                     </div>
                     {comm.subject && (
-                      <h4 className="font-semibold text-gray-900 mt-2">{comm.subject}</h4>
+                      <h4 className="font-semibold text-slate-900 mt-2">{comm.subject}</h4>
                     )}
                     {comm.content && (
-                      <p className="text-sm text-gray-600 mt-1">{comm.content}</p>
+                      <p className="text-sm text-slate-600 mt-1">{comm.content}</p>
                     )}
                   </div>
                 </div>
@@ -669,28 +669,28 @@ function DocumentsTab({
     <Card>
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Documents</h3>
           <Button size="sm" onClick={onAdd}>
             <FileStack className="w-4 h-4 mr-2" />
             Upload Document
           </Button>
         </div>
         {documents.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-slate-500">
             No documents uploaded yet
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {documents.map((doc) => (
-              <div key={doc.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div key={doc.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start gap-3">
                   <FileText className="w-8 h-8 text-primary" />
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 truncate">{doc.name}</h4>
+                    <h4 className="font-medium text-slate-900 truncate">{doc.name}</h4>
                     {doc.file_type && (
-                      <p className="text-sm text-gray-500 mt-1">{doc.file_type}</p>
+                      <p className="text-sm text-slate-500 mt-1">{doc.file_type}</p>
                     )}
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       Uploaded {format(new Date(doc.created_at), 'MMM dd, yyyy')}
                     </p>
                   </div>
@@ -711,73 +711,73 @@ function PerformanceTab({ supplier, performance }: { supplier: SupplierWithRelat
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <div className="p-4">
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
+            <div className="flex items-center gap-2 text-slate-600 mb-2">
               <TrendingUp className="w-4 h-4" />
               <span className="text-sm">Rating</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{supplier.rating != null ? `${supplier.rating}/5` : '-'}</div>
+            <div className="text-2xl font-bold text-slate-900">{supplier.rating != null ? `${supplier.rating}/5` : '-'}</div>
           </div>
         </Card>
         <Card>
           <div className="p-4">
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
+            <div className="flex items-center gap-2 text-slate-600 mb-2">
               <Star className="w-4 h-4" />
               <span className="text-sm">Metrics Tracked</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{performance.length}</div>
+            <div className="text-2xl font-bold text-slate-900">{performance.length}</div>
           </div>
         </Card>
         <Card>
           <div className="p-4">
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
+            <div className="flex items-center gap-2 text-slate-600 mb-2">
               <DollarSign className="w-4 h-4" />
               <span className="text-sm">Credit Limit</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{supplier.credit_limit != null ? formatCurrency(supplier.credit_limit) : '-'}</div>
+            <div className="text-2xl font-bold text-slate-900">{supplier.credit_limit != null ? formatCurrency(supplier.credit_limit) : '-'}</div>
           </div>
         </Card>
         <Card>
           <div className="p-4">
-            <div className="flex items-center gap-2 text-gray-600 mb-2">
+            <div className="flex items-center gap-2 text-slate-600 mb-2">
               <CheckCircle className="w-4 h-4" />
               <span className="text-sm">Outstanding</span>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{supplier.outstanding_balance != null ? formatCurrency(supplier.outstanding_balance) : '-'}</div>
+            <div className="text-2xl font-bold text-slate-900">{supplier.outstanding_balance != null ? formatCurrency(supplier.outstanding_balance) : '-'}</div>
           </div>
         </Card>
       </div>
 
       <Card>
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance History</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Performance History</h3>
           {performance.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-slate-500">
               No performance evaluations recorded yet
             </div>
           ) : (
             <div className="space-y-4">
               {performance.map((perf) => (
-                <div key={perf.id} className="border border-gray-200 rounded-lg p-4">
+                <div key={perf.id} className="border border-slate-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-slate-900">
                       {perf.period_end ? format(new Date(perf.period_end), 'MMM dd, yyyy') : '-'}
                     </span>
                     <Badge variant="info">{perf.metric_type}</Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Value:</span>
+                      <span className="text-slate-500">Value:</span>
                       <span className="ml-1 font-medium">{perf.value ?? '-'}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Period Start:</span>
+                      <span className="text-slate-500">Period Start:</span>
                       <span className="ml-1 font-medium">
                         {perf.period_start ? format(new Date(perf.period_start), 'MMM dd, yyyy') : '-'}
                       </span>
                     </div>
                   </div>
                   {perf.notes && (
-                    <p className="text-sm text-gray-600 mt-2">{perf.notes}</p>
+                    <p className="text-sm text-slate-600 mt-2">{perf.notes}</p>
                   )}
                 </div>
               ))}
@@ -836,14 +836,14 @@ function OrdersTab({ orders, supplierId }: { orders: PurchaseOrderWithStatus[]; 
     <Card>
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Purchase Orders</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Purchase Orders</h3>
           <Button size="sm" onClick={() => navigate('/purchase-orders/new', { state: { supplierId } })}>
             <Package className="w-4 h-4 mr-2" />
             Create PO
           </Button>
         </div>
         {orders.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-slate-500">
             No purchase orders yet
           </div>
         ) : (
@@ -858,25 +858,25 @@ function AuditTab({ auditTrail }: { auditTrail: SupplierAuditTrailRow[] }) {
   return (
     <Card>
       <div className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Audit Trail</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Audit Trail</h3>
         {auditTrail.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-slate-500">
             No audit records found
           </div>
         ) : (
           <div className="space-y-3">
             {auditTrail.map((audit) => (
-              <div key={audit.id} className="flex items-start gap-3 py-3 border-b border-gray-100 last:border-0">
-                <Activity className="w-5 h-5 text-gray-400 mt-0.5" />
+              <div key={audit.id} className="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
+                <Activity className="w-5 h-5 text-slate-400 mt-0.5" />
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-900">{audit.action}</span>
-                    <span className="text-sm text-gray-500">
+                    <span className="font-medium text-slate-900">{audit.action}</span>
+                    <span className="text-sm text-slate-500">
                       {format(new Date(audit.created_at), 'MMM dd, yyyy HH:mm')}
                     </span>
                   </div>
                   {audit.details != null && (
-                    <pre className="text-xs text-gray-600 mt-1 whitespace-pre-wrap font-sans">
+                    <pre className="text-xs text-slate-600 mt-1 whitespace-pre-wrap font-sans">
                       {typeof audit.details === 'string' ? audit.details : JSON.stringify(audit.details, null, 2)}
                     </pre>
                   )}

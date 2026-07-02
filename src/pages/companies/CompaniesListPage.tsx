@@ -11,6 +11,7 @@ import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { Plus, Search, Filter, Mail, Phone, Building2, MapPin, Users, UserCheck, Clock, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 import { KpiRow } from '../../components/templates/KpiRow';
+import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
 import { useAuth } from '../../contexts/AuthContext';
 import { logger } from '../../lib/logger';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -320,29 +321,17 @@ export const CompaniesListPage: React.FC = () => {
   });
 
   return (
-    <div className="p-6 max-w-[1800px] mx-auto">
-      <div className="mb-6 flex items-start justify-between">
-        <div className="flex items-start gap-4">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg bg-primary"
-            style={{
-              boxShadow: '0 10px 40px -10px rgb(var(--color-primary) / 0.5)',
-            }}
-          >
-            <Building2 className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 mb-1">Companies</h1>
-            <p className="text-slate-600 text-base">
-              Manage corporate clients and business relationships
-            </p>
-          </div>
-        </div>
-        <Button onClick={handleOpenModal}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Company
-        </Button>
-      </div>
+    <div className="px-6 py-5 max-w-[1800px] mx-auto">
+      <PageHeaderSlot
+        title="Companies"
+        icon={Building2}
+        actions={
+          <Button size="sm" onClick={handleOpenModal}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Company
+          </Button>
+        }
+      />
 
       <KpiRow
         cols="grid-cols-2 lg:grid-cols-4"
@@ -530,7 +519,7 @@ export const CompaniesListPage: React.FC = () => {
                       className="hover:bg-slate-50 transition-colors cursor-pointer"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-semibold text-primary">
+                        <span className="text-sm font-semibold text-primary">
                           {company.company_number}
                         </span>
                       </td>
@@ -540,7 +529,7 @@ export const CompaniesListPage: React.FC = () => {
                             {(company.name || company.company_name || '??').substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-medium text-slate-900">
+                            <div className="text-sm font-semibold text-slate-900">
                               {company.name || company.company_name}
                             </div>
                             {company.tax_number && (
@@ -691,7 +680,7 @@ export const CompaniesListPage: React.FC = () => {
               label="Industry"
               value={formData.industry_id}
               onChange={(value) => setFormData({ ...formData, industry_id: value })}
-              options={industries.map((i) => ({ id: i.id, name: i.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...industries.map((i) => ({ id: i.id, name: i.name }))]}
               placeholder="Select Industry"
             />
           </div>
@@ -721,10 +710,13 @@ export const CompaniesListPage: React.FC = () => {
             label="Primary Contact"
             value={formData.primary_contact_id}
             onChange={(value) => setFormData({ ...formData, primary_contact_id: value })}
-            options={customers.map((c) => ({
-              id: c.id,
-              name: `${c.customer_name}${c.email ? ` (${c.email})` : ''}`,
-            }))}
+            options={[
+              { id: '', name: 'No contact' },
+              ...customers.map((c) => ({
+                id: c.id,
+                name: `${c.customer_name}${c.email ? ` (${c.email})` : ''}`,
+              })),
+            ]}
             placeholder="Select Primary Contact"
           />
 
@@ -735,14 +727,14 @@ export const CompaniesListPage: React.FC = () => {
               onChange={(value) => {
                 setFormData({ ...formData, country_id: value, city_id: '' });
               }}
-              options={countries.map((c) => ({ id: c.id, name: c.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...countries.map((c) => ({ id: c.id, name: c.name }))]}
               placeholder="Select Country"
             />
             <SearchableSelect
               label="City"
               value={formData.city_id}
               onChange={(value) => setFormData({ ...formData, city_id: value })}
-              options={filteredCities.map((c) => ({ id: c.id, name: c.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...filteredCities.map((c) => ({ id: c.id, name: c.name }))]}
               placeholder="Select City"
               disabled={!formData.country_id}
             />
@@ -820,7 +812,7 @@ export const CompaniesListPage: React.FC = () => {
               label="Industry"
               value={formData.industry_id}
               onChange={(value) => setFormData({ ...formData, industry_id: value })}
-              options={industries.map((i) => ({ id: i.id, name: i.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...industries.map((i) => ({ id: i.id, name: i.name }))]}
               placeholder="Select Industry"
             />
           </div>
@@ -853,14 +845,14 @@ export const CompaniesListPage: React.FC = () => {
               onChange={(value) => {
                 setFormData({ ...formData, country_id: value, city_id: '' });
               }}
-              options={countries.map((c) => ({ id: c.id, name: c.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...countries.map((c) => ({ id: c.id, name: c.name }))]}
               placeholder="Select Country"
             />
             <SearchableSelect
               label="City"
               value={formData.city_id}
               onChange={(value) => setFormData({ ...formData, city_id: value })}
-              options={filteredCities.map((c) => ({ id: c.id, name: c.name }))}
+              options={[{ id: '', name: 'Not specified' }, ...filteredCities.map((c) => ({ id: c.id, name: c.name }))]}
               placeholder="Select City"
               disabled={!formData.country_id}
             />

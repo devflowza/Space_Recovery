@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useFieldA11y } from '../../hooks/useFieldA11y';
 
@@ -45,7 +46,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           )}
         />
         {error && (
-          <p {...errorProps} className="mt-1 text-sm text-danger">
+          <p {...errorProps} className="mt-1 text-xs text-danger flex items-center gap-1"><AlertCircle aria-hidden="true" className="w-3 h-3 shrink-0" />
             {error}
           </p>
         )}

@@ -48,14 +48,14 @@ export const ConfigurationStep = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <label className="block text-sm font-medium text-slate-300 font-body mb-3">
+        <label className="block text-sm font-medium text-slate-300 mb-3">
           Primary Services <span className="text-primary">*</span>
         </label>
         <ServiceSelector
           selected={formData.services}
           onChange={val => updateField('services', val)}
         />
-        {errors.services && <p className="text-danger text-xs mt-2 font-body">{errors.services}</p>}
+        {errors.services && <p className="text-danger text-xs mt-2">{errors.services}</p>}
       </motion.div>
 
       <motion.div
@@ -63,7 +63,7 @@ export const ConfigurationStep = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <label className="block text-sm font-medium text-slate-300 font-body mb-3">
+        <label className="block text-sm font-medium text-slate-300 mb-3">
           Estimated Monthly Cases <span className="text-primary">*</span>
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -72,7 +72,7 @@ export const ConfigurationStep = ({
               key={opt.value}
               type="button"
               onClick={() => updateField('estimatedCases', opt.value)}
-              className={`py-2.5 px-3 rounded-xl border text-sm font-body transition-all ${
+              className={`py-2.5 px-3 rounded-xl border text-sm transition-all ${
                 formData.estimatedCases === opt.value
                   ? 'border-primary/60 bg-primary/10 text-white'
                   : 'border-slate-700/60 bg-slate-800/30 text-slate-400 hover:border-slate-600'
@@ -82,7 +82,7 @@ export const ConfigurationStep = ({
             </button>
           ))}
         </div>
-        {errors.estimatedCases && <p className="text-danger text-xs mt-2 font-body">{errors.estimatedCases}</p>}
+        {errors.estimatedCases && <p className="text-danger text-xs mt-2">{errors.estimatedCases}</p>}
       </motion.div>
 
       <motion.div
@@ -90,7 +90,7 @@ export const ConfigurationStep = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <label className="block text-sm font-medium text-slate-300 font-body mb-3">
+        <label className="block text-sm font-medium text-slate-300 mb-3">
           Choose Your Plan <span className="text-primary">*</span>
         </label>
 
@@ -124,15 +124,15 @@ export const ConfigurationStep = ({
                 >
                   {isRecommended && formData.estimatedCases && (
                     <div className="absolute -top-2.5 left-3">
-                      <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-medium font-body px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-full">
                         <Sparkles className="w-2.5 h-2.5" /> Recommended
                       </span>
                     </div>
                   )}
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm font-medium text-white font-body">{plan.name}</p>
-                      <p className="text-lg font-bold text-white font-body mt-1">
+                      <p className="text-sm font-medium text-white">{plan.name}</p>
+                      <p className="text-lg font-bold text-white mt-1">
                         ${plan.price_monthly}
                         <span className="text-xs font-normal text-slate-500">/mo</span>
                       </p>
@@ -148,10 +148,10 @@ export const ConfigurationStep = ({
                     )}
                   </div>
                   <div className="mt-2 space-y-1">
-                    <p className="text-xs text-slate-500 font-body">
+                    <p className="text-xs text-slate-500">
                       {limits.max_users === -1 ? 'Unlimited' : limits.max_users} users
                     </p>
-                    <p className="text-xs text-slate-500 font-body">
+                    <p className="text-xs text-slate-500">
                       {limits.max_cases === -1 ? 'Unlimited' : limits.max_cases} cases/mo
                     </p>
                   </div>
@@ -160,7 +160,7 @@ export const ConfigurationStep = ({
             })}
           </div>
         )}
-        {errors.planId && <p className="text-danger text-xs mt-2 font-body">{errors.planId}</p>}
+        {errors.planId && <p className="text-danger text-xs mt-2">{errors.planId}</p>}
       </motion.div>
 
       <motion.div
@@ -173,14 +173,14 @@ export const ConfigurationStep = ({
           type="button"
           onClick={onBack}
           disabled={submitting}
-          className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 font-body text-sm hover:border-slate-600 hover:text-slate-300 transition-all disabled:opacity-40"
+          className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 text-sm hover:border-slate-600 hover:text-slate-300 transition-all disabled:opacity-40"
         >
           Back
         </button>
         <Button
           onClick={onSubmit}
           disabled={submitting || plansLoading}
-          className="flex-1 !bg-primary hover:!bg-primary/90 !text-primary-foreground !rounded-xl !py-3 !font-body disabled:!opacity-40"
+          className="flex-1 !bg-primary hover:!bg-primary/90 !text-primary-foreground !rounded-xl !py-3 ! disabled:!opacity-40"
         >
           {submitting ? 'Creating Account...' : 'Create Account'}
         </Button>
