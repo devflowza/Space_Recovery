@@ -137,8 +137,8 @@ export function SignatureCaptureModal({ open, onClose, title, onCapture, allowed
   }
 
   return (
-    <Dialog open={open} onClose={onClose} label={title} className="max-w-lg w-full">
-      <div className="p-6 space-y-5">
+    <Dialog open={open} onClose={onClose} label={title} className="max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="p-6 space-y-5 overflow-y-auto flex-1">
         <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
 
         {/* Segmented control */}
@@ -237,15 +237,15 @@ export function SignatureCaptureModal({ open, onClose, title, onCapture, allowed
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex justify-end gap-3 pt-2 border-t border-border">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={handleApply} disabled={!isValid()}>
-            Apply signature
-          </Button>
-        </div>
+      </div>
+      {/* Actions — pinned footer */}
+      <div className="shrink-0 flex items-center justify-end gap-3 border-t border-border px-6 py-3">
+        <Button type="button" variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="button" onClick={handleApply} disabled={!isValid()}>
+          Apply signature
+        </Button>
       </div>
     </Dialog>
   );
