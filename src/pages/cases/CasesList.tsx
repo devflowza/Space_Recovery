@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { sanitizeFilterValue } from '../../lib/postgrestSanitizer';
+import { buildCaseSearchOr } from '../../lib/caseSearch';
 import { Button } from '../../components/ui/Button';
 import { Plus, Search, Filter, Briefcase, AlertCircle, RefreshCw, ChevronLeft, ChevronRight, Archive, Download } from 'lucide-react';
 import { EmptyState } from '../../components/shared/EmptyState';
@@ -110,17 +111,19 @@ export const CasesList: React.FC = () => {
     setCurrentPage(1);
   }, [searchTerm, filterStatus, filterPriority]);
 
-  const buildFiltersQuery = () => {
+  // Search spans case_no / client_reference / subject plus customer (name, email, mobile,
+  // number) and device serials — the latter two pre-resolved to ids (see caseSearch.ts).
+  const resolveSearchOr = async (): Promise<string | null> =>
+    searchTerm ? buildCaseSearchOr(sanitizeFilterValue(searchTerm)) : null;
+
+  const buildFiltersQuery = (searchOr: string | null) => {
     let query = supabase
       .from('cases')
       .select('id, case_no, priority, status, customer_id', { count: 'exact', head: false })
       .is('deleted_at', null);
 
-    if (searchTerm) {
-      const s = sanitizeFilterValue(searchTerm);
-      query = query.or(
-        `case_no.ilike.%${s}%,client_reference.ilike.%${s}%`
-      );
+    if (searchOr) {
+      query = query.or(searchOr);
     }
 
     if (filterStatus !== 'all') {
@@ -137,7 +140,7 @@ export const CasesList: React.FC = () => {
   const { data: totalCountData } = useQuery({
     queryKey: ['cases_count', searchTerm, filterStatus, filterPriority],
     queryFn: async () => {
-      const query = buildFiltersQuery();
+      const query = buildFiltersQuery(await resolveSearchOr());
       const { count, error } = await query;
       if (error) throw error;
       return count || 0;
@@ -172,11 +175,9 @@ export const CasesList: React.FC = () => {
         `)
         .is('deleted_at', null);
 
-      if (searchTerm) {
-        const s = sanitizeFilterValue(searchTerm);
-        query = query.or(
-          `case_no.ilike.%${s}%,client_reference.ilike.%${s}%`
-        );
+      const searchOr = await resolveSearchOr();
+      if (searchOr) {
+        query = query.or(searchOr);
       }
 
       if (filterStatus !== 'all') {
@@ -573,9 +574,9 @@ export const CasesList: React.FC = () => {
                   .from('cases')
                   .select('case_no, title, priority, status, client_reference, created_at, customers_enhanced:customer_id(customer_name), case_devices(serial_number, model, is_primary, catalog_device_types(name), catalog_device_capacities(name))')
                   .is('deleted_at', null);
-                if (searchTerm) {
-                  const s = sanitizeFilterValue(searchTerm);
-                  q = q.or(`case_no.ilike.%${s}%,client_reference.ilike.%${s}%`);
+                const searchOr = await resolveSearchOr();
+                if (searchOr) {
+                  q = q.or(searchOr);
                 }
                 if (filterStatus !== 'all') q = q.eq('status', filterStatus);
                 if (filterPriority !== 'all') q = q.eq('priority', filterPriority);
