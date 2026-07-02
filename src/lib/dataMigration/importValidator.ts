@@ -54,6 +54,47 @@ const FK_REFS: Partial<Record<EntityType, Array<{ field: string; target: EntityT
     { field: 'case_legacy_id', target: 'cases', required: false },
     { field: 'bank_account_legacy_id', target: 'bankAccounts', required: false },
   ],
+  accountTransfers: [
+    { field: 'from_bank_legacy_id', target: 'bankAccounts', required: true },
+    { field: 'to_bank_legacy_id', target: 'bankAccounts', required: true },
+  ],
+  paymentDisbursements: [
+    { field: 'bank_account_legacy_id', target: 'bankAccounts', required: false },
+    { field: 'expense_legacy_id', target: 'expenses', required: false },
+  ],
+  creditNotes: [
+    { field: 'invoice_legacy_id', target: 'invoices', required: false },
+    { field: 'case_legacy_id', target: 'cases', required: false },
+    { field: 'customer_legacy_id', target: 'customers', required: false },
+  ],
+  creditNoteItems: [{ field: 'credit_note_legacy_id', target: 'creditNotes', required: true }],
+  creditNoteAllocations: [
+    { field: 'credit_note_legacy_id', target: 'creditNotes', required: true },
+    { field: 'invoice_legacy_id', target: 'invoices', required: true },
+  ],
+  customerCommunications: [{ field: 'customer_legacy_id', target: 'customers', required: true }],
+  caseCommunications: [{ field: 'case_legacy_id', target: 'cases', required: true }],
+  caseRecoveryAttempts: [
+    { field: 'case_legacy_id', target: 'cases', required: true },
+    { field: 'device_legacy_id', target: 'devices', required: false },
+  ],
+  deviceDiagnostics: [{ field: 'device_legacy_id', target: 'devices', required: true }],
+  cloneDrives: [{ field: 'case_legacy_id', target: 'cases', required: false }],
+  supplierContacts: [{ field: 'supplier_legacy_id', target: 'suppliers', required: true }],
+  purchaseOrders: [{ field: 'supplier_legacy_id', target: 'suppliers', required: true }],
+  purchaseOrderItems: [{ field: 'purchase_order_legacy_id', target: 'purchaseOrders', required: true }],
+  stockSerialNumbers: [{ field: 'item_legacy_id', target: 'stockItems', required: true }],
+  stockSaleItems: [
+    { field: 'sale_legacy_id', target: 'stockSales', required: true },
+    { field: 'item_legacy_id', target: 'stockItems', required: true },
+  ],
+  positions: [{ field: 'department_legacy_id', target: 'departments', required: false }],
+  employees: [
+    { field: 'department_legacy_id', target: 'departments', required: false },
+    { field: 'position_legacy_id', target: 'positions', required: false },
+  ],
+  leaveBalances: [{ field: 'employee_legacy_id', target: 'employees', required: true }],
+  employeeLoans: [{ field: 'employee_legacy_id', target: 'employees', required: true }],
   notes: [{ field: 'case_legacy_id', target: 'cases', required: true }],
   statusHistory: [{ field: 'case_legacy_id', target: 'cases', required: true }],
   // Donor parts must reference an item present in the file. inventoryItems.location_legacy_id
@@ -69,20 +110,35 @@ const UNIQUE_NUMBER: Partial<Record<EntityType, string>> = {
   cases: 'case_number',
   quotes: 'quote_number',
   invoices: 'invoice_number',
+  creditNotes: 'credit_note_number',
+  suppliers: 'supplier_number',
+  purchaseOrders: 'po_number',
+  stockItems: 'sku',
+  stockSales: 'sale_number',
+  employees: 'employee_number',
 };
 
-// Status enum guards. Only entities whose status column is constrained DB-side are
-// validated as ERRORS here so the failure surfaces client-side rather than as an
-// opaque per-row RPC failure. Verified against the live schema (2026-07-01):
-//   • invoices.status — hard CHECK (draft/sent/paid/partial/overdue/cancelled/void/converted).
-//   • quotes.status / cases.status — NO CHECK, NO FK; tenant-configurable free text in
-//     master_quote_statuses / master_case_statuses. NOT a fixed enum, so flagging a value
-//     here would be wrong (false positives on valid legacy data). Intentionally NOT guarded.
-const STATUS_ENUMS: Partial<Record<EntityType, { field: string; allowed: ReadonlySet<string> }>> = {
-  invoices: {
+// Status enum guards. Only fields constrained DB-side (hard CHECK) are validated as ERRORS
+// here so the failure surfaces client-side rather than as an opaque per-row RPC failure.
+// Free-text / tenant-configurable statuses (quotes, cases, stock sale status, …) are
+// intentionally NOT guarded — flagging them would false-positive on valid legacy data.
+const STATUS_ENUMS: Partial<Record<EntityType, Array<{ field: string; allowed: ReadonlySet<string> }>>> = {
+  invoices: [{
     field: 'status',
     allowed: new Set(['draft', 'sent', 'paid', 'partial', 'overdue', 'cancelled', 'void', 'converted']),
-  },
+  }],
+  expenses: [{
+    field: 'status',
+    allowed: new Set(['draft', 'pending', 'approved', 'rejected', 'paid', 'voided']),
+  }],
+  creditNotes: [
+    { field: 'status', allowed: new Set(['draft', 'issued', 'applied', 'void']) },
+    { field: 'credit_type', allowed: new Set(['adjustment', 'refund', 'advance_adjustment', 'writeoff']) },
+  ],
+  stockSales: [{
+    field: 'payment_status',
+    allowed: new Set(['unpaid', 'partial', 'paid', 'refunded']),
+  }],
 };
 
 function isEmpty(v: unknown): boolean {
@@ -185,8 +241,8 @@ export function validateWorkbook(wb: ParsedWorkbook, domain: WorkbookDomain): Va
       }
 
       // status enum (DB-constrained columns only — see STATUS_ENUMS)
-      const statusGuard = STATUS_ENUMS[entity];
-      if (statusGuard && !isEmpty(row[statusGuard.field])) {
+      for (const statusGuard of STATUS_ENUMS[entity] ?? []) {
+        if (isEmpty(row[statusGuard.field])) continue;
         const value = String(row[statusGuard.field]);
         if (!statusGuard.allowed.has(value.toLowerCase())) {
           issues.push({
@@ -195,7 +251,7 @@ export function validateWorkbook(wb: ParsedWorkbook, domain: WorkbookDomain): Va
             legacyId,
             severity: 'error',
             field: statusGuard.field,
-            message: `Invalid status "${value}" (allowed: ${[...statusGuard.allowed].join(', ')})`,
+            message: `Invalid ${statusGuard.field} "${value}" (allowed: ${[...statusGuard.allowed].join(', ')})`,
           });
         }
       }

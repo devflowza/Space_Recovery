@@ -8,11 +8,18 @@ import {
 import type { EntityType } from '../workbookContract';
 
 const ALL_ENTITIES: EntityType[] = [
-  'companies', 'customers', 'relationships', 'cases', 'devices',
+  'companies', 'customerGroups', 'customers', 'relationships', 'cases', 'devices',
   'quotes', 'quoteItems', 'invoices', 'invoiceLineItems',
   'bankAccounts', 'payments', 'receipts', 'expenses',
+  'accountTransfers', 'paymentDisbursements',
+  'creditNotes', 'creditNoteItems', 'creditNoteAllocations',
+  'customerCommunications', 'caseCommunications', 'caseRecoveryAttempts',
+  'deviceDiagnostics', 'cloneDrives',
   'notes', 'statusHistory',
   'inventoryLocations', 'inventoryItems', 'inventoryDonorParts',
+  'suppliers', 'supplierContacts', 'purchaseOrders', 'purchaseOrderItems',
+  'stockCategories', 'stockLocations', 'stockItems', 'stockSerialNumbers', 'stockSales', 'stockSaleItems',
+  'departments', 'positions', 'employees', 'leaveBalances', 'employeeLoans',
 ];
 
 describe('workbookContract — structural invariants', () => {
@@ -28,9 +35,9 @@ describe('workbookContract — structural invariants', () => {
     }
   });
 
-  it('IMPORT_ORDER contains exactly the 18 EntityTypes (no duplicates, no missing)', () => {
-    expect(IMPORT_ORDER).toHaveLength(18);
-    expect(new Set(IMPORT_ORDER).size).toBe(18);
+  it('IMPORT_ORDER contains exactly the 44 EntityTypes (no duplicates, no missing)', () => {
+    expect(IMPORT_ORDER).toHaveLength(44);
+    expect(new Set(IMPORT_ORDER).size).toBe(44);
     for (const e of ALL_ENTITIES) {
       expect(IMPORT_ORDER).toContain(e);
     }
@@ -41,6 +48,25 @@ describe('workbookContract — structural invariants', () => {
     expect(IMPORT_ORDER.indexOf('invoices')).toBeLessThan(IMPORT_ORDER.indexOf('payments'));
     expect(IMPORT_ORDER.indexOf('bankAccounts')).toBeLessThan(IMPORT_ORDER.indexOf('payments'));
     expect(IMPORT_ORDER.indexOf('bankAccounts')).toBeLessThan(IMPORT_ORDER.indexOf('expenses'));
+  });
+
+  it('IMPORT_ORDER: new-entity refs come after their parents', () => {
+    // customer groups before customers (group membership resolves by name at customer insert)
+    expect(IMPORT_ORDER.indexOf('customerGroups')).toBeLessThan(IMPORT_ORDER.indexOf('customers'));
+    expect(IMPORT_ORDER.indexOf('bankAccounts')).toBeLessThan(IMPORT_ORDER.indexOf('accountTransfers'));
+    expect(IMPORT_ORDER.indexOf('expenses')).toBeLessThan(IMPORT_ORDER.indexOf('paymentDisbursements'));
+    expect(IMPORT_ORDER.indexOf('creditNotes')).toBeLessThan(IMPORT_ORDER.indexOf('creditNoteItems'));
+    expect(IMPORT_ORDER.indexOf('creditNotes')).toBeLessThan(IMPORT_ORDER.indexOf('creditNoteAllocations'));
+    expect(IMPORT_ORDER.indexOf('devices')).toBeLessThan(IMPORT_ORDER.indexOf('deviceDiagnostics'));
+    expect(IMPORT_ORDER.indexOf('suppliers')).toBeLessThan(IMPORT_ORDER.indexOf('supplierContacts'));
+    expect(IMPORT_ORDER.indexOf('suppliers')).toBeLessThan(IMPORT_ORDER.indexOf('purchaseOrders'));
+    expect(IMPORT_ORDER.indexOf('purchaseOrders')).toBeLessThan(IMPORT_ORDER.indexOf('purchaseOrderItems'));
+    expect(IMPORT_ORDER.indexOf('stockItems')).toBeLessThan(IMPORT_ORDER.indexOf('stockSerialNumbers'));
+    expect(IMPORT_ORDER.indexOf('stockSales')).toBeLessThan(IMPORT_ORDER.indexOf('stockSaleItems'));
+    expect(IMPORT_ORDER.indexOf('departments')).toBeLessThan(IMPORT_ORDER.indexOf('positions'));
+    expect(IMPORT_ORDER.indexOf('positions')).toBeLessThan(IMPORT_ORDER.indexOf('employees'));
+    expect(IMPORT_ORDER.indexOf('employees')).toBeLessThan(IMPORT_ORDER.indexOf('leaveBalances'));
+    expect(IMPORT_ORDER.indexOf('employees')).toBeLessThan(IMPORT_ORDER.indexOf('employeeLoans'));
   });
 
   it('IMPORT_ORDER: companies before customers', () => {

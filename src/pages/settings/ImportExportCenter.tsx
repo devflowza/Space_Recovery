@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Upload, Download, Database, CheckCircle, Clock, XCircle, AlertCircle, Briefcase, Package } from 'lucide-react';
+import { Upload, Download, Database, CheckCircle, Clock, XCircle, AlertCircle, Briefcase, Package, Truck, Boxes, Users } from 'lucide-react';
 import { SettingsPageHeader } from '../../components/layout/SettingsPageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -12,7 +12,7 @@ import { ImportWizard } from '../../components/dataMigration/ImportWizard';
 import { ExportWizard } from '../../components/dataMigration/ExportWizard';
 import type { WorkbookDomain } from '../../lib/dataMigration/workbookContract';
 
-// Two independent import/export domains — never mixed in one file.
+// Independent import/export domains — never mixed in one file.
 const DOMAIN_CARDS: Array<{
   domain: WorkbookDomain;
   title: string;
@@ -23,7 +23,7 @@ const DOMAIN_CARDS: Array<{
   {
     domain: 'records',
     title: 'Case Records',
-    blurb: 'Customers, companies, cases, devices, quotes, invoices, and case history.',
+    blurb: 'Customers, companies, cases, devices, quotes, invoices, financials, and case history.',
     icon: <Briefcase className="w-6 h-6 text-info" />,
     tint: 'bg-info-muted',
   },
@@ -33,6 +33,27 @@ const DOMAIN_CARDS: Array<{
     blurb: 'Stock items (with technical specs), storage locations, and donor parts.',
     icon: <Package className="w-6 h-6 text-accent" />,
     tint: 'bg-accent/10',
+  },
+  {
+    domain: 'procurement',
+    title: 'Suppliers & Purchasing',
+    blurb: 'Supplier directory, contacts, and purchase orders with line items.',
+    icon: <Truck className="w-6 h-6 text-secondary" />,
+    tint: 'bg-secondary/10',
+  },
+  {
+    domain: 'stock',
+    title: 'Stock & Products',
+    blurb: 'Sellable stock catalog, categories, locations, serial numbers, and sales.',
+    icon: <Boxes className="w-6 h-6 text-success" />,
+    tint: 'bg-success-muted',
+  },
+  {
+    domain: 'hr',
+    title: 'HR & Employees',
+    blurb: 'Departments, positions, employee roster, leave balances, and loans.',
+    icon: <Users className="w-6 h-6 text-warning" />,
+    tint: 'bg-warning-muted',
   },
 ];
 

@@ -434,8 +434,13 @@ export function generateLargeFixture(opts: FixtureOptions = {}): ParsedWorkbook 
   const inventoryItems: RawRow[] = [];
   const inventoryDonorParts: RawRow[] = [];
 
+  // Newer records-domain entities + the procurement/stock/hr domains are exercised by the
+  // rolled-back live smoke tests, not this scale fixture — present but empty.
+  const empty: RawRow[] = [];
+
   return {
     companies,
+    customerGroups: empty,
     customers,
     relationships,
     cases,
@@ -448,10 +453,35 @@ export function generateLargeFixture(opts: FixtureOptions = {}): ParsedWorkbook 
     payments,
     receipts,
     expenses,
+    accountTransfers: empty,
+    paymentDisbursements: empty,
+    creditNotes: empty,
+    creditNoteItems: empty,
+    creditNoteAllocations: empty,
+    customerCommunications: empty,
+    caseCommunications: empty,
+    caseRecoveryAttempts: empty,
+    deviceDiagnostics: empty,
+    cloneDrives: empty,
     notes,
     statusHistory,
     inventoryLocations,
     inventoryItems,
     inventoryDonorParts,
+    suppliers: empty,
+    supplierContacts: empty,
+    purchaseOrders: empty,
+    purchaseOrderItems: empty,
+    stockCategories: empty,
+    stockLocations: empty,
+    stockItems: empty,
+    stockSerialNumbers: empty,
+    stockSales: empty,
+    stockSaleItems: empty,
+    departments: empty,
+    positions: empty,
+    employees: empty,
+    leaveBalances: empty,
+    employeeLoans: empty,
   };
 }
