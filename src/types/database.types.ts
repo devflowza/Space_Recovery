@@ -4427,6 +4427,7 @@ export type Database = {
           id: string
           invoice_id: string
           tenant_id: string
+          updated_at: string
         }
         Insert: {
           amount: number
@@ -4437,6 +4438,7 @@ export type Database = {
           id?: string
           invoice_id: string
           tenant_id: string
+          updated_at?: string
         }
         Update: {
           amount?: number
@@ -4447,6 +4449,7 @@ export type Database = {
           id?: string
           invoice_id?: string
           tenant_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -8742,6 +8745,7 @@ export type Database = {
         Row: {
           carried_over: number | null
           created_at: string
+          deleted_at: string | null
           employee_id: string
           id: string
           leave_type_id: string
@@ -8755,6 +8759,7 @@ export type Database = {
         Insert: {
           carried_over?: number | null
           created_at?: string
+          deleted_at?: string | null
           employee_id: string
           id?: string
           leave_type_id: string
@@ -8768,6 +8773,7 @@ export type Database = {
         Update: {
           carried_over?: number | null
           created_at?: string
+          deleted_at?: string | null
           employee_id?: string
           id?: string
           leave_type_id?: string
@@ -14187,6 +14193,7 @@ export type Database = {
       stock_sale_items: {
         Row: {
           created_at: string
+          deleted_at: string | null
           discount: number | null
           id: string
           invoice_line_item_id: string | null
@@ -14201,6 +14208,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           discount?: number | null
           id?: string
           invoice_line_item_id?: string | null
@@ -14215,6 +14223,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           discount?: number | null
           id?: string
           invoice_line_item_id?: string | null
