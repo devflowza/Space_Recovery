@@ -6,6 +6,7 @@ import type { Database } from '../types/database.types';
 import { createFinancialTransaction } from './financialService';
 import { resolveRateContext, getBaseCurrency, getCurrencyDecimals } from './currencyService';
 import { convertToBase, baseAmount } from './financialMath';
+import { currentTenantToday } from './tenantToday';
 
 type ExpenseInsert = Database['public']['Tables']['expenses']['Insert'];
 type ExpenseAttachmentRow = Database['public']['Tables']['expense_attachments']['Row'];
@@ -275,7 +276,7 @@ export const updateExpense = async (
     if (expense.exchange_rate || currencyChanged) {
       const rc = await resolveRateContext(
         expense.currency ?? existing?.currency,
-        expense.expense_date ?? new Date().toISOString().slice(0, 10),
+        expense.expense_date ?? (await currentTenantToday()),
         expense.exchange_rate
           ? { rate: expense.exchange_rate, source: expense.rate_source as 'manual' | 'provider' | undefined }
           : null,
@@ -414,7 +415,7 @@ export const approveExpense = async (id: string, approvedBy: string) => {
   // Post the ledger entry at the EXPENSE date (not the approval date) so every
   // period report buckets it consistently (EXP-024).
   await createFinancialTransaction({
-    transaction_date: (expense.expense_date ?? new Date().toISOString()).slice(0, 10),
+    transaction_date: (expense.expense_date ?? (await currentTenantToday())).slice(0, 10),
     amount: expense.amount,
     transaction_type: 'expense',
     description: `Expense approved: ${expense.description ?? ''}`,
@@ -748,7 +749,7 @@ const createExpenseVATRecord = async (args: {
   expenseDate: string | null;
 }) => {
   const vatRate = args.netAmount > 0 ? Math.round((args.taxAmount / args.netAmount) * 10000) / 100 : 0;
-  const taxPeriod = (args.expenseDate ?? new Date().toISOString()).slice(0, 7); // YYYY-MM
+  const taxPeriod = (args.expenseDate ?? (await currentTenantToday())).slice(0, 7); // YYYY-MM
   const payload = {
     record_type: 'purchase',
     record_id: args.recordId,

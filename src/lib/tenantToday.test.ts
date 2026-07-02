@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const maybeSingle = vi.fn();
 vi.mock('./supabaseClient', () => ({
@@ -83,5 +85,19 @@ describe('getTenantTimezone / currentTenantToday', () => {
     maybeSingle.mockResolvedValue({ data: { timezone: 'Asia/Muscat' }, error: null });
     expect(await currentTenantToday()).toBe('2026-07-01');
     vi.useRealTimers();
+  });
+});
+
+describe('document-date stamping sweep (Phase 0)', () => {
+  const SWEPT_FILES = [
+    'src/components/cases/InvoiceFormModal.tsx',
+    'src/components/cases/QuoteFormModal.tsx',
+    'src/components/cases/ConvertToInvoiceModal.tsx',
+    'src/components/financial/ExpenseFormModal.tsx',
+    'src/components/financial/ExpensePaymentModal.tsx',
+  ];
+  it.each(SWEPT_FILES)('%s no longer stamps UTC document dates', (file) => {
+    const src = readFileSync(join(process.cwd(), file), 'utf8');
+    expect(src.includes("new Date().toISOString().split('T')[0]")).toBe(false);
   });
 });
