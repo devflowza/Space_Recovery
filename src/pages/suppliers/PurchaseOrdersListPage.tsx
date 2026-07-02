@@ -206,7 +206,7 @@ export default function PurchaseOrdersListPage() {
       render: (order) => (
         <div>
           <div className="font-medium">{order.supplier?.name ?? '-'}</div>
-          <div className="text-sm text-gray-500">{order.supplier?.supplier_number ?? ''}</div>
+          <div className="text-sm text-slate-500">{order.supplier?.supplier_number ?? ''}</div>
         </div>
       ),
     },
@@ -270,7 +270,7 @@ export default function PurchaseOrdersListPage() {
         <div className="mb-4 flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -284,7 +284,7 @@ export default function PurchaseOrdersListPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
             >
               <option value="all">All Statuses</option>
               {statuses.map((status) => (

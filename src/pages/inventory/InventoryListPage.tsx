@@ -234,7 +234,7 @@ export default function InventoryListPage() {
   const getStockColor = (count: number) => {
     if (count === 0) return 'text-danger';
     if (count <= 2) return 'text-warning';
-    return 'text-gray-900';
+    return 'text-slate-900';
   };
 
   const formatDate = (dateString: string) => {

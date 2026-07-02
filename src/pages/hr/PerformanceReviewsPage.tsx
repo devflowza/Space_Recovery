@@ -234,7 +234,7 @@ export const PerformanceReviewsPage: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         {[
           { label: 'Total Reviews', value: stats?.total ?? '–', icon: TrendingUp, bg: 'from-slate-50 to-slate-100', border: 'border-slate-200', icon_bg: 'bg-slate-500', text: 'text-slate-600', num: 'text-slate-900' },
-          { label: 'Draft', value: stats?.draft ?? '–', icon: Clock, bg: 'from-gray-50 to-gray-100', border: 'border-gray-200', icon_bg: 'bg-gray-400', text: 'text-gray-600', num: 'text-gray-900' },
+          { label: 'Draft', value: stats?.draft ?? '–', icon: Clock, bg: 'from-slate-50 to-slate-100', border: 'border-slate-200', icon_bg: 'bg-slate-400', text: 'text-slate-600', num: 'text-slate-900' },
           { label: 'Submitted', value: stats?.submitted ?? '–', icon: Send, bg: 'bg-info-muted', border: 'border-info/30', icon_bg: 'bg-info', text: 'text-info', num: 'text-info' },
           { label: 'Completed', value: stats?.completed ?? '–', icon: CheckCircle, bg: 'bg-success-muted', border: 'border-success/30', icon_bg: 'bg-success', text: 'text-success', num: 'text-success' },
           { label: 'Avg. Rating', value: avgRating ? `${avgRating}/5` : '–', icon: Star, bg: 'bg-warning-muted', border: 'border-warning/30', icon_bg: 'bg-warning', text: 'text-warning', num: 'text-warning' },

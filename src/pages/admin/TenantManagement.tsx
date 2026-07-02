@@ -105,8 +105,8 @@ export const TenantManagement = () => {
       key: 'name',
       render: (tenant) => (
         <div>
-          <div className="font-medium text-gray-900">{tenant.name}</div>
-          <div className="text-sm text-gray-500">{tenant.slug}</div>
+          <div className="font-medium text-slate-900">{tenant.name}</div>
+          <div className="text-sm text-slate-500">{tenant.slug}</div>
         </div>
       ),
     },
@@ -127,7 +127,7 @@ export const TenantManagement = () => {
       key: 'users',
       render: (tenant) => (
         <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-gray-400" />
+          <Users className="w-4 h-4 text-slate-400" />
           <span>{tenantStats[tenant.id]?.users || 0}</span>
         </div>
       ),
@@ -137,7 +137,7 @@ export const TenantManagement = () => {
       key: 'cases',
       render: (tenant) => (
         <div className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-gray-400" />
+          <FileText className="w-4 h-4 text-slate-400" />
           <span>{tenantStats[tenant.id]?.cases || 0}</span>
         </div>
       ),
@@ -147,7 +147,7 @@ export const TenantManagement = () => {
       key: 'customers',
       render: (tenant) => (
         <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-gray-400" />
+          <Building2 className="w-4 h-4 text-slate-400" />
           <span>{tenantStats[tenant.id]?.customers || 0}</span>
         </div>
       ),
@@ -156,7 +156,7 @@ export const TenantManagement = () => {
       header: 'Created',
       key: 'created_at',
       render: (tenant) => (
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-slate-500">
           {new Date(tenant.created_at).toLocaleDateString()}
         </span>
       ),

@@ -86,12 +86,12 @@ export default function DeleteInventoryConfirmationModal({
           <AlertTriangle className="h-8 w-8 text-danger" />
         </div>
 
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">
+        <h3 className="text-2xl font-bold text-slate-900 mb-2">
           Delete Inventory Item?
         </h3>
 
-        <p className="text-gray-600 mb-6">
-          Are you sure you want to delete <span className="font-semibold text-gray-900">"{itemName}"</span>?
+        <p className="text-slate-600 mb-6">
+          Are you sure you want to delete <span className="font-semibold text-slate-900">"{itemName}"</span>?
         </p>
 
         <div className="bg-warning-muted border border-warning/30 rounded-lg p-4 mb-6">
@@ -109,14 +109,14 @@ export default function DeleteInventoryConfirmationModal({
           </div>
         ) : (
           <div className="mb-6">
-            <label htmlFor={statusSelectId} className="block text-left text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor={statusSelectId} className="block text-left text-sm font-medium text-slate-700 mb-2">
               Change Status To:
             </label>
             <select
               id={statusSelectId}
               value={selectedStatusId}
               onChange={(e) => setSelectedStatusId(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base"
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-base"
               disabled={loading}
             >
               {statusTypes.map((status) => (

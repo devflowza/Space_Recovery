@@ -201,7 +201,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               <Building2 className="inline w-4 h-4 mr-1" />
               Company Name *
             </label>
@@ -215,7 +215,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Supplier Number *
             </label>
             <Input
@@ -228,14 +228,14 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label htmlFor={categorySelectId} className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={categorySelectId} className="block text-sm font-medium text-slate-700 mb-1">
               Category
             </label>
             <select
               id={categorySelectId}
               value={formData.category_id}
               onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="">Select Category</option>
               {categories.map((cat) => (
@@ -247,7 +247,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               <Mail className="inline w-4 h-4 mr-1" />
               Email *
             </label>
@@ -261,7 +261,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               <Phone className="inline w-4 h-4 mr-1" />
               Phone
             </label>
@@ -273,7 +273,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Tax ID / VAT Number
             </label>
             <Input
@@ -284,7 +284,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Website
             </label>
             <Input
@@ -296,7 +296,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               <MapPin className="inline w-4 h-4 mr-1" />
               Address
             </label>
@@ -308,7 +308,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               City
             </label>
             <Input
@@ -319,7 +319,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               State / Province
             </label>
             <Input
@@ -330,7 +330,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               ZIP / Postal Code
             </label>
             <Input
@@ -341,7 +341,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Country
             </label>
             <Input
@@ -352,14 +352,14 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label htmlFor={paymentTermsSelectId} className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor={paymentTermsSelectId} className="block text-sm font-medium text-slate-700 mb-1">
               Payment Terms
             </label>
             <select
               id={paymentTermsSelectId}
               value={formData.payment_terms_id}
               onChange={(e) => setFormData({ ...formData, payment_terms_id: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="">Select Payment Terms</option>
               {paymentTerms.map((term) => (
@@ -371,7 +371,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               <Truck className="inline w-4 h-4 mr-1" />
               Preferred Shipping Method
             </label>
@@ -383,28 +383,28 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               <FileText className="inline w-4 h-4 mr-1" />
               Description
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={3}
               placeholder="Brief description of the supplier and products/services..."
             />
           </div>
 
           <div className="md:col-span-2 border-t pt-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">
               <User className="inline w-4 h-4 mr-1" />
               Primary Contact Information
             </h3>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Contact Name
             </label>
             <Input
@@ -415,7 +415,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Contact Position
             </label>
             <Input
@@ -426,7 +426,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Contact Email
             </label>
             <Input
@@ -438,7 +438,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               Contact Phone
             </label>
             <Input
@@ -455,9 +455,9 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
                   type="checkbox"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                  className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
                 />
-                <span className="text-sm font-medium text-gray-700">Active Supplier</span>
+                <span className="text-sm font-medium text-slate-700">Active Supplier</span>
               </label>
 
               <label className="flex items-center gap-2">
@@ -465,9 +465,9 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
                   type="checkbox"
                   checked={formData.is_approved}
                   onChange={(e) => setFormData({ ...formData, is_approved: e.target.checked })}
-                  className="w-4 h-4 text-success border-gray-300 rounded focus:ring-success"
+                  className="w-4 h-4 text-success border-slate-300 rounded focus:ring-success"
                 />
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-slate-700">
                   <CheckCircle className="inline w-4 h-4 mr-1 text-success" />
                   Approved Supplier
                 </span>

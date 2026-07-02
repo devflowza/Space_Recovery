@@ -78,10 +78,10 @@ export const EmployeeProfilePage: React.FC = () => {
             Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-slate-900">
               {employee.first_name} {employee.last_name}
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-600">
               {employee.employee_number} • {employee.departments?.name} •{' '}
               {employee.positions?.title}
             </p>
@@ -103,29 +103,29 @@ export const EmployeeProfilePage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Current Salary</span>
-            <DollarSign className="h-5 w-5 text-gray-400" />
+            <span className="text-sm text-slate-600">Current Salary</span>
+            <DollarSign className="h-5 w-5 text-slate-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-bold text-slate-900">
             {employee.basic_salary != null
               ? formatCurrency(Number(employee.basic_salary))
               : 'Not Set'}
           </p>
           {employee.salary_currency && (
-            <p className="text-xs text-gray-500 mt-1">{employee.salary_currency}</p>
+            <p className="text-xs text-slate-500 mt-1">{employee.salary_currency}</p>
           )}
         </Card>
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Active Loans</span>
-            <TrendingUp className="h-5 w-5 text-gray-400" />
+            <span className="text-sm text-slate-600">Active Loans</span>
+            <TrendingUp className="h-5 w-5 text-slate-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-bold text-slate-900">
             {activeLoans.filter((l) => l.status === 'active').length}
           </p>
           {totalLoanDeductions > 0 && (
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               {formatCurrency(totalLoanDeductions)} monthly
             </p>
           )}
@@ -133,10 +133,10 @@ export const EmployeeProfilePage: React.FC = () => {
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Hire Date</span>
-            <Calendar className="h-5 w-5 text-gray-400" />
+            <span className="text-sm text-slate-600">Hire Date</span>
+            <Calendar className="h-5 w-5 text-slate-400" />
           </div>
-          <p className="text-lg font-bold text-gray-900">
+          <p className="text-lg font-bold text-slate-900">
             {employee.hire_date
               ? new Date(employee.hire_date).toLocaleDateString()
               : 'Not Set'}
@@ -145,9 +145,9 @@ export const EmployeeProfilePage: React.FC = () => {
       </div>
 
       <Card>
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-slate-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Salary Structure</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Salary Structure</h2>
             <Button size="sm" variant="secondary">
               <Edit className="h-4 w-4 mr-2" />
               Update Salary
@@ -159,45 +159,45 @@ export const EmployeeProfilePage: React.FC = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-sm text-gray-600">Structure Name</span>
-                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                  <span className="text-sm text-slate-600">Structure Name</span>
+                  <p className="text-lg font-semibold text-slate-900 mt-1">
                     {salaryStructure.name}
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Net Salary</span>
-                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                  <span className="text-sm text-slate-600">Net Salary</span>
+                  <p className="text-lg font-semibold text-slate-900 mt-1">
                     {salaryStructure.net_salary != null
                       ? formatCurrency(Number(salaryStructure.net_salary))
                       : '-'}
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Total Earnings</span>
-                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                  <span className="text-sm text-slate-600">Total Earnings</span>
+                  <p className="text-lg font-semibold text-slate-900 mt-1">
                     {salaryStructure.total_earnings != null
                       ? formatCurrency(Number(salaryStructure.total_earnings))
                       : '-'}
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Total Deductions</span>
-                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                  <span className="text-sm text-slate-600">Total Deductions</span>
+                  <p className="text-lg font-semibold text-slate-900 mt-1">
                     {salaryStructure.total_deductions != null
                       ? formatCurrency(Number(salaryStructure.total_deductions))
                       : '-'}
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Effective Date</span>
-                  <p className="text-lg font-semibold text-gray-900 mt-1">
+                  <span className="text-sm text-slate-600">Effective Date</span>
+                  <p className="text-lg font-semibold text-slate-900 mt-1">
                     {salaryStructure.effective_date
                       ? new Date(salaryStructure.effective_date).toLocaleDateString()
                       : '-'}
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-600">Status</span>
+                  <span className="text-sm text-slate-600">Status</span>
                   <p className="mt-1">
                     <Badge color={salaryStructure.is_current ? 'green' : 'gray'}>
                       {salaryStructure.is_current ? 'Active' : 'Inactive'}
@@ -207,27 +207,27 @@ export const EmployeeProfilePage: React.FC = () => {
               </div>
 
               {employee.bank_name && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4">
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                  <h3 className="text-sm font-semibold text-slate-900 mb-4">
                     Bank Details
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-sm text-gray-600">Bank Name</span>
-                      <p className="text-sm font-medium text-gray-900 mt-1">
+                      <span className="text-sm text-slate-600">Bank Name</span>
+                      <p className="text-sm font-medium text-slate-900 mt-1">
                         {employee.bank_name}
                       </p>
                     </div>
                     <div>
-                      <span className="text-sm text-gray-600">Account Number</span>
-                      <p className="text-sm font-medium text-gray-900 mt-1">
+                      <span className="text-sm text-slate-600">Account Number</span>
+                      <p className="text-sm font-medium text-slate-900 mt-1">
                         {employee.bank_account_number || '-'}
                       </p>
                     </div>
                     {employee.bank_branch && (
                       <div className="col-span-2">
-                        <span className="text-sm text-gray-600">Branch</span>
-                        <p className="text-sm font-medium text-gray-900 mt-1">
+                        <span className="text-sm text-slate-600">Branch</span>
+                        <p className="text-sm font-medium text-slate-900 mt-1">
                           {employee.bank_branch}
                         </p>
                       </div>
@@ -238,7 +238,7 @@ export const EmployeeProfilePage: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">No salary structure configured</p>
+              <p className="text-slate-500 mb-4">No salary structure configured</p>
               <Button size="sm">
                 <DollarSign className="h-4 w-4 mr-2" />
                 Set Up Salary
@@ -250,8 +250,8 @@ export const EmployeeProfilePage: React.FC = () => {
 
       {activeLoans.length > 0 && (
         <Card>
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Active Loans</h2>
+          <div className="p-6 border-b border-slate-200">
+            <h2 className="text-lg font-semibold text-slate-900">Active Loans</h2>
           </div>
           <div className="p-6">
             <div className="space-y-4">
@@ -260,11 +260,11 @@ export const EmployeeProfilePage: React.FC = () => {
                 .map((loan) => (
                   <div
                     key={loan.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-4 bg-slate-50 rounded-lg"
                   >
                     <div>
-                      <p className="font-medium text-gray-900">{loan.loan_number}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-medium text-slate-900">{loan.loan_number}</p>
+                      <p className="text-sm text-slate-600">
                         {(loan.loan_type ?? '')
                           .split('_')
                           .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -272,10 +272,10 @@ export const EmployeeProfilePage: React.FC = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-slate-900">
                         {formatCurrency(Number(loan.remaining_amount ?? 0))}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-slate-600">
                         {loan.paid_installments || 0}/{loan.installments} paid
                       </p>
                     </div>
@@ -287,27 +287,27 @@ export const EmployeeProfilePage: React.FC = () => {
       )}
 
       <Card>
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Contact Information</h2>
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900">Contact Information</h2>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-sm text-gray-600">Email</span>
-              <p className="text-sm font-medium text-gray-900 mt-1">
+              <span className="text-sm text-slate-600">Email</span>
+              <p className="text-sm font-medium text-slate-900 mt-1">
                 {employee.profiles?.email || '-'}
               </p>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Phone</span>
-              <p className="text-sm font-medium text-gray-900 mt-1">
+              <span className="text-sm text-slate-600">Phone</span>
+              <p className="text-sm font-medium text-slate-900 mt-1">
                 {employee.phone || employee.mobile || '-'}
               </p>
             </div>
             {employee.address && (
               <div className="col-span-2">
-                <span className="text-sm text-gray-600">Address</span>
-                <p className="text-sm font-medium text-gray-900 mt-1">{employee.address}</p>
+                <span className="text-sm text-slate-600">Address</span>
+                <p className="text-sm font-medium text-slate-900 mt-1">{employee.address}</p>
               </div>
             )}
           </div>

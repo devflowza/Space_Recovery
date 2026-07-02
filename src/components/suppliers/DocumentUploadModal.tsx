@@ -111,14 +111,14 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
     <Modal isOpen={isOpen} onClose={onClose} title="Upload Document">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="supplier-doc-type" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="supplier-doc-type" className="block text-sm font-medium text-slate-700 mb-1">
             Document Type *
           </label>
           <select
             id="supplier-doc-type"
             value={formData.document_type}
             onChange={(e) => setFormData({ ...formData, document_type: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             required
           >
             {documentTypes.map((type) => (
@@ -130,7 +130,7 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-slate-700 mb-1">
             Description
           </label>
           <Input
@@ -141,18 +141,18 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-slate-700 mb-2">
             Select File * (Max 10MB)
           </label>
 
           {!selectedFile ? (
-            <label className="flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 hover:border-gray-400">
+            <label className="flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-slate-300 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 hover:border-slate-400">
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <Upload className="w-10 h-10 mb-3 text-gray-400" />
-                <p className="mb-2 text-sm text-gray-500">
+                <Upload className="w-10 h-10 mb-3 text-slate-400" />
+                <p className="mb-2 text-sm text-slate-500">
                   <span className="font-semibold">Click to upload</span> or drag and drop
                 </p>
-                <p className="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX, or images</p>
+                <p className="text-xs text-slate-500">PDF, DOC, DOCX, XLS, XLSX, or images</p>
               </div>
               <input
                 type="file"
@@ -162,12 +162,12 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, suppli
               />
             </label>
           ) : (
-            <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <FileText className="w-8 h-8 text-primary" />
                 <div>
-                  <p className="font-medium text-gray-900">{selectedFile.name}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-slate-900">{selectedFile.name}</p>
+                  <p className="text-sm text-slate-500">
                     {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>

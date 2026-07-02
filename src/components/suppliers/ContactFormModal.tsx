@@ -123,7 +123,7 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
     <Modal isOpen={isOpen} onClose={onClose} title={contact ? 'Edit Contact' : 'Add New Contact'} closeOnBackdrop={false}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-slate-700 mb-1">
             <User className="inline w-4 h-4 mr-1" />
             Full Name *
           </label>
@@ -136,7 +136,7 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-slate-700 mb-1">
             <Briefcase className="inline w-4 h-4 mr-1" />
             Position / Title
           </label>
@@ -149,7 +149,7 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               <Mail className="inline w-4 h-4 mr-1" />
               Email *
             </label>
@@ -163,7 +163,7 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 mb-1">
               <Phone className="inline w-4 h-4 mr-1" />
               Phone
             </label>
@@ -176,7 +176,7 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-slate-700 mb-1">
             Mobile
           </label>
           <Input
@@ -187,14 +187,14 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
         </div>
 
         <div>
-          <label htmlFor="supplier-contact-notes" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="supplier-contact-notes" className="block text-sm font-medium text-slate-700 mb-1">
             Notes
           </label>
           <textarea
             id="supplier-contact-notes"
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             rows={3}
             placeholder="Additional notes about this contact..."
           />
@@ -206,9 +206,9 @@ export default function ContactFormModal({ isOpen, onClose, onSuccess, supplierI
               type="checkbox"
               checked={formData.is_primary}
               onChange={(e) => setFormData({ ...formData, is_primary: e.target.checked })}
-              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+              className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
             />
-            <span className="text-sm font-medium text-gray-700">Set as primary contact</span>
+            <span className="text-sm font-medium text-slate-700">Set as primary contact</span>
           </label>
         </div>
 

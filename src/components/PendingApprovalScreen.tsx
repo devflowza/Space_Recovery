@@ -48,18 +48,18 @@ export const PendingApprovalScreen: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-primary rounded-2xl shadow-lg shadow-primary/25 mb-4">
             <Shield className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">xSuite</h2>
-          <p className="text-sm text-gray-500">Data Recovery Management</p>
+          <h2 className="text-3xl font-bold text-slate-900">xSuite</h2>
+          <p className="text-sm text-slate-500">Data Recovery Management</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
           <div className="bg-gradient-to-r from-warning-muted to-warning-muted px-8 py-6 border-b border-warning/20">
             <div className="flex items-center justify-center space-x-3">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
                 <Clock className="w-6 h-6 text-warning" />
               </div>
               <div className="text-left">
-                <h1 className="text-xl font-semibold text-gray-900">
+                <h1 className="text-xl font-semibold text-slate-900">
                   Account Created Successfully
                 </h1>
                 <p className="text-sm text-warning">Awaiting administrator approval</p>
@@ -69,22 +69,22 @@ export const PendingApprovalScreen: React.FC = () => {
 
           <div className="p-8">
             <div className="text-center mb-6">
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-slate-600 leading-relaxed">
                 Your account has been created. An administrator will review your access rights
                 and activate your account shortly. Please stay tuned.
               </p>
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+            <div className="bg-slate-50 rounded-xl p-4 mb-6">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                  <Mail className="w-5 h-5 text-gray-500" />
+                  <Mail className="w-5 h-5 text-slate-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
                     Registered Email
                   </p>
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-sm font-medium text-slate-900 truncate">
                     {user?.email}
                   </p>
                 </div>
@@ -105,14 +105,14 @@ export const PendingApprovalScreen: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
               <span>Last checked: {formatLastChecked()}</span>
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={autoRefreshEnabled}
                   onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
-                  className="w-3.5 h-3.5 text-primary rounded border-gray-300 focus:ring-primary"
+                  className="w-3.5 h-3.5 text-primary rounded border-slate-300 focus:ring-primary"
                 />
                 <span>Auto-refresh every 30s</span>
               </label>
@@ -141,7 +141,7 @@ export const PendingApprovalScreen: React.FC = () => {
               <Button
                 variant="ghost"
                 onClick={signOut}
-                className="w-full text-gray-500 hover:text-gray-700"
+                className="w-full text-slate-500 hover:text-slate-700"
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
@@ -150,7 +150,7 @@ export const PendingApprovalScreen: React.FC = () => {
           </div>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        <p className="text-center text-xs text-slate-400 mt-6">
           Need help? Contact your system administrator for assistance.
         </p>
       </div>

@@ -80,7 +80,7 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
   if (isLoading || !loan) {
     return (
       <Modal isOpen={isOpen} onClose={onClose} title="Loan Details">
-        <div className="p-8 text-center text-gray-500">Loading loan details...</div>
+        <div className="p-8 text-center text-slate-500">Loading loan details...</div>
       </Modal>
     );
   }
@@ -155,8 +155,8 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
         <div className="flex items-center justify-between pb-4 border-b">
           <div className="flex items-center space-x-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{loan.loan_number}</h2>
-              <p className="text-sm text-gray-600">
+              <h2 className="text-2xl font-bold text-slate-900">{loan.loan_number}</h2>
+              <p className="text-sm text-slate-600">
                 {loan.employee.first_name} {loan.employee.last_name} (
                 {loan.employee.employee_number})
               </p>
@@ -174,31 +174,31 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Principal</span>
-              <DollarSign className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-slate-600">Principal</span>
+              <DollarSign className="h-4 w-4 text-slate-400" />
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-slate-900">
               {formatCurrency(Number(loan.amount))}
             </p>
           </Card>
 
           <Card className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Total Amount</span>
-              <DollarSign className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-slate-600">Total Amount</span>
+              <DollarSign className="h-4 w-4 text-slate-400" />
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-slate-900">
               {formatCurrency(Number(loan.total_amount))}
             </p>
             {loan.interest_rate && Number(loan.interest_rate) > 0 && (
-              <p className="text-xs text-gray-500 mt-1">{loan.interest_rate}% interest</p>
+              <p className="text-xs text-slate-500 mt-1">{loan.interest_rate}% interest</p>
             )}
           </Card>
 
           <Card className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Remaining</span>
-              <TrendingUp className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-slate-600">Remaining</span>
+              <TrendingUp className="h-4 w-4 text-slate-400" />
             </div>
             <p className="text-xl font-bold text-warning">
               {formatCurrency(Number(loan.remaining_amount))}
@@ -207,50 +207,50 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
 
           <Card className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Next Payment</span>
-              <Calendar className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-slate-600">Next Payment</span>
+              <Calendar className="h-4 w-4 text-slate-400" />
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-xl font-bold text-slate-900">
               {formatCurrency(Number(loan.installment_amount))}
             </p>
             {loan.status === 'active' && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Due {new Date(loan.start_date).toLocaleDateString()}
               </p>
             )}
           </Card>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-slate-50 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Repayment Progress</span>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm font-medium text-slate-700">Repayment Progress</span>
+            <span className="text-sm text-slate-600">
               {loan.paid_installments || 0} of {loan.installments} installments
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
+          <div className="w-full bg-slate-200 rounded-full h-3">
             <div
               className="bg-primary h-3 rounded-full transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
           <div className="flex justify-between mt-1">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-slate-500">
               {formatCurrency(
                 Number(loan.total_amount) - Number(loan.remaining_amount)
               )}{' '}
               paid
             </span>
-            <span className="text-xs text-gray-500">{progress.toFixed(1)}%</span>
+            <span className="text-xs text-slate-500">{progress.toFixed(1)}%</span>
           </div>
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Loan Information</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Loan Information</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-600">Loan Type:</span>
-              <p className="font-medium text-gray-900 mt-1">
+              <span className="text-slate-600">Loan Type:</span>
+              <p className="font-medium text-slate-900 mt-1">
                 {(loan.loan_type ?? '')
                   .split('_')
                   .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -258,53 +258,53 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
               </p>
             </div>
             <div>
-              <span className="text-gray-600">Interest Rate:</span>
-              <p className="font-medium text-gray-900 mt-1">
+              <span className="text-slate-600">Interest Rate:</span>
+              <p className="font-medium text-slate-900 mt-1">
                 {loan.interest_rate ? `${loan.interest_rate}%` : 'Interest-free'}
               </p>
             </div>
             <div>
-              <span className="text-gray-600">Start Date:</span>
-              <p className="font-medium text-gray-900 mt-1">
+              <span className="text-slate-600">Start Date:</span>
+              <p className="font-medium text-slate-900 mt-1">
                 {new Date(loan.start_date).toLocaleDateString()}
               </p>
             </div>
             <div>
-              <span className="text-gray-600">End Date:</span>
-              <p className="font-medium text-gray-900 mt-1">
+              <span className="text-slate-600">End Date:</span>
+              <p className="font-medium text-slate-900 mt-1">
                 {loan.end_date ? new Date(loan.end_date).toLocaleDateString() : '-'}
               </p>
             </div>
           </div>
           {loan.notes && (
             <div className="mt-4">
-              <span className="text-gray-600">Notes:</span>
-              <p className="text-gray-900 mt-1">{loan.notes}</p>
+              <span className="text-slate-600">Notes:</span>
+              <p className="text-slate-900 mt-1">{loan.notes}</p>
             </div>
           )}
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Repayment Schedule</h3>
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Repayment Schedule</h3>
+          <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                     #
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">
                     Due Date
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">
                     Amount
                   </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">
                     Status
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-slate-200">
                 {schedule.map((item) => (
                   <tr
                     key={item.installmentNumber}
@@ -316,13 +316,13 @@ export const LoanDetailModal: React.FC<LoanDetailModalProps> = ({
                           : ''
                     }
                   >
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-4 py-3 text-sm text-slate-900">
                       {item.installmentNumber}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-4 py-3 text-sm text-slate-900">
                       {item.dueDate.toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-sm text-right text-gray-900">
+                    <td className="px-4 py-3 text-sm text-right text-slate-900">
                       {formatCurrency(item.amount)}
                     </td>
                     <td className="px-4 py-3 text-center">

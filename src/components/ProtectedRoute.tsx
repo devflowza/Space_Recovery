@@ -69,15 +69,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
 
   if (profileStatus === 'inactive') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="mx-auto w-16 h-16 bg-danger-muted rounded-full flex items-center justify-center mb-4">
             <svg className="w-8 h-8 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Account Inactive</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Account Inactive</h1>
+          <p className="text-slate-600 mb-6">
             Your account has been deactivated. Please contact your system administrator for assistance.
           </p>
         </div>
@@ -87,15 +87,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
 
   if (profileStatus === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="mx-auto w-16 h-16 bg-danger-muted rounded-full flex items-center justify-center mb-4">
             <svg className="w-8 h-8 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Profile Error</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Profile Error</h1>
+          <p className="text-slate-600 mb-6">
             There was an error loading your profile. Please try logging in again or contact support.
           </p>
         </div>
@@ -122,7 +122,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-danger mb-2">Access Denied</h1>
-          <p className="text-gray-600">You don't have permission to access this page.</p>
+          <p className="text-slate-600">You don't have permission to access this page.</p>
         </div>
       </div>
     );

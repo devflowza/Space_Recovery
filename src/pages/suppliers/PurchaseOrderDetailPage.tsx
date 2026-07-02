@@ -107,7 +107,7 @@ export default function PurchaseOrderDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading purchase order...</div>
+        <div className="text-slate-500">Loading purchase order...</div>
       </div>
     );
   }
@@ -125,12 +125,12 @@ export default function PurchaseOrderDetailPage() {
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">{order.po_number}</h1>
+              <h1 className="text-2xl font-bold text-slate-900">{order.po_number}</h1>
               <Badge style={{ backgroundColor: order.status?.color || '#3b82f6', color: 'white' }}>
                 {order.status?.name || 'Unknown'}
               </Badge>
             </div>
-            <p className="text-gray-500 mt-1">
+            <p className="text-slate-500 mt-1">
               Created on {format(new Date(order.created_at), 'MMM dd, yyyy')}
             </p>
           </div>
@@ -156,7 +156,7 @@ export default function PurchaseOrderDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">
                 <Building2 className="inline w-5 h-5 mr-2" />
                 Supplier Information
               </h3>
@@ -168,22 +168,22 @@ export default function PurchaseOrderDetailPage() {
                   >
                     {order.supplier.name}
                   </button>
-                  <p className="text-sm text-gray-500">{order.supplier.supplier_number}</p>
+                  <p className="text-sm text-slate-500">{order.supplier.supplier_number}</p>
                 </div>
                 {order.supplier.email && (
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-slate-600">
                     <FileText className="w-4 h-4" />
                     <span>{order.supplier.email}</span>
                   </div>
                 )}
                 {order.supplier.phone && (
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-slate-600">
                     <FileText className="w-4 h-4" />
                     <span>{order.supplier.phone}</span>
                   </div>
                 )}
                 {order.supplier.address && (
-                  <div className="flex items-start gap-2 text-gray-600">
+                  <div className="flex items-start gap-2 text-slate-600">
                     <MapPin className="w-4 h-4 mt-0.5" />
                     <div>
                       <div>{order.supplier.address}</div>
@@ -204,53 +204,53 @@ export default function PurchaseOrderDetailPage() {
 
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">
                 <Package className="inline w-5 h-5 mr-2" />
                 Line Items
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-slate-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Description</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Quantity</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Unit Price</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Total</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Description</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">Quantity</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">Unit Price</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">Total</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-slate-200">
                     {order.line_items?.map((item: { description?: string; item_name?: string; quantity: number; unit_price?: number; total?: number; stock_item_id?: string | null }, index: number) => (
                       <tr key={index}>
-                        <td className="px-4 py-3 text-sm text-gray-900">{item.description}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600 text-right">{item.quantity}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600 text-right">
+                        <td className="px-4 py-3 text-sm text-slate-900">{item.description}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600 text-right">{item.quantity}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600 text-right">
                           {formatCurrency(item.unit_price ?? 0)}
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">
+                        <td className="px-4 py-3 text-sm font-medium text-slate-900 text-right">
                           {formatCurrency(item.total ?? 0)}
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-gray-50">
+                  <tfoot className="bg-slate-50">
                     <tr>
-                      <td colSpan={3} className="px-4 py-3 text-right text-sm font-medium text-gray-700">
+                      <td colSpan={3} className="px-4 py-3 text-right text-sm font-medium text-slate-700">
                         Subtotal:
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
                         {formatCurrency(order.subtotal ?? 0)}
                       </td>
                     </tr>
                     <tr>
-                      <td colSpan={3} className="px-4 py-3 text-right text-sm font-medium text-gray-700">
+                      <td colSpan={3} className="px-4 py-3 text-right text-sm font-medium text-slate-700">
                         {tax.label}:
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900">
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
                         {formatCurrency(order.tax_amount ?? 0)}
                       </td>
                     </tr>
-                    <tr className="border-t-2 border-gray-300">
-                      <td colSpan={3} className="px-4 py-3 text-right text-base font-bold text-gray-900">
+                    <tr className="border-t-2 border-slate-300">
+                      <td colSpan={3} className="px-4 py-3 text-right text-base font-bold text-slate-900">
                         Total:
                       </td>
                       <td className="px-4 py-3 text-right text-lg font-bold text-primary">
@@ -266,25 +266,25 @@ export default function PurchaseOrderDetailPage() {
           {(order.notes || order.internal_notes) && (
             <Card>
               <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">
                   <FileText className="inline w-5 h-5 mr-2" />
                   Notes
                 </h3>
                 <div className="space-y-4">
                   {order.notes && (
                     <div>
-                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                      <label className="text-sm font-medium text-slate-700 block mb-1">
                         Supplier Notes
                       </label>
-                      <p className="text-gray-600 bg-gray-50 p-3 rounded">{order.notes}</p>
+                      <p className="text-slate-600 bg-slate-50 p-3 rounded">{order.notes}</p>
                     </div>
                   )}
                   {order.internal_notes && (
                     <div>
-                      <label className="text-sm font-medium text-gray-700 block mb-1">
+                      <label className="text-sm font-medium text-slate-700 block mb-1">
                         Internal Notes
                       </label>
-                      <p className="text-gray-600 bg-warning-muted p-3 rounded border border-warning/30">
+                      <p className="text-slate-600 bg-warning-muted p-3 rounded border border-warning/30">
                         {order.internal_notes}
                       </p>
                     </div>
@@ -298,10 +298,10 @@ export default function PurchaseOrderDetailPage() {
         <div className="space-y-6">
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Details</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Order Details</h3>
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm text-gray-500 flex items-center gap-1">
+                  <label className="text-sm text-slate-500 flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     Order Date
                   </label>
@@ -309,7 +309,7 @@ export default function PurchaseOrderDetailPage() {
                 </div>
                 {order.expected_delivery && (
                   <div>
-                    <label className="text-sm text-gray-500 flex items-center gap-1">
+                    <label className="text-sm text-slate-500 flex items-center gap-1">
                       <Clock className="w-4 h-4" />
                       Expected Delivery
                     </label>
@@ -318,7 +318,7 @@ export default function PurchaseOrderDetailPage() {
                 )}
                 {order.shipping_method && (
                   <div>
-                    <label className="text-sm text-gray-500 flex items-center gap-1">
+                    <label className="text-sm text-slate-500 flex items-center gap-1">
                       <Truck className="w-4 h-4" />
                       Shipping Method
                     </label>
@@ -327,7 +327,7 @@ export default function PurchaseOrderDetailPage() {
                 )}
                 {order.tracking_number && (
                   <div>
-                    <label className="text-sm text-gray-500">Tracking Number</label>
+                    <label className="text-sm text-slate-500">Tracking Number</label>
                     <p className="font-medium">{order.tracking_number}</p>
                   </div>
                 )}
@@ -338,29 +338,29 @@ export default function PurchaseOrderDetailPage() {
           {order.shipping_address && (
             <Card>
               <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
                   Shipping Address
                 </h3>
-                <p className="text-gray-700 whitespace-pre-line">{order.shipping_address}</p>
+                <p className="text-slate-700 whitespace-pre-line">{order.shipping_address}</p>
               </div>
             </Card>
           )}
 
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Workflow Status</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Workflow Status</h3>
               <div className="space-y-3">
                 {order.approved_at && (
                   <div className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-success mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Approved</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm font-medium text-slate-900">Approved</p>
+                      <p className="text-xs text-slate-500">
                         {format(new Date(order.approved_at), 'MMM dd, yyyy HH:mm')}
                       </p>
                       {order.approved_by_user && (
-                        <p className="text-xs text-gray-500">by {order.approved_by_user.email}</p>
+                        <p className="text-xs text-slate-500">by {order.approved_by_user.email}</p>
                       )}
                     </div>
                   </div>
@@ -369,12 +369,12 @@ export default function PurchaseOrderDetailPage() {
                   <div className="flex items-start gap-2">
                     <CheckCircle className="w-5 h-5 text-success mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Received</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm font-medium text-slate-900">Received</p>
+                      <p className="text-xs text-slate-500">
                         {format(new Date(order.received_at), 'MMM dd, yyyy HH:mm')}
                       </p>
                       {order.received_by_user && (
-                        <p className="text-xs text-gray-500">by {order.received_by_user.email}</p>
+                        <p className="text-xs text-slate-500">by {order.received_by_user.email}</p>
                       )}
                     </div>
                   </div>
@@ -385,18 +385,18 @@ export default function PurchaseOrderDetailPage() {
 
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Audit Information</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Audit Information</h3>
               <div className="space-y-3 text-sm">
                 <div>
-                  <label className="text-gray-500">Created By</label>
+                  <label className="text-slate-500">Created By</label>
                   <p className="font-medium">{order.created_by_user?.email || 'Unknown'}</p>
-                  <p className="text-xs text-gray-500">{format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}</p>
+                  <p className="text-xs text-slate-500">{format(new Date(order.created_at), 'MMM dd, yyyy HH:mm')}</p>
                 </div>
                 {order.updated_at && order.updated_at !== order.created_at && (
                   <div>
-                    <label className="text-gray-500">Last Updated By</label>
+                    <label className="text-slate-500">Last Updated By</label>
                     <p className="font-medium">{order.updated_by_user?.email || 'Unknown'}</p>
-                    <p className="text-xs text-gray-500">{format(new Date(order.updated_at), 'MMM dd, yyyy HH:mm')}</p>
+                    <p className="text-xs text-slate-500">{format(new Date(order.updated_at), 'MMM dd, yyyy HH:mm')}</p>
                   </div>
                 )}
               </div>
