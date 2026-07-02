@@ -343,7 +343,7 @@ export function ConfigurableDataTable<T>({
                         <dl className="grid grid-cols-1 gap-x-8 gap-y-2 md:grid-cols-2 lg:grid-cols-3">
                           {overflowDefs.map((def) => (
                             <div key={def.key} className="flex items-baseline gap-2">
-                              <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              <dt className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                 {def.label}
                               </dt>
                               <dd className="text-sm text-slate-800">{def.render(row)}</dd>
@@ -392,7 +392,7 @@ export function ConfigurableDataTable<T>({
               <dl className="grid grid-cols-[minmax(0,40%)_1fr] gap-x-3 gap-y-2">
                 {orderedDefs.map((def) => (
                   <React.Fragment key={def.key}>
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{def.label}</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-slate-500">{def.label}</dt>
                     <dd className="text-sm text-slate-900 break-words">{def.render(row)}</dd>
                   </React.Fragment>
                 ))}

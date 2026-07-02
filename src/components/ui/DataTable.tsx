@@ -156,7 +156,7 @@ export function DataTable<T extends object>({
     <dl className="grid grid-cols-[minmax(0,40%)_1fr] gap-x-3 gap-y-2">
       {columns.map((column) => (
         <React.Fragment key={column.key}>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <dt className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             {column.header}
           </dt>
           <dd className="text-sm text-slate-900 break-words">{cellValue(column, row)}</dd>

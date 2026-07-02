@@ -92,7 +92,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
             <Icon className="w-5 h-5 text-white" aria-hidden="true" />
           </div>
           <div className="flex items-center gap-3">
-            <h3 id={titleId} className="text-lg font-bold text-slate-900">
+            <h3 id={titleId} className="text-lg font-semibold text-slate-900">
               {title}
             </h3>
             {fieldCount !== undefined && (

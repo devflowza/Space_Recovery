@@ -280,7 +280,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       <div className={cn('space-y-3', className)}>
         {label && (
           <div>
-            <label {...labelProps} className="block text-sm font-semibold text-slate-700 mb-1">
+            <label {...labelProps} className="block text-sm font-medium text-slate-700 mb-1">
               {label}
             </label>
             {description && <p className="text-xs text-slate-500">{description}</p>}
@@ -413,7 +413,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             className="flex items-start gap-2 p-3 bg-danger-muted border border-danger/30 rounded-lg"
           >
             <AlertCircle className="w-4 h-4 text-danger mt-0.5 flex-shrink-0" aria-hidden="true" />
-            <p className="text-sm text-danger">{error}</p>
+            <p className="text-xs text-danger">{error}</p>
           </div>
         )}
       </div>

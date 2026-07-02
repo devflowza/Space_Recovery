@@ -64,7 +64,7 @@ export function Table<T extends Record<string, any>>({
                 key={column.key}
                 scope="col"
                 style={{ width: column.width }}
-                className="px-6 py-3.5 text-start text-xs font-semibold text-slate-700 uppercase tracking-wider"
+                className="px-6 py-3.5 text-start text-xs font-semibold text-slate-600 uppercase tracking-wider"
               >
                 {column.header}
               </th>
@@ -84,7 +84,7 @@ export function Table<T extends Record<string, any>>({
             ))
           ) : data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-6 py-12 text-center text-slate-500">
+              <td colSpan={columns.length} className="px-6 py-12 text-center text-sm text-slate-500">
                 {emptyMessage ?? t('ui.noData')}
               </td>
             </tr>

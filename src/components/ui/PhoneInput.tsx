@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, Search } from 'lucide-react';
+import { AlertCircle, ChevronDown, Search } from 'lucide-react';
 import { useFieldA11y } from '../../hooks/useFieldA11y';
 import { useAnchoredPosition } from '../../hooks/useAnchoredPosition';
 import { useListboxKeyboard } from '../../hooks/useListboxKeyboard';
@@ -278,11 +278,11 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
         </div>
 
         {error ? (
-          <p {...errorProps} className="mt-1 text-sm text-danger">
+          <p {...errorProps} className="mt-1 text-xs text-danger flex items-center gap-1"><AlertCircle aria-hidden="true" className="w-3 h-3 shrink-0" />
             {error}
           </p>
         ) : hint ? (
-          <p {...hintProps} className="mt-1 text-sm text-slate-500">
+          <p {...hintProps} className="mt-1 text-xs text-slate-500">
             {hint}
           </p>
         ) : null}
