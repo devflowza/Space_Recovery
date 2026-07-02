@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { formatDate } from '../../lib/format';
+import { formatDate, formatTaxRatePercent } from '../../lib/format';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useTaxConfig } from '../../contexts/TenantConfigContext';
@@ -288,7 +288,7 @@ export const VATAuditPage: React.FC = () => {
                   {
                     tone: 'neutral',
                     label: 'Tax Rate',
-                    value: `${(taxConfig.defaultRate * 100).toFixed(2)}%`,
+                    value: formatTaxRatePercent(taxConfig.defaultRate),
                     sub: taxConfig.label || 'VAT',
                     icon: FileCheck,
                   },
@@ -465,7 +465,7 @@ export const VATAuditPage: React.FC = () => {
                               {formatCurrency(record.vat_amount)}
                             </td>
                             <td className="py-3 px-4 text-center text-sm text-slate-600">
-                              {(record.vat_rate * 100).toFixed(2)}%
+                              {formatTaxRatePercent(record.vat_rate)}
                             </td>
                             <td className="py-3 px-4 text-sm text-slate-600">
                               {record.tax_period || '-'}
