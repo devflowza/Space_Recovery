@@ -34,10 +34,69 @@
 ## Typography
 Fonts load via Google Fonts in `index.html` (CSP allows `fonts.googleapis.com` / `fonts.gstatic.com`). Family tokens are defined in `tailwind.config.js` (`fontFamily`); the default `sans` is set to Inter so unclassed elements inherit it via Tailwind Preflight (`html`).
 
-- **All UI (Display / Body / Labels / Data):** `Inter` — the single app-wide typeface. Tailwind `font-sans` (default), `font-body`, and `font-display` all resolve to Inter, so the whole app is consistent and the existing `font-body`/`font-display` usages need no changes.
-- **Code:** none defined. Do not introduce a mono font without updating this doc.
+> Full baseline + evidence: `docs/typography-audit-2026-07-02.md`. The role table below was codified
+> 2026-07-02 (see Decisions Log) — values match the codebase majority so most surfaces are already
+> conformant; deviations are burned down by the typography standardization program and held by lint.
+
+### Families
+- **All UI (Display / Body / Labels / Data):** `Inter` — the single app-wide typeface via `font-sans`
+  (Preflight default). The legacy `font-body`/`font-display` aliases (both = Inter) are **removed** —
+  do not reintroduce them; unclassed text already inherits Inter.
+- **Code / character-verified data:** `font-mono` — tokenized in `tailwind.config.js` as the platform
+  monospace stack. **Mono is for strings a human verifies character-by-character**: device serials,
+  custody hashes, SKUs, tenant/plan codes, OTP inputs, JSON/raw payloads, `kbd` shortcuts. Business
+  document numbers (CASE/INV/EXP/CUST/QUO-…) are **not** mono — they render proportional per the
+  table-cell roles below.
 - **Arabic / RTL (PDF only):** Noto Sans Arabic + Tajawal, in `public/fonts/` (see `src/lib/pdf/fontLoader.ts`). On-screen Arabic falls back to the system Arabic face (Inter ships no Arabic glyphs); PDFs are unaffected.
-- **Custom sizes:** `text-xxs` = `0.625rem` (10px) for ultra-dense table metadata. Everything else uses the default Tailwind type scale — do not add sizes ad hoc.
+
+### Sizes
+- Default Tailwind type scale only. **Arbitrary sizes (`text-[Npx]`) are banned** (lint:
+  `xsuite/no-arbitrary-typography`; pre-existing offenders are baselined per-file and ratchet down).
+- `text-xxs` = `0.625rem` (10px) — sanctioned **only** for KPI-tile microlabels/pills and app-chrome
+  metadata. Never for content labels or body text.
+- **Content floor is 12px (`text-xs`).** 9px/11px/13px/15px are retired from content surfaces; the app
+  chrome (sidebar / top bar) temporarily keeps its 13/15px ramp until it is promoted to named tokens
+  (program Phase 5) — do not copy chrome sizes into pages.
+- **Explicit size on table/tab text is mandatory.** Unsized `<td>`/`<span>`/tab text inherits the 16px
+  root and silently breaks the 14px rhythm (the audit's F-4 class of bugs).
+
+### Type roles (locked)
+| Role | Spec |
+|---|---|
+| Page title — AppLayout list pages | Top-bar slot only (`usePageHeaderSlot`); **no in-content page header** (H2 pattern) |
+| Page title — detail pages | `DetailPageHeader` h1: `text-2xl font-bold text-slate-900` |
+| Page title — portal / platform-admin shells | `PageHeader` (`text-lg font-semibold`) for list-level; `DetailPageHeader` for detail-level; `text-3xl` retired |
+| Section / card heading | `text-lg font-semibold text-slate-900`; sub-section `text-base font-semibold`; `font-bold` is not a heading weight at these sizes |
+| Modal title | `text-lg font-semibold text-slate-900` (`Modal`/`ConfirmDialog`) — all surfaces incl. portal |
+| Table header (th) | `text-xs font-semibold uppercase tracking-wider text-slate-600` |
+| Table body cell | `text-sm text-slate-700`; identity/emphasis cells `text-sm font-semibold text-slate-900` (or `text-primary` for linked numbers) — size always explicit |
+| Money / quantity | `text-sm font-semibold text-slate-900 tabular-nums`; `font-bold` reserved for totals rows; `tabular-nums` on every numeric column/figure |
+| Button | `font-medium`; sm `text-sm`, **md (default) `text-sm`**, lg `text-base` — 14px is the platform button size |
+| Badge / chip | `ui/Badge` only (`font-semibold`; sm `text-xs`, md `text-sm`); no hand-rolled 9–11px chips |
+| Form label | `text-sm font-medium text-slate-700` (the settings `font-semibold` variant is retired) |
+| Hint / helper | `text-xs text-slate-500` |
+| Error | `text-xs text-danger` + `AlertCircle` icon + `role="alert"` (the `FormField` spec — universal) |
+| Uppercase micro-label / form section header | `text-xs font-semibold uppercase tracking-wider` (+ `text-primary` for form section dividers, `text-slate-500` elsewhere) |
+| KPI cards | the two `StatCard` styles only — compact (label `text-xs font-medium text-slate-500`, value `text-xl font-bold tabular-nums`) and vivid `GradientStatCard` (label `text-xxs font-semibold uppercase tracking-wider`, value `text-xl/2xl font-bold tabular-nums`); no hand-rolled KPI markup |
+| Empty state | `shared/EmptyState` (`text-lg font-semibold` + `text-sm`) |
+| Pagination | `ui/Pager` (`text-sm text-slate-600`) |
+| Breadcrumbs | top-bar 13px (chrome); `DetailPageHeader` crumbs `text-sm text-slate-500` — surface-specific, both sanctioned |
+
+### Neutral text (slate only)
+`text-gray-*` (and every `*-gray-*` utility) is **banned** in `src/` — lint `xsuite/no-gray-palette`.
+Shade roles: primary content `slate-900` · body `slate-700` · secondary `slate-600` · captions/hints
+`slate-500` · decorative/disabled only `slate-400` (≈3:1 on white — never for meaningful text).
+
+### Tracking & transforms
+- Uppercase labels always pair with `tracking-wider`. `tracking-wide` is retired from the uppercase
+  micro-label role; arbitrary `tracking-[…]` literals are banned — sole exception `tracking-[0.5em]`
+  on OTP/code inputs (built into the lint rule).
+- `italic` only for quoted/testimonial content and notes.
+
+### Enforcement
+`eslint-rules/no-gray-palette.js` (error, no baseline) and `eslint-rules/no-arbitrary-typography.js`
+(error; per-file baseline in `eslint.config.js`, ratchet-down only) — same operating model as the
+raw-color rules.
 
 ## Color
 Every brand/status token is an **RGB triplet** CSS variable (e.g. `--color-primary: 22 38 96`) so Tailwind's `<alpha-value>` opacity syntax works. The 14 semantic tokens are wired in `tailwind.config.js`; values live in `src/index.css`. **Use semantic tokens only — never raw Tailwind brand colors or hex in `src/`.**
@@ -213,7 +272,7 @@ Documents the field-grouping the redesign introduces, plus the existing `FormFie
 > **Status — partly leads the code.** The `FormField` + `ui/` field primitives below exist and are the standard for labels/errors/a11y. The **4-column Workspace grid** and **uppercase section-header dividers** are **net-new prescriptions** — no form uses them yet (the closest shipped grid is `DeviceDetailsForm`'s `sm:grid-cols-2 lg:grid-cols-4`; tab bodies vary at `lg:grid-cols-3`). Apply them to new and edited Workspace forms; existing forms are tracked, not assumed.
 
 - **Grid:** Workspace-tier forms use a responsive 4-column grid — `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-5`. Wide = 2 columns, Standard = 1 column. **The multi-column grid is the primary scroll-reducer:** ~35 fields in 4 columns is ~9 rows versus ~18 in two. *(Shipped device-form bodies currently break at `sm:` rather than `md:` and some use 3 columns; converge new work on the 4-column `md:`/`lg:` grid.)*
-- **Section headers:** group related fields under uppercase labelled dividers — `text-xs font-semibold uppercase tracking-wide text-primary` + a `border-b border-border` rule, spaced above (e.g. "BASIC INFORMATION", "TECHNICAL INFORMATION"). A flat wall of fields is not acceptable for 15+ field forms.
+- **Section headers:** group related fields under uppercase labelled dividers — `text-xs font-semibold uppercase tracking-wider text-primary` + a `border-b border-border` rule, spaced above (e.g. "BASIC INFORMATION", "TECHNICAL INFORMATION"). A flat wall of fields is not acceptable for 15+ field forms. *(Tracking harmonized to `tracking-wider` 2026-07-02 — one spacing for every uppercase label.)*
 - **Full-width fields:** long or multi-value controls (chip/multi-select Accessories, Device Password, Role-Specific Notes, rich-text terms) span all columns (`col-span-full`).
 - **Primitives:** use `ui/FormField.tsx` (owns label / required `*` / error / hint + a11y via `useFieldA11y`, `src/hooks/useFieldA11y.ts`) with the `ui/` field primitives (`Input`, `Select`, `SearchableSelect`, `Textarea`, `Checkbox`, `ChipInput`, `PhoneInput`, `RichTextEditor`). Verified `FormField` classes: label `block text-sm font-medium text-slate-700`; error `<p>` `text-xs text-danger flex items-center gap-1` with `role="alert"` on the `<p>` (via `useFieldA11y`) and a decorative `aria-hidden` `AlertCircle` (`w-3 h-3 shrink-0`); hint `text-xs text-slate-500`. **This is a presentational standard — it does not require rewriting a form's state model.** Three form patterns coexist today (plain `useState`; `react-hook-form` + `register`; `FormField` render-prop); converge *new and edited* forms on `FormField` for consistent labels and error rendering, without a forced migration.
 - **Density:** comfortable, not bloated. Tune row gap so more of a tab is visible per viewport — the goal is **fewer scroll events**, not maximum whitespace.
@@ -275,3 +334,4 @@ Captured 2026-06-01 from a code audit; drifts #1–#3 resolved 2026-06-02. **A 2
 | 2026-06-26 | Added a **Z-Index Scale** (`src/lib/ui/zIndex.ts` + Tailwind tokens: dropdown 30 / overlay 40 / modal 50 / popover 60 / toast 70) and an **Elevation** ladder (resting `shadow-sm` → overlay `shadow-xl`). The z-index scale leads the code (it does not exist yet); the elevation ladder documents the live `shadow-*` vocabulary and flags the dead custom tokens for removal. | The recon found `z-50` saturated with ad-hoc `z-[60]`/`z-[100]`/`z-[9999]` overrides and no governance, and the custom shadow scale unused (1 usage) with depth leaning ~5:1 on borders (~2000 vs ~400). Both are now named layers/levels so overlays stack predictably and depth is intentional; the scale file + token migration and the dead-shadow cleanup are tracked (Known Deviations #10–#11). Toast layering is governed by `react-hot-toast`'s default today, not an app token — flagged in the Z-Index section. |
 | 2026-06-26 | Added a **Forms & Field Layout** section: responsive 4-column grid for Workspace forms, uppercase section-header dividers, `col-span-full` for long fields, `ui/FormField` + `ui/` primitives as the presentational standard. | Documents the field-grouping the redesign introduces and the existing `FormField` conventions (verified at `ui/FormField.tsx`, not `shared/`) the doc never captured. The 4-column grid is the main scroll-reducer (≈ ¼ the rows of a single column). The grid + dividers are net-new prescriptions (no form uses them yet), applied to new/edited work; field state-model migration is not forced. |
 | 2026-06-26 | **Implemented Known Deviations #8–#11** the same day they were codified: `Dialog` scrim → `bg-slate-900/40` (+ `CommandPalette`/`MobileNavDrawer` reconcile); opt-in `ui/Tabs` `variant="pills"` adopted by `DeviceFormModal`; named z-index scale (`src/lib/ui/zIndex.ts` + Tailwind tokens, `cn()`/twMerge extended, magic numbers migrated, Toaster wired); removed the two dead `boxShadow` tokens (retained `glow-primary`). Doc reconciled — #8–#11 ✅, the Overlays / Z-Index / Tabbed-form "Status — leads the code" notes now read "shipped". | The owner asked to proceed with the tracked items; doing the code in the same change set keeps the contract honest (no "shipped" claim ahead of code). The z-index migration was behavior-preserving and **corrected the scale's latent regression**: page menus-with-backdrop (`RowActionsMenu`/`ColumnPickerPopover`) coexist with `BulkActionsBar` (overlay 40) so they map to `z-modal` (50)/`z-overlay` (40), not `z-dropdown` (30); `Select` is a native element (no z-index) and was dropped from the field-listbox set. tsc 0; full suite green except 2 pre-existing invoicePilot PDF failures. |
+| 2026-07-02 | **Typography role standard codified** (Typography section rewritten with the locked role table): page titles per surface, headings, modal titles, table th/td, **Button md = 14px**, badges, labels/hints/errors (`FormField` spec universal), uppercase micro-labels on `tracking-wider`, KPI two-style rule, money = `font-semibold tabular-nums`, mono policy (character-verified strings only), 12px content floor, slate-only neutrals with shade roles. Banned: `text-[Npx]`, all `*-gray-*` utilities, arbitrary `tracking-[…]` (OTP `0.5em` exception) — enforced by `xsuite/no-gray-palette` (no baseline) + `xsuite/no-arbitrary-typography` (per-file ratchet baseline). §Forms section-header tracking harmonized `wide`→`wider`. | The 2026-07-02 typography audit (`docs/typography-audit-2026-07-02.md`) found role-level spec absence as the root cause of 5 page-title specs, 7 table-header specs, a 30-file gray fork, 93 arbitrary sizes, and error/hint splits inside `ui/` itself. Standard values were chosen to match the codebase **majority** (minimum visual churn); deviations burn down via the phased standardization program (P1 mechanical sweeps → P2 primitive convergence → P3 high-traffic tables → P4 structural header/KPI migrations → P5 chrome tokenization + portal), copying the proven raw-color-burndown operating model (sweep → lint `error` → ratchet). |
