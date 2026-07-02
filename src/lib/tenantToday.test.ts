@@ -50,6 +50,16 @@ describe('date math (pure, timezone-free)', () => {
     expect(addMonthsIso('2026-01-15', -3)).toBe('2025-10-15');
     expect(addMonthsIso('2026-11-15', 2)).toBe('2027-01-15');
   });
+  it('addMonthsIso clamps to end-of-month instead of overflowing', () => {
+    // 2026 is not a leap year: Feb has 28 days.
+    expect(addMonthsIso('2026-01-31', 1)).toBe('2026-02-28');
+    // Jan 31 + 3 months lands in April, which has 30 days.
+    expect(addMonthsIso('2026-01-31', 3)).toBe('2026-04-30');
+    // Dec 31 2026 + 2 months lands in Feb 2027 (not a leap year either).
+    expect(addMonthsIso('2026-12-31', 2)).toBe('2027-02-28');
+    // 2028 IS a leap year: Feb has 29 days.
+    expect(addMonthsIso('2028-01-31', 1)).toBe('2028-02-29');
+  });
 });
 
 describe('getTenantTimezone / currentTenantToday', () => {

@@ -24,10 +24,18 @@ export function addDaysIso(isoDate: string, days: number): string {
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
 }
 
-/** Pure calendar-month arithmetic on 'YYYY-MM-DD' strings. */
+/**
+ * Pure calendar-month arithmetic on 'YYYY-MM-DD' strings. Clamps to the last day of
+ * the target month when the source day doesn't exist there (e.g. Jan 31 + 1 month =
+ * Feb 28, not a naive-Date.UTC overflow into March) — required for VAT/billing period
+ * boundaries anchored on month-end dates.
+ */
 export function addMonthsIso(isoDate: string, months: number): string {
   const [y, m, d] = isoDate.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1 + months, d)).toISOString().slice(0, 10);
+  const targetMonthIndex = m - 1 + months;
+  const lastDayOfTargetMonth = new Date(Date.UTC(y, targetMonthIndex + 1, 0)).getUTCDate();
+  const day = Math.min(d, lastDayOfTargetMonth);
+  return new Date(Date.UTC(y, targetMonthIndex, day)).toISOString().slice(0, 10);
 }
 
 let timezoneCache: string | null = null;
