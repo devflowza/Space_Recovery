@@ -77,9 +77,10 @@ const TrendMark: React.FC<{ trend: Trend }> = ({ trend }) => {
 
 // Each bucket owns a VISIBLE-on-white hue end-to-end: dot + number share it,
 // and the active (filtering) card tints in the same colour rather than a
-// generic outline. Brand navy/accent are deliberately avoided here — navy
-// reads as ink and royal accent is a pale cream, so neither registers as
-// colour. Delivered stays ink/slate: terminal states shouldn't compete.
+// generic outline. The five stage hues are meaning-constant across themes
+// (like status pills); "New" alone follows the tenant theme's primary as the
+// brand moment (owner request) — note it reads near-ink on Royal's navy.
+// Delivered stays ink/slate: terminal states shouldn't compete.
 const BUCKET_META: Array<{
   bucket: CaseBucket;
   label: string;
@@ -87,7 +88,7 @@ const BUCKET_META: Array<{
   valueClass: string;
   activeClass: string;
 }> = [
-  { bucket: 'new', label: 'New', dotClass: 'bg-info', valueClass: 'text-info', activeClass: 'border-info bg-info-muted' },
+  { bucket: 'new', label: 'New', dotClass: 'bg-primary', valueClass: 'text-primary', activeClass: 'border-primary bg-primary/10' },
   { bucket: 'diagnosis', label: 'In diagnosis', dotClass: 'bg-warning', valueClass: 'text-warning', activeClass: 'border-warning bg-warning-muted' },
   { bucket: 'approval', label: 'Awaiting approval', dotClass: 'bg-cat-6', valueClass: 'text-cat-6', activeClass: 'border-cat-6 bg-cat-6/10' },
   { bucket: 'recovery', label: 'In recovery', dotClass: 'bg-cat-2', valueClass: 'text-cat-2', activeClass: 'border-cat-2 bg-cat-2/10' },
