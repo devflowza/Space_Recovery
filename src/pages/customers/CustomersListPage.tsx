@@ -22,6 +22,7 @@ import { downloadCSV } from '../../lib/csvExport';
 import { formatDate } from '../../lib/format';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
+import { useListPageSize } from '../../hooks/useListPageSize';
 import { useConfirm } from '../../hooks/useConfirm';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ListPageTemplate } from '../../components/templates/ListPageTemplate';
@@ -80,8 +81,6 @@ interface City {
   is_active: boolean;
 }
 
-const PAGE_SIZE = 50;
-
 export const CustomersListPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -101,6 +100,7 @@ export const CustomersListPage: React.FC = () => {
   const [filterPortal, setFilterPortal] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
+  const pageSize = useListPageSize();
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
@@ -109,7 +109,7 @@ export const CustomersListPage: React.FC = () => {
 
   useEffect(() => {
     setPage(0);
-  }, [debouncedSearch, filterGroup, filterPortal]);
+  }, [debouncedSearch, filterGroup, filterPortal, pageSize]);
 
   // Command-palette deep-link: /customers?new=1 opens the create modal.
   useEffect(() => {
@@ -153,7 +153,7 @@ export const CustomersListPage: React.FC = () => {
   });
 
   const { data: customersPage, isLoading } = useQuery({
-    queryKey: ['customers_enhanced', debouncedSearch, filterGroup, filterPortal, page],
+    queryKey: ['customers_enhanced', debouncedSearch, filterGroup, filterPortal, page, pageSize],
     queryFn: async () => {
       let query = supabase
         .from('customers_enhanced')
@@ -183,7 +183,7 @@ export const CustomersListPage: React.FC = () => {
 
       const { data, error, count } = await query
         .order('created_at', { ascending: false })
-        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        .range(page * pageSize, (page + 1) * pageSize - 1);
       if (error) throw error;
       return { rows: (data ?? []) as unknown as Customer[], total: count ?? 0 };
     },
@@ -816,7 +816,7 @@ export const CustomersListPage: React.FC = () => {
       kpis={kpis}
       toolbar={toolbar}
       table={table}
-      pager={{ page, pageSize: PAGE_SIZE, total: totalCustomers, onPageChange: setPage, itemNoun: 'customers' }}
+      pager={{ page, pageSize, total: totalCustomers, onPageChange: setPage, itemNoun: 'customers' }}
       loading={isLoading}
       loadingFallback={loadingFallback}
       isEmpty={customers.length === 0}

@@ -40,6 +40,7 @@ import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { downloadCSV } from '../../lib/csvExport';
 import { useToast } from '../../hooks/useToast';
 import { useConfirm } from '../../hooks/useConfirm';
+import { useListPageSize } from '../../hooks/useListPageSize';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { logger } from '../../lib/logger';
 import type { Database } from '../../types/database.types';
@@ -86,8 +87,6 @@ type ExpenseRow = Pick<
   case: { case_no: string | null; title: string | null } | null;
 };
 
-const PAGE_SIZE = 50;
-
 export const ExpensesList: React.FC = () => {
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -102,6 +101,7 @@ export const ExpensesList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
+  const pageSize = useListPageSize();
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
@@ -124,7 +124,7 @@ export const ExpensesList: React.FC = () => {
 
   useEffect(() => {
     setPage(0);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, pageSize]);
 
   // Mirror the server has_role('accounts') set (owner/admin/manager/accounts) so the
   // Approve/Reject/Mark-as-Paid affordances match what RLS+service actually permit (EXP-012).
@@ -132,7 +132,7 @@ export const ExpensesList: React.FC = () => {
   const canManage = canManageExpenses(profile?.role);
 
   const { data: expensesPage, isLoading, error, refetch } = useQuery({
-    queryKey: ['expenses', searchTerm, statusFilter, page],
+    queryKey: ['expenses', searchTerm, statusFilter, page, pageSize],
     queryFn: async () => {
       try {
         let query = supabase
@@ -150,7 +150,7 @@ export const ExpensesList: React.FC = () => {
           query = query.eq('status', statusFilter);
         }
 
-        const { data, error, count } = await query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        const { data, error, count } = await query.range(page * pageSize, (page + 1) * pageSize - 1);
         if (error) throw error;
         return { rows: (data ?? []) as unknown as ExpenseRow[], total: count ?? 0 };
       } catch (err) {
@@ -592,7 +592,7 @@ export const ExpensesList: React.FC = () => {
           />
         </div>
       }
-      pager={{ page, pageSize: PAGE_SIZE, total: totalExpensesCount, onPageChange: setPage, itemNoun: 'expenses' }}
+      pager={{ page, pageSize, total: totalExpensesCount, onPageChange: setPage, itemNoun: 'expenses' }}
       table={
         <div className="overflow-x-auto">
             <table className="w-full">

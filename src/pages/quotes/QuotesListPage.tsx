@@ -17,6 +17,7 @@ import { EmptyState } from '../../components/shared/EmptyState';
 import { ExportButton } from '../../components/shared/ExportButton';
 import { BulkActionsBar, BulkActionButton } from '../../components/shared/BulkActionsBar';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
+import { useListPageSize } from '../../hooks/useListPageSize';
 import { downloadCSV } from '../../lib/csvExport';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
@@ -56,8 +57,6 @@ const toOptionalString = (value: unknown): string | null => {
   return null;
 };
 
-const PAGE_SIZE = 50;
-
 export const QuotesListPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -79,6 +78,7 @@ export const QuotesListPage: React.FC = () => {
   const [editingQuote, setEditingQuote] = useState<QuoteWithDetails | null>(null);
   const [sendingQuoteId, setSendingQuoteId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  const pageSize = useListPageSize();
 
   // Command-palette deep-link: /quotes?new=1 opens the create modal.
   useEffect(() => {
@@ -100,7 +100,7 @@ export const QuotesListPage: React.FC = () => {
 
   useEffect(() => {
     setPage(0);
-  }, [statusFilter, debouncedSearch]);
+  }, [statusFilter, debouncedSearch, pageSize]);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['quote_stats'],
@@ -111,13 +111,13 @@ export const QuotesListPage: React.FC = () => {
   });
 
   const { data: quotesPage, isLoading, error: quotesError } = useQuery({
-    queryKey: ['quotes', statusFilter, debouncedSearch, page],
+    queryKey: ['quotes', statusFilter, debouncedSearch, page, pageSize],
     queryFn: () =>
       fetchQuotesPage({
         status: statusFilter !== 'all' ? statusFilter : undefined,
         search: debouncedSearch || undefined,
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
       }),
     staleTime: 30000,
     refetchOnWindowFocus: false,
@@ -677,7 +677,7 @@ export const QuotesListPage: React.FC = () => {
       kpis={kpis}
       toolbar={toolbar}
       table={table}
-      pager={{ page, pageSize: PAGE_SIZE, total: totalQuotes, onPageChange: setPage, itemNoun: 'quotes' }}
+      pager={{ page, pageSize, total: totalQuotes, onPageChange: setPage, itemNoun: 'quotes' }}
       loading={isLoading || statsLoading}
       isEmpty={quotes.length === 0}
       empty={empty}

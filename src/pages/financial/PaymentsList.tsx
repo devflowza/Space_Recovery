@@ -17,6 +17,7 @@ import { PaymentReceiptModal } from '../../components/financial/PaymentReceiptMo
 import { useCurrency } from '../../hooks/useCurrency';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useToast } from '../../hooks/useToast';
+import { useListPageSize } from '../../hooks/useListPageSize';
 import { createPayment, getPaymentStats, voidPayment, fetchPaymentById } from '../../lib/paymentsService';
 import { baseAmount } from '../../lib/financialMath';
 import { EmptyState } from '../../components/shared/EmptyState';
@@ -38,8 +39,6 @@ import {
   BarChart3,
 } from 'lucide-react';
 
-const PAGE_SIZE = 50;
-
 export const PaymentsList: React.FC = () => {
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
@@ -51,6 +50,7 @@ export const PaymentsList: React.FC = () => {
   const [dateFilter, setDateFilter] = useState<string>('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
+  const pageSize = useListPageSize();
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
   const [_selectedPayment, _setSelectedPayment] = useState<any>(null);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -72,7 +72,7 @@ export const PaymentsList: React.FC = () => {
   // Reset to the first page whenever the active filters/search change.
   useEffect(() => {
     setPage(0);
-  }, [searchTerm, statusFilter, dateFilter, paymentMethodFilter]);
+  }, [searchTerm, statusFilter, dateFilter, paymentMethodFilter, pageSize]);
 
   const { data: paymentMethods = [] } = useQuery({
     queryKey: ['payment_methods_active'],
@@ -88,7 +88,7 @@ export const PaymentsList: React.FC = () => {
   });
 
   const { data: paymentsPage, isLoading } = useQuery({
-    queryKey: ['payments', searchTerm, statusFilter, dateFilter, paymentMethodFilter, page],
+    queryKey: ['payments', searchTerm, statusFilter, dateFilter, paymentMethodFilter, page, pageSize],
     queryFn: async () => {
       let query = supabase
         .from('payments')
@@ -112,7 +112,7 @@ export const PaymentsList: React.FC = () => {
           )
         `, { count: 'exact' })
         .order('payment_date', { ascending: false })
-        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        .range(page * pageSize, (page + 1) * pageSize - 1);
 
       if (searchTerm) {
         const s = sanitizeFilterValue(searchTerm);
@@ -647,7 +647,7 @@ export const PaymentsList: React.FC = () => {
       table={table}
       pager={{
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         total: totalPaymentsCount,
         onPageChange: setPage,
         itemNoun: 'payments',

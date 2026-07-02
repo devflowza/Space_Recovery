@@ -6,7 +6,15 @@ import { SettingsPageHeader } from '../../components/layout/SettingsPageHeader';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../hooks/useToast';
 import { casesColumns, CASES_TABLE_KEY } from '../../lib/tables/casesColumns';
-import { getTenantTableColumns, setTenantTableColumns } from '../../lib/tablePrefsService';
+import {
+  DEFAULT_LIST_PAGE_SIZE,
+  LIST_PAGE_SIZE_OPTIONS,
+  getTenantListPageSize,
+  getTenantTableColumns,
+  setTenantListPageSize,
+  setTenantTableColumns,
+} from '../../lib/tablePrefsService';
+import { settingsKeys } from '../../lib/queryKeys';
 
 /**
  * Tenant defaults for configurable tables (cases list today). Controls which
@@ -30,6 +38,31 @@ export const TableColumnsSettings: React.FC = () => {
     queryKey: ['table_columns', 'tenant', CASES_TABLE_KEY],
     queryFn: () => getTenantTableColumns(CASES_TABLE_KEY),
   });
+
+  const { data: tenantPageSize, isLoading: isPageSizeLoading } = useQuery({
+    queryKey: settingsKeys.listPageSize(),
+    queryFn: async () => (await getTenantListPageSize()) ?? null,
+  });
+  const [savingPageSize, setSavingPageSize] = useState<number | null>(null);
+  const effectivePageSize = tenantPageSize ?? DEFAULT_LIST_PAGE_SIZE;
+
+  const handleSelectPageSize = async (size: number) => {
+    if (size === effectivePageSize || savingPageSize !== null) return;
+    const previous = tenantPageSize ?? null;
+    setSavingPageSize(size);
+    // Optimistic: every open list refetches at the new size immediately.
+    queryClient.setQueryData(settingsKeys.listPageSize(), size);
+    try {
+      await setTenantListPageSize(size);
+      toast.success(`Lists now show ${size} rows per page for all users`);
+    } catch (error) {
+      queryClient.setQueryData(settingsKeys.listPageSize(), previous);
+      toast.error((error as Error).message || 'Failed to save rows per page');
+    } finally {
+      setSavingPageSize(null);
+      queryClient.invalidateQueries({ queryKey: settingsKeys.listPageSize() });
+    }
+  };
 
   const [order, setOrder] = useState<string[]>(registryKeys);
   const [visible, setVisible] = useState<Set<string>>(new Set(defaultVisible));
@@ -114,6 +147,45 @@ export const TableColumnsSettings: React.FC = () => {
         <ChevronLeft className="w-4 h-4" />
         <span className="text-sm font-medium">Back to Settings</span>
       </button>
+
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 mb-6">
+        <h2 className="text-base font-semibold text-slate-900">Rows per page</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          How many rows every list shows per page — cases, invoices, quotes, payments, customers,
+          stock and more. Applies to all users in your workspace.
+        </p>
+        {isPageSizeLoading ? (
+          <div className="flex items-center gap-2 py-4 text-slate-500">
+            <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Loading current setting…
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Rows per page">
+            {LIST_PAGE_SIZE_OPTIONS.map((size) => {
+              const active = effectivePageSize === size;
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => handleSelectPageSize(size)}
+                  disabled={savingPageSize !== null}
+                  aria-pressed={active}
+                  className={`h-11 min-w-[4.5rem] rounded-xl border px-4 text-sm font-semibold transition-colors disabled:opacity-60 ${
+                    active
+                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {savingPageSize === size ? (
+                    <Loader2 className="mx-auto h-4 w-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <>{size} rows</>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
         <h2 className="text-base font-semibold text-slate-900 mb-4">Cases table</h2>

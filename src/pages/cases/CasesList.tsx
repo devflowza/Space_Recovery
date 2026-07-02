@@ -16,6 +16,7 @@ import { ColumnPickerPopover } from '../../components/ui/ColumnPickerPopover';
 import { casesColumns, casesRegistryMeta, pickPrimaryDevice, CASES_TABLE_KEY } from '../../lib/tables/casesColumns';
 import type { CaseListRow } from '../../lib/tables/casesColumns';
 import { useTableViewPrefs } from '../../hooks/useTableViewPrefs';
+import { useListPageSize } from '../../hooks/useListPageSize';
 import { CreateCaseWizard } from '../../components/cases/CreateCaseWizard';
 import { useCasesRealtime } from '../../hooks/useCasesRealtime';
 import { useAuth } from '../../contexts/AuthContext';
@@ -102,14 +103,14 @@ export const CasesList: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [period, setPeriod] = useState<CasePeriod>('month');
   const [currentPage, setCurrentPage] = useState(1);
-  const CASES_PER_PAGE = 7;
+  const casesPerPage = useListPageSize();
 
   const queryClient = useQueryClient();
   useCasesRealtime();
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, filterPriority]);
+  }, [searchTerm, filterStatus, filterPriority, casesPerPage]);
 
   // Search spans case_no / client_reference / subject plus customer (name, email, mobile,
   // number) and device serials — the latter two pre-resolved to ids (see caseSearch.ts).
@@ -148,10 +149,10 @@ export const CasesList: React.FC = () => {
   });
 
   const { data: cases = [], isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['cases', currentPage, searchTerm, filterStatus, filterPriority],
+    queryKey: ['cases', currentPage, casesPerPage, searchTerm, filterStatus, filterPriority],
     queryFn: async () => {
-      const from = (currentPage - 1) * CASES_PER_PAGE;
-      const to = from + CASES_PER_PAGE - 1;
+      const from = (currentPage - 1) * casesPerPage;
+      const to = from + casesPerPage - 1;
 
       // customer and devices are embedded via real FKs (cases.customer_id ->
       // customers_enhanced, case_devices.case_id -> cases) in one query. cases.created_by
@@ -270,9 +271,9 @@ export const CasesList: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: [CASE_COMMAND_STATS_KEY] });
   };
 
-  const totalPages = Math.ceil((totalCountData || 0) / CASES_PER_PAGE);
-  const startIndex = (currentPage - 1) * CASES_PER_PAGE + 1;
-  const endIndex = Math.min(currentPage * CASES_PER_PAGE, totalCountData || 0);
+  const totalPages = Math.ceil((totalCountData || 0) / casesPerPage);
+  const startIndex = (currentPage - 1) * casesPerPage + 1;
+  const endIndex = Math.min(currentPage * casesPerPage, totalCountData || 0);
 
   const getPriorityColor = (priority: string | null | undefined) => {
     if (!priority) return '#6b7280';

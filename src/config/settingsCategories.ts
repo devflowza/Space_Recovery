@@ -77,13 +77,13 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
   },
   {
     id: 'table-columns',
-    title: 'Table Columns',
+    title: 'Tables',
     icon: Columns3,
     backgroundColor: '#475569',
     borderColor: '#475569',
     tables: [],
-    actionLabel: 'Configure Columns',
-    description: 'Choose the default and locked columns your team sees on the Cases table.',
+    actionLabel: 'Configure Tables',
+    description: 'Rows per page for all list tables, plus default and locked columns for the Cases table.',
   },
   {
     id: 'features',
