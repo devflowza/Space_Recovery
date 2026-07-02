@@ -18,6 +18,7 @@
     "geo:test": "vitest run --config vitest.config.scripts.ts",
     "geo:build-seed": "GENERATE=1 vitest run --config vitest.config.scripts.ts scripts/country-engine/generate-seed.test.ts",
     "check:registry-trigger-parity": "vitest run --config vitest.config.scripts.ts scripts/country-engine/registry-trigger-parity.test.ts",
+    "check:registry-mapper-parity": "vitest run --config vitest.config.scripts.ts scripts/country-engine/registry-mapper-parity.test.ts",
     "check:signup-smoke": "vitest run --config vitest.config.scripts.ts scripts/country-engine/signup-smoke.test.ts"
   },
   "dependencies": {
