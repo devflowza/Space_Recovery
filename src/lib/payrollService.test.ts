@@ -11,8 +11,10 @@ vi.mock('./supabaseClient', () => ({
 }));
 vi.mock('./currencyService', () => ({ resolveRateContext: vi.fn() }));
 vi.mock('./payrollBase', () => ({ buildPayrollBaseColumns: vi.fn(() => ({})) }));
+vi.mock('./logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
 import { payrollService } from './payrollService';
+import { logger } from './logger';
 
 /** Thenable query builder: every chainable method returns the builder; awaiting
  *  it (or calling maybeSingle) yields {data}. `rows` is the resolved payload. */
@@ -68,5 +70,66 @@ describe('payrollService.getDashboardStats (D7 — cross-record totals must be b
     const stats = await payrollService.getDashboardStats();
 
     expect(stats.totalPayroll).toBe(70);
+  });
+});
+
+describe('statutory social-security guard (Phase 0)', () => {
+  const baseSettings = {
+    working_days_per_month: 22,
+    working_hours_per_day: 8,
+    overtime_rate_multiplier: { regular: 1.5, weekend: 1.5, holiday: 2 },
+    payment_day: 28,
+  };
+
+  function arrange(
+    socialSecurityRate: number | undefined,
+    captured: { records?: Array<Record<string, unknown>> },
+  ) {
+    vi.spyOn(payrollService, 'getPayrollPeriod').mockResolvedValue(
+      { id: 'period-1', status: 'draft', start_date: '2026-06-01', end_date: '2026-06-30', period_name: 'Jun 2026' } as never,
+    );
+    vi.spyOn(payrollService, 'getPayrollSettings').mockResolvedValue(
+      { ...baseSettings, social_security_rate: socialSecurityRate } as never,
+    );
+    vi.spyOn(payrollService, 'getEmployeeAttendance').mockResolvedValue(
+      { daysWorked: 22, daysAbsent: 0, daysLeave: 0, regularHours: 176, overtimeHours: 0 } as never,
+    );
+    vi.spyOn(payrollService, 'getActiveLoans').mockResolvedValue([] as never);
+    vi.spyOn(payrollService, 'updatePayrollPeriod').mockResolvedValue(undefined as never);
+
+    from.mockImplementation((table: string) => {
+      if (table === 'employees') return makeQuery([{ id: 'emp-1', tenant_id: 't-1', basic_salary: 1000 }]);
+      if (table === 'payroll_records') {
+        return {
+          insert: (rows: Array<Record<string, unknown>>) => {
+            captured.records = rows;
+            return { select: () => Promise.resolve({ data: rows, error: null }) };
+          },
+        } as unknown as ReturnType<typeof makeQuery>;
+      }
+      return makeQuery(null);
+    });
+  }
+
+  it('skips the deduction and warns loudly when no rate is configured', async () => {
+    const captured: { records?: Array<Record<string, unknown>> } = {};
+    arrange(undefined, captured);
+
+    await payrollService.processPayroll('period-1');
+
+    expect(captured.records).toHaveLength(1);
+    expect(captured.records![0].total_deductions).toBe(0);  // no fabricated 7% PASI
+    expect(captured.records![0].net_salary).toBe(1000);
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringMatching(/social-security rate/i));
+  });
+
+  it('applies a configured rate exactly (Omani 0.07 keeps working)', async () => {
+    const captured: { records?: Array<Record<string, unknown>> } = {};
+    arrange(0.07, captured);
+
+    await payrollService.processPayroll('period-1');
+
+    expect(captured.records![0].total_deductions).toBe(70);  // 1000 * 0.07
+    expect(captured.records![0].net_salary).toBe(930);
   });
 });
