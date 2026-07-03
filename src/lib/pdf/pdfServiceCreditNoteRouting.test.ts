@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { CreditNoteDocumentData } from './types';
 
-// generateCreditNote is the FIRST doc type with no legacy feature flag: it must
-// always build via the engine, never via the hand-written `buildCreditNoteDocument`
-// (Task 10 deletes that builder later, after final parity). This guards the
-// unconditional route directly — a regression here would silently resurrect the
-// legacy CRED template if someone re-wires the ternary other doc types use.
+// generateCreditNote has no legacy feature flag: it always builds via the
+// engine. The hand-written `buildCreditNoteDocument` was deleted in Task 10
+// after final legacy↔engine parity, so the engine is now the sole credit-note
+// render path. This exercises the unconditional route end-to-end: the
+// engine-produced doc-definition must carry the credit-note number and total.
 
 const fixture: CreditNoteDocumentData = {
   creditNoteData: {
@@ -37,12 +37,6 @@ vi.mock('./dataFetcher', async (importOriginal) => {
   return { ...actual, fetchCreditNoteData: vi.fn(async () => fixture) };
 });
 
-vi.mock('./documents/CreditNoteDocument', () => ({
-  buildCreditNoteDocument: vi.fn(() => {
-    throw new Error('legacy CreditNoteDocument builder must not be called — credit notes route unconditionally');
-  }),
-}));
-
 vi.mock('./fonts', () => ({
   initializePDFFonts: vi.fn(async () => true),
   createPdfWithFonts: vi.fn(() => ({ download: vi.fn(), open: vi.fn() })),
@@ -72,11 +66,9 @@ vi.mock('../documentTemplateService', async (importOriginal) => {
 });
 
 import { generateCreditNote } from './pdfService';
-import { buildCreditNoteDocument } from './documents/CreditNoteDocument';
 import { createPdfWithFonts } from './fonts';
 
-// Recursively collect every `text` string in a pdfmake content tree (mirrors
-// documents/CreditNoteDocument.test.ts's helper).
+// Recursively collect every `text` string in a pdfmake content tree.
 function collectText(node: unknown, acc: string[]): void {
   if (node == null) return;
   if (typeof node === 'string') {
@@ -100,11 +92,10 @@ function collectText(node: unknown, acc: string[]): void {
 }
 
 describe('generateCreditNote — unconditional engine route', () => {
-  it('never calls the legacy builder and renders the engine-produced document', async () => {
+  it('renders the engine-produced document', async () => {
     const result = await generateCreditNote('cn-1', false);
 
     expect(result.success).toBe(true);
-    expect(buildCreditNoteDocument).not.toHaveBeenCalled();
     expect(createPdfWithFonts).toHaveBeenCalledTimes(1);
 
     const docDefinition = vi.mocked(createPdfWithFonts).mock.calls[0][0] as { content: unknown };

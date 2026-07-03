@@ -4,8 +4,6 @@ import { buildOfficeReceiptDocument } from './documents/OfficeReceiptDocument';
 import { buildCustomerCopyDocument } from './documents/CustomerCopyDocument';
 import { buildCheckoutFormDocument } from './documents/CheckoutFormDocument';
 import { buildCaseLabelDocument } from './documents/CaseLabelDocument';
-import { buildQuoteDocument } from './documents/QuoteDocument';
-import { buildInvoiceDocument } from './documents/InvoiceDocument';
 import { buildPaymentReceiptDocument } from './documents/PaymentReceiptDocument';
 import { buildPayslipDocument } from './documents/PayslipDocument';
 import { buildChainOfCustodyDocument } from './documents/ChainOfCustodyDocument';
@@ -112,8 +110,8 @@ export async function resolveCountryLayer(
 /**
  * Build the invoice pdfmake doc-definition via the NEW config-driven engine.
  *
- * Flag-guarded: this is only reached when `isPdfEngineEnabled('invoice')` is
- * true. It resolves the tenant's deployed invoice template (if any) as the
+ * UNCONDITIONAL: the engine is the sole invoice render path (the legacy builder
+ * was deleted in Task 10). It resolves the tenant's deployed invoice template (if any) as the
  * doc-type cascade layer over the built-in 'invoice' default, normalizes the
  * invoice data through the adapter, and assembles via `renderTemplate`. With no
  * tenant template seeded it falls back to the built-in config, so the path
@@ -160,7 +158,8 @@ async function buildInvoiceDocumentViaEngine(
 /**
  * Build the quote pdfmake doc-definition via the NEW config-driven engine.
  *
- * Flag-guarded: only reached when `isPdfEngineEnabled('quote')` is true. Mirrors
+ * UNCONDITIONAL: the engine is the sole quote render path (the legacy builder
+ * was deleted in Task 10). Mirrors
  * {@link buildInvoiceDocumentViaEngine}: resolve the tenant's deployed quote
  * template (if any) as the doc-type cascade layer over the built-in 'quote'
  * default, normalize through the quote adapter, and assemble via
@@ -203,9 +202,9 @@ async function buildQuoteViaEngine(
 /**
  * Build the credit-note pdfmake doc-definition via the config-driven engine.
  *
- * UNCONDITIONAL: unlike every other doc type above, credit notes have no legacy
- * feature flag — `generateCreditNote` always routes through here (the first
- * doc type to skip the flag-gated ternary entirely). Mirrors
+ * UNCONDITIONAL: credit notes have no legacy feature flag — `generateCreditNote`
+ * always routes through here, alongside invoice/quote which became unconditional
+ * in Task 10 (the legacy builders were deleted). Mirrors
  * {@link buildQuoteViaEngine}: resolve the tenant's deployed 'credit_note'
  * template (if any) as the doc-type cascade layer over the built-in
  * 'credit_note' default, apply the country layer (which sets the TAX CREDIT
@@ -862,11 +861,7 @@ export async function generateQuote(quoteId: string, download: boolean = true): 
         : Promise.resolve(null),
     ]);
 
-    const qrCodeCaption = data.companySettings.branding?.qr_code_quote_caption || 'Scan to approve this quote';
-
-    const docDefinition = isPdfEngineEnabled('quote')
-      ? await buildQuoteViaEngine(data, ctx, logoBase64, qrCodeBase64)
-      : buildQuoteDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const docDefinition = await buildQuoteViaEngine(data, ctx, logoBase64, qrCodeBase64);
 
     const filename = `Quote_${data.quoteData.quote_number}_${new Date().toISOString().split('T')[0]}.pdf`;
 
@@ -964,11 +959,7 @@ export async function generateInvoice(invoiceId: string, download: boolean = tru
         : Promise.resolve(null),
     ]);
 
-    const qrCodeCaption = data.companySettings.branding?.qr_code_invoice_caption || 'Scan to pay this invoice';
-
-    const docDefinition = isPdfEngineEnabled('invoice')
-      ? await buildInvoiceDocumentViaEngine(data, ctx, logoBase64, qrCodeBase64)
-      : buildInvoiceDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const docDefinition = await buildInvoiceDocumentViaEngine(data, ctx, logoBase64, qrCodeBase64);
 
     const invoiceType = data.invoiceData.invoice_type === 'proforma' ? 'Proforma' : 'Tax';
     const filename = `${invoiceType}_Invoice_${data.invoiceData.invoice_number}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -1043,10 +1034,9 @@ export async function generateCreditNote(creditNoteId: string, download: boolean
       ? await withTimeout(loadImageAsBase64(data.companySettings.branding.logo_url), 5000, 'Logo loading timeout')
       : null;
 
-    // UNCONDITIONAL: credit notes have no legacy feature flag — this is the
-    // first doc type to always route through the engine (no ternary against
-    // `buildCreditNoteDocument`). The legacy builder stays importable/callable
-    // until Task 10 deletes it after final parity.
+    // UNCONDITIONAL: credit notes always route through the engine (no ternary,
+    // no feature flag). The legacy pdfmake builder was deleted in Task 10 after
+    // final legacy↔engine parity, so the engine is the sole render path.
     const docDefinition = await buildCreditNoteViaEngine(data, logoBase64);
     const filename = `Credit_Note_${data.creditNoteData.credit_note_number || 'draft'}_${new Date().toISOString().split('T')[0]}.pdf`;
 
@@ -1554,11 +1544,7 @@ export async function generateQuoteAsBlob(quoteId: string): Promise<PDFBlobResul
         : Promise.resolve(null),
     ]);
 
-    const qrCodeCaption = data.companySettings.branding?.qr_code_quote_caption || 'Scan to approve this quote';
-
-    const docDefinition = isPdfEngineEnabled('quote')
-      ? await buildQuoteViaEngine(data, ctx, logoBase64, qrCodeBase64)
-      : buildQuoteDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const docDefinition = await buildQuoteViaEngine(data, ctx, logoBase64, qrCodeBase64);
     const filename = `Quote_${data.quoteData.quote_number}_${new Date().toISOString().split('T')[0]}.pdf`;
 
     return new Promise((resolve) => {
@@ -1599,11 +1585,7 @@ export async function generateInvoiceAsBlob(invoiceId: string): Promise<PDFBlobR
         : Promise.resolve(null),
     ]);
 
-    const qrCodeCaption = data.companySettings.branding?.qr_code_invoice_caption || 'Scan to pay this invoice';
-
-    const docDefinition = isPdfEngineEnabled('invoice')
-      ? await buildInvoiceDocumentViaEngine(data, ctx, logoBase64, qrCodeBase64)
-      : buildInvoiceDocument(data, ctx, logoBase64, qrCodeBase64, qrCodeCaption);
+    const docDefinition = await buildInvoiceDocumentViaEngine(data, ctx, logoBase64, qrCodeBase64);
     const invoiceType = data.invoiceData.invoice_type === 'proforma' ? 'Proforma' : 'Tax';
     const filename = `${invoiceType}_Invoice_${data.invoiceData.invoice_number}_${new Date().toISOString().split('T')[0]}.pdf`;
 

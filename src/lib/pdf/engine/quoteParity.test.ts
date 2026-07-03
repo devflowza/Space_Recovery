@@ -2,22 +2,23 @@ import { describe, it, expect } from 'vitest';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { toEngineData } from './adapters/quoteAdapter';
 import { renderTemplate } from './renderTemplate';
-import { buildQuoteDocument } from '../documents/QuoteDocument';
 import type { TranslationContext, QuoteDocumentData } from '../types';
 import { BUILT_IN_TEMPLATE_CONFIGS } from '../templateConfig';
 
 // ---------------------------------------------------------------------------
-// Quote ENGINE ↔ LEGACY parity.
+// Quote ENGINE GOLDEN.
 //
-// Renders a representative quote BOTH ways — the legacy hand-written
-// `buildQuoteDocument(...)` and the config-driven engine
-// (toEngineData → renderTemplate) — and asserts CONTENT/STRUCTURAL equivalence
-// (not byte-identical): bilingual document title, every line-item row + value,
+// Renders a representative quote through the config-driven engine
+// (toEngineData → renderTemplate) and asserts its CONTENT/STRUCTURE: the
+// bilingual document title, every line-item row + value,
 // subtotal/discount/net/VAT/total, customer, terms/notes + bank box, and a
 // repeating page-footer callback.
 //
-// The legacy builder is the reference and MUST stay untouched. All inputs are
-// synthetic — no DB, no font loading.
+// These probes were the ENGINE half of the former legacy↔engine parity suite;
+// the legacy `buildQuoteDocument` was the comparison oracle and was deleted in
+// Task 10 after a final byte-for-byte parity run proved the engine output
+// identical. The engine is now the sole quote render path, so these are its
+// golden. All inputs are synthetic — no DB, no font loading.
 // ---------------------------------------------------------------------------
 
 const englishCtx: TranslationContext = {
@@ -146,14 +147,6 @@ function allTexts(def: TDocumentDefinitions): string[] {
   return out;
 }
 
-/** Render the quote via the legacy hand-written builder (the reference). */
-function renderLegacy(
-  data: QuoteDocumentData,
-  ctx: TranslationContext = englishCtx,
-): TDocumentDefinitions {
-  return buildQuoteDocument(data, ctx, null, TINY_PNG, 'Scan to approve this quote');
-}
-
 /** Render the quote via the config-driven engine. */
 function renderEngine(
   data: QuoteDocumentData,
@@ -164,18 +157,15 @@ function renderEngine(
   return renderTemplate(config, engineData, ctx, null, TINY_PNG);
 }
 
-describe('quote parity — engine output matches the legacy builder', () => {
-  it('renders the QUOTATION title in both (single language)', () => {
+describe('quote engine golden — the engine is the sole render path', () => {
+  it('renders the QUOTATION title (single language)', () => {
     const data = makeQuoteData();
-    const legacy = allTexts(renderLegacy(data));
     const engine = allTexts(renderEngine(data));
-    expect(legacy.some((t) => t.includes('QUOTATION'))).toBe(true);
     expect(engine.some((t) => t.includes('QUOTATION'))).toBe(true);
   });
 
-  it('renders the bilingual QUOTATION title in both', () => {
+  it('renders the bilingual QUOTATION title', () => {
     const data = makeQuoteData();
-    const legacyJoined = allTexts(renderLegacy(data, bilingualCtx)).join('|');
     // Engine reads bilingual from config language mode, not ctx — assert the
     // engine emits the Arabic title from config.
     const config = BUILT_IN_TEMPLATE_CONFIGS.quote;
@@ -188,18 +178,15 @@ describe('quote parity — engine output matches the legacy builder', () => {
       renderTemplate(bilingualConfig, engineData, bilingualCtx, null, TINY_PNG),
     ).join('|');
 
-    expect(legacyJoined).toContain('عرض أسعار');
     expect(engineJoined).toContain('عرض أسعار');
     expect(engineJoined).toContain('QUOTATION');
   });
 
-  it('renders every line-item row + value in both', () => {
+  it('renders every line-item row + value', () => {
     const data = makeQuoteData();
     const engine = allTexts(renderEngine(data));
-    const legacy = allTexts(renderLegacy(data));
 
     for (const desc of ['RAID-5 logical recovery', 'Donor drive sourcing']) {
-      expect(legacy.some((t) => t.includes(desc))).toBe(true);
       expect(engine.some((t) => t.includes(desc))).toBe(true);
     }
     // Line-item monetary values (AED, 2dp, 'after').
@@ -208,18 +195,16 @@ describe('quote parity — engine output matches the legacy builder', () => {
     }
   });
 
-  it('renders subtotal / discount / net / VAT / total in both', () => {
+  it('renders subtotal / discount / net / VAT / total', () => {
     const data = makeQuoteData();
     const engineJoined = allTexts(renderEngine(data)).join('|');
-    const legacyJoined = allTexts(renderLegacy(data)).join('|');
 
     for (const val of ['1,500.00 AED', '100.00 AED', '1,400.00 AED', '70.00 AED', '1,470.00 AED']) {
-      expect(legacyJoined).toContain(val);
       expect(engineJoined).toContain(val);
     }
   });
 
-  it('handles a percentage discount the same way the legacy builder does', () => {
+  it('handles a percentage discount', () => {
     // 10% of 1500 = 150 discount → net 1350, VAT 5% = 67.50, total 1417.50.
     const data = makeQuoteData({
       discount_type: 'percentage',
@@ -228,31 +213,25 @@ describe('quote parity — engine output matches the legacy builder', () => {
       total_amount: 1417.5,
     });
     const engineJoined = allTexts(renderEngine(data)).join('|');
-    const legacyJoined = allTexts(renderLegacy(data)).join('|');
 
     for (const val of ['150.00 AED', '1,350.00 AED', '67.50 AED', '1,417.50 AED']) {
-      expect(legacyJoined).toContain(val);
       expect(engineJoined).toContain(val);
     }
   });
 
-  it('renders the customer block in both', () => {
+  it('renders the customer block', () => {
     const data = makeQuoteData();
     const engine = allTexts(renderEngine(data));
-    const legacy = allTexts(renderLegacy(data));
 
     for (const probe of ['Jane Client', 'jane@client.test', '+971 50 123 4567', 'QUO-2026-0042']) {
-      expect(legacy.some((t) => t.includes(probe))).toBe(true);
       expect(engine.some((t) => t.includes(probe))).toBe(true);
     }
   });
 
-  it('renders the validity (valid_until) in the meta of both', () => {
+  it('renders the validity (valid_until) in the meta', () => {
     const data = makeQuoteData();
     const engine = allTexts(renderEngine(data)).join('|');
-    const legacy = allTexts(renderLegacy(data)).join('|');
     // 2026-07-13 → "13 Jul 2026" via dd MMM yyyy.
-    expect(legacy).toContain('13 Jul 2026');
     expect(engine).toContain('13 Jul 2026');
   });
 
@@ -290,9 +269,6 @@ describe('quote parity — engine output matches the legacy builder', () => {
   it('emits a repeating page-footer callback (gap — page footer)', () => {
     const def = renderEngine(makeQuoteData());
     expect(typeof def.footer).toBe('function');
-
-    const legacy = renderLegacy(makeQuoteData());
-    expect(typeof legacy.footer).toBe('function');
 
     const footerFn = def.footer as (cp: number, pc: number) => Content;
     const footerTexts: string[] = [];

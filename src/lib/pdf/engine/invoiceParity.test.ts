@@ -2,28 +2,29 @@ import { describe, it, expect } from 'vitest';
 import type { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { toEngineData } from './adapters/invoiceAdapter';
 import { renderTemplate } from './renderTemplate';
-import { buildInvoiceDocument } from '../documents/InvoiceDocument';
 import type { TranslationContext, InvoiceDocumentData } from '../types';
 import { BUILT_IN_TEMPLATE_CONFIGS } from '../templateConfig';
 
 // ---------------------------------------------------------------------------
-// M5 invoice ENGINE ↔ LEGACY parity.
+// Invoice ENGINE GOLDEN.
 //
-// Renders a representative invoice BOTH ways — the legacy hand-written
-// `buildInvoiceDocument(...)` and the config-driven engine
-// (toEngineData → renderTemplate) — and asserts CONTENT/STRUCTURAL equivalence
-// (not byte-identical): same document title, every line-item row + value,
-// subtotal/discount/VAT/total, Amount Paid + Balance Due, every payment-history
-// row, and that a repeating page-footer callback exists.
+// Renders a representative invoice through the config-driven engine
+// (toEngineData → renderTemplate) and asserts its CONTENT/STRUCTURE: the
+// document title, every line-item row + value, subtotal/discount/VAT/total,
+// Amount Paid + Balance Due, every payment-history row, and that a repeating
+// page-footer callback exists.
 //
-// This pins the four M5 parity gaps closed:
+// These probes were the ENGINE half of the former legacy↔engine parity suite;
+// the legacy `buildInvoiceDocument` was the comparison oracle and was deleted in
+// Task 10 after a final byte-for-byte parity run proved the engine output
+// identical. The engine is now the sole invoice render path, so these are its
+// golden. They pin the four M5 gaps closed:
 //   1. title precedence (proforma renders PROFORMA, not the static TAX INVOICE)
 //   2. repeating page footer (a `footer:` callback, not trailing content)
 //   3. bilingual terms/notes + bank layout (Payment Terms / Notes stacks)
 //   4. payment history + Amount Paid / Balance Due totals
 //
-// The legacy builder is the reference and MUST stay untouched. All inputs are
-// synthetic — no DB, no font loading.
+// All inputs are synthetic — no DB, no font loading.
 // ---------------------------------------------------------------------------
 
 const englishCtx: TranslationContext = {
@@ -174,14 +175,6 @@ function allTexts(def: TDocumentDefinitions): string[] {
   return out;
 }
 
-/** Render the invoice via the legacy hand-written builder (the reference). */
-function renderLegacy(
-  data: InvoiceDocumentData,
-  ctx: TranslationContext = englishCtx,
-): TDocumentDefinitions {
-  return buildInvoiceDocument(data, ctx, null, TINY_PNG, 'Scan to pay this invoice');
-}
-
 /** Render the invoice via the config-driven engine. */
 function renderEngine(
   data: InvoiceDocumentData,
@@ -192,32 +185,26 @@ function renderEngine(
   return renderTemplate(config, engineData, ctx, null, TINY_PNG);
 }
 
-describe('invoice parity — engine output matches the legacy builder', () => {
-  it('renders the same document title (tax invoice)', () => {
+describe('invoice engine golden — the engine is the sole render path', () => {
+  it('renders the document title (tax invoice)', () => {
     const data = makeInvoiceData();
-    const legacy = allTexts(renderLegacy(data));
     const engine = allTexts(renderEngine(data));
-    expect(legacy.some((t) => t.includes('TAX INVOICE'))).toBe(true);
     expect(engine.some((t) => t.includes('TAX INVOICE'))).toBe(true);
   });
 
-  it('renders the proforma title in BOTH (gap 1 — title precedence)', () => {
+  it('renders the proforma title (gap 1 — title precedence)', () => {
     const data = makeInvoiceData({ invoice_type: 'proforma' });
-    const legacy = allTexts(renderLegacy(data));
     const engine = allTexts(renderEngine(data));
-    expect(legacy.some((t) => t.includes('PROFORMA INVOICE'))).toBe(true);
     expect(engine.some((t) => t.includes('PROFORMA INVOICE'))).toBe(true);
     // Crucially, the engine must NOT fall back to the config's static title.
     expect(engine.some((t) => t.includes('TAX INVOICE'))).toBe(false);
   });
 
-  it('renders every line-item row + value in both', () => {
+  it('renders every line-item row + value', () => {
     const data = makeInvoiceData();
     const engine = allTexts(renderEngine(data));
-    const legacy = allTexts(renderLegacy(data));
 
     for (const desc of ['RAID-5 logical recovery', 'Donor drive sourcing']) {
-      expect(legacy.some((t) => t.includes(desc))).toBe(true);
       expect(engine.some((t) => t.includes(desc))).toBe(true);
     }
     // Line-item monetary values (AED, 2dp, 'after').
@@ -226,13 +213,11 @@ describe('invoice parity — engine output matches the legacy builder', () => {
     }
   });
 
-  it('renders subtotal / discount / net / VAT / total in both', () => {
+  it('renders subtotal / discount / net / VAT / total', () => {
     const data = makeInvoiceData();
     const engineJoined = allTexts(renderEngine(data)).join('|');
-    const legacyJoined = allTexts(renderLegacy(data)).join('|');
 
     for (const val of ['1,500.00 AED', '100.00 AED', '1,400.00 AED', '70.00 AED', '1,470.00 AED']) {
-      expect(legacyJoined).toContain(val);
       expect(engineJoined).toContain(val);
     }
   });
@@ -240,12 +225,8 @@ describe('invoice parity — engine output matches the legacy builder', () => {
   it('renders Amount Paid + Balance Due (gap 4 — paid/balance)', () => {
     const data = makeInvoiceData();
     const engine = allTexts(renderEngine(data));
-    const legacy = allTexts(renderLegacy(data));
 
-    // Labels present in both.
-    expect(legacy.some((t) => t.includes('Amount Paid:'))).toBe(true);
     expect(engine.some((t) => t.includes('Amount Paid:'))).toBe(true);
-    expect(legacy.some((t) => t.includes('Balance Due:'))).toBe(true);
     expect(engine.some((t) => t.includes('Balance Due:'))).toBe(true);
 
     // Values: paid 470.00, balance 1000.00.
@@ -257,12 +238,10 @@ describe('invoice parity — engine output matches the legacy builder', () => {
   it('renders every payment-history row (gap 4 — payment history)', () => {
     const data = makeInvoiceData();
     const engine = allTexts(renderEngine(data));
-    const legacy = allTexts(renderLegacy(data));
 
     // The section title + each row's document number, method, recorder, and
-    // running balance must appear in both.
+    // running balance must appear.
     for (const probe of ['Payment History', 'RCPT-0001', 'RCPT-0002', 'Bank Transfer', 'Cash', 'Alex Accounts', 'TRX-1001', 'CASH-9']) {
-      expect(legacy.some((t) => t.includes(probe))).toBe(true);
       expect(engine.some((t) => t.includes(probe))).toBe(true);
     }
     // Running balances (statement-style).
@@ -308,12 +287,8 @@ describe('invoice parity — engine output matches the legacy builder', () => {
 
   it('emits a repeating page-footer callback (gap 2)', () => {
     const def = renderEngine(makeInvoiceData());
-    // The engine must promote footer/qr to a pdfmake page `footer:` callback,
-    // mirroring the legacy builder (whose footer is also a function).
+    // The engine must promote footer/qr to a pdfmake page `footer:` callback.
     expect(typeof def.footer).toBe('function');
-
-    const legacy = renderLegacy(makeInvoiceData());
-    expect(typeof legacy.footer).toBe('function');
 
     // The page footer carries the tagline + website on every page.
     const footerFn = def.footer as (cp: number, pc: number) => Content;
