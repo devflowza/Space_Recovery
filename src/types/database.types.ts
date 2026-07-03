@@ -10983,6 +10983,7 @@ export type Database = {
           last_reset_period: string | null
           last_reset_year: number | null
           legal_entity_id: string | null
+          max_length: number | null
           padding: number | null
           prefix: string | null
           reset_annually: boolean | null
@@ -11001,6 +11002,7 @@ export type Database = {
           last_reset_period?: string | null
           last_reset_year?: number | null
           legal_entity_id?: string | null
+          max_length?: number | null
           padding?: number | null
           prefix?: string | null
           reset_annually?: boolean | null
@@ -11019,6 +11021,7 @@ export type Database = {
           last_reset_period?: string | null
           last_reset_year?: number | null
           legal_entity_id?: string | null
+          max_length?: number | null
           padding?: number | null
           prefix?: string | null
           reset_annually?: boolean | null
@@ -18409,6 +18412,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      preview_number_format: {
+        Args: { p_format_template: string; p_scope: string }
+        Returns: string
+      }
       process_due_case_follow_ups: { Args: never; Returns: Json }
       process_time_based_events: { Args: never; Returns: Json }
       promote_device_to_primary: {
@@ -18857,9 +18864,13 @@ export type Database = {
       update_number_sequence: {
         Args: {
           p_current_value?: number
+          p_fiscal_year_anchor?: string
+          p_format_template?: string
+          p_max_length?: number
           p_padding: number
           p_prefix: string
           p_reset: boolean
+          p_reset_basis?: string
           p_scope: string
         }
         Returns: undefined
