@@ -16,7 +16,9 @@ export type ConfigDomain =
   | 'locale'
   | 'address'
   | 'labor'
-  | 'document';
+  | 'document'
+  | 'compliance'
+  | 'format';
 
 // NOTE: this is the RICHER authoring interface (adds domain/label/description/
 // maxOverrideLayer). It is structurally assignable to the MINIMAL ConfigKeyDef in
@@ -210,6 +212,74 @@ export const COUNTRY_CONFIG_REGISTRY: ConfigKeyDef[] = [
     description: 'BCP-47 locale. Backfilled from geo_countries.locale_code (§4.4 Phase A).',
     schema: z.string().min(2),
     codedDefault: 'en', // neutral language-only fallback; full locale resolved from layers
+  },
+  // ── regime routing (L4 → L3; statutory, country-locked — Phase 1) ──
+  {
+    key: 'regime.tax', domain: 'tax', label: 'Tax regime plugin',
+    description: 'Registered TaxStrategy key computing this country\'s tax. Country-locked; tenants cannot forge compliance.',
+    schema: z.string().min(1), codedDefault: 'simple_vat', maxOverrideLayer: 'country',
+  },
+  {
+    key: 'regime.einvoice', domain: 'tax', label: 'E-invoicing regime plugin',
+    description: 'Registered EInvoicingTransport key. Country-locked.',
+    schema: z.string().min(1), codedDefault: 'no_einvoice', maxOverrideLayer: 'country',
+  },
+  {
+    key: 'regime.numbering', domain: 'tax', label: 'Numbering policy plugin',
+    description: 'Registered NumberingPolicy key seeding statutory sequences. Country-locked.',
+    schema: z.string().min(1), codedDefault: 'prefix_numbering', maxOverrideLayer: 'country',
+  },
+  {
+    key: 'regime.documents', domain: 'tax', label: 'Document compliance profile',
+    description: 'Registered DocumentComplianceProfile key (titles, bands, forced columns). Country-locked.',
+    schema: z.string().min(1), codedDefault: 'generic_invoice', maxOverrideLayer: 'country',
+  },
+  {
+    key: 'regime.payroll', domain: 'tax', label: 'Payroll pack plugin',
+    description: 'Registered PayrollPack key. "none" = loud not-configured error on payroll statutory ops (Phase 6).',
+    schema: z.string().min(1), codedDefault: 'none', maxOverrideLayer: 'country',
+  },
+  {
+    key: 'tax.rounding_policy', domain: 'tax', label: 'Tax rounding policy',
+    description: 'Pack DATA (graft 4): {mode: half_up|half_even, level: line|document, cash_increment?}. simple_vat default preserves Oman byte-parity.',
+    schema: z.object({
+      mode: z.enum(['half_up', 'half_even']),
+      level: z.enum(['line', 'document']),
+      cash_increment: z.number().positive().optional(),
+    }),
+    codedDefault: { mode: 'half_up', level: 'document' }, maxOverrideLayer: 'country',
+  },
+  {
+    key: 'format.amount_words_scale', domain: 'format', label: 'Amount-in-words scale system',
+    description: 'western (million/billion) or indian (lakh/crore). Pack data consumed by the speller (Phase 4 wires indian).',
+    schema: z.enum(['western', 'indian']), codedDefault: 'western', maxOverrideLayer: 'country',
+  },
+  // ── RESERVED pack-schema keys — registered NOW, consumers ship later ──
+  {
+    key: 'compliance.audit_file_exports', domain: 'compliance', label: 'Statutory audit-file export descriptors',
+    description: 'RESERVED (owner E9, consumed when markets demand): [{descriptor_key, format_class: saf_t|fec|gobd|custom, version, capability_key}].',
+    schema: z.array(z.object({
+      descriptor_key: z.string(), format_class: z.enum(['saf_t', 'fec', 'gobd', 'custom']),
+      version: z.string(), capability_key: z.string(),
+    })),
+    codedDefault: [], maxOverrideLayer: 'country',
+  },
+  {
+    key: 'custody.unclaimed_property', domain: 'compliance', label: 'Unclaimed-device / abandoned-property rules',
+    description: 'RESERVED (owner E8, implemented Phase 6 wired to custody/checkout with a disposal legality gate): {holding_period_days, notice_schedule_days[], storage_fee_accrual{amount, per: day|month}, lien_rights, disposal_requires_legality_gate}.',
+    schema: z.union([z.null(), z.object({
+      holding_period_days: z.number().int().positive(),
+      notice_schedule_days: z.array(z.number().int().positive()),
+      storage_fee_accrual: z.object({ amount: z.number(), per: z.enum(['day', 'month']) }),
+      lien_rights: z.boolean(),
+      disposal_requires_legality_gate: z.literal(true),
+    })]),
+    codedDefault: null, maxOverrideLayer: 'country',
+  },
+  {
+    key: 'privacy.regime', domain: 'compliance', label: 'Data-protection regime key',
+    description: 'RESERVED (owner E7, consumed Phase 6 on the regime-key pattern): gdpr|pdpl|dpdp|none.',
+    schema: z.enum(['gdpr', 'pdpl', 'dpdp', 'none']), codedDefault: 'none', maxOverrideLayer: 'country',
   },
 ];
 
