@@ -9768,6 +9768,66 @@ export type Database = {
         }
         Relationships: []
       }
+      master_document_requirements: {
+        Row: {
+          condition: Json | null
+          country_id: string
+          created_at: string
+          deleted_at: string | null
+          doc_type: string
+          effective_from: string
+          field_key: string
+          id: string
+          level: string
+          message_i18n: Json
+          pack_version_id: string | null
+          sort_order: number
+        }
+        Insert: {
+          condition?: Json | null
+          country_id: string
+          created_at?: string
+          deleted_at?: string | null
+          doc_type: string
+          effective_from?: string
+          field_key: string
+          id?: string
+          level: string
+          message_i18n?: Json
+          pack_version_id?: string | null
+          sort_order?: number
+        }
+        Update: {
+          condition?: Json | null
+          country_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          doc_type?: string
+          effective_from?: string
+          field_key?: string
+          id?: string
+          level?: string
+          message_i18n?: Json
+          pack_version_id?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_document_requirements_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "master_document_requirements_pack_version_id_fkey"
+            columns: ["pack_version_id"]
+            isOneToOne: false
+            referencedRelation: "master_country_pack_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       master_einvoice_regimes: {
         Row: {
           adapter_key: string
