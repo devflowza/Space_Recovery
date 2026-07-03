@@ -6,14 +6,13 @@ import { buildCheckoutFormDocument } from './documents/CheckoutFormDocument';
 import { buildCaseLabelDocument } from './documents/CaseLabelDocument';
 import { buildQuoteDocument } from './documents/QuoteDocument';
 import { buildInvoiceDocument } from './documents/InvoiceDocument';
-import { buildCreditNoteDocument } from './documents/CreditNoteDocument';
 import { buildPaymentReceiptDocument } from './documents/PaymentReceiptDocument';
 import { buildPayslipDocument } from './documents/PayslipDocument';
 import { buildChainOfCustodyDocument } from './documents/ChainOfCustodyDocument';
 import { loadImageAsBase64 } from './utils';
 import { logPDFGeneration } from './loggingService';
 import { withTimeout, createTranslationContext, ctxFromLanguageConfig } from './translationContext';
-import type { DocumentType, InvoiceDocumentData, QuoteDocumentData, PaymentReceiptDocumentData, PayslipDocumentData, ChainOfCustodyDocumentData, ReceiptData, TranslationContext } from './types';
+import type { DocumentType, InvoiceDocumentData, QuoteDocumentData, CreditNoteDocumentData, PaymentReceiptDocumentData, PayslipDocumentData, ChainOfCustodyDocumentData, ReceiptData, TranslationContext } from './types';
 import { type LanguageCode } from '../documentTranslations';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { isPdfEngineEnabled } from './engine/featureFlag';
@@ -41,6 +40,7 @@ async function renderWithQr(
 }
 import { toEngineData } from './engine/adapters/invoiceAdapter';
 import { toEngineData as toQuoteEngineData } from './engine/adapters/quoteAdapter';
+import { toCreditNoteEngineData } from './engine/adapters/creditNoteAdapter';
 import { toEngineData as toPaymentReceiptEngineData } from './engine/adapters/paymentReceiptAdapter';
 import { toEngineData as toReceiptEngineData, type ReceiptVariant } from './engine/adapters/receiptAdapter';
 import { toEngineData as toCheckoutEngineData } from './engine/adapters/checkoutAdapter';
@@ -198,6 +198,52 @@ async function buildQuoteViaEngine(
   const engineData = toQuoteEngineData(data, languageAwareConfig);
   await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
   return renderWithQr(languageAwareConfig, engineData, ctxFromLanguageConfig(languageAwareConfig.language), logoBase64, qrCodeBase64);
+}
+
+/**
+ * Build the credit-note pdfmake doc-definition via the config-driven engine.
+ *
+ * UNCONDITIONAL: unlike every other doc type above, credit notes have no legacy
+ * feature flag — `generateCreditNote` always routes through here (the first
+ * doc type to skip the flag-gated ternary entirely). Mirrors
+ * {@link buildQuoteViaEngine}: resolve the tenant's deployed 'credit_note'
+ * template (if any) as the doc-type cascade layer over the built-in
+ * 'credit_note' default, apply the country layer (which sets the TAX CREDIT
+ * NOTE / CREDIT NOTE title ceremony per `gcc_tax_invoice`/`generic_invoice`),
+ * normalize through the credit-note adapter, and assemble via `renderTemplate`.
+ * No QR image is resolved — `generateCreditNote` has never loaded one, and the
+ * built-in config has no `qr` section, so `renderTemplate` (not `renderWithQr`)
+ * is the correct call here, matching current (no-QR) behavior byte-for-byte.
+ */
+async function buildCreditNoteViaEngine(
+  data: CreditNoteDocumentData,
+  logoBase64: string | null,
+): Promise<TDocumentDefinitions> {
+  let docTypeOverride: TemplateConfigOverride | undefined;
+  try {
+    const deployed = await getDeployedVersionByType('credit_note');
+    if (deployed) {
+      docTypeOverride = readConfig(deployed.config);
+    }
+  } catch (err) {
+    console.error('[PDF Service] Credit-note engine: template resolution failed, using built-in default:', err);
+  }
+
+  const countryLayer = await resolveCountryLayer('credit_note');
+
+  const resolvedConfig: DocumentTemplateConfig = resolveTemplateConfigWithCountry(
+    BUILT_IN_TEMPLATE_CONFIGS.credit_note,
+    countryLayer,
+    /* theme */ undefined,
+    /* docType */ docTypeOverride,
+    /* instance */ undefined,
+  );
+
+  const languageAwareConfig = applyTenantLanguage(resolvedConfig, data.companySettings, docTypeOverride?.language !== undefined || countryLayer?.language !== undefined);
+
+  const engineData = toCreditNoteEngineData(data, languageAwareConfig);
+  await initializePDFFonts(resolveSecondary(languageAwareConfig.language));
+  return renderTemplate(languageAwareConfig, engineData, ctxFromLanguageConfig(languageAwareConfig.language), logoBase64);
 }
 
 /**
@@ -993,13 +1039,15 @@ export async function generateCreditNote(creditNoteId: string, download: boolean
       fontSource = 'fallback';
     }
 
-    const ctx = createTranslationContext(mode, languageCode);
-
     const logoBase64 = data.companySettings.branding?.logo_url
       ? await withTimeout(loadImageAsBase64(data.companySettings.branding.logo_url), 5000, 'Logo loading timeout')
       : null;
 
-    const docDefinition = buildCreditNoteDocument(data, ctx, logoBase64);
+    // UNCONDITIONAL: credit notes have no legacy feature flag — this is the
+    // first doc type to always route through the engine (no ternary against
+    // `buildCreditNoteDocument`). The legacy builder stays importable/callable
+    // until Task 10 deletes it after final parity.
+    const docDefinition = await buildCreditNoteViaEngine(data, logoBase64);
     const filename = `Credit_Note_${data.creditNoteData.credit_note_number || 'draft'}_${new Date().toISOString().split('T')[0]}.pdf`;
 
     if (download) {

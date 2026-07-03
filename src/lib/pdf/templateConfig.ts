@@ -668,6 +668,7 @@ export type TemplateDocumentType =
   | 'case_label'
   | 'quote'
   | 'invoice'
+  | 'credit_note'
   | 'payment_receipt'
   | 'payslip'
   | 'chain_of_custody'
@@ -903,6 +904,38 @@ function defaultFor(docType: TemplateDocumentType): DocumentTemplateConfig {
         labels: { documentTitle: { en: 'QUOTATION', ar: 'عرض أسعار' } },
         layout: { partiesMetaSideBySide: true },
       };
+    case 'credit_note':
+      // A credit note is a simpler statutory document than an invoice/quote: no
+      // tax bar / tax summary / payment history / bank / signature / QR sections
+      // (CreditNoteData carries no bank_accounts and the legacy builder never
+      // resolves a QR image for it either) — just the identity + customer/
+      // credit-note-details header, the credited line items, the STORED totals,
+      // and the Reason box (via `terms`). Mirrors the legacy two-column
+      // Customer Information | Credit Note Details layout from
+      // `documents/CreditNoteDocument.ts`.
+      return {
+        ...base,
+        sections: [
+          section('header', 0),
+          section('parties', 1),
+          section('meta', 2),
+          section('lineItems', 3, { columns: lineItemColumns() }),
+          section('totals', 4, {
+            lines: {
+              subtotal: true,
+              tax: true,
+              total: true,
+              amountPaid: false,
+              balanceDue: false,
+              amountInWords: false,
+            },
+          }),
+          section('terms', 5),
+          section('footer', 6),
+        ],
+        labels: { documentTitle: { en: 'CREDIT NOTE', ar: 'إشعار دائن' } },
+        layout: { partiesMetaSideBySide: true },
+      };
     case 'payment_receipt':
       return {
         ...base,
@@ -1098,6 +1131,7 @@ export const BUILT_IN_TEMPLATE_CONFIGS: Record<TemplateDocumentType, DocumentTem
   case_label: defaultFor('case_label'),
   quote: defaultFor('quote'),
   invoice: defaultFor('invoice'),
+  credit_note: defaultFor('credit_note'),
   payment_receipt: defaultFor('payment_receipt'),
   payslip: defaultFor('payslip'),
   chain_of_custody: defaultFor('chain_of_custody'),
