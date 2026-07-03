@@ -6,8 +6,10 @@ import { sanitizeUuidFields as sanitizeUuids, dropEmptyKeys } from './dataValida
 import { sanitizeFilterValue } from './postgrestSanitizer';
 import { buildQuoteSearchOr } from './searchResolvers';
 import { logger } from './logger';
-import { calculateQuoteTotals, calculateQuoteTotalsBase, roundMoney } from './financialMath';
+import { calculateQuoteTotalsBase, roundMoney } from './financialMath';
 import { resolveRateContext, getBaseCurrency, getCurrencyDecimals } from './currencyService';
+import type { RateContext } from './currencyService';
+import { computeDocumentTotals, persistDocumentTaxLines } from './taxDocumentService';
 import { toDateInputValue } from './format';
 import { getTenantConfig } from './tenantConfigService';
 
@@ -53,6 +55,10 @@ export interface Quote {
   subtotal?: number;
   tax_rate?: number;
   tax_amount?: number;
+  /** Read by the fiscal-kernel compute path (exclusive default). Persistence of
+   *  the real `quotes.tax_inclusive` column is deferred; live quotes are
+   *  exclusive, so the kernel matches legacy calculateQuoteTotals. */
+  tax_inclusive?: boolean;
   discount_amount?: number;
   discount_type?: 'amount' | 'percentage' | 'fixed';
   total_amount?: number;
@@ -406,12 +412,21 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
         : null,
     );
 
-    const { subtotal, taxAmount, totalAmount } = calculateQuoteTotals(
-      items,
-      quote.discount_type,
-      quote.discount_amount || 0,
-      quote.tax_rate || 0,
-      rc.documentDecimals,
+    const { computation, subtotal, taxAmount, totalAmount } = await computeDocumentTotals(
+      {
+        items: items.map((i) => ({
+          description: i.description,
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+        })),
+        discountType: quote.discount_type,
+        discountAmount: quote.discount_amount || 0,
+        taxRate: quote.tax_rate || 0,
+        documentType: 'quote',
+        documentDate: new Date().toISOString().slice(0, 10),
+        taxInclusive: quote.tax_inclusive ?? false,
+      },
+      rc,
     );
     const baseTotals = calculateQuoteTotalsBase({ subtotal, taxAmount, totalAmount }, rc.rate, rc.baseDecimals);
 
@@ -483,15 +498,31 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
       };
     });
 
-    const { error: itemsError } = await supabase
+    const { data: insertedItems, error: itemsError } = await supabase
       .from('quote_items')
-      .insert(itemsWithQuoteId);
+      .insert(itemsWithQuoteId)
+      .select('id, sort_order');
 
     if (itemsError) {
       logger.error('Error creating quote items:', itemsError);
       await supabase.from('quotes').update({ deleted_at: new Date().toISOString() }).eq('id', quoteData.id);
       throw new Error(`Failed to add quote items: ${itemsError.message}`);
     }
+
+    // Ordered id array aligned to the kernel's `idx:<n>` sentinels (sort_order === n),
+    // so persistDocumentTaxLines relabels each component row to its real line-item id.
+    const insertedItemIds: Array<string | null> = items.map(
+      (_, index) => (insertedItems ?? []).find((r) => r.sort_order === index)?.id ?? null,
+    );
+
+    await persistDocumentTaxLines({
+      tenantId,
+      documentType: 'quote',
+      documentId: quoteData.id,
+      computation,
+      rc,
+      lineItemIds: insertedItemIds,
+    });
 
     await logAuditTrail('create', 'quotes', quoteData.id, {}, { quote_number: quoteData.quote_number, total_amount: quoteData.total_amount });
 
@@ -540,25 +571,42 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
 
     const currencyChanged = quote.currency !== undefined && quote.currency !== existing?.currency;
     if (quote.exchange_rate || currencyChanged) {
-      const rc = await resolveRateContext(
+      const resolved = await resolveRateContext(
         quote.currency ?? existing?.currency,
         new Date().toISOString().slice(0, 10),
         quote.exchange_rate
           ? { rate: quote.exchange_rate, source: quote.rate_source as 'manual' | 'provider' | undefined }
           : null,
       );
-      rate = rc.rate;
-      rateSource = rc.rateSource;
-      docCurrency = rc.documentCurrency;
+      rate = resolved.rate;
+      rateSource = resolved.rateSource;
+      docCurrency = resolved.documentCurrency;
     }
 
     const docDecimals = await getCurrencyDecimals(docCurrency ?? baseCurrency);
-    const { subtotal, taxAmount, totalAmount } = calculateQuoteTotals(
-      items,
-      quote.discount_type,
-      quote.discount_amount || 0,
-      quote.tax_rate || 0,
-      docDecimals,
+    const rc: RateContext = {
+      documentCurrency: docCurrency ?? baseCurrency,
+      documentDecimals: docDecimals,
+      baseCurrency,
+      baseDecimals,
+      rate,
+      rateSource: rateSource as RateContext['rateSource'],
+    };
+    const { computation, subtotal, taxAmount, totalAmount } = await computeDocumentTotals(
+      {
+        items: items.map((i) => ({
+          description: i.description,
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+        })),
+        discountType: quote.discount_type,
+        discountAmount: quote.discount_amount || 0,
+        taxRate: quote.tax_rate || 0,
+        documentType: 'quote',
+        documentDate: new Date().toISOString().slice(0, 10),
+        taxInclusive: quote.tax_inclusive ?? false,
+      },
+      rc,
     );
 
     const baseTotals = calculateQuoteTotalsBase({ subtotal, taxAmount, totalAmount }, rate, baseDecimals);
@@ -592,11 +640,27 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
       };
     });
 
-    const { error: itemsError } = await supabase
+    const { data: insertedItems, error: itemsError } = await supabase
       .from('quote_items')
-      .insert(itemsWithQuoteId);
+      .insert(itemsWithQuoteId)
+      .select('id, sort_order');
 
     if (itemsError) throw itemsError;
+
+    // Ordered id array aligned to the kernel's `idx:<n>` sentinels (sort_order === n),
+    // so persistDocumentTaxLines relabels each component row to its real line-item id.
+    const insertedItemIds: Array<string | null> = items.map(
+      (_, index) => (insertedItems ?? []).find((r) => r.sort_order === index)?.id ?? null,
+    );
+
+    await persistDocumentTaxLines({
+      tenantId,
+      documentType: 'quote',
+      documentId: id,
+      computation,
+      rc,
+      lineItemIds: insertedItemIds,
+    });
   }
 
   // Defense-in-depth (Issue 2): an edit must never clear the quote's ownership links.
