@@ -17151,6 +17151,10 @@ export type Database = {
         Args: { p_row_count: number }
         Returns: undefined
       }
+      assert_financial_base_integrity: {
+        Args: { p_lookback?: string }
+        Returns: undefined
+      }
       assign_inventory_to_case: {
         Args: { p_case_id: string; p_item_id: string; p_notes?: string }
         Returns: {
