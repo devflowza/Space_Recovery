@@ -14,3 +14,9 @@ export const BANNED_TABLES = [
   'report_section_library', 'report_section_presets', 'report_template_section_mappings',
   'case_reports', 'case_report_sections', 'master_case_report_templates',
 ];
+
+// ALLOWLIST NOTE — document_tax_lines deliberately spans document kinds
+// (quote/invoice/credit_note/stock_sale) and therefore carries no domain prefix.
+// One subledger join target for return composition, HSN summaries and audit is a
+// design decision (localization spec 2026-07-02 §Database Changes) — do NOT
+// "fix" it into per-domain tables.
