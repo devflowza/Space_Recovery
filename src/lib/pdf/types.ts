@@ -148,6 +148,33 @@ export interface QuoteItemData {
   line_total?: number;
 }
 
+/** One row of `document_tax_lines` for a document (Phase 1 tax ledger). Rollup
+ *  rows (`line_item_id === null`) and per-line rows both come back; consumers
+ *  filter for the shape they need. Kept structurally identical to
+ *  `DocumentTaxLineRow` in `dataFetcher.ts` (not imported, to avoid a
+ *  types.ts → dataFetcher.ts circular dependency). */
+export interface DocumentTaxLine {
+  line_item_id: string | null;
+  component_code: string;
+  component_label: string;
+  rate: number;
+  taxable_base: number;
+  tax_amount: number;
+  tax_treatment: string;
+  treatment_reason_code: string | null;
+  sequence: number;
+  backfilled: boolean;
+  rule_trace: unknown;
+}
+
+/** Issuance-time notation snapshot (e.g. zero-rating/reverse-charge notices)
+ *  rendered verbatim on the document. */
+export interface DocumentNotation {
+  code: string;
+  text: string;
+  textTranslated?: string;
+}
+
 export interface QuoteData {
   id: string;
   quote_number: string;
@@ -168,16 +195,27 @@ export interface QuoteData {
   notes?: string;
   created_at: string;
   created_by?: string;
+  /** Buyer VATIN/TRN snapshotted at issuance (Phase 1 compliance columns). */
+  buyer_tax_number?: string | null;
+  buyer_tax_number_label?: string | null;
+  buyer_address?: Record<string, unknown> | null;
+  seller_tax_number?: string | null;
+  supply_date?: string | null;
+  reverse_charge?: boolean;
+  notations?: DocumentNotation[] | null;
+  tax_lines?: DocumentTaxLine[];
   customer?: {
     id: string;
     customer_name: string;
     email?: string;
     mobile_number?: string;
     phone_number?: string;
+    tax_number?: string;
     address_line1?: string;
     address_line2?: string;
     city?: string;
     postal_code?: string;
+    subdivision_name?: string;
     country?: string;
   };
   company?: {
@@ -185,7 +223,11 @@ export interface QuoteData {
     company_name: string;
     email?: string;
     phone_number?: string;
+    tax_number?: string;
     address_line1?: string;
+    address_line2?: string;
+    postal_code?: string;
+    subdivision_name?: string;
   };
   customer_associated_company?: {
     id: string;
@@ -217,6 +259,8 @@ export interface QuoteData {
     currency_symbol: string;
     currency_position: 'before' | 'after';
     decimal_places: number;
+    decimal_separator?: string;
+    thousands_separator?: string;
   };
 }
 
@@ -253,16 +297,27 @@ export interface InvoiceData {
   internal_notes?: string;
   created_at: string;
   created_by?: string;
+  /** Buyer VATIN/TRN snapshotted at issuance (Phase 1 compliance columns). */
+  buyer_tax_number?: string | null;
+  buyer_tax_number_label?: string | null;
+  buyer_address?: Record<string, unknown> | null;
+  seller_tax_number?: string | null;
+  supply_date?: string | null;
+  reverse_charge?: boolean;
+  notations?: DocumentNotation[] | null;
+  tax_lines?: DocumentTaxLine[];
   customer?: {
     id: string;
     customer_name: string;
     email?: string;
     mobile_number?: string;
     phone_number?: string;
+    tax_number?: string;
     address_line1?: string;
     address_line2?: string;
     city?: string;
     postal_code?: string;
+    subdivision_name?: string;
     country?: string;
   };
   company?: {
@@ -270,10 +325,12 @@ export interface InvoiceData {
     company_name: string;
     email?: string;
     phone_number?: string;
+    tax_number?: string;
     address_line1?: string;
     address_line2?: string;
     city?: string;
     postal_code?: string;
+    subdivision_name?: string;
     country?: string;
   };
   customer_associated_company?: {
@@ -311,6 +368,8 @@ export interface InvoiceData {
     currency_symbol: string;
     currency_position: 'before' | 'after';
     decimal_places: number;
+    decimal_separator?: string;
+    thousands_separator?: string;
   };
 }
 
@@ -487,6 +546,15 @@ export interface CreditNoteData {
   currency_position: 'before' | 'after';
   decimal_places: number;
   items: CreditNoteLineItem[];
+  /** Buyer VATIN/TRN snapshotted at issuance (Phase 1 compliance columns). */
+  buyer_tax_number?: string | null;
+  buyer_tax_number_label?: string | null;
+  buyer_address?: Record<string, unknown> | null;
+  seller_tax_number?: string | null;
+  supply_date?: string | null;
+  reverse_charge?: boolean;
+  notations?: DocumentNotation[] | null;
+  tax_lines?: DocumentTaxLine[];
 }
 
 export interface CreditNoteDocumentData {
