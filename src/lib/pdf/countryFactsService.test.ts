@@ -13,15 +13,18 @@ describe('getResolvedCountryFacts (R3, §8b)', () => {
   it('maps a geo_countries row to ResolvedCountryFacts (scalar tax_label path)', async () => {
     maybeSingle.mockResolvedValue({
       data: {
-        code: 'OM', tax_system: 'VAT', tax_label: 'VAT', tax_invoice_required: true,
-        language_code: 'ar', decimal_places: 3, date_format: 'DD/MM/YYYY',
+        code: 'OM', tax_system: 'VAT', tax_label: 'VAT', tax_number_label: 'VATIN',
+        tax_invoice_required: true, language_code: 'ar', decimal_places: 3,
+        date_format: 'DD/MM/YYYY', decimal_separator: '.', thousands_separator: ',',
+        digit_grouping: '3',
       },
       error: null,
     });
     const facts = await getResolvedCountryFacts('country-uuid');
     expect(facts).toEqual({
-      code: 'OM', taxSystem: 'VAT', taxLabel: 'VAT', taxInvoiceRequired: true,
+      code: 'OM', taxSystem: 'VAT', taxLabel: 'VAT', taxNumberLabel: 'VATIN', taxInvoiceRequired: true,
       languageCode: 'ar', decimalPlaces: 3, dateFormat: 'DD/MM/YYYY',
+      decimalSeparator: '.', thousandsSeparator: ',', digitGrouping: '3',
     });
   });
 

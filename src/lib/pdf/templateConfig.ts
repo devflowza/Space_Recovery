@@ -589,6 +589,10 @@ export interface LocaleConfig {
   dateFormat?: string;
   groupingStyle?: 'standard' | 'indian';
   decimalPlaces?: number;
+  /** Country decimal separator ('.' or ','); absent = engine default '.'. */
+  decimalSeparator?: string;
+  /** Country thousands separator (',', '.', ' ', or '' for none). */
+  thousandsSeparator?: string;
 }
 
 /**
