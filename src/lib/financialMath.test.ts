@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   roundMoney,
+  allocateLargestRemainder,
+  roundMoneyWith,
   convertToBase,
-  calculateInvoiceTotals,
-  calculateQuoteTotals,
   calculateInvoiceTotalsBase,
   calculateQuoteTotalsBase,
   computeRealizedFx,
@@ -29,113 +29,6 @@ describe('roundMoney', () => {
     // This is the current behavior, not necessarily the desired one — pinned so a
     // future "rounding fix" is a conscious, reviewed change rather than a silent one.
     expect(roundMoney(1.005)).toBe(1);
-  });
-});
-
-describe('calculateInvoiceTotals (canonical = createInvoice rounded path)', () => {
-  it('computes a single untaxed-discount line with tax', () => {
-    expect(
-      calculateInvoiceTotals([{ quantity: 2, unit_price: 100 }], 0, 10, 0),
-    ).toEqual({ subtotal: 200, taxRate: 10, taxAmount: 20, totalAmount: 220, amountDue: 220 });
-  });
-
-  it('rounds tax to cents on fractional inputs', () => {
-    expect(
-      calculateInvoiceTotals([{ quantity: 3, unit_price: 9.99 }], 0, 7.5, 0),
-    ).toEqual({ subtotal: 29.97, taxRate: 7.5, taxAmount: 2.25, totalAmount: 32.22, amountDue: 32.22 });
-  });
-
-  it('applies per-line %, then invoice-level discount, then amount paid', () => {
-    expect(
-      calculateInvoiceTotals(
-        [{ quantity: 1, unit_price: 100, discount_percent: 10 }],
-        5, // invoice-level fixed discount
-        0, // no tax
-        50, // amount already paid
-      ),
-    ).toEqual({ subtotal: 90, taxRate: 0, taxAmount: 0, totalAmount: 85, amountDue: 35 });
-  });
-
-  it('accumulates multiple lines with mixed discounts', () => {
-    expect(
-      calculateInvoiceTotals(
-        [
-          { quantity: 2, unit_price: 50 },
-          { quantity: 1, unit_price: 25.5, discount_percent: 20 },
-        ],
-        0,
-        5,
-        0,
-      ),
-    ).toEqual({ subtotal: 120.4, taxRate: 5, taxAmount: 6.02, totalAmount: 126.42, amountDue: 126.42 });
-  });
-});
-
-describe('calculateQuoteTotals (already-rounded create/update path)', () => {
-  it('applies a percentage discount then tax', () => {
-    expect(
-      calculateQuoteTotals(
-        [
-          { quantity: 2, unit_price: 50 },
-          { quantity: 1, unit_price: 30 },
-        ],
-        'percentage',
-        10,
-        5,
-      ),
-    ).toEqual({ subtotal: 130, taxAmount: 5.85, totalAmount: 122.85 });
-  });
-
-  it('applies a fixed discount then tax', () => {
-    expect(
-      calculateQuoteTotals([{ quantity: 1, unit_price: 100 }], 'fixed', 15, 10),
-    ).toEqual({ subtotal: 100, taxAmount: 8.5, totalAmount: 93.5 });
-  });
-
-  it('handles no discount and no tax', () => {
-    expect(
-      calculateQuoteTotals([{ quantity: 3, unit_price: 33.33 }], undefined, 0, 0),
-    ).toEqual({ subtotal: 99.99, taxAmount: 0, totalAmount: 99.99 });
-  });
-
-  it('keeps 3 decimals for an OMR quote', () => {
-    // qty 1 @ 33.333 OMR, 10% tax, 3-decimal currency.
-    expect(
-      calculateQuoteTotals([{ quantity: 1, unit_price: 33.333 }], undefined, 0, 10, 3),
-    ).toEqual({ subtotal: 33.333, taxAmount: 3.333, totalAmount: 36.666 });
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CONFIRM (your accounting policy) — owner contribution
-//
-// This pins the canonical total for a representative data-recovery invoice under
-// the CURRENT per-step rounding rule. Verify these expected values match how your
-// business / jurisdiction expects VAT and discounts to round. If your standard
-// rounds differently (e.g. round only the final total, or banker's rounding on
-// tax), change the expected values here first — this test then becomes the
-// specification that financialMath.ts must satisfy, and we adjust the helper to
-// match. As written it documents today's behavior (so it currently passes).
-// ─────────────────────────────────────────────────────────────────────────────
-describe('canonical accounting policy', () => {
-  it('representative data-recovery invoice: 5% VAT, one discounted donor line', () => {
-    const totals = calculateInvoiceTotals(
-      [
-        { quantity: 1, unit_price: 450 }, // Logical recovery — 1TB HDD
-        { quantity: 2, unit_price: 75, discount_percent: 10 }, // Donor parts, 10% off
-      ],
-      0, // no invoice-level discount
-      5, // 5% VAT
-      0, // nothing paid yet
-    );
-
-    expect(totals).toEqual({
-      subtotal: 585,
-      taxRate: 5,
-      taxAmount: 29.25,
-      totalAmount: 614.25,
-      amountDue: 614.25,
-    });
   });
 });
 
@@ -169,32 +62,6 @@ describe('convertToBase', () => {
   });
   it('is identity at rate 1', () => {
     expect(convertToBase(614.25, 1, 2)).toBe(614.25);
-  });
-});
-
-describe('calculateInvoiceTotals (currency-aware rounding)', () => {
-  it('rounds totals to 0 decimals for a JPY invoice', () => {
-    // qty 1 @ 1000, 10% tax, nothing paid, 0-decimal currency
-    expect(calculateInvoiceTotals([{ quantity: 1, unit_price: 1000 }], 0, 10, 0, 0)).toEqual({
-      subtotal: 1000,
-      taxRate: 10,
-      taxAmount: 100,
-      totalAmount: 1100,
-      amountDue: 1100,
-    });
-  });
-
-  it('keeps 3 decimals for an OMR invoice (the real tenant currency)', () => {
-    // qty 3 @ 9.999 OMR, 5% tax, nothing paid, 3-decimal currency.
-    // At 2dp this would round the line to 30.00 and total to 31.50; at 3dp the
-    // third decimal survives (29.997 -> 31.497) — that is the whole point of the fix.
-    expect(calculateInvoiceTotals([{ quantity: 3, unit_price: 9.999 }], 0, 5, 0, 3)).toEqual({
-      subtotal: 29.997,
-      taxRate: 5,
-      taxAmount: 1.5,
-      totalAmount: 31.497,
-      amountDue: 31.497,
-    });
   });
 });
 
@@ -345,5 +212,62 @@ describe('isReceivableInvoice (shared receivable filter — EXP-014)', () => {
 
   it('parity contract: excluded-status list is exactly void + cancelled', () => {
     expect([...RECEIVABLE_INVOICE_EXCLUDED_STATUSES]).toEqual(['void', 'cancelled']);
+  });
+});
+
+describe('allocateLargestRemainder', () => {
+  it('spec example: OMR 0.100 discount over three equal 100.000 lines → 0.034/0.033/0.033', () => {
+    expect(allocateLargestRemainder(0.1, [100, 100, 100], 3)).toEqual([0.034, 0.033, 0.033]);
+  });
+  it('spec example: inclusive ₹762.71 split across equal CGST/SGST weights → 381.36/381.35', () => {
+    expect(allocateLargestRemainder(762.71, [9, 9], 2)).toEqual([381.36, 381.35]);
+  });
+  it('negative totals mirror positive allocation (credit notes)', () => {
+    expect(allocateLargestRemainder(-0.1, [100, 100, 100], 3)).toEqual([-0.034, -0.033, -0.033]);
+  });
+  it('zero weights degrade to stable equal spread', () => {
+    expect(allocateLargestRemainder(0.05, [0, 0], 2)).toEqual([0.03, 0.02]);
+  });
+  it('empty weights → empty result', () => {
+    expect(allocateLargestRemainder(10, [], 2)).toEqual([]);
+  });
+  it('PROPERTY: sums exactly, parts within one minor unit of exact share, deterministic', () => {
+    let seed = 424242;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+    for (let trial = 0; trial < 500; trial++) {
+      const dp = [0, 2, 3][trial % 3];
+      const n = 1 + Math.floor(rnd() * 7);
+      const weights = Array.from({ length: n }, () => Math.floor(rnd() * 5000) / 10);
+      const total = roundMoney(rnd() * 10000 - 2000, dp);
+      const parts = allocateLargestRemainder(total, weights, dp);
+      const sum = roundMoney(parts.reduce((s, p) => s + p, 0), dp);
+      expect(sum).toBe(total);
+      expect(allocateLargestRemainder(total, weights, dp)).toEqual(parts); // deterministic
+      const weightSum = weights.reduce((s, w) => s + w, 0);
+      if (weightSum > 0) {
+        parts.forEach((p, i) => {
+          const exact = (total * weights[i]) / weightSum;
+          expect(Math.abs(p - exact)).toBeLessThanOrEqual(1 / 10 ** dp + 1e-9);
+        });
+      }
+    }
+  });
+});
+
+describe('roundMoneyWith', () => {
+  const docHalfUp = { mode: 'half_up', level: 'document' } as const;
+  const docHalfEven = { mode: 'half_even', level: 'document' } as const;
+  it('half_up matches the house roundMoney byte-for-byte (Oman parity requirement)', () => {
+    for (const v of [62.5, 62.4999, -2.005, 1.0005, 0.0005, -0.0005, 1250.0625]) {
+      for (const dp of [0, 2, 3]) {
+        expect(roundMoneyWith(v, dp, docHalfUp)).toBe(roundMoney(v, dp));
+      }
+    }
+  });
+  it('half_even rounds exact halves to the even minor unit', () => {
+    expect(roundMoneyWith(0.125, 2, docHalfEven)).toBe(0.12);
+    expect(roundMoneyWith(0.135, 2, docHalfEven)).toBe(0.14);
+    expect(roundMoneyWith(2.5, 0, docHalfEven)).toBe(2);
+    expect(roundMoneyWith(3.5, 0, docHalfEven)).toBe(4);
   });
 });

@@ -137,7 +137,32 @@ vi.mock('../../lib/supabaseClient', () => {
           };
         }
         if (table === 'quote_items') {
-          return { insert: vi.fn(async () => ({ error: null })) };
+          return {
+            insert: vi.fn((rows: Array<Record<string, unknown>>) => ({
+              select: vi.fn(async () => ({
+                data: rows.map((r, i) => ({ id: `item-${i}`, sort_order: (r.sort_order as number | undefined) ?? i })),
+                error: null,
+              })),
+            })),
+          };
+        }
+        // computeDocumentTotals -> fetchSellerContext reads the tenant's primary
+        // legal entity to resolve the tax jurisdiction; a minimal valid row lets
+        // the kernel path complete instead of resolving legalEntityId/countryId undefined.
+        if (table === 'legal_entities') {
+          return thenableChain({
+            data: { id: 'legal-entity-1', country_id: 'country-1', tax_identifier: 'TAX-0001' },
+            error: null,
+          });
+        }
+        // persistDocumentTaxLines: soft-deletes the previous snapshot
+        // (.update().eq().eq().is()) then inserts fresh component/rollup rows
+        // (.insert(), no .select() chained — only { error } is read).
+        if (table === 'document_tax_lines') {
+          return {
+            update: vi.fn(() => thenableChain({ data: null, error: null })),
+            insert: vi.fn(async () => ({ data: null, error: null })),
+          };
         }
         return thenableChain({ data: [], count: 0, error: null });
       }),

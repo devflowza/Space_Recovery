@@ -126,6 +126,13 @@ export function resolveTenantConfigFromLayers(
       languageCode: (base.ui_language as string) || 'en',
       postalCodeLabel: (snap['address.postal_code_label'] as string) || 'Postal Code',
     },
+    regime: {
+      tax: get<string>('regime.tax'),
+      einvoice: get<string>('regime.einvoice'),
+      numbering: get<string>('regime.numbering'),
+      documents: get<string>('regime.documents'),
+      payroll: get<string>('regime.payroll'),
+    },
     theme: THEMES.includes(base.theme as Theme) ? (base.theme as Theme) : DEFAULT_THEME,
     featureFlags: {},
   };
@@ -185,6 +192,16 @@ export function mapRowToConfig(
       // an English-operating lab in an Arabic-language country defaults to LTR.
       languageCode: (data.ui_language as string) || 'en',
       postalCodeLabel: (country?.postal_code_label as string) || 'Postal Code',
+    },
+    // Legacy mapper has no country-engine layers to resolve regime routing from;
+    // seed the coded defaults (byte-identical to the registry codedDefaults) so the
+    // pure-mapper tests keep passing. The engine path resolves real per-country keys.
+    regime: {
+      tax: 'simple_vat',
+      einvoice: 'no_einvoice',
+      numbering: 'prefix_numbering',
+      documents: 'generic_invoice',
+      payroll: 'none',
     },
     theme: THEMES.includes(data.theme as Theme) ? (data.theme as Theme) : DEFAULT_THEME,
     featureFlags: {},

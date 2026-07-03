@@ -4483,12 +4483,17 @@ export type Database = {
           description: string
           discount: number
           id: string
+          item_code: string | null
           quantity: number
           sort_order: number
           tax_amount: number
           tax_rate: number
+          tax_treatment: string | null
           tenant_id: string
           total: number
+          treatment_reason_code: string | null
+          unit_code: string | null
+          unit_label: string | null
           unit_price: number
           updated_at: string
         }
@@ -4499,12 +4504,17 @@ export type Database = {
           description?: string
           discount?: number
           id?: string
+          item_code?: string | null
           quantity?: number
           sort_order?: number
           tax_amount?: number
           tax_rate?: number
+          tax_treatment?: string | null
           tenant_id: string
           total?: number
+          treatment_reason_code?: string | null
+          unit_code?: string | null
+          unit_label?: string | null
           unit_price?: number
           updated_at?: string
         }
@@ -4515,12 +4525,17 @@ export type Database = {
           description?: string
           discount?: number
           id?: string
+          item_code?: string | null
           quantity?: number
           sort_order?: number
           tax_amount?: number
           tax_rate?: number
+          tax_treatment?: string | null
           tenant_id?: string
           total?: number
+          treatment_reason_code?: string | null
+          unit_code?: string | null
+          unit_label?: string | null
           unit_price?: number
           updated_at?: string
         }
@@ -4546,6 +4561,9 @@ export type Database = {
           applied_amount: number
           approved_at: string | null
           approved_by: string | null
+          buyer_address: Json | null
+          buyer_tax_number: string | null
+          buyer_tax_number_label: string | null
           case_id: string | null
           company_id: string | null
           created_at: string
@@ -4557,18 +4575,28 @@ export type Database = {
           customer_id: string | null
           deleted_at: string | null
           exchange_rate: number
+          expected_withholding: number | null
           id: string
           invoice_id: string | null
+          notations: Json | null
+          pack_version_id: string | null
+          place_of_supply_subdivision_id: string | null
           rate_source: string
           reason_code: string | null
           reason_notes: string | null
           refunded_amount: number
+          regime_snapshot: Json | null
+          reverse_charge: boolean | null
+          seller_tax_number: string | null
           status: string
           subtotal: number
           subtotal_base: number
+          supply_date: string | null
           tax_amount: number
           tax_amount_base: number
+          tax_inclusive: boolean
           tax_rate: number
+          tax_regime_key: string | null
           tenant_id: string
           total_amount: number
           total_amount_base: number
@@ -4580,6 +4608,9 @@ export type Database = {
           applied_amount?: number
           approved_at?: string | null
           approved_by?: string | null
+          buyer_address?: Json | null
+          buyer_tax_number?: string | null
+          buyer_tax_number_label?: string | null
           case_id?: string | null
           company_id?: string | null
           created_at?: string
@@ -4591,18 +4622,28 @@ export type Database = {
           customer_id?: string | null
           deleted_at?: string | null
           exchange_rate?: number
+          expected_withholding?: number | null
           id?: string
           invoice_id?: string | null
+          notations?: Json | null
+          pack_version_id?: string | null
+          place_of_supply_subdivision_id?: string | null
           rate_source?: string
           reason_code?: string | null
           reason_notes?: string | null
           refunded_amount?: number
+          regime_snapshot?: Json | null
+          reverse_charge?: boolean | null
+          seller_tax_number?: string | null
           status?: string
           subtotal?: number
           subtotal_base?: number
+          supply_date?: string | null
           tax_amount?: number
           tax_amount_base?: number
+          tax_inclusive?: boolean
           tax_rate?: number
+          tax_regime_key?: string | null
           tenant_id: string
           total_amount?: number
           total_amount_base?: number
@@ -4614,6 +4655,9 @@ export type Database = {
           applied_amount?: number
           approved_at?: string | null
           approved_by?: string | null
+          buyer_address?: Json | null
+          buyer_tax_number?: string | null
+          buyer_tax_number_label?: string | null
           case_id?: string | null
           company_id?: string | null
           created_at?: string
@@ -4625,18 +4669,28 @@ export type Database = {
           customer_id?: string | null
           deleted_at?: string | null
           exchange_rate?: number
+          expected_withholding?: number | null
           id?: string
           invoice_id?: string | null
+          notations?: Json | null
+          pack_version_id?: string | null
+          place_of_supply_subdivision_id?: string | null
           rate_source?: string
           reason_code?: string | null
           reason_notes?: string | null
           refunded_amount?: number
+          regime_snapshot?: Json | null
+          reverse_charge?: boolean | null
+          seller_tax_number?: string | null
           status?: string
           subtotal?: number
           subtotal_base?: number
+          supply_date?: string | null
           tax_amount?: number
           tax_amount_base?: number
+          tax_inclusive?: boolean
           tax_rate?: number
+          tax_regime_key?: string | null
           tenant_id?: string
           total_amount?: number
           total_amount_base?: number
@@ -4657,6 +4711,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_place_of_supply_subdivision_id_fkey"
+            columns: ["place_of_supply_subdivision_id"]
+            isOneToOne: false
+            referencedRelation: "geo_subdivisions"
             referencedColumns: ["id"]
           },
           {
@@ -5815,6 +5876,108 @@ export type Database = {
         }
         Relationships: []
       }
+      document_tax_lines: {
+        Row: {
+          backfilled: boolean
+          component_code: string
+          component_label: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          deleted_at: string | null
+          document_id: string
+          document_type: string
+          exchange_rate: number
+          id: string
+          jurisdiction_ref: string | null
+          line_item_id: string | null
+          pack_version_id: string | null
+          plugin_version: string
+          rate: number
+          regime_key: string
+          rule_trace: Json | null
+          sequence: number
+          tax_amount: number
+          tax_amount_base: number
+          tax_treatment: string
+          taxable_base: number
+          tenant_id: string
+          treatment_reason_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          backfilled?: boolean
+          component_code: string
+          component_label: string
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          deleted_at?: string | null
+          document_id: string
+          document_type: string
+          exchange_rate: number
+          id?: string
+          jurisdiction_ref?: string | null
+          line_item_id?: string | null
+          pack_version_id?: string | null
+          plugin_version: string
+          rate: number
+          regime_key: string
+          rule_trace?: Json | null
+          sequence?: number
+          tax_amount: number
+          tax_amount_base: number
+          tax_treatment: string
+          taxable_base: number
+          tenant_id: string
+          treatment_reason_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          backfilled?: boolean
+          component_code?: string
+          component_label?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          deleted_at?: string | null
+          document_id?: string
+          document_type?: string
+          exchange_rate?: number
+          id?: string
+          jurisdiction_ref?: string | null
+          line_item_id?: string | null
+          pack_version_id?: string | null
+          plugin_version?: string
+          rate?: number
+          regime_key?: string
+          rule_trace?: Json | null
+          sequence?: number
+          tax_amount?: number
+          tax_amount_base?: number
+          tax_treatment?: string
+          taxable_base?: number
+          tenant_id?: string
+          treatment_reason_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_tax_lines_jurisdiction_ref_fkey"
+            columns: ["jurisdiction_ref"]
+            isOneToOne: false
+            referencedRelation: "geo_subdivisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_tax_lines_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_template_versions: {
         Row: {
           business_unit_id: string | null
@@ -6054,6 +6217,74 @@ export type Database = {
           },
           {
             foreignKeyName: "document_templates_pdf_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      einvoice_submissions: {
+        Row: {
+          artifact_type: string
+          authority_reference: string | null
+          authority_response: Json | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          document_id: string
+          document_type: string
+          id: string
+          payload_hash: string
+          payload_storage_path: string | null
+          previous_hash: string | null
+          regime_key: string
+          sealed_at: string | null
+          status: string
+          submitted_at: string | null
+          tenant_id: string
+        }
+        Insert: {
+          artifact_type: string
+          authority_reference?: string | null
+          authority_response?: Json | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          document_id: string
+          document_type: string
+          id?: string
+          payload_hash: string
+          payload_storage_path?: string | null
+          previous_hash?: string | null
+          regime_key: string
+          sealed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          tenant_id: string
+        }
+        Update: {
+          artifact_type?: string
+          authority_reference?: string | null
+          authority_response?: Json | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          document_id?: string
+          document_type?: string
+          id?: string
+          payload_hash?: string
+          payload_storage_path?: string | null
+          previous_hash?: string | null
+          regime_key?: string
+          sealed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "einvoice_submissions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -7166,6 +7397,88 @@ export type Database = {
           },
         ]
       }
+      geo_country_tax_rates: {
+        Row: {
+          applies_to: string | null
+          component_code: string
+          component_label: string
+          component_label_i18n: Json | null
+          country_id: string
+          created_at: string
+          data_source: string | null
+          deleted_at: string | null
+          id: string
+          pack_version_id: string | null
+          rate: number
+          sort_order: number
+          source_version: string | null
+          subdivision_id: string | null
+          tax_category: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          applies_to?: string | null
+          component_code: string
+          component_label: string
+          component_label_i18n?: Json | null
+          country_id: string
+          created_at?: string
+          data_source?: string | null
+          deleted_at?: string | null
+          id?: string
+          pack_version_id?: string | null
+          rate: number
+          sort_order?: number
+          source_version?: string | null
+          subdivision_id?: string | null
+          tax_category: string
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          applies_to?: string | null
+          component_code?: string
+          component_label?: string
+          component_label_i18n?: Json | null
+          country_id?: string
+          created_at?: string
+          data_source?: string | null
+          deleted_at?: string | null
+          id?: string
+          pack_version_id?: string | null
+          rate?: number
+          sort_order?: number
+          source_version?: string | null
+          subdivision_id?: string | null
+          tax_category?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_country_tax_rates_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "geo_country_tax_rates_pack_version_id_fkey"
+            columns: ["pack_version_id"]
+            isOneToOne: false
+            referencedRelation: "master_country_pack_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "geo_country_tax_rates_subdivision_id_fkey"
+            columns: ["subdivision_id"]
+            isOneToOne: false
+            referencedRelation: "geo_subdivisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geo_languages: {
         Row: {
           code: string
@@ -8137,12 +8450,17 @@ export type Database = {
           discount: number | null
           id: string
           invoice_id: string
+          item_code: string | null
           quantity: number | null
           sort_order: number | null
           tax_amount: number | null
           tax_rate: number | null
+          tax_treatment: string | null
           tenant_id: string
           total: number
+          treatment_reason_code: string | null
+          unit_code: string | null
+          unit_label: string | null
           unit_price: number
           updated_at: string
         }
@@ -8153,12 +8471,17 @@ export type Database = {
           discount?: number | null
           id?: string
           invoice_id: string
+          item_code?: string | null
           quantity?: number | null
           sort_order?: number | null
           tax_amount?: number | null
           tax_rate?: number | null
+          tax_treatment?: string | null
           tenant_id: string
           total: number
+          treatment_reason_code?: string | null
+          unit_code?: string | null
+          unit_label?: string | null
           unit_price: number
           updated_at?: string
         }
@@ -8169,12 +8492,17 @@ export type Database = {
           discount?: number | null
           id?: string
           invoice_id?: string
+          item_code?: string | null
           quantity?: number | null
           sort_order?: number | null
           tax_amount?: number | null
           tax_rate?: number | null
+          tax_treatment?: string | null
           tenant_id?: string
           total?: number
+          treatment_reason_code?: string | null
+          unit_code?: string | null
+          unit_label?: string | null
           unit_price?: number
           updated_at?: string
         }
@@ -8203,6 +8531,9 @@ export type Database = {
           balance_due_base: number | null
           bank_account_id: string | null
           business_unit_id: string | null
+          buyer_address: Json | null
+          buyer_tax_number: string | null
+          buyer_tax_number_label: string | null
           case_id: string | null
           client_reference: string | null
           company_id: string | null
@@ -8220,6 +8551,7 @@ export type Database = {
           discount_type: string
           due_date: string | null
           exchange_rate: number
+          expected_withholding: number | null
           footer: string | null
           id: string
           invoice_date: string | null
@@ -8227,19 +8559,28 @@ export type Database = {
           invoice_type: string | null
           is_proforma: boolean | null
           legal_entity_id: string | null
+          notations: Json | null
           notes: string | null
+          pack_version_id: string | null
           paid_at: string | null
           payment_status: string | null
+          place_of_supply_subdivision_id: string | null
           proforma_invoice_id: string | null
           rate_source: string
+          regime_snapshot: Json | null
+          reverse_charge: boolean | null
+          seller_tax_number: string | null
           sent_at: string | null
           status: string
           status_id: string | null
           subtotal: number | null
           subtotal_base: number | null
+          supply_date: string | null
           tax_amount: number | null
           tax_amount_base: number | null
+          tax_inclusive: boolean
           tax_rate: number | null
+          tax_regime_key: string | null
           template_version_id: string | null
           tenant_id: string
           terms: string | null
@@ -8257,6 +8598,9 @@ export type Database = {
           balance_due_base?: number | null
           bank_account_id?: string | null
           business_unit_id?: string | null
+          buyer_address?: Json | null
+          buyer_tax_number?: string | null
+          buyer_tax_number_label?: string | null
           case_id?: string | null
           client_reference?: string | null
           company_id?: string | null
@@ -8274,6 +8618,7 @@ export type Database = {
           discount_type?: string
           due_date?: string | null
           exchange_rate?: number
+          expected_withholding?: number | null
           footer?: string | null
           id?: string
           invoice_date?: string | null
@@ -8281,19 +8626,28 @@ export type Database = {
           invoice_type?: string | null
           is_proforma?: boolean | null
           legal_entity_id?: string | null
+          notations?: Json | null
           notes?: string | null
+          pack_version_id?: string | null
           paid_at?: string | null
           payment_status?: string | null
+          place_of_supply_subdivision_id?: string | null
           proforma_invoice_id?: string | null
           rate_source?: string
+          regime_snapshot?: Json | null
+          reverse_charge?: boolean | null
+          seller_tax_number?: string | null
           sent_at?: string | null
           status?: string
           status_id?: string | null
           subtotal?: number | null
           subtotal_base?: number | null
+          supply_date?: string | null
           tax_amount?: number | null
           tax_amount_base?: number | null
+          tax_inclusive?: boolean
           tax_rate?: number | null
+          tax_regime_key?: string | null
           template_version_id?: string | null
           tenant_id: string
           terms?: string | null
@@ -8311,6 +8665,9 @@ export type Database = {
           balance_due_base?: number | null
           bank_account_id?: string | null
           business_unit_id?: string | null
+          buyer_address?: Json | null
+          buyer_tax_number?: string | null
+          buyer_tax_number_label?: string | null
           case_id?: string | null
           client_reference?: string | null
           company_id?: string | null
@@ -8328,6 +8685,7 @@ export type Database = {
           discount_type?: string
           due_date?: string | null
           exchange_rate?: number
+          expected_withholding?: number | null
           footer?: string | null
           id?: string
           invoice_date?: string | null
@@ -8335,19 +8693,28 @@ export type Database = {
           invoice_type?: string | null
           is_proforma?: boolean | null
           legal_entity_id?: string | null
+          notations?: Json | null
           notes?: string | null
+          pack_version_id?: string | null
           paid_at?: string | null
           payment_status?: string | null
+          place_of_supply_subdivision_id?: string | null
           proforma_invoice_id?: string | null
           rate_source?: string
+          regime_snapshot?: Json | null
+          reverse_charge?: boolean | null
+          seller_tax_number?: string | null
           sent_at?: string | null
           status?: string
           status_id?: string | null
           subtotal?: number | null
           subtotal_base?: number | null
+          supply_date?: string | null
           tax_amount?: number | null
           tax_amount_base?: number | null
+          tax_inclusive?: boolean
           tax_rate?: number | null
+          tax_regime_key?: string | null
           template_version_id?: string | null
           tenant_id?: string
           terms?: string | null
@@ -8420,6 +8787,13 @@ export type Database = {
             columns: ["legal_entity_id"]
             isOneToOne: false
             referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_place_of_supply_subdivision_id_fkey"
+            columns: ["place_of_supply_subdivision_id"]
+            isOneToOne: false
+            referencedRelation: "geo_subdivisions"
             referencedColumns: ["id"]
           },
           {
@@ -8991,6 +9365,83 @@ export type Database = {
           },
         ]
       }
+      legal_entity_tax_registrations: {
+        Row: {
+          country_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_primary: boolean
+          legal_entity_id: string
+          registered_from: string
+          registered_to: string | null
+          scheme: string
+          subdivision_id: string | null
+          tax_number: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          country_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_primary?: boolean
+          legal_entity_id: string
+          registered_from: string
+          registered_to?: string | null
+          scheme?: string
+          subdivision_id?: string | null
+          tax_number: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          country_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_primary?: boolean
+          legal_entity_id?: string
+          registered_from?: string
+          registered_to?: string | null
+          scheme?: string
+          subdivision_id?: string | null
+          tax_number?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_entity_tax_registrations_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_entity_tax_registrations_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_entity_tax_registrations_subdivision_id_fkey"
+            columns: ["subdivision_id"]
+            isOneToOne: false
+            referencedRelation: "geo_subdivisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_entity_tax_registrations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_repayments: {
         Row: {
           amount: number
@@ -9117,6 +9568,119 @@ export type Database = {
         }
         Relationships: []
       }
+      master_country_pack_tests: {
+        Row: {
+          country_id: string
+          created_at: string
+          deleted_at: string | null
+          expected: Json
+          id: string
+          input_document: Json
+          last_result: Json | null
+          last_run_at: string | null
+          name: string
+          pack_version_id: string | null
+        }
+        Insert: {
+          country_id: string
+          created_at?: string
+          deleted_at?: string | null
+          expected: Json
+          id?: string
+          input_document: Json
+          last_result?: Json | null
+          last_run_at?: string | null
+          name: string
+          pack_version_id?: string | null
+        }
+        Update: {
+          country_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          expected?: Json
+          id?: string
+          input_document?: Json
+          last_result?: Json | null
+          last_run_at?: string | null
+          name?: string
+          pack_version_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_country_pack_tests_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "master_country_pack_tests_pack_version_id_fkey"
+            columns: ["pack_version_id"]
+            isOneToOne: false
+            referencedRelation: "master_country_pack_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      master_country_pack_versions: {
+        Row: {
+          approved_by: string | null
+          authored_by: string | null
+          changelog: string | null
+          checksum: string | null
+          country_id: string
+          created_at: string
+          deleted_at: string | null
+          effective_from: string | null
+          id: string
+          next_review_date: string | null
+          staleness_days: number | null
+          status: string
+          updated_at: string | null
+          version: number
+        }
+        Insert: {
+          approved_by?: string | null
+          authored_by?: string | null
+          changelog?: string | null
+          checksum?: string | null
+          country_id: string
+          created_at?: string
+          deleted_at?: string | null
+          effective_from?: string | null
+          id?: string
+          next_review_date?: string | null
+          staleness_days?: number | null
+          status?: string
+          updated_at?: string | null
+          version: number
+        }
+        Update: {
+          approved_by?: string | null
+          authored_by?: string | null
+          changelog?: string | null
+          checksum?: string | null
+          country_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          effective_from?: string | null
+          id?: string
+          next_review_date?: string | null
+          staleness_days?: number | null
+          status?: string
+          updated_at?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_country_pack_versions_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       master_currency_codes: {
         Row: {
           code: string
@@ -9177,6 +9741,80 @@ export type Database = {
           is_active?: boolean
           storage_endpoint?: string | null
           supabase_ref?: string | null
+        }
+        Relationships: []
+      }
+      master_einvoice_regimes: {
+        Row: {
+          adapter_key: string
+          code: string
+          config: Json
+          country_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          mandatory_from: string | null
+          regime_class: string
+          thresholds: Json
+        }
+        Insert: {
+          adapter_key: string
+          code: string
+          config?: Json
+          country_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          mandatory_from?: string | null
+          regime_class: string
+          thresholds?: Json
+        }
+        Update: {
+          adapter_key?: string
+          code?: string
+          config?: Json
+          country_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          mandatory_from?: string | null
+          regime_class?: string
+          thresholds?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_einvoice_regimes_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "geo_countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      master_engine_capabilities: {
+        Row: {
+          capability_key: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          kind: string
+          min_engine_version: string
+        }
+        Insert: {
+          capability_key: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          kind: string
+          min_engine_version?: string
+        }
+        Update: {
+          capability_key?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          kind?: string
+          min_engine_version?: string
         }
         Relationships: []
       }
@@ -10345,6 +10983,7 @@ export type Database = {
           last_reset_period: string | null
           last_reset_year: number | null
           legal_entity_id: string | null
+          max_length: number | null
           padding: number | null
           prefix: string | null
           reset_annually: boolean | null
@@ -10363,6 +11002,7 @@ export type Database = {
           last_reset_period?: string | null
           last_reset_year?: number | null
           legal_entity_id?: string | null
+          max_length?: number | null
           padding?: number | null
           prefix?: string | null
           reset_annually?: boolean | null
@@ -10381,6 +11021,7 @@ export type Database = {
           last_reset_period?: string | null
           last_reset_year?: number | null
           legal_entity_id?: string | null
+          max_length?: number | null
           padding?: number | null
           prefix?: string | null
           reset_annually?: boolean | null
@@ -12444,13 +13085,18 @@ export type Database = {
           description: string
           discount: number | null
           id: string
+          item_code: string | null
           quantity: number | null
           quote_id: string
           sort_order: number | null
           tax_amount: number | null
           tax_rate: number | null
+          tax_treatment: string | null
           tenant_id: string
           total: number
+          treatment_reason_code: string | null
+          unit_code: string | null
+          unit_label: string | null
           unit_price: number
           updated_at: string
         }
@@ -12460,13 +13106,18 @@ export type Database = {
           description: string
           discount?: number | null
           id?: string
+          item_code?: string | null
           quantity?: number | null
           quote_id: string
           sort_order?: number | null
           tax_amount?: number | null
           tax_rate?: number | null
+          tax_treatment?: string | null
           tenant_id: string
           total: number
+          treatment_reason_code?: string | null
+          unit_code?: string | null
+          unit_label?: string | null
           unit_price: number
           updated_at?: string
         }
@@ -12476,13 +13127,18 @@ export type Database = {
           description?: string
           discount?: number | null
           id?: string
+          item_code?: string | null
           quantity?: number | null
           quote_id?: string
           sort_order?: number | null
           tax_amount?: number | null
           tax_rate?: number | null
+          tax_treatment?: string | null
           tenant_id?: string
           total?: number
+          treatment_reason_code?: string | null
+          unit_code?: string | null
+          unit_label?: string | null
           unit_price?: number
           updated_at?: string
         }
@@ -12509,6 +13165,9 @@ export type Database = {
           approved_by: string | null
           bank_account_id: string | null
           business_unit_id: string | null
+          buyer_address: Json | null
+          buyer_tax_number: string | null
+          buyer_tax_number_label: string | null
           case_id: string | null
           client_reference: string | null
           company_id: string | null
@@ -12521,22 +13180,32 @@ export type Database = {
           discount_amount: number | null
           discount_type: string
           exchange_rate: number
+          expected_withholding: number | null
           id: string
           legal_entity_id: string | null
+          notations: Json | null
           notes: string | null
+          pack_version_id: string | null
+          place_of_supply_subdivision_id: string | null
           quote_date: string | null
           quote_number: string | null
           quote_type: string | null
           rate_source: string
+          regime_snapshot: Json | null
           rejected_at: string | null
           rejection_reason: string | null
+          reverse_charge: boolean | null
+          seller_tax_number: string | null
           status: string | null
           status_id: string | null
           subtotal: number | null
           subtotal_base: number | null
+          supply_date: string | null
           tax_amount: number | null
           tax_amount_base: number | null
+          tax_inclusive: boolean
           tax_rate: number | null
+          tax_regime_key: string | null
           template_version_id: string | null
           tenant_id: string
           terms: string | null
@@ -12552,6 +13221,9 @@ export type Database = {
           approved_by?: string | null
           bank_account_id?: string | null
           business_unit_id?: string | null
+          buyer_address?: Json | null
+          buyer_tax_number?: string | null
+          buyer_tax_number_label?: string | null
           case_id?: string | null
           client_reference?: string | null
           company_id?: string | null
@@ -12564,22 +13236,32 @@ export type Database = {
           discount_amount?: number | null
           discount_type?: string
           exchange_rate?: number
+          expected_withholding?: number | null
           id?: string
           legal_entity_id?: string | null
+          notations?: Json | null
           notes?: string | null
+          pack_version_id?: string | null
+          place_of_supply_subdivision_id?: string | null
           quote_date?: string | null
           quote_number?: string | null
           quote_type?: string | null
           rate_source?: string
+          regime_snapshot?: Json | null
           rejected_at?: string | null
           rejection_reason?: string | null
+          reverse_charge?: boolean | null
+          seller_tax_number?: string | null
           status?: string | null
           status_id?: string | null
           subtotal?: number | null
           subtotal_base?: number | null
+          supply_date?: string | null
           tax_amount?: number | null
           tax_amount_base?: number | null
+          tax_inclusive?: boolean
           tax_rate?: number | null
+          tax_regime_key?: string | null
           template_version_id?: string | null
           tenant_id: string
           terms?: string | null
@@ -12595,6 +13277,9 @@ export type Database = {
           approved_by?: string | null
           bank_account_id?: string | null
           business_unit_id?: string | null
+          buyer_address?: Json | null
+          buyer_tax_number?: string | null
+          buyer_tax_number_label?: string | null
           case_id?: string | null
           client_reference?: string | null
           company_id?: string | null
@@ -12607,22 +13292,32 @@ export type Database = {
           discount_amount?: number | null
           discount_type?: string
           exchange_rate?: number
+          expected_withholding?: number | null
           id?: string
           legal_entity_id?: string | null
+          notations?: Json | null
           notes?: string | null
+          pack_version_id?: string | null
+          place_of_supply_subdivision_id?: string | null
           quote_date?: string | null
           quote_number?: string | null
           quote_type?: string | null
           rate_source?: string
+          regime_snapshot?: Json | null
           rejected_at?: string | null
           rejection_reason?: string | null
+          reverse_charge?: boolean | null
+          seller_tax_number?: string | null
           status?: string | null
           status_id?: string | null
           subtotal?: number | null
           subtotal_base?: number | null
+          supply_date?: string | null
           tax_amount?: number | null
           tax_amount_base?: number | null
+          tax_inclusive?: boolean
           tax_rate?: number | null
+          tax_regime_key?: string | null
           template_version_id?: string | null
           tenant_id?: string
           terms?: string | null
@@ -12688,6 +13383,13 @@ export type Database = {
             columns: ["legal_entity_id"]
             isOneToOne: false
             referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_place_of_supply_subdivision_id_fkey"
+            columns: ["place_of_supply_subdivision_id"]
+            isOneToOne: false
+            referencedRelation: "geo_subdivisions"
             referencedColumns: ["id"]
           },
           {
@@ -14200,12 +14902,17 @@ export type Database = {
           discount: number | null
           id: string
           invoice_line_item_id: string | null
+          item_code: string | null
           item_id: string
           quantity: number
           sale_id: string
           tax_amount: number | null
+          tax_treatment: string | null
           tenant_id: string
           total: number
+          treatment_reason_code: string | null
+          unit_code: string | null
+          unit_label: string | null
           unit_price: number
           updated_at: string
         }
@@ -14215,12 +14922,17 @@ export type Database = {
           discount?: number | null
           id?: string
           invoice_line_item_id?: string | null
+          item_code?: string | null
           item_id: string
           quantity: number
           sale_id: string
           tax_amount?: number | null
+          tax_treatment?: string | null
           tenant_id: string
           total: number
+          treatment_reason_code?: string | null
+          unit_code?: string | null
+          unit_label?: string | null
           unit_price: number
           updated_at?: string
         }
@@ -14230,12 +14942,17 @@ export type Database = {
           discount?: number | null
           id?: string
           invoice_line_item_id?: string | null
+          item_code?: string | null
           item_id?: string
           quantity?: number
           sale_id?: string
           tax_amount?: number | null
+          tax_treatment?: string | null
           tenant_id?: string
           total?: number
+          treatment_reason_code?: string | null
+          unit_code?: string | null
+          unit_label?: string | null
           unit_price?: number
           updated_at?: string
         }
@@ -16028,6 +16745,7 @@ export type Database = {
           country_config_overrides: Json
           country_config_version: number | null
           country_id: string | null
+          country_pack_version: number | null
           created_at: string
           currency_code: string
           currency_symbol: string
@@ -16072,6 +16790,7 @@ export type Database = {
           country_config_overrides?: Json
           country_config_version?: number | null
           country_id?: string | null
+          country_pack_version?: number | null
           created_at?: string
           currency_code: string
           currency_symbol: string
@@ -16116,6 +16835,7 @@ export type Database = {
           country_config_overrides?: Json
           country_config_version?: number | null
           country_id?: string | null
+          country_pack_version?: number | null
           created_at?: string
           currency_code?: string
           currency_symbol?: string
@@ -16644,14 +17364,21 @@ export type Database = {
       }
       vat_records: {
         Row: {
+          component_code: string | null
           created_at: string
           currency: string | null
           deleted_at: string | null
           exchange_rate: number | null
           id: string
+          jurisdiction_ref: string | null
           record_id: string
           record_type: string
+          regime_key: string | null
+          source_document_id: string | null
+          source_document_type: string | null
           tax_period: string | null
+          tax_point_date: string | null
+          tax_treatment: string | null
           taxable_amount_base: number | null
           tenant_id: string
           updated_at: string
@@ -16660,14 +17387,21 @@ export type Database = {
           vat_rate: number
         }
         Insert: {
+          component_code?: string | null
           created_at?: string
           currency?: string | null
           deleted_at?: string | null
           exchange_rate?: number | null
           id?: string
+          jurisdiction_ref?: string | null
           record_id: string
           record_type: string
+          regime_key?: string | null
+          source_document_id?: string | null
+          source_document_type?: string | null
           tax_period?: string | null
+          tax_point_date?: string | null
+          tax_treatment?: string | null
           taxable_amount_base?: number | null
           tenant_id: string
           updated_at?: string
@@ -16676,14 +17410,21 @@ export type Database = {
           vat_rate: number
         }
         Update: {
+          component_code?: string | null
           created_at?: string
           currency?: string | null
           deleted_at?: string | null
           exchange_rate?: number | null
           id?: string
+          jurisdiction_ref?: string | null
           record_id?: string
           record_type?: string
+          regime_key?: string | null
+          source_document_id?: string | null
+          source_document_type?: string | null
           tax_period?: string | null
+          tax_point_date?: string | null
+          tax_treatment?: string | null
           taxable_amount_base?: number | null
           tenant_id?: string
           updated_at?: string
@@ -16692,6 +17433,13 @@ export type Database = {
           vat_rate?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "vat_records_jurisdiction_ref_fkey"
+            columns: ["jurisdiction_ref"]
+            isOneToOne: false
+            referencedRelation: "geo_subdivisions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vat_records_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -17064,6 +17812,9 @@ export type Database = {
           applied_amount: number
           approved_at: string | null
           approved_by: string | null
+          buyer_address: Json | null
+          buyer_tax_number: string | null
+          buyer_tax_number_label: string | null
           case_id: string | null
           company_id: string | null
           created_at: string
@@ -17075,18 +17826,28 @@ export type Database = {
           customer_id: string | null
           deleted_at: string | null
           exchange_rate: number
+          expected_withholding: number | null
           id: string
           invoice_id: string | null
+          notations: Json | null
+          pack_version_id: string | null
+          place_of_supply_subdivision_id: string | null
           rate_source: string
           reason_code: string | null
           reason_notes: string | null
           refunded_amount: number
+          regime_snapshot: Json | null
+          reverse_charge: boolean | null
+          seller_tax_number: string | null
           status: string
           subtotal: number
           subtotal_base: number
+          supply_date: string | null
           tax_amount: number
           tax_amount_base: number
+          tax_inclusive: boolean
           tax_rate: number
+          tax_regime_key: string | null
           tenant_id: string
           total_amount: number
           total_amount_base: number
@@ -17457,6 +18218,9 @@ export type Database = {
           applied_amount: number
           approved_at: string | null
           approved_by: string | null
+          buyer_address: Json | null
+          buyer_tax_number: string | null
+          buyer_tax_number_label: string | null
           case_id: string | null
           company_id: string | null
           created_at: string
@@ -17468,18 +18232,28 @@ export type Database = {
           customer_id: string | null
           deleted_at: string | null
           exchange_rate: number
+          expected_withholding: number | null
           id: string
           invoice_id: string | null
+          notations: Json | null
+          pack_version_id: string | null
+          place_of_supply_subdivision_id: string | null
           rate_source: string
           reason_code: string | null
           reason_notes: string | null
           refunded_amount: number
+          regime_snapshot: Json | null
+          reverse_charge: boolean | null
+          seller_tax_number: string | null
           status: string
           subtotal: number
           subtotal_base: number
+          supply_date: string | null
           tax_amount: number
           tax_amount_base: number
+          tax_inclusive: boolean
           tax_rate: number
+          tax_regime_key: string | null
           tenant_id: string
           total_amount: number
           total_amount_base: number
@@ -17493,6 +18267,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      issue_tax_document: {
+        Args: { p_doc_id: string; p_doc_type: string; p_dry_run?: boolean }
+        Returns: Json
       }
       log_audit_trail:
         | {
@@ -17633,6 +18411,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      preview_number_format: {
+        Args: { p_format_template: string; p_scope: string }
+        Returns: string
       }
       process_due_case_follow_ups: { Args: never; Returns: Json }
       process_time_based_events: { Args: never; Returns: Json }
@@ -18082,9 +18864,13 @@ export type Database = {
       update_number_sequence: {
         Args: {
           p_current_value?: number
+          p_fiscal_year_anchor?: string
+          p_format_template?: string
+          p_max_length?: number
           p_padding: number
           p_prefix: string
           p_reset: boolean
+          p_reset_basis?: string
           p_scope: string
         }
         Returns: undefined
@@ -18095,6 +18881,9 @@ export type Database = {
           applied_amount: number
           approved_at: string | null
           approved_by: string | null
+          buyer_address: Json | null
+          buyer_tax_number: string | null
+          buyer_tax_number_label: string | null
           case_id: string | null
           company_id: string | null
           created_at: string
@@ -18106,18 +18895,28 @@ export type Database = {
           customer_id: string | null
           deleted_at: string | null
           exchange_rate: number
+          expected_withholding: number | null
           id: string
           invoice_id: string | null
+          notations: Json | null
+          pack_version_id: string | null
+          place_of_supply_subdivision_id: string | null
           rate_source: string
           reason_code: string | null
           reason_notes: string | null
           refunded_amount: number
+          regime_snapshot: Json | null
+          reverse_charge: boolean | null
+          seller_tax_number: string | null
           status: string
           subtotal: number
           subtotal_base: number
+          supply_date: string | null
           tax_amount: number
           tax_amount_base: number
+          tax_inclusive: boolean
           tax_rate: number
+          tax_regime_key: string | null
           tenant_id: string
           total_amount: number
           total_amount_base: number

@@ -19,12 +19,14 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('../supabaseClient', () => ({ supabase: {}, resolveTenantId: async () => null }));
 
 import {
-  calculateInvoiceTotals,
   calculateInvoiceTotalsBase,
   convertToBase,
   baseAmount,
   computeRealizedFx,
 } from '../financialMath';
+import { computeDocumentTax } from '../tax/kernel';
+import type { GeoCountryTaxRateRow, TaxContext } from '../regimes/types';
+import type { RateContext } from '../currencyService';
 import { sumBankBalanceBase } from '../financialReportsService';
 import { sumBase } from '../../pages/financial/reportsDashboardRollup';
 import { amountInWordsEn } from '../pdf/engine/amountInWords';
@@ -38,9 +40,35 @@ const OMR_VAT = 5; // percent
 
 describe('C4 — EUR document on an OMR tenant reconciles to the baisa', () => {
   // A EUR invoice: 2 x 500.00 = 1000.00 subtotal, 5% VAT = 50.00, total 1050.00.
-  const totals = calculateInvoiceTotals(
-    [{ quantity: 2, unit_price: 500 }], 0, OMR_VAT, 0, EUR_DP,
-  );
+  // Header totals come from the fiscal kernel (legacy calculateInvoiceTotals was
+  // deleted in Task 32); the base-money helpers under test are unchanged. EUR is a
+  // 2-decimal document; the base shadow (OMR, 3dp) is frozen below the same way.
+  const eurRc: RateContext = {
+    documentCurrency: 'EUR', documentDecimals: EUR_DP, baseCurrency: 'OMR', baseDecimals: OMR_DP,
+    rate: EUR_TO_OMR, rateSource: 'derived',
+  };
+  const eurVat: GeoCountryTaxRateRow = {
+    id: 'rate-eur-vat-std', country_id: 'eu', subdivision_id: null, component_code: 'VAT',
+    component_label: 'VAT', tax_category: 'standard', rate: OMR_VAT, applies_to: null,
+    valid_from: '1970-01-01', valid_to: null, sort_order: 0,
+  };
+  const ctx: TaxContext = {
+    documentType: 'invoice',
+    seller: { legalEntityId: 'le', countryId: 'eu', subdivisionId: null, taxIdentifier: null, registrations: [] },
+    buyer: { taxNumber: null, countryId: null, subdivisionId: null, isBusiness: false, addressSnapshot: null },
+    taxPointDate: '2026-07-02', placeOfSupplySubdivisionId: null,
+    lines: [{ lineItemId: null, description: 'Recovery', quantity: 2, unitPrice: 500, lineDiscount: 0, unitCode: null, itemCode: null, treatment: 'standard', treatmentReasonCode: null }],
+    documentDiscount: 0, taxInclusive: false,
+    rateContext: eurRc, rates: [eurVat],
+    roundingPolicy: { mode: 'half_up', level: 'document' }, scaleSystem: 'western',
+  };
+  const computation = computeDocumentTax(ctx);
+  const totals = {
+    subtotal: computation.totals.taxableBase,
+    taxAmount: computation.totals.taxTotal,
+    totalAmount: computation.totals.grandTotal,
+    amountDue: computation.totals.grandTotal, // nothing paid at issue
+  };
   const baseTotals = calculateInvoiceTotalsBase(
     { subtotal: totals.subtotal, taxAmount: totals.taxAmount, totalAmount: totals.totalAmount, amountPaid: 0, amountDue: totals.amountDue },
     EUR_TO_OMR, OMR_DP,

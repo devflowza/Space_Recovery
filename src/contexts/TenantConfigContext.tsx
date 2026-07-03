@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
-import type { TenantConfig, CurrencyConfig, TaxConfig, DateTimeConfig, LocaleConfig } from '../types/tenantConfig';
+import type { TenantConfig, CurrencyConfig, TaxConfig, RegimeConfig, DateTimeConfig, LocaleConfig } from '../types/tenantConfig';
 import { DEFAULT_TENANT_CONFIG, isResolvedConfig } from '../types/tenantConfig';
 import { getTenantConfig, invalidateTenantConfigCache } from '../lib/tenantConfigService';
 import { useAuth } from './AuthContext';
@@ -167,4 +167,16 @@ export function useTenantFeatures(): {
     }),
     [config.featureFlags, isLoading],
   );
+}
+
+/**
+ * Country-locked regime routing keys for this tenant (regime.tax / regime.einvoice
+ * / regime.numbering / regime.documents / regime.payroll). Statutory: resolved from
+ * the country layer, never a tenant override. Later phases route each value to its
+ * registered plugin; this hook is the plumbing surface.
+ */
+export function useRegimeConfig(): RegimeConfig {
+  const { config } = useTenantConfig();
+  if (!config) throw new Error('useRegimeConfig requires a resolved tenant config');
+  return config.regime;
 }

@@ -5,6 +5,8 @@
 // (invoiceService.createInvoice and quotesService.createQuote/updateQuote);
 // they are shared so the create/update paths can no longer diverge.
 
+import type { RoundingPolicy } from './regimes/types';
+
 /**
  * Round a monetary value to a currency's minor units. decimalPlaces defaults to 2
  * (cents) so every existing caller is unchanged; pass the currency's decimal_places
@@ -25,6 +27,76 @@ export const convertToBase = (
   baseDecimalPlaces = 2,
 ): number => roundMoney(amount * rate, baseDecimalPlaces);
 
+/**
+ * THE ONLY sanctioned way to split a document-level amount across lines or
+ * components (graft 9). Guarantees Σ(result) === total exactly at the target
+ * precision; parts are proportional to weights with the residual minor units
+ * assigned by largest fractional remainder (ties broken by stable input order,
+ * so the result is deterministic). Negative totals allocate |total| and negate.
+ * Ad-hoc proportional splits are banned by eslint xsuite/no-adhoc-money-allocation.
+ */
+export const allocateLargestRemainder = (
+  total: number,
+  weights: number[],
+  decimalPlaces: number,
+): number[] => {
+  if (weights.length === 0) return [];
+  if (total < 0) {
+    return allocateLargestRemainder(-total, weights, decimalPlaces).map((v) => (v === 0 ? 0 : -v));
+  }
+  const factor = 10 ** decimalPlaces;
+  const totalUnits = Math.round(total * factor);
+  const weightSum = weights.reduce((s, w) => s + w, 0);
+
+  let exactUnits: number[];
+  if (weightSum === 0) {
+    // Degenerate weights: spread equally (stable order gets the residual first).
+    exactUnits = weights.map(() => totalUnits / weights.length);
+  } else {
+    exactUnits = weights.map((w) => (totalUnits * w) / weightSum);
+  }
+  const floored = exactUnits.map((u) => Math.floor(u + 1e-9));
+  let residual = totalUnits - floored.reduce((s, u) => s + u, 0);
+  const order = exactUnits
+    .map((u, i) => ({ i, frac: u - Math.floor(u + 1e-9) }))
+    .sort((a, b) => b.frac - a.frac || a.i - b.i);
+  const result = [...floored];
+  for (const { i } of order) {
+    if (residual <= 0) break;
+    result[i] += 1;
+    residual -= 1;
+  }
+  return result.map((u) => u / factor);
+};
+
+/**
+ * Policy-aware money rounding (graft 4). 'half_up' is defined as the HOUSE
+ * roundMoney behavior (Math.round: half toward +infinity) — NOT textbook
+ * half-away-from-zero — because the Oman byte-parity gate pins the kernel to the
+ * legacy calculateInvoiceTotals output on 2,131 live documents. 'half_even'
+ * (banker's) rounds exact halves to the even minor unit. `policy.level` and
+ * `policy.cash_increment` are consumed by the kernel, not here.
+ */
+export const roundMoneyWith = (
+  value: number,
+  decimalPlaces: number,
+  policy: RoundingPolicy,
+): number => {
+  if (policy.mode === 'half_up') return roundMoney(value, decimalPlaces);
+  const factor = 10 ** decimalPlaces;
+  const scaled = value * factor;
+  const floor = Math.floor(scaled);
+  const diff = scaled - floor;
+  const EPS = 1e-9;
+  let units: number;
+  if (Math.abs(diff - 0.5) < EPS) {
+    units = floor % 2 === 0 ? floor : floor + 1;
+  } else {
+    units = Math.round(scaled);
+  }
+  return units / factor;
+};
+
 export interface MoneyLineItem {
   quantity: number;
   unit_price: number;
@@ -38,32 +110,6 @@ export interface InvoiceTotals {
   totalAmount: number;
   amountDue: number;
 }
-
-/**
- * Invoice header totals. Per-item subtotal less per-item percentage discount,
- * then invoice-level fixed discount, then invoice-level tax, then amount paid.
- * Mirrors invoiceService.createInvoice (the canonical rounded variant).
- */
-export const calculateInvoiceTotals = (
-  items: MoneyLineItem[],
-  discountAmount: number,
-  taxRate: number,
-  amountPaid: number,
-  decimalPlaces = 2,
-): InvoiceTotals => {
-  const subtotal = items.reduce((sum, item) => {
-    const itemSubtotal = roundMoney(item.quantity * item.unit_price, decimalPlaces);
-    const discount = roundMoney(itemSubtotal * ((item.discount_percent || 0) / 100), decimalPlaces);
-    return roundMoney(sum + (itemSubtotal - discount), decimalPlaces);
-  }, 0);
-
-  const discountedSubtotal = roundMoney(subtotal - discountAmount, decimalPlaces);
-  const taxAmount = roundMoney((discountedSubtotal * taxRate) / 100, decimalPlaces);
-  const totalAmount = roundMoney(discountedSubtotal + taxAmount, decimalPlaces);
-  const amountDue = roundMoney(totalAmount - amountPaid, decimalPlaces);
-
-  return { subtotal, taxRate, taxAmount, totalAmount, amountDue };
-};
 
 export interface InvoiceBaseTotals {
   subtotalBase: number;
@@ -136,35 +182,6 @@ export const computeRealizedFx = (
   invoiceRate: number,
   baseDecimalPlaces = 2,
 ): number => roundMoney(docAmount * (paymentRate - invoiceRate), baseDecimalPlaces);
-
-/**
- * Quote header totals. Per-item line totals, then a fixed-or-percentage
- * discount, then quote-level tax. Mirrors quotesService.createQuote/updateQuote
- * (both already fully rounded and identical).
- */
-export const calculateQuoteTotals = (
-  items: MoneyLineItem[],
-  discountType: string | null | undefined,
-  discountAmount: number,
-  taxRate: number,
-  decimalPlaces = 2,
-): QuoteTotals => {
-  const subtotal = items.reduce((sum, item) => {
-    const lineTotal = roundMoney(item.quantity * item.unit_price, decimalPlaces);
-    return roundMoney(sum + lineTotal, decimalPlaces);
-  }, 0);
-
-  const discountValue =
-    discountType === 'percentage'
-      ? roundMoney((subtotal * discountAmount) / 100, decimalPlaces)
-      : discountAmount;
-
-  const discountedSubtotal = roundMoney(subtotal - discountValue, decimalPlaces);
-  const taxAmount = roundMoney(discountedSubtotal * (taxRate / 100), decimalPlaces);
-  const totalAmount = roundMoney(discountedSubtotal + taxAmount, decimalPlaces);
-
-  return { subtotal, taxAmount, totalAmount };
-};
 
 /**
  * Read a row's base-currency value for a money field, for cross-document

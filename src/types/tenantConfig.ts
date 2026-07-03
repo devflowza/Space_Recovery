@@ -36,6 +36,18 @@ export interface TaxConfig {
   invoiceRequired: boolean;
 }
 
+/** Country-locked regime routing keys (statutory, maxOverrideLayer:'country'). Each
+ *  value is a registered plugin key resolved in later phases: tax → TaxStrategy,
+ *  einvoice → EInvoicingTransport, numbering → NumberingPolicy, documents →
+ *  DocumentComplianceProfile, payroll → PayrollPack ('none' = not configured). */
+export interface RegimeConfig {
+  tax: string;
+  einvoice: string;
+  numbering: string;
+  documents: string;
+  payroll: string;
+}
+
 export interface DateTimeConfig {
   dateFormat: string;
   timeFormat: '12h' | '24h';
@@ -57,6 +69,7 @@ export interface TenantConfig {
   countryName: string;
   currency: CurrencyConfig;
   tax: TaxConfig;
+  regime: RegimeConfig;
   dateTime: DateTimeConfig;
   locale: LocaleConfig;
   theme: Theme;
@@ -93,6 +106,13 @@ export const DEFAULT_TENANT_CONFIG: TenantConfig = {
     numberPlaceholder: null,
     defaultRate: 0,
     invoiceRequired: false,
+  },
+  regime: {
+    tax: 'simple_vat',
+    einvoice: 'no_einvoice',
+    numbering: 'prefix_numbering',
+    documents: 'generic_invoice',
+    payroll: 'none',
   },
   dateTime: {
     dateFormat: 'MM/DD/YYYY',
