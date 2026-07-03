@@ -146,6 +146,24 @@ jobs:
       - run: npm run check:signup-smoke
       - run: npm run check:vat-contra-reversal
 
+  statutory-fixtures:
+    runs-on: ubuntu-latest
+    # A country cannot BE statutory_ready with missing/failing fixtures. The pure
+    # kernel half (repo fixtures against runPublishGate) runs UNCONDITIONALLY on
+    # every PR (incl. Dependabot/forks); the live-DB half self-skips
+    # (describe.skipIf) when SUPABASE_DB_URL is absent, mirroring
+    # registry-trigger-parity above.
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run check:statutory-fixtures
+
   token-guard:
     runs-on: ubuntu-latest
     steps:
