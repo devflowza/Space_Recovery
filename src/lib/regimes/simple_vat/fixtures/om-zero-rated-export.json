@@ -1,0 +1,24 @@
+{
+  "name": "OM zero-rated export line alongside a standard line",
+  "input_document": {
+    "documentType": "invoice",
+    "seller": { "legalEntityId": "fixture-le", "countryId": "fixture-om", "subdivisionId": null, "taxIdentifier": "1234567890", "registrations": [] },
+    "buyer": { "taxNumber": null, "countryId": null, "subdivisionId": null, "isBusiness": true, "addressSnapshot": null },
+    "taxPointDate": "2026-07-02",
+    "placeOfSupplySubdivisionId": null,
+    "lines": [
+      { "lineItemId": null, "description": "HDD recovery", "quantity": 1, "unitPrice": 200, "lineDiscount": 0, "unitCode": null, "itemCode": null, "treatment": "standard", "treatmentReasonCode": null },
+      { "lineItemId": null, "description": "Export service (Dubai customer)", "quantity": 1, "unitPrice": 50, "lineDiscount": 0, "unitCode": null, "itemCode": null, "treatment": "zero_rated", "treatmentReasonCode": "EXPORT_SERVICES" }
+    ],
+    "documentDiscount": 0,
+    "taxInclusive": false,
+    "rateContext": { "documentCurrency": "OMR", "documentDecimals": 3, "baseCurrency": "OMR", "baseDecimals": 3, "rate": 1, "rateSource": "derived" },
+    "rates": [{ "id": "fixture-om-vat-std", "country_id": "fixture-om", "subdivision_id": null, "component_code": "VAT", "component_label": "VAT", "tax_category": "standard", "rate": 5, "applies_to": null, "valid_from": "2021-04-16", "valid_to": null, "sort_order": 0 }],
+    "roundingPolicy": { "mode": "half_up", "level": "document" },
+    "scaleSystem": "western"
+  },
+  "expected": {
+    "totals": { "taxableBase": 250, "taxTotal": 10, "grandTotal": 260, "roundingAdjustment": null },
+    "rollups": [{ "componentCode": "VAT", "rate": 5, "taxableBase": 200, "taxAmount": 10 }]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "OM standard 5% — 12-drive RAID, 12 × OMR 120.000 (spec walkthrough)",
+  "input_document": {
+    "documentType": "invoice",
+    "seller": { "legalEntityId": "fixture-le", "countryId": "fixture-om", "subdivisionId": null, "taxIdentifier": "1234567890", "registrations": [] },
+    "buyer": { "taxNumber": null, "countryId": null, "subdivisionId": null, "isBusiness": true, "addressSnapshot": null },
+    "taxPointDate": "2026-07-02",
+    "placeOfSupplySubdivisionId": null,
+    "lines": [{ "lineItemId": null, "description": "12-drive RAID recovery", "quantity": 12, "unitPrice": 120, "lineDiscount": 0, "unitCode": "C62", "itemCode": null, "treatment": "standard", "treatmentReasonCode": null }],
+    "documentDiscount": 0,
+    "taxInclusive": false,
+    "rateContext": { "documentCurrency": "OMR", "documentDecimals": 3, "baseCurrency": "OMR", "baseDecimals": 3, "rate": 1, "rateSource": "derived" },
+    "rates": [{ "id": "fixture-om-vat-std", "country_id": "fixture-om", "subdivision_id": null, "component_code": "VAT", "component_label": "VAT", "tax_category": "standard", "rate": 5, "applies_to": null, "valid_from": "2021-04-16", "valid_to": null, "sort_order": 0 }],
+    "roundingPolicy": { "mode": "half_up", "level": "document" },
+    "scaleSystem": "western"
+  },
+  "expected": {
+    "totals": { "taxableBase": 1440, "taxTotal": 72, "grandTotal": 1512, "roundingAdjustment": null },
+    "rollups": [{ "componentCode": "VAT", "componentLabel": "VAT 5%", "rate": 5, "taxableBase": 1440, "taxAmount": 72, "taxTreatment": "standard" }]
+  }
+}
