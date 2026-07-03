@@ -1,38 +1,35 @@
-# Session Handoff — 2026-07-03
+# Session Handoff — 2026-07-03 (Localization Phase 1 MERGED)
 
 ## What I was doing
-A long multi-deliverable session: (1) pulled `main`; (2) a codebase-wide **Refresh-button UX & architecture audit** + a follow-on **elimination readiness review** (docs, on an unpushed branch); (3) executed **localization Phase 0 tasks 14–27** end-to-end and shipped them as **PR #359**.
+Executed **Global Tenant Localization — Phase 1 (Fiscal Kernel + Oman Parity)** end-to-end from `docs/superpowers/plans/2026-07-02-localization-phase1-fiscal-kernel-oman-parity.md` — all **33 tasks + the deferred WP-3 Part-3 backstop**, via subagent-driven-development. Shipped as PR #361, now **MERGED to `main`**.
 
 ## Current status
-- **This branch:** `docs/session-handoff-2026-07-03` (cut from `main` d93821a) — holds only this handoff.
-- **PR #359 — OPEN, MERGEABLE** — `feat/localization-phase0-tasks-14-27` → `main`. Localization Phase 0 "Stop the Bleeding" tasks 14–27. **Migrations M5–M14 applied to the live canonical DB `ssmbegiyjivrcwgcqutu`**; edge fn `provision-tenant` redeployed v23. `tsc 0`, full vitest **2280 pass / 0 fail**, `assert_financial_base_integrity` clean on live. Awaiting review + **4 owner sign-off items in the PR body** (M6 additive-only DROP-COLUMN deviation is the key one). CI was starting (Cloudflare Pages + Supabase Preview).
-- **Branch `docs/refresh-button-ux-audit` — LOCAL, UNPUSHED** — 2 committed docs (`docs/superpowers/specs/2026-07-02-refresh-button-ux-audit.md` + `2026-07-03-refresh-elimination-review.md`), each with a claude.ai Artifact. Also merged `origin/main` cleanly. **No PR yet** — pending a decision (open a docs PR, or start the refresh-button implementation program).
-- **stash@{0}** (`On feat/typography-standardization: wip docs …`) — a stale pre-session `handoff.md` edit + a duplicate localization spec. Safe to `git stash drop`.
+- **PR #361 — MERGED** → `main` @ **9a7f24c** ("Localization Phase 1 … (#361)"). The work branch `claude/handoff-continuation-hbytbe` is squash-merged — **do NOT reuse it**; start each new piece of work on a fresh branch cut from `main`.
+- **13 additive migrations applied live** to the canonical DB `ssmbegiyjivrcwgcqutu` (all recorded in `supabase/migrations.manifest.md`): `pack_governance_tables`, `geo_country_tax_rates`, `document_tax_lines`, `registrations_einvoice`, `document_header_columns`, `statutory_keys_regime_sync`, `issue_tax_document`, `integrity_immutability_triggers`, `numbering_v2`, `oman_pack_v1`, `tax_line_backfill`, `validate_integrity`, `vat_record_backstop`.
+- **The kernel is canonical** for invoice/quote totals. Legacy `calculateInvoiceTotals`/`calculateQuoteTotals` are **deleted** (the `*Base` helpers retained). Invoices/quotes compute via `src/lib/tax/kernel` through `src/lib/taxDocumentService.ts`; tax invoices no longer pre-mint numbers — they issue via the `issue_tax_document` RPC (number minted in-transaction at issuance; the `post_invoice_vat_record` backstop rejects any raw draft→sent flip that bypasses the RPC).
+- **Verified pre-merge (local):** full vitest **2325 pass / 0 fail** (exit 0, 0 unhandled rejections); `tsc` 0; no legacy runtime callers; `lint` = the 2 pre-existing `PortalDocuments` errors only (0 new).
+- **Parity exit gate proven:** kernel ≡ legacy on **993/993 invoices + 1137/1138 quotes**. The lone quote (`b2d6ccec`) differs by 1 mil due to a legacy quote-fn float operation-ordering artifact (`X*(r/100)` vs the kernel/invoice `(X*r)/100`) — owner-approved + allowlisted. `check:parity-replay` carries a documented **106-doc historical allowlist** (`scripts/localization/parity-replay-allowlist.json`: 65 old-2dp precision drift + 40 bad-data + 1 float quote).
 
-## Next step (pick up here — in priority order)
-1. **PR #359:** watch CI; address the 4 owner sign-off items (esp. get sign-off on the **M6 DROP+recreate-of-derived-objects** deviation); fix the stale `CLAUDE.md` Key Functions entry (`convert_proforma_to_tax_invoice` → `convert_proforma_invoice_to_tax_invoice`); merge.
-2. **Localization Phase 1** (fiscal kernel / Oman parity) — plan ready at `docs/superpowers/plans/2026-07-02-localization-phase1-fiscal-kernel-oman-parity.md`. Start on a **fresh branch from `main`**.
-3. **Refresh-button program Phase 1** — plan is inside the audit doc (delete the 5 redundant Refresh buttons + fix the `CasesList` bulk-archive `CASE_COMMAND_STATS_KEY` bug). Decide the fate of the `docs/refresh-button-ux-audit` branch.
+## Next step (pick up here — priority order; start each on a FRESH branch from `main`)
+1. **Confirm PR #361's CI went green on merge.** The CI-only gates (`check:parity-replay`, `check:bypass-suite`, `check:statutory-fixtures`, `schema-drift`) only do real work when CI has `SUPABASE_DB_URL` / the `supabase` CLI. If any failed post-merge, address on a follow-up branch.
+2. **Fix `resync_tenant_country_config()`** — a **pre-existing** bug found this session: it INSERTs non-existent `audit_trails` columns (`entity_type`/`entity_id`/`metadata`; the live schema uses `record_type`/`new_values`) and errors on every call. Small `CREATE OR REPLACE` fix mirroring the Phase-0 `anonymize_customer_data`/`export_customer_data` rewrites. (It blocked the M-J resync no-op verification; no-drift still holds by design since `regime.*` keys resolve via the TS registry codedDefault, not the DB mapper.)
+3. **Localization Phase 2 (document compliance)** — plan ready: `docs/superpowers/plans/2026-07-02-localization-phase2-document-compliance.md`. Consumes Phase-1 columns/RPC (item/unit-code persistence, buyer/seller snapshots, `DocumentComplianceProfile` in pdfService, `master_document_requirements` evaluated in-RPC — the RPC returns `requirement_failures: []` today as a stable contract).
 
-## Key decisions made this session
-- Cut localization Phase 0 tasks 14–27 on a **fresh branch from `main`**, NOT the post-squash `feat/localization-phase0-stop-the-bleeding` (squash-merge rule — reusing it carries already-merged commits).
-- Ran 14–27 via **subagent-driven-development**, fully-continuous, per-task TDD + spec/quality review with **independent live-DB verification**, plus a whole-branch opus review.
-- Accepted M6's additive-only **deviation** (DROP+recreate of derived objects — `bank_transactions` generated cols + `public.customers` view — to widen columns those depend on) as non-destructive + the only Postgres-viable path → flagged for owner sign-off.
-- Refresh review conclusion: **realtime is a surgical tool, not the backbone**; the killer risk is silent `postgres_changes` message-drop on bulk writes (project-shared single-threaded replication/RLS).
-
-## Files / artifacts this session
-- `docs/superpowers/specs/2026-07-02-refresh-button-ux-audit.md`, `docs/superpowers/specs/2026-07-03-refresh-elimination-review.md` (branch `docs/refresh-button-ux-audit`).
-- PR #359: 15 commits (migrations M5–M14 + banking guard, WPS-disable, DSR fix, provisioning-422 edge redeploy, quotes rate/base fix).
-- SDD ledger (full task-by-task log for Phase 0 14–27): `.superpowers/sdd/progress.md` (gitignored scratch).
+## Key decisions / deviations (Phase 1)
+- **Part-3 (`post_invoice_vat_record`) backstop deferred** from WP-3 to WP-6 and applied WITH the cutover — applying it at WP-3 would have broken the live pre-cutover `issueInvoice` draft→sent flow.
+- **Parity gate reframe:** the plan's kernel-vs-STORED replay went RED (247 divergences) on historical realities (old-2dp OMR figures + bad data + 2 harness bugs), NOT a kernel bug. Reframed to kernel-vs-LEGACY on identical inputs (the real cutover-safety question) → clean (the 1 float quote). Owner approved the cutover + deletion on that basis. The committed harness is kernel-vs-stored + the 106-doc allowlist (literal kernel-vs-legacy is impossible post-deletion).
+- **Single branch** (not the plan's per-WP branches) per the owner's single-push directive.
+- **In-migration obstacles handled:** `SET LOCAL app.bypass_tenant_guard='true'` for tenant-guarded seeds (registrations, M-C backfill — the tenant/audit trigger rejects an explicit `tenant_id` in no-session migration context); `statutory_keys` synced into `validate_country_config_overrides()` (WP-2 security completion — else tenants could forge the new country-locked `regime.*` keys); M-C also sets `app.tax_line_backfill='true'`.
+- Several plan-verbatim snippets adapted for this repo's strict tsc (`rule_trace`→`Json` cast, `|| null`→`|| undefined` on optional RPC args, `discount_percent`→`discount` column, kind-aware `documentType`/date columns in the harness) — all behavior-preserving, disclosed in commit bodies.
 
 ## Plan progress
-- `docs/superpowers/plans/2026-07-02-localization-phase0-stop-the-bleeding.md`: **27/27 COMPLETE** (1–13 via PR #358 on main; 14–27 via PR #359).
-- Localization **Phases 1–6**: plans exist (`…-phase{1..6}-*.md`), NOT started.
-- Refresh-button program: audit + review done; implementation NOT started.
+- `2026-07-02-localization-phase1-fiscal-kernel-oman-parity.md`: **33/33 COMPLETE** (merged via PR #361).
+- Localization Phases 2–6: plans exist (`…-phase{2..6}-*.md`), NOT started.
 
 ## ⚠️ HARD RULE (standing)
-**Local-first: NO push / `gh pr create` / remote change until the user explicitly asks in the moment** (see memory `dev-workflow-local-first`). This session's push of PR #359 and this handoff were explicitly authorized; that authorization does NOT carry forward. `git fetch` (read-only) is fine.
+**Local-first: NO push / `gh pr create` / remote git change until the owner explicitly asks in the moment.** This session's pushes (PR #361 + this handoff PR) were explicitly authorized; that does NOT carry forward. Applying **additive** migrations to the canonical DB via `mcp__supabase__apply_migration` is the established project workflow (Phase 0 + Phase 1) and is in-scope when executing an owner-authorized migration plan; git push/PR is separately gated.
 
 ## Open questions / blockers
-- Owner sign-off needed on PR #359's **M6 additive-only deviation** before merge.
-- 2 pre-existing **Dependabot high vulns** on the default branch (unrelated to this session's work).
+- CI-only gates need `SUPABASE_DB_URL` / the `supabase` CLI (absent in the web/dev container) — Phase-1 parity was verified out-of-band via an MCP `float8` SQL replay proven IEEE-754-identical to the JS kernel, cross-checked against the real `computeDocumentTax` on all boundary docs.
+- 2 pre-existing `PortalDocuments` lint errors + 2 Dependabot high vulns on `main` (both pre-existing, unrelated to this work).
+- The `resync_tenant_country_config` bug (Next step #2).
