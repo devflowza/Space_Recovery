@@ -18265,6 +18265,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      issue_tax_document: {
+        Args: { p_doc_id: string; p_doc_type: string; p_dry_run?: boolean }
+        Returns: Json
+      }
       log_audit_trail:
         | {
             Args: {
