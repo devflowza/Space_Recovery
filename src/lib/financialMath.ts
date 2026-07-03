@@ -111,32 +111,6 @@ export interface InvoiceTotals {
   amountDue: number;
 }
 
-/**
- * Invoice header totals. Per-item subtotal less per-item percentage discount,
- * then invoice-level fixed discount, then invoice-level tax, then amount paid.
- * Mirrors invoiceService.createInvoice (the canonical rounded variant).
- */
-export const calculateInvoiceTotals = (
-  items: MoneyLineItem[],
-  discountAmount: number,
-  taxRate: number,
-  amountPaid: number,
-  decimalPlaces = 2,
-): InvoiceTotals => {
-  const subtotal = items.reduce((sum, item) => {
-    const itemSubtotal = roundMoney(item.quantity * item.unit_price, decimalPlaces);
-    const discount = roundMoney(itemSubtotal * ((item.discount_percent || 0) / 100), decimalPlaces);
-    return roundMoney(sum + (itemSubtotal - discount), decimalPlaces);
-  }, 0);
-
-  const discountedSubtotal = roundMoney(subtotal - discountAmount, decimalPlaces);
-  const taxAmount = roundMoney((discountedSubtotal * taxRate) / 100, decimalPlaces);
-  const totalAmount = roundMoney(discountedSubtotal + taxAmount, decimalPlaces);
-  const amountDue = roundMoney(totalAmount - amountPaid, decimalPlaces);
-
-  return { subtotal, taxRate, taxAmount, totalAmount, amountDue };
-};
-
 export interface InvoiceBaseTotals {
   subtotalBase: number;
   taxAmountBase: number;
@@ -208,35 +182,6 @@ export const computeRealizedFx = (
   invoiceRate: number,
   baseDecimalPlaces = 2,
 ): number => roundMoney(docAmount * (paymentRate - invoiceRate), baseDecimalPlaces);
-
-/**
- * Quote header totals. Per-item line totals, then a fixed-or-percentage
- * discount, then quote-level tax. Mirrors quotesService.createQuote/updateQuote
- * (both already fully rounded and identical).
- */
-export const calculateQuoteTotals = (
-  items: MoneyLineItem[],
-  discountType: string | null | undefined,
-  discountAmount: number,
-  taxRate: number,
-  decimalPlaces = 2,
-): QuoteTotals => {
-  const subtotal = items.reduce((sum, item) => {
-    const lineTotal = roundMoney(item.quantity * item.unit_price, decimalPlaces);
-    return roundMoney(sum + lineTotal, decimalPlaces);
-  }, 0);
-
-  const discountValue =
-    discountType === 'percentage'
-      ? roundMoney((subtotal * discountAmount) / 100, decimalPlaces)
-      : discountAmount;
-
-  const discountedSubtotal = roundMoney(subtotal - discountValue, decimalPlaces);
-  const taxAmount = roundMoney(discountedSubtotal * (taxRate / 100), decimalPlaces);
-  const totalAmount = roundMoney(discountedSubtotal + taxAmount, decimalPlaces);
-
-  return { subtotal, taxAmount, totalAmount };
-};
 
 /**
  * Read a row's base-currency value for a money field, for cross-document
