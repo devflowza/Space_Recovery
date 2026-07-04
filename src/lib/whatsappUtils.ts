@@ -44,6 +44,18 @@ export const generateCaseUpdateMessage = (
   companyName: string = 'Data Recovery'
 ): string => {
   const statusMessages: Record<string, string> = {
+    // Canonical case statuses (2026-07 lifecycle standardization), lowercased.
+    'registered': `We have registered your case and are awaiting your device.`,
+    'device received': `We have received your device for recovery service.`,
+    'in diagnosis': `The initial diagnosis of your device is in progress.`,
+    'preparing quote': `Diagnosis is complete — we are preparing your quote.`,
+    'awaiting customer approval': `Your quote is ready. Awaiting your approval to proceed.`,
+    'approved — in queue': `Thank you for your approval — your case is queued for recovery.`,
+    'recovery in progress': `Data recovery is currently in progress.`,
+    'ready for delivery': `Your recovered data is ready for collection.`,
+    'data delivered': `Your recovered data has been delivered.`,
+    'closed — device returned': `Your device has been returned and the case is closed.`,
+    // Legacy vocabulary, kept for history surfaces that still show old text.
     'received': `We have received your device for recovery service.`,
     'diagnosis': `The initial diagnosis of your device is in progress.`,
     'in-progress': `Data recovery is currently in progress.`,

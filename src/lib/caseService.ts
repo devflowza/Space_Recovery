@@ -105,6 +105,38 @@ export async function getNextCaseNumber(): Promise<string> {
   return data;
 }
 
+export interface IntakeStatusRef {
+  id: string;
+  name: string;
+}
+
+/**
+ * The intake status new cases start at. The guard trigger on `cases` rejects
+ * any INSERT whose status is not an active intake row with a matching
+ * status_id, so every creation path must resolve this pair first.
+ *
+ * Both creation flows register a case as its devices are physically received,
+ * so prefer the last intake sub-status ("Device Received") over the bare
+ * default ("Registered", reserved for cases logged before media arrives).
+ */
+export async function getIntakeStatusForCreation(): Promise<IntakeStatusRef> {
+  const { data, error } = await supabase
+    .from('master_case_statuses')
+    .select('id, name')
+    .eq('type', 'intake')
+    .eq('is_active', true)
+    .order('sort_order');
+  if (error) {
+    logger.error('Error resolving intake status:', error);
+    throw new Error('Failed to resolve the intake case status');
+  }
+  const rows = data ?? [];
+  if (rows.length === 0) {
+    throw new Error('No active intake case status is configured');
+  }
+  return rows[rows.length - 1];
+}
+
 /**
  * Duplicate a case: assign a new case number, insert a fresh case copied from
  * the source, and copy its devices. Returns the new case row. tenant_id is
@@ -121,6 +153,7 @@ export async function duplicateCase(
   caseNumber?: string,
 ): Promise<CaseRow> {
   const nextCaseNumber = caseNumber ?? (await getNextCaseNumber());
+  const intakeStatus = await getIntakeStatusForCreation();
 
   const newCaseData: CaseInsert = {
     tenant_id: actor.tenantId,
@@ -128,7 +161,9 @@ export async function duplicateCase(
     customer_id: source.customer_id ?? null,
     service_type_id: source.service_type_id ?? null,
     priority: source.priority ?? null,
-    status: 'Received',
+    status: intakeStatus.name,
+    status_id: intakeStatus.id,
+    phase_entered_at: new Date().toISOString(),
     client_reference: source.case_no ?? null,
     subject: source.title ?? null,
     created_by: actor.id ?? null,

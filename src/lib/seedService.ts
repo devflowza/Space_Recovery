@@ -754,11 +754,13 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
 
     const caseStatusesCount = await getTableCount('master_case_statuses');
     if (caseStatusesCount === 0) {
-      const caseStatusRecords = CASE_SERVICE_SEED_DATA.master_case_statuses.map((status, index) => ({
+      const caseStatusRecords = CASE_SERVICE_SEED_DATA.master_case_statuses.map((status) => ({
         name: status.name,
         type: status.type,
         color: status.color,
-        sort_order: index + 1,
+        sort_order: status.sort_order,
+        is_default: status.is_default,
+        customer_visible: status.customer_visible,
         is_active: true,
       }));
 
@@ -795,6 +797,57 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
         status: 'skipped',
         beforeCount: caseStatusesCount,
         afterCount: caseStatusesCount,
+        itemsInserted: 0,
+      });
+    }
+
+    // The phase transition matrix is global like the statuses; a fresh deploy
+    // needs it or transition_case_status rejects every cross-phase move.
+    const transitionsCount = await getTableCount('case_status_transitions');
+    if (transitionsCount === 0) {
+      const transitionRecords = CASE_SERVICE_SEED_DATA.case_status_transitions.map((edge) => ({
+        from_phase: edge.from_phase,
+        to_phase: edge.to_phase,
+        allowed_roles: edge.allowed_roles,
+        requires: edge.requires,
+        sort_order: edge.sort_order,
+        description: edge.description,
+        is_active: true,
+      }));
+
+      const { error: transitionError, count } = await supabase
+        .from('case_status_transitions')
+        .insert(transitionRecords)
+        .select();
+
+      if (transitionError) {
+        details.push({
+          tableName: 'case_status_transitions',
+          tableLabel: 'Case Status Transitions',
+          status: 'error',
+          beforeCount: 0,
+          afterCount: 0,
+          itemsInserted: 0,
+        });
+      } else {
+        const itemsInserted = count || transitionRecords.length;
+        totalInserted += itemsInserted;
+        details.push({
+          tableName: 'case_status_transitions',
+          tableLabel: 'Case Status Transitions',
+          status: 'seeded',
+          beforeCount: 0,
+          afterCount: itemsInserted,
+          itemsInserted,
+        });
+      }
+    } else {
+      details.push({
+        tableName: 'case_status_transitions',
+        tableLabel: 'Case Status Transitions',
+        status: 'skipped',
+        beforeCount: transitionsCount,
+        afterCount: transitionsCount,
         itemsInserted: 0,
       });
     }

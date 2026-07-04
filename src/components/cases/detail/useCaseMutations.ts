@@ -314,11 +314,15 @@ export function useCaseMutations({ id, caseData, devices, modals }: UseCaseMutat
 
       if (updateCaseStatus && id) {
         // Direct cases.status UPDATE is blocked by the state-machine guard
-        // trigger. Route through transition_case_status RPC instead.
+        // trigger. Route through transition_case_status RPC instead. Resolve
+        // by phase, not name, so status renames never break this path.
         const { data: deliveredStatus, error: lookupError } = await supabase
           .from('master_case_statuses')
           .select('id')
-          .eq('name', 'Delivered')
+          .eq('type', 'delivered')
+          .eq('is_active', true)
+          .order('sort_order')
+          .limit(1)
           .maybeSingle();
         if (lookupError) throw lookupError;
         if (!deliveredStatus?.id) throw new Error('Delivered status missing');

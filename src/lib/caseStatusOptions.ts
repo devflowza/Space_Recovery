@@ -33,12 +33,16 @@ export interface BuildCaseStatusOptionsParams {
   current: StatusLite | null;
   allActiveStatuses: StatusLite[];
   allowedTransitions: AllowedTransition[];
+  /** Tenant QA feature (workflow.stage.qa). When false, qa-phase options are
+   *  suppressed — defense-in-depth over the service + server filters. */
+  qaEnabled?: boolean;
 }
 
 export function buildCaseStatusOptions({
   current,
   allActiveStatuses,
   allowedTransitions,
+  qaEnabled = true,
 }: BuildCaseStatusOptionsParams): CaseStatusOption[] {
   const options: CaseStatusOption[] = [];
   const seen = new Set<string>();
@@ -55,6 +59,7 @@ export function buildCaseStatusOptions({
     // Same-phase siblings — intra-phase lateral moves, now accepted by the DB.
     // A null phase is not a real phase, so null-phase statuses are never siblings.
     for (const s of allActiveStatuses) {
+      if (!qaEnabled && s.type === 'qa') continue;
       if (current.type != null && s.type === current.type && s.id !== current.id) {
         push(s.name, s.name, 'lateral');
       }
@@ -64,6 +69,7 @@ export function buildCaseStatusOptions({
   // Cross-phase destinations from the state machine, grouped by intent.
   for (const t of allowedTransitions) {
     if (current && t.to_status.id === current.id) continue;
+    if (!qaEnabled && t.to_phase === 'qa') continue;
     const group: StatusOptionGroup =
       t.to_phase === 'cancelled' ? 'cancel' : t.is_reopen ? 'reopen' : 'advance';
     push(t.to_status.name, t.to_status.name, group);

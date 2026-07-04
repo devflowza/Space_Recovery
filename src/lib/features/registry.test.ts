@@ -62,8 +62,15 @@ describe('isFeatureEnabled (bound to the real registry)', () => {
     expect(isFeatureEnabled({ 'case.tab.overview': false }, 'case.tab.overview')).toBe(true);
   });
 
-  it('cascades stage toggles off when the banner is disabled', () => {
-    expect(isFeatureEnabled({ 'workflow.stage_banner': false }, 'workflow.stage.qa')).toBe(false);
+  it('cascades display stage toggles off when the banner is disabled', () => {
+    expect(isFeatureEnabled({ 'workflow.stage_banner': false }, 'workflow.stage.quoting')).toBe(false);
+  });
+
+  it('keeps the QA workflow toggle independent of the display-only banner', () => {
+    // workflow.stage.qa is routing-authoritative (enforced server-side), so a
+    // tenant that hides the cosmetic banner must NOT silently lose QA.
+    expect(isFeatureEnabled({ 'workflow.stage_banner': false }, 'workflow.stage.qa')).toBe(true);
+    expect(isFeatureEnabled({ 'workflow.stage.qa': false }, 'workflow.stage.qa')).toBe(false);
   });
 
   it('groups features by category', () => {

@@ -34,6 +34,14 @@ export function describeGateError(error: unknown): string | null {
       return "This case can't advance until a recovery attempt with an outcome is recorded. Add one in the Recovery & QA tab first.";
     case 'payment_outstanding':
       return "This case can't be released while it has an outstanding invoice balance. Record the remaining payment first (this gate is enabled for your lab in Settings).";
+    case 'qa_disabled':
+      return 'The QA stage is disabled for your lab. Enable it in Settings → Features & Modules, or move the case straight to Ready for Delivery.';
+    case 'cancellation_reason':
+      return 'A cancellation reason is required to cancel this case.';
+    case 'reopen_reason':
+      return 'A reason is required to reopen this case.';
+    case 'device_returned':
+      return "This case can't be closed until every device is checked out to the customer. Record the device checkout first.";
     default:
       return null;
   }

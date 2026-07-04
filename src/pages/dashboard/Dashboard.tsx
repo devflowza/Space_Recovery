@@ -29,13 +29,39 @@ export const Dashboard: React.FC = () => {
     getCurrentPlanCode().then(setPlanCode);
   }, []);
 
+  // Status lists come from the lifecycle taxonomy (master_case_statuses.type),
+  // never from hardcoded names. Shares the ['case_statuses'] cache entry with
+  // CasesList / useSidebarBadges.
+  const { data: caseStatuses = [] } = useQuery({
+    queryKey: ['case_statuses'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('master_case_statuses')
+        .select('id, name, type, color')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const terminalTypes = ['delivered', 'closed', 'cancelled'];
+  const activeStatusNames = caseStatuses
+    .filter((s) => !terminalTypes.includes(s.type ?? ''))
+    .map((s) => s.name);
+  const pendingStatusNames = caseStatuses
+    .filter((s) => s.type === 'intake' || s.type === 'diagnosis')
+    .map((s) => s.name);
+
   const { data: caseStats } = useQuery({
-    queryKey: ['dashboard-case-stats'],
+    queryKey: ['dashboard-case-stats', activeStatusNames, pendingStatusNames],
+    enabled: activeStatusNames.length > 0,
     queryFn: async () => {
       const [activeRes, todayRes, pendingRes] = await Promise.all([
-        supabase.from('cases').select('id', { count: 'exact', head: true }).not('status', 'in', '("Delivered","Archived","Cancelled")'),
-        supabase.from('cases').select('id', { count: 'exact', head: true }).gte('created_at', new Date().toISOString().split('T')[0]),
-        supabase.from('cases').select('id', { count: 'exact', head: true }).eq('status', 'Pending Assessment'),
+        supabase.from('cases').select('id', { count: 'exact', head: true }).is('deleted_at', null).in('status', activeStatusNames),
+        supabase.from('cases').select('id', { count: 'exact', head: true }).is('deleted_at', null).gte('created_at', new Date().toISOString().split('T')[0]),
+        supabase.from('cases').select('id', { count: 'exact', head: true }).is('deleted_at', null).in('status', pendingStatusNames),
       ]);
       return {
         active: activeRes.count ?? 0,

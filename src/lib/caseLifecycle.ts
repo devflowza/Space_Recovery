@@ -15,8 +15,8 @@ export const CASE_STATUS_TYPES = [
   'recovery',
   'qa',
   'ready',
-  'completed',
   'delivered',
+  'closed',
   'cancelled',
 ] as const;
 
@@ -32,16 +32,16 @@ export const STATUS_TYPE_LABELS: Record<CaseStatusType, string> = {
   recovery: 'Recovery',
   qa: 'QA / verification',
   ready: 'Ready',
-  completed: 'Completed',
   delivered: 'Delivered',
+  closed: 'Closed',
   cancelled: 'Cancelled',
 };
 
 /** Types that end the pipeline — never age-flagged, excluded from "active". */
-export const TERMINAL_TYPES: readonly CaseStatusType[] = ['completed', 'delivered', 'cancelled'];
+export const TERMINAL_TYPES: readonly CaseStatusType[] = ['delivered', 'closed', 'cancelled'];
 
 /** Disjoint pipeline buckets shown as command-center cards. */
-export type CaseBucket = 'new' | 'diagnosis' | 'approval' | 'recovery' | 'ready' | 'delivered';
+export type CaseBucket = 'new' | 'diagnosis' | 'approval' | 'recovery' | 'ready' | 'delivered' | 'closed';
 
 export const CASE_BUCKET_TYPES: Record<CaseBucket, readonly CaseStatusType[]> = {
   new: ['intake'],
@@ -49,7 +49,8 @@ export const CASE_BUCKET_TYPES: Record<CaseBucket, readonly CaseStatusType[]> = 
   approval: ['quoting', 'awaiting_approval'],
   recovery: ['approved', 'recovery', 'qa'],
   ready: ['ready'],
-  delivered: ['completed', 'delivered'],
+  delivered: ['delivered'],
+  closed: ['closed'],
 };
 
 export const CASE_BUCKETS = Object.keys(CASE_BUCKET_TYPES) as CaseBucket[];
@@ -89,7 +90,7 @@ export interface BucketizedCounts {
   /** Statuses (incl. null) with no lifecycle classification — treated as open. */
   unmapped: number;
   total: number;
-  /** Everything not delivered/completed/cancelled; unmapped counts as active. */
+  /** Everything not delivered/closed/cancelled; unmapped counts as active. */
   active: number;
 }
 
@@ -109,6 +110,7 @@ export function bucketizeStatusCounts(
     recovery: 0,
     ready: 0,
     delivered: 0,
+    closed: 0,
   };
   let cancelled = 0;
   let unmapped = 0;
@@ -134,7 +136,7 @@ export function bucketizeStatusCounts(
     cancelled,
     unmapped,
     total,
-    active: total - buckets.delivered - cancelled,
+    active: total - buckets.delivered - buckets.closed - cancelled,
   };
 }
 

@@ -82,7 +82,7 @@ export const DuplicateCaseConfirmationModal: React.FC<DuplicateCaseConfirmationM
         <div className="flex gap-2">
           <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
           <p className="text-sm text-warning">
-            The new job will be set to 'Received' status and all devices will be marked as 'In Lab'.
+            The new job will be set to 'Device Received' status and all devices will be marked as 'In Lab'.
           </p>
         </div>
       </div>

@@ -60,17 +60,20 @@ export const FEATURE_REGISTRY: FeatureDef[] = [
   { key: 'case.tab.stock', label: 'Backup Devices', description: 'Backup/stock device handling for the case.', category: 'case_tabs', defaultEnabled: true, caseTabId: 'stock' },
   { key: 'case.tab.files', label: 'Files', description: 'File attachments.', category: 'case_tabs', defaultEnabled: true, caseTabId: 'files' },
   { key: 'case.tab.engineers', label: 'Engineers', description: 'Engineer assignment.', category: 'case_tabs', defaultEnabled: true, caseTabId: 'engineers' },
-  { key: 'case.tab.recovery_qa', label: 'Recovery & QA', description: 'Recovery progress and QA sign-off.', category: 'case_tabs', defaultEnabled: true, caseTabId: 'recovery_qa' },
+  { key: 'case.tab.recovery_qa', label: 'Recovery & QA', description: 'Recovery attempt capture and (when the QA stage is enabled) QA sign-off. Recovery attempts are required evidence to advance out of Recovery, so this tab has no dependency on the QA stage toggle.', category: 'case_tabs', defaultEnabled: true, caseTabId: 'recovery_qa' },
   { key: 'case.tab.notes', label: 'Internal Notes', description: 'Internal-only notes & findings.', category: 'case_tabs', defaultEnabled: true, caseTabId: 'notes' },
   { key: 'case.tab.communications', label: 'Communications', description: 'Case communication log & compose (email / WhatsApp / SMS).', category: 'case_tabs', defaultEnabled: true, caseTabId: 'communications' },
   { key: 'case.tab.portal', label: 'Client Portal (case)', description: "Per-case portal visibility settings.", category: 'case_tabs', defaultEnabled: true, caseTabId: 'portal' },
   { key: 'case.tab.history', label: 'Device Tracking', description: 'Chain-of-custody / device tracking history.', category: 'case_tabs', defaultEnabled: true, caseTabId: 'history' },
 
-  // ── Workflow stages ── (display-only filtering of the Stage Banner pipeline)
+  // ── Workflow stages ── (quoting / awaiting_approval are display-only chip
+  // filters; the QA toggle is ROUTING-AUTHORITATIVE — enforced server-side in
+  // transition_case_status via tenant_feature_enabled, so it must NOT depend
+  // on the cosmetic stage banner.)
   { key: 'workflow.stage_banner', label: 'Stage Banner', description: 'The CURRENT STAGE banner and lifecycle pipeline on the case page.', category: 'workflow', defaultEnabled: true },
   { key: 'workflow.stage.quoting', label: 'Stage: Quoting', description: 'Show the Quoting stage in the pipeline.', category: 'workflow', defaultEnabled: true, dependsOn: ['workflow.stage_banner'], stagePhase: 'quoting' },
   { key: 'workflow.stage.awaiting_approval', label: 'Stage: Awaiting Approval', description: 'Show the Awaiting Approval stage in the pipeline.', category: 'workflow', defaultEnabled: true, dependsOn: ['workflow.stage_banner'], stagePhase: 'awaiting_approval' },
-  { key: 'workflow.stage.qa', label: 'Stage: QA', description: 'Show the QA stage in the pipeline.', category: 'workflow', defaultEnabled: true, dependsOn: ['workflow.stage_banner'], stagePhase: 'qa' },
+  { key: 'workflow.stage.qa', label: 'QA / Verification stage', description: 'Offer the QA verification stage in the recovery workflow. When on, QA is optional per case (Recovery can go to QA or straight to Ready for Delivery). When off, QA statuses and transitions are hidden and blocked server-side — Recovery flows directly to Ready.', category: 'workflow', defaultEnabled: true, stagePhase: 'qa' },
 
   // ── Navigation / modules ── (AND-ed with role hasModuleAccess at the sidebar)
   { key: 'nav.financial', label: 'Financial', description: 'Invoices, payments, expenses, banking navigation.', category: 'navigation', defaultEnabled: true },

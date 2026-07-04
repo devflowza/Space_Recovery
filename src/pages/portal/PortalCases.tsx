@@ -144,15 +144,14 @@ export const PortalCases: React.FC = () => {
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'delivered':
-        return <CheckCircle className="w-5 h-5" />;
-      case 'cancelled':
-        return <XCircle className="w-5 h-5" />;
-      default:
-        return <Clock className="w-5 h-5" />;
+    const s = status.trim().toLowerCase();
+    if (s === 'data delivered' || s.startsWith('closed')) {
+      return <CheckCircle className="w-5 h-5" />;
     }
+    if (s.startsWith('cancelled')) {
+      return <XCircle className="w-5 h-5" />;
+    }
+    return <Clock className="w-5 h-5" />;
   };
 
   const handleViewDetails = (caseItem: Case) => {

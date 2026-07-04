@@ -1,3 +1,16 @@
+> **PROGRESS (2026-07-04, v1.3.0 lifecycle standardization):** sequence steps 3 & 4
+> partially LANDED via `standardize_case_lifecycle`: `guard_cases_status_changes`
+> is now `BEFORE INSERT OR UPDATE` (intake-pair-or-bypass INSERT rule, honoring
+> `app.bypass_status_guard`/`app.importing`); `transition_case_status` enforces
+> `requires[]` (`recovery_outcome`, `qa_passed`, `cancellation_reason`,
+> `reopen_reason`, `device_returned`) plus the tenant QA toggle
+> (`workflow.stage.qa`) and the existing payment-before-release opt-in;
+> `log_case_checkout` routes through the RPC (full checkout →
+> `ready→delivered→closed`). Still open from step 3: `CHECK` + role-gated INSERT
+> hardening on the evidence tables (`case_qa_checklists.status`,
+> `case_recovery_attempts.result`) and the `clone_drives.status` trigger. Steps
+> 5+ (portal JWT, C4 manifest) untouched.
+>
 > **SCOPE DOCUMENT — no code written yet.** Canonical plan for fixing the four `Critical`-severity data-recovery gaps (backlog #1–#4 in `docs/data-recovery-workflow.md`), read **alongside** that doc. Records verified root causes, fix tiers, the DB enforcement that must survive the anon-key REST bypass, sequencing, and product-owner decisions. Grounded in a live-DB + source audit (project `ssmbegiyjivrcwgcqutu`), independently reviewed; reviewer corrections folded in, refuted claims dropped. Full body saved at `docs/critical-fixes-scope.md`.
 
 ## Criticals

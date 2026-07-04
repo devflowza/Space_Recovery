@@ -603,6 +603,7 @@ export const CaseDetail: React.FC = () => {
             clone={modals.selectedClone}
             caseNo={caseData?.case_no ?? undefined}
             caseStatus={caseData?.status ?? undefined}
+            casePhase={caseStatuses.find((s) => s.id === caseData?.status_id)?.type ?? null}
             patientDeviceName={
               modals.selectedClone && devices.length > 0
                 ? (() => {

@@ -185,7 +185,7 @@ export async function getCasesForAssignment(): Promise<CaseOption[]> {
   const { data: statusData, error: statusError } = await supabase
     .from('master_case_statuses')
     .select('name')
-    .in('type', ['received', 'diagnosis', 'waiting-approval', 'in-progress'])
+    .in('type', ['intake', 'diagnosis', 'quoting', 'awaiting_approval', 'approved', 'recovery', 'qa'])
     .eq('is_active', true);
 
   if (statusError) {

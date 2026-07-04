@@ -35,9 +35,11 @@ export function CaseStageBanner({
   const toast = useToast();
   const callerRole = profile?.role ?? null;
 
-  // Per-tenant pipeline display: hide stage chips the tenant disabled. Display-only —
-  // transitions are unaffected (the global state machine stays intact).
+  // Per-tenant pipeline: hide stage chips the tenant disabled. For QA the flag
+  // is also routing-authoritative — qa destinations are filtered out of the
+  // transition query below, and the server refuses qa entry when it is off.
   const { isEnabled } = useTenantFeatures();
+  const qaEnabled = isEnabled('workflow.stage.qa');
   const visiblePhases = useMemo(
     () => PHASE_ORDER.filter((p) => {
       const key = STAGE_FEATURE_BY_PHASE[p];
@@ -52,8 +54,8 @@ export function CaseStageBanner({
   const [pendingTarget, setPendingTarget] = useState<AllowedTransition | null>(null);
 
   const { data: allowed = [], isLoading } = useQuery({
-    queryKey: ['case-allowed-transitions', currentStatusId, callerRole],
-    queryFn: () => getAllowedTransitions(currentStatusId, callerRole),
+    queryKey: ['case-allowed-transitions', currentStatusId, callerRole, qaEnabled],
+    queryFn: () => getAllowedTransitions(currentStatusId, callerRole, { qaEnabled }),
     enabled: Boolean(callerRole),
   });
 
@@ -221,13 +223,12 @@ export function CaseStageBanner({
               <div className="flex items-start gap-2 rounded-md bg-warning-muted p-3 text-sm text-warning">
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                 <div>
-                  This transition expects the following before being applied:
+                  This move is blocked until the following are recorded:
                   <ul className="ml-4 list-disc">
                     {pendingTarget.requires.map((r) => (
                       <li key={r}>{r.replace(/_/g, ' ')}</li>
                     ))}
                   </ul>
-                  These are advisory — the RPC does not block on them today.
                 </div>
               </div>
             ) : null}
@@ -238,7 +239,7 @@ export function CaseStageBanner({
                   htmlFor="state-reason"
                   className="mb-1 block text-sm font-medium text-slate-700"
                 >
-                  Reason {pendingTarget.to_phase === 'cancelled' ? '(required)' : '(optional)'}
+                  Reason {pendingTarget.to_phase === 'cancelled' || pendingTarget.is_reopen ? '(required)' : '(optional)'}
                 </label>
                 <input
                   id="state-reason"
@@ -281,7 +282,8 @@ export function CaseStageBanner({
                 onClick={confirmTransition}
                 disabled={
                   transitionMutation.isPending ||
-                  (pendingTarget.to_phase === 'cancelled' && reason.trim().length === 0)
+                  ((pendingTarget.to_phase === 'cancelled' || pendingTarget.is_reopen) &&
+                    reason.trim().length === 0)
                 }
               >
                 {transitionMutation.isPending ? (
