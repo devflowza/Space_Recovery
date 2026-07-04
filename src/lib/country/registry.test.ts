@@ -175,3 +175,24 @@ describe('§4.7 worked example — a NEW country key ships with ZERO schema chan
     ).toBe('Emirates ID');
   });
 });
+
+describe('P3 filing keys', () => {
+  it('registers tax.filing_frequency / tax.period_anchor / tax.return_composer as country-locked', () => {
+    const byKey = Object.fromEntries(COUNTRY_CONFIG_REGISTRY.map((d) => [d.key, d]));
+    for (const key of ['tax.filing_frequency', 'tax.period_anchor', 'tax.return_composer']) {
+      expect(byKey[key], `${key} missing`).toBeDefined();
+      expect(byKey[key].maxOverrideLayer).toBe('country');
+      expect(byKey[key].domain).toBe('tax');
+    }
+    expect(byKey['tax.filing_frequency'].codedDefault).toBe('quarterly');
+    expect(byKey['tax.period_anchor'].codedDefault).toBe('01-01');
+    expect(byKey['tax.return_composer'].codedDefault).toBe('gcc_return');
+    expect(byKey['tax.filing_frequency'].schema.safeParse('monthly').success).toBe(true);
+    expect(byKey['tax.filing_frequency'].schema.safeParse('weekly').success).toBe(false);
+    expect(byKey['tax.period_anchor'].schema.safeParse('04-01').success).toBe(true);
+    expect(byKey['tax.period_anchor'].schema.safeParse('4-1').success).toBe(false);
+    expect(STATUTORY_KEYS).toContain('tax.filing_frequency');
+    expect(STATUTORY_KEYS).toContain('tax.period_anchor');
+    expect(STATUTORY_KEYS).toContain('tax.return_composer');
+  });
+});
