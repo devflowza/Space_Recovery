@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { getNextCaseNumber } from '../../lib/caseService';
-import { MessageCircle, Printer, FileText, Tag, CheckCircle2, Copy, User, HardDrive, FileStack, AlertCircle, Package, Activity, Settings, History, Users, DollarSign, Trash2, Grid2x2 as Grid, Eye, Mail } from 'lucide-react';
+import { MessageCircle, Printer, FileText, Tag, CheckCircle2, Copy, User, HardDrive, FileStack, AlertCircle, Package, Activity, Settings, History, Users, DollarSign, Trash2, Grid2x2 as Grid, Eye, Mail, RotateCcw, CircleHelp } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -25,6 +25,9 @@ import { CASE_TAB_FEATURE } from '../../lib/features/registry';
 import { SendMessageModal } from '../../components/communications/SendMessageModal';
 import { DeviceCheckoutModal } from '../../components/cases/DeviceCheckoutModal';
 import { DuplicateCaseConfirmationModal } from '../../components/cases/DuplicateCaseConfirmationModal';
+import { OutcomeBadge } from '../../components/cases/OutcomeBadge';
+import { MarkNoSolutionModal } from '../../components/cases/MarkNoSolutionModal';
+import { StartReRecoveryModal } from '../../components/cases/StartReRecoveryModal';
 import { DeleteCaseConfirmationModal } from '../../components/cases/DeleteCaseConfirmationModal';
 import { DeviceFormModal } from '../../components/cases/DeviceFormModal';
 import { MarkAsDeliveredModal } from '../../components/cases/MarkAsDeliveredModal';
@@ -160,6 +163,8 @@ export const CaseDetail: React.FC = () => {
   // Header quick action — opens the templated WhatsApp handoff modal (renders
   // a tenant template with case context, logs to case_communications).
   const [whatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
+  const [showNoSolutionModal, setShowNoSolutionModal] = useState(false);
+  const [showReRecoveryModal, setShowReRecoveryModal] = useState(false);
   const [issueRequirementFailures, setIssueRequirementFailures] = useState<RequirementFailure[]>([]);
   const [showIssueBlockModal, setShowIssueBlockModal] = useState(false);
   const [showIssueWarnConfirm, setShowIssueWarnConfirm] = useState(false);
@@ -355,14 +360,32 @@ export const CaseDetail: React.FC = () => {
     return <DetailPageNotFound backTo={{ to: '/cases', label: 'Back to Cases' }} />;
   }
 
+  const currentPhase = caseStatuses.find((s) => s.id === caseData.status_id)?.type ?? null;
+  const canParkNoSolution = currentPhase === 'recovery' || currentPhase === 'diagnosis';
+  const canReRecover = ['delivered', 'closed', 'cancelled', 'no_solution'].includes(currentPhase ?? '');
+
   return (
     <DetailPageTemplate
       header={{
         breadcrumbs: [{ label: 'Cases', to: '/cases' }, { label: `Case #${caseData.case_no}` }],
         badges: (
-          <Badge variant="custom" color={getStatusColor(caseData.status)} size="lg">
-            {getStatusDisplayName(caseData.status)}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="custom" color={getStatusColor(caseData.status)} size="lg">
+              {getStatusDisplayName(caseData.status)}
+            </Badge>
+            <OutcomeBadge outcome={caseData.recovery_outcome} size="md" />
+            {caseData.parent_case_id && (
+              <button
+                type="button"
+                onClick={() => navigate(`/cases/${caseData.parent_case_id}`)}
+                className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-200"
+                title="This case is a re-recovery — view the original"
+              >
+                <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                Re-recovery
+              </button>
+            )}
+          </div>
         ),
         actions: (
           <>
@@ -420,6 +443,28 @@ export const CaseDetail: React.FC = () => {
               <Copy className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Duplicate</span>
             </Button>
+            {canParkNoSolution && (
+              <Button
+                onClick={() => setShowNoSolutionModal(true)}
+                variant="warning"
+                size="sm"
+                title="No recovery method available today — park for future follow-up"
+              >
+                <CircleHelp className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">No Solution</span>
+              </Button>
+            )}
+            {canReRecover && (
+              <Button
+                onClick={() => setShowReRecoveryModal(true)}
+                variant="secondary"
+                size="sm"
+                title="Device returned for another attempt — create a linked re-recovery case"
+              >
+                <RotateCcw className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Re-Recovery</span>
+              </Button>
+            )}
             {profile?.role === 'admin' && (
               <Button
                 onClick={handleDeleteCase}
@@ -488,6 +533,35 @@ export const CaseDetail: React.FC = () => {
               newCaseNumber={nextCaseNumberQuery.data}
               isGeneratingNumber={nextCaseNumberQuery.isFetching}
               isLoading={duplicateCaseMutation.isPending}
+            />
+          )}
+
+          {/* Mark No Solution — Future Follow-up */}
+          {showNoSolutionModal && profile?.tenant_id && (
+            <MarkNoSolutionModal
+              isOpen={showNoSolutionModal}
+              onClose={() => setShowNoSolutionModal(false)}
+              caseId={id!}
+              tenantId={profile.tenant_id}
+              userId={profile.id ?? null}
+              assignedTo={caseData.assigned_to ?? null}
+              onDone={() => {
+                queryClient.invalidateQueries({ queryKey: ['case', id] });
+                queryClient.invalidateQueries({ queryKey: ['case_history', id] });
+              }}
+            />
+          )}
+
+          {/* Start Re-Recovery (linked new case) */}
+          {showReRecoveryModal && profile?.tenant_id && (
+            <StartReRecoveryModal
+              isOpen={showReRecoveryModal}
+              onClose={() => setShowReRecoveryModal(false)}
+              sourceCaseId={id!}
+              originalCaseNumber={caseData.case_no ?? ''}
+              customerName={caseData.customer?.customer_name || 'Unknown'}
+              actor={{ id: profile.id ?? null, tenantId: profile.tenant_id }}
+              onCreated={(newCaseId) => navigate(`/cases/${newCaseId}`)}
             />
           )}
 

@@ -22,6 +22,20 @@ export interface RecordQaResultInput {
   result: QaResult;
 }
 
+type NoSolutionReasonRow = Database['public']['Tables']['master_case_no_solution_reasons']['Row'];
+
+/**
+ * Roll a recovery-attempt result up to the case-level outcome
+ * (cases.recovery_outcome vocabulary: full | partial | unrecoverable | declined).
+ * 'declined' is a customer-side outcome, not an attempt result, so it's not here.
+ */
+export const RECOVERY_RESULT_TO_OUTCOME: Record<RecoveryResult, string> = {
+  success: 'full',
+  partial: 'partial',
+  failed: 'unrecoverable',
+  no_data: 'unrecoverable',
+};
+
 /**
  * Capture services backing the C3 release gate. The gate in
  * transition_case_status requires a recorded recovery attempt and a passed QA
@@ -71,7 +85,54 @@ export const caseQualityService = {
       throw error;
     }
     if (!data) throw new Error('Failed to record recovery attempt');
+
+    // Roll the latest attempt's result up to the case outcome so the Outcome
+    // badge (esp. Partial) is set without waiting for checkout. recovery_outcome
+    // is not gated by the status guard, so a direct column update is fine; staff
+    // can still adjust it at delivery.
+    const outcome = RECOVERY_RESULT_TO_OUTCOME[input.result];
+    if (outcome) {
+      const { error: outcomeErr } = await supabase
+        .from('cases')
+        .update({ recovery_outcome: outcome, updated_at: new Date().toISOString() })
+        .eq('id', caseId);
+      if (outcomeErr) logger.error('Failed to roll up recovery outcome:', outcomeErr);
+    }
     return data;
+  },
+
+  /** Active no-solution reasons for the "Mark No Solution" picker. */
+  async listNoSolutionReasons(): Promise<Pick<NoSolutionReasonRow, 'id' | 'code' | 'name' | 'description'>[]> {
+    const { data, error } = await supabase
+      .from('master_case_no_solution_reasons')
+      .select('id, code, name, description')
+      .eq('is_active', true)
+      .order('sort_order');
+    if (error) {
+      logger.error('Error listing no-solution reasons:', error);
+      throw error;
+    }
+    return data ?? [];
+  },
+
+  /**
+   * Record the structured no-solution reason + notes on a case. The
+   * transition_case_status no_solution_reason gate requires this to be set
+   * before the case can enter the No-Solution phase.
+   */
+  async setNoSolutionReason(caseId: string, reasonId: string, notes?: string | null): Promise<void> {
+    const { error } = await supabase
+      .from('cases')
+      .update({
+        no_solution_reason_id: reasonId,
+        no_solution_notes: notes ?? null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', caseId);
+    if (error) {
+      logger.error('Error setting no-solution reason:', error);
+      throw error;
+    }
   },
 
   async listQaChecklists(caseId: string): Promise<QaChecklistRow[]> {

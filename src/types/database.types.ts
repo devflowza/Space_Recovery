@@ -2645,6 +2645,7 @@ export type Database = {
           branch_id: string | null
           case_no: string | null
           case_number: string | null
+          case_origin: string
           checkout_collector_id: string | null
           checkout_collector_mobile: string | null
           checkout_collector_name: string | null
@@ -2667,6 +2668,9 @@ export type Database = {
           legacy_status: string | null
           legal_entity_id: string | null
           net_amount: number | null
+          no_solution_notes: string | null
+          no_solution_reason_id: string | null
+          parent_case_id: string | null
           phase_entered_at: string | null
           priority: string | null
           priority_id: string | null
@@ -2693,6 +2697,7 @@ export type Database = {
           branch_id?: string | null
           case_no?: string | null
           case_number?: string | null
+          case_origin?: string
           checkout_collector_id?: string | null
           checkout_collector_mobile?: string | null
           checkout_collector_name?: string | null
@@ -2715,6 +2720,9 @@ export type Database = {
           legacy_status?: string | null
           legal_entity_id?: string | null
           net_amount?: number | null
+          no_solution_notes?: string | null
+          no_solution_reason_id?: string | null
+          parent_case_id?: string | null
           phase_entered_at?: string | null
           priority?: string | null
           priority_id?: string | null
@@ -2741,6 +2749,7 @@ export type Database = {
           branch_id?: string | null
           case_no?: string | null
           case_number?: string | null
+          case_origin?: string
           checkout_collector_id?: string | null
           checkout_collector_mobile?: string | null
           checkout_collector_name?: string | null
@@ -2763,6 +2772,9 @@ export type Database = {
           legacy_status?: string | null
           legal_entity_id?: string | null
           net_amount?: number | null
+          no_solution_notes?: string | null
+          no_solution_reason_id?: string | null
+          parent_case_id?: string | null
           phase_entered_at?: string | null
           priority?: string | null
           priority_id?: string | null
@@ -2816,6 +2828,20 @@ export type Database = {
             columns: ["legal_entity_id"]
             isOneToOne: false
             referencedRelation: "legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_no_solution_reason_id_fkey"
+            columns: ["no_solution_reason_id"]
+            isOneToOne: false
+            referencedRelation: "master_case_no_solution_reasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_parent_case_id_fkey"
+            columns: ["parent_case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
             referencedColumns: ["id"]
           },
           {
@@ -9563,6 +9589,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      master_case_no_solution_reasons: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       master_case_priorities: {
         Row: {

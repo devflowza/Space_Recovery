@@ -653,10 +653,23 @@ export const CASE_SERVICE_SEED_DATA = {
     { name: 'Closed — Media Disposed', type: 'closed', color: '#475569', sort_order: 115, is_default: false, customer_visible: false },
     { name: 'Cancelled — Customer Declined', type: 'cancelled', color: '#6b7280', sort_order: 120, is_default: false, customer_visible: true },
     { name: 'Cancelled — Unrecoverable', type: 'cancelled', color: '#ef4444', sort_order: 125, is_default: false, customer_visible: true },
+    { name: 'No Solution — Future Follow-up', type: 'no_solution', color: '#b45309', sort_order: 130, is_default: false, customer_visible: true },
   ],
 
-  // The 22-edge phase transition matrix (mirrors the live case_status_transitions
-  // rows). requires[] carries ONLY tokens transition_case_status enforces.
+  // Structured reasons a case is parked as No Solution — Future Follow-up
+  // (global master data; matches master_case_no_solution_reasons).
+  master_case_no_solution_reasons: [
+    { code: 'unsupported_firmware',   name: 'Unsupported Firmware / Family',    description: 'Drive firmware or family not yet supported by available tools', sort_order: 10 },
+    { code: 'unsupported_controller', name: 'Unsupported SSD/Flash Controller', description: 'SSD or flash memory controller not yet supported',              sort_order: 20 },
+    { code: 'no_method',              name: 'No Recovery Method Available',      description: 'No known recovery method currently exists for this failure',    sort_order: 30 },
+    { code: 'severe_media_damage',    name: 'Severe Media Damage',              description: 'Physical media damage beyond current recovery capability',       sort_order: 40 },
+    { code: 'tool_unavailable',       name: 'Required Tool/Donor Unavailable',  description: 'Required tool, donor part, or resource not currently available', sort_order: 50 },
+    { code: 'other',                  name: 'Other (see notes)',                description: 'Other reason — see case notes',                                 sort_order: 90 },
+  ],
+
+  // The phase transition matrix (mirrors the live case_status_transitions
+  // rows, incl. the no_solution edges). requires[] carries ONLY tokens
+  // transition_case_status enforces.
   case_status_transitions: [
     { from_phase: 'intake', to_phase: 'diagnosis', allowed_roles: ['technician', 'manager', 'admin', 'owner'], requires: [], sort_order: 10, description: 'Devices received and logged — begin assessment' },
     { from_phase: 'intake', to_phase: 'cancelled', allowed_roles: ['technician', 'manager', 'admin', 'owner'], requires: ['cancellation_reason'], sort_order: 15, description: 'Cancel before assessment' },
@@ -680,6 +693,11 @@ export const CASE_SERVICE_SEED_DATA = {
     { from_phase: 'cancelled', to_phase: 'intake', allowed_roles: ['admin', 'owner'], requires: ['reopen_reason'], sort_order: 90, description: 'Reopen a cancelled case' },
     { from_phase: 'delivered', to_phase: 'recovery', allowed_roles: ['admin', 'owner'], requires: ['reopen_reason'], sort_order: 92, description: 'Reopen after delivery (rework)' },
     { from_phase: 'closed', to_phase: 'recovery', allowed_roles: ['admin', 'owner'], requires: ['reopen_reason'], sort_order: 94, description: 'Reopen a closed case (rework)' },
+    { from_phase: 'recovery', to_phase: 'no_solution', allowed_roles: ['technician', 'manager', 'admin', 'owner'], requires: ['no_solution_reason'], sort_order: 66, description: 'No method available today — park for future follow-up (device returned)' },
+    { from_phase: 'diagnosis', to_phase: 'no_solution', allowed_roles: ['technician', 'manager', 'admin', 'owner'], requires: ['no_solution_reason'], sort_order: 28, description: 'No method available today — park for future follow-up (device returned)' },
+    { from_phase: 'no_solution', to_phase: 'recovery', allowed_roles: ['admin', 'owner'], requires: ['reopen_reason'], sort_order: 96, description: 'A recovery method is now available — resume recovery' },
+    { from_phase: 'no_solution', to_phase: 'diagnosis', allowed_roles: ['admin', 'owner'], requires: ['reopen_reason'], sort_order: 97, description: 'Re-assess with new tooling' },
+    { from_phase: 'no_solution', to_phase: 'closed', allowed_roles: ['technician', 'manager', 'admin', 'owner'], requires: [], sort_order: 98, description: 'Permanently close — customer no longer interested' },
   ],
 
   catalog_service_locations: [
