@@ -35,6 +35,9 @@ export interface ResolvedCountryFacts {
   decimalSeparator: string | null;
   thousandsSeparator: string | null;
   digitGrouping: string | null;        // '3' western, '3;2' Indian (consumed Phase 4)
+  /** Joined geo_countries.address_format lines (e.g. '%N %O %A %C %Z'), or null.
+   *  Optional so existing fixtures/tests built without it keep compiling. */
+  addressFormat?: string | null;
 }
 
 /** Profile inputs for financial documents; null docType = non-financial doc
@@ -112,6 +115,18 @@ export function countryTemplateOverride(
   if (facts.decimalPlaces != null) locale.decimalPlaces = facts.decimalPlaces;
   if (facts.decimalSeparator) locale.decimalSeparator = facts.decimalSeparator;
   if (facts.thousandsSeparator != null) locale.thousandsSeparator = facts.thousandsSeparator;
+
+  // Address-line ordering (Task 22): geo_countries.address_format is a jsonb
+  // postal-address template (e.g. '%N %O %A %C %Z'). postalFirst is set true
+  // ONLY when the postal token (%Z) precedes the city token (%C) — today, every
+  // onboardable country lists city before postal, so this stays unset (false)
+  // everywhere and GCC/US/UK output is unchanged.
+  if (facts.addressFormat) {
+    const z = facts.addressFormat.indexOf('%Z');
+    const c = facts.addressFormat.indexOf('%C');
+    if (z >= 0 && c >= 0 && z < c) locale.postalFirst = true;
+  }
+
   if (Object.keys(locale).length > 0) override.locale = locale;
 
   // Profile paper (Letter for US-profile documents — consumed Phase 5; A4 is a

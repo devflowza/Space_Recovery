@@ -593,6 +593,9 @@ export interface LocaleConfig {
   decimalSeparator?: string;
   /** Country thousands separator (',', '.', ' ', or '' for none). */
   thousandsSeparator?: string;
+  /** Country address_format lists the postal code before the city (Task 22).
+   *  Absent/false = today's city-then-postal ordering (GCC/US/UK unchanged). */
+  postalFirst?: boolean;
 }
 
 /**

@@ -162,7 +162,7 @@ export function toEngineData(
           postal_code: invoiceData.customer?.postal_code,
           free_text: undefined,
         },
-    false,
+    config.locale?.postalFirst ?? false,
   );
   addressLines.forEach((line, i) => {
     // The 'Address:' label leads only the first line; continuation rows are blank.

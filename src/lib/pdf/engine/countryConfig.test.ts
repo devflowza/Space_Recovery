@@ -91,3 +91,14 @@ describe('countryTemplateOverride + DocumentComplianceProfile', () => {
     expect(o.language).toEqual({ mode: 'bilingual_stacked', primary: 'ar' });
   });
 });
+
+describe('countryTemplateOverride address ordering', () => {
+  it('sets locale.postalFirst=true when the postal token precedes the city token', () => {
+    const override = countryTemplateOverride({ ...omFacts, addressFormat: '%N %O %A %Z %C' });
+    expect(override.locale?.postalFirst).toBe(true);
+  });
+  it('leaves postalFirst unset when the template lists city before postal (GCC/US/UK)', () => {
+    const override = countryTemplateOverride({ ...omFacts, addressFormat: '%N %O %A %C %Z' });
+    expect(override.locale?.postalFirst).toBeUndefined();
+  });
+});
