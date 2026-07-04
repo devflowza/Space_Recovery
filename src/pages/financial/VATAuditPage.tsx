@@ -11,6 +11,8 @@ import { useTaxConfig, useDateTimeConfig } from '../../contexts/TenantConfigCont
 import { tenantToday, addMonthsIso } from '../../lib/tenantToday';
 import { Input } from '../../components/ui/Input';
 import { VATReturnModal } from '../../components/financial/VATReturnModal';
+import { VATReturnDetailModal } from '../../components/financial/VATReturnDetailModal';
+import type { VatReturnRow } from '../../lib/tax/taxReturnService';
 import { KpiRow } from '../../components/templates/KpiRow';
 import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
 import {
@@ -78,6 +80,7 @@ export const VATAuditPage: React.FC = () => {
   const [recordTypeFilter, setRecordTypeFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<string>('month');
   const [showVATReturnModal, setShowVATReturnModal] = useState(false);
+  const [detailReturn, setDetailReturn] = useState<VatReturnRow | null>(null);
 
   const getDateFromFilter = () => {
     if (dateRange === 'all') return undefined;
@@ -343,6 +346,7 @@ export const VATAuditPage: React.FC = () => {
                                   </button>
                                 )}
                                 <button
+                                  onClick={() => setDetailReturn(vatReturn as unknown as VatReturnRow)}
                                   className="p-1.5 text-primary hover:bg-info-muted rounded transition-colors"
                                   title="View"
                                 >
@@ -556,6 +560,11 @@ export const VATAuditPage: React.FC = () => {
           queryClient.invalidateQueries({ queryKey: ['vat_records'] });
           queryClient.invalidateQueries({ queryKey: ['vat_stats'] });
         }}
+      />
+
+      <VATReturnDetailModal
+        vatReturn={detailReturn}
+        onClose={() => setDetailReturn(null)}
       />
     </div>
   );
