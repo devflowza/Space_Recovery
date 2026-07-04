@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -95,6 +95,30 @@ describe('ProtectedRoute', () => {
     setAuth({ profile: APPROVED_PROFILE, profileStatus: 'approved', passwordResetRequired: true });
     renderRoute();
     expect(screen.getByText('Change Your Password')).toBeInTheDocument();
+    expect(screen.queryByText('protected content')).not.toBeInTheDocument();
+  });
+
+  it('bounces a recovery-pending session to /reset-password instead of admitting it (deep-nav hijack guard)', () => {
+    // A session minted from an email reset link is fully "logged in" — without
+    // this gate a mid-flow navigation to any protected route would land in the
+    // app with the old password still active.
+    setAuth({ profile: APPROVED_PROFILE, profileStatus: 'approved', recoveryPending: true });
+    render(
+      <MemoryRouter initialEntries={['/cases']}>
+        <Routes>
+          <Route
+            path="/cases"
+            element={
+              <ProtectedRoute>
+                <div>protected content</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/reset-password" element={<div>reset probe</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('reset probe')).toBeInTheDocument();
     expect(screen.queryByText('protected content')).not.toBeInTheDocument();
   });
 });

@@ -1,40 +1,47 @@
+import { useTranslation } from 'react-i18next';
 import { motion, useReducedMotion } from 'framer-motion';
-import { HardDrive, Shield, Users } from 'lucide-react';
-import { StatCard } from './StatCard';
-import { TestimonialCarousel } from './TestimonialCarousel';
-import { TrustBadges } from './TrustBadges';
+import { Fingerprint, Layers, Users, FileCheck } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+const CAPABILITIES: { key: string; icon: LucideIcon }[] = [
+  { key: 'custody', icon: Fingerprint },
+  { key: 'raid', icon: Layers },
+  { key: 'portal', icon: Users },
+  { key: 'reporting', icon: FileCheck },
+];
 
 export const BrandShowcase = () => {
+  const { t } = useTranslation();
   const shouldReduceMotion = useReducedMotion();
 
+  const enter = (delay: number) => ({
+    initial: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 14 },
+    animate: shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 },
+    transition: { duration: 0.5, delay },
+  });
+
   return (
-    <div className="space-y-10 max-w-xl">
-      <motion.div
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -30 }}
-        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-      >
-        <h1 className="text-4xl xl:text-5xl text-white leading-tight">
-          Data Recovery,
-          <br />
-          <span className="text-primary">Simplified.</span>
+    <div className="max-w-xl">
+      <motion.div {...enter(0.05)}>
+        <h1 className="font-display-auth text-5xl xl:text-6xl font-bold text-white leading-[1.08] tracking-tight whitespace-pre-line">
+          {t('auth.headline')}
         </h1>
-        <p className="text-slate-400 mt-4 text-lg leading-relaxed">
-          The complete lab management platform trusted by recovery professionals worldwide.
+        <div aria-hidden="true" className="mt-6 h-1 w-24 rounded-full bg-gradient-to-r from-sky-400 to-sky-400/0" />
+        <p className="text-slate-400 mt-6 text-lg leading-relaxed max-w-md">
+          {t('auth.subheadline')}
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard icon={HardDrive} value="50K+" label="Cases Managed" delay={0.4} />
-        <StatCard icon={Shield} value="99.9%" label="Uptime" delay={0.5} />
-        <StatCard icon={Users} value="200+" label="Labs Trust Us" delay={0.6} />
-      </div>
-
-      <div className="hidden xl:block">
-        <TestimonialCarousel />
-      </div>
-
-      <TrustBadges />
+      <ul className="mt-10 space-y-4">
+        {CAPABILITIES.map(({ key, icon: Icon }, i) => (
+          <motion.li key={key} {...enter(0.25 + i * 0.08)} className="flex items-center gap-3.5">
+            <span className="w-9 h-9 rounded-lg bg-white/[0.06] ring-1 ring-white/10 flex items-center justify-center flex-shrink-0">
+              <Icon className="w-[18px] h-[18px] text-sky-300" strokeWidth={1.75} aria-hidden="true" />
+            </span>
+            <span className="text-slate-300 text-sm">{t(`auth.capability.${key}`)}</span>
+          </motion.li>
+        ))}
+      </ul>
     </div>
   );
 };

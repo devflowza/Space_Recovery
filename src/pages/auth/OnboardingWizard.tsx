@@ -24,7 +24,7 @@ export const OnboardingWizard = () => {
       <AnimatedBackground />
 
       <header className="relative z-10 flex items-center justify-between px-6 py-5">
-        <span className="text-xl text-white tracking-tight">
+        <span className="font-display-auth text-xl font-semibold text-white tracking-tight">
           xSuite
         </span>
         <Link

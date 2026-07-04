@@ -31,12 +31,14 @@ interface AuthContextType {
   profileStatus: ProfileStatus;
   passwordResetRequired: boolean;
   mfaPending: boolean;
+  recoveryPending: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   completeMFAChallenge: () => void;
+  completePasswordRecovery: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,6 +51,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profileStatus, setProfileStatus] = useState<ProfileStatus>('loading');
   const [passwordResetRequired, setPasswordResetRequired] = useState(false);
   const [mfaPending, setMfaPending] = useState(false);
+  // Armed by the PASSWORD_RECOVERY auth event (email reset link). Persisted in
+  // sessionStorage (tab-scoped) so a mid-flow refresh of /reset-password keeps
+  // the guard — the event itself only fires once, on link consumption.
+  const [recoveryPending, setRecoveryPending] = useState(
+    () => sessionStorage.getItem('auth_password_recovery') === '1'
+  );
   const profileCache = useRef<Profile | null>(null);
   const profileFetchInFlight = useRef<string | null>(null);
   // Bumped on every sign-out (manual or expiry). A profile fetch snapshots it
@@ -168,6 +176,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // A fresh/restored session — clear the signing-out guard so the next
           // login's profile fetch isn't dropped.
           signingOut.current = false;
+          // Email reset link consumed: the session is real but exists only to
+          // set a new password. ProtectedRoute bounces this tab to
+          // /reset-password until completePasswordRecovery() clears the flag.
+          if (event === 'PASSWORD_RECOVERY') {
+            sessionStorage.setItem('auth_password_recovery', '1');
+            setRecoveryPending(true);
+          }
           // TOKEN_REFRESHED fires roughly hourly for the SAME user; re-fetching
           // the profile then produced a new profile identity and re-rendered
           // every consumer for no data change. All other events (sign-in, user
@@ -190,6 +205,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileCache.current = null;
           setProfileStatus('loading');
           setMfaPending(false);
+          // An abandoned recovery must not haunt the next login in this tab.
+          sessionStorage.removeItem('auth_password_recovery');
+          setRecoveryPending(false);
           // A SIGNED_OUT with no preceding signOut() is an expiry / revoked
           // refresh token, not a deliberate logout — flag it so the login page
           // shows "session expired" instead of a silent eject (H4). INITIAL_SESSION
@@ -231,6 +249,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const completeMFAChallenge = useCallback(() => {
     setMfaPending(false);
+  }, []);
+
+  const completePasswordRecovery = useCallback(() => {
+    sessionStorage.removeItem('auth_password_recovery');
+    setRecoveryPending(false);
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -318,8 +341,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Memoized so the context only changes when auth state actually changes —
   // 59 files consume useAuth(), so an unstable value re-renders most of the app.
   const value = useMemo(
-    () => ({ user, profile, session, loading, profileStatus, passwordResetRequired, mfaPending, signIn, signInWithGoogle, signUp, signOut, refreshProfile, completeMFAChallenge }),
-    [user, profile, session, loading, profileStatus, passwordResetRequired, mfaPending, signIn, signInWithGoogle, signUp, signOut, refreshProfile, completeMFAChallenge]
+    () => ({ user, profile, session, loading, profileStatus, passwordResetRequired, mfaPending, recoveryPending, signIn, signInWithGoogle, signUp, signOut, refreshProfile, completeMFAChallenge, completePasswordRecovery }),
+    [user, profile, session, loading, profileStatus, passwordResetRequired, mfaPending, recoveryPending, signIn, signInWithGoogle, signUp, signOut, refreshProfile, completeMFAChallenge, completePasswordRecovery]
   );
 
   return (

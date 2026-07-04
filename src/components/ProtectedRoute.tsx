@@ -45,7 +45,7 @@ const AuthLoadingSkeleton = () => (
 );
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
-  const { user, profile, loading, profileStatus, mfaPending, passwordResetRequired, completeMFAChallenge, signOut } = useAuth();
+  const { user, profile, loading, profileStatus, mfaPending, passwordResetRequired, recoveryPending, completeMFAChallenge, signOut } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -54,6 +54,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Password-recovery gate: a session minted from an email reset link exists
+  // only to set a new password. Bounce any protected-route navigation back to
+  // /reset-password until the flow completes — placed BEFORE the MFA gate
+  // because the reset page owns the MFA challenge in this flow.
+  if (recoveryPending) {
+    return <Navigate to="/reset-password" replace />;
   }
 
   // MFA gate: an authenticated-but-not-yet-elevated (aal1) session must present

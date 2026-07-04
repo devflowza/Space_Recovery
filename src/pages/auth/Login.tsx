@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { PasswordChangeModal } from '../../components/users/PasswordChangeModal';
 import { MFAChallenge } from '../../components/auth/MFAChallenge';
-import { AuthLayout } from '../../components/auth/shared/AuthLayout';
+import { AuthShell } from '../../components/auth/shared/AuthShell';
 import { safeInternalRedirect } from '../../lib/utils';
 import { BrandShowcase } from './login/BrandShowcase';
+import { TrustBadges } from './login/TrustBadges';
 import { LoginForm } from './login/LoginForm';
 
 export const Login: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, passwordResetRequired, profile, profileStatus, mfaPending, completeMFAChallenge, signOut } = useAuth();
@@ -34,9 +37,9 @@ export const Login: React.FC = () => {
   useEffect(() => {
     if (localStorage.getItem('auth_session_expired')) {
       localStorage.removeItem('auth_session_expired');
-      setError('Your session has expired. Please sign in again.');
+      setError(t('auth.sessionExpired'));
     }
-  }, []);
+  }, [t]);
 
   const handleSubmit = async (email: string, password: string) => {
     setError('');
@@ -72,16 +75,13 @@ export const Login: React.FC = () => {
 
   return (
     <>
-      <AuthLayout
-        leftContent={<BrandShowcase />}
-        rightContent={
-          <LoginForm
-            onSubmit={handleSubmit}
-            error={error}
-            loading={loading}
-          />
-        }
-      />
+      <AuthShell aside={<BrandShowcase />} footer={<TrustBadges />}>
+        <LoginForm
+          onSubmit={handleSubmit}
+          error={error}
+          loading={loading}
+        />
+      </AuthShell>
 
       {showPasswordChangeModal && profile && (
         <PasswordChangeModal

@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Loader2, ChevronRight } from 'lucide-react';
-import { FloatingInput } from './FloatingInput';
+import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { Mail, Lock, Eye, EyeOff, Loader2, ChevronRight, ArrowLeft } from 'lucide-react';
+import { AuthTextField } from '../../../components/auth/shared/AuthTextField';
+import { AuthAlert } from '../../../components/auth/shared/AuthAlert';
+import { useResetRequest } from '../../../components/auth/shared/useResetRequest';
 
 interface LoginFormProps {
   onSubmit: (email: string, password: string) => Promise<void>;
@@ -11,11 +14,14 @@ interface LoginFormProps {
 }
 
 export const LoginForm = ({ onSubmit, error, loading }: LoginFormProps) => {
+  const { t } = useTranslation();
   const shouldReduceMotion = useReducedMotion();
+  const [view, setView] = useState<'signin' | 'forgot'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
+  const resetRequest = useResetRequest();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,122 +29,164 @@ export const LoginForm = ({ onSubmit, error, loading }: LoginFormProps) => {
     setShakeKey(prev => prev + 1);
   };
 
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    await resetRequest.send(email);
+  };
+
+  const viewMotion = shouldReduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : { initial: { opacity: 0, x: 8 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -8 } };
+
   return (
-    <div className="w-full max-w-md">
-      <motion.div
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
-        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="text-center mb-8"
-      >
-        <h1 className="text-3xl text-slate-900 tracking-tight">xSuite</h1>
-        <h2 className="mt-5 text-2xl font-semibold text-slate-900">
-          Welcome back
-        </h2>
-        <p className="mt-2 text-slate-500">
-          Sign in to access your lab dashboard
-        </p>
-      </motion.div>
+    <div>
+      <AnimatePresence mode="wait" initial={false}>
+        {view === 'signin' ? (
+          <motion.div key="signin" {...viewMotion} transition={{ duration: 0.2 }}>
+            <h1 className="text-xl font-semibold text-white">{t('auth.welcomeBack')}</h1>
+            <p className="mt-1 text-sm text-slate-400 mb-6">{t('auth.signInSubtitle')}</p>
 
-      <motion.div
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
-        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-7 sm:p-8 border border-slate-100"
-      >
-        {error && (
-          <motion.div
-            key={shakeKey}
-            animate={shouldReduceMotion ? {} : { x: [0, -8, 8, -8, 4, 0] }}
-            transition={{ duration: 0.4 }}
-            className="mb-5 p-3 bg-danger-muted border border-danger/30 text-danger rounded-xl text-sm"
-            role="alert"
-          >
-            {error}
+            {error && (
+              <motion.div
+                key={shakeKey}
+                animate={shouldReduceMotion ? {} : { x: [0, -8, 8, -8, 4, 0] }}
+                transition={{ duration: 0.4 }}
+                className="mb-5"
+              >
+                <AuthAlert>{error}</AuthAlert>
+              </motion.div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <AuthTextField
+                icon={Mail}
+                label={t('auth.emailLabel')}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+
+              <AuthTextField
+                icon={Lock}
+                label={t('auth.passwordLabel')}
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                    aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                }
+              />
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => { resetRequest.reset(); setView('forgot'); }}
+                  className="text-sm text-secondary hover:text-white font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
+                >
+                  {t('auth.forgotPassword')}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                aria-busy={loading}
+                className="w-full py-3.5 bg-white text-slate-900 font-medium text-sm rounded-xl shadow-lg shadow-sky-950/40 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />
+                    {t('auth.signingIn')}
+                  </>
+                ) : (
+                  t('auth.signInCta')
+                )}
+              </button>
+            </form>
+
+            <p className="text-center mt-6 text-slate-400 text-sm">
+              {t('auth.newToXsuite')}{' '}
+              <Link
+                to="/signup/tenant"
+                className="text-secondary font-medium hover:text-white transition-colors inline-flex items-center gap-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
+              >
+                {t('auth.createYourLab')}
+                <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" aria-hidden="true" />
+              </Link>
+            </p>
           </motion.div>
-        )}
+        ) : (
+          <motion.div key="forgot" {...viewMotion} transition={{ duration: 0.2 }}>
+            <h1 className="text-xl font-semibold text-white">{t('auth.forgot.title')}</h1>
+            <p className="mt-1 text-sm text-slate-400 mb-6">{t('auth.forgot.subtitle')}</p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <FloatingInput
-            icon={Mail}
-            label="Email address"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
+            {resetRequest.status === 'sent' ? (
+              <div className="space-y-5">
+                <AuthAlert tone="success">
+                  {t('auth.forgot.sent', { email })}
+                </AuthAlert>
+                {resetRequest.cooldown > 0 && (
+                  <p className="text-xs text-slate-500 text-center">
+                    {t('auth.forgot.resendIn', { seconds: resetRequest.cooldown })}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleForgotSubmit} className="space-y-5">
+                {resetRequest.error && <AuthAlert>{resetRequest.error}</AuthAlert>}
+                <AuthTextField
+                  icon={Mail}
+                  label={t('auth.emailLabel')}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+                <button
+                  type="submit"
+                  disabled={resetRequest.status === 'sending'}
+                  aria-busy={resetRequest.status === 'sending'}
+                  className="w-full py-3.5 bg-white text-slate-900 font-medium text-sm rounded-xl shadow-lg shadow-sky-950/40 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {resetRequest.status === 'sending' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />
+                      {t('auth.forgot.sending')}
+                    </>
+                  ) : (
+                    t('auth.forgot.send')
+                  )}
+                </button>
+              </form>
+            )}
 
-          <FloatingInput
-            icon={Lock}
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-            rightElement={
+            <p className="mt-6 text-center">
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                tabIndex={-1}
+                onClick={() => setView('signin')}
+                className="inline-flex items-center gap-1.5 text-sm text-slate-300 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" aria-hidden="true" />
+                {t('auth.forgot.backToSignIn')}
               </button>
-            }
-          />
-
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary focus:ring-offset-0"
-              />
-              Remember me
-            </label>
-            <button
-              type="button"
-              className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-            >
-              Forgot password?
-            </button>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            aria-busy={loading}
-            className="w-full py-3.5 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground font-medium rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              'Sign In to xSuite'
-            )}
-          </button>
-        </form>
-      </motion.div>
-
-      <motion.p
-        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-        className="text-center mt-8 text-slate-600 text-sm"
-      >
-        New to xSuite?{' '}
-        <Link
-          to="/signup/tenant"
-          className="text-primary font-medium hover:text-primary/80 transition-colors inline-flex items-center gap-0.5"
-        >
-          Create your lab
-          <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
-      </motion.p>
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
