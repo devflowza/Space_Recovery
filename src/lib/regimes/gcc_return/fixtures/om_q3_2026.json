@@ -1,0 +1,26 @@
+{
+  "name": "om_gcc_3box_q3_2026",
+  "input_document": {
+    "kind": "return_composition",
+    "composer": "gcc_return",
+    "filingFrequency": "quarterly",
+    "periodAnchor": "01-01",
+    "forDate": "2026-07-02",
+    "jurisdictionCurrency": "OMR",
+    "baseCurrency": "OMR",
+    "ledgerRows": [
+      { "record_type": "sale", "vat_amount_base": 52.5, "tax_period": "2026-07" },
+      { "record_type": "sale", "vat_amount_base": 10.0, "tax_period": "2026-09" },
+      { "record_type": "purchase", "vat_amount_base": 12.25, "tax_period": "2026-08" }
+    ]
+  },
+  "expected": {
+    "periodStart": "2026-07-01",
+    "periodEnd": "2026-09-30",
+    "boxes": [
+      { "boxCode": "BOX_1_OUTPUT", "amountBase": 62.5 },
+      { "boxCode": "BOX_2_INPUT", "amountBase": 12.25 },
+      { "boxCode": "BOX_3_NET", "amountBase": 50.25 }
+    ]
+  }
+}
