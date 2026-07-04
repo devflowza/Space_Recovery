@@ -18883,6 +18883,10 @@ export type Database = {
         Args: { p_case_id: string; p_device_id: string }
         Returns: undefined
       }
+      publish_country_pack: {
+        Args: { p_country_id: string; p_version: number }
+        Returns: Json
+      }
       reconcile_expense_ledger: {
         Args: { p_date_from?: string; p_date_to?: string }
         Returns: {
@@ -19262,6 +19266,10 @@ export type Database = {
       submit_country_pack_for_review: {
         Args: { p_pack_version_id: string }
         Returns: undefined
+      }
+      sync_engine_capabilities: {
+        Args: { p_capabilities: Json }
+        Returns: number
       }
       tenant_feature_enabled: {
         Args: { p_key: string; p_tenant_id: string }
