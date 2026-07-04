@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { getAllowedTransitions } from '@/lib/caseStateMachineService';
 import { buildCaseStatusOptions, type StatusOptionGroup } from '@/lib/caseStatusOptions';
+import { useTenantFeatures } from '../../../contexts/TenantConfigContext';
 import type { Database } from '../../../types/database.types';
 
 type CaseRow = Database['public']['Tables']['cases']['Row'];
@@ -182,9 +183,12 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   // same-phase or non-adjacent pick.
   const currentStatus = caseStatuses.find((s) => s.name === caseData.status) ?? null;
 
+  const { isEnabled: isFeatureOn } = useTenantFeatures();
+  const qaEnabled = isFeatureOn('workflow.stage.qa');
+
   const { data: allowedTransitions = [] } = useQuery({
-    queryKey: ['case_allowed_transitions', currentStatus?.id ?? null, profile?.role ?? null],
-    queryFn: () => getAllowedTransitions(currentStatus?.id ?? null, profile?.role ?? null),
+    queryKey: ['case_allowed_transitions', currentStatus?.id ?? null, profile?.role ?? null, qaEnabled],
+    queryFn: () => getAllowedTransitions(currentStatus?.id ?? null, profile?.role ?? null, { qaEnabled }),
     enabled: !!currentStatus?.id && !!profile?.role,
   });
 
@@ -276,6 +280,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
     current: currentStatus,
     allActiveStatuses: caseStatuses,
     allowedTransitions,
+    qaEnabled,
   });
   const hasStatusChangeTargets = statusChangeOptions.some((o) => o.group !== 'current');
   const priorityOptions = casePriorities.map(priority => ({ value: priority.name.toLowerCase(), label: priority.name }));

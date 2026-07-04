@@ -5,6 +5,7 @@ import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTenantFeature } from '@/contexts/TenantConfigContext';
 import { useToast } from '@/hooks/useToast';
 import { formatDate } from '@/lib/format';
 import { caseQualityService } from '@/lib/caseQualityService';
@@ -44,6 +45,10 @@ export const CaseRecoveryQaTab: React.FC<{ caseId: string }> = ({ caseId }) => {
   const { profile } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
+  // Recovery-attempt capture stays available regardless — it is the required
+  // evidence for leaving Recovery. Only the QA sign-off surface follows the
+  // tenant QA stage toggle.
+  const qaEnabled = useTenantFeature('workflow.stage.qa');
 
   const { data: attempts = [] } = useQuery({
     queryKey: ['case_recovery_attempts', caseId],
@@ -112,12 +117,13 @@ export const CaseRecoveryQaTab: React.FC<{ caseId: string }> = ({ caseId }) => {
         <div className="p-6">
           <h2 className="text-xl font-bold text-slate-900 mb-1">Recovery &amp; QA</h2>
           <p className="text-sm text-slate-500 mb-4">
-            A case can only advance to Completed / Delivered once a recovery attempt has an outcome
-            and QA has passed. These are enforced server-side.
+            {qaEnabled
+              ? 'A case can only leave Recovery once an attempt has a recorded outcome, and can only pass QA with a passed checklist. These are enforced server-side.'
+              : 'A case can only leave Recovery once an attempt has a recorded outcome. This is enforced server-side. (The QA stage is disabled for your lab.)'}
           </p>
           <div className="flex flex-wrap gap-3">
             <ReadinessPill ok={readiness.hasRecordedRecovery} label="Recovery outcome recorded" />
-            <ReadinessPill ok={readiness.hasPassedQa} label="QA passed" />
+            {qaEnabled ? <ReadinessPill ok={readiness.hasPassedQa} label="QA passed" /> : null}
           </div>
         </div>
       </Card>
@@ -189,6 +195,7 @@ export const CaseRecoveryQaTab: React.FC<{ caseId: string }> = ({ caseId }) => {
         </div>
       </Card>
 
+      {qaEnabled ? (
       <Card>
         <div className="p-6">
           <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
@@ -238,6 +245,7 @@ export const CaseRecoveryQaTab: React.FC<{ caseId: string }> = ({ caseId }) => {
           </div>
         </div>
       </Card>
+      ) : null}
     </div>
   );
 };

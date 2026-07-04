@@ -49,7 +49,32 @@ export type BadgeVariant =
  * (e.g. `invoices.status`) — fall back to the neutral `secondary` variant.
  */
 export function statusToBadgeVariant(status: string | null | undefined): BadgeVariant {
-  switch (status?.trim().toLowerCase()) {
+  const normalized = status?.trim().toLowerCase() ?? '';
+
+  // Canonical case-lifecycle statuses (2026-07 standardization). These carry
+  // multiword names, so they are matched before the generic vocabulary below.
+  // Closed is terminal-neutral (device returned / disposed, case archived);
+  // the cancelled variants read as danger like the generic 'cancelled'.
+  if (normalized.startsWith('closed —')) return 'secondary';
+  if (normalized.startsWith('cancelled —')) return 'danger';
+  switch (normalized) {
+    case 'data delivered':
+    case 'ready for delivery':
+    case 'approved — in queue':
+      return 'success';
+    case 'registered':
+    case 'device received':
+    case 'in diagnosis':
+      return 'info';
+    case 'preparing quote':
+    case 'awaiting customer approval':
+    case 'recovery in progress':
+    case 'on hold — awaiting parts':
+    case 'verification (qa)':
+      return 'warning';
+  }
+
+  switch (normalized) {
     // Positive / terminal-good outcomes. Domain additions: 'ready' (recovery
     // data ready for delivery — matches the internal "Ready" success stat card),
     // 'available' (clone drive free for use).

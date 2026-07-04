@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   AlertCircle,
+  Archive,
   ArrowDown,
   ArrowUp,
   Briefcase,
@@ -77,10 +78,11 @@ const TrendMark: React.FC<{ trend: Trend }> = ({ trend }) => {
 
 // Each bucket owns a VISIBLE-on-white hue end-to-end: dot + number share it,
 // and the active (filtering) card tints in the same colour rather than a
-// generic outline. The five stage hues are meaning-constant across themes
-// (like status pills); "New" alone follows the tenant theme's primary as the
-// brand moment (owner request) — note it reads near-ink on Royal's navy.
-// Delivered stays ink/slate: terminal states shouldn't compete.
+// generic outline. The stage hues are meaning-constant across themes (like
+// status pills); "New" alone follows the tenant theme's primary as the brand
+// moment (owner request) — note it reads near-ink on Royal's navy.
+// Delivered is still actionable (data released, device awaiting return) so it
+// keeps a live hue; Closed owns the terminal ink/slate role.
 const BUCKET_META: Array<{
   bucket: CaseBucket;
   label: string;
@@ -93,7 +95,8 @@ const BUCKET_META: Array<{
   { bucket: 'approval', label: 'Awaiting approval', dotClass: 'bg-cat-6', valueClass: 'text-cat-6', activeClass: 'border-cat-6 bg-cat-6/10' },
   { bucket: 'recovery', label: 'In recovery', dotClass: 'bg-cat-2', valueClass: 'text-cat-2', activeClass: 'border-cat-2 bg-cat-2/10' },
   { bucket: 'ready', label: 'Ready', dotClass: 'bg-success', valueClass: 'text-success', activeClass: 'border-success bg-success-muted' },
-  { bucket: 'delivered', label: 'Delivered', dotClass: 'bg-slate-400', valueClass: 'text-slate-900', activeClass: 'border-slate-400 bg-slate-100' },
+  { bucket: 'delivered', label: 'Delivered', dotClass: 'bg-info', valueClass: 'text-info', activeClass: 'border-info bg-info-muted' },
+  { bucket: 'closed', label: 'Closed', dotClass: 'bg-slate-400', valueClass: 'text-slate-900', activeClass: 'border-slate-400 bg-slate-100' },
 ];
 
 /**
@@ -172,7 +175,7 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
 
       {cardStyle === 'vivid' ? (
         <div
-          className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6"
+          className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7"
           role="group"
           aria-label="Filter cases by lifecycle stage"
         >
@@ -240,10 +243,21 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
             onClick={() => onBucketChange(activeBucket === 'delivered' ? null : 'delivered')}
             className={cn(activeBucket === 'delivered' && activeRing)}
           />
+          <GradientStatCard
+            size="sm"
+            tone="cat-8"
+            icon={Archive}
+            label="Closed"
+            value={stats?.buckets.closed ?? 0}
+            denom={stats?.total}
+            loading={loading}
+            onClick={() => onBucketChange(activeBucket === 'closed' ? null : 'closed')}
+            className={cn(activeBucket === 'closed' && activeRing)}
+          />
         </div>
       ) : (
       <div
-        className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6"
+        className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7"
         role="group"
         aria-label="Filter cases by lifecycle stage"
       >

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { setPrimaryDevice } from '../../lib/deviceService';
+import { getIntakeStatusForCreation } from '../../lib/caseService';
 import { logger } from '../../lib/logger';
 import { useToast } from '../../hooks/useToast';
 import { useConfirm } from '../../hooks/useConfirm';
@@ -366,13 +367,19 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
       }
       const tenantId = profile.tenant_id;
 
+      // The guard trigger on cases requires a matched active intake
+      // status_id + name pair on INSERT.
+      const intakeStatus = await getIntakeStatusForCreation();
+
       const caseData: CasesInsert = {
         tenant_id: tenantId,
         case_number: caseNumber,
         customer_id: formData.customer_id,
         subject: `Case for ${customerName}`,
         priority: formData.priority,
-        status: 'Received',
+        status: intakeStatus.name,
+        status_id: intakeStatus.id,
+        phase_entered_at: new Date().toISOString(),
       };
 
       if (formData.contact_id) {

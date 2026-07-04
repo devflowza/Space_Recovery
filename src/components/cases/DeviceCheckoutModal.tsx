@@ -301,6 +301,11 @@ export const DeviceCheckoutModal: React.FC<DeviceCheckoutModalProps> = ({
           </select>
         </div>
 
+        <p className="text-xs text-slate-500">
+          When the last device is checked out, the case automatically moves to
+          Closed — Device Returned (after Data Delivered where applicable).
+        </p>
+
         {error && (
           <div className="bg-danger-muted border border-danger/30 rounded-lg p-3 text-sm text-danger">
             {error}

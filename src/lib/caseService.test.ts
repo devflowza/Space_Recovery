@@ -18,6 +18,32 @@ function mockCasesInsert(newCase: Record<string, unknown>) {
 
 const devicesStub = () => ({ insert: vi.fn(() => Promise.resolve({ error: null })) });
 
+// getIntakeStatusForCreation() resolves the active intake statuses; the
+// creation paths stamp the LAST one (Device Received) onto the new case.
+function mockIntakeStatuses() {
+  const chain: Record<string, unknown> = {};
+  chain.select = vi.fn(() => chain);
+  chain.eq = vi.fn(() => chain);
+  chain.order = vi.fn(() =>
+    Promise.resolve({
+      data: [
+        { id: 'st-registered', name: 'Registered' },
+        { id: 'st-received', name: 'Device Received' },
+      ],
+      error: null,
+    }),
+  );
+  return chain;
+}
+
+function routeTables(casesChain: Record<string, unknown>) {
+  return (table: string) => {
+    if (table === 'cases') return casesChain;
+    if (table === 'master_case_statuses') return mockIntakeStatuses();
+    return devicesStub();
+  };
+}
+
 describe('duplicateCase — case number sourcing', () => {
   beforeEach(() => {
     rpc.mockReset();
@@ -27,7 +53,7 @@ describe('duplicateCase — case number sourcing', () => {
   it('reserves the next number from the canonical `case` scope (not the legacy `cases` wrapper)', async () => {
     rpc.mockResolvedValue({ data: 'C-0020', error: null });
     const casesChain = mockCasesInsert({ id: 'new-1', case_number: 'C-0020' });
-    from.mockImplementation((table: string) => (table === 'cases' ? casesChain : devicesStub()));
+    from.mockImplementation(routeTables(casesChain));
 
     const result = await duplicateCase(
       { customer_id: 'c1', priority: 'high', title: 'X' },
@@ -38,14 +64,19 @@ describe('duplicateCase — case number sourcing', () => {
     expect(rpc).toHaveBeenCalledWith('get_next_number', { p_scope: 'case' });
     expect(rpc).not.toHaveBeenCalledWith('get_next_case_number');
     expect(casesChain.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ case_number: 'C-0020', tenant_id: 't1' }),
+      expect.objectContaining({
+        case_number: 'C-0020',
+        tenant_id: 't1',
+        status: 'Device Received',
+        status_id: 'st-received',
+      }),
     );
     expect(result.case_number).toBe('C-0020');
   });
 
   it('reuses a pre-reserved case number when one is passed (no extra RPC)', async () => {
     const casesChain = mockCasesInsert({ id: 'new-2', case_number: 'C-0099' });
-    from.mockImplementation((table: string) => (table === 'cases' ? casesChain : devicesStub()));
+    from.mockImplementation(routeTables(casesChain));
 
     await duplicateCase({ customer_id: 'c1' }, [], { id: 'u1', tenantId: 't1' }, 'C-0099');
 

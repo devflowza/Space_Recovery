@@ -22,14 +22,14 @@
 | 5 | Initial Inspection / Condition | `case_devices.condition_id`; `device_diagnostics` (insert fails — see workflow doc) |
 | 6 | Diagnosis / Fault / Recoverability | `case_devices.symptoms` + `catalog_service_problems` (flat label, no severity) |
 | 7 | Quotation & Approval | `quotes` (internal) vs `case_quotes` (portal read — 0 rows; loop broken) |
-| 8 | Recovery Process | `transition_case_status` + `resource_clone_drives`; `case_recovery_attempts` unwired |
+| 8 | Recovery Process | `transition_case_status` + `resource_clone_drives`; `case_recovery_attempts` is REQUIRED evidence to leave `recovery` (v1.3.0) |
 | 9 | Engineer Assignment | `case_engineers` (hardcoded `profiles.role='technician'`; hard-delete on remove) |
 | 10 | Internal Notes & Findings | `case_internal_notes`; `device_diagnostics` (no visibility/private column) |
-| 11 | Recovery Verification / QA | `chain_of_custody_integrity_checks` (hash/seal); `case_qa_checklists` orphan |
+| 11 | Recovery Verification / QA | `case_qa_checklists` (gates `qa → ready`); QA stage is a per-tenant toggle `workflow.stage.qa`, optional per case when on (v1.3.0); `chain_of_custody_integrity_checks` (hash/seal) |
 | 12 | File Listing & Delivery Approval | _no recovered-file manifest, no customer accept gate_; `case_reports` (read-only portal) |
-| 13 | Device Checkout / Return | `log_case_checkout` (raw `status='Delivered'`); `chain_of_custody_transfers` |
+| 13 | Device Checkout / Return | `log_case_checkout` (routes through `transition_case_status`; full collection drives `ready→delivered→closed`); `chain_of_custody_transfers` |
 | 14 | Billing & Payment | `invoices`, `payments`, `payment_allocations` (no payment-before-release gate) |
-| 15 | Case Closure | `transition_case_status` (`requires[]` advisory-only) vs `log_case_checkout` bypass |
+| 15 | Case Closure | terminal `closed` phase (`Closed — Device Returned` / `Closed — Media Disposed`), gated on all devices checked out; `requires[]` tokens are DB-ENFORCED in `transition_case_status` (v1.3.0) |
 | 16 | Audit Trail & Reporting | `case_job_history`, `audit_trails`, `case_reports`, `chain_of_custody` |
 
 ### Before you change anything
@@ -613,6 +613,17 @@ const formatted = formatCurrencyWithConfig(amount, currency);
 - **Customer↔company integrity**: single-primary partial unique index `uq_customer_primary_company` + data fix (9 linked customers had no primary); relationship management UI (`ManageCompaniesModal`, manager+) with audited add/set-primary/end and explicit open-case re-pointing; all relationship readers now filter `deleted_at`.
 - Tenant-configurable case table columns: registry + `company_settings.metadata.table_columns` (tenant defaults/locked) + `user_preferences.preferences.tables` (user overrides); fit-to-width rendering (no horizontal scroll). No schema change.
 - `database.types.ts` regenerated.
+
+### Version 1.3.0 — Case Lifecycle Standardization & Optional QA
+**Date**: 2026-07-04
+**Migrations**: `standardize_case_lifecycle`, `normalize_recovery_outcome_vocabulary`
+
+- **One canonical status vocabulary end-to-end.** `master_case_statuses` reshaped to 15 active statuses across 11 phases (`intake → diagnosis → quoting → awaiting_approval → approved → recovery → [qa] → ready → delivered → closed`, `cancelled` off-ramp). The `completed` phase is retired — recovery outcome (full/partial/unrecoverable/declined) lives in `cases.recovery_outcome` + `case_recovery_attempts.result`, never in status names. New terminal **`closed`** phase (`Closed — Device Returned`, `Closed — Media Disposed`): delivered/cancelled cases close when every device is checked out.
+- **All 2,012 legacy cases remapped** onto the canonical set (original text frozen in new `cases.legacy_status`; one `status_standardized` row per changed case in `case_job_history`; `status_id` now NON-NULL on every live case). Legacy `Returned` (1,092) → `Closed — Device Returned`. Dashboard "active" derives from phase (`type ∉ {delivered, closed, cancelled}`): 1,448 → 304.
+- **`case_status_transitions` rebuilt to 22 active edges** with enforced `requires[]` only: `recovery_outcome` (leave recovery), `qa_passed` (qa→ready), `cancellation_reason`/`reopen_reason` (blank reason blocked), `device_returned` (close gates on full device checkout). `recovery→ready` provides the QA-skip path; `recovery→cancelled` added.
+- **QA is a real tenant feature toggle**: `workflow.stage.qa` (Settings → Features & Modules) is routing-authoritative — `transition_case_status` refuses to ENTER `type='qa'` when off (`tenant_feature_enabled`, HINT `qa_disabled`); pickers/stage banner filter qa client-side; the Recovery & QA tab keeps recovery-attempt capture (required evidence) and hides only the QA sign-off card. When on, QA is optional per case. Decoupled from the display-only `workflow.stage_banner`.
+- **Creation goes through the machine**: `guard_cases_status_changes` is now BEFORE INSERT OR UPDATE (INSERT must carry a matched active intake `status_id`+`status` pair, be NULL/NULL, or run under `app.bypass_status_guard`/`app.importing`); `CreateCaseWizard`/`caseService.duplicateCase` resolve the intake status via `getIntakeStatusForCreation()`. `log_case_checkout` best-effort target is now `closed` (via `delivered` from `ready`). `seedData.ts` seeds the canonical statuses + edge matrix for fresh tenants (stale hyphenated vocabulary removed).
+- `database.types.ts` regenerated (`cases.legacy_status`).
 
 ### Future Migration Guidelines
 

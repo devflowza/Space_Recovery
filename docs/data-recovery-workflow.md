@@ -313,6 +313,21 @@ The chain-of-custody subsystem is substantial in the UI and service layer but it
 
 ## Case Status State Machine
 
+> **⚠️ SUPERSEDED (2026-07-04, v1.3.0 lifecycle standardization).** The snapshot
+> below predates the `standardize_case_lifecycle` migration and is retained as
+> the historical gap record. Current reality: the vocabulary is 15 active
+> statuses across `intake → diagnosis → quoting → awaiting_approval → approved
+> → recovery → [qa] → ready → delivered → closed` (+ `cancelled` off-ramp); the
+> `completed` phase and outcome-in-status-name variants are retired (outcome
+> lives in `cases.recovery_outcome`); `requires[]` tokens ARE enforced by the
+> RPC (`recovery_outcome`, `qa_passed`, `cancellation_reason`, `reopen_reason`,
+> `device_returned`, plus the payment-before-release tenant gate); the guard
+> trigger covers INSERT as well as UPDATE; `log_case_checkout` routes through
+> the RPC and full device checkout drives `ready→delivered→closed`; QA is a
+> tenant feature toggle (`workflow.stage.qa`), optional per case when enabled
+> and blocked server-side when disabled. All 2,012 legacy cases were remapped
+> (original text in `cases.legacy_status`). See CLAUDE.md § Version 1.3.0.
+
 **Engine.** `transition_case_status` (DB RPC) + `case_status_transitions` (edges) + `master_case_statuses` (vocabulary), surfaced by `src/lib/caseStateMachineService.ts` and `CaseStageBanner.tsx`. `PHASE_ORDER` runs intake → ... → recovery → qa → completed → delivered. The `completed` phase has three variants (`Completed-Success/Partial/Failed`); terminal states are the three `Completed-*`, `Delivered`, and `Cancelled` (3 variants).
 
 **What it enforces.** For a transition, the RPC validates exactly (a) the phase edge exists in `case_status_transitions` and (b) the caller's `profiles.role` is in that edge's `allowed_roles`. Forward edges allow technician/manager/admin/owner; reopen edges are admin/owner only. A BEFORE-UPDATE trigger `trg_guard_cases_status_changes` → `guard_cases_status_changes()` raises `42501` on any direct `cases.status`/`status_id` change unless session-local `app.bypass_status_guard='true'` (which `transition_case_status` sets around its UPDATE).

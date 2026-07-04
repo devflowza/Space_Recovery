@@ -97,8 +97,8 @@ const CHIP_STYLE: Partial<Record<CaseStatusType, { idle: string; active: string 
   recovery: { idle: 'bg-cat-2/10 text-cat-2 hover:bg-cat-2/20', active: 'bg-cat-2/20 text-cat-2 ring-2 ring-cat-2' },
   qa: { idle: 'bg-cat-2/10 text-cat-2 hover:bg-cat-2/20', active: 'bg-cat-2/20 text-cat-2 ring-2 ring-cat-2' },
   ready: { idle: 'bg-success-muted text-success hover:bg-success/20', active: 'bg-success text-success-foreground shadow-md' },
-  completed: { idle: 'bg-success-muted text-success hover:bg-success/20', active: 'bg-success text-success-foreground shadow-md' },
-  delivered: { idle: 'bg-success-muted text-success hover:bg-success/20', active: 'bg-success text-success-foreground shadow-md' },
+  delivered: { idle: 'bg-info-muted text-info hover:bg-info/20', active: 'bg-info text-info-foreground shadow-md' },
+  closed: { idle: 'bg-slate-100 text-slate-600 hover:bg-slate-200', active: 'bg-slate-600 text-white shadow-md' },
   cancelled: { idle: 'bg-danger-muted text-danger hover:bg-danger/20', active: 'bg-danger text-danger-foreground shadow-md' },
 };
 const DEFAULT_CHIP_STYLE = {

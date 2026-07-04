@@ -36,12 +36,12 @@ export const useSidebarBadges = (): SidebarBadgeCounts => {
     staleTime: 10 * 60 * 1000,
   });
 
-  const excludedTypes = ['completed', 'delivered', 'cancelled'];
+  const excludedTypes = ['delivered', 'closed', 'cancelled'];
   const activeStatusNames = (caseStatuses ?? [])
     .filter(s => !excludedTypes.includes(s.type?.toLowerCase() || ''))
     .map(s => s.name);
 
-  // Get cases created today with active statuses (not completed, delivered, or cancelled)
+  // Get cases created today with active statuses (not delivered, closed, or cancelled)
   const { data: casesTodayCount = 0 } = useQuery({
     queryKey: ['sidebar_badges_cases_today', activeStatusNames],
     enabled: activeStatusNames.length > 0,

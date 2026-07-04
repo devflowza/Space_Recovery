@@ -2664,6 +2664,7 @@ export type Database = {
           internal_notes: string | null
           is_urgent: boolean | null
           is_warranty: boolean | null
+          legacy_status: string | null
           legal_entity_id: string | null
           net_amount: number | null
           phase_entered_at: string | null
@@ -2711,6 +2712,7 @@ export type Database = {
           internal_notes?: string | null
           is_urgent?: boolean | null
           is_warranty?: boolean | null
+          legacy_status?: string | null
           legal_entity_id?: string | null
           net_amount?: number | null
           phase_entered_at?: string | null
@@ -2758,6 +2760,7 @@ export type Database = {
           internal_notes?: string | null
           is_urgent?: boolean | null
           is_warranty?: boolean | null
+          legacy_status?: string | null
           legal_entity_id?: string | null
           net_amount?: number | null
           phase_entered_at?: string | null

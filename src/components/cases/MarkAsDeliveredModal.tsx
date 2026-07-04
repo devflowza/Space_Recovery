@@ -37,6 +37,9 @@ interface MarkAsDeliveredModalProps {
   clone: CloneDrive | null;
   caseNo?: string;
   caseStatus?: string;
+  /** Lifecycle phase (master_case_statuses.type) — status names are
+   *  tenant-facing labels and must not drive logic. */
+  casePhase?: string | null;
   patientDeviceName?: string;
   isLoading?: boolean;
 }
@@ -48,10 +51,11 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
   clone,
   caseNo,
   caseStatus,
+  casePhase,
   patientDeviceName,
   isLoading = false,
 }) => {
-  const [updateCaseStatus, setUpdateCaseStatus] = useState(caseStatus !== 'Delivered');
+  const [updateCaseStatus, setUpdateCaseStatus] = useState(casePhase !== 'delivered');
   const [deliveryNotes, setDeliveryNotes] = useState('');
   const [retentionDays, setRetentionDays] = useState(clone?.retention_days || 180);
   const retentionInputRef = useRef<HTMLInputElement>(null);
@@ -222,7 +226,7 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
               />
             </div>
 
-            {caseStatus !== 'Delivered' && (
+            {casePhase !== 'delivered' && (
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5">
                 <label className="flex items-start gap-2.5 cursor-pointer">
                   <input
@@ -234,7 +238,7 @@ export const MarkAsDeliveredModal: React.FC<MarkAsDeliveredModalProps> = ({
                   />
                   <div className="flex-1">
                     <div className="text-xs font-medium text-slate-900">
-                      Also update case status to "Delivered"
+                      Also update case status to "Data Delivered"
                     </div>
                     <div className="text-xs text-slate-600 mt-0.5">
                       Current case status: <span className="font-medium">{caseStatus}</span>

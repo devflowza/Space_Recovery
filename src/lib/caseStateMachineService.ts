@@ -14,8 +14,8 @@ export type CasePhase =
   | 'recovery'
   | 'qa'
   | 'ready'
-  | 'completed'
   | 'delivered'
+  | 'closed'
   | 'cancelled';
 
 export const PHASE_LABEL: Record<CasePhase, string> = {
@@ -27,8 +27,8 @@ export const PHASE_LABEL: Record<CasePhase, string> = {
   recovery: 'Recovery',
   qa: 'QA',
   ready: 'Ready',
-  completed: 'Completed',
   delivered: 'Delivered',
+  closed: 'Closed',
   cancelled: 'Cancelled',
 };
 
@@ -42,9 +42,9 @@ export const PHASE_ORDER: CasePhase[] = [
   'approved',
   'recovery',
   'qa',
-  'completed',
   'ready',
   'delivered',
+  'closed',
 ];
 
 export interface AllowedTransition {
@@ -74,10 +74,17 @@ export async function listCaseStatuses(): Promise<CaseStatusRow[]> {
   return (data ?? []) as CaseStatusRow[];
 }
 
+export interface TransitionOptions {
+  /** When false, qa-phase destinations are removed (tenant QA feature off). */
+  qaEnabled?: boolean;
+}
+
 export async function getAllowedTransitions(
   currentStatusId: string | null,
   callerRole: string | null,
+  options: TransitionOptions = {},
 ): Promise<AllowedTransition[]> {
+  const qaEnabled = options.qaEnabled ?? true;
   // Read the current phase first; if currentStatusId is null we treat as intake.
   let currentPhase: CasePhase = 'intake';
   if (currentStatusId) {
@@ -99,15 +106,18 @@ export async function getAllowedTransitions(
   if (edgesErr) throw edgesErr;
 
   // Role filter happens client-side; DB also blocks at the RPC layer.
-  const allowedEdges = (edges ?? []).filter((e: TransitionRow) =>
-    callerRole ? e.allowed_roles.includes(callerRole) : false,
+  // The QA filter mirrors the server's tenant gate (qa_disabled).
+  const allowedEdges = (edges ?? []).filter(
+    (e: TransitionRow) =>
+      (callerRole ? e.allowed_roles.includes(callerRole) : false) &&
+      (qaEnabled || e.to_phase !== 'qa'),
   );
 
   if (allowedEdges.length === 0) return [];
 
   // Pull the destination statuses. Multiple statuses may share a phase
-  // (e.g. completed has three variants). Return all of them so the UI
-  // can let the user pick.
+  // (e.g. cancelled and closed each have variants). Return all of them so
+  // the UI can let the user pick.
   const toPhases = Array.from(new Set(allowedEdges.map((e) => e.to_phase as CasePhase)));
   const { data: statuses, error: stErr } = await supabase
     .from('master_case_statuses')
@@ -120,7 +130,8 @@ export async function getAllowedTransitions(
   // Cancellation reopens are special — flag for the UI so they can show in
   // a destructive-style action group.
   const reopenPhases = new Set<CasePhase>(['intake', 'recovery']);
-  const isReopenEdge = currentPhase === 'delivered' || currentPhase === 'cancelled';
+  const isReopenEdge =
+    currentPhase === 'delivered' || currentPhase === 'cancelled' || currentPhase === 'closed';
 
   return (statuses ?? []).map((s) => {
     const matchingEdge = allowedEdges.find((e) => e.to_phase === s.type);

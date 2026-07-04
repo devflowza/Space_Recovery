@@ -256,13 +256,24 @@ export const CompanyProfilePage: React.FC = () => {
           }
         }
 
-        const completedStatuses = ['completed', 'closed', 'delivered'];
-        const pendingStatuses = ['open', 'in_progress', 'pending', 'awaiting_approval'];
+        // Terminal case statuses: canonical names (Data Delivered, Closed — *,
+        // Cancelled — *) plus the legacy words for any pre-standardization text
+        // still rendered from history.
+        const isFinishedCase = (status: string) => {
+          const v = status.toLowerCase();
+          return (
+            v === 'data delivered' ||
+            v.startsWith('closed') ||
+            v.startsWith('cancelled') ||
+            ['completed', 'delivered', 'returned'].includes(v)
+          );
+        };
+        const finishedCount = cases?.filter(c => c.status && isFinishedCase(c.status)).length || 0;
 
         return {
           totalCases: cases?.length || 0,
-          completedCases: cases?.filter(c => c.status && completedStatuses.includes(c.status.toLowerCase())).length || 0,
-          pendingCases: cases?.filter(c => c.status && pendingStatuses.includes(c.status.toLowerCase())).length || 0,
+          completedCases: finishedCount,
+          pendingCases: (cases?.length || 0) - finishedCount,
           totalRevenue,
           totalQuotes,
           approvedQuotes,
