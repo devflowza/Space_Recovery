@@ -17,6 +17,7 @@ export const CASE_STATUS_TYPES = [
   'ready',
   'delivered',
   'closed',
+  'no_solution',
   'cancelled',
 ] as const;
 
@@ -34,14 +35,19 @@ export const STATUS_TYPE_LABELS: Record<CaseStatusType, string> = {
   ready: 'Ready',
   delivered: 'Delivered',
   closed: 'Closed',
+  no_solution: 'No Solution (Follow-up)',
   cancelled: 'Cancelled',
 };
 
-/** Types that end the pipeline — never age-flagged, excluded from "active". */
-export const TERMINAL_TYPES: readonly CaseStatusType[] = ['delivered', 'closed', 'cancelled'];
+/**
+ * Types that end the active pipeline — never age-flagged, excluded from "active".
+ * `no_solution` is terminal-for-now (device returned, parked for review) but
+ * revisitable via reopen; it still counts as not-active daily work.
+ */
+export const TERMINAL_TYPES: readonly CaseStatusType[] = ['delivered', 'closed', 'no_solution', 'cancelled'];
 
 /** Disjoint pipeline buckets shown as command-center cards. */
-export type CaseBucket = 'new' | 'diagnosis' | 'approval' | 'recovery' | 'ready' | 'delivered' | 'closed';
+export type CaseBucket = 'new' | 'diagnosis' | 'approval' | 'recovery' | 'ready' | 'delivered' | 'closed' | 'no_solution';
 
 export const CASE_BUCKET_TYPES: Record<CaseBucket, readonly CaseStatusType[]> = {
   new: ['intake'],
@@ -51,6 +57,7 @@ export const CASE_BUCKET_TYPES: Record<CaseBucket, readonly CaseStatusType[]> = 
   ready: ['ready'],
   delivered: ['delivered'],
   closed: ['closed'],
+  no_solution: ['no_solution'],
 };
 
 export const CASE_BUCKETS = Object.keys(CASE_BUCKET_TYPES) as CaseBucket[];
@@ -111,6 +118,7 @@ export function bucketizeStatusCounts(
     ready: 0,
     delivered: 0,
     closed: 0,
+    no_solution: 0,
   };
   let cancelled = 0;
   let unmapped = 0;
@@ -136,7 +144,7 @@ export function bucketizeStatusCounts(
     cancelled,
     unmapped,
     total,
-    active: total - buckets.delivered - buckets.closed - cancelled,
+    active: total - buckets.delivered - buckets.closed - buckets.no_solution - cancelled,
   };
 }
 

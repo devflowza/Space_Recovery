@@ -39,7 +39,10 @@ export function useCaseQueries(id: string | undefined) {
           updated_by,
           assigned_engineer_id,
           assigned_to,
-          company_id
+          company_id,
+          recovery_outcome,
+          parent_case_id,
+          no_solution_reason_id
         `)
         .eq('id', id)
         .maybeSingle();

@@ -96,6 +96,7 @@ const BUCKET_META: Array<{
   { bucket: 'recovery', label: 'In recovery', dotClass: 'bg-cat-2', valueClass: 'text-cat-2', activeClass: 'border-cat-2 bg-cat-2/10' },
   { bucket: 'ready', label: 'Ready', dotClass: 'bg-success', valueClass: 'text-success', activeClass: 'border-success bg-success-muted' },
   { bucket: 'delivered', label: 'Delivered', dotClass: 'bg-info', valueClass: 'text-info', activeClass: 'border-info bg-info-muted' },
+  { bucket: 'no_solution', label: 'No solution', dotClass: 'bg-warning', valueClass: 'text-warning', activeClass: 'border-warning bg-warning-muted' },
   { bucket: 'closed', label: 'Closed', dotClass: 'bg-slate-400', valueClass: 'text-slate-900', activeClass: 'border-slate-400 bg-slate-100' },
 ];
 
@@ -257,7 +258,7 @@ export const CasesCommandCenter: React.FC<CasesCommandCenterProps> = ({
         </div>
       ) : (
       <div
-        className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-7"
+        className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8"
         role="group"
         aria-label="Filter cases by lifecycle stage"
       >

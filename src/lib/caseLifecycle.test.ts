@@ -19,6 +19,7 @@ const MASTER = [
   { name: 'Ready for Delivery', type: 'ready' },
   { name: 'Data Delivered', type: 'delivered' },
   { name: 'Closed — Device Returned', type: 'closed' },
+  { name: 'No Solution — Future Follow-up', type: 'no_solution' },
   { name: 'Cancelled — Customer Declined', type: 'cancelled' },
   { name: 'No Type Row', type: null },
 ];
@@ -65,6 +66,7 @@ describe('bucketizeStatusCounts', () => {
     { status: 'Ready for Delivery', total: 24 },
     { status: 'Data Delivered', total: 482 },
     { status: 'Closed — Device Returned', total: 1099 },
+    { status: 'No Solution — Future Follow-up', total: 15 },
     { status: 'Cancelled — Customer Declined', total: 127 },
     { status: 'Some Unknown', total: 7 },
     { status: null, total: 3 },
@@ -79,14 +81,16 @@ describe('bucketizeStatusCounts', () => {
     expect(r.buckets.ready).toBe(24);
     expect(r.buckets.delivered).toBe(482);
     expect(r.buckets.closed).toBe(1099);
+    expect(r.buckets.no_solution).toBe(15);
     expect(r.cancelled).toBe(127);
   });
 
   it('counts unmapped + null statuses as unmapped and keeps them active', () => {
     const r = bucketizeStatusCounts(counts, typeMap);
     expect(r.unmapped).toBe(10);
-    expect(r.total).toBe(2022);
-    expect(r.active).toBe(2022 - 482 - 1099 - 127);
+    expect(r.total).toBe(2037);
+    // no_solution is terminal-for-now: excluded from active like delivered/closed/cancelled.
+    expect(r.active).toBe(2037 - 482 - 1099 - 15 - 127);
   });
 });
 

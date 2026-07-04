@@ -57,6 +57,8 @@ export function statusToBadgeVariant(status: string | null | undefined): BadgeVa
   // the cancelled variants read as danger like the generic 'cancelled'.
   if (normalized.startsWith('closed —')) return 'secondary';
   if (normalized.startsWith('cancelled —')) return 'danger';
+  // No Solution — Future Follow-up: parked but revisitable → attention/warning.
+  if (normalized.startsWith('no solution')) return 'warning';
   switch (normalized) {
     case 'data delivered':
     case 'ready for delivery':

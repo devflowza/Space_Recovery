@@ -151,6 +151,7 @@ export async function duplicateCase(
   devices: DuplicateDeviceSource[],
   actor: { id?: string | null; tenantId: string },
   caseNumber?: string,
+  options?: { parentCaseId?: string | null; caseOrigin?: 'new' | 're_recovery' },
 ): Promise<CaseRow> {
   const nextCaseNumber = caseNumber ?? (await getNextCaseNumber());
   const intakeStatus = await getIntakeStatusForCreation();
@@ -167,6 +168,8 @@ export async function duplicateCase(
     client_reference: source.case_no ?? null,
     subject: source.title ?? null,
     created_by: actor.id ?? null,
+    parent_case_id: options?.parentCaseId ?? null,
+    case_origin: options?.caseOrigin ?? 'new',
   };
   if (source.contact_id) newCaseData.contact_id = source.contact_id;
   if (source.assigned_engineer_id) newCaseData.assigned_to = source.assigned_engineer_id;
@@ -213,6 +216,57 @@ export async function duplicateCase(
       logger.error('Error duplicating devices:', devicesError);
       throw new Error(`Failed to duplicate devices: ${devicesError.message}`);
     }
+  }
+
+  return newCase;
+}
+
+/**
+ * Start a Re-Recovery: create a NEW case linked to `sourceCaseId` (device came
+ * back for another attempt). Copies the device(s) + customer/company, starts at
+ * intake with fresh custody, marks `case_origin='re_recovery'` + `parent_case_id`,
+ * and cross-links both cases in `case_job_history` so the original's full history
+ * is preserved and discoverable. Reuses `duplicateCase`'s copy path.
+ */
+export async function createReRecoveryCase(
+  source: DuplicateCaseSource,
+  devices: DuplicateDeviceSource[],
+  actor: { id?: string | null; tenantId: string },
+  sourceCaseId: string,
+  caseNumber?: string,
+): Promise<CaseRow> {
+  const newCase = await duplicateCase(source, devices, actor, caseNumber, {
+    parentCaseId: sourceCaseId,
+    caseOrigin: 're_recovery',
+  });
+
+  // Cross-link both cases in the append-only audit trail (tenant_id + actor are
+  // filled by the case_job_history audit trigger under the authed session).
+  const { error: linkError } = await supabase.from('case_job_history').insert([
+    {
+      tenant_id: actor.tenantId,
+      case_id: sourceCaseId,
+      action: 'rerecovery_created',
+      old_value: null,
+      new_value: newCase.case_number,
+      details: JSON.stringify({
+        rerecovery_case_id: newCase.id,
+        rerecovery_case_number: newCase.case_number,
+      }),
+    },
+    {
+      tenant_id: actor.tenantId,
+      case_id: newCase.id,
+      action: 'rerecovery_of',
+      old_value: source.case_no ?? null,
+      new_value: null,
+      details: JSON.stringify({ parent_case_id: sourceCaseId, parent_case_no: source.case_no ?? null }),
+    },
+  ]);
+  if (linkError) {
+    // The case is already created + linked via parent_case_id; a history-log
+    // failure shouldn't lose the case. Log and continue.
+    logger.error('Re-recovery created but linkage history failed:', linkError);
   }
 
   return newCase;

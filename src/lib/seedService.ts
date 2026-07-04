@@ -852,6 +852,54 @@ export async function seedCaseServiceData(): Promise<SeedResult> {
       });
     }
 
+    // No-solution reason catalog (global master data).
+    const noSolutionReasonsCount = await getTableCount('master_case_no_solution_reasons');
+    if (noSolutionReasonsCount === 0) {
+      const reasonRecords = CASE_SERVICE_SEED_DATA.master_case_no_solution_reasons.map((r) => ({
+        code: r.code,
+        name: r.name,
+        description: r.description,
+        sort_order: r.sort_order,
+        is_active: true,
+      }));
+
+      const { error: reasonError, count } = await supabase
+        .from('master_case_no_solution_reasons')
+        .insert(reasonRecords)
+        .select();
+
+      if (reasonError) {
+        details.push({
+          tableName: 'master_case_no_solution_reasons',
+          tableLabel: 'No-Solution Reasons',
+          status: 'error',
+          beforeCount: 0,
+          afterCount: 0,
+          itemsInserted: 0,
+        });
+      } else {
+        const itemsInserted = count || reasonRecords.length;
+        totalInserted += itemsInserted;
+        details.push({
+          tableName: 'master_case_no_solution_reasons',
+          tableLabel: 'No-Solution Reasons',
+          status: 'seeded',
+          beforeCount: 0,
+          afterCount: itemsInserted,
+          itemsInserted,
+        });
+      }
+    } else {
+      details.push({
+        tableName: 'master_case_no_solution_reasons',
+        tableLabel: 'No-Solution Reasons',
+        status: 'skipped',
+        beforeCount: noSolutionReasonsCount,
+        afterCount: noSolutionReasonsCount,
+        itemsInserted: 0,
+      });
+    }
+
     const serviceLocationsCount = await getTableCount('catalog_service_locations');
     if (serviceLocationsCount === 0) {
       const serviceLocationRecords = CASE_SERVICE_SEED_DATA.catalog_service_locations.map((location, index) => ({

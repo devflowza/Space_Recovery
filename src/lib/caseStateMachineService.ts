@@ -16,6 +16,7 @@ export type CasePhase =
   | 'ready'
   | 'delivered'
   | 'closed'
+  | 'no_solution'
   | 'cancelled';
 
 export const PHASE_LABEL: Record<CasePhase, string> = {
@@ -29,6 +30,7 @@ export const PHASE_LABEL: Record<CasePhase, string> = {
   ready: 'Ready',
   delivered: 'Delivered',
   closed: 'Closed',
+  no_solution: 'No Solution',
   cancelled: 'Cancelled',
 };
 
@@ -129,9 +131,12 @@ export async function getAllowedTransitions(
 
   // Cancellation reopens are special — flag for the UI so they can show in
   // a destructive-style action group.
-  const reopenPhases = new Set<CasePhase>(['intake', 'recovery']);
+  const reopenPhases = new Set<CasePhase>(['intake', 'diagnosis', 'recovery']);
   const isReopenEdge =
-    currentPhase === 'delivered' || currentPhase === 'cancelled' || currentPhase === 'closed';
+    currentPhase === 'delivered' ||
+    currentPhase === 'cancelled' ||
+    currentPhase === 'closed' ||
+    currentPhase === 'no_solution';
 
   return (statuses ?? []).map((s) => {
     const matchingEdge = allowedEdges.find((e) => e.to_phase === s.type);
@@ -186,5 +191,7 @@ export function suggestNextAction(
 }
 
 function isCasePhase(value: string): value is CasePhase {
-  return (PHASE_ORDER as string[]).includes(value) || value === 'cancelled';
+  // PHASE_ORDER is the on-track linear pipeline; cancelled and no_solution are
+  // off-track terminal states rendered separately, so accept them explicitly.
+  return (PHASE_ORDER as string[]).includes(value) || value === 'cancelled' || value === 'no_solution';
 }
