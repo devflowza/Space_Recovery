@@ -153,11 +153,13 @@
     },
     {
       // Fixed surfaces intentionally NOT themed (see DESIGN.md): PDF document
-      // builders and the pre-tenant auth decorative chrome.
+      // builders and the pre-tenant auth zone (login/reset/signup + MFA render
+      // before any tenant theme exists; the semantic status tokens are tuned
+      // for light surfaces and fall below contrast on the dark auth canvas).
       files: [
         'src/components/documents/**/*.{ts,tsx}',
-        'src/components/auth/shared/AuthBackground.tsx',
-        'src/components/auth/shared/constants.ts',
+        'src/components/auth/**/*.{ts,tsx}',
+        'src/pages/auth/**/*.{ts,tsx}',
       ],
       plugins: { 'xsuite': xsuitePlugin },
       rules: {

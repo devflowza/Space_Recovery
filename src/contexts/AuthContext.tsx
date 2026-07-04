@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
+import { hasStoredAuthSession, resetSessionPersistence } from '../lib/authStorage';
 import { mfaService } from '../lib/mfaService';
 import { rolePermissionsService } from '../lib/rolePermissionsService';
 import { logger, setSentryUser } from '../lib/logger';
@@ -31,12 +32,14 @@ interface AuthContextType {
   profileStatus: ProfileStatus;
   passwordResetRequired: boolean;
   mfaPending: boolean;
+  recoveryPending: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   completeMFAChallenge: () => void;
+  completePasswordRecovery: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,6 +52,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profileStatus, setProfileStatus] = useState<ProfileStatus>('loading');
   const [passwordResetRequired, setPasswordResetRequired] = useState(false);
   const [mfaPending, setMfaPending] = useState(false);
+  // Armed by the PASSWORD_RECOVERY auth event (email reset link). Persisted in
+  // sessionStorage (tab-scoped) so a mid-flow refresh of /reset-password keeps
+  // the guard — the event itself only fires once, on link consumption.
+  const [recoveryPending, setRecoveryPending] = useState(
+    () => sessionStorage.getItem('auth_password_recovery') === '1'
+  );
   const profileCache = useRef<Profile | null>(null);
   const profileFetchInFlight = useRef<string | null>(null);
   // Bumped on every sign-out (manual or expiry). A profile fetch snapshots it
@@ -162,12 +171,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       (async () => {
         if (!mounted) return;
+        // Ghost-session guard: GoTrue's BroadcastChannel forwards auth events
+        // cross-tab WITH the session object. In sessionStorage ("don't
+        // remember me") mode a second tab can't read that session from
+        // storage — acting on the broadcast would unlock the UI while REST
+        // calls fall back to the anon key and fail RLS. Locally-originated
+        // events always pass (GoTrue saves before it notifies).
+        if (session?.user && !hasStoredAuthSession()) return;
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
           // A fresh/restored session — clear the signing-out guard so the next
           // login's profile fetch isn't dropped.
           signingOut.current = false;
+          // Email reset link consumed: the session is real but exists only to
+          // set a new password. ProtectedRoute bounces this tab to
+          // /reset-password until completePasswordRecovery() clears the flag.
+          if (event === 'PASSWORD_RECOVERY') {
+            sessionStorage.setItem('auth_password_recovery', '1');
+            setRecoveryPending(true);
+          }
           // TOKEN_REFRESHED fires roughly hourly for the SAME user; re-fetching
           // the profile then produced a new profile identity and re-rendered
           // every consumer for no data change. All other events (sign-in, user
@@ -190,6 +213,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           profileCache.current = null;
           setProfileStatus('loading');
           setMfaPending(false);
+          // An abandoned recovery must not haunt the next login in this tab.
+          sessionStorage.removeItem('auth_password_recovery');
+          setRecoveryPending(false);
           // A SIGNED_OUT with no preceding signOut() is an expiry / revoked
           // refresh token, not a deliberate logout — flag it so the login page
           // shows "session expired" instead of a silent eject (H4). INITIAL_SESSION
@@ -202,6 +228,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // different user on the same device can't inherit them (H6, L5).
           rolePermissionsService.clearCache();
           localStorage.removeItem('tenant_id');
+          // Back to the default so out-of-band session creation (recovery
+          // links, future OAuth) lands persistent unless the user opts out
+          // again at the next sign-in.
+          resetSessionPersistence();
           setLoading(false);
         }
       })().catch((e) => logger.error('Auth state change handler failed:', e));
@@ -231,6 +261,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const completeMFAChallenge = useCallback(() => {
     setMfaPending(false);
+  }, []);
+
+  const completePasswordRecovery = useCallback(() => {
+    sessionStorage.removeItem('auth_password_recovery');
+    setRecoveryPending(false);
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -318,8 +353,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Memoized so the context only changes when auth state actually changes —
   // 59 files consume useAuth(), so an unstable value re-renders most of the app.
   const value = useMemo(
-    () => ({ user, profile, session, loading, profileStatus, passwordResetRequired, mfaPending, signIn, signInWithGoogle, signUp, signOut, refreshProfile, completeMFAChallenge }),
-    [user, profile, session, loading, profileStatus, passwordResetRequired, mfaPending, signIn, signInWithGoogle, signUp, signOut, refreshProfile, completeMFAChallenge]
+    () => ({ user, profile, session, loading, profileStatus, passwordResetRequired, mfaPending, recoveryPending, signIn, signInWithGoogle, signUp, signOut, refreshProfile, completeMFAChallenge, completePasswordRecovery }),
+    [user, profile, session, loading, profileStatus, passwordResetRequired, mfaPending, recoveryPending, signIn, signInWithGoogle, signUp, signOut, refreshProfile, completeMFAChallenge, completePasswordRecovery]
   );
 
   return (

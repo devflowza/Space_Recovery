@@ -56,6 +56,10 @@ export default {
           '"Courier New"',
           'monospace',
         ],
+        // The single sanctioned scoped exception to the one-typeface rule:
+        // Chakra Petch for the AUTH ZONE ONLY (wordmark + headline on
+        // login/reset/signup). Never use in the app shell — see DESIGN.md.
+        'display-auth': ['"Chakra Petch"', 'Inter', 'system-ui', 'sans-serif'],
       },
       spacing: {
         '4.5': '1.125rem',

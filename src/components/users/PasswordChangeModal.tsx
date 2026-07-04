@@ -2,8 +2,10 @@ import React, { useState, useRef, useId } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Lock, AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { userManagementService } from '../../lib/userManagementService';
+import { validatePassword } from '../auth/shared/passwordPolicy';
+import { PasswordStrengthMeter } from '../auth/shared/PasswordStrengthMeter';
 
 interface PasswordChangeModalProps {
   isOpen: boolean;
@@ -26,44 +28,6 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const validatePassword = (password: string): string | null => {
-    if (password.length < 6) {
-      return 'Password must be at least 6 characters long';
-    }
-    if (!/[A-Z]/.test(password)) {
-      return 'Password must contain at least one uppercase letter';
-    }
-    if (!/[a-z]/.test(password)) {
-      return 'Password must contain at least one lowercase letter';
-    }
-    if (!/[0-9]/.test(password)) {
-      return 'Password must contain at least one number';
-    }
-    return null;
-  };
-
-  const getPasswordStrength = (password: string): { label: string; color: string; width: string } => {
-    if (password.length === 0) {
-      return { label: '', color: '', width: '0%' };
-    }
-
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (password.length >= 12) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[a-z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[^A-Za-z0-9]/.test(password)) strength++;
-
-    if (strength <= 2) {
-      return { label: 'Weak', color: 'bg-danger', width: '33%' };
-    } else if (strength <= 4) {
-      return { label: 'Medium', color: 'bg-warning', width: '66%' };
-    } else {
-      return { label: 'Strong', color: 'bg-success', width: '100%' };
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,8 +69,6 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
       setLoading(false);
     }
   };
-
-  const passwordStrength = getPasswordStrength(newPassword);
 
   return (
     <Modal
@@ -192,44 +154,7 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
               {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          {newPassword && (
-            <div className="mt-2">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-slate-600">Password Strength:</span>
-                <span className={`text-xs font-medium ${
-                  passwordStrength.label === 'Weak' ? 'text-danger' :
-                  passwordStrength.label === 'Medium' ? 'text-warning' :
-                  'text-success'
-                }`}>
-                  {passwordStrength.label}
-                </span>
-              </div>
-              <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${passwordStrength.color} transition-all duration-300`}
-                  style={{ width: passwordStrength.width }}
-                />
-              </div>
-            </div>
-          )}
-          <ul className="mt-2 space-y-1 text-xs text-slate-600">
-            <li className="flex items-center gap-2">
-              <CheckCircle className={`w-3 h-3 ${newPassword.length >= 6 ? 'text-success' : 'text-slate-300'}`} />
-              At least 6 characters
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className={`w-3 h-3 ${/[A-Z]/.test(newPassword) ? 'text-success' : 'text-slate-300'}`} />
-              One uppercase letter
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className={`w-3 h-3 ${/[a-z]/.test(newPassword) ? 'text-success' : 'text-slate-300'}`} />
-              One lowercase letter
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle className={`w-3 h-3 ${/[0-9]/.test(newPassword) ? 'text-success' : 'text-slate-300'}`} />
-              One number
-            </li>
-          </ul>
+          <PasswordStrengthMeter password={newPassword} />
         </div>
 
         <div>

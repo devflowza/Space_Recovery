@@ -95,6 +95,7 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />} errorElement={<RouteErrorFallback />} hydrateFallbackElement={<LoadingFallback />}>
       <Route path="/login" lazy={page(() => import('./pages/auth/Login'), 'Login')} />
+      <Route path="/reset-password" lazy={page(() => import('./pages/auth/ResetPassword'), 'ResetPassword')} />
       <Route path="/signup/tenant" lazy={page(() => import('./pages/auth/OnboardingWizard'), 'OnboardingWizard')} />
       <Route path="/signup" element={<Navigate to="/signup/tenant" replace />} />
 

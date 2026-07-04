@@ -42,6 +42,12 @@ Fonts load via Google Fonts in `index.html` (CSP allows `fonts.googleapis.com` /
 - **All UI (Display / Body / Labels / Data):** `Inter` — the single app-wide typeface via `font-sans`
   (Preflight default). The legacy `font-body`/`font-display` aliases (both = Inter) are **removed** —
   do not reintroduce them; unclassed text already inherits Inter.
+- **Auth zone display (the single sanctioned scoped exception):** `font-display-auth` = Chakra Petch
+  (600/700, Google Fonts, same CSP allowlist). Owner-approved 2026-07-04 for the pre-tenant auth
+  surfaces **only** — wordmark + headline on login / reset-password / signup. It is differently-scoped
+  from the removed `font-display` alias (which was Inter everywhere): this token must never appear in
+  the app shell, portal, or any tenant-themed surface. If you see it outside `src/pages/auth/**` /
+  `src/components/auth/**`, that is drift.
 - **Code / character-verified data:** `font-mono` — tokenized in `tailwind.config.js` as the platform
   monospace stack. **Mono is for strings a human verifies character-by-character**: device serials,
   custody hashes, SKUs, tenant/plan codes, OTP inputs, JSON/raw payloads, `kbd` shortcuts. Business
@@ -175,7 +181,8 @@ These read from constants, never from CSS variables. This is by design so output
 - **Categorical UI palette:** `cat-1`…`cat-8` (`src/index.css`, `tailwind.config.js`) — the screen-side mirror of `chartCategorical`, for identity color in UI (see **Color → Categorical (identity) palette**). Fixed across themes by design.
 - **PDFs:** `src/lib/pdf/styles.ts` — `PDF_COLORS` (primary `#162660` = fixed Royal-brand navy, text `#1E293B`, …), font `Roboto`. One fixed color for all tenants by design (a themed invoice would look alarming). Device-role badge colors (patient/backup/donor/spare) are fixed.
 - **Device icons:** `src/lib/deviceIconMapper.ts` — fixed SVG hexes. Intentional.
-- **Auth screens:** `src/components/auth/shared/AuthBackground.tsx` + `constants.ts` — the login/signup split-screen's fixed dark decorative identity (slate/blue gradient, circuit SVG, particles, CTA button gradient). Auth renders **before** a tenant theme is known (you're not in a tenant yet), so it is intentionally non-themed and lint-exempt like PDFs.
+- **Auth zone:** the full pre-tenant surface — `src/pages/auth/**` + `src/components/auth/**` (redesigned 2026-07-04 as one immersive dark canvas). Shared identity pieces: `AuthBackground.tsx` (slate/blue-950 gradient, sector-dot grid, particles, scanning beam, `AuthWaveField.tsx` Canvas-2D particle wave), `GlowPanel.tsx` (glass panel with animated conic border glow — `backdrop-blur` is sanctioned here and only here at page scale), `XLogo.tsx` (gradient logomark), `AuthShell.tsx` (full-bleed scaffold), `AuthTextField/AuthAlert/PasswordStrengthMeter` (dark-legible variants — the semantic status tokens are tuned for light surfaces and fall below contrast on slate-950). Auth renders **before** a tenant theme is known, so the zone is intentionally non-themed and lint-exempt (`eslint.config.js` fixed-surfaces block) like PDFs. The old `AuthLayout` 60/40 split and `auth/shared/constants.ts` were deleted with the redesign.
+  - **Blue→violet gradient identity (owner-approved exception, 2026-07-04):** the auth zone's brand gradients (logomark, headline accent, primary CTA, border glow, wave) deliberately use the sky→violet family per the approved login mockup. This is the ONLY place violet may appear — the repo-wide purple/indigo/violet ban stands everywhere else and remains lint-enforced outside this zone.
 
 ## Spacing
 - **Base unit:** Tailwind default 4px scale (`p-1`=4px … `p-6`=24px …). Density target: **comfortable-to-compact** for data tables.
