@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { gccReturnComposer, taxPeriodsBetween } from './regimes/gcc_return';
 
 export interface VATRecord {
   id?: string;
@@ -276,33 +277,34 @@ export const getVATRecordsByReturn = async (
   periodStart: string,
   periodEnd: string
 ) => {
+  // Same period dimension the return totals were composed on (tax_period-first,
+  // matching calculateVATForPeriod's bucketing) — never created_at, which
+  // diverges for late-approved expenses (audit finding vatService.ts:279).
+  const taxPeriods = taxPeriodsBetween(periodStart.slice(0, 7), periodEnd.slice(0, 7));
   const { data, error } = await supabase
     .from('vat_records')
     .select('*')
+    .in('tax_period', taxPeriods)
     .is('deleted_at', null)
-    .gte('created_at', periodStart)
-    .lte('created_at', periodEnd)
-    .order('created_at', { ascending: true });
+    .order('tax_period', { ascending: true });
 
   if (error) throw error;
   return data || [];
 };
 
-export const getQuarterlyVATSummary = async (year: number) => {
-  const quarters = [
-    { q: 1, start: `${year}-01-01`, end: `${year}-03-31` },
-    { q: 2, start: `${year}-04-01`, end: `${year}-06-30` },
-    { q: 3, start: `${year}-07-01`, end: `${year}-09-30` },
-    { q: 4, start: `${year}-10-01`, end: `${year}-12-31` },
-  ];
-
-  const summaries = await Promise.all(
-    quarters.map(async ({ q, start, end }) => {
-      const summary = await calculateVATForPeriod(start, end);
-      return { quarter: q, ...summary };
-    })
-  );
-
+export const getQuarterlyVATSummary = async (year: number, periodAnchor: string = '01-01') => {
+  // Quarter windows derived from the pack's period anchor via the composer —
+  // no hardcoded Jan/Apr/Jul/Oct calendar quarters (audit finding vatService.ts:288).
+  const anchorMonth = periodAnchor.slice(0, 2);
+  const summaries = [] as Array<{ quarter: number } & VATSummary>;
+  for (let q = 1; q <= 4; q++) {
+    const probeMonthNum = ((Number(anchorMonth) - 1 + (q - 1) * 3) % 12) + 1;
+    const probeYear = year + Math.floor((Number(anchorMonth) - 1 + (q - 1) * 3) / 12);
+    const probe = `${probeYear}-${String(probeMonthNum).padStart(2, '0')}-15`;
+    const bounds = gccReturnComposer.periodBounds('quarterly', periodAnchor, probe, 'UTC');
+    const summary = await calculateVATForPeriod(bounds.periodStart, bounds.periodEnd);
+    summaries.push({ quarter: q, ...summary });
+  }
   return summaries;
 };
 

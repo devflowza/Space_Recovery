@@ -5,6 +5,7 @@ vi.mock('./supabaseClient', () => ({ supabase: { from } }));
 
 import {
   createVATRecordFromPurchase, createVATRecordFromInvoice, calculateVATForPeriod,
+  getVATRecordsByReturn, getQuarterlyVATSummary,
 } from './vatService';
 
 /** insert-path builder: .insert(rows).select().maybeSingle() → { data: rows[0] }. */
@@ -70,5 +71,53 @@ describe('calculateVATForPeriod — base-currency summation (Phase 0)', () => {
     ]));
     const s = await calculateVATForPeriod('2026-07-01', '2026-09-30');
     expect(s.totalOutputVAT).toBe(7);
+  });
+});
+
+/**
+ * drill-down builder for getVATRecordsByReturn: tolerant of BOTH the old
+ * created_at chain (.select().is().gte().lte().order()) and the new tax_period
+ * chain (.select().in().is().order()) so RED fails on the assertion, not a
+ * missing method. Records the `.in(column, values)` call.
+ */
+function makeDrillDownQuery(captured: { column?: string; values?: unknown }) {
+  const b: Record<string, unknown> = {
+    select: vi.fn(() => b),
+    in: vi.fn((column: string, values: unknown[]) => { captured.column = column; captured.values = values; return b; }),
+    is: vi.fn(() => b),
+    gte: vi.fn(() => b),
+    lte: vi.fn(() => b),
+    order: vi.fn(() => b),
+    then: (resolve: (v: { data: unknown; error: null }) => void) => resolve({ data: [], error: null }),
+  };
+  return b;
+}
+
+describe('getVATRecordsByReturn (P3 — tax_period dimension)', () => {
+  it('filters by tax_period months, never created_at', async () => {
+    const captured: { column?: string; values?: unknown } = {};
+    from.mockReturnValue(makeDrillDownQuery(captured));
+    await getVATRecordsByReturn('2026-07-01', '2026-09-30');
+    expect(captured.column).toBe('tax_period');
+    expect(captured.values).toEqual(['2026-07', '2026-08', '2026-09']);
+  });
+});
+
+describe('getQuarterlyVATSummary (P3 — composer-derived period anchor)', () => {
+  it('derives Q1 from the fiscal-year anchor, not calendar January', async () => {
+    const orArgs: string[] = [];
+    const b: Record<string, unknown> = {
+      select: vi.fn(() => b),
+      is: vi.fn(() => b),
+      or: vi.fn((arg: string) => { orArgs.push(arg); return b; }),
+      then: (resolve: (v: { data: unknown; error: null }) => void) => resolve({ data: [], error: null }),
+    };
+    from.mockReturnValue(b);
+    const summaries = await getQuarterlyVATSummary(2026, '04-01');
+    expect(summaries.map(s => s.quarter)).toEqual([1, 2, 3, 4]);
+    expect(orArgs).toHaveLength(4);
+    // Fiscal year starts April → Q1 window is Apr–Jun, NOT calendar Jan–Mar.
+    expect(orArgs[0]).toContain('tax_period.gte.2026-04');
+    expect(orArgs[0]).toContain('tax_period.lte.2026-06');
   });
 });

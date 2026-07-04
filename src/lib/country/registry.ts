@@ -281,6 +281,34 @@ export const COUNTRY_CONFIG_REGISTRY: ConfigKeyDef[] = [
     description: 'RESERVED (owner E7, consumed Phase 6 on the regime-key pattern): gdpr|pdpl|dpdp|none.',
     schema: z.enum(['gdpr', 'pdpl', 'dpdp', 'none']), codedDefault: 'none', maxOverrideLayer: 'country',
   },
+  // ── tax filing shape (P3 — consumed by the ReturnComposer path) ──
+  {
+    key: 'tax.filing_frequency',
+    domain: 'tax',
+    label: 'Tax filing frequency',
+    description: 'How often the jurisdiction requires tax returns to be filed.',
+    schema: z.enum(['monthly', 'quarterly', 'annual']),
+    codedDefault: 'quarterly',
+    maxOverrideLayer: 'country',
+  },
+  {
+    key: 'tax.period_anchor',
+    domain: 'tax',
+    label: 'Tax period anchor',
+    description: 'MM-DD anchor the filing periods count from (fiscal-year style anchors supported).',
+    schema: z.string().regex(/^\d{2}-\d{2}$/),
+    codedDefault: '01-01',
+    maxOverrideLayer: 'country',
+  },
+  {
+    key: 'tax.return_composer',
+    domain: 'tax',
+    label: 'Return composer',
+    description: "Registered ReturnComposer plugin key that shapes this jurisdiction's statutory return.",
+    schema: z.enum(['gcc_return', 'gstr', 'us_jurisdiction_remit', 'uk_mtd_9box']),
+    codedDefault: 'gcc_return',
+    maxOverrideLayer: 'country',
+  },
 ];
 
 export const REGISTRY_BY_KEY: Record<string, ConfigKeyDef> = Object.fromEntries(
