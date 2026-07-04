@@ -16299,6 +16299,75 @@ export type Database = {
           },
         ]
       }
+      tax_return_lines: {
+        Row: {
+          amount_base: number
+          box_code: string
+          box_label: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          meta: Json | null
+          quantity: number | null
+          sequence: number
+          tenant_id: string
+          unit_code: string | null
+          updated_at: string | null
+          updated_by: string | null
+          vat_return_id: string
+        }
+        Insert: {
+          amount_base?: number
+          box_code: string
+          box_label: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          meta?: Json | null
+          quantity?: number | null
+          sequence?: number
+          tenant_id: string
+          unit_code?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          vat_return_id: string
+        }
+        Update: {
+          amount_base?: number
+          box_code?: string
+          box_label?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          meta?: Json | null
+          quantity?: number | null
+          sequence?: number
+          tenant_id?: string
+          unit_code?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          vat_return_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_return_lines_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_return_lines_vat_return_id_fkey"
+            columns: ["vat_return_id"]
+            isOneToOne: false
+            referencedRelation: "vat_returns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       template_versions: {
         Row: {
           content: string | null
@@ -17650,12 +17719,15 @@ export type Database = {
         Row: {
           created_at: string
           deleted_at: string | null
+          filing_frequency: string | null
           id: string
           input_vat: number | null
           net_vat: number | null
           output_vat: number | null
+          period_anchor: string | null
           period_end: string
           period_start: string
+          regime_key: string | null
           status: string | null
           submitted_at: string | null
           submitted_by: string | null
@@ -17665,12 +17737,15 @@ export type Database = {
         Insert: {
           created_at?: string
           deleted_at?: string | null
+          filing_frequency?: string | null
           id?: string
           input_vat?: number | null
           net_vat?: number | null
           output_vat?: number | null
+          period_anchor?: string | null
           period_end: string
           period_start: string
+          regime_key?: string | null
           status?: string | null
           submitted_at?: string | null
           submitted_by?: string | null
@@ -17680,12 +17755,15 @@ export type Database = {
         Update: {
           created_at?: string
           deleted_at?: string | null
+          filing_frequency?: string | null
           id?: string
           input_vat?: number | null
           net_vat?: number | null
           output_vat?: number | null
+          period_anchor?: string | null
           period_end?: string
           period_start?: string
+          regime_key?: string | null
           status?: string | null
           submitted_at?: string | null
           submitted_by?: string | null
@@ -18272,6 +18350,33 @@ export type Database = {
         Returns: Json
       }
       export_customer_data: { Args: { p_customer_id: string }; Returns: Json }
+      file_vat_return: {
+        Args: { p_lines: Json; p_return: Json; p_tax_periods: string[] }
+        Returns: {
+          created_at: string
+          deleted_at: string | null
+          filing_frequency: string | null
+          id: string
+          input_vat: number | null
+          net_vat: number | null
+          output_vat: number | null
+          period_anchor: string | null
+          period_end: string
+          period_start: string
+          regime_key: string | null
+          status: string | null
+          submitted_at: string | null
+          submitted_by: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "vat_returns"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       generate_next_number: { Args: { p_scope: string }; Returns: string }
       get_accessible_modules: {
         Args: never
