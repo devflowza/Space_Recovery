@@ -35,13 +35,21 @@ feat/p3-publish-governance  (WP-4)  → feat/p3-country-studio (WP-5)
   exit evidence `docs/superpowers/specs/2026-07-02-p3-exit-evidence.md`.
 
 ## LIVE-execution findings (the runbook found what static review couldn't — RPCs had never been run)
+7 real defects surfaced by executing the publish pipeline live; 6 fixed, 1 owner-decision, 1 minor carry-forward.
 1. **FIXED** `phase3_wp7_submit_no_content_bump` — submit staled fixtures via `_pack_touch`.
 2. **FIXED** `phase3_wp7_pack_audit_admin_id_fk` — `platform_audit_logs.admin_id` FKs `platform_admins.id`
    (NOT `auth.uid()` = `.user_id`); every authoring RPC 23503'd. New `_pack_admin_id()` resolves it.
-3. **carry-forward** `upsert_country_tax_rate` not idempotent vs seeded rates (add ON CONFLICT).
-4. **carry-forward** publish capability gate requires unimplemented future-phase caps (`zatca_ph2`) → SA capped.
-5. **carry-forward** `countryFactsService` picks the latest-mandated regime (`zatca_ph2`) over the implemented
-   `zatca_ph1` → SA invoice QR does not emit (prefer latest REGISTERED regime).
+3. **FIXED** `phase3_cf_upsert_tax_rate_idempotent` — `upsert_country_tax_rate` ON CONFLICT on the effective-key index.
+4. **OWNER DECISION** — publish capability gate requires unimplemented `zatca_ph2` → SA honestly capped at
+   `formatting_ready`. Implement Phase-2 clearance OR scope it to applicable tenants. Not code-fixed.
+5. **FIXED** `countryFactsService` (CF-5) — resolver prefers the latest REGISTERED regime → SA now emits the zatca_ph1 QR.
+6. **FIXED** `phase3_cf_publish_gate_blocker_array_append` — `publish_country_pack` blocker path did
+   `v_blockers || 'text'` → 22P02 crash the moment any blocker fired; every publish-blocked path crashed. array_append.
+7. **carry-forward (minor)** fixture-count subquery ignores `deleted_at` (no app path soft-deletes tests; 1-line fix).
+
+**GCC now: AE + OM `statutory_ready`, SA `formatting_ready`** (honest). OM published v2 through the governed gate
+(supersedes the author-NULL Phase-1 seed v1). Carry-forward branch: `feat/p3-carry-forwards` (stacked on WP-7);
+all 3 CF fixes adversarially re-verified CLEAN. Full detail: `docs/superpowers/specs/2026-07-02-p3-exit-evidence.md`.
 
 ## HOW TO RESUME / next steps
 1. Nothing is pushed. To ship: the 4 stacked branches → 4 PRs (or squash the stack) from `feat/p3-ae-sa-zatca`.

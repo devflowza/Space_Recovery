@@ -50,12 +50,17 @@ this session — which is sufficient to prove the data path end-to-end.
 |---|---|---|---|
 | 1 | med | `submit_country_pack_for_review` bumped `content_updated_at` → stales fixtures → publish blocks | **FIXED** `phase3_wp7_submit_no_content_bump` |
 | 2 | high | `platform_audit_logs.admin_id` FKs `platform_admins.id`, but `_pack_touch` inserted `auth.uid()` (=user_id) → 23503 on every authoring RPC | **FIXED** `phase3_wp7_pack_audit_admin_id_fk` (`_pack_admin_id()`) |
-| 3 | med | `upsert_country_tax_rate` (no id) always INSERTs → collides with seeded effective rate; not the "idempotent upsert" the plan assumed | carry-forward (add ON CONFLICT) |
-| 4 | design | publish capability gate requires ALL einvoice adapters incl. future/unimplemented (`zatca_ph2`) → SA capped at formatting_ready | carry-forward (gate on implemented/active phase only) |
-| 5 | design | `countryFactsService` resolves the LATEST-mandated regime (`zatca_ph2`) over the implemented `zatca_ph1` → SA invoice QR does not emit | carry-forward (prefer latest REGISTERED regime) |
+| 3 | med | `upsert_country_tax_rate` (no id) always INSERTs → collides with seeded effective rate; not idempotent | **FIXED** `phase3_cf_upsert_tax_rate_idempotent` (ON CONFLICT on the effective-key index; verified rolled-back same-id) |
+| 4 | design | publish capability gate requires ALL einvoice adapters incl. future/unimplemented (`zatca_ph2`) → SA capped at formatting_ready | **OWNER DECISION** — honest degradation; not code-fixed (see §6) |
+| 5 | design | `countryFactsService` resolves the LATEST-mandated regime (`zatca_ph2`) over the implemented `zatca_ph1` → SA invoice QR does not emit | **FIXED** `countryFactsService` (CF-5): prefers the latest REGISTERED regime → SA emits the zatca_ph1 QR; unit test added |
+| 6 | high | `publish_country_pack` built blockers as `v_blockers || '<text>'` → Postgres `22P02` (array||array) the moment ANY blocker fired → every publish-blocked path CRASHED. Zero-blocker AE/SA hid it; OM's stale seed fixtures triggered it | **FIXED** `phase3_cf_publish_gate_blocker_array_append` (array_append) |
+| 7 | low | the fixture-count subquery does not filter `deleted_at` (every other subquery does) → a soft-deleted FAILING fixture would block publish forever | carry-forward (add `AND deleted_at IS NULL` to the `master_country_pack_tests` count) |
 
-## 6. Carry-forwards for the owner
-- Publish an OM pack through the gate to lift OM to `statutory_ready` (parity with AE).
-- Resolve findings 3/4/5 (idempotent rate upsert; phase-aware capability gate; registered-regime QR resolver)
-  so SA reaches `statutory_ready` and emits the Phase-1 QR once those refinements land.
+## 6. Post-fix state + remaining owner items
+- **GCC now: AE + OM `statutory_ready`, SA `formatting_ready`** (honest). OM v2 published through the governed
+  gate (supersedes the author-NULL Phase-1 seed v1); its 3 canonical golden fixtures recorded, duplicates soft-deleted.
+- **SA `statutory_ready` is an OWNER DECISION (finding 4):** SA's seeded data mandates `zatca_ph2` (clearance)
+  which is unimplemented. Either implement the Phase-2 clearance transport, or scope Phase-2 to the tenants it
+  legally applies to (so a Phase-1-only lab is `statutory_ready`). SA's Phase-1 QR now emits (CF-5).
+- Fix finding 7 (soft-deleted-fixture count) — 1-line `AND deleted_at IS NULL`.
 - Apply the CLDR operator seed (`supabase/seeds/cldr_locale_facts.operator.sql`) after review — a deliberate operator step.
