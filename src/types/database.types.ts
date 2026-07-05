@@ -18198,6 +18198,7 @@ export type Database = {
       _apply_country_config: { Args: { p_tenant_id: string }; Returns: number }
       _fin_base_currency: { Args: { p_tenant: string }; Returns: string }
       _fin_currency_decimals: { Args: { p_code: string }; Returns: number }
+      _pack_admin_id: { Args: never; Returns: string }
       _pack_open_version: { Args: { p_country_id: string }; Returns: string }
       _pack_require_platform_admin: { Args: never; Returns: undefined }
       _pack_touch: {
