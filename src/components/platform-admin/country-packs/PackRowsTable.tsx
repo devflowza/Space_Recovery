@@ -53,7 +53,10 @@ export function PackRowsTable<Row extends { id: string }>({
   const setField = (key: string, type: string, raw: string) =>
     setDraft((d) => ({
       ...d,
-      [key]: type === 'number' ? Number(raw) : type === 'json' ? safeJson(raw) : raw,
+      // Empty numeric input clears to undefined (dropped from the JSON payload → the RPC
+      // sees an absent key → NULL), NOT Number('')===0 which would persist a spurious 0
+      // (and, for max_length, then false-block publish on the numbering coverage gate).
+      [key]: type === 'number' ? (raw === '' ? undefined : Number(raw)) : type === 'json' ? safeJson(raw) : raw,
     }));
   const safeJson = (raw: string): unknown => {
     try { return JSON.parse(raw); } catch { return raw; }
@@ -123,7 +126,7 @@ export function PackRowsTable<Row extends { id: string }>({
               )}
             </div>
           ))}
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p role="alert" className="text-sm text-danger">{error}</p>}
           <div className="flex justify-end gap-2">
             <Button size="sm" variant="secondary" onClick={close} disabled={saving}>Cancel</Button>
             <Button size="sm" onClick={() => void save()} disabled={saving}>Save</Button>

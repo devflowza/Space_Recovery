@@ -48,10 +48,12 @@ export const PackFactsTab: React.FC<{ detail: PackDetail; disabled: boolean; onC
   const [rLevel, setRLevel] = useState<string>(rp.level ?? 'document');
   const [rCash, setRCash] = useState<string>(rp.cash_increment == null ? '' : String(rp.cash_increment));
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const set = (k: string, v: string) => setValues((prev) => ({ ...prev, [k]: v }));
 
   const save = async () => {
     setSaving(true);
+    setError(null);
     try {
       const outScalars: Record<string, unknown> = {};
       const outConfig: Record<string, unknown> = {};
@@ -67,6 +69,8 @@ export const PackFactsTab: React.FC<{ detail: PackDetail; disabled: boolean; onC
       outConfig['tax.rounding_policy'] = rounding;
       await updatePackFacts(detail.country.id, outScalars, outConfig);
       onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed');
     } finally {
       setSaving(false);
     }
@@ -84,13 +88,13 @@ export const PackFactsTab: React.FC<{ detail: PackDetail; disabled: boolean; onC
           <label key={f.key} className="flex flex-col gap-1 text-sm">
             <span className="text-slate-600">{f.label} <span className="font-mono text-xs text-slate-400">{f.key}</span></span>
             {f.kind === 'select' ? (
-              <select aria-label={f.key} disabled={disabled} value={values[f.key]}
+              <select aria-label={`${f.label} (${f.key})`} disabled={disabled} value={values[f.key]}
                       className="rounded border border-border px-2 py-1" onChange={(e) => set(f.key, e.target.value)}>
                 <option value="">—</option>
                 {f.options!.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
             ) : (
-              <input aria-label={f.key} disabled={disabled} value={values[f.key]}
+              <input aria-label={`${f.label} (${f.key})`} disabled={disabled} value={values[f.key]}
                      type={f.kind === 'number' ? 'number' : 'text'}
                      className="rounded border border-border px-2 py-1" onChange={(e) => set(f.key, e.target.value)} />
             )}
@@ -118,6 +122,7 @@ export const PackFactsTab: React.FC<{ detail: PackDetail; disabled: boolean; onC
           </label>
         </div>
       </fieldset>
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       <Button variant="primary" disabled={disabled || saving} onClick={save}>
         {saving ? 'Saving…' : 'Save facts'}
       </Button>

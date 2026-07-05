@@ -13,6 +13,7 @@ interface Props { detail: PackDetail; disabled: boolean; onChanged: () => void }
 export const PackFixturesTab: React.FC<Props> = ({ detail, disabled, onChanged }) => {
   const [summary, setSummary] = useState<FixtureRunSummary | null>(null);
   const [running, setRunning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const columns: PackColumn<PackTestRow>[] = [
     { key: 'name', label: 'Fixture', render: (r) => r.name, input: { type: 'text', required: true } },
@@ -30,11 +31,13 @@ export const PackFixturesTab: React.FC<Props> = ({ detail, disabled, onChanged }
 
   const run = async () => {
     setRunning(true);
+    setError(null);
     try {
       setSummary(await runPackFixtures(detail.country.id, detail.country.code));
       onChanged();
     } catch (e) {
       logger.error('Fixture run failed:', e);
+      setError(e instanceof Error ? e.message : 'Fixture run failed');
     } finally {
       setRunning(false);
     }
@@ -52,13 +55,22 @@ export const PackFixturesTab: React.FC<Props> = ({ detail, disabled, onChanged }
         </Button>
       </div>
 
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+
       {summary && (
-        <div className={`rounded-lg border px-4 py-3 text-sm ${summary.passed === summary.total ? 'border-success bg-success-muted text-success' : 'border-danger bg-danger-muted text-danger'}`}>
+        <div role="status" aria-live="polite" className={`rounded-lg border px-4 py-3 text-sm ${summary.passed === summary.total ? 'border-success bg-success-muted text-success' : 'border-danger bg-danger-muted text-danger'}`}>
           {summary.passed} / {summary.total} passed
           {summary.results.filter((r) => !r.pass).map((r) => (
             <div key={r.name} className="mt-2">
               <div className="font-medium">{r.name}</div>
               <table className="mt-1 w-full text-xs">
+                <thead>
+                  <tr className="text-left text-slate-500">
+                    <th scope="col" className="pr-3 font-normal">Path</th>
+                    <th scope="col" className="pr-3 font-normal">Expected</th>
+                    <th scope="col" className="font-normal">Actual</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {r.diffs.map((d, i) => (
                     <tr key={i}>

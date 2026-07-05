@@ -24,18 +24,25 @@ export const CountryPackEditorPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('Rates');
 
-  const { data: detail } = useQuery({
+  const { data: detail, isLoading, isError, error } = useQuery({
     queryKey: countryPackKeys.detail(countryId),
     queryFn: () => getPackDetail(countryId),
     enabled: !!countryId,
   });
-  if (!detail) return <div className="p-6 text-slate-500">Loading…</div>;
+  if (isError) return <div role="alert" className="p-6 text-sm text-danger">Failed to load country pack: {error instanceof Error ? error.message : 'unknown error'}</div>;
+  if (isLoading || !detail) return <div className="p-6 text-slate-500">Loading…</div>;
 
   const openVersion = detail.versions.find((v) => v.status === 'draft' || v.status === 'in_review') ?? null;
   const disabled = !openVersion;
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: countryPackKeys.detail(countryId) });
-  const withCountry = (draft: Record<string, unknown>, existing: { id: string } | null) => ({
-    ...draft, country_id: countryId, ...(existing ? { id: existing.id } : {}),
+  // Invalidate the whole country-pack tree (detail AND the list) so config_status /
+  // lifecycle changes made here reflect immediately on the Country Packs list too.
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: countryPackKeys.all });
+  // On EDIT, round-trip the FULL existing row: the upsert_* RPCs overwrite the whole
+  // column set unconditionally, so any column the grid doesn't surface (component_label_i18n,
+  // sort_order, effective_from, config, …) would be silently nulled if we sent only the
+  // edited fields. Spreading `existing` first preserves them; the RPC ignores keys it doesn't read.
+  const withCountry = (draft: Record<string, unknown>, existing: Record<string, unknown> | null) => ({
+    ...(existing ?? {}), ...draft, country_id: countryId,
   });
 
   const rateColumns: PackColumn<CountryTaxRateRow>[] = [
@@ -88,7 +95,7 @@ export const CountryPackEditorPage: React.FC = () => {
 
       <div role="tablist" className="flex gap-1 border-b border-border">
         {TABS.map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t}
+          <button key={t} role="tab" id={`packtab-${t}`} aria-controls="packtab-panel" aria-selected={tab === t}
                   className={`px-3 py-2 text-sm ${tab === t ? 'border-b-2 border-primary font-medium text-primary' : 'text-slate-500'}`}
                   onClick={() => setTab(t)}>
             {t}
@@ -96,6 +103,7 @@ export const CountryPackEditorPage: React.FC = () => {
         ))}
       </div>
 
+      <div role="tabpanel" id="packtab-panel" aria-labelledby={`packtab-${tab}`} className="space-y-6">
       {tab === 'Rates' && (
         <PackRowsTable title="Effective-dated tax rates (geo_country_tax_rates)" rows={detail.rates}
           columns={rateColumns} disabled={disabled}
@@ -142,6 +150,7 @@ export const CountryPackEditorPage: React.FC = () => {
       {tab === 'Lifecycle' && (
         <PackPublishPanel detail={detail} onChanged={invalidate} />
       )}
+      </div>
     </div>
   );
 };

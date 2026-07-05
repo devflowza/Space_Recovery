@@ -79,10 +79,10 @@ export const PackPublishPanel: React.FC<Props> = ({ detail, onChanged }) => {
         </div>
       )}
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
 
       {gate && (
-        <div className={`rounded-lg border p-4 text-sm ${gate.published ? 'border-success bg-success-muted' : 'border-danger bg-danger-muted'}`}>
+        <div role="status" aria-live="polite" className={`rounded-lg border p-4 text-sm ${gate.published ? 'border-success bg-success-muted' : 'border-danger bg-danger-muted'}`}>
           <p className="font-medium">
             {gate.published ? `Published — config_status: ${gate.config_status}` : 'Publish blocked by the gate'}
           </p>
