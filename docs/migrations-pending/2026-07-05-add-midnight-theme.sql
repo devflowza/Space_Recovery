@@ -1,5 +1,7 @@
 -- ============================================================================
--- PENDING MIGRATION — NOT YET APPLIED
+-- ✅ APPLIED 2026-07-05 via mcp__supabase__apply_migration as version
+-- 20260705175334 (recorded in supabase/migrations.manifest.md). Kept as the
+-- authored artifact; the live DB + manifest are the source of truth.
 -- name: add_midnight_theme
 -- date: 2026-07-05
 --

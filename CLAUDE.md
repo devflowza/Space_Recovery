@@ -639,7 +639,7 @@ const formatted = formatCurrencyWithConfig(amount, currency);
 
 ### Version 1.5.0 — Midnight Aurora Theme & Var-Backed Neutral Ramp
 **Date**: 2026-07-05
-**Migration**: `add_midnight_theme` (**PENDING** — SQL in `docs/migrations-pending/2026-07-05-add-midnight-theme.sql`; apply via `mcp__supabase__apply_migration` then record in the manifest. Until applied, picking Midnight fails the CHECK and the UI reverts safely.)
+**Migration**: `add_midnight_theme` (applied 2026-07-05 as version `20260705175334`; recorded in the manifest — tenants.theme CHECK now allows all four values)
 
 - **4th tenant theme `midnight` ("Midnight Aurora")** — flagship premium dark theme carrying the 2026-07-04 auth-zone identity app-wide: navy surfaces (`#0A111F` page / `#111B32` card), electric-blue `primary #2E6BE8`, aurora-violet `secondary #6D4AE3`, dark-violet `accent` surface. All pairs WCAG-validated (matrix: `docs/superpowers/plans/2026-07-05-midnight-aurora-theme.md`). The purple/indigo/violet *class* ban is unchanged — the hue ships only as theme token values.
 - **Neutral ramp architecture**: `white`/`slate` Tailwind utilities remapped per-utility to CSS vars (`--nb-*`/`--nt-*`/`--ne-*`) in `tailwind.config.js`; light themes bind to exact Tailwind values (pixel-identical), midnight rebinds the ramp — ~7,000 neutral call-sites re-theme with zero churn. New constant `ink-dark` token for ink on saturated fills (`GradientStatCard`/vivid previews migrated off `text-slate-900`). Bare-`border` DEFAULT rebound from gray-200 (latent drift) to the slate-200 edge var.
