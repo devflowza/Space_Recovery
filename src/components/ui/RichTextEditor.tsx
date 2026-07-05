@@ -169,6 +169,9 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
 
   const applyHighlight = (color: string) => {
     execCommand('backColor', color);
+    // Pastel highlights are tuned for light paper; pin dark ink on the
+    // highlighted run so it stays legible on dark app surfaces (midnight).
+    if (color !== 'transparent') execCommand('foreColor', '#0f172a');
     setShowHighlightPicker(false);
   };
 

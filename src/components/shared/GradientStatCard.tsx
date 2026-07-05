@@ -47,9 +47,9 @@ type FgSpec = {
 const FG: Record<'dark' | 'light', FgSpec> = {
   dark: {
     text: 'text-white', label: 'text-white/90', denom: 'text-white/60', sub: 'text-white/70',
-    pill: 'bg-white/15', track: 'bg-white/20', fill: 'bg-white/75', ring: 'ring-white/10',
-    glow: 'bg-white/15', ringline: 'border-white/10', ghost: 'text-white/10',
-    dotA: 'bg-white/25', dotB: 'bg-white/20', dotC: 'bg-white/15',
+    pill: 'bg-ink-light/15', track: 'bg-ink-light/20', fill: 'bg-ink-light/75', ring: 'ring-white/10',
+    glow: 'bg-ink-light/15', ringline: 'border-white/10', ghost: 'text-white/10',
+    dotA: 'bg-ink-light/25', dotB: 'bg-ink-light/20', dotC: 'bg-ink-light/15',
   },
   light: {
     text: 'text-ink-dark', label: 'text-ink-dark/80', denom: 'text-ink-dark/60', sub: 'text-ink-dark/70',

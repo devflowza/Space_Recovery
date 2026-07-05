@@ -185,7 +185,7 @@ export function SignatureCaptureModal({ open, onClose, title, onCapture, allowed
               ref={canvasRef}
               width={448}
               height={160}
-              className="w-full rounded-md border border-border bg-white cursor-crosshair touch-none"
+              className="paper-light w-full rounded-md border border-border bg-white cursor-crosshair touch-none"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}

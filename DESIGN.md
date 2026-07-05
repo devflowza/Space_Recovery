@@ -202,6 +202,19 @@ Rules:
 - **`ink-dark`** (`--color-ink-dark`, constant `#0F172A`) is the dark ink for
   saturated fills (amber/lime KPI tiles, colored pills). Use `text-ink-dark` /
   `bg-ink-dark/NN` there — **never `text-slate-900`**, which inverts on midnight.
+- **`ink-light`** (`--color-ink-light`, constant white) is the white glass/
+  decoration on saturated fills — use `bg-ink-light/NN` there, **never
+  `bg-white/NN`**, which remaps to the navy card on midnight. (`text-white`
+  needs no substitute — text utilities stay literal.)
+- **Paper islands:** on-screen document previews that mirror the non-themed
+  PDFs (`#invoice-print-content`, `#quote-print-content`, or any element with
+  `.paper-light`) re-pin the ramp to light in every theme — apply `.paper-light`
+  to new print-parity surfaces (receipt hosts, signature canvas, PDF-template
+  thumbnails, brand-asset/QR previews).
+- **`Badge variant="custom"`** re-mixes its DB/config color toward white under
+  midnight via the `.badge-custom` rule (hue identity preserved) and uses
+  `color-mix` for tint/border, so token strings (`rgb(var(--color-x))`) are
+  valid inputs — never concatenate hex+alpha by hand.
 - Scrollbars follow `--scrollbar-thumb(-hover)`; Tailwind's ring-offset default
   is rebound to the card surface under midnight; `@media print` forces the
   light bindings back so the dark theme never prints navy pages.

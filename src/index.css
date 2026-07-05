@@ -155,10 +155,13 @@
   --ne-base: 226 232 240;
   --ne-strong: 203 213 225;
 
-  /* Fixed dark ink for saturated fills (amber/lime KPI tiles, colored pill
-     tabs). Deliberately NOT themed — on a vivid gradient the ink must stay
-     dark in every theme. Exposed as text-ink-dark / bg-ink-dark. */
+  /* Fixed inks for saturated fills (KPI gradient tiles, colored pills).
+     Deliberately NOT themed — on a vivid gradient the ink/glass must stay
+     the same in every theme. ink-dark = dark ink on the light tones
+     (amber/lime/yellow); ink-light = white glass/decoration on the dark
+     tones (bg-white would remap to the navy card under midnight). */
   --color-ink-dark: 15 23 42;
+  --color-ink-light: 255 255 255;
 
   /* Themed scrollbar (light themes keep the original slate-300/400 pair). */
   --scrollbar-thumb: 203 213 225;
@@ -166,6 +169,14 @@
 }
 
 @layer base {
+  /* The document background follows the page token — without this the UA
+     default (white) shows through on overscroll and route transitions, which
+     flashes brightly under midnight. Light themes bind --nb-page to slate-50,
+     matching what page containers already paint. */
+  body {
+    background-color: rgb(var(--nb-page));
+  }
+
   * {
     scrollbar-width: thin;
     scrollbar-color: rgb(var(--scrollbar-thumb)) transparent;
@@ -250,6 +261,60 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Print-parity PAPER ISLANDS. On-screen document previews (invoice / quote /
+   payment-receipt papers, PDF-template thumbnails, signature capture) mirror
+   the NON-THEMED PDF output, so they must stay light in every theme. Scoping
+   the neutral-ramp + surface vars back to their light values makes every
+   remapped utility inside the island resolve light again — no per-element
+   changes needed. Apply via the ids the detail pages already use, or the
+   shared .paper-light class. */
+:root[data-theme="midnight"] #invoice-print-content,
+:root[data-theme="midnight"] #quote-print-content,
+:root[data-theme="midnight"] .paper-light {
+  color-scheme: light;
+  --color-surface: 255 255 255;
+  --color-surface-muted: 248 250 252;
+  --color-border: 226 232 240;
+  --nb-card: 255 255 255;
+  --nb-page: 248 250 252;
+  --nb-raised: 241 245 249;
+  --nb-strong: 226 232 240;
+  --nb-inset: 203 213 225;
+  --nb-dim: 51 65 85;
+  --nb-dark: 30 41 59;
+  --nb-deep: 15 23 42;
+  --nt-900: 15 23 42;
+  --nt-800: 30 41 59;
+  --nt-700: 51 65 85;
+  --nt-600: 71 85 105;
+  --nt-500: 100 116 139;
+  --nt-400: 148 163 184;
+  --nt-300: 203 213 225;
+  --ne-soft: 241 245 249;
+  --ne-base: 226 232 240;
+  --ne-strong: 203 213 225;
+}
+
+/* Badge variant="custom" carries a DB/config-driven color (case statuses,
+   priorities, categories) as ink + tint via inline style. Those colors are
+   tuned for white cards; on midnight's navy they'd sit dark-on-dark, and the
+   DB can't be repainted per theme. Re-mix the SAME color toward white for
+   dark surfaces — hue identity survives, legibility restored. !important is
+   required to beat the inline style (same documented approach as the
+   recharts tooltip above). Paper islands opt back out to the original mix. */
+:root[data-theme="midnight"] .badge-custom {
+  color: color-mix(in srgb, var(--badge-c) 45%, white) !important;
+  background-color: color-mix(in srgb, var(--badge-c) 22%, transparent) !important;
+  border-color: color-mix(in srgb, var(--badge-c) 50%, transparent) !important;
+}
+:root[data-theme="midnight"] #invoice-print-content .badge-custom,
+:root[data-theme="midnight"] #quote-print-content .badge-custom,
+:root[data-theme="midnight"] .paper-light .badge-custom {
+  color: var(--badge-c) !important;
+  background-color: color-mix(in srgb, var(--badge-c) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--badge-c) 25%, transparent) !important;
 }
 
 /* Chart CHROME under midnight — axis text, grid lines, tooltip frame and

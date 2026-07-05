@@ -493,7 +493,7 @@ xSuite supports four tenant-selectable themes — Royal (default), Burgundy, Sca
 - Brand: `primary`, `primary-foreground`, `secondary`, `secondary-foreground`, `accent`, `accent-foreground`
 - Surface: `surface`, `surface-muted`, `border`, `ring`
 - Status (hue/meaning fixed; midnight re-anchors values for dark): `success`, `success-foreground`, `success-muted`, `warning`, `warning-foreground`, `warning-muted`, `danger`, `danger-foreground`, `danger-muted`, `info`, `info-foreground`, `info-muted`
-- Plus (v1.5.0): `ink-dark` (constant dark ink for saturated fills) and the internal neutral-ramp vars (`--nb-*`/`--nt-*`/`--ne-*`) behind the `white`/`slate` utilities.
+- Plus (v1.5.0): `ink-dark`/`ink-light` (constant ink/glass for saturated fills), the internal neutral-ramp vars (`--nb-*`/`--nt-*`/`--ne-*`) behind the `white`/`slate` utilities, and the `.paper-light` print-parity island scope (document previews stay light in every theme).
 
 Do NOT invent new tokens. If a color need doesn't fit, ask before extending the vocabulary.
 

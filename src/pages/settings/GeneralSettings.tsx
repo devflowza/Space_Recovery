@@ -683,11 +683,6 @@ export const GeneralSettings: React.FC = () => {
           onClick={handleSave}
           disabled={isSaving || !hasUnsavedChanges}
           className="flex items-center gap-2 shadow-md hover:shadow-lg transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            background: hasUnsavedChanges
-              ? 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)'
-              : 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)',
-          }}
         >
           <Save className="w-4 h-4" />
           {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Save Changes' : 'No Changes'}
@@ -1442,11 +1437,6 @@ export const GeneralSettings: React.FC = () => {
           onClick={handleSave}
           disabled={isSaving || !hasUnsavedChanges}
           className="flex items-center gap-2 px-8 py-3 shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            background: hasUnsavedChanges
-              ? 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)'
-              : 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)',
-          }}
         >
           <Save className="w-5 h-5" />
           {isSaving ? 'Saving Changes...' : hasUnsavedChanges ? 'Save All Changes' : 'No Changes to Save'}

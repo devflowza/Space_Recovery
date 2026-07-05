@@ -136,11 +136,13 @@ export default {
         'cat-6': 'rgb(var(--color-cat-6) / <alpha-value>)',
         'cat-7': 'rgb(var(--color-cat-7) / <alpha-value>)',
         'cat-8': 'rgb(var(--color-cat-8) / <alpha-value>)',
-        // Fixed dark ink for saturated fills (amber/lime KPI tiles, colored
-        // pill tabs). Deliberately NOT themed: on a vivid gradient the ink
-        // must stay dark in every theme, including midnight where the
-        // slate-900 text utility inverts to near-white.
+        // Fixed inks for saturated fills (KPI gradient tiles, colored pill
+        // tabs). Deliberately NOT themed: on a vivid gradient the ink/glass
+        // must stay constant in every theme — text-slate-900 inverts under
+        // midnight and bg-white remaps to the navy card, so neither may be
+        // used as on-tile ink/decoration.
         'ink-dark': 'rgb(var(--color-ink-dark) / <alpha-value>)',
+        'ink-light': 'rgb(var(--color-ink-light) / <alpha-value>)',
       },
       fontFamily: {
         // App-wide typeface: Inter. `sans` is set so Tailwind Preflight applies

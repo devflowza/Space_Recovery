@@ -92,3 +92,32 @@ Banned values verified absent: `#3B82F6`, `#6366F1`, `#8B5CF6`, `#A855F7`, `#1E5
 - [ ] Built-CSS assertions: `.bg-white` resolves to `var(--nb-card)`; `.text-slate-900` to `var(--nt-900)`; `.divide-slate-200` var-backed.
 - [ ] Visual harness: render the component sampler under all 4 themes via headless Chromium; confirm light themes pixel-stable vs pre-change captures and midnight legible.
 - [ ] Adversarial review workflow over the full diff; fix confirmed findings; push to PR #377.
+
+---
+
+## Post-audit register (2026-07-05, 10-auditor sweep)
+
+**Fixed in the follow-up commit:** Badge `custom` color-mix + midnight re-mix
+(`.badge-custom`) covering every DB-driven status/priority pill; paper-light
+print-parity islands (`#invoice-print-content`, `#quote-print-content`,
+`.paper-light` on receipt print host, signature canvas, PDF-template
+thumbnails, ImageUpload/QR previews, portal logo plate); GradientStatCard
+FG.dark glass → `ink-light`; PlatformAdminLayout remap-proof sidebar ink;
+UpgradeBanner / avatar gradients (white ink over light accent/secondary stops
+— broken in Royal too); UserManagement + EmployeeProfilePage named-color
+badges → semantic variants; PDFDownloadButton + GeneralSettings save-button
+hardcoded hexes → tokens; CommandPalette `bg-primary/8` (never compiled) →
+`/10`; PendingApprovalScreen colored shadow; RichTextEditor highlights pair
+dark ink; meeting comm color accent-as-ink → `cat-7`; InvoiceDetailPage
+variant-names-as-colors; `body` background follows the page token.
+
+**Deferred (documented, low-impact):**
+- `chartCategorical` DATA hues cat-7 (#1e40af) / cat-8 (#475569) sit low-contrast
+  on navy chart cards — fixed-by-design for cross-tenant comparability; revisit
+  only with an owner decision (would change light-theme charts too).
+- The decorative "ghost" idiom (literal `text-slate-300/200` empty-state icons)
+  reads brighter on midnight than on light themes — cosmetic emphasis shift.
+- RichTextEditor's user-authored `Black` foreColor preset is user content;
+  authors on midnight see the result as they type.
+- Portal sessionStorage theme-travel edge (interval stops 30s after mount) —
+  pre-existing portal-session quirk, not theme-specific.

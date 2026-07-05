@@ -38,7 +38,7 @@ const PresetThumbnail: React.FC<{ preset: TemplatePreset }> = ({ preset }) => {
     </div>
   );
   return (
-    <div className="pointer-events-none flex h-36 flex-col gap-2 rounded-md border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="paper-light pointer-events-none flex h-36 flex-col gap-2 rounded-md border border-slate-200 bg-white p-3 shadow-sm">
       {/* Letterhead */}
       <div
         className={[
