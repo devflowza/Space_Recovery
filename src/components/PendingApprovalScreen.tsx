@@ -52,7 +52,7 @@ export const PendingApprovalScreen: React.FC = () => {
           <p className="text-sm text-slate-500">Data Recovery Management</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
           <div className="bg-gradient-to-r from-warning-muted to-warning-muted px-8 py-6 border-b border-warning/20">
             <div className="flex items-center justify-center space-x-3">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">

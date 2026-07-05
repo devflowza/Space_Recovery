@@ -69,7 +69,7 @@ export const PrintPaymentReceiptPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white paper-light">
       <div className="no-print fixed bottom-4 right-4 z-modal flex gap-2">
         <button
           onClick={() => window.print()}

@@ -124,7 +124,7 @@ export const PortalLayout: React.FC = () => {
                 <img
                   src={branding.logoUrl}
                   alt={t('portal.common.logoAlt')}
-                  className="h-10 w-auto max-w-[200px] object-contain"
+                  className="paper-light h-10 w-auto max-w-[200px] rounded-md bg-white object-contain p-1"
                 />
               ) : (
                 <h1 className="text-xl font-bold text-slate-900">{t('portal.common.customerPortal')}</h1>
