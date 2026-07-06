@@ -1,0 +1,25 @@
+{
+  "name": "unregistered seller plain invoice — below threshold, no GST levied",
+  "input_document": {
+    "documentType": "invoice",
+    "seller": { "legalEntityId": "le-in", "countryId": "in", "subdivisionId": "sub-IN-KA", "taxIdentifier": null, "registrations": [] },
+    "buyer": { "taxNumber": null, "countryId": "in", "subdivisionId": "sub-IN-KA", "isBusiness": false, "addressSnapshot": null },
+    "taxPointDate": "2026-07-15",
+    "placeOfSupplySubdivisionId": "sub-IN-KA",
+    "lines": [{ "lineItemId": null, "description": "USB flash recovery", "quantity": 1, "unitPrice": 100000, "lineDiscount": 0, "unitCode": "C62", "itemCode": "998319", "treatment": "standard", "treatmentReasonCode": null }],
+    "documentDiscount": 0,
+    "taxInclusive": false,
+    "rateContext": { "documentCurrency": "INR", "documentDecimals": 2, "baseCurrency": "INR", "baseDecimals": 2, "rate": 1, "rateSource": "manual" },
+    "rates": [],
+    "roundingPolicy": { "mode": "half_up", "level": "head" },
+    "scaleSystem": "indian"
+  },
+  "expected": {
+    "totals": { "taxableBase": 100000, "taxTotal": 0, "grandTotal": 100000, "roundingAdjustment": null },
+    "rollups": []
+  },
+  "_meta": {
+    "external_validation": { "status": "pending", "validator": null, "credential": null, "reference": null, "signed_off_at": null },
+    "citations": ["CGST Act 2017 s.22/24 — registration threshold", "CGST Act 2017 s.32(1) — an unregistered person shall not collect GST"]
+  }
+}

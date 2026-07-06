@@ -1,0 +1,32 @@
+{
+  "name": "inclusive B2C walk-in ₹5,000 (taxable value 4,237.29 derived) — equal heads + Section 170 round-off",
+  "input_document": {
+    "documentType": "invoice",
+    "seller": { "legalEntityId": "le-in", "countryId": "in", "subdivisionId": "sub-IN-KA", "taxIdentifier": "29ABCDE1234F1ZW", "registrations": [] },
+    "buyer": { "taxNumber": null, "countryId": "in", "subdivisionId": "sub-IN-KA", "isBusiness": false, "addressSnapshot": null },
+    "taxPointDate": "2026-07-15",
+    "placeOfSupplySubdivisionId": "sub-IN-KA",
+    "lines": [{ "lineItemId": null, "description": "Walk-in HDD recovery (₹5,000 all-inclusive)", "quantity": 1, "unitPrice": 4237.29, "lineDiscount": 0, "unitCode": "C62", "itemCode": "998319", "treatment": "standard", "treatmentReasonCode": null }],
+    "documentDiscount": 0,
+    "taxInclusive": false,
+    "rateContext": { "documentCurrency": "INR", "documentDecimals": 2, "baseCurrency": "INR", "baseDecimals": 2, "rate": 1, "rateSource": "manual" },
+    "rates": [
+      { "id": "in-cgst-18", "country_id": "in", "subdivision_id": null, "component_code": "CGST", "component_label": "CGST", "tax_category": "standard", "rate": 9, "applies_to": "gst_slab_18", "valid_from": "2017-07-01", "valid_to": null, "sort_order": 10 },
+      { "id": "in-sgst-18", "country_id": "in", "subdivision_id": null, "component_code": "SGST", "component_label": "SGST", "tax_category": "standard", "rate": 9, "applies_to": "gst_slab_18", "valid_from": "2017-07-01", "valid_to": null, "sort_order": 20 },
+      { "id": "in-igst-18", "country_id": "in", "subdivision_id": null, "component_code": "IGST", "component_label": "IGST", "tax_category": "standard", "rate": 18, "applies_to": "gst_slab_18", "valid_from": "2017-07-01", "valid_to": null, "sort_order": 30 }
+    ],
+    "roundingPolicy": { "mode": "half_up", "level": "head", "cash_increment": 1 },
+    "scaleSystem": "indian"
+  },
+  "expected": {
+    "totals": { "taxableBase": 4237.29, "taxTotal": 762.72, "grandTotal": 5000, "roundingAdjustment": -0.01 },
+    "rollups": [
+      { "componentCode": "CGST", "rate": 9, "taxableBase": 4237.29, "taxAmount": 381.36, "taxTreatment": "standard" },
+      { "componentCode": "SGST", "rate": 9, "taxableBase": 4237.29, "taxAmount": 381.36, "taxTreatment": "standard" }
+    ]
+  },
+  "_meta": {
+    "external_validation": { "status": "pending", "validator": null, "credential": null, "reference": null, "signed_off_at": null },
+    "citations": ["CGST Act 2017 s.15 — value of taxable supply (inclusive back-out to 4,237.29)", "CGST Act 2017 s.170 — rounding of tax; equal 9% heads + round-off −0.01 → ₹5,000.00", "Rule 46(m) — consolidated B2C invoice"]
+  }
+}
