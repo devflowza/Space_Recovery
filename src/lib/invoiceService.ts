@@ -446,7 +446,7 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
     invoice.exchange_rate ? { rate: invoice.exchange_rate, source: invoice.rate_source as 'manual' | 'provider' | undefined } : null,
   );
 
-  const { computation, subtotal, taxAmount, totalAmount } = await computeDocumentTotals(
+  const { computation, subtotal, taxAmount, totalAmount, placeOfSupplySubdivisionId } = await computeDocumentTotals(
     {
       items: items.map((i) => ({
         description: i.description,
@@ -460,6 +460,8 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
       documentType: 'invoice',
       documentDate: invoice.invoice_date || new Date().toISOString().slice(0, 10),
       taxInclusive: invoice.tax_inclusive ?? false,
+      customerId: invoice.customer_id ?? null,
+      companyId: invoice.company_id ?? null,
     },
     rc,
   );
@@ -501,6 +503,7 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
     total_amount_base: baseTotals.totalAmountBase,
     amount_paid_base: baseTotals.amountPaidBase,
     balance_due_base: baseTotals.balanceDueBase,
+    place_of_supply_subdivision_id: placeOfSupplySubdivisionId,
   };
 
   const sanitizedInvoice = sanitizeUuidFields(invoiceToInsert);
@@ -636,7 +639,7 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
     // partly-paid invoice.
     const { data: existing } = await supabase
       .from('invoices')
-      .select('currency, exchange_rate, rate_source, amount_paid')
+      .select('currency, exchange_rate, rate_source, amount_paid, customer_id, company_id')
       .eq('id', id)
       .maybeSingle();
 
@@ -674,7 +677,7 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
       rate,
       rateSource: rateSource as RateContext['rateSource'],
     };
-    const { computation, subtotal, taxAmount, totalAmount } = await computeDocumentTotals(
+    const { computation, subtotal, taxAmount, totalAmount, placeOfSupplySubdivisionId } = await computeDocumentTotals(
       {
         items: items.map((i) => ({
           description: i.description,
@@ -688,6 +691,8 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
         documentType: 'invoice',
         documentDate: invoice.invoice_date || new Date().toISOString().slice(0, 10),
         taxInclusive: invoice.tax_inclusive ?? false,
+        customerId: invoice.customer_id ?? existing?.customer_id ?? null,
+        companyId: invoice.company_id ?? existing?.company_id ?? null,
       },
       rc,
     );
@@ -714,6 +719,7 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
       total_amount_base: baseTotals.totalAmountBase,
       amount_paid_base: baseTotals.amountPaidBase,
       balance_due_base: baseTotals.balanceDueBase,
+      place_of_supply_subdivision_id: placeOfSupplySubdivisionId,
     };
 
     await supabase.from('invoice_line_items').update({ deleted_at: new Date().toISOString() }).eq('invoice_id', id);
