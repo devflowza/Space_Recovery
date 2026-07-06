@@ -420,7 +420,7 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
         : null,
     );
 
-    const { computation, subtotal, taxAmount, totalAmount } = await computeDocumentTotals(
+    const { computation, subtotal, taxAmount, totalAmount, placeOfSupplySubdivisionId } = await computeDocumentTotals(
       {
         items: items.map((i) => ({
           description: i.description,
@@ -433,6 +433,8 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
         documentType: 'quote',
         documentDate: new Date().toISOString().slice(0, 10),
         taxInclusive: quote.tax_inclusive ?? false,
+        customerId: quote.customer_id ?? null,
+        companyId: quote.company_id ?? null,
       },
       rc,
     );
@@ -465,6 +467,7 @@ export const createQuote = async (quote: Quote, items: QuoteItem[]) => {
       subtotal_base: baseTotals.subtotalBase,
       tax_amount_base: baseTotals.taxAmountBase,
       total_amount_base: baseTotals.totalAmountBase,
+      place_of_supply_subdivision_id: placeOfSupplySubdivisionId,
       created_by: user.id,
     };
     const quoteToInsert = sanitizeUuidFields(quoteToInsertRaw as Record<string, unknown>) as QuoteInsert;
@@ -572,7 +575,7 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
     // currency's decimals; base never changes on an edit.
     const { data: existing } = await supabase
       .from('quotes')
-      .select('currency, exchange_rate, rate_source')
+      .select('currency, exchange_rate, rate_source, customer_id, company_id')
       .eq('id', id)
       .maybeSingle();
 
@@ -605,7 +608,7 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
       rate,
       rateSource: rateSource as RateContext['rateSource'],
     };
-    const { computation, subtotal, taxAmount, totalAmount } = await computeDocumentTotals(
+    const { computation, subtotal, taxAmount, totalAmount, placeOfSupplySubdivisionId } = await computeDocumentTotals(
       {
         items: items.map((i) => ({
           description: i.description,
@@ -618,6 +621,8 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
         documentType: 'quote',
         documentDate: new Date().toISOString().slice(0, 10),
         taxInclusive: quote.tax_inclusive ?? false,
+        customerId: quote.customer_id ?? existing?.customer_id ?? null,
+        companyId: quote.company_id ?? existing?.company_id ?? null,
       },
       rc,
     );
@@ -635,6 +640,7 @@ export const updateQuote = async (id: string, quote: Partial<Quote>, items?: Quo
       subtotal_base: baseTotals.subtotalBase,
       tax_amount_base: baseTotals.taxAmountBase,
       total_amount_base: baseTotals.totalAmountBase,
+      place_of_supply_subdivision_id: placeOfSupplySubdivisionId,
     };
 
     await supabase.from('quote_items').update({ deleted_at: new Date().toISOString() }).eq('quote_id', id);
