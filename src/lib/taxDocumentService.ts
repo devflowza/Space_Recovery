@@ -103,6 +103,18 @@ export function matchFormRate(
   const flat = standards.filter((r) => r.subdivision_id === null && r.applies_to === null);
   const sum = flat.reduce((s, r) => s + r.rate, 0);
   if (flat.length > 0 && Math.abs(sum - formRate) < 1e-9) return flat;
+  // A slab-bucketed pack (India GST) has NO bucket-less flat standards, so the
+  // single-row synthetic fallback below would emit a mis-coded head (component
+  // of standards[0]) that the split kernel silently zero-rates inter-state
+  // (IGST filter finds nothing) or mis-splits intra-state (one CGST head, no
+  // SGST). A form rate matching no configured slab is out-of-spec — fail loud
+  // rather than under-tax a statutory document.
+  if (buckets.size > 0 && flat.length === 0) {
+    throw new Error(
+      `Tax rate ${formRate}% matches no configured tax slab (available: ${[...buckets.keys()].join(', ')}). `
+      + 'Only a seeded slab rate is valid for a split-levy pack.',
+    );
+  }
   return [{
     id: `form:${formRate}`, country_id: flat[0]?.country_id ?? standards[0]?.country_id ?? 'form',
     subdivision_id: null,

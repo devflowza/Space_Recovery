@@ -72,6 +72,13 @@ describe('taxDocumentService pure helpers', () => {
     expect(rows.map((r) => r.component_code)).toEqual(['CGST', 'SGST', 'IGST']);
     expect(rows.some((r) => r.id.startsWith('form:'))).toBe(false);
   });
+  it('matchFormRate fails loud on an off-slab rate for a split-levy pack (never a silent mis-coded synthetic head)', () => {
+    // A slab pack (India) with tax_rate 12 (unseeded) must NOT synthesize a lone
+    // 'CGST 12%' row that the split kernel zero-rates inter-state / mis-splits intra-state.
+    expect(() => matchFormRate([inCgst, inSgst, inIgst], 12)).toThrow(/no configured tax slab/i);
+    // rate 0 stays an untaxed document even on a slab pack.
+    expect(matchFormRate([inCgst, inSgst, inIgst], 0)).toEqual([]);
+  });
   it('matchFormRate leaves the legacy single-levy path byte-identical (Oman VAT 5 → the one VAT row)', () => {
     expect(matchFormRate([omVat], 5)).toEqual([omVat]);
     expect(matchFormRate([omVat], 7.5)[0]).toMatchObject({ id: 'form:7.5', rate: 7.5, component_code: 'VAT' });
