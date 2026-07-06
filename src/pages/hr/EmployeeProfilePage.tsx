@@ -88,12 +88,12 @@ export const EmployeeProfilePage: React.FC = () => {
           </div>
         </div>
         <Badge
-          color={
+          variant={
             employee.employment_status === 'active'
-              ? 'green'
+              ? 'success'
               : employee.employment_status === 'on_leave'
-                ? 'yellow'
-                : 'red'
+                ? 'warning'
+                : 'danger'
           }
         >
           {employee.employment_status}

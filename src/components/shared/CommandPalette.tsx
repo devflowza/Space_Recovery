@@ -286,7 +286,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                       onMouseEnter={() => setActiveIndex(globalIdx)}
                       onClick={() => runItem(item)}
                       className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
-                        isActive ? 'bg-primary/8 text-slate-900' : 'text-slate-700 hover:bg-slate-50'
+                        isActive ? 'bg-primary/10 text-slate-900' : 'text-slate-700 hover:bg-slate-50'
                       }`}
                     >
                       <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-primary' : 'text-slate-400'}`} />

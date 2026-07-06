@@ -83,7 +83,7 @@ export const PortalCommunications: React.FC = () => {
       case 'phone':
         return '#10b981';
       case 'meeting':
-        return '#1e40af';
+        return 'rgb(var(--color-cat-7))';
       case 'sms':
         return '#f59e0b';
       default:

@@ -42,10 +42,10 @@ const statusConfig = {
   partial: { label: 'Partially Paid', color: 'warning', icon: DollarSign },
   overdue: { label: 'Overdue', color: 'danger', icon: AlertCircle },
   cancelled: { label: 'Cancelled', color: 'secondary', icon: AlertCircle },
-};
+} as const;
 
 const typeConfig = {
-  proforma: { label: 'Proforma Invoice', color: 'rgb(var(--color-accent))' },
+  proforma: { label: 'Proforma Invoice', color: 'rgb(var(--color-cat-8))' },
   tax: { label: 'Tax Invoice', color: '#0ea5e9' },
 };
 
@@ -711,7 +711,7 @@ export const InvoiceDetailPage: React.FC = () => {
           <>
             <div className="flex items-center gap-2">
               <StatusIcon className="w-5 h-5" />
-              <Badge variant="custom" color={statusConfig[invoice?.status as keyof typeof statusConfig]?.color || 'secondary'}>
+              <Badge variant={statusConfig[invoice?.status as keyof typeof statusConfig]?.color ?? 'secondary'}>
                 {statusConfig[invoice?.status as keyof typeof statusConfig]?.label || invoice?.status}
               </Badge>
             </div>

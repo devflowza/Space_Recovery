@@ -215,21 +215,24 @@ export const UserManagement: React.FC = () => {
     }
   };
 
-  const getRoleBadgeColor = (role: string | null) => {
-    if (role === null) return 'amber';
+  // Semantic Badge variants (not raw colors): raw named-color backgrounds
+  // paired with the default variant's slate ink break under the midnight
+  // theme, where the slate ink ramp inverts.
+  const getRoleBadgeVariant = (role: string | null) => {
+    if (role === null) return 'warning' as const;
     switch (role) {
       case 'admin':
-        return 'red';
+        return 'danger' as const;
       case 'technician':
-        return 'blue';
+        return 'info' as const;
       case 'sales':
-        return 'green';
+        return 'success' as const;
       case 'accounts':
-        return 'orange';
+        return 'warning' as const;
       case 'hr':
-        return 'teal';
+        return 'accent' as const;
       default:
-        return 'gray';
+        return 'secondary' as const;
     }
   };
 
@@ -374,13 +377,13 @@ export const UserManagement: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge color={getRoleBadgeColor(user.role)}>
+                    <Badge variant={getRoleBadgeVariant(user.role)}>
                       {user.role === null ? 'Pending Approval' : user.role}
                     </Badge>
                   </td>
                   <td className="px-6 py-4">
                     {user.role === 'technician' ? (
-                      <Badge color={user.case_access_level === 'restricted' ? '#f59e0b' : '#10b981'}>
+                      <Badge variant={user.case_access_level === 'restricted' ? 'warning' : 'success'}>
                         {user.case_access_level === 'restricted' ? 'Restricted' : 'Full'}
                       </Badge>
                     ) : (

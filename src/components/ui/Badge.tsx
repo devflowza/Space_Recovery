@@ -71,10 +71,21 @@ export const Badge: React.FC<BadgeProps> = ({
   const resolvedVariant = VARIANT_ALIAS[variant];
   const interactive = !!onClick;
 
+  // Custom variant: DB/config-driven color rendered as ink over a soft tint.
+  // color-mix (not the old hex+'20' concat) so ANY css color works — hex,
+  // rgb(var(--token)) or named — instead of producing invalid CSS. The color
+  // is also exposed as --badge-c so the midnight theme can re-mix the ink for
+  // dark surfaces (see the .badge-custom rule in src/index.css) — DB status
+  // colors are tuned for white cards and would otherwise sit dark-on-dark.
   const colorStyle: React.CSSProperties | undefined =
     color !== undefined
       ? resolvedVariant === 'custom'
-        ? { backgroundColor: color + '20', color, border: `1px solid ${color}40` }
+        ? ({
+            ['--badge-c' as string]: color,
+            backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`,
+            color,
+            border: `1px solid color-mix(in srgb, ${color} 25%, transparent)`,
+          } as React.CSSProperties)
         : { backgroundColor: color }
       : undefined;
 
@@ -97,7 +108,11 @@ export const Badge: React.FC<BadgeProps> = ({
       tabIndex={interactive ? 0 : rest.tabIndex}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      className={cn(badgeVariants({ variant: resolvedVariant, size, interactive }), className)}
+      className={cn(
+        badgeVariants({ variant: resolvedVariant, size, interactive }),
+        resolvedVariant === 'custom' && color !== undefined && 'badge-custom',
+        className,
+      )}
       style={computedStyle}
     >
       {children}

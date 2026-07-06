@@ -409,7 +409,7 @@ export const CustomerProfilePage: React.FC = () => {
       case 'phone':
         return '#10b981';
       case 'meeting':
-        return 'rgb(var(--color-accent))';
+        return 'rgb(var(--color-cat-7))';
       case 'sms':
         return '#f59e0b';
       default:

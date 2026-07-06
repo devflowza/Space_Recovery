@@ -289,7 +289,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
       {previewUrl ? (
         <div className="space-y-3">
-          <div className="relative group rounded-xl border-2 border-slate-200 overflow-hidden bg-slate-50">
+          <div className="paper-light relative group rounded-xl border-2 border-slate-200 overflow-hidden bg-slate-50">
             <img
               src={previewUrl}
               alt={t('ui.imageUpload.previewAlt')}

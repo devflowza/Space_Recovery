@@ -25,7 +25,7 @@ export function UpgradeBanner({
     return (
       <div
         className={cn(
-          'flex items-center justify-between gap-4 bg-gradient-to-r from-primary to-accent text-white rounded-lg px-4 py-3',
+          'flex items-center justify-between gap-4 bg-gradient-to-r from-primary to-primary/80 text-white rounded-lg px-4 py-3',
           className
         )}
       >
@@ -53,7 +53,7 @@ export function UpgradeBanner({
   return (
     <div
       className={cn(
-        'relative bg-gradient-to-br from-primary via-accent to-primary text-white rounded-xl p-6 overflow-hidden',
+        'relative bg-gradient-to-br from-primary via-primary/85 to-primary text-white rounded-xl p-6 overflow-hidden',
         className
       )}
     >

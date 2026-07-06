@@ -28,8 +28,7 @@ export const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({
       type="button"
       onClick={onClick}
       disabled={isDisabled}
-      style={variant === 'primary' ? { backgroundColor: isGenerating ? '#64748b' : '#10b981', color: 'white' } : undefined}
-      variant={variant === 'secondary' ? 'secondary' : undefined}
+      variant={variant === 'secondary' ? 'secondary' : 'success'}
       className={`${size === 'sm' ? 'text-sm' : ''} ${className}`}
       title={tooltip || (isGenerating ? 'Generating PDF...' : 'Download PDF')}
     >
