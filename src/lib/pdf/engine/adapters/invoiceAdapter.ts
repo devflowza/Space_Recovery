@@ -17,6 +17,7 @@ import { fmtDateWithConfig } from '../../configDate';
 import { amountInWordsAr, amountInWordsEn } from '../amountInWords';
 import { resolveEInvoicingTransport } from '../../../regimes/registry';
 import { resolveStatutoryDocumentMeta } from '../../../regimes/in_gst/statutoryMeta';
+import { isEInvoiceApplicable } from '../../../einvoiceReadiness';
 import type { ResolvedCountryFacts } from '../countryConfig';
 import type {
   BankBlock,
@@ -452,6 +453,13 @@ export function toEngineData(
     ? null
     : `INVOICE:${invoiceData.invoice_number || 'Draft'} TOTAL:${money(totalAmount)} DATE:${docDate(invoiceData.invoice_date)}`;
 
+  // ---- IRN QR real-estate (Phase 4 D3, IRN-readiness only) -----------------
+  // When the tenant marked GST e-invoicing applicable, the always-rendered QR
+  // block is labelled as the RESERVED IRN slot. The payload stays the generic
+  // verification QR — a fabricated IRN payload would be a compliance lie. A
+  // real e-invoice regime artifact (zatcaPayload) always wins.
+  const irnReserved = !zatcaPayload && isEInvoiceApplicable(companySettings.metadata);
+
   return {
     documentTitle,
     identity,
@@ -469,7 +477,11 @@ export function toEngineData(
       { en: 'Authorized Signature', ar: 'التوقيع المعتمد' },
       { en: 'Customer Signature', ar: 'توقيع العميل' },
     ],
-    qrCaption: zatcaPayload ? 'ZATCA e-invoice QR' : 'Scan to verify this invoice',
+    qrCaption: zatcaPayload
+      ? 'ZATCA e-invoice QR'
+      : irnReserved
+        ? 'IRN QR (reserved) — register on IRP; verification QR shown'
+        : 'Scan to verify this invoice',
     zatcaPayload,
     qrPayload,
   };
