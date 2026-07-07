@@ -57,14 +57,20 @@ export const gstrComposer: ReturnComposer = {
       const r = raw as GstrLedgerRow;
       const treatment = r.tax_treatment ?? 'standard';
       if (treatment === 'out_of_scope') continue;              // Section 170 round-off lines
-      if (r.record_type !== 'sale') { skippedPurchaseRows += 1; continue; }  // ITC = named non-goal
+      // Non-'sale' rows are skipped: 'purchase' (ITC = named non-goal) AND WP-L4's
+      // 'advance'/'advance_refund'/'advance_adjustment' rows. The advance rows SHOULD
+      // net into 3.1(a) via their signed vat_amount_base (receipt-period + / invoice-
+      // period −), but wiring that into the composer + file_vat_return re-derivation in
+      // lockstep is a pending S6 follow-up (see review WP-L4 #6) — until then advance
+      // tax is period-mis-attributed but total-conserved (composer is display_only).
+      if (r.record_type !== 'sale') { skippedPurchaseRows += 1; continue; }
 
       const head = headOf(r);
       const taxable = Number(r.taxable_amount_base ?? 0);
       // SGST mirrors CGST's base on every dual-levy row pair (equal heads, spec §3): count
       // the shared taxable base once, from the NON-SGST head of each pair, never the SGST
-      // mirror. PER-HEAD signed rows (invoices, and WP-L4's future per-head CN / advance
-      // offsets) net naturally through the head sums.
+      // mirror. PER-HEAD signed 'sale' rows (invoices) net naturally through the head sums;
+      // WP-L4's advance/CN offset rows are skipped at the record_type gate above (S6 follow-up).
       if (treatment === 'exempt' || treatment === 'zero_rated') {
         if (head === 'sgst') continue;                         // skip the SGST mirror only
         exemptNil += taxable;                                  // 'zero' = nil-rated domestic (§3)
@@ -73,7 +79,8 @@ export const gstrComposer: ReturnComposer = {
       // A HEAD-LESS standard row (live credit-note contra) can't be split across heads.
       // Excluding it from BOTH heads and taxable keeps 3.1(a) internally consistent —
       // GROSS of it — rather than the inconsistent "tax on a net-zero base". The header
-      // output tax (SUM(vat_amount_base)) still nets it; WP-L4 makes 3.1(a) net too.
+      // output tax (SUM(vat_amount_base)) still nets it; netting it into 3.1(a) is a
+      // pending S6 composer change (paired with file_vat_return's re-derivation).
       if (!head) { headlessSaleTaxBase += Number(r.vat_amount_base ?? 0); continue; }
       outward[head] += Number(r.vat_amount_base ?? 0);
       if (head !== 'sgst') outward.taxable += taxable;
@@ -95,9 +102,10 @@ export const gstrComposer: ReturnComposer = {
         display_only: true,
         itc_table4: 'not_composed_purchases_not_modeled',
         skipped_purchase_rows: skippedPurchaseRows,
-        // 3.1(a) is composed gross of head-less credit-note contras (see loop). Their
-        // signed tax is surfaced here; the header output tax nets them. Net-in-3.1(a) = WP-L4.
-        credit_notes_netting: 'gross_pending_l4',
+        // 3.1(a) is composed gross of head-less credit-note contras + skips L4 advance
+        // rows (see loop); their signed tax is surfaced via the header output tax.
+        // Netting them into 3.1(a) is a pending S6 composer follow-up (review WP-L4 #6).
+        credit_notes_netting: 'gross_pending_composer',
         headless_sale_tax_base: roundMoney(headlessSaleTaxBase, 2),
         taxPeriods: input.taxPeriods,
         ...(input.taxPeriods.length > 0
