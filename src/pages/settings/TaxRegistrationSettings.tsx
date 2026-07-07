@@ -16,6 +16,7 @@ import { settingsKeys } from '../../lib/queryKeys';
 import { geoCountryService, type CountrySubdivision } from '../../lib/geoCountryService';
 import { validateGSTIN } from '../../lib/regimes/in_gst/gstin';
 import { gstinMatchesSubdivision } from '../../lib/regimes/in_gst/registrationStatus';
+import { validateTaxNumber } from '../auth/onboarding/onboardingValidation';
 import {
   getPrimaryLegalEntity, getActiveTaxRegistration, createTaxRegistration,
   endTaxRegistration, getDeclaredRegistrationStatus, setDeclaredRegistrationStatus,
@@ -59,13 +60,23 @@ export const TaxRegistrationSettings: React.FC = () => {
     view?.registration ? 'registered' : view?.declared === 'unregistered' ? 'unregistered' : 'unset';
 
   const selected = subdivisions.find((s) => s.id === subdivisionId) ?? null;
+  // Regime gate (DATA key, never a country literal): GST-coded subdivisions carry
+  // a tax_authority_code. Only India-style GST tenants get the GSTIN checksum +
+  // state cross-check; VAT/TRN/other regimes validate with the soft country regex,
+  // so a valid non-GSTIN number is not blocked from saving.
+  const hasGstSubdivisions = subdivisions.some((s) => s.tax_authority_code);
   const trimmed = taxNumber.trim().toUpperCase();
   let formError: string | null = null;
   if (trimmed.length > 0) {
-    const check = validateGSTIN(trimmed);
-    if (!check.ok) formError = check.error ?? `Invalid ${tax.numberLabel}`;
-    else if (selected && !gstinMatchesSubdivision(trimmed, selected.tax_authority_code)) {
-      formError = `This ${tax.numberLabel} does not match the selected state (expected state code ${selected.tax_authority_code}).`;
+    if (hasGstSubdivisions) {
+      const check = validateGSTIN(trimmed);
+      if (!check.ok) formError = check.error ?? `Invalid ${tax.numberLabel}`;
+      else if (selected && !gstinMatchesSubdivision(trimmed, selected.tax_authority_code)) {
+        formError = `This ${tax.numberLabel} does not match the selected state (expected state code ${selected.tax_authority_code}).`;
+      }
+    } else {
+      const soft = validateTaxNumber(tax.numberFormat, trimmed);
+      if (!soft.ok) formError = soft.message ?? `Invalid ${tax.numberLabel}`;
     }
   }
   const canSave = trimmed.length > 0 && !formError && (subdivisions.length === 0 || !!subdivisionId);
