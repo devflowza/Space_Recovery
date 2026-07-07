@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Receipt } from 'lucide-react';
 import type { OnboardingFormData } from '../constants';
-import { geoCountryService, type CountrySubdivision, type OnboardableCountry } from '../../../../lib/geoCountryService';
-import { validateTaxNumber } from '../onboardingValidation';
-import { validateGSTIN } from '../../../../lib/regimes/in_gst/gstin';
-import { gstinMatchesSubdivision } from '../../../../lib/regimes/in_gst/registrationStatus';
+import type { CountrySubdivision, OnboardableCountry } from '../../../../lib/geoCountryService';
+import { evaluateJurisdiction } from '../onboardingValidation';
 
 interface JurisdictionStepProps {
   formData: OnboardingFormData;
   country: OnboardableCountry;
+  subdivisions: CountrySubdivision[];
   updateField: <K extends keyof OnboardingFormData>(key: K, value: OnboardingFormData[K]) => void;
 }
 
@@ -30,40 +28,12 @@ const inputClasses = (hasError: boolean) =>
  * against the country's tax_number_format), and confirms the fiscal-year start.
  * Persists into formData → provision-tenant → primary legal_entity.
  */
-export const JurisdictionStep = ({ formData, country, updateField }: JurisdictionStepProps) => {
+export const JurisdictionStep = ({ formData, country, subdivisions, updateField }: JurisdictionStepProps) => {
   const taxLabel = country.tax_number_label || `${country.tax_label || 'Tax'} Registration Number`;
 
-  const [subdivisions, setSubdivisions] = useState<CountrySubdivision[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    geoCountryService.listCountrySubdivisions(country.id)
-      .then((rows) => { if (!cancelled) setSubdivisions(rows); })
-      .catch(() => { if (!cancelled) setSubdivisions([]); });
-    return () => { cancelled = true; };
-  }, [country.id]);
-
-  const selectedSubdivision = subdivisions.find((s) => s.id === formData.subdivisionId) ?? null;
-  const hasGstSubdivisions = subdivisions.some((s) => s.tax_authority_code);
-  const trimmedTax = formData.taxNumber.trim();
-
-  // GST-coded countries get the S3 checksum validator + the L2 state cross-check;
-  // everything else keeps the existing soft regex check.
-  let taxCheck: { ok: boolean; message?: string } = { ok: true };
-  if (trimmedTax.length > 0) {
-    if (hasGstSubdivisions) {
-      const gstin = validateGSTIN(trimmedTax);
-      if (!gstin.ok) {
-        taxCheck = { ok: false, message: gstin.error ?? 'Invalid GSTIN' };
-      } else if (selectedSubdivision && !gstinMatchesSubdivision(trimmedTax, selectedSubdivision.tax_authority_code)) {
-        taxCheck = {
-          ok: false,
-          message: `This ${country.tax_number_label || 'GSTIN'} does not match the selected state (expected state code ${selectedSubdivision.tax_authority_code}).`,
-        };
-      }
-    } else {
-      taxCheck = validateTaxNumber(country.tax_number_format, formData.taxNumber);
-    }
-  }
+  // Subdivisions are loaded by the parent (LocationStep) and passed in, so the
+  // same evaluation drives both this inline error AND the Continue gate.
+  const { taxError } = evaluateJurisdiction(formData, country, subdivisions);
 
   return (
     <motion.div
@@ -123,18 +93,22 @@ export const JurisdictionStep = ({ formData, country, updateField }: Jurisdictio
         )}
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
+          <label htmlFor="jurisdiction-tax-number" className="block text-sm font-medium text-slate-300 mb-2">
             {taxLabel} <span className="text-primary">*</span>
           </label>
           <input
+            id="jurisdiction-tax-number"
+            aria-label={taxLabel}
             type="text"
             value={formData.taxNumber}
             onChange={(e) => updateField('taxNumber', e.target.value)}
             placeholder={country.tax_number_label || 'e.g. 300000000000003'}
-            className={inputClasses(!taxCheck.ok)}
+            className={inputClasses(!!taxError)}
+            aria-invalid={!taxError ? undefined : true}
+            aria-describedby={taxError ? 'jurisdiction-tax-error' : undefined}
           />
-          {!taxCheck.ok && (
-            <p className="text-danger text-xs mt-1">{taxCheck.message}</p>
+          {taxError && (
+            <p id="jurisdiction-tax-error" role="alert" className="text-danger text-xs mt-1">{taxError}</p>
           )}
         </div>
 
