@@ -80,15 +80,21 @@ export function countryTemplateOverride(
     };
   }
 
-  // D11 — registration band. With a profile: band shows only for a registered
-  // seller whose profile wants it. Without: preserve the legacy fact-only rule.
+  // D11 — registration band. With a profile the PROFILE is the authority (its
+  // showRegistrationBand + a registered seller), NOT the tax-system string — else a
+  // GST (India) tax invoice would never show its GSTIN band. Without a profile,
+  // preserve the legacy VAT-only fact rule.
   const bandEnabled = compliance
-    ? facts.taxInvoiceRequired && facts.taxSystem === 'VAT' &&
+    ? facts.taxInvoiceRequired &&
       compliance.profile.showRegistrationBand && compliance.sellerRegistered
     : facts.taxInvoiceRequired && facts.taxSystem === 'VAT';
   override.taxBar = { enabled: bandEnabled };
   const bandLabel = facts.taxNumberLabel ?? facts.taxLabel;
   if (bandLabel) override.taxBar.label = { en: bandLabel };
+
+  // Expose the resolved profile key so the financial adapters can inject the
+  // profile's statutory meta rows (regime-owned; no country branching here).
+  if (compliance) override.statutoryProfileKey = compliance.profile.key;
 
   // Forced statutory line-item columns (item code / unit). Map the profile's
   // snake_case forcedColumns to the real camelCase column keys and flip them

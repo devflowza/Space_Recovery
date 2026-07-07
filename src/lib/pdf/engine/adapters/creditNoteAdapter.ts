@@ -25,6 +25,7 @@ import type { CreditNoteDocumentData } from '../../types';
 import { formatEngineMoney, safeString } from '../../utils';
 import { fmtDateWithConfig } from '../../configDate';
 import type { EngineDocData, LabelText, PartyBlock, ResolvedColumn } from '../types';
+import { resolveStatutoryDocumentMeta } from '../../../regimes/in_gst/statutoryMeta';
 
 /** Default column alignments by column key (parity with invoice/quote).
  *  `itemCode` / `unit` are the optional statutory columns (hidden until a
@@ -117,10 +118,32 @@ export function toCreditNoteEngineData(
   const status = humanize(creditNoteData.status);
   if (status) meta.push({ label: { en: 'Status:', ar: 'الحالة:' }, value: status });
   if (creditNoteData.invoice_number) {
-    meta.push({ label: { en: 'Against Invoice:', ar: 'مقابل الفاتورة:' }, value: creditNoteData.invoice_number });
+    // India r.53: reference the original tax invoice by number AND date. Non-India
+    // credit notes keep the legacy "Against Invoice" label (byte-stable goldens).
+    const isIndia = config.statutoryProfileKey === 'in_gst_invoice';
+    const dt = isIndia && creditNoteData.invoice_date ? ` dt ${creditNoteData.invoice_date}` : '';
+    meta.push({
+      label: { en: isIndia ? 'Revision of Tax Invoice:' : 'Against Invoice:', ar: 'مقابل الفاتورة:' },
+      value: `${creditNoteData.invoice_number}${dt}`,
+    });
   }
   if (creditNoteData.case_no) {
     meta.push({ label: { en: 'Job ID:', ar: 'رقم المهمة:' }, value: creditNoteData.case_no });
+  }
+  // India Rule-46 statutory meta — appended only for the in_gst_invoice profile,
+  // from fields already on the doc (place-of-supply state code = GSTIN prefix).
+  {
+    const addr = creditNoteData.buyer_address as Record<string, string | null | undefined> | null | undefined;
+    const gstin = creditNoteData.buyer_tax_number ?? '';
+    for (const row of resolveStatutoryDocumentMeta(config.statutoryProfileKey ?? '', {
+      placeOfSupplyStateName: addr?.state ?? null,
+      placeOfSupplyStateCode: /^\d{2}/.test(gstin) ? gstin.slice(0, 2) : null,
+      reverseCharge: creditNoteData.reverse_charge ?? false,
+      billingAddress: addr?.address ?? null,
+      deliveryAddress: addr?.delivery_address ?? null,
+    })) {
+      meta.push({ label: { en: row.label.en, ar: '' }, value: row.value });
+    }
   }
 
   // ---- Line items ----------------------------------------------------------
@@ -146,10 +169,15 @@ export function toCreditNoteEngineData(
   if (on('subtotal')) {
     totals.push({ ...tl('subtotal', 'Subtotal:', 'المجموع الفرعي:'), value: money(creditNoteData.subtotal ?? 0) });
   }
-  // M-I fallback: a single stored header tax_amount. Component tax lines
-  // (document_tax_lines) are threaded onto CreditNoteData in a later phase —
-  // never recompute from tax_rate × subtotal here.
-  if (on('tax') && (creditNoteData.tax_amount ?? 0) !== 0) {
+  // Per-head rows from the stored document_tax_lines rollups (India CGST/SGST/IGST
+  // reversal — already NEGATIVE) when present; else the M-I fallback single stored
+  // header tax_amount. Never recompute from tax_rate × subtotal here.
+  const cnRollups = (creditNoteData.tax_lines ?? []).filter((l) => l.line_item_id === null);
+  if (on('tax') && cnRollups.length > 0) {
+    for (const r of cnRollups) {
+      totals.push({ key: 'tax', label: { en: r.component_label, ar: '' }, value: money(r.tax_amount) });
+    }
+  } else if (on('tax') && (creditNoteData.tax_amount ?? 0) !== 0) {
     const rate = creditNoteData.tax_rate != null ? ` ${creditNoteData.tax_rate}%` : '';
     totals.push({
       key: 'tax',
