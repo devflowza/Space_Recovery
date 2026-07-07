@@ -15,7 +15,8 @@
 
 import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS, createBilingualInfoBox } from '../../styles';
-import { resolveSectionFill, resolveHeaderText } from '../branding';
+import { resolveSectionFill, resolveHeaderText, resolvePresentation } from '../branding';
+import { openInfoBox, openInfoRow } from './openCard';
 import { safeString } from '../../utils';
 import { getGeneralIconSvg } from '../../../deviceIconMapper';
 import type {
@@ -57,13 +58,22 @@ export const renderCollector: SectionRenderer = (
   const labelLang = fieldLabelLanguage(language, engine.config.translationPolicy, 'collector');
   const labelWidth = isBilingualMode(labelLang) ? 150 : 90;
   const userIcon = getGeneralIconSvg('user');
+  const secondaryTitle = bilingual ? ar(collector.title, language) : null;
+
+  if (resolvePresentation(engine.config).infoCardStyle === 'open') {
+    const openRows = collector.rows.map((r) => openInfoRow(r.label, r.value, labelLang, labelWidth));
+    return {
+      stack: [openInfoBox(en(collector.title, 'Collection Information'), secondaryTitle, openRows, userIcon)],
+      margin: [0, 0, 0, 8],
+    };
+  }
 
   const rows: object[] = collector.rows.map((r) => infoRow(r.label, r.value, labelLang, labelWidth));
 
   const fill = resolveSectionFill(engine.config, 'collector');
   const box = createBilingualInfoBox(
     en(collector.title, 'Collection Information'),
-    bilingual ? ar(collector.title, language) : null,
+    secondaryTitle,
     rows,
     userIcon,
     fill,

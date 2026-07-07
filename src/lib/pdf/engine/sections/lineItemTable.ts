@@ -19,7 +19,7 @@ import type {
 } from '../types';
 import { isBilingualMode, en, ar, resolveLabel } from '../labels';
 import { engineLayoutDirection, mirrorColumns } from '../rtl';
-import { resolveTable, resolveSectionFill } from '../branding';
+import { resolveTable, resolveSectionFill, resolvePresentation } from '../branding';
 import { readableTextOn } from '../palette';
 
 function headerAlignment(col: ResolvedColumn): 'left' | 'center' | 'right' {
@@ -53,10 +53,14 @@ export const renderLineItems: SectionRenderer = (
   // Table styling. `headerBackground` defaults to the legacy `PDF_COLORS.headerBg`,
   // so an unconfigured table is unchanged; S/N + zebra are opt-in.
   const tableStyle = resolveTable(engine.config);
+  // Premium light finish: white header with dark bold labels + hairline grid.
+  const light = resolvePresentation(engine.config).tableHeaderStyle === 'light';
   // Per-section header fill (sections-list override → global → the table default),
   // with auto-contrast text so any custom/dark fill keeps the labels readable.
-  const headerFill = resolveSectionFill(engine.config, 'lineItems', tableStyle.headerBackground);
-  const headerText = readableTextOn(headerFill);
+  const headerFill = light
+    ? PDF_COLORS.white
+    : resolveSectionFill(engine.config, 'lineItems', tableStyle.headerBackground);
+  const headerText = light ? PDF_COLORS.text : readableTextOn(headerFill);
 
   // Header row: one cell per visible column, label resolved by language mode.
   const headerRow: TableCell[] = columns.map((col) => ({
@@ -65,6 +69,7 @@ export const renderLineItems: SectionRenderer = (
     fillColor: headerFill,
     color: headerText,
     alignment: headerAlignment(col),
+    ...(light ? { fontSize: 8.5 } : {}),
   }));
 
   const body: TableCell[][] = [headerRow];
@@ -97,12 +102,19 @@ export const renderLineItems: SectionRenderer = (
   }
 
   // Opt-in zebra striping: body rows alternate a light fill. Header cells set
-  // their own fill, so the layout fill only paints body rows.
+  // their own fill, so the layout fill only paints body rows. The light finish
+  // separates the header with a slightly stronger rule + roomier padding.
   const layout = {
-    hLineWidth: () => 0.5,
+    hLineWidth: light
+      ? (i: number, node: { table: { body: unknown[] } }) =>
+          i === 0 || i === 1 || i === node.table.body.length ? 0.75 : 0.5
+      : () => 0.5,
     vLineWidth: () => 0.5,
     hLineColor: () => PDF_COLORS.border,
     vLineColor: () => PDF_COLORS.border,
+    ...(light
+      ? { paddingLeft: () => 6, paddingRight: () => 6, paddingTop: () => 4, paddingBottom: () => 4 }
+      : {}),
     ...(tableStyle.zebra
       ? { fillColor: (rowIndex: number) => (rowIndex > 0 && rowIndex % 2 === 0 ? PDF_COLORS.background : null) }
       : {}),

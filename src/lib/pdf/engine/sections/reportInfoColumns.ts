@@ -28,7 +28,8 @@ import type {
   ReportInfoColumnsBlock,
   SectionRenderer,
 } from '../types';
-import { isBilingualMode, en, ar, resolveLabel } from '../labels';
+import { isBilingualMode, en, ar, resolveLabel, fieldLabelLanguage, type TranslationGroup } from '../labels';
+import { resolveSectionFill, resolveHeaderText } from '../branding';
 
 function infoRow(
   label: LabelText,
@@ -47,20 +48,29 @@ function infoRow(
 
 function columnBox(
   col: ReportInfoColumnsBlock['general'],
-  language: EngineContext['config']['language'],
+  engine: EngineContext,
   iconSvg: string,
   fallbackTitle: string,
+  labelGroup: TranslationGroup,
 ): Content {
+  const { language } = engine.config;
   const bilingual = isBilingualMode(language);
+  const labelLang = fieldLabelLanguage(language, engine.config.translationPolicy, labelGroup);
   // Two-column cards sit narrower than full width — use a tighter label column
   // so the value half stays legible (bilingual labels still get more room).
-  const labelWidth = bilingual ? 95 : 70;
-  const rows = col.rows.map((r) => infoRow(r.label, r.value, language, labelWidth));
+  const labelWidth = isBilingualMode(labelLang) ? 95 : 70;
+  const rows = col.rows.map((r) => infoRow(r.label, r.value, labelLang, labelWidth));
+  // Per-section header fill (sections-list override → global → the neutral
+  // default) + readable heading text — the same convention as caseInfo/devices,
+  // so a preset can tint the report cards (e.g. the reference light blue).
+  const fill = resolveSectionFill(engine.config, 'reportInfoColumns');
   return createBilingualInfoBox(
     en(col.title, fallbackTitle),
     bilingual ? ar(col.title, language) : null,
     rows,
     iconSvg,
+    fill,
+    resolveHeaderText(engine.config, fill),
   ) as Content;
 }
 
@@ -76,14 +86,14 @@ export const renderReportInfoColumns: SectionRenderer = (
   const generalIcon = getGeneralIconSvg('fileText');
   const deviceIcon = generalIcon;
 
-  const generalBox = columnBox(block.general, language, generalIcon, 'General Details');
+  const generalBox = columnBox(block.general, engine, generalIcon, 'General Details', 'meta');
 
   // No device data (prevention / recovered_files): General spans full width.
   if (!block.device || block.device.rows.length === 0) {
     return { stack: [generalBox], margin: [0, 0, 0, 12] };
   }
 
-  const deviceBox = columnBox(block.device, language, deviceIcon, 'Device Details');
+  const deviceBox = columnBox(block.device, engine, deviceIcon, 'Device Details', 'diagnostics');
   const generalCol = { width: '*', stack: [generalBox] };
   const deviceCol = { width: '*', stack: [deviceBox] };
 

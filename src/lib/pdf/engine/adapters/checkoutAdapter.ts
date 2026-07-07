@@ -20,10 +20,12 @@
 import type { CaseData, DeviceData, ReceiptData } from '../../types';
 import type { DocumentTemplateConfig } from '../../templateConfig';
 import { formatDate, formatCapacity, safeString } from '../../utils';
+import { docRefBannerActive } from './receiptAdapter';
 import type {
   CaseInfoBlock,
   CollectorBlock,
   DevicesBlock,
+  DocRefBlock,
   EngineDocData,
   LabelText,
   LegalTermsBlock,
@@ -108,11 +110,19 @@ function devicesInLatestBatch(devices: DeviceData[]): DeviceData[] {
  * Checkout Date, and how many devices were collected). The customer's identity
  * lives in the Customer Information box and is deliberately NOT repeated here.
  */
-function caseInfoBlock(caseData: CaseData, collectedCount: number, totalCount: number): CaseInfoBlock {
+function caseInfoBlock(
+  caseData: CaseData,
+  collectedCount: number,
+  totalCount: number,
+  omitCaseId = false,
+): CaseInfoBlock {
   return {
     title: { en: 'Case Details', ar: 'تفاصيل الحالة' },
     rows: [
-      { label: { en: 'Case ID:', ar: 'رقم الحالة:' }, value: safeString(caseData.case_no) },
+      // The premium docRef banner shows the case number; drop the duplicate row.
+      ...(omitCaseId
+        ? []
+        : [{ label: { en: 'Case ID:', ar: 'رقم الحالة:' }, value: safeString(caseData.case_no) }]),
       { label: { en: 'Service:', ar: 'الخدمة:' }, value: safeString(caseData.service_type?.name) },
       { label: { en: 'Recovery Outcome:', ar: 'نتيجة الاستعادة:' }, value: recoveryOutcomeLabel(caseData.recovery_outcome) },
       { label: { en: 'Checkout Date:', ar: 'تاريخ التسليم:' }, value: formatDate(caseData.checkout_date || new Date().toISOString(), 'dd MMM yyyy, HH:mm') },
@@ -178,7 +188,7 @@ function legalTermsBlock(companySettings: ReceiptData['companySettings']): Legal
 
 export function toEngineData(
   data: ReceiptData,
-  _config: DocumentTemplateConfig,
+  config: DocumentTemplateConfig,
 ): EngineDocData {
   const { caseData, devices, companySettings } = data;
 
@@ -199,8 +209,19 @@ export function toEngineData(
     ar: 'نموذج تسليم الجهاز',
   };
 
+  // ---- Premium document-reference banner ------------------------------------
+  const bannerActive = docRefBannerActive(config);
+  const docRef: DocRefBlock | null = caseData.case_no
+    ? { label: { en: 'Case ID', ar: 'رقم الحالة' }, value: safeString(caseData.case_no) }
+    : null;
+
   // ---- Case-info header ----------------------------------------------------
-  const caseInfo: CaseInfoBlock = caseInfoBlock(caseData, collectedDevices.length, devices.length);
+  const caseInfo: CaseInfoBlock = caseInfoBlock(
+    caseData,
+    collectedDevices.length,
+    devices.length,
+    bannerActive,
+  );
 
   // ---- Customer party ------------------------------------------------------
   const to: PartyBlock = {
@@ -239,16 +260,22 @@ export function toEngineData(
     { en: 'Company Representative', ar: 'ممثل الشركة' },
   ];
 
+  // ---- Prepared-by line (rendered only under the premium presentation) ------
+  const creatorName =
+    caseData.created_by_profile?.full_name || caseData.created_by_profile?.email || 'System';
+
   return {
     documentTitle,
     identity: companySettings,
     parties: { to },
     meta: [],
+    docRef,
     caseInfo,
     devices: devicesBlock,
     collector,
     legalTerms,
     signatures,
+    preparedBy: `Prepared by: ${creatorName}`,
     // Checkout docs carry no money.
     paymentHistory: null,
     terms: null,

@@ -27,7 +27,9 @@ describe('StatCard (vivid style)', () => {
     const { container } = render(<StatCard tone="warning" label="Pending" value={3} />);
     const card = container.firstChild as HTMLElement;
     expect(card.className).toContain('from-warning');
-    expect(card.className).toContain('text-slate-900');
+    // v1.5.0 neutral ramp: saturated fills use the constant `ink-dark` token,
+    // never `text-slate-900` (which inverts under midnight) — see DESIGN.md.
+    expect(card.className).toContain('text-ink-dark');
   });
 
   it('maps a cat-* tone to its gradient', () => {

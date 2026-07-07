@@ -26,10 +26,16 @@ import type {
   BrandingConfig,
   ColorsConfig,
   DensityPreset,
+  DocRefStyle,
   DocumentTemplateConfig,
   DividerStyle,
   HeaderLayout,
+  InfoCardStyle,
   LogoPlacement,
+  SignatureLineStyle,
+  TableHeaderStyle,
+  TermsLayoutStyle,
+  TitleStyle,
   TypographyStyleKey,
   WatermarkConfig,
 } from '../templateConfig';
@@ -415,6 +421,63 @@ export function resolveTable(
       PDF_COLORS.headerBg,
     rowNumbering: t?.rowNumbering === true,
     zebra: t?.zebra === true,
+  };
+}
+
+export interface ResolvedPresentation {
+  infoCardStyle: InfoCardStyle;
+  tableHeaderStyle: TableHeaderStyle;
+  titleStyle: TitleStyle;
+  docRef: DocRefStyle;
+  signatureStyle: SignatureLineStyle;
+  signatureAlign: 'left' | 'center';
+  termsStyle: TermsLayoutStyle;
+  footerSocialIcons: boolean;
+  headerWebsite: boolean;
+  deviceIcons: boolean;
+}
+
+/** Legacy presentation finish — what an absent `presentation` group resolves to. */
+const LEGACY_PRESENTATION: ResolvedPresentation = {
+  infoCardStyle: 'band',
+  tableHeaderStyle: 'filled',
+  titleStyle: 'inline',
+  docRef: 'none',
+  signatureStyle: 'solid',
+  signatureAlign: 'left',
+  termsStyle: 'boxed',
+  footerSocialIcons: false,
+  headerWebsite: false,
+  deviceIcons: false,
+};
+
+/** Pick `value` when it is one of `allowed`, else the legacy default. */
+function pick<T extends string>(value: T | undefined, allowed: readonly T[], fallback: T): T {
+  return value !== undefined && allowed.includes(value) ? value : fallback;
+}
+
+/**
+ * Resolve the presentation finish. Absent group (or an unknown value on any
+ * field) → the legacy finish, so an unconfigured/malformed template renders
+ * exactly as today. Section renderers read ONLY this resolver — never the raw
+ * group — so both render paths share one source of truth.
+ */
+export function resolvePresentation(
+  config: Pick<DocumentTemplateConfig, 'presentation'>,
+): ResolvedPresentation {
+  const p = config.presentation;
+  if (!p) return LEGACY_PRESENTATION;
+  return {
+    infoCardStyle: pick(p.infoCardStyle, ['band', 'open'], 'band'),
+    tableHeaderStyle: pick(p.tableHeaderStyle, ['filled', 'light'], 'filled'),
+    titleStyle: pick(p.titleStyle, ['inline', 'display'], 'inline'),
+    docRef: pick(p.docRef, ['none', 'banner', 'pill'], 'none'),
+    signatureStyle: pick(p.signatureStyle, ['solid', 'dotted'], 'solid'),
+    signatureAlign: pick(p.signatureAlign, ['left', 'center'], 'left'),
+    termsStyle: pick(p.termsStyle, ['boxed', 'open'], 'boxed'),
+    footerSocialIcons: p.footerSocialIcons === true,
+    headerWebsite: p.headerWebsite === true,
+    deviceIcons: p.deviceIcons === true,
   };
 }
 

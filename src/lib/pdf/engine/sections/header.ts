@@ -18,8 +18,9 @@ import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS } from '../../styles';
 import { buildCompanyAddress } from '../../utils';
 import type { EngineContext, EngineDocData, SectionRenderer } from '../types';
-import { resolveLabel } from '../labels';
-import { resolveColors, resolveHeader, resolveOrganization } from '../branding';
+import { isBilingualMode, en, ar, resolveLabel } from '../labels';
+import { reverseArabicText } from '../../fonts';
+import { resolveColors, resolveHeader, resolveOrganization, resolvePresentation } from '../branding';
 import type { ResolvedHeader } from '../branding';
 import { buildLogoNode, classifyLogo } from '../../brandingImage';
 
@@ -32,6 +33,7 @@ export const renderHeader: SectionRenderer = (
   const { config, logo } = engine;
   const settings = data.identity;
   const colors = resolveColors(config);
+  const presentation = resolvePresentation(config);
 
   const companyName = settings.basic_info?.company_name || 'Company Name';
   const legalName = settings.basic_info?.legal_name || companyName;
@@ -44,6 +46,10 @@ export const renderHeader: SectionRenderer = (
   if (settings.contact_info?.email_general) {
     contactLines.push(`Email: ${settings.contact_info.email_general}`);
   }
+  // Premium opt-in: the website joins the identity block (reference letterhead).
+  if (presentation.headerWebsite && settings.online_presence?.website) {
+    contactLines.push(settings.online_presence.website.replace(/^https?:\/\//, ''));
+  }
 
   // The centered document title is shared by both paths. Precedence: the
   // ADAPTER-computed title wins (e.g. PROFORMA vs TAX INVOICE), then the
@@ -53,7 +59,7 @@ export const renderHeader: SectionRenderer = (
     data.documentTitle && data.documentTitle.en
       ? data.documentTitle
       : config.labels.documentTitle ?? { en: 'DOCUMENT' };
-  const titleBlock: Content = {
+  let titleBlock: Content = {
     text: resolveLabel(titleLabel, config.language),
     fontSize: 16,
     bold: true,
@@ -61,6 +67,49 @@ export const renderHeader: SectionRenderer = (
     alignment: 'center',
     margin: [0, 0, 0, 6],
   };
+  // Premium display title: larger, letter-spaced English in near-black ink with
+  // the secondary language stacked beneath in a muted tone — the reference
+  // treatment. Uses `ar()` (word-order-corrected for RTL) instead of the inline
+  // "EN | AR" join, so the stacked Arabic reads correctly.
+  if (presentation.titleStyle === 'display') {
+    let englishTitle = en(titleLabel, 'DOCUMENT');
+    let secondaryTitle = isBilingualMode(config.language) ? ar(titleLabel, config.language) : null;
+    // Report adapters pre-join the bilingual title through `ctx.t` into `en`
+    // ("EN | AR" via formatBilingualText). Split it back so the display title
+    // stacks the two languages instead of wrapping one long joined line; the
+    // secondary half gets the RTL word-order correction it never had inline.
+    if (!secondaryTitle && englishTitle.includes(' | ')) {
+      const pipeAt = englishTitle.indexOf(' | ');
+      const tail = englishTitle.slice(pipeAt + 3).trim();
+      if (tail) {
+        englishTitle = englishTitle.slice(0, pipeAt).trim();
+        secondaryTitle = reverseArabicText(tail);
+      }
+    }
+    const enFirst = config.language.primary !== 'ar' || !secondaryTitle;
+    const enLine: Content = {
+      text: englishTitle,
+      fontSize: 19,
+      bold: true,
+      color: config.colors ? colors.text : PDF_COLORS.text,
+      characterSpacing: 0.6,
+      alignment: 'center',
+    };
+    const secondaryLine: Content | null = secondaryTitle
+      ? {
+          text: secondaryTitle,
+          fontSize: 13,
+          bold: true,
+          color: PDF_COLORS.textLight,
+          alignment: 'center',
+          margin: [0, 3, 0, 0],
+        }
+      : null;
+    const lines = enFirst
+      ? [enLine, ...(secondaryLine ? [secondaryLine] : [])]
+      : [{ ...(secondaryLine as object), fontSize: 17, margin: [0, 0, 0, 0] } as Content, { ...(enLine as object), fontSize: 14, margin: [0, 3, 0, 0] } as Content];
+    titleBlock = { stack: lines, margin: [0, 2, 0, 10] };
+  }
 
   const showLogo = config.branding.logo && classifyLogo(logo).kind !== 'none';
 

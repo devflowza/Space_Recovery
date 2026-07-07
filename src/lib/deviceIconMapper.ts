@@ -96,6 +96,30 @@ const SVG_ICONS = {
     <line x1="8" y1="13" x2="16" y2="13" stroke="#4A5568" stroke-width="2"/>
     <line x1="8" y1="17" x2="16" y2="17" stroke="#4A5568" stroke-width="2"/>
   </svg>`,
+
+  // Social-network glyphs for the premium PDF footer (fixed muted slate, like
+  // every other PDF icon hex in this file — PDFs stay non-themed).
+  facebook: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 18 2 L 15 2 C 12.2 2 10 4.2 10 7 L 10 10 L 7 10 L 7 14 L 10 14 L 10 22 L 14 22 L 14 14 L 17 14 L 18 10 L 14 10 L 14 7 C 14 6.4 14.4 6 15 6 L 18 6 Z" fill="none" stroke="#64748b" stroke-width="2"/>
+  </svg>`,
+
+  x: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <line x1="4" y1="4" x2="20" y2="20" stroke="#64748b" stroke-width="2.4"/>
+    <line x1="20" y1="4" x2="4" y2="20" stroke="#64748b" stroke-width="2.4"/>
+  </svg>`,
+
+  linkedin: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="2" width="20" height="20" rx="2" fill="none" stroke="#64748b" stroke-width="2"/>
+    <line x1="7" y1="10" x2="7" y2="17" stroke="#64748b" stroke-width="2"/>
+    <circle cx="7" cy="7" r="1" fill="#64748b"/>
+    <path d="M 11 17 L 11 10 M 11 13 C 11 11.3 12.3 10 14 10 C 15.7 10 17 11.3 17 13 L 17 17" fill="none" stroke="#64748b" stroke-width="2"/>
+  </svg>`,
+
+  instagram: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke="#64748b" stroke-width="2"/>
+    <circle cx="12" cy="12" r="4" fill="none" stroke="#64748b" stroke-width="2"/>
+    <circle cx="17.5" cy="6.5" r="1.2" fill="#64748b"/>
+  </svg>`,
 };
 
 const DEVICE_ICON_MAP: Record<string, DeviceIconMapping> = {
@@ -256,6 +280,8 @@ export function getAllDeviceTypes(): string[] {
   return Object.keys(DEVICE_ICON_MAP);
 }
 
-export function getGeneralIconSvg(iconName: 'user' | 'fileText'): string {
+export function getGeneralIconSvg(
+  iconName: 'user' | 'fileText' | 'facebook' | 'x' | 'linkedin' | 'instagram',
+): string {
   return SVG_ICONS[iconName] || '';
 }

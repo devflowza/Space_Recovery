@@ -12,11 +12,59 @@
 
 import type { Content } from 'pdfmake/interfaces';
 import { createSignatureBlock, PDF_COLORS } from '../../styles';
-import { resolveLabel } from '../labels';
+import { isBilingualMode, en, ar, resolveLabel } from '../labels';
+import { resolvePresentation } from '../branding';
+import type { ResolvedPresentation } from '../branding';
 import { buildLogoNode, classifyLogo } from '../../brandingImage';
 import type { EngineContext, EngineDocData, LabelText, SectionRenderer, SignatureBlockData } from '../types';
 
 const DEFAULT_SIGNATURES: LabelText[] = [{ en: 'Authorized Signature', ar: 'التوقيع المعتمد' }];
+
+/**
+ * A premium signature block: dotted (or solid) rule with the English label
+ * bold beneath and the secondary language under it in a muted tone —
+ * center-aligned when the presentation asks for it (the reference finish).
+ */
+function premiumSignatureBlock(
+  label: LabelText,
+  engine: EngineContext,
+  presentation: ResolvedPresentation,
+): object {
+  const { language } = engine.config;
+  const bilingual = isBilingualMode(language);
+  const secondary = bilingual ? ar(label, language) : null;
+  const alignment = presentation.signatureAlign === 'center' ? ('center' as const) : ('left' as const);
+  const dotted = presentation.signatureStyle === 'dotted';
+  const lineWidth = 200;
+
+  const labelLines: Content[] = [
+    { text: en(label), bold: true, fontSize: 10, color: PDF_COLORS.text, alignment, margin: [0, 5, 0, 0] },
+  ];
+  if (secondary) {
+    labelLines.push({ text: secondary, fontSize: 8.5, color: PDF_COLORS.textLight, alignment, margin: [0, 1, 0, 0] });
+  }
+
+  return {
+    stack: [
+      {
+        canvas: [
+          {
+            type: 'line',
+            x1: 0,
+            y1: 26,
+            x2: lineWidth,
+            y2: 26,
+            lineWidth: 0.9,
+            lineColor: PDF_COLORS.textMuted,
+            ...(dotted ? { dash: { length: 1.5, space: 2.2 } } : {}),
+          },
+        ],
+      },
+      ...labelLines,
+    ],
+    width: 220,
+  };
+}
 
 /**
  * Builds a pdfmake stack for one captured (signed) SignatureBlockData entry:
@@ -85,22 +133,43 @@ export const renderSignature: SectionRenderer = (
   }
 
   // Default: wet-ink signature lines (byte-identical to the pre-Phase-6 path).
+  // With a configured `presentation` group the premium finish applies: dotted/
+  // solid rules with centered bilingual labels, and the adapter's
+  // "Registered by" line above — gated on the group so legacy output never
+  // changes (unconfigured templates take the parity path below).
+  const presentation = resolvePresentation(engine.config);
+  const premium = engine.config.presentation !== undefined;
   const sigs = data.signatures && data.signatures.length > 0 ? data.signatures : DEFAULT_SIGNATURES;
-  const blocks: object[] = sigs.map(
-    (label) => createSignatureBlock(resolveLabel(label, language)) as object,
-  );
+  const blocks: object[] = premium
+    ? sigs.map((label) => premiumSignatureBlock(label, engine, presentation))
+    : sigs.map((label) => createSignatureBlock(resolveLabel(label, language)) as object);
   const columns: object[] = [];
   blocks.forEach((b, i) => {
     columns.push(b);
     if (i < blocks.length - 1) columns.push({ text: '', width: '*' });
   });
 
-  // Parity: with no images, return the original single block unchanged.
+  const preparedByLine: Content | null =
+    premium && data.preparedBy
+      ? { text: data.preparedBy, fontSize: 8.5, color: PDF_COLORS.textMuted, alignment: 'right', margin: [0, 10, 0, 2] }
+      : null;
+
+  // Parity: with no images, return the original single block unchanged. The
+  // premium block is unbreakable so a page break never strands the labels from
+  // their rules.
   if (!stampNode && !sigNode) {
-    return { columns, margin: [0, 24, 0, 8] } as Content;
+    const sigRow = {
+      columns,
+      margin: [0, preparedByLine ? 4 : premium ? 16 : 24, 0, 8],
+      ...(premium ? { unbreakable: true } : {}),
+    } as Content;
+    return preparedByLine
+      ? ({ stack: [preparedByLine, sigRow], unbreakable: true } as Content)
+      : sigRow;
   }
 
   const stack: Content[] = [];
+  if (preparedByLine) stack.push(preparedByLine);
   if (stampNode) stack.push(stampNode as Content);
   if (sigNode) stack.push(sigNode as Content);
   stack.push({ columns, margin: [0, 4, 0, 8] } as Content);
