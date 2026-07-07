@@ -21,6 +21,10 @@ import {
   resolveGstRegistrationStatus,
   assertNoSilentUnregisteredFallback,
 } from './regimes/in_gst/registrationStatus';
+import { findBranchStateMismatches, type BranchStateMismatch } from './regimes/in_gst/branchStateCheck';
+import { logger } from './logger';
+
+export type { BranchStateMismatch } from './regimes/in_gst/branchStateCheck';
 
 export type DbTaxRegistrationRow =
   Database['public']['Tables']['legal_entity_tax_registrations']['Row'];
@@ -111,4 +115,27 @@ export async function assertGstRegistrationExplicit(
   assertNoSilentUnregisteredFallback(
     resolveGstRegistrationStatus({ regimeTaxKey, activeRegistrations: active, declaredStatus }),
   );
+}
+
+/** Branch-state vs GSTIN-state check. Non-throwing dev assertion: the mismatch
+ *  is reported via logger.error AND returned so the Settings banner (which is
+ *  the surface telling the user how to fix it) always renders. */
+export async function getBranchStateMismatches(): Promise<BranchStateMismatch[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const registration = await getActiveTaxRegistration(today);
+  if (!registration || !registration.subdivision_id) return [];
+  const { data, error } = await supabase
+    .from('branches')
+    .select('id, name, subdivision_id, is_active')
+    .is('deleted_at', null);
+  if (error) throw error;
+  const mismatches = findBranchStateMismatches(data ?? [], registration.subdivision_id);
+  if (mismatches.length > 0) {
+    logger.error(
+      `[dev-assert] ${mismatches.length} active branch(es) are in a different state than the GSTIN registration ` +
+      `(${mismatches.map((m) => m.branchName).join(', ')}). Multi-state GSTIN management is not yet available; ` +
+      'these branches must not issue GST documents under this registration.',
+    );
+  }
+  return mismatches;
 }

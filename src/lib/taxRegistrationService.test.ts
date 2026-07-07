@@ -16,9 +16,13 @@ vi.mock('./companySettingsService', () => ({
   invalidateCompanySettingsCache: (...a: unknown[]) => invalidateCompanySettingsCache(...a),
 }));
 
+vi.mock('./logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
+import { logger } from './logger';
+
 import {
   getActiveTaxRegistration, createTaxRegistration, endTaxRegistration,
   getDeclaredRegistrationStatus, setDeclaredRegistrationStatus,
+  getBranchStateMismatches,
 } from './taxRegistrationService';
 
 function chain(result: { data: unknown; error: unknown }) {
@@ -107,5 +111,34 @@ describe('declared registration status (company_settings.metadata.tax_registrati
       metadata: { table_columns: { cases: {} }, tax_registration_status: 'registered' },
     });
     expect(invalidateCompanySettingsCache).toHaveBeenCalled();
+  });
+});
+
+describe('getBranchStateMismatches', () => {
+  it('returns mismatched branches and fires the non-throwing dev assertion', async () => {
+    const regChain = chain({
+      data: [{ id: 'r1', is_primary: true, subdivision_id: 's-ka', registered_from: '2026-04-01', registered_to: null }],
+      error: null,
+    });
+    const branchChain = chain({ data: null, error: null });
+    branchChain.is.mockResolvedValue({
+      data: [
+        { id: 'b1', name: 'HQ', subdivision_id: 's-ka', is_active: true },
+        { id: 'b2', name: 'Mumbai Desk', subdivision_id: 's-mh', is_active: true },
+      ],
+      error: null,
+    });
+    fromMock.mockImplementation((table: string) =>
+      table === 'legal_entity_tax_registrations' ? regChain : branchChain);
+    const out = await getBranchStateMismatches();
+    expect(out).toEqual([{ branchId: 'b2', branchName: 'Mumbai Desk', branchSubdivisionId: 's-mh' }]);
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Mumbai Desk'));
+  });
+
+  it('returns [] with no registration and never queries branches', async () => {
+    const regChain = chain({ data: [], error: null });
+    fromMock.mockReturnValue(regChain);
+    expect(await getBranchStateMismatches()).toEqual([]);
+    expect(fromMock).not.toHaveBeenCalledWith('branches');
   });
 });
