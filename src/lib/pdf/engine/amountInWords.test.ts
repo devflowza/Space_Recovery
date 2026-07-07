@@ -79,4 +79,8 @@ describe("amountInWordsEn scale='indian' (WP-L1)", () => {
   it('default scale stays western (byte-identical)', () => {
     expect(amountInWordsEn(1234000, 'OMR', 3)).toBe('OMR One Million Two Hundred Thirty Four Thousand only');
   });
+  it('non-finite honest-degrades to no words (matches the western path, never renders "null")', () => {
+    expect(amountInWordsEn(Number.NaN, '₹', 2, 'indian')).not.toContain('null');
+    expect(amountInWordsEn(Number.NaN, '₹', 2, 'indian')).toBe(amountInWordsEn(Number.NaN, '₹', 2));
+  });
 });

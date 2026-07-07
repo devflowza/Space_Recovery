@@ -66,7 +66,11 @@ export function amountInWordsEn(
   const whole = Math.floor(Math.abs(amount));
   const factor = 10 ** decimals;
   const minor = Math.round((Math.abs(amount) - whole) * factor);
-  const words = scale === 'indian' ? numberToWordsEnIndian(whole) : numberToWordsEn(whole);
+  // `?? ''` aligns the indian path with the western one (numberToWordsEn returns ''
+  // for non-finite) and the S4 sibling formatAmountWordsForScale's null-guard, so a
+  // non-finite amount degrades to no words rather than the literal "null" on a doc.
+  // No-op for every valid finite amount (numberToWordsEnIndian returns a string then).
+  const words = scale === 'indian' ? (numberToWordsEnIndian(whole) ?? '') : numberToWordsEn(whole);
   const minorPart = decimals > 0 && minor > 0
     ? ` and ${String(minor).padStart(decimals, '0')}/${factor}` : '';
   return `${currency ? `${currency} ` : ''}${words}${minorPart} only`;
