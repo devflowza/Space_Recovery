@@ -12,6 +12,10 @@ const TITLES: Record<TaxDocumentType, { registered: string; unregistered: string
   credit_note: { registered: 'CREDIT NOTE', unregistered: 'Credit Note' },
   quote:       { registered: 'Quotation',   unregistered: 'Quotation' },
   stock_sale:  { registered: 'TAX INVOICE', unregistered: 'Cash Sale' },
+  // CGST Rule 50 (advance receipt) / Rule 51 (refund of advance). Vouchers are a
+  // registered-seller instrument; the unregistered title is a plain fallback.
+  receipt_voucher: { registered: 'RECEIPT VOUCHER', unregistered: 'Receipt Voucher' },
+  refund_voucher:  { registered: 'REFUND VOUCHER',  unregistered: 'Refund Voucher' },
 };
 
 export const inGstInvoiceProfile: DocumentComplianceProfile = {
