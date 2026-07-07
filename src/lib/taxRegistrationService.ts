@@ -14,6 +14,13 @@ import {
   updateCompanySettings,
   invalidateCompanySettingsCache,
 } from './companySettingsService';
+import type { LegalEntityTaxRegistrationRow } from './regimes/types';
+import {
+  regimeRequiresExplicitRegistrationStatus,
+  filterActiveRegistrations,
+  resolveGstRegistrationStatus,
+  assertNoSilentUnregisteredFallback,
+} from './regimes/in_gst/registrationStatus';
 
 export type DbTaxRegistrationRow =
   Database['public']['Tables']['legal_entity_tax_registrations']['Row'];
@@ -87,4 +94,21 @@ export async function setDeclaredRegistrationStatus(status: DeclaredRegistration
   };
   await updateCompanySettings({ metadata: metadata as Json });
   invalidateCompanySettingsCache();
+}
+
+/** D6 choke-point guard: called by computeDocumentTotals with the pack-resolved
+ *  regime.tax key and the seller registrations it already fetched. No-op for
+ *  non-GST regimes; lazily reads the declared status only when there is no
+ *  active registration (getOrCreateCompanySettings is cached ~5 min). */
+export async function assertGstRegistrationExplicit(
+  regimeTaxKey: string,
+  registrations: LegalEntityTaxRegistrationRow[],
+  onDate: string,
+): Promise<void> {
+  if (!regimeRequiresExplicitRegistrationStatus(regimeTaxKey)) return;
+  const active = filterActiveRegistrations(registrations, onDate);
+  const declaredStatus = active.length > 0 ? undefined : await getDeclaredRegistrationStatus();
+  assertNoSilentUnregisteredFallback(
+    resolveGstRegistrationStatus({ regimeTaxKey, activeRegistrations: active, declaredStatus }),
+  );
 }
