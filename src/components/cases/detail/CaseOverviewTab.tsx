@@ -181,6 +181,26 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
     enabled: !!caseData.id,
   });
 
+  // A refund voucher already issued for this receipt latches the panel closed
+  // (a second refund would reverse the advance GST twice; the DB unique index
+  // ux_advance_voucher_one_refund is the authoritative backstop).
+  const { data: refundVoucher = null, refetch: refetchRefundVoucher } = useQuery({
+    queryKey: ['case_refund_voucher', receiptVoucher?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('advance_vouchers')
+        .select('id')
+        .eq('original_voucher_id', receiptVoucher!.id)
+        .eq('voucher_type', 'refund')
+        .is('deleted_at', null)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!receiptVoucher?.id,
+  });
+
   const { data: casePriorities = [] } = useQuery({
     queryKey: ['case_priorities'],
     queryFn: async () => {
@@ -313,6 +333,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
     phaseType,
     recoveryOutcome: caseData.recovery_outcome ?? null,
     hasIssuedReceiptVoucher: !!receiptVoucher,
+    hasIssuedRefundVoucher: !!refundVoucher,
   });
 
   const handleIssueRefundVoucher = async () => {
@@ -322,7 +343,7 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
       const result = await offerRefundVoucher(receiptVoucher.id, refundReason.trim());
       toast.success(`Refund Voucher ${result.document_number ?? ''} issued`.trim());
       setRefundReason('');
-      await refetchReceiptVoucher();
+      await Promise.all([refetchReceiptVoucher(), refetchRefundVoucher()]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to issue refund voucher');
     } finally {

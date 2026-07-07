@@ -11,4 +11,10 @@ describe('canOfferRefundVoucher', () => {
     expect(canOfferRefundVoucher({ phaseType: 'recovery', recoveryOutcome: null, hasIssuedReceiptVoucher: true })).toBe(false);
     expect(canOfferRefundVoucher({ phaseType: 'no_solution', recoveryOutcome: null, hasIssuedReceiptVoucher: false })).toBe(false);
   });
+  it('does NOT re-offer refund once a refund voucher already exists (idempotency — no double reversal)', () => {
+    expect(canOfferRefundVoucher({
+      phaseType: 'no_solution', recoveryOutcome: 'unrecoverable',
+      hasIssuedReceiptVoucher: true, hasIssuedRefundVoucher: true,
+    })).toBe(false);
+  });
 });
