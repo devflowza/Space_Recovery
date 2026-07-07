@@ -1,8 +1,11 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Receipt } from 'lucide-react';
 import type { OnboardingFormData } from '../constants';
-import type { OnboardableCountry } from '../../../../lib/geoCountryService';
+import { geoCountryService, type CountrySubdivision, type OnboardableCountry } from '../../../../lib/geoCountryService';
 import { validateTaxNumber } from '../onboardingValidation';
+import { validateGSTIN } from '../../../../lib/regimes/in_gst/gstin';
+import { gstinMatchesSubdivision } from '../../../../lib/regimes/in_gst/registrationStatus';
 
 interface JurisdictionStepProps {
   formData: OnboardingFormData;
@@ -29,10 +32,38 @@ const inputClasses = (hasError: boolean) =>
  */
 export const JurisdictionStep = ({ formData, country, updateField }: JurisdictionStepProps) => {
   const taxLabel = country.tax_number_label || `${country.tax_label || 'Tax'} Registration Number`;
-  const taxCheck =
-    formData.taxNumber.trim().length > 0
-      ? validateTaxNumber(country.tax_number_format, formData.taxNumber)
-      : { ok: true };
+
+  const [subdivisions, setSubdivisions] = useState<CountrySubdivision[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    geoCountryService.listCountrySubdivisions(country.id)
+      .then((rows) => { if (!cancelled) setSubdivisions(rows); })
+      .catch(() => { if (!cancelled) setSubdivisions([]); });
+    return () => { cancelled = true; };
+  }, [country.id]);
+
+  const selectedSubdivision = subdivisions.find((s) => s.id === formData.subdivisionId) ?? null;
+  const hasGstSubdivisions = subdivisions.some((s) => s.tax_authority_code);
+  const trimmedTax = formData.taxNumber.trim();
+
+  // GST-coded countries get the S3 checksum validator + the L2 state cross-check;
+  // everything else keeps the existing soft regex check.
+  let taxCheck: { ok: boolean; message?: string } = { ok: true };
+  if (trimmedTax.length > 0) {
+    if (hasGstSubdivisions) {
+      const gstin = validateGSTIN(trimmedTax);
+      if (!gstin.ok) {
+        taxCheck = { ok: false, message: gstin.error ?? 'Invalid GSTIN' };
+      } else if (selectedSubdivision && !gstinMatchesSubdivision(trimmedTax, selectedSubdivision.tax_authority_code)) {
+        taxCheck = {
+          ok: false,
+          message: `This ${country.tax_number_label || 'GSTIN'} does not match the selected state (expected state code ${selectedSubdivision.tax_authority_code}).`,
+        };
+      }
+    } else {
+      taxCheck = validateTaxNumber(country.tax_number_format, formData.taxNumber);
+    }
+  }
 
   return (
     <motion.div
@@ -68,6 +99,28 @@ export const JurisdictionStep = ({ formData, country, updateField }: Jurisdictio
             </select>
           </div>
         </div>
+
+        {subdivisions.length > 0 && (
+          <div>
+            <label htmlFor="jurisdiction-subdivision" className="block text-sm font-medium text-slate-300 mb-2">
+              State / Union Territory <span className="text-primary">*</span>
+            </label>
+            <select
+              id="jurisdiction-subdivision"
+              aria-label="State / Union Territory"
+              value={formData.subdivisionId}
+              onChange={(e) => updateField('subdivisionId', e.target.value)}
+              className={inputClasses(false)}
+            >
+              <option value="" className="bg-slate-900">Select a state…</option>
+              {subdivisions.map((s) => (
+                <option key={s.id} value={s.id} className="bg-slate-900">
+                  {s.name}{s.tax_authority_code ? ` (${s.tax_authority_code})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">
