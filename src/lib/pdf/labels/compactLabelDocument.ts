@@ -73,10 +73,17 @@ function idRowSize(label: CompactLabelContent, maxWidthPt: number, basePt: numbe
   return fitFontSize(label.id, maxWidthPt - indexWidth, basePt, minPt);
 }
 
-function idRow(label: CompactLabelContent, maxWidthPt: number, basePt: number, minPt: number): ContentText {
+function idRow(
+  label: CompactLabelContent,
+  maxWidthPt: number,
+  basePt: number,
+  minPt: number,
+  /** Explicit rendered size (e.g. capped by an available height budget). */
+  sizeOverride?: number,
+): ContentText {
   const indexText = label.index ? ` ${label.index}` : '';
   const indexSize = Math.max(minPt, basePt * 0.5);
-  const size = idRowSize(label, maxWidthPt, basePt, minPt);
+  const size = sizeOverride ?? idRowSize(label, maxWidthPt, basePt, minPt);
   const spans: Content[] = [{ text: label.id, bold: true, fontSize: size, color: INK }];
   if (indexText) spans.push({ text: indexText, fontSize: indexSize, color: INK });
   return { text: spans, lineHeight: LINE_HEIGHT };
@@ -139,12 +146,30 @@ function buildStrip(label: CompactLabelContent, contentW: number, contentH: numb
     };
   }
 
-  const idSize = idRowSize(label, contentW, 11, 5.5);
-  const stack: Content[] = [idRow(label, contentW, 11, 5.5)];
-  const bottomH = contentH - lineBoxPt(idSize) - 2;
-  const qrSide = label.qrDataUrl && bottomH >= MIN_QR_SIDE_PT ? bottomH : 0;
+  // A scannable QR is the label's entire purpose, so when the stock is tall
+  // enough to seat BOTH a scannable QR and a legible identifier, reserve the
+  // QR's height FIRST and size the id to what remains. Previously the id took
+  // its natural (width-fit) size and the QR got only the leftover height — a
+  // short, index-less id (STK-0005, INV-00013) rendered large and squeezed the
+  // QR off the label, leaving stock/inventory labels un-scannable while
+  // multi-device case labels (whose index chip shrinks the id) kept theirs.
+  // Too-short stock (25×13) still can't fit both, so it keeps the legible id
+  // and omits the QR, exactly as before.
+  const gapV = 2;
+  const canFitQr = !!label.qrDataUrl && contentH >= MIN_QR_SIDE_PT + lineBoxPt(7) + gapV;
+  const qrSide = canFitQr
+    ? Math.max(MIN_QR_SIDE_PT, Math.min(contentH * 0.55, contentH - lineBoxPt(7) - gapV))
+    : 0;
+  const topH = qrSide ? contentH - qrSide - gapV : contentH;
+  const widthFit = idRowSize(label, contentW, 11, 5.5);
+  const idSize = qrSide
+    ? Math.max(5.5, Math.min(widthFit, Math.floor((topH / LINE_FACTOR) * 2) / 2))
+    : widthFit;
+
+  const stack: Content[] = [idRow(label, contentW, 11, 5.5, idSize)];
   const metaW = qrSide ? contentW - qrSide - gap : contentW;
-  const maxMetaLines = Math.min(2, Math.max(0, Math.floor(bottomH / lineBoxPt(metaSize))));
+  const metaBudgetH = qrSide ? qrSide : contentH - lineBoxPt(idSize) - 2;
+  const maxMetaLines = Math.min(2, Math.max(0, Math.floor(metaBudgetH / lineBoxPt(metaSize))));
   const metaStack = (label.lines ?? [])
     .slice(0, maxMetaLines)
     .map((line) => metaLine(line, metaW, metaSize));
