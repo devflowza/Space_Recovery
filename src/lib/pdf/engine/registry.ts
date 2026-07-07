@@ -20,6 +20,7 @@
 
 import type { SectionRenderer } from './types';
 import { renderHeader } from './sections/header';
+import { renderDocRef } from './sections/docRef';
 import { renderParties, renderMeta } from './sections/infoBoxes';
 import { renderCaseInfo } from './sections/caseInfo';
 import { renderDevices } from './sections/devices';
@@ -55,6 +56,9 @@ import { renderTaxBar } from './sections/taxBar';
 
 export const SECTION_REGISTRY: Record<string, SectionRenderer> = {
   header: renderHeader,
+  // Premium document-reference banner (Job ID / case no). Not part of any
+  // built-in section set — presets/tenants introduce it via a section override.
+  docRef: renderDocRef,
   parties: renderParties,
   meta: renderMeta,
   caseInfo: renderCaseInfo,

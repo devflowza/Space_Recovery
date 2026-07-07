@@ -615,6 +615,20 @@ export interface SignatureBlockData {
  * (title + qr) alike — a section renderer simply returns `null` when its slice
  * of data is absent.
  */
+/**
+ * The document-reference banner data (Job ID / case number / document number),
+ * rendered by the opt-in `docRef` section as a full-width banner or centered
+ * pill under the title (premium presentation). The adapter pre-formats the
+ * value; `label` defaults to "Job ID" when omitted. Absent → the section
+ * renders nothing, so documents whose adapters don't emit it are unaffected.
+ */
+export interface DocRefBlock {
+  /** Reference label (e.g. "Job ID" / "رقم الحالة"). */
+  label?: LabelText;
+  /** Pre-formatted reference value (e.g. "CASE-0042"). */
+  value: string;
+}
+
 export interface EngineDocData {
   /** Bilingual document title (e.g. EN "TAX INVOICE" / AR "فاتورة ضريبية"). */
   documentTitle: LabelText;
@@ -684,6 +698,19 @@ export interface EngineDocData {
    * for non-proforma invoices that have recorded payments.
    */
   paymentHistory?: PaymentHistoryBlock | null;
+  /**
+   * Document-reference banner (Job ID / case no), or absent. Rendered only by
+   * the opt-in `docRef` section (premium presentation) — emitting the data has
+   * no effect on templates without that section.
+   */
+  docRef?: DocRefBlock | null;
+  /**
+   * The pre-formatted "Registered by: <name>" / "Prepared by: <name>" line the
+   * adapter derives from the case creator, or absent. Rendered above the
+   * signature lines ONLY when the premium `presentation` group is configured,
+   * so legacy engine output is unchanged.
+   */
+  preparedBy?: string | null;
   /** Signature line labels (e.g. ["Received by", "Authorized by"]). */
   signatures?: LabelText[];
   /** Captured signatures to EMBED (Phase 6). Empty/undefined → wet-ink lines only. */

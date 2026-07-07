@@ -503,6 +503,54 @@ export interface LayoutConfig {
   partiesMetaSideBySide?: boolean;
 }
 
+/**
+ * Presentation finish — the premium "design pack" knobs (all OPTIONAL; absent
+ * group/field = the legacy finish, byte-identical output).
+ *
+ * These control the visual FINISH of surfaces the engine already renders:
+ * info-box cards, data-table headers, the document title, signature rules, the
+ * consent/terms box, and the footer. A preset (or the Studio) opts a template
+ * into the airy, reference-grade look; templates that never set the group keep
+ * today's exact rendering, so the parity/golden wall is unaffected.
+ */
+export type InfoCardStyle = 'band' | 'open';
+export type TableHeaderStyle = 'filled' | 'light';
+export type TitleStyle = 'inline' | 'display';
+export type DocRefStyle = 'none' | 'banner' | 'pill';
+export type SignatureLineStyle = 'solid' | 'dotted';
+export type TermsLayoutStyle = 'boxed' | 'open';
+
+export interface PresentationConfig {
+  /** Info-box finish: `'band'` filled header band (legacy) or `'open'` white
+   *  header + inset hairline divider + roomier rows. Default `'band'`. */
+  infoCardStyle?: InfoCardStyle;
+  /** Data-table header finish: `'filled'` colored band (legacy) or `'light'`
+   *  white header with dark bold text + hairline grid. Default `'filled'`. */
+  tableHeaderStyle?: TableHeaderStyle;
+  /** Document title: `'inline'` single line (legacy) or `'display'` — larger,
+   *  letter-spaced English with the secondary stacked beneath. Default `'inline'`. */
+  titleStyle?: TitleStyle;
+  /** Document-reference banner under the title (Job ID / case no): `'none'`
+   *  (legacy), `'banner'` full-width box, or `'pill'` compact centered chip.
+   *  Renders only when the adapter supplies {@link EngineDocData.docRef} data
+   *  and the config lists a visible `docRef` section. Default `'none'`. */
+  docRef?: DocRefStyle;
+  /** Signature rules: `'solid'` (legacy) or `'dotted'`. Default `'solid'`. */
+  signatureStyle?: SignatureLineStyle;
+  /** Signature label alignment under the rule. Default `'left'` (legacy). */
+  signatureAlign?: 'left' | 'center';
+  /** Consent/terms box: `'boxed'` bordered (legacy) or `'open'` free two-column
+   *  prose. Default `'boxed'`. */
+  termsStyle?: TermsLayoutStyle;
+  /** Footer: accent-colored tagline + social icon glyphs beside the network
+   *  names. Default false (legacy text-only footer). */
+  footerSocialIcons?: boolean;
+  /** Letterhead: append the website line to the identity block. Default false. */
+  headerWebsite?: boolean;
+  /** Device tables: draw the device-type icon beside the type cell. Default false. */
+  deviceIcons?: boolean;
+}
+
 export type TranslationPolicyMode = 'all' | 'system_only' | 'custom';
 
 /** Per data-block field-label bilingual toggle (used only when mode === 'custom'). */
@@ -649,6 +697,8 @@ export interface DocumentTemplateConfig {
   pageFitting?: PageFittingConfig;
   watermark?: WatermarkConfig;
   layout?: LayoutConfig;
+  /** Premium presentation finish (cards/tables/title/signatures/footer). */
+  presentation?: PresentationConfig;
   translationPolicy?: TranslationPolicyConfig;
   signatureImages?: SignatureImagesConfig;
   /** Resolved date/number locale (§8d). Absent = neutral PDF default. */
@@ -714,6 +764,8 @@ export interface TemplateConfigOverride {
   pageFitting?: PageFittingConfig;
   watermark?: WatermarkConfig;
   layout?: LayoutConfig;
+  /** Premium presentation finish (scalars; shallow-merged). */
+  presentation?: PresentationConfig;
   translationPolicy?: TranslationPolicyConfig;
   signatureImages?: SignatureImagesConfig;
   locale?: LocaleConfig;
@@ -1382,6 +1434,7 @@ function applyOverride(
     pageFitting: mergeGroup(base.pageFitting, override.pageFitting),
     watermark: mergeGroup(base.watermark, override.watermark),
     layout: mergeGroup(base.layout, override.layout),
+    presentation: mergeGroup(base.presentation, override.presentation),
     translationPolicy: mergeTranslationPolicy(base.translationPolicy, override.translationPolicy),
     signatureImages: mergeSignatureImages(base.signatureImages, override.signatureImages),
     locale: mergeGroup(base.locale, override.locale),

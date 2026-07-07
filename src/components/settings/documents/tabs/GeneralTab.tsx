@@ -7,7 +7,18 @@ import { ColorField, FieldGroup, NumberField, SegmentedControl, ToggleRow } from
 import { PDF_COLORS } from '../../../../lib/pdf/styles';
 import { generatePalette } from '../../../../lib/pdf/engine/palette';
 import { resolveSecondary, secondaryText } from '../../../../lib/pdf/templateConfig';
-import type { DensityPreset, PaperConfig, PdfFontFamily, TypographyStyleKey } from '../../../../lib/pdf/templateConfig';
+import type {
+  DensityPreset,
+  DocRefStyle,
+  InfoCardStyle,
+  PaperConfig,
+  PdfFontFamily,
+  SignatureLineStyle,
+  TableHeaderStyle,
+  TermsLayoutStyle,
+  TitleStyle,
+  TypographyStyleKey,
+} from '../../../../lib/pdf/templateConfig';
 import { isRTLLanguage } from '../../../../lib/documentTranslations';
 import { languageName } from '../languageOptions';
 import type { StudioApi } from '../TemplateStudio';
@@ -56,6 +67,7 @@ export const GeneralTab: React.FC<{ api: StudioApi }> = ({ api }) => {
   const colors = resolved.colors;
   const typo = resolved.typography;
   const fitting = resolved.pageFitting;
+  const presentation = resolved.presentation;
   const seed = colors?.accent && colors.accent.startsWith('#') ? colors.accent : PDF_COLORS.primary;
   const secondary = resolveSecondary(resolved.language);
   const docTitle = resolved.labels?.documentTitle;
@@ -161,6 +173,103 @@ export const GeneralTab: React.FC<{ api: StudioApi }> = ({ api }) => {
             />
           ))}
         </div>
+      </FieldGroup>
+
+      <FieldGroup
+        title="Design style"
+        description="The premium presentation finish. Classic keeps today's look; the premium options match the flagship gallery templates."
+      >
+        <SegmentedControl<InfoCardStyle>
+          label="Info cards"
+          columns={2}
+          value={presentation?.infoCardStyle ?? 'band'}
+          onChange={(v) => api.setPresentation({ infoCardStyle: v })}
+          options={[
+            { value: 'band', label: 'Filled band' },
+            { value: 'open', label: 'Open (premium)' },
+          ]}
+        />
+        <SegmentedControl<TableHeaderStyle>
+          label="Table headers"
+          columns={2}
+          value={presentation?.tableHeaderStyle ?? 'filled'}
+          onChange={(v) => api.setPresentation({ tableHeaderStyle: v })}
+          options={[
+            { value: 'filled', label: 'Filled' },
+            { value: 'light', label: 'Light (premium)' },
+          ]}
+        />
+        <SegmentedControl<TitleStyle>
+          label="Document title"
+          columns={2}
+          value={presentation?.titleStyle ?? 'inline'}
+          onChange={(v) => api.setPresentation({ titleStyle: v })}
+          options={[
+            { value: 'inline', label: 'Inline' },
+            { value: 'display', label: 'Display (stacked)' },
+          ]}
+        />
+        <SegmentedControl<DocRefStyle>
+          label="Case / document ID banner"
+          columns={3}
+          value={presentation?.docRef ?? 'none'}
+          onChange={(v) => api.setPresentation({ docRef: v })}
+          options={[
+            { value: 'none', label: 'None' },
+            { value: 'banner', label: 'Banner' },
+            { value: 'pill', label: 'Pill' },
+          ]}
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <SegmentedControl<SignatureLineStyle>
+            label="Signature rules"
+            columns={2}
+            value={presentation?.signatureStyle ?? 'solid'}
+            onChange={(v) => api.setPresentation({ signatureStyle: v })}
+            options={[
+              { value: 'solid', label: 'Solid' },
+              { value: 'dotted', label: 'Dotted' },
+            ]}
+          />
+          <SegmentedControl<'left' | 'center'>
+            label="Signature labels"
+            columns={2}
+            value={presentation?.signatureAlign ?? 'left'}
+            onChange={(v) => api.setPresentation({ signatureAlign: v })}
+            options={[
+              { value: 'left', label: 'Left' },
+              { value: 'center', label: 'Centered' },
+            ]}
+          />
+        </div>
+        <SegmentedControl<TermsLayoutStyle>
+          label="Terms & consent box"
+          columns={2}
+          value={presentation?.termsStyle ?? 'boxed'}
+          onChange={(v) => api.setPresentation({ termsStyle: v })}
+          options={[
+            { value: 'boxed', label: 'Boxed' },
+            { value: 'open', label: 'Open columns' },
+          ]}
+        />
+        <ToggleRow
+          label="Social icons in footer"
+          description="Accent tagline plus Facebook / X / LinkedIn / Instagram glyphs from your online presence."
+          checked={presentation?.footerSocialIcons ?? false}
+          onChange={(v) => api.setPresentation({ footerSocialIcons: v })}
+        />
+        <ToggleRow
+          label="Website in letterhead"
+          description="Adds your website to the header identity block."
+          checked={presentation?.headerWebsite ?? false}
+          onChange={(v) => api.setPresentation({ headerWebsite: v })}
+        />
+        <ToggleRow
+          label="Device icons in tables"
+          description="Draws the device-type icon beside each device row."
+          checked={presentation?.deviceIcons ?? false}
+          onChange={(v) => api.setPresentation({ deviceIcons: v })}
+        />
       </FieldGroup>
 
       <FieldGroup

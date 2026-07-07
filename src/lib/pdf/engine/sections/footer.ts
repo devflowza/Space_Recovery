@@ -16,9 +16,60 @@
 
 import type { Content, DynamicContent } from 'pdfmake/interfaces';
 import { PDF_COLORS, createSocialFooter } from '../../styles';
+import { getGeneralIconSvg } from '../../../deviceIconMapper';
+import type { CompanySettingsData } from '../../types';
 import type { EngineContext, EngineDocData, SectionRenderer } from '../types';
-import { resolveFooter } from '../branding';
+import { resolveColors, resolveFooter, resolvePresentation } from '../branding';
 import { qrContentNode } from './qr';
+
+/**
+ * Premium footer stack (presentation.footerSocialIcons): accent-colored bold
+ * tagline, muted website line, then a centered row of social glyphs + names —
+ * the reference finish. Returns null when the identity has nothing to show.
+ */
+function premiumSocialFooter(engine: EngineContext, identity: CompanySettingsData): Content | null {
+  const tagline = identity.branding?.brand_tagline || null;
+  const online = identity.online_presence;
+  const accent = resolveColors(engine.config).accent;
+
+  const lines: Content[] = [];
+  if (tagline) {
+    lines.push({ text: tagline, fontSize: 11, bold: true, color: accent, alignment: 'center', margin: [0, 0, 0, 2] });
+  }
+  if (online?.website) {
+    lines.push({
+      text: online.website.replace(/^https?:\/\//, ''),
+      fontSize: 9,
+      color: PDF_COLORS.textLight,
+      alignment: 'center',
+      margin: [0, 0, 0, 6],
+    });
+  }
+
+  const networks: Array<{ key: 'facebook' | 'x' | 'linkedin' | 'instagram'; name: string; url?: string }> = [
+    { key: 'facebook', name: 'Facebook', url: online?.facebook },
+    { key: 'x', name: 'X', url: online?.twitter },
+    { key: 'linkedin', name: 'LinkedIn', url: online?.linkedin },
+    { key: 'instagram', name: 'Instagram', url: online?.instagram },
+  ];
+  const active = networks.filter((n) => !!n.url);
+  if (active.length > 0) {
+    const items: object[] = [];
+    active.forEach((n, i) => {
+      items.push({ svg: getGeneralIconSvg(n.key), width: 9, height: 9, margin: [0, 0.5, 0, 0] });
+      items.push({
+        text: n.name,
+        fontSize: 8,
+        color: PDF_COLORS.textLight,
+        width: 'auto',
+        margin: [3, 0, i < active.length - 1 ? 14 : 0, 0],
+      });
+    });
+    lines.push({ columns: [{ text: '', width: '*' }, ...items, { text: '', width: '*' }] } as Content);
+  }
+
+  return lines.length > 0 ? ({ stack: lines } as Content) : null;
+}
 
 export const renderFooter: SectionRenderer = (
   engine: EngineContext,
@@ -37,14 +88,25 @@ export const renderFooter: SectionRenderer = (
     (!!online.website || !!online.facebook || !!online.twitter || !!online.linkedin || !!online.instagram);
   if (!tagline && !hasSocial && !qrNode) return null;
 
+  const premium = resolvePresentation(engine.config).footerSocialIcons;
   const divider: Content = {
     canvas: [
-      { type: 'line', x1: 0, y1: 0, x2: 525, y2: 0, lineWidth: 0.5, lineColor: PDF_COLORS.primary },
+      {
+        type: 'line',
+        x1: 0,
+        y1: 0,
+        x2: 525,
+        y2: 0,
+        lineWidth: 0.5,
+        lineColor: premium ? PDF_COLORS.border : PDF_COLORS.primary,
+      },
     ],
     margin: [0, 12, 0, 10],
   };
 
-  const social = createSocialFooter(online, tagline) as Content;
+  const social = premium
+    ? (premiumSocialFooter(engine, settings) ?? (createSocialFooter(online, tagline) as Content))
+    : (createSocialFooter(online, tagline) as Content);
 
   if (qrNode) {
     const caption = data.qrCaption ?? null;
@@ -110,9 +172,18 @@ export function buildPageFooter(
   const hasQr = !!qr || !!zatca || !!data.qrPayload;
   if (!tagline && !hasSocial && !hasQr && !fcfg?.customText) return null;
 
+  const premium = resolvePresentation(engine.config).footerSocialIcons;
   const dividerLine: Content = {
     canvas: [
-      { type: 'line', x1: 0, y1: 0, x2: 525, y2: 0, lineWidth: 0.5, lineColor: PDF_COLORS.primary },
+      {
+        type: 'line',
+        x1: 0,
+        y1: 0,
+        x2: 525,
+        y2: 0,
+        lineWidth: 0.5,
+        lineColor: premium ? PDF_COLORS.border : PDF_COLORS.primary,
+      },
     ],
     margin: [0, 0, 0, 10],
   };
@@ -143,6 +214,39 @@ export function buildPageFooter(
         };
       }
       return { stack: [dividerLine, { stack: lines }], margin: [35, 10, 35, 25] };
+    }
+
+    // Premium finish: accent tagline + website + social glyph row, centered
+    // (QR, when present, keeps its left slot with the premium stack right).
+    if (premium) {
+      const premiumStack = premiumSocialFooter(engine, settings);
+      const premiumQrNode = qrContentNode(zatca, qr, data.qrPayload, 60, [0, 0, 0, 2]);
+      if (premiumStack && premiumQrNode) {
+        return {
+          stack: [
+            dividerLine,
+            {
+              columns: [
+                {
+                  width: 'auto',
+                  stack: [
+                    premiumQrNode,
+                    ...(caption
+                      ? [{ text: caption, fontSize: 8, color: PDF_COLORS.text, alignment: 'left' as const }]
+                      : []),
+                  ],
+                },
+                { text: '', width: '*' },
+                { width: 'auto', stack: [premiumStack] },
+              ],
+            },
+          ],
+          margin: [35, 0, 35, 25],
+        };
+      }
+      if (premiumStack) {
+        return { stack: [dividerLine, premiumStack], margin: [35, 10, 35, 25] };
+      }
     }
 
     const qrNode = qrContentNode(zatca, qr, data.qrPayload, 60, [0, 0, 0, 2]);

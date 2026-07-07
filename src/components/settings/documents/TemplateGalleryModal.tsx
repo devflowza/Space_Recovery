@@ -37,6 +37,45 @@ const PresetThumbnail: React.FC<{ preset: TemplatePreset }> = ({ preset }) => {
       <div className="h-1.5 w-12 rounded-full bg-slate-200" />
     </div>
   );
+
+  // Premium skeleton: letterhead, centered title, Job-ID banner, twin open
+  // cards, and a light-header table — the flagship layout at a glance.
+  if (hint === 'premium') {
+    return (
+      <div className="paper-light pointer-events-none flex h-36 flex-col gap-1.5 rounded-md border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex items-start justify-between">
+          {logo}
+          {lines}
+        </div>
+        <div className="h-px w-full bg-slate-200" />
+        <div className="mx-auto h-2 w-24 rounded-full bg-slate-800" />
+        <div className="flex h-4 items-center justify-center rounded border border-slate-200">
+          <div className="h-1.5 w-12 rounded-full" style={{ backgroundColor: accent }} />
+        </div>
+        <div className="grid flex-1 grid-cols-2 gap-1.5">
+          {[0, 1].map((c) => (
+            <div key={c} className="rounded border border-slate-200 p-1">
+              <div className="mb-1 h-1 w-10 rounded-full bg-slate-400" />
+              <div className="h-px w-full bg-slate-100" />
+              <div className="mt-1 h-1 w-12 rounded-full bg-slate-200" />
+              <div className="mt-1 h-1 w-8 rounded-full bg-slate-200" />
+            </div>
+          ))}
+        </div>
+        <div className="overflow-hidden rounded border border-slate-200">
+          <div className="flex h-2.5 items-center gap-1 border-b border-slate-200 px-1">
+            <div className="h-1 flex-1 rounded-full bg-slate-300" />
+            <div className="h-1 w-5 rounded-full bg-slate-300" />
+          </div>
+          <div className="flex h-2.5 items-center gap-1 px-1">
+            <div className="h-1 flex-1 rounded-full bg-slate-200" />
+            <div className="h-1 w-5 rounded-full bg-danger/40" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="paper-light pointer-events-none flex h-36 flex-col gap-2 rounded-md border border-slate-200 bg-white p-3 shadow-sm">
       {/* Letterhead */}
@@ -190,7 +229,10 @@ export const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({
                   <PresetThumbnail preset={preset} />
                   <div className="mt-2.5 flex items-start justify-between gap-2">
                     <h3 className="text-sm font-semibold text-slate-900">{preset.name}</h3>
-                    <Badge variant={preset.category === 'vip' ? 'success' : 'default'} size="sm">
+                    <Badge
+                      variant={preset.category === 'premium' ? 'accent' : preset.category === 'vip' ? 'success' : 'default'}
+                      size="sm"
+                    >
                       {PRESET_CATEGORY_LABELS[preset.category]}
                     </Badge>
                   </div>

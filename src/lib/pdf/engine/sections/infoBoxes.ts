@@ -21,7 +21,8 @@ import type {
   SectionRenderer,
 } from '../types';
 import { isBilingualMode, en, ar, resolveLabel, fieldLabelLanguage } from '../labels';
-import { resolveSectionFill, resolveHeaderText } from '../branding';
+import { resolveSectionFill, resolveHeaderText, resolvePresentation } from '../branding';
+import { openCardHeaderColumns, openCardLayout, openInfoBox, openInfoRow } from './openCard';
 import { engineLayoutDirection } from '../rtl';
 
 function infoRow(
@@ -50,14 +51,19 @@ function labelWidthFor(language: EngineContext['config']['language']): number {
  * the label-column width — it is the full bilingual config when the `parties`
  * group is translated, else primary-only when suppressed.
  */
-function partyRows(party: PartyBlock, labelLang: EngineContext['config']['language']): object[] {
+function partyRows(
+  party: PartyBlock,
+  labelLang: EngineContext['config']['language'],
+  open = false,
+): object[] {
   const labelWidth = labelWidthFor(labelLang);
+  const row = open ? openInfoRow : infoRow;
   const rows: object[] = [];
   if (party.name) {
-    rows.push(infoRow({ en: 'Name:', ar: 'الاسم:' }, party.name, labelLang, labelWidth));
+    rows.push(row({ en: 'Name:', ar: 'الاسم:' }, party.name, labelLang, labelWidth));
   }
   for (const r of party.rows) {
-    rows.push(infoRow(r.label, r.value, labelLang, labelWidth));
+    rows.push(row(r.label, r.value, labelLang, labelWidth));
   }
   return rows;
 }
@@ -70,6 +76,12 @@ function partyBox(
   const { language } = engine.config;
   const bilingual = isBilingualMode(language);
   const labelLang = fieldLabelLanguage(language, engine.config.translationPolicy, 'parties');
+  const secondaryTitle = bilingual ? ar(party.title, language) : null;
+
+  // Premium open finish: white header + inset divider + roomier rows.
+  if (resolvePresentation(engine.config).infoCardStyle === 'open') {
+    return openInfoBox(en(party.title), secondaryTitle, partyRows(party, labelLang, true), iconSvg);
+  }
 
   // Pass the real Arabic title when bilingual; null collapses the AR column.
   // The TITLE stays on `language` (always bilingual); the field rows use
@@ -77,7 +89,7 @@ function partyBox(
   const b = sectionBand(engine, 'parties');
   return createBilingualInfoBox(
     en(party.title),
-    bilingual ? ar(party.title, language) : null,
+    secondaryTitle,
     partyRows(party, labelLang),
     iconSvg,
     b.fill,
@@ -101,11 +113,12 @@ function metaTitleLabel(engine: EngineContext): LabelText {
 }
 
 /** The label/value rows for the meta (document-details) block. */
-function metaRows(engine: EngineContext, data: EngineDocData): object[] {
+function metaRows(engine: EngineContext, data: EngineDocData, open = false): object[] {
   const { language } = engine.config;
   const labelLang = fieldLabelLanguage(language, engine.config.translationPolicy, 'meta');
   const labelWidth = labelWidthFor(labelLang);
-  return (data.meta ?? []).map((m) => infoRow(m.label, m.value, labelLang, labelWidth));
+  const row = open ? openInfoRow : infoRow;
+  return (data.meta ?? []).map((m) => row(m.label, m.value, labelLang, labelWidth));
 }
 
 /** Build the meta (document-details) info box, or null when there is nothing to show. */
@@ -114,10 +127,14 @@ function buildMetaBox(engine: EngineContext, data: EngineDocData): Content | nul
   const { language } = engine.config;
   const bilingual = isBilingualMode(language);
   const metaTitle = metaTitleLabel(engine);
+  const secondaryTitle = bilingual ? ar(metaTitle, language) : null;
+  if (resolvePresentation(engine.config).infoCardStyle === 'open') {
+    return openInfoBox(en(metaTitle), secondaryTitle, metaRows(engine, data, true), getGeneralIconSvg('fileText'));
+  }
   const b = sectionBand(engine, 'meta');
   return createBilingualInfoBox(
     en(metaTitle),
-    bilingual ? ar(metaTitle, language) : null,
+    secondaryTitle,
     metaRows(engine, data),
     getGeneralIconSvg('fileText'),
     b.fill,
@@ -156,19 +173,21 @@ function sectionBand(engine: EngineContext, key: string): { fill: string; text: 
 function detailsHalf(
   engine: EngineContext,
   data: EngineDocData,
+  open = false,
 ): { title: LabelText; rows: object[] } | null {
   const { language } = engine.config;
+  const row = open ? openInfoRow : infoRow;
   if (data.meta && data.meta.length > 0) {
     const metaLabelLang = fieldLabelLanguage(language, engine.config.translationPolicy, 'meta');
     const metaLabelWidth = labelWidthFor(metaLabelLang);
-    return { title: metaTitleLabel(engine), rows: data.meta.map((m) => infoRow(m.label, m.value, metaLabelLang, metaLabelWidth)) };
+    return { title: metaTitleLabel(engine), rows: data.meta.map((m) => row(m.label, m.value, metaLabelLang, metaLabelWidth)) };
   }
   if (data.caseInfo && data.caseInfo.rows.length > 0) {
     const caseLabelLang = fieldLabelLanguage(language, engine.config.translationPolicy, 'caseInfo');
     const caseLabelWidth = labelWidthFor(caseLabelLang);
     return {
       title: data.caseInfo.title,
-      rows: data.caseInfo.rows.map((r) => infoRow(r.label, r.value, caseLabelLang, caseLabelWidth)),
+      rows: data.caseInfo.rows.map((r) => row(r.label, r.value, caseLabelLang, caseLabelWidth)),
     };
   }
   return null;
@@ -244,12 +263,13 @@ export function renderPartiesMeta(
   const { language } = engine.config;
   const bilingual = isBilingualMode(language);
   const partyLabelLang = fieldLabelLanguage(language, engine.config.translationPolicy, 'parties');
+  const open = resolvePresentation(engine.config).infoCardStyle === 'open';
 
   // The single party present (recipient preferred, else issuer). `renderTemplate`
   // only routes here when there is at most one party box.
   const party = data.parties.to ?? data.parties.from ?? null;
   const partyIcon = getGeneralIconSvg(data.parties.to ? 'user' : 'fileText');
-  const details = detailsHalf(engine, data);
+  const details = detailsHalf(engine, data, open);
 
   // One side missing → fall back to a single full-width box.
   if (!party && !details) return null;
@@ -257,6 +277,12 @@ export function renderPartiesMeta(
   // resolve its own section colour accordingly.
   const detailsKey = partiesDetailsKey(data) ?? 'meta';
   if (!party) {
+    if (open) {
+      return {
+        stack: [openInfoBox(en(details!.title), bilingual ? ar(details!.title, language) : null, details!.rows, getGeneralIconSvg('fileText'))],
+        margin: [0, 0, 0, 8],
+      };
+    }
     const db = sectionBand(engine, detailsKey);
     return {
       stack: [
@@ -273,6 +299,48 @@ export function renderPartiesMeta(
     };
   }
   if (!details) return renderParties(engine, data);
+
+  // Premium open finish: the two cards render as ONE 3-column table (card |
+  // gutter | card) with per-cell borders — the gutter column draws nothing, so
+  // the cards read as separate, while the shared table rows GUARANTEE both
+  // cards are exactly the same height (a row sizes every cell to the tallest).
+  // The RTL mirror still swaps the halves.
+  if (open) {
+    const noBorder = [false, false, false, false];
+    const gutterHeader = { text: '', border: noBorder };
+    const gutterContent = { text: '', border: noBorder };
+    const partyHeader = {
+      ...openCardHeaderColumns(en(party.title), bilingual ? ar(party.title, language) : null, partyIcon),
+      border: [true, true, true, true],
+      margin: [8, 7, 8, 5],
+    };
+    const detailsHeader = {
+      ...openCardHeaderColumns(en(details.title), bilingual ? ar(details.title, language) : null, getGeneralIconSvg('fileText')),
+      border: [true, true, true, true],
+      margin: [8, 7, 8, 5],
+    };
+    const partyContent = { stack: partyRows(party, partyLabelLang, true), border: [true, false, true, true], margin: [8, 6, 8, 7] };
+    const detailsContent = { stack: details.rows, border: [true, false, true, true], margin: [8, 6, 8, 7] };
+
+    const rtlOpen = engineLayoutDirection(language) === 'rtl';
+    const headerRowOpen = rtlOpen
+      ? [detailsHeader, gutterHeader, partyHeader]
+      : [partyHeader, gutterHeader, detailsHeader];
+    const contentRowOpen = rtlOpen
+      ? [detailsContent, gutterContent, partyContent]
+      : [partyContent, gutterContent, detailsContent];
+
+    return {
+      table: {
+        widths: ['*', 12, '*'],
+        body: [headerRowOpen, contentRowOpen] as unknown as TableCell[][],
+      },
+      // Same layout as the standalone open card, so padding + hairlines are
+      // identical whether a card renders alone or in the equal-height pair.
+      layout: openCardLayout(),
+      margin: [0, 0, 0, 10],
+    };
+  }
 
   const partyB = sectionBand(engine, 'parties');
   const detailsB = sectionBand(engine, detailsKey);
