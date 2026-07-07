@@ -132,6 +132,23 @@ describe('buildCompactLabelDocument', () => {
     expect(collectImages(buildCompactLabelDocument([label()], getLabelSize('nb_15x26')))).toContain(QR_PNG);
   });
 
+  it('guarantees the QR on the default strip even for a short, index-less id', () => {
+    // Stock (STK-0005) and inventory (INV-00013) ids are short and carry no
+    // device index, so the identifier used to render at full size and squeeze
+    // the QR off the label — leaving it un-scannable, unlike a multi-device
+    // case label. The QR is the label's purpose: it must survive.
+    for (const id of ['STK-0005', 'INV-00013']) {
+      const doc = buildCompactLabelDocument(
+        [label({ id, index: undefined, title: null, lines: ['Donor Drives'] })],
+        getLabelSize('nb_15x26'),
+      );
+      expect(collectImages(doc), `${id} QR`).toContain(QR_PNG);
+      const idNode = collectTexts(doc).find((t) => t.text === id);
+      // The identifier stays clearly legible alongside the guaranteed QR.
+      expect(idNode!.fontSize as number, `${id} id size`).toBeGreaterThanOrEqual(8);
+    }
+  });
+
   it('gives the identifier the full label width on narrow strips (26×15)', () => {
     const doc = buildCompactLabelDocument([label()], getLabelSize('nb_15x26'));
     const idNode = collectTexts(doc).find((t) => t.text === 'CASE-0042');
