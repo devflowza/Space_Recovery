@@ -1,6 +1,6 @@
 // src/pages/settings/TaxRegistrationSettings.test.tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -103,6 +103,23 @@ describe('TaxRegistrationSettings', () => {
     renderPage();
     expect(await screen.findByText(/Mumbai Intake Desk/)).toBeInTheDocument();
     expect(screen.getByText(/multi-state gstin management is not yet available/i)).toBeInTheDocument();
+  });
+
+  it('same-day unregister ends the registration on YESTERDAY so status flips today (C4)', async () => {
+    svc.getActiveTaxRegistration.mockResolvedValue(registration);
+    svc.getDeclaredRegistrationStatus.mockResolvedValue('registered');
+    svc.endTaxRegistration.mockResolvedValue(undefined);
+    svc.setDeclaredRegistrationStatus.mockResolvedValue(undefined);
+    renderPage();
+
+    // Registered card → open the form → click the loud unregister button.
+    fireEvent.click(await screen.findByRole('button', { name: /change gstin/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /we are not gst registered/i }));
+
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    await waitFor(() => expect(svc.endTaxRegistration).toHaveBeenCalledWith('r1', yesterday));
+    // registered_from '2026-04-01' precedes yesterday, so the clamp keeps yesterday.
+    expect(svc.setDeclaredRegistrationStatus).toHaveBeenCalledWith('unregistered');
   });
 
   it('non-GST regime (no GST-coded subdivisions): a valid non-GSTIN number can be saved (C3)', async () => {

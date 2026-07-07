@@ -111,7 +111,19 @@ export const TaxRegistrationSettings: React.FC = () => {
 
   const unregisterMutation = useMutation({
     mutationFn: async () => {
-      if (view?.registration) await endTaxRegistration(view.registration.id, today());
+      // End the registration YESTERDAY (clamped so it never precedes
+      // registered_from) so the inclusive `registered_to >= today` active-filter
+      // excludes it immediately and status resolves to 'unregistered' the SAME
+      // day — matching the success toast and rendering the loud banner. The >=
+      // filter is a deliberate convention shared with tax-rate validity; we do
+      // NOT change it, and we do NOT let the declared flag override an active row
+      // (D6: evidence beats declaration).
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      if (view?.registration) {
+        const endDate =
+          view.registration.registered_from > yesterday ? view.registration.registered_from : yesterday;
+        await endTaxRegistration(view.registration.id, endDate);
+      }
       await setDeclaredRegistrationStatus('unregistered');
     },
     onSuccess: () => {
@@ -144,7 +156,7 @@ export const TaxRegistrationSettings: React.FC = () => {
       </div>
 
       {mismatches.length > 0 && (
-        <div className="mb-6 rounded-xl border border-warning/40 bg-warning-muted p-4">
+        <div role="status" className="mb-6 rounded-xl border border-warning/40 bg-warning-muted p-4">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
             <div>
@@ -165,7 +177,7 @@ export const TaxRegistrationSettings: React.FC = () => {
       )}
 
       {status === 'unset' && (
-        <div className="mb-6 rounded-xl border border-danger/40 bg-danger-muted p-4">
+        <div role="alert" className="mb-6 rounded-xl border border-danger/40 bg-danger-muted p-4">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
             <div>
@@ -182,7 +194,7 @@ export const TaxRegistrationSettings: React.FC = () => {
       )}
 
       {status === 'unregistered' && (
-        <div className="mb-6 rounded-xl border border-danger/40 bg-danger-muted p-4">
+        <div role="alert" className="mb-6 rounded-xl border border-danger/40 bg-danger-muted p-4">
           <div className="flex items-start gap-3">
             <ShieldOff className="w-5 h-5 text-danger shrink-0 mt-0.5" />
             <div>
@@ -257,8 +269,10 @@ export const TaxRegistrationSettings: React.FC = () => {
               onChange={(e) => setTaxNumber(e.target.value)}
               placeholder={tax.numberPlaceholder ?? ''}
               className={selectClasses}
+              aria-invalid={!!formError}
+              aria-describedby={formError ? 'tax-reg-number-error' : undefined}
             />
-            {formError && <p className="text-xs text-danger mt-1">{formError}</p>}
+            {formError && <p id="tax-reg-number-error" role="alert" className="text-xs text-danger mt-1">{formError}</p>}
           </div>
 
           <div className="flex items-center justify-between pt-2">
