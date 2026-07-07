@@ -25,6 +25,22 @@ export interface Inv01FieldEntry {
   source: Inv01Source;
 }
 
+/**
+ * The exact key set issue_tax_document freezes into invoices.buyer_address
+ * (verified against the live function). Any `derived` rule that names a
+ * buyer_address JSON sub-key must reference one of these — inv01Completeness
+ * cross-checks it, so a fabricated sub-key (e.g. the removed 'city') can never
+ * again masquerade as a satisfied source.
+ */
+export const ISSUANCE_BUYER_ADDRESS_KEYS = [
+  'line1',
+  'line2',
+  'subdivision_id',
+  'subdivision',
+  'postal_code',
+  'free_text',
+] as const;
+
 export const INV01_MANDATORY_FIELDS: readonly Inv01FieldEntry[] = [
   { field: 'Version', source: { kind: 'constant', value: '1.1' } },
   { field: 'TranDtls.TaxSch', source: { kind: 'constant', value: 'GST' } },
@@ -39,9 +55,13 @@ export const INV01_MANDATORY_FIELDS: readonly Inv01FieldEntry[] = [
   { field: 'SellerDtls.Pin', source: { kind: 'company_settings', path: 'location.postal_code' } },
   { field: 'SellerDtls.Stcd', source: { kind: 'derived', from: ['invoices.seller_tax_number'], rule: 'GSTIN characters 1-2 (the state code is embedded in the stamped seller GSTIN)' } },
   { field: 'BuyerDtls.Gstin', source: { kind: 'invoice_column', column: 'buyer_tax_number' } },
-  { field: 'BuyerDtls.LglNm', source: { kind: 'derived', from: ['invoices.buyer_address', 'customers_enhanced.customer_name', 'companies.company_name'], rule: 'issuance snapshot name, falling back to the linked customer/company record' } },
+  { field: 'BuyerDtls.LglNm', source: { kind: 'derived', from: ['customers_enhanced.customer_name', 'companies.company_name'], rule: 'live customer legal name (company_name when billed to a company) — NOTE: the buyer legal name is NOT frozen into the issuance snapshot (unlike Gstin/Addr1/Pin/Pos), so the in_irn builder must capture it at issuance or accept a live-read caveat' } },
   { field: 'BuyerDtls.Addr1', source: { kind: 'derived', from: ['invoices.buyer_address'], rule: 'frozen snapshot JSON line1' } },
-  { field: 'BuyerDtls.Loc', source: { kind: 'derived', from: ['invoices.buyer_address'], rule: 'frozen snapshot JSON city' } },
+  // HONEST GAP (WP-L5 review): buyer city is not captured discretely at issuance.
+  // issue_tax_document freezes buyer_address as {line1,line2,subdivision_id,
+  // subdivision,postal_code,free_text} (no city); the buyer record holds only
+  // city_id (FK to geo_cities), never resolved to a name in the snapshot.
+  { field: 'BuyerDtls.Loc', source: { kind: 'gap', note: 'Buyer city not captured discretely — buyer_address snapshot has no city key and the buyer record holds only city_id (geo_cities FK). Closing it needs a snapshot migration resolving geo_cities.name into buyer_address (deferred; out of L5 no-migration scope).' } },
   { field: 'BuyerDtls.Pin', source: { kind: 'derived', from: ['invoices.buyer_address'], rule: 'frozen snapshot JSON postal_code' } },
   { field: 'BuyerDtls.Stcd', source: { kind: 'derived', from: ['invoices.buyer_tax_number', 'invoices.place_of_supply_subdivision_id'], rule: 'GSTIN characters 1-2; unregistered buyer → the place-of-supply state code (Sec 12(2), S2 derivation)' } },
   { field: 'BuyerDtls.Pos', source: { kind: 'subdivision_column', column: 'tax_authority_code', via: 'place_of_supply_subdivision_id' } },

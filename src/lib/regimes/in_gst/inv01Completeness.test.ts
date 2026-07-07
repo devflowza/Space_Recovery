@@ -4,7 +4,7 @@
 // Column-name existence is enforced at compile time (keyof Database rows); this
 // suite enforces coverage, uniqueness, and the statutory spot-checks.
 import { describe, it, expect } from 'vitest';
-import { INV01_MANDATORY_FIELDS } from './inv01FieldMap';
+import { INV01_MANDATORY_FIELDS, ISSUANCE_BUYER_ADDRESS_KEYS } from './inv01FieldMap';
 
 const byField = (field: string) => INV01_MANDATORY_FIELDS.find((e) => e.field === field);
 
@@ -18,9 +18,26 @@ describe('INV-01 v1.1 field-completeness assertion', () => {
     expect(new Set(fields).size).toBe(fields.length);
   });
 
-  it('every mandatory field has a real source — ZERO gaps', () => {
+  it('surfaces exactly the one HONEST gap — buyer city is not captured discretely at issuance (never certified as covered)', () => {
+    // The completeness assertion is a gap DETECTOR, not a rubber stamp: buyer
+    // city has no discrete issuance source (only city_id FK; the buyer_address
+    // snapshot has no city key), so it is an explicit, documented gap — not a
+    // 'derived' source dressed over a fictitious buyer_address.city key.
     const gaps = INV01_MANDATORY_FIELDS.filter((e) => e.source.kind === 'gap');
-    expect(gaps.map((g) => g.field)).toEqual([]);
+    expect(gaps.map((g) => g.field)).toEqual(['BuyerDtls.Loc']);
+  });
+
+  it('every buyer_address-sourced derived rule names a REAL snapshot key (guards fabricated sub-keys like the removed city)', () => {
+    for (const entry of INV01_MANDATORY_FIELDS) {
+      if (entry.source.kind !== 'derived') continue;
+      if (!entry.source.from.includes('invoices.buyer_address')) continue;
+      const referenced = entry.source.rule.match(/snapshot JSON (\w+)/);
+      if (!referenced) continue;
+      expect(
+        ISSUANCE_BUYER_ADDRESS_KEYS as readonly string[],
+        `${entry.field} references non-existent buyer_address.${referenced[1]}`,
+      ).toContain(referenced[1]);
+    }
   });
 
   it('every derived source names its table.column inputs and a non-empty rule', () => {
