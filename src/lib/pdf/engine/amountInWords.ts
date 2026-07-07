@@ -5,6 +5,7 @@
  * functional (positional ones/tens/hundreds/scales joined with "و") — it conveys
  * the value clearly but is not fully case-inflected.
  */
+import type { ScaleSystem } from '../../regimes/types';
 
 const ONES = [
   'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
@@ -120,4 +121,33 @@ export function amountInWordsAr(amount: number, currency = '', decimals = 2): st
   const words = numberToWordsAr(whole);
   const minorPart = decimals > 0 && minor > 0 ? ` و${numberToWordsAr(minor)}` : '';
   return `${words}${minorPart}${currency ? ` ${currency}` : ''} فقط`;
+}
+
+/**
+ * HOOK (defined by WP-S4, implemented in place by WP-L1 Task L1.3 — same module,
+ * same `string | null` signature, no second export): spell a whole number in Indian
+ * English (lakh/crore grouping). Returns null until L1 supplies the body, so a
+ * render path OMITS the words line rather than printing western grouping on an
+ * Indian statutory document. L1 flips this to a non-null grammatically-complete
+ * speller and updates amountInWordsHook.test.ts accordingly.
+ */
+export function numberToWordsEnIndian(_value: number): string | null {
+  return null;
+}
+
+/** Scale-keyed amount-in-words dispatch. 'western' → the existing speller;
+ *  'indian' → the L1 hook (null until implemented). Keyed on format.amount_words_scale. */
+export function formatAmountWordsForScale(
+  amount: number, currency: string, decimals: number, scale: ScaleSystem,
+): string | null {
+  if (scale === 'indian') {
+    const whole = Math.floor(Math.abs(amount));
+    const words = numberToWordsEnIndian(whole);
+    if (words === null) return null;
+    const factor = 10 ** decimals;
+    const minor = Math.round((Math.abs(amount) - whole) * factor);
+    const minorPart = decimals > 0 && minor > 0 ? ` and ${String(minor).padStart(decimals, '0')}/${factor}` : '';
+    return `${currency ? `${currency} ` : ''}${words}${minorPart} only`;
+  }
+  return amountInWordsEn(amount, currency, decimals);
 }

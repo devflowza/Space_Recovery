@@ -4,6 +4,7 @@
 // = "Other information technology services n.e.c." (data recovery); 998713 =
 // "Maintenance and repair of computers and peripheral equipment" (physical media).
 import { supabase } from '../../supabaseClient';
+import type { Json } from '../../../types/database.types';
 
 export const INDIA_SAC_DEFAULTS = {
   default: '998319',
@@ -45,7 +46,7 @@ export async function seedIndiaSacDefaults(tenantId: string): Promise<void> {
   const metadata = { ...((row?.metadata as Record<string, unknown> | null) ?? {}), ...buildIndiaSacMetadataPatch() };
   const { error: writeErr } = await supabase
     .from('company_settings')
-    .update({ metadata })
+    .update({ metadata: metadata as Json })
     .eq('tenant_id', tenantId)
     .is('deleted_at', null);
   if (writeErr) throw writeErr;
