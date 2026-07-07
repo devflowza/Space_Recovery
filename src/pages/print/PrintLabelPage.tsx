@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { generateCaseLabel } from '../../lib/pdf/pdfService';
+import { printCaseLabels } from '../../lib/pdf/labels/labelPrintService';
 import { Printer, X, Loader2, AlertCircle, RefreshCw, Tag } from 'lucide-react';
 
 export const PrintLabelPage = () => {
@@ -20,7 +20,7 @@ export const PrintLabelPage = () => {
       setIsGenerating(true);
       setError(null);
 
-      const result = await generateCaseLabel(caseId, false);
+      const result = await printCaseLabels(caseId, { output: 'print' });
 
       if (!result.success) {
         setError(result.error || 'Failed to generate PDF');
@@ -36,7 +36,7 @@ export const PrintLabelPage = () => {
     if (caseId) {
       setIsGenerating(true);
       setError(null);
-      generateCaseLabel(caseId, false).then((result) => {
+      printCaseLabels(caseId, { output: 'print' }).then((result) => {
         if (!result.success) {
           setError(result.error || 'Failed to generate PDF');
         }
@@ -47,7 +47,7 @@ export const PrintLabelPage = () => {
 
   const handleDownload = () => {
     if (caseId) {
-      generateCaseLabel(caseId, true);
+      printCaseLabels(caseId, { output: 'download' });
     }
   };
 
@@ -112,7 +112,7 @@ export const PrintLabelPage = () => {
           <>
             <Tag className="w-16 h-16 text-success mx-auto mb-4" />
             <h2 className="text-xl font-bold text-slate-900 mb-2">Label Ready</h2>
-            <p className="text-slate-600 mb-6">Your case label has been generated and opened.</p>
+            <p className="text-slate-600 mb-6">Your case labels were sent to the print dialog — one label per device.</p>
             <div className="flex gap-3 justify-center">
               <button
                 onClick={handleDownload}
