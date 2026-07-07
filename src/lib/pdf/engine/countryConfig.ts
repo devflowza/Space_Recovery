@@ -80,10 +80,12 @@ export function countryTemplateOverride(
     };
   }
 
-  // D11 — registration band. With a profile: band shows only for a registered
-  // seller whose profile wants it. Without: preserve the legacy fact-only rule.
+  // D11 — registration band. With a profile the PROFILE is the authority (its
+  // showRegistrationBand + a registered seller), NOT the tax-system string — else a
+  // GST (India) tax invoice would never show its GSTIN band. Without a profile,
+  // preserve the legacy VAT-only fact rule.
   const bandEnabled = compliance
-    ? facts.taxInvoiceRequired && facts.taxSystem === 'VAT' &&
+    ? facts.taxInvoiceRequired &&
       compliance.profile.showRegistrationBand && compliance.sellerRegistered
     : facts.taxInvoiceRequired && facts.taxSystem === 'VAT';
   override.taxBar = { enabled: bandEnabled };
