@@ -12,7 +12,7 @@ import { registerAllRegimePlugins } from './regimes/register';
 import { resolveTaxStrategy } from './regimes/registry';
 import { derivePlaceOfSupply } from './regimes/in_gst/placeOfSupply';
 import type {
-  GeoCountryTaxRateRow, LegalEntityTaxRegistrationRow, RoundingPolicy, RuleTrace,
+  ComputedTaxLine, GeoCountryTaxRateRow, LegalEntityTaxRegistrationRow, RoundingPolicy, RuleTrace,
   ScaleSystem, TaxComputation, TaxContext, TaxDocumentType, TaxableLine,
 } from './regimes/types';
 
@@ -76,24 +76,97 @@ export function buildTaxableLines(
 }
 
 /** The form's header rate resolves against effective-dated standard rows.
- *  Exact match → the real rate rows (single-mode: subdivision-null standards).
- *  rate 0 → no components (untaxed doc, matches legacy 0%). Any other rate →
- *  ONE synthetic row id 'form:<rate>' so provenance shows a form override
- *  (Phase 2 replaces free rates with treatment selectors). */
+ *  (1) Slab-bucketed multi-head packs (India GST: CGST+SGST+IGST share an
+ *      `applies_to` bucket) — the bucket whose HEADLINE (max) component rate
+ *      equals the form rate carries the full head-set; return every row so the
+ *      kernel's split_by_place_of_supply mode picks CGST/SGST vs IGST itself.
+ *  (2) Legacy single-levy packs (Oman/AE/SA) — subdivision-null, bucket-less
+ *      standards summing to the form rate (byte-parity path, unchanged).
+ *  (3) Unmatched → one synthetic 'form:<rate>' row so provenance shows the
+ *      override. rate 0 → no components (untaxed doc, matches legacy 0%). */
 export function matchFormRate(
   effective: GeoCountryTaxRateRow[], formRate: number,
 ): GeoCountryTaxRateRow[] {
   if (formRate === 0) return [];
-  const standards = effective.filter((r) => r.tax_category === 'standard' && r.subdivision_id === null);
-  const sum = standards.reduce((s, r) => s + r.rate, 0);
-  if (standards.length > 0 && Math.abs(sum - formRate) < 1e-9) return standards;
+  const standards = effective.filter((r) => r.tax_category === 'standard');
+  const buckets = new Map<string, GeoCountryTaxRateRow[]>();
+  for (const r of standards) {
+    if (r.applies_to === null) continue;
+    const rows = buckets.get(r.applies_to) ?? [];
+    rows.push(r);
+    buckets.set(r.applies_to, rows);
+  }
+  for (const rows of buckets.values()) {
+    const headline = Math.max(...rows.map((r) => r.rate));
+    if (Math.abs(headline - formRate) < 1e-9) return rows;
+  }
+  const flat = standards.filter((r) => r.subdivision_id === null && r.applies_to === null);
+  const sum = flat.reduce((s, r) => s + r.rate, 0);
+  if (flat.length > 0 && Math.abs(sum - formRate) < 1e-9) return flat;
+  // A slab-bucketed pack (India GST) has NO bucket-less flat standards, so the
+  // single-row synthetic fallback below would emit a mis-coded head (component
+  // of standards[0]) that the split kernel silently zero-rates inter-state
+  // (IGST filter finds nothing) or mis-splits intra-state (one CGST head, no
+  // SGST). A form rate matching no configured slab is out-of-spec — fail loud
+  // rather than under-tax a statutory document.
+  if (buckets.size > 0 && flat.length === 0) {
+    throw new Error(
+      `Tax rate ${formRate}% matches no configured tax slab (available: ${[...buckets.keys()].join(', ')}). `
+      + 'Only a seeded slab rate is valid for a split-levy pack.',
+    );
+  }
   return [{
-    id: `form:${formRate}`, country_id: standards[0]?.country_id ?? 'form', subdivision_id: null,
-    component_code: standards[0]?.component_code ?? 'VAT',
-    component_label: standards[0]?.component_label ?? 'VAT',
+    id: `form:${formRate}`, country_id: flat[0]?.country_id ?? standards[0]?.country_id ?? 'form',
+    subdivision_id: null,
+    component_code: flat[0]?.component_code ?? standards[0]?.component_code ?? 'VAT',
+    component_label: flat[0]?.component_label ?? standards[0]?.component_label ?? 'VAT',
     tax_category: 'standard', rate: formRate, applies_to: null,
     valid_from: '1970-01-01', valid_to: null, sort_order: 0,
   }];
+}
+
+/** The tax strategy key for the current tenant, resolved from the pack's
+ *  `regime.tax` binding (Country Engine), defaulting to `simple_vat` when unbound
+ *  — mirrors assembleStockSaleContext.ts:37-38. Threaded into computeDocumentTotals
+ *  so a live India invoice resolves `in_gst` (kernel split) instead of `simple_vat`. */
+export function resolveStrategyKey(resolved: Record<string, unknown>): string {
+  return (resolved['regime.tax'] as string) || 'simple_vat';
+}
+
+/** India's `gst_slab_18` bucket carries the country CGST/SGST/IGST plus one
+ *  UT-scoped SGST (labelled UTGST) row per Union Territory. The kernel's intra
+ *  split (`split_by_place_of_supply`) selects EVERY 'SGST'-coded row, so the
+ *  bucket must first collapse to one row per component — preferring the row
+ *  scoped to the place of supply (a UT's UTGST) over the country default — else
+ *  an intra-state invoice stacks all six SGST heads. A no-op for single-levy
+ *  packs (already one row per component). NOTE: correct for single/split modes
+ *  (every live country); a future jurisdiction_stack country needs its own path. */
+export function scopeRatesToPlaceOfSupply(
+  rows: GeoCountryTaxRateRow[], placeOfSupplySubdivisionId: string | null,
+): GeoCountryTaxRateRow[] {
+  const score = (r: GeoCountryTaxRateRow): number =>
+    r.subdivision_id !== null && r.subdivision_id === placeOfSupplySubdivisionId ? 2
+      : r.subdivision_id === null ? 1 : 0;
+  const best = new Map<string, GeoCountryTaxRateRow>();
+  for (const r of rows) {
+    const cur = best.get(r.component_code);
+    if (!cur || score(r) > score(cur)) best.set(r.component_code, r);
+  }
+  return [...best.values()];
+}
+
+/** Section 170 (CGST Act): whole-rupee cash rounding leaves a ± paise residual.
+ *  Persist it as an explicit document-level "Round off" line (out_of_scope) so
+ *  invoice grand total, the vat ledger and the GST return all reconcile — the
+ *  residual is never smeared into a tax head. Null/0 adjustment → no line. */
+export function roundOffAdjustmentLine(computation: TaxComputation): ComputedTaxLine | null {
+  const adj = computation.totals.roundingAdjustment;
+  if (adj === null || adj === 0) return null;
+  return {
+    lineItemId: null, componentCode: 'ROUND_OFF', componentLabel: 'Round off',
+    jurisdictionRef: null, rate: 0, taxableBase: 0, taxAmount: adj,
+    taxTreatment: 'out_of_scope', treatmentReasonCode: 'SEC_170_ROUNDING', sequence: 999,
+  };
 }
 
 /** Kernel totals → the legacy header shape (subtotal is PRE-document-discount). */
@@ -145,11 +218,11 @@ async function fetchEffectiveRates(countryId: string, onDate: string): Promise<G
   return (data ?? []) as GeoCountryTaxRateRow[];
 }
 
-/** Pack-resolved rounding + scale (pattern: assembleStockSaleContext.ts:36-63).
- *  The strategy KEY is deliberately NOT consumed here — threading regime.tax
- *  before in_gst registers would throw CountryConfigError (WP-S3 owns it). */
+/** Pack-resolved strategy key + rounding + scale (pattern: assembleStockSaleContext.ts:36-63).
+ *  WP-S3 now threads the strategy key: `regime.tax` selects the TaxStrategy
+ *  (`in_gst` for a published India pack, `simple_vat` otherwise). */
 async function fetchPackContext(tenantId: string): Promise<{
-  roundingPolicy: RoundingPolicy; scaleSystem: ScaleSystem;
+  strategyKey: string; roundingPolicy: RoundingPolicy; scaleSystem: ScaleSystem;
 }> {
   const { data: tenant, error } = await supabase
     .from('tenants')
@@ -159,6 +232,7 @@ async function fetchPackContext(tenantId: string): Promise<{
   if (error) throw error;
   const resolved = (tenant?.resolved_country_config ?? {}) as Record<string, unknown>;
   return {
+    strategyKey: resolveStrategyKey(resolved),
     roundingPolicy: (resolved['tax.rounding_policy'] as RoundingPolicy | undefined)
       ?? { mode: 'half_up', level: 'document' },
     scaleSystem: (resolved['format.amount_words_scale'] as ScaleSystem | undefined) ?? 'western',
@@ -236,7 +310,9 @@ export async function computeDocumentTotals(
     subdivisionIdByAuthorityCode: authorityMap,
   });
   const effective = await fetchEffectiveRates(seller.countryId, input.documentDate);
-  const rates = matchFormRate(effective, input.taxRate || 0);
+  // Collapse the slab bucket's per-UT SGST fan-out to one head per component
+  // (scoped to the place of supply) BEFORE the kernel's split selects heads.
+  const rates = scopeRatesToPlaceOfSupply(matchFormRate(effective, input.taxRate || 0), pos.subdivisionId);
   const lines = buildTaxableLines(input.items, rc.documentDecimals);
   const preDiscountSubtotal = lines.reduce(
     (s, l) => roundMoney(s + roundMoney(roundMoney(l.quantity * l.unitPrice, rc.documentDecimals) - l.lineDiscount, rc.documentDecimals), rc.documentDecimals), 0);
@@ -261,7 +337,7 @@ export async function computeDocumentTotals(
     roundingPolicy: pack.roundingPolicy,
     scaleSystem: pack.scaleSystem,
   };
-  const strategy = resolveTaxStrategy('simple_vat'); // WP-S3 threads pack-resolved regime.tax (in_gst registers there)
+  const strategy = resolveTaxStrategy(pack.strategyKey); // pack.regime.tax → in_gst (kernel split) or simple_vat
   const computation = await strategy.compute(ctx);
   return { computation, placeOfSupplySubdivisionId: pos.subdivisionId, ...totalsFromComputation(computation, documentDiscount, rc.documentDecimals) };
 }
@@ -309,6 +385,19 @@ export async function persistDocumentTaxLines(args: {
     backfilled: false,
     sequence: l.sequence,
   }));
+  const roundOff = roundOffAdjustmentLine(computation);
+  if (roundOff) {
+    rows.push({
+      tenant_id: tenantId, document_type: documentType, document_id: documentId,
+      line_item_id: null, component_code: roundOff.componentCode, component_label: roundOff.componentLabel,
+      jurisdiction_ref: null, rate: roundOff.rate, taxable_base: roundOff.taxableBase, tax_amount: roundOff.taxAmount,
+      currency: rc.documentCurrency, exchange_rate: rc.rate,
+      tax_amount_base: convertToBase(roundOff.taxAmount, rc.rate, rc.baseDecimals),
+      tax_treatment: roundOff.taxTreatment, treatment_reason_code: roundOff.treatmentReasonCode,
+      regime_key: computation.trace.regimeKey, plugin_version: computation.trace.pluginVersion,
+      pack_version_id: computation.trace.packVersionId, rule_trace: null, backfilled: false, sequence: roundOff.sequence,
+    });
+  }
   const { error } = await supabase.from('document_tax_lines').insert(rows);
   if (error) throw error;
 }

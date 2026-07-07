@@ -11,12 +11,14 @@ import { gccTaxInvoiceProfile } from './gcc_tax_invoice';
 import { noEinvoice } from './no_einvoice';
 import { zatcaPh1Transport } from './zatca_ph1';
 import { gccReturnComposer } from './gcc_return';
+import { inGstStrategy } from './in_gst';
 
 let registered = false;
 
 export function registerAllRegimePlugins(): void {
   if (registered) return;
   registerRegimePlugin('tax', simpleVat);
+  registerRegimePlugin('tax', inGstStrategy);
   registerRegimePlugin('numbering', prefixNumbering);
   registerRegimePlugin('documents', genericInvoice);
   registerRegimePlugin('documents', gccTaxInvoiceProfile);

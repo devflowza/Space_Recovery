@@ -1,0 +1,32 @@
+{
+  "name": "UTGST Chandigarh — intra-UT supply, second head renders UTGST",
+  "input_document": {
+    "documentType": "invoice",
+    "seller": { "legalEntityId": "le-in", "countryId": "in", "subdivisionId": "sub-IN-CH", "taxIdentifier": "04ABCDE1234F1Z8", "registrations": [] },
+    "buyer": { "taxNumber": null, "countryId": "in", "subdivisionId": "sub-IN-CH", "isBusiness": false, "addressSnapshot": null },
+    "taxPointDate": "2026-07-15",
+    "placeOfSupplySubdivisionId": "sub-IN-CH",
+    "lines": [{ "lineItemId": null, "description": "HDD recovery (Chandigarh)", "quantity": 1, "unitPrice": 50000, "lineDiscount": 0, "unitCode": "C62", "itemCode": "998319", "treatment": "standard", "treatmentReasonCode": null }],
+    "documentDiscount": 0,
+    "taxInclusive": false,
+    "rateContext": { "documentCurrency": "INR", "documentDecimals": 2, "baseCurrency": "INR", "baseDecimals": 2, "rate": 1, "rateSource": "manual" },
+    "rates": [
+      { "id": "in-cgst-18", "country_id": "in", "subdivision_id": null, "component_code": "CGST", "component_label": "CGST", "tax_category": "standard", "rate": 9, "applies_to": "gst_slab_18", "valid_from": "2017-07-01", "valid_to": null, "sort_order": 10 },
+      { "id": "in-utgst-ch-18", "country_id": "in", "subdivision_id": "sub-IN-CH", "component_code": "SGST", "component_label": "UTGST", "tax_category": "standard", "rate": 9, "applies_to": "gst_slab_18", "valid_from": "2017-07-01", "valid_to": null, "sort_order": 20 },
+      { "id": "in-igst-18", "country_id": "in", "subdivision_id": null, "component_code": "IGST", "component_label": "IGST", "tax_category": "standard", "rate": 18, "applies_to": "gst_slab_18", "valid_from": "2017-07-01", "valid_to": null, "sort_order": 30 }
+    ],
+    "roundingPolicy": { "mode": "half_up", "level": "head", "cash_increment": 1 },
+    "scaleSystem": "indian"
+  },
+  "expected": {
+    "totals": { "taxableBase": 50000, "taxTotal": 9000, "grandTotal": 59000, "roundingAdjustment": 0 },
+    "rollups": [
+      { "componentCode": "CGST", "componentLabel": "CGST 9%", "rate": 9, "taxableBase": 50000, "taxAmount": 4500, "taxTreatment": "standard" },
+      { "componentCode": "SGST", "componentLabel": "UTGST 9%", "rate": 9, "taxableBase": 50000, "taxAmount": 4500, "taxTreatment": "standard" }
+    ]
+  },
+  "_meta": {
+    "external_validation": { "status": "pending", "validator": null, "credential": null, "reference": null, "signed_off_at": null },
+    "citations": ["UTGST Act 2017 s.7 — Union Territory tax (Chandigarh; UT without legislature)", "CGST Act 2017 s.9(1) — CGST component"]
+  }
+}

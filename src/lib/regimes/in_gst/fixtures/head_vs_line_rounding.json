@@ -1,0 +1,36 @@
+{
+  "name": "head-vs-line rounding discriminator — 3 × ₹8.61 intra-state @18%",
+  "input_document": {
+    "documentType": "invoice",
+    "seller": { "legalEntityId": "le-in", "countryId": "in", "subdivisionId": "sub-IN-KA", "taxIdentifier": "29ABCDE1234F1ZW", "registrations": [] },
+    "buyer": { "taxNumber": "29AABCU9603R1ZJ", "countryId": "in", "subdivisionId": "sub-IN-KA", "isBusiness": true, "addressSnapshot": null },
+    "taxPointDate": "2026-07-15",
+    "placeOfSupplySubdivisionId": "sub-IN-KA",
+    "lines": [
+      { "lineItemId": null, "description": "Consumable A", "quantity": 1, "unitPrice": 8.61, "lineDiscount": 0, "unitCode": "C62", "itemCode": "998319", "treatment": "standard", "treatmentReasonCode": null },
+      { "lineItemId": null, "description": "Consumable B", "quantity": 1, "unitPrice": 8.61, "lineDiscount": 0, "unitCode": "C62", "itemCode": "998319", "treatment": "standard", "treatmentReasonCode": null },
+      { "lineItemId": null, "description": "Consumable C", "quantity": 1, "unitPrice": 8.61, "lineDiscount": 0, "unitCode": "C62", "itemCode": "998319", "treatment": "standard", "treatmentReasonCode": null }
+    ],
+    "documentDiscount": 0,
+    "taxInclusive": false,
+    "rateContext": { "documentCurrency": "INR", "documentDecimals": 2, "baseCurrency": "INR", "baseDecimals": 2, "rate": 1, "rateSource": "manual" },
+    "rates": [
+      { "id": "in-cgst-18", "country_id": "in", "subdivision_id": null, "component_code": "CGST", "component_label": "CGST", "tax_category": "standard", "rate": 9, "applies_to": "gst_slab_18", "valid_from": "2017-07-01", "valid_to": null, "sort_order": 10 },
+      { "id": "in-sgst-18", "country_id": "in", "subdivision_id": null, "component_code": "SGST", "component_label": "SGST", "tax_category": "standard", "rate": 9, "applies_to": "gst_slab_18", "valid_from": "2017-07-01", "valid_to": null, "sort_order": 20 },
+      { "id": "in-igst-18", "country_id": "in", "subdivision_id": null, "component_code": "IGST", "component_label": "IGST", "tax_category": "standard", "rate": 18, "applies_to": "gst_slab_18", "valid_from": "2017-07-01", "valid_to": null, "sort_order": 30 }
+    ],
+    "roundingPolicy": { "mode": "half_up", "level": "head" },
+    "scaleSystem": "indian"
+  },
+  "expected": {
+    "totals": { "taxableBase": 25.83, "taxTotal": 4.64, "grandTotal": 30.47, "roundingAdjustment": null },
+    "rollups": [
+      { "componentCode": "CGST", "rate": 9, "taxableBase": 25.83, "taxAmount": 2.32, "taxTreatment": "standard" },
+      { "componentCode": "SGST", "rate": 9, "taxableBase": 25.83, "taxAmount": 2.32, "taxTreatment": "standard" }
+    ]
+  },
+  "_meta": {
+    "external_validation": { "status": "pending", "validator": null, "credential": null, "reference": null, "signed_off_at": null },
+    "citations": ["CGST Act 2017 s.170 — rounding applied per tax head per invoice (head level, not per line)"]
+  }
+}
