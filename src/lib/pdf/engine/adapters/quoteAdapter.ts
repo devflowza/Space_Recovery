@@ -268,7 +268,7 @@ export function toEngineData(
   // Amount in words (opt-in; off by default). Language-aware.
   if (lines.amountInWords === true) {
     const mode = config.language.mode;
-    const enWords = amountInWordsEn(totalAmount, currencySymbol, decimalPlaces);
+    const enWords = amountInWordsEn(totalAmount, currencySymbol, decimalPlaces, config.locale?.amountWordsScale ?? 'western');
     const arWords = amountInWordsAr(totalAmount, currencySymbol, decimalPlaces);
     totals.push({
       ...tl('amountInWords', 'Amount in Words:', 'المبلغ بالحروف:'),
@@ -305,8 +305,8 @@ export function toEngineData(
                   config.language.mode === 'ar'
                     ? amountInWordsAr(storedTax, currencySymbol, decimalPlaces)
                     : config.language.mode.startsWith('bilingual')
-                      ? `${amountInWordsEn(storedTax, currencySymbol, decimalPlaces)}  ·  ${amountInWordsAr(storedTax, currencySymbol, decimalPlaces)}`
-                      : amountInWordsEn(storedTax, currencySymbol, decimalPlaces),
+                      ? `${amountInWordsEn(storedTax, currencySymbol, decimalPlaces, config.locale?.amountWordsScale ?? 'western')}  ·  ${amountInWordsAr(storedTax, currencySymbol, decimalPlaces)}`
+                      : amountInWordsEn(storedTax, currencySymbol, decimalPlaces, config.locale?.amountWordsScale ?? 'western'),
               }
             : {}),
         }

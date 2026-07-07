@@ -8,7 +8,7 @@ const inFacts: ResolvedCountryFacts = {
   code: 'IN', taxSystem: 'GST', taxLabel: 'GST', taxNumberLabel: 'GSTIN',
   taxInvoiceRequired: true, languageCode: 'en', decimalPlaces: 2,
   dateFormat: 'DD/MM/YYYY', decimalSeparator: '.', thousandsSeparator: ',',
-  digitGrouping: '3;2', einvoiceRegimeKey: 'no_einvoice',
+  digitGrouping: '3;2', amountWordsScale: 'indian', einvoiceRegimeKey: 'no_einvoice',
 };
 
 function inConfig() {
@@ -33,5 +33,19 @@ describe('invoiceAdapter Indian money formatting (WP-L1)', () => {
   it('AED fixture without the country layer stays byte-identical (parity guard)', () => {
     const data = toEngineData(buildInvoiceFixture(), BUILT_IN_TEMPLATE_CONFIGS.invoice);
     expect(data.totals!.find((t) => t.key === 'total')!.value).toBe('1,470.00 AED');
+  });
+});
+
+describe('invoiceAdapter Indian amount-in-words (WP-L1)', () => {
+  it('spells the total in lakh/crore when the totals line is enabled', () => {
+    const config = resolveTemplateConfigWithCountry(
+      BUILT_IN_TEMPLATE_CONFIGS.invoice,
+      countryTemplateOverride({ ...inFacts, amountWordsScale: 'indian' }),
+    );
+    const totalsSection = config.sections.find((s) => s.key === 'totals')!;
+    totalsSection.lines = { ...(totalsSection.lines ?? {}), amountInWords: true };
+    const data = toEngineData(inFixture(), config);
+    const words = data.totals!.find((t) => t.key === 'amountInWords')!;
+    expect(words.value).toBe('₹ One Lakh Six Thousand Two Hundred only');
   });
 });
