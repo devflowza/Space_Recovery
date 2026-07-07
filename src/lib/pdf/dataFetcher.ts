@@ -451,6 +451,11 @@ export async function fetchCompanySettings(): Promise<CompanySettingsData> {
   try {
     const settings = await getOrCreateCompanySettings();
     return {
+      // Pass the raw metadata bucket through — the invoice adapter reads
+      // company_settings.metadata.einvoice_readiness for the reserved-IRN QR
+      // caption (WP-L5). Dropping it here silently disables the feature in
+      // production while the hand-built adapter test stays green.
+      metadata: (settings.metadata ?? null) as Record<string, unknown> | null,
       basic_info: settings.basic_info,
       location: settings.location,
       contact_info: settings.contact_info,
@@ -462,6 +467,7 @@ export async function fetchCompanySettings(): Promise<CompanySettingsData> {
   } catch (error) {
     console.error('Error fetching company settings:', error);
     return {
+      metadata: null,
       basic_info: { company_name: 'Company Name' },
       location: {},
       contact_info: {},

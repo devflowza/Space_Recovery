@@ -68,6 +68,9 @@ export interface DeviceData {
 }
 
 export interface CompanySettingsData {
+  /** Raw company_settings.metadata bucket (dataFetcher passes the full row).
+   *  Read via pure helpers only (e.g. isEInvoiceApplicable) — never typed here. */
+  metadata?: Record<string, unknown> | null;
   basic_info?: {
     company_name?: string;
     legal_name?: string;

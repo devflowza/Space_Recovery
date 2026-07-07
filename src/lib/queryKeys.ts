@@ -396,3 +396,8 @@ export const countryPackKeys = {
   list: () => [...countryPackKeys.all, 'list'] as const,
   detail: (countryId: string) => [...countryPackKeys.all, 'detail', countryId] as const,
 };
+
+export const einvoiceReadinessKeys = {
+  all: ['einvoice-readiness'] as const,
+  tenant: () => [...einvoiceReadinessKeys.all, 'tenant'] as const,
+};

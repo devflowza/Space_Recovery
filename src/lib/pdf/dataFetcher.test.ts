@@ -9,7 +9,8 @@ vi.mock('../supabaseClient', () => ({ supabase: {} }));
 vi.mock('../companySettingsService', () => ({ getOrCreateCompanySettings: vi.fn() }));
 
 import { supabase } from '../supabaseClient';
-import { toQuoteData, toInvoiceData, toCaseData, toPaymentReceiptData, toPayslipData, toQuoteItems, toInvoiceItems, currencyToBlock, fetchDocumentTaxLines } from './dataFetcher';
+import { getOrCreateCompanySettings } from '../companySettingsService';
+import { toQuoteData, toInvoiceData, toCaseData, toPaymentReceiptData, toPayslipData, toQuoteItems, toInvoiceItems, currencyToBlock, fetchDocumentTaxLines, fetchCompanySettings } from './dataFetcher';
 
 // Wires supabase.from('document_tax_lines').select(...).eq(...).eq(...).is(...).order(...)
 // to resolve with `result`, and returns the spies so callers can assert on args.
@@ -503,5 +504,27 @@ describe('toPayslipData — column mapping + relation contract', () => {
     });
     expect(result.employee).toEqual({ first_name: 'Sam', last_name: 'Lee', employee_number: 'E-1' });
     expect(result.payroll_period.period_name).toBe('Jan 2026');
+  });
+});
+
+describe('fetchCompanySettings — metadata round-trip (WP-L5 review: the reserved-IRN caption reads company_settings.metadata)', () => {
+  const mockGet = vi.mocked(getOrCreateCompanySettings);
+
+  it('passes the raw metadata bucket through to the PDF adapter (not stripped by the field-by-field rebuild)', async () => {
+    mockGet.mockResolvedValueOnce({
+      id: 'cs1',
+      basic_info: { company_name: 'Lab' },
+      metadata: { einvoice_readiness: { applicable: true, marked_at: '2026-07-05T00:00:00.000Z' } },
+    } as never);
+    const result = await fetchCompanySettings();
+    expect(result.metadata).toEqual({
+      einvoice_readiness: { applicable: true, marked_at: '2026-07-05T00:00:00.000Z' },
+    });
+  });
+
+  it('yields metadata: null on the error fallback (never undefined — the guard stays total)', async () => {
+    mockGet.mockRejectedValueOnce(new Error('boom'));
+    const result = await fetchCompanySettings();
+    expect(result.metadata).toBeNull();
   });
 });
