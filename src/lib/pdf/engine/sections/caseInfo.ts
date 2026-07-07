@@ -15,7 +15,8 @@
 
 import type { Content } from 'pdfmake/interfaces';
 import { PDF_COLORS, createBilingualInfoBox } from '../../styles';
-import { resolveSectionFill, resolveHeaderText } from '../branding';
+import { resolveSectionFill, resolveHeaderText, resolvePresentation } from '../branding';
+import { openInfoBox, openInfoRow } from './openCard';
 import { safeString } from '../../utils';
 import { getGeneralIconSvg } from '../../../deviceIconMapper';
 import type {
@@ -58,13 +59,22 @@ export const renderCaseInfo: SectionRenderer = (
   const labelLang = fieldLabelLanguage(language, engine.config.translationPolicy, 'caseInfo');
   const labelWidth = isBilingualMode(labelLang) ? 150 : 90;
   const fileIcon = getGeneralIconSvg('fileText');
+  const secondaryTitle = bilingual ? ar(caseInfo.title, language) : null;
+
+  if (resolvePresentation(engine.config).infoCardStyle === 'open') {
+    const openRows = caseInfo.rows.map((r) => openInfoRow(r.label, r.value, labelLang, labelWidth));
+    return {
+      stack: [openInfoBox(en(caseInfo.title, 'Case Details'), secondaryTitle, openRows, fileIcon)],
+      margin: [0, 0, 0, 8],
+    };
+  }
 
   const rows: object[] = caseInfo.rows.map((r) => infoRow(r.label, r.value, labelLang, labelWidth));
 
   const fill = resolveSectionFill(engine.config, 'caseInfo');
   const box = createBilingualInfoBox(
     en(caseInfo.title, 'Case Details'),
-    bilingual ? ar(caseInfo.title, language) : null,
+    secondaryTitle,
     rows,
     fileIcon,
     fill,

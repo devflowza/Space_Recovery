@@ -551,16 +551,24 @@ export function toEngineData(
   config: DocumentTemplateConfig,
   ctx: TranslationContext,
 ): EngineDocData {
-  const { report, companySettings } = data;
+  const { report, companySettings, caseData } = data;
 
   const documentTitle = reportTypeTitle(report.report_type, ctx);
   const custodyLog = buildCustodyLog(data.chainOfCustodyEvents, config, ctx);
+
+  // Premium document-reference pill (rendered only by an opt-in `docRef`
+  // section — the premium classic-letterhead report presets add one).
+  const refNo = caseData?.case_no || caseData?.case_number || report.case_id;
+  const docRef = refNo
+    ? { label: { en: 'Job ID', ar: 'رقم الحالة' }, value: safeString(refNo) }
+    : null;
 
   return {
     documentTitle,
     identity: companySettings,
     parties: {},
     meta: [],
+    docRef,
     reportHeader: buildReportHeader(data, ctx),
     reportSummary: buildReportSummary(data, ctx),
     reportInfoColumns: buildReportInfoColumns(data, ctx),

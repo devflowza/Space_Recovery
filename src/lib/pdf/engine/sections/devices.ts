@@ -27,6 +27,8 @@ import {
   getRoleBadgeColors,
   getSimpleRoleLabel,
 } from '../../styles';
+import { getDeviceIconSvg, getGeneralIconSvg } from '../../../deviceIconMapper';
+import { openCardHeaderColumns } from './openCard';
 import type {
   EngineContext,
   EngineDocData,
@@ -34,7 +36,7 @@ import type {
   SectionRenderer,
 } from '../types';
 import { isBilingualMode, en, ar, resolveLabel } from '../labels';
-import { resolveSectionFill } from '../branding';
+import { resolveSectionFill, resolvePresentation } from '../branding';
 import { readableTextOn } from '../palette';
 import { engineLayoutDirection, mirrorColumns } from '../rtl';
 
@@ -96,24 +98,40 @@ export const renderDevices: SectionRenderer = (
   if (columns.length === 0) return null;
 
   const bilingual = isBilingualMode(language);
+  const presentation = resolvePresentation(engine.config);
+  const light = presentation.tableHeaderStyle === 'light';
 
   // Section heading ("Device(s) Received" / "Device(s) Returned"), bilingual
-  // when the mode asks for it.
-  const heading = createBilingualSectionHeader(
-    en(dev.title, 'Devices'),
-    bilingual ? ar(dev.title, language) : null,
-  ) as Content;
+  // when the mode asks for it. The premium light finish uses the dark open-card
+  // heading treatment (icon + ink title) instead of the accent band header.
+  const heading = light
+    ? ({
+        ...openCardHeaderColumns(
+          en(dev.title, 'Devices'),
+          bilingual ? ar(dev.title, language) : null,
+          getGeneralIconSvg('fileText'),
+        ),
+        margin: [0, 4, 0, 5],
+      } as Content)
+    : (createBilingualSectionHeader(
+        en(dev.title, 'Devices'),
+        bilingual ? ar(dev.title, language) : null,
+      ) as Content);
 
   // Header row: per-section header fill (was hardcoded, so it ignored the Header
-  // background) + auto-contrast text — consistent with the line-item table.
-  const headerFill = resolveSectionFill(engine.config, 'devices', PDF_COLORS.headerBg);
-  const headerText = readableTextOn(headerFill);
+  // background) + auto-contrast text — consistent with the line-item table. The
+  // premium light finish uses a white header with dark bold labels instead.
+  const headerFill = light
+    ? PDF_COLORS.white
+    : resolveSectionFill(engine.config, 'devices', PDF_COLORS.headerBg);
+  const headerText = light ? PDF_COLORS.text : readableTextOn(headerFill);
   const headerRow: TableCell[] = columns.map((col) => ({
     text: resolveLabel(col.label, language),
     style: 'tableHeader',
     fillColor: headerFill,
     color: headerText,
-    alignment: headerAlignment(col),
+    alignment: light ? (col.align ?? 'left') : headerAlignment(col),
+    ...(light ? { fontSize: 8.5 } : {}),
   }));
 
   const body: TableCell[][] = [headerRow];
@@ -129,6 +147,17 @@ export const renderDevices: SectionRenderer = (
         }
         const style =
           align === 'right' ? 'tableCellRight' : align === 'center' ? 'tableCellCenter' : 'tableCell';
+        // Premium: draw the device-type icon beside the type cell (reference look).
+        if (col.key === 'type' && presentation.deviceIcons && text && text !== '-') {
+          return {
+            columns: [
+              { svg: getDeviceIconSvg(text), width: 11, height: 11, margin: [0, 0.5, 0, 0] },
+              { text, style },
+            ],
+            columnGap: 5,
+            margin: [2, 3, 2, 3],
+          } as TableCell;
+        }
         return { text, style };
       }),
     );
@@ -138,17 +167,33 @@ export const renderDevices: SectionRenderer = (
   // table fits the printable width regardless of how many columns are visible.
   const widths = columns.map((col) => (col.width !== undefined ? col.width : '*'));
 
+  // The light finish separates the header with a slightly stronger rule and
+  // pads cells more generously; the legacy grid is unchanged otherwise.
+  const layout = light
+    ? {
+        hLineWidth: (i: number, node: { table: { body: unknown[] } }) =>
+          i === 0 || i === 1 || i === node.table.body.length ? 0.75 : 0.5,
+        vLineWidth: () => 0.5,
+        hLineColor: () => PDF_COLORS.border,
+        vLineColor: () => PDF_COLORS.border,
+        paddingLeft: () => 6,
+        paddingRight: () => 6,
+        paddingTop: () => 4,
+        paddingBottom: () => 4,
+      }
+    : {
+        hLineWidth: () => 0.5,
+        vLineWidth: () => 0.5,
+        hLineColor: () => PDF_COLORS.border,
+        vLineColor: () => PDF_COLORS.border,
+      };
+
   return {
     stack: [
       heading,
       {
         table: { headerRows: 1, widths, body },
-        layout: {
-          hLineWidth: () => 0.5,
-          vLineWidth: () => 0.5,
-          hLineColor: () => PDF_COLORS.border,
-          vLineColor: () => PDF_COLORS.border,
-        },
+        layout,
         margin: [0, 0, 0, 8],
       },
     ],

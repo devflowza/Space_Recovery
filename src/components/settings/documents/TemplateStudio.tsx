@@ -30,6 +30,7 @@ import {
   type PageFittingConfig,
   type PageNumbersConfig,
   type PaperConfig,
+  type PresentationConfig,
   type SignatureImageOptions,
   type SignatureImagesConfig,
   type StampImageOptions,
@@ -88,6 +89,8 @@ export interface StudioApi {
   setTaxBar: (patch: Partial<TaxBarConfig>) => void;
   setTable: (patch: Partial<TableConfig>) => void;
   setLayout: (patch: Partial<LayoutConfig>) => void;
+  /** Premium presentation finish (cards / tables / title / signatures / footer). */
+  setPresentation: (patch: Partial<PresentationConfig>) => void;
   setTranslationPolicy: (patch: Partial<TranslationPolicyConfig>) => void;
   setTranslationGroup: (group: keyof NonNullable<TranslationPolicyConfig['groups']>, value: boolean) => void;
   setTermsContent: (patch: Partial<TermsContentConfig>) => void;
@@ -353,6 +356,7 @@ export const TemplateStudio: React.FC<TemplateStudioProps> = ({
       setTaxBar: (patch) => mergeGroup('taxBar', patch),
       setTable: (patch) => mergeGroup('table', patch),
       setLayout: (patch) => mergeGroup('layout', patch),
+      setPresentation: (patch) => mergeGroup('presentation', patch),
       setTranslationPolicy: (patch) => mergeGroup('translationPolicy', patch),
       setTranslationGroup: (group, value) =>
         setOverride((prev) => ({

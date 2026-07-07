@@ -64,7 +64,13 @@ const SAMPLE_COMPANY = {
   location: { address_line1: '12 Lab Street', city: 'Dubai', country: 'United Arab Emirates' },
   contact_info: { phone_primary: '+971 4 123 4567', email_general: 'lab@acme.example' },
   branding: { brand_tagline: 'Recovered. Verified. Delivered.' },
-  online_presence: { website: 'https://acme.example' },
+  online_presence: {
+    website: 'https://acme.example',
+    facebook: 'https://facebook.com/acmedatarecovery',
+    twitter: 'https://x.com/acmedatarecovery',
+    linkedin: 'https://linkedin.com/company/acmedatarecovery',
+    instagram: 'https://instagram.com/acmedatarecovery',
+  },
 };
 
 const SAMPLE_LOCALE = { currency_symbol: 'AED', currency_position: 'after' as const, decimal_places: 2 };

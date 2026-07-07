@@ -10,9 +10,10 @@
 
 import type { TemplateConfigOverride, TemplateDocumentType } from '../../lib/pdf/templateConfig';
 
-export type PresetCategory = 'standard' | 'vip' | 'retail_pos' | 'tally';
+export type PresetCategory = 'premium' | 'standard' | 'vip' | 'retail_pos' | 'tally';
 
 export const PRESET_CATEGORY_LABELS: Record<PresetCategory, string> = {
+  premium: 'Premium',
   standard: 'Standard',
   vip: 'VIP',
   retail_pos: 'Retail & POS',
@@ -28,7 +29,7 @@ export interface TemplatePreset {
   /** Display-only font label, e.g. "Roboto · classic". */
   fontLabel: string;
   /** A short layout hint used by the lightweight mini-preview skeleton. */
-  thumbnailHint: 'classic' | 'modern' | 'minimal' | 'boxed' | 'split' | 'spreadsheet';
+  thumbnailHint: 'classic' | 'modern' | 'minimal' | 'boxed' | 'split' | 'spreadsheet' | 'premium';
   config: TemplateConfigOverride;
 }
 
@@ -136,6 +137,124 @@ const FINANCIAL_RECIPES: Recipe[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Premium presets — the reference-grade "lab suite" finish: airy classic
+// letterhead with the website line, display title, Job-ID banner, open info
+// cards, light device tables with device icons, open two-column bilingual
+// terms, dotted centered signatures, and an accent tagline + social-icon
+// footer. Colors are explicit opt-ins (never the app theme).
+// ---------------------------------------------------------------------------
+
+/** Shared premium look (colors + presentation + airy page geometry). */
+const PREMIUM_BASE: TemplateConfigOverride = {
+  paper: { margins: [38, 44, 84, 44] },
+  header: { layout: 'classic', divider: 'thin', dividerColor: '#e2e8f0', logoWidth: 150, logoMaxHeight: 46 },
+  colors: { accent: '#2563eb', text: '#1e293b', label: '#64748b', headerBackground: '#f8fafc' },
+  presentation: {
+    infoCardStyle: 'open',
+    tableHeaderStyle: 'light',
+    titleStyle: 'display',
+    signatureStyle: 'dotted',
+    signatureAlign: 'center',
+    termsStyle: 'open',
+    footerSocialIcons: true,
+    headerWebsite: true,
+    deviceIcons: true,
+  },
+  // Field-row labels stay single-language (headings remain bilingual) — the
+  // reference look. Tenants flip this back under Other Details → Translation.
+  translationPolicy: { mode: 'system_only' },
+};
+
+/** Premium intake/checkout preset: Job-ID banner after the header, no QR. */
+function premiumLabPreset(
+  docType: TemplateDocumentType,
+  sectionOrders: Record<string, number>,
+): TemplatePreset {
+  return {
+    id: `${docType}-premium-lab`,
+    docType,
+    name: 'Premium Lab',
+    description:
+      'Flagship reference design — airy cards, Job ID banner, light device table, dotted signatures, and a branded social footer.',
+    category: 'premium',
+    fontLabel: 'Roboto · premium',
+    thumbnailHint: 'premium',
+    config: {
+      ...PREMIUM_BASE,
+      presentation: { ...PREMIUM_BASE.presentation, docRef: 'banner' },
+      sections: [
+        { key: 'docRef', visible: true, order: 1 },
+        ...Object.entries(sectionOrders).map(([key, order]) => ({ key, order })),
+        { key: 'qr', visible: false },
+      ],
+    },
+  };
+}
+
+const PREMIUM_INTAKE_ORDERS: Record<string, number> = {
+  parties: 2,
+  caseInfo: 3,
+  devices: 4,
+  legalTerms: 5,
+  signature: 6,
+  qr: 7,
+  footer: 8,
+};
+
+const PREMIUM_CHECKOUT_ORDERS: Record<string, number> = {
+  parties: 2,
+  caseInfo: 3,
+  devices: 4,
+  collector: 5,
+  legalTerms: 6,
+  signature: 7,
+  qr: 8,
+  footer: 9,
+};
+
+/** Premium evaluation-report preset: classic letterhead + Job-ID pill + tinted cards. */
+const PREMIUM_REPORT: TemplatePreset = {
+  id: 'report-premium-evaluation',
+  docType: 'report',
+  name: 'Premium Evaluation',
+  description:
+    'Reference evaluation-report design — classic letterhead, Job ID pill, tinted info cards, and toned findings sections.',
+  category: 'premium',
+  fontLabel: 'Roboto · premium',
+  thumbnailHint: 'premium',
+  config: {
+    ...PREMIUM_BASE,
+    presentation: {
+      ...PREMIUM_BASE.presentation,
+      docRef: 'pill',
+      deviceIcons: false,
+      signatureStyle: 'dotted',
+    },
+    sections: [
+      // Swap the navy band + tile row for the classic letterhead + pill.
+      { key: 'reportHeader', visible: false },
+      { key: 'reportSummary', visible: false },
+      { key: 'header', visible: true, order: 0 },
+      { key: 'docRef', visible: true, order: 1 },
+      // Reference info cards carry a light-blue tinted band.
+      { key: 'reportInfoColumns', headerBackground: '#dbeafe' },
+    ],
+  },
+};
+
+/** Premium financial preset (invoice/quote/…): the same finish, no banner. */
+const PREMIUM_BUSINESS: Recipe = {
+  key: 'premium-business',
+  name: 'Premium Business',
+  description:
+    'Flagship reference finish for financial documents — display title, open cards, light item table, and a branded social footer.',
+  category: 'premium',
+  fontLabel: 'Roboto · premium',
+  thumbnailHint: 'premium',
+  config: PREMIUM_BASE,
+};
+
 /** GCC tax-compliant invoice preset (ZATCA/FTA): TRN bar + page numbers. */
 const GCC_INVOICE: Recipe = {
   key: 'gcc-compliance',
@@ -203,27 +322,28 @@ const financialFor = (docType: TemplateDocumentType): TemplatePreset[] =>
 
 /** All curated presets, keyed by document type. */
 export const TEMPLATE_PRESETS: Record<TemplateDocumentType, TemplatePreset[]> = {
-  invoice: [...financialFor('invoice'), fromRecipe('invoice', GCC_INVOICE)],
-  quote: financialFor('quote'),
+  invoice: [fromRecipe('invoice', PREMIUM_BUSINESS), ...financialFor('invoice'), fromRecipe('invoice', GCC_INVOICE)],
+  quote: [fromRecipe('quote', PREMIUM_BUSINESS), ...financialFor('quote')],
   credit_note: financialFor('credit_note'),
   payment_receipt: [
+    fromRecipe('payment_receipt', PREMIUM_BUSINESS),
     fromRecipe('payment_receipt', FINANCIAL_RECIPES[0]),
     fromRecipe('payment_receipt', FINANCIAL_RECIPES[1]),
     fromRecipe('payment_receipt', FINANCIAL_RECIPES[5]),
   ],
-  office_receipt: genericPresets('office_receipt'),
-  customer_copy: genericPresets('customer_copy'),
-  checkout_form: genericPresets('checkout_form'),
+  office_receipt: [premiumLabPreset('office_receipt', PREMIUM_INTAKE_ORDERS), ...genericPresets('office_receipt')],
+  customer_copy: [premiumLabPreset('customer_copy', PREMIUM_INTAKE_ORDERS), ...genericPresets('customer_copy')],
+  checkout_form: [premiumLabPreset('checkout_form', PREMIUM_CHECKOUT_ORDERS), ...genericPresets('checkout_form')],
   case_label: genericPresets('case_label'),
   stock_label: genericPresets('stock_label'),
   chain_of_custody: genericPresets('chain_of_custody'),
-  report: genericPresets('report'),
+  report: [PREMIUM_REPORT, ...genericPresets('report')],
   payslip: genericPresets('payslip'),
 };
 
 /** The categories present for a given document type, in display order. */
 export function categoriesFor(docType: TemplateDocumentType): PresetCategory[] {
-  const order: PresetCategory[] = ['standard', 'vip', 'retail_pos', 'tally'];
+  const order: PresetCategory[] = ['premium', 'standard', 'vip', 'retail_pos', 'tally'];
   const present = new Set(TEMPLATE_PRESETS[docType].map((p) => p.category));
   return order.filter((c) => present.has(c));
 }

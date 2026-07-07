@@ -29,12 +29,25 @@ import { formatDate, formatCapacity, safeString } from '../../utils';
 import type {
   CaseInfoBlock,
   DevicesBlock,
+  DocRefBlock,
   EngineDocData,
   LabelText,
   LegalTermsBlock,
   PartyBlock,
   ResolvedColumn,
 } from '../types';
+
+/**
+ * Whether the config renders the premium document-reference banner — a visible
+ * `docRef` section with a non-`'none'` presentation style. When it does, the
+ * case number moves from the Case Details rows into the banner (the reference
+ * layout), so the adapter drops the duplicate row.
+ */
+export function docRefBannerActive(config: DocumentTemplateConfig): boolean {
+  const style = config.presentation?.docRef;
+  if (!style || style === 'none') return false;
+  return config.sections.some((s) => s.key === 'docRef' && s.visible);
+}
 
 /** Which intake variant we are producing. */
 export type ReceiptVariant = 'office' | 'customer';
@@ -104,12 +117,20 @@ function customerParty(caseData: CaseData): PartyBlock {
  * device_problem, falling back to the case-level problem_description — matching
  * the hand-written `firstDeviceProblem || caseData.problem_description`.
  */
-function caseInfoBlock(caseData: CaseData, devices: DeviceData[]): CaseInfoBlock {
+function caseInfoBlock(
+  caseData: CaseData,
+  devices: DeviceData[],
+  omitCaseId = false,
+): CaseInfoBlock {
   const firstDeviceProblem = devices.length > 0 ? devices[0].device_problem : null;
   return {
     title: { en: 'Case Details', ar: 'تفاصيل الحالة' },
     rows: [
-      { label: { en: 'Case ID:', ar: 'رقم الحالة:' }, value: safeString(caseData.case_no) },
+      // When the premium docRef banner shows the case number, the row here
+      // would duplicate it — the banner takes over (reference layout).
+      ...(omitCaseId
+        ? []
+        : [{ label: { en: 'Case ID:', ar: 'رقم الحالة:' }, value: safeString(caseData.case_no) }]),
       { label: { en: 'Service:', ar: 'الخدمة:' }, value: safeString(caseData.service_type?.name) },
       { label: { en: 'Priority:', ar: 'الأولوية:' }, value: safeString(caseData.priority) },
       { label: { en: 'Problem:', ar: 'العطل:' }, value: safeString(firstDeviceProblem || caseData.problem_description) },
@@ -154,7 +175,7 @@ function legalTermsBlock(
 
 export function toEngineData(
   data: ReceiptData,
-  _config: DocumentTemplateConfig,
+  config: DocumentTemplateConfig,
   variant: ReceiptVariant,
 ): EngineDocData {
   const { caseData, devices, companySettings } = data;
@@ -168,8 +189,14 @@ export function toEngineData(
     ar: 'إيصال استلام جهاز',
   };
 
+  // ---- Premium document-reference banner ------------------------------------
+  const bannerActive = docRefBannerActive(config);
+  const docRef: DocRefBlock | null = caseData.case_no
+    ? { label: { en: 'Job ID', ar: 'رقم الحالة' }, value: safeString(caseData.case_no) }
+    : null;
+
   // ---- Case-info header ----------------------------------------------------
-  const caseInfo: CaseInfoBlock = caseInfoBlock(caseData, devices);
+  const caseInfo: CaseInfoBlock = caseInfoBlock(caseData, devices, bannerActive);
 
   // ---- Customer party ------------------------------------------------------
   const to: PartyBlock = customerParty(caseData);
@@ -190,15 +217,21 @@ export function toEngineData(
     { en: 'Company Representative', ar: 'ممثل الشركة' },
   ];
 
+  // ---- Registered-by line (rendered only under the premium presentation) ----
+  const creatorName =
+    caseData.created_by_profile?.full_name || caseData.created_by_profile?.email || 'System';
+
   return {
     documentTitle,
     identity: companySettings,
     parties: { to },
     meta: [],
+    docRef,
     caseInfo,
     devices: devicesBlock,
     legalTerms,
     signatures,
+    preparedBy: `Registered by: ${creatorName}`,
     // Intake docs carry no money: no line items, totals, bank, or payment history.
     paymentHistory: null,
     terms: null,
