@@ -10,6 +10,8 @@ import { EngineerSelector } from '../EngineerSelector';
 import { StatusPillSelect } from '../StatusPillSelect';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
+import { canOfferRefundVoucher, offerRefundVoucher } from '@/lib/advanceTerminals';
+import { useToast } from '@/hooks/useToast';
 import type { Database } from '../../../types/database.types';
 
 type CaseRow = Database['public']['Tables']['cases']['Row'];
@@ -99,6 +101,8 @@ interface CaseWithEmbeds {
   company?: CompanyEmbed | null;
   important_data?: string | null;
   accessories?: string[] | null;
+  // WP-L4: recovery outcome (v1.4.0) drives the advance refund-terminal guard.
+  recovery_outcome?: string | null;
 }
 
 interface OverviewProfile {
@@ -142,6 +146,9 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
   const [isEditingPriority, setIsEditingPriority] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const priorityRef = useRef<HTMLDivElement>(null);
+  const toast = useToast();
+  const [refundReason, setRefundReason] = useState('');
+  const [isRefunding, setIsRefunding] = useState(false);
 
   const { data: caseStatuses = [] } = useQuery({
     queryKey: ['case_statuses'],
@@ -150,6 +157,48 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
       if (error) throw error;
       return data || [];
     },
+  });
+
+  // WP-L4: the case's issued advance Receipt Voucher (Rule 50). Its existence is
+  // the Rule 51 refund gate — there is a tax leg to reverse only once a voucher
+  // was actually issued for a held advance.
+  const { data: receiptVoucher = null, refetch: refetchReceiptVoucher } = useQuery({
+    queryKey: ['case_receipt_voucher', caseData.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('advance_vouchers')
+        .select('id, voucher_number')
+        .eq('case_id', caseData.id)
+        .eq('voucher_type', 'receipt')
+        .not('voucher_number', 'is', null)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!caseData.id,
+  });
+
+  // A refund voucher already issued for this receipt latches the panel closed
+  // (a second refund would reverse the advance GST twice; the DB unique index
+  // ux_advance_voucher_one_refund is the authoritative backstop).
+  const { data: refundVoucher = null, refetch: refetchRefundVoucher } = useQuery({
+    queryKey: ['case_refund_voucher', receiptVoucher?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('advance_vouchers')
+        .select('id')
+        .eq('original_voucher_id', receiptVoucher!.id)
+        .eq('voucher_type', 'refund')
+        .is('deleted_at', null)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!receiptVoucher?.id,
   });
 
   const { data: casePriorities = [] } = useQuery({
@@ -276,8 +325,80 @@ export const CaseOverviewTab: React.FC<CaseOverviewTabProps> = ({
     setEditedDeviceData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // WP-L4 refund terminal: derive the current phase from the resolved status and
+  // gate the Rule 51 refund action to real no-recovery surfaces holding an
+  // issued advance voucher.
+  const phaseType = caseStatuses.find((s) => s.name === caseData.status)?.type ?? null;
+  const canRefundAdvance = canOfferRefundVoucher({
+    phaseType,
+    recoveryOutcome: caseData.recovery_outcome ?? null,
+    hasIssuedReceiptVoucher: !!receiptVoucher,
+    hasIssuedRefundVoucher: !!refundVoucher,
+  });
+
+  const handleIssueRefundVoucher = async () => {
+    if (!receiptVoucher || !refundReason.trim() || isRefunding) return;
+    setIsRefunding(true);
+    try {
+      const result = await offerRefundVoucher(receiptVoucher.id, refundReason.trim());
+      toast.success(`Refund Voucher ${result.document_number ?? ''} issued`.trim());
+      setRefundReason('');
+      await Promise.all([refetchReceiptVoucher(), refetchRefundVoucher()]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to issue refund voucher');
+    } finally {
+      setIsRefunding(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* WP-L4: advance refund terminal — shown only on a no-recovery close that
+          holds an issued advance Receipt Voucher. Terminal 3 (retain the advance
+          → evaluation-service invoice + applyAdvanceToInvoice) is realized by the
+          existing invoice flow and is not raised inline here. */}
+      {canRefundAdvance && receiptVoucher && (
+        <Card variant="bordered" className="lg:col-span-3">
+          <div className="bg-warning-muted border-b border-warning/20 px-4 py-3 rounded-t-lg">
+            <h2 className="text-base font-bold text-warning flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Advance Refund — GST Rule 51
+            </h2>
+          </div>
+          <div className="bg-white p-4 space-y-3">
+            <p className="text-sm text-slate-600">
+              This case ended without a successful recovery and holds an issued advance Receipt
+              Voucher (<span className="font-medium text-slate-900">{receiptVoucher.voucher_number}</span>).
+              Issue a Refund Voucher to reverse the advance GST — or retain the advance by raising an
+              evaluation-service invoice (SAC 998319) and applying the advance to it.
+            </p>
+            <div>
+              <label htmlFor="refund-reason" className="block text-sm font-medium text-slate-700 mb-1">
+                Refund reason <span className="text-danger">*</span>
+              </label>
+              <textarea
+                id="refund-reason"
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                rows={2}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                placeholder="e.g. Media physically unrecoverable — advance returned to customer"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="primary"
+                disabled={!refundReason.trim() || isRefunding}
+                onClick={handleIssueRefundVoucher}
+              >
+                {isRefunding ? 'Issuing…' : 'Issue Refund Voucher'}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Case Info Card */}
       <Card variant="bordered" className="overflow-visible">
         <div className="bg-info-muted border-b border-info/20 px-4 py-3 rounded-t-lg">

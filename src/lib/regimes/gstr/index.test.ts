@@ -105,7 +105,7 @@ describe('gstr composer — GSTR-3B', () => {
     expect(box(r, '3.1(a).cgst')).toBe(9000);
     expect(box(r, '3.1(a).sgst')).toBe(9000);
     expect(r.meta['headless_sale_tax_base']).toBe(-18000);
-    expect(r.meta['credit_notes_netting']).toBe('gross_pending_l4');
+    expect(r.meta['credit_notes_netting']).toBe('gross_pending_composer');
   });
 
   it('advance netting (L4 shape): voucher month + net invoice month conserve total tax; works with rows absent too', () => {

@@ -18,7 +18,8 @@ export type TaxTreatment =
 export type RegimeClass =
   'render_artifact' | 'clearance_api' | 'chained_document' | 'certified_software' | 'filing_api';
 
-export type TaxDocumentType = 'quote' | 'invoice' | 'credit_note' | 'stock_sale';
+export type TaxDocumentType =
+  'quote' | 'invoice' | 'credit_note' | 'stock_sale' | 'receipt_voucher' | 'refund_voucher';
 
 export interface RoundingPolicy {
   mode: 'half_up' | 'half_even';

@@ -1,14 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FileText, DollarSign, Eye, CreditCard, RefreshCw, Lock, ExternalLink, TrendingUp, TrendingDown, Minus, Receipt, Wallet, Send } from 'lucide-react';
 import { CreditCard as Edit } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
+import { RecordPaymentModal } from '../../financial/RecordPaymentModal';
+import { ApplyAdvanceModal } from './ApplyAdvanceModal';
 import { getCaseExpenses, getCasePayments, type CaseExpense, type CasePayment, type CaseFinancialSummary } from '@/lib/caseFinanceService';
+import { createAdvancePayment, issueReceiptVoucher, applyAdvanceToInvoice, getHeldAdvancesForCase, type HeldAdvance } from '@/lib/advanceVoucherService';
+import { resolveAdvanceReceiptArtifact } from '@/lib/pdf/advanceReceiptArtifact';
 import { formatDate, formatCurrencyWithConfig } from '@/lib/format';
-import { useCurrencyConfig } from '@/contexts/TenantConfigContext';
+import { useCurrencyConfig, useRegimeConfig } from '@/contexts/TenantConfigContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/useToast';
 import { toQuoteEditInitialData } from '@/lib/quotesService';
 import { toInvoiceEditInitialData } from '@/lib/invoiceService';
 import { useNavigate } from 'react-router-dom';
@@ -103,9 +108,21 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
   invoiceService,
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const currencyConfig = useCurrencyConfig();
+  const regime = useRegimeConfig();
+  const toast = useToast();
   const { profile } = useAuth();
   const isOwnerAdmin = ['owner', 'admin'].includes(profile?.role ?? '');
+  // WP-L4: case-level unallocated advance capture. Held (not allocated to an
+  // invoice) and, for IN-GST tenants, immediately issued as a Rule 50 Receipt
+  // Voucher — one advance yields exactly one customer artifact.
+  const [showAdvanceModal, setShowAdvanceModal] = useState(false);
+  // WP-L4 forward-apply: net a held advance into an issued invoice. Without this
+  // an advance (income + output GST already posted at receipt) can only be
+  // captured, never applied — so raising the service invoice and recording a
+  // normal payment would double-post income and declare output GST twice.
+  const [applyingAdvance, setApplyingAdvance] = useState<HeldAdvance | null>(null);
 
   const { data: expenses = [] } = useQuery<CaseExpense[]>({
     queryKey: ['case_expenses', caseId],
@@ -113,11 +130,43 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
     enabled: !!caseId,
   });
 
-  const { data: payments = [] } = useQuery<CasePayment[]>({
+  const { data: payments = [], refetch: refetchPayments } = useQuery<CasePayment[]>({
     queryKey: ['case_payments', caseId],
     queryFn: () => getCasePayments(caseId),
     enabled: !!caseId,
   });
+
+  const { data: heldAdvances = [], refetch: refetchHeldAdvances } = useQuery<HeldAdvance[]>({
+    queryKey: ['case_held_advances', caseId],
+    queryFn: () => getHeldAdvancesForCase(caseId),
+    enabled: !!caseId,
+  });
+
+  // Valid apply targets: issued (non-draft, non-cancelled) tax invoices with an
+  // open balance. apply_advance_to_invoice rejects drafts/zero-balance and
+  // currency mismatches at the DB — this pre-filter just keeps the picker honest.
+  const applyTargetInvoices = invoices.filter(
+    (inv) =>
+      inv.invoice_type === 'tax_invoice' &&
+      inv.status !== 'cancelled' &&
+      inv.status !== 'draft' &&
+      (inv.balance_due ?? 0) > 0,
+  );
+
+  const handleApplyAdvance = async ({ paymentId, invoiceId, amount }: { paymentId: string; invoiceId: string; amount: number }) => {
+    try {
+      const result = await applyAdvanceToInvoice(paymentId, invoiceId, amount);
+      const target = applyTargetInvoices.find((inv) => inv.id === invoiceId);
+      toast.success(`Advance applied — invoice ${target?.invoice_number ?? ''} now ${result.invoice_status}`.replace(/\s{2,}/g, ' ').trim());
+      setApplyingAdvance(null);
+      await Promise.all([refetchHeldAdvances(), refetchPayments()]);
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'case', caseId] });
+      queryClient.invalidateQueries({ queryKey: ['case_financial_summary', caseId] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not apply the advance to the invoice.');
+      throw err;
+    }
+  };
 
   const margin = caseFinancialSummary?.profitMargin ?? 0;
   const marginColor = margin > 20 ? 'text-success' : margin >= 0 ? 'text-warning' : 'text-danger';
@@ -148,6 +197,15 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
               <Button onClick={() => { onSetEditingInvoice(null); onSetShowInvoiceModal(true); }} size="sm">
                 <FileText className="w-4 h-4 mr-2" />
                 New Invoice
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setShowAdvanceModal(true)}
+                size="sm"
+                title="Record an unallocated advance — a GST Receipt Voucher (Rule 50) is issued for it"
+              >
+                <Wallet className="w-4 h-4 mr-2" />
+                Record Advance
               </Button>
             </div>
           </div>
@@ -433,6 +491,49 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
             </div>
           </div>
 
+          {/* Held advances — unallocated advance payments that can be netted
+              into an issued invoice (forward-apply). Rendered only when at
+              least one advance still has an unapplied balance. */}
+          {heldAdvances.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-dashed border-slate-200">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 mb-2">
+                <Wallet className="w-3.5 h-3.5 text-warning" />
+                Held Advances
+                <CountPill value={heldAdvances.length} />
+              </h3>
+              <div className="space-y-2 max-h-40 overflow-y-auto pr-0.5">
+                {heldAdvances.map((adv) => {
+                  const noTargets = applyTargetInvoices.length === 0;
+                  return (
+                    <div key={adv.id} className="flex items-center gap-2.5 bg-warning-muted border border-warning/20 rounded-lg px-3 py-2">
+                      <div className="w-7 h-7 bg-warning/20 rounded-full flex items-center justify-center shrink-0">
+                        <Wallet className="w-3.5 h-3.5 text-warning" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-slate-900 truncate">{adv.payment_number ?? 'Advance'}</p>
+                        <p className="text-xs text-slate-500 truncate">
+                          Unapplied{' '}
+                          <span className="font-semibold text-warning tabular-nums">{formatCurrencyWithConfig(adv.unappliedBalance, currencyConfig)}</span>
+                        </p>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="shrink-0"
+                        disabled={noTargets}
+                        onClick={() => setApplyingAdvance(adv)}
+                        title={noTargets ? 'Issue a tax invoice with an open balance first' : 'Apply this advance to an unpaid invoice'}
+                      >
+                        <Send className="w-3.5 h-3.5 mr-1.5" />
+                        Apply to invoice
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Payment history — folded into the same card as a compact chip grid */}
           {payments.length > 0 && (
             <div className="mt-4 pt-4 border-t border-dashed border-slate-200">
@@ -507,6 +608,64 @@ export const CaseFinancesTab: React.FC<CaseFinancesTabProps> = ({
             </div>
           </div>
         </Card>
+      )}
+
+      <RecordPaymentModal
+        isOpen={showAdvanceModal}
+        onClose={() => setShowAdvanceModal(false)}
+        preselectedCaseId={caseId}
+        initialKind="advance"
+        onSave={async (paymentData) => {
+          if (paymentData.kind !== 'advance') {
+            throw new Error('This action records unallocated advances. To settle an invoice, use Record Payment on the invoice row.');
+          }
+          const payment = await createAdvancePayment({
+            amount: paymentData.amount,
+            payment_date: paymentData.payment_date,
+            customer_id: paymentData.customer_id ?? null,
+            case_id: paymentData.case_id ?? caseId,
+            payment_method_id: paymentData.payment_method_id ?? null,
+            bank_account_id: paymentData.bank_account_id ?? null,
+            reference: paymentData.reference ?? null,
+            notes: paymentData.notes ?? null,
+          });
+          // Regime-keyed receipt artifact: IN GST supersedes the legacy payment
+          // receipt with the statutory Rule 50 Receipt Voucher; other regimes
+          // keep the advance as a plain held payment (legacy receipt path).
+          let voucherNote = '';
+          if (resolveAdvanceReceiptArtifact(regime.documents) === 'receipt_voucher') {
+            const result = await issueReceiptVoucher({
+              payment_id: payment.id,
+              tenant_id: payment.tenant_id,
+              case_id: payment.case_id ?? caseId,
+              customer_id: payment.customer_id ?? null,
+              advance_amount: paymentData.amount,
+              // currencyConfig.code may be the unresolved REQUIRED_SENTINEL symbol
+              // (D2) — coerce to a string like the useCurrency hook does. payment.currency
+              // is set by record_payment (base fallback), so this branch is defensive.
+              currency: payment.currency ?? (typeof currencyConfig.code === 'string' ? currencyConfig.code : ''),
+              payment_date: payment.payment_date ?? paymentData.payment_date,
+            });
+            voucherNote = result.document_number ? ` · Receipt Voucher ${result.document_number} issued` : '';
+          }
+          toast.success(`Advance ${payment.payment_number ?? ''} recorded${voucherNote}`.trim());
+          await Promise.all([refetchPayments(), refetchHeldAdvances()]);
+        }}
+      />
+
+      {applyingAdvance && (
+        <ApplyAdvanceModal
+          open
+          advance={applyingAdvance}
+          invoices={applyTargetInvoices.map((inv) => ({
+            id: inv.id,
+            invoice_number: inv.invoice_number,
+            balance_due: inv.balance_due ?? 0,
+          }))}
+          currencyConfig={currencyConfig}
+          onClose={() => setApplyingAdvance(null)}
+          onApply={handleApplyAdvance}
+        />
       )}
     </div>
   );
