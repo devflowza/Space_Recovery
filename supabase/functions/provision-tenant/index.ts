@@ -465,7 +465,7 @@ Deno.serve(async (req: Request) => {
     // tax_system === 'GST' on its geo_countries row.
     const isGstRegime = (countryData?.tax_system ?? '').toUpperCase() === 'GST';
 
-    let registrationRow;
+    let registrationRow: ReturnType<typeof buildPrimaryRegistrationRow>;
     try {
       registrationRow = buildPrimaryRegistrationRow({
         tenantId: tenant.id,
