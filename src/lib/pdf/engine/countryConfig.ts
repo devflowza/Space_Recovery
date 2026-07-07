@@ -125,6 +125,7 @@ export function countryTemplateOverride(
   if (facts.decimalPlaces != null) locale.decimalPlaces = facts.decimalPlaces;
   if (facts.decimalSeparator) locale.decimalSeparator = facts.decimalSeparator;
   if (facts.thousandsSeparator != null) locale.thousandsSeparator = facts.thousandsSeparator;
+  if (facts.digitGrouping === '3;2') locale.groupingStyle = 'indian';
 
   // Address-line ordering (Task 22): geo_countries.address_format is a jsonb
   // postal-address template (e.g. '%N %O %A %C %Z'). postalFirst is set true

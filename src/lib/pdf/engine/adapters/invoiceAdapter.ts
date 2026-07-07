@@ -80,6 +80,7 @@ export function toEngineData(
       position: currencyPosition,
       decimalSeparator: config.locale?.decimalSeparator ?? invoiceData.accounting_locales?.decimal_separator,
       thousandsSeparator: config.locale?.thousandsSeparator ?? invoiceData.accounting_locales?.thousands_separator,
+      digitGrouping: config.locale?.groupingStyle === 'indian' ? '3;2' : '3',
     });
   // Country/tenant date format (falls back to the neutral 'dd MMM yyyy' default
   // when no locale is threaded, so un-wired call sites are byte-identical).
