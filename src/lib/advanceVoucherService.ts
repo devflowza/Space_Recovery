@@ -74,17 +74,31 @@ export async function issueRefundVoucher(receiptVoucherId: string, reason: strin
     .select('*').eq('id', receiptVoucherId).is('deleted_at', null).maybeSingle();
   if (oErr) throw oErr;
   if (!orig) throw new Error('Original receipt voucher not found');
+
+  // Review #2: reverse only the UNAPPLIED advance. Any portion already netted
+  // into an invoice via apply_advance_to_invoice must NOT be reversed again
+  // (that would under-collect output GST). The DB _issue_advance_voucher refund
+  // cap is the authoritative backstop; this keeps the persisted lines in step.
+  const { data: allocs, error: aErr } = await supabase.from('payment_allocations')
+    .select('amount').eq('payment_id', orig.payment_id).is('deleted_at', null);
+  if (aErr) throw aErr;
+  const applied = (allocs ?? []).reduce((sum, a) => sum + Number(a.amount ?? 0), 0);
+  const refundable = Number(orig.total_amount) - applied;
+  if (refundable <= 0) {
+    throw new Error('This advance has been fully applied to invoices — there is nothing to refund.');
+  }
+
   const rc = await resolveRateContext(orig.currency, new Date().toISOString().slice(0, 10), null);
   const { data: refund, error: rErr } = await supabase.from('advance_vouchers').insert({
     tenant_id: orig.tenant_id, payment_id: orig.payment_id, case_id: orig.case_id,
     customer_id: orig.customer_id, company_id: orig.company_id, voucher_type: 'refund',
     original_voucher_id: orig.id, currency: orig.currency, exchange_rate: rc.rate,
-    total_amount: orig.total_amount, place_of_supply_subdivision_id: orig.place_of_supply_subdivision_id,
+    total_amount: refundable, place_of_supply_subdivision_id: orig.place_of_supply_subdivision_id,
     notations: [{ code: 'REFUND_REASON', text: reason }],
   }).select().single();
   if (rErr) throw rErr;
 
-  const input = buildAdvanceVoucherTotalsInput(orig.total_amount, refund.voucher_date, undefined,
+  const input = buildAdvanceVoucherTotalsInput(refundable, refund.voucher_date, undefined,
     { customerId: orig.customer_id ?? null, companyId: orig.company_id ?? null });
   const { computation } = await computeDocumentTotals(input, rc);
   await persistDocumentTaxLines({
