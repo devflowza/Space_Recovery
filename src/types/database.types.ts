@@ -18823,6 +18823,15 @@ export type Database = {
       get_next_supplier_number: { Args: never; Returns: string }
       get_next_ticket_number: { Args: never; Returns: string }
       get_next_transfer_number: { Args: never; Returns: string }
+      get_payment_stats_base: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_month_start?: string
+          p_today?: string
+        }
+        Returns: Json
+      }
       get_primary_device_for_case: {
         Args: { p_case_id: string }
         Returns: {
@@ -18895,6 +18904,10 @@ export type Database = {
       get_tenant_storage_bytes: {
         Args: { p_tenant_id: string }
         Returns: number
+      }
+      get_transaction_stats_base: {
+        Args: { p_date_from?: string; p_date_to?: string }
+        Returns: Json
       }
       get_user_case_access_level: { Args: never; Returns: string }
       get_user_profiles_with_email: {
