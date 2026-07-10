@@ -18882,6 +18882,15 @@ export type Database = {
         }
       }
       get_quote_stats_base: { Args: never; Returns: Json }
+      get_sidebar_badge_counts: {
+        Args: { p_cases_since: string }
+        Returns: {
+          cases_today: number
+          invoices_attention: number
+          low_stock: number
+          pending_quotes: number
+        }[]
+      }
       get_system_setting: { Args: { p_key: string }; Returns: string }
       get_tenant_storage_bytes: {
         Args: { p_tenant_id: string }
