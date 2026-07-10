@@ -7,9 +7,11 @@ import { StockCategorySelect } from './StockCategorySelect';
 import {
   createStockItem,
   updateStockItem,
+  getStockItem,
   StockItemWithCategory,
 } from '../../lib/stockService';
 import { useToast } from '../../hooks/useToast';
+import { shouldAutoPrintLabel } from '../../lib/labelPrefsService';
 import type { Database } from '../../types/database.types';
 
 type StockItemInsert = Database['public']['Tables']['stock_items']['Insert'];
@@ -160,8 +162,18 @@ export const StockItemFormModal: React.FC<StockItemFormModalProps> = ({
         await updateStockItem(item.id, payload);
         toast.success('Stock item updated successfully');
       } else {
-        await createStockItem(payload);
+        const created = await createStockItem(payload);
         toast.success('Stock item created successfully');
+        // Direct Print Label: fire-and-forget so a printer problem never blocks intake.
+        void shouldAutoPrintLabel('stock').then(async (enabled) => {
+          if (!enabled) return;
+          const { printStockLabelBatch } = await import('../../lib/pdf/labels/labelPrintService');
+          // createStockItem returns the bare insert row without the category
+          // join, so re-fetch it — otherwise the auto-printed label drops the
+          // category line a list-printed label shows. Fall back to the bare row.
+          const enriched = await getStockItem(created.id).catch(() => null);
+          await printStockLabelBatch([{ item: enriched ?? created }], { output: 'print' });
+        });
       }
       onSuccess();
       onClose();
