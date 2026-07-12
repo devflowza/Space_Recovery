@@ -246,6 +246,11 @@ export const payrollService = {
 
   async getCurrentPayrollPeriod() {
     const now = new Date();
+    // Multiple overlapping monthly periods can cover today (there is no DB
+    // overlap/uniqueness constraint on payroll_periods, and the UI lets an admin
+    // create a duplicate current-month period). Order deterministically and cap
+    // to one row so .maybeSingle() never sees >1 match and throws PGRST116 —
+    // which would otherwise reject getDashboardStats and blank the dashboard.
     const { data, error } = await supabase
       .from('payroll_periods')
       .select('*')
@@ -253,6 +258,8 @@ export const payrollService = {
       .gte('end_date', now.toISOString().split('T')[0])
       .eq('period_type', 'monthly')
       .is('deleted_at', null)
+      .order('start_date', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (error) throw error;

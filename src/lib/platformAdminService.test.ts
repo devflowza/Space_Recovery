@@ -93,6 +93,67 @@ describe('recordHealthMetrics (D — revenue_last_30d persisted must be base cur
 });
 
 /**
+ * Regression for bugs 106/107/108 — recordHealthMetrics revenue/login-recency/active-user math.
+ *   106: payments revenue must exclude soft-deleted and non-completed rows.
+ *   107: days_since_last_login must be persisted (was never set → DEFAULT 0 forever).
+ *   108: active_users_count must be the distinct recently-active users, not the total
+ *        registered profile count.
+ */
+describe('recordHealthMetrics (bugs 106/107/108)', () => {
+  function wire(opts: {
+    payments?: Array<Record<string, unknown>>;
+    profiles?: Array<Record<string, unknown>>;
+    activitySessions?: Array<Record<string, unknown>>;
+  }) {
+    const paymentsQuery = makeQuery({ data: opts.payments ?? [] });
+    from.mockImplementation((table: string) => {
+      switch (table) {
+        case 'payments':
+          return paymentsQuery;
+        case 'profiles':
+          return makeQuery({ data: opts.profiles ?? [], count: (opts.profiles ?? []).length });
+        case 'user_activity_sessions':
+          return makeQuery({ data: opts.activitySessions ?? [] });
+        case 'cases':
+        case 'support_tickets':
+          return makeQuery({ count: 0 });
+        case 'tenant_health_metrics':
+          return { insert } as unknown as Record<string, unknown>;
+        default:
+          return makeQuery({ data: [], count: 0 });
+      }
+    });
+    return paymentsQuery;
+  }
+
+  it('bug 106 — filters payments revenue to non-deleted, completed rows', async () => {
+    const paymentsQuery = wire({ payments: MIXED_PAYMENTS });
+    await recordHealthMetrics('tenant-1');
+    expect(paymentsQuery.is).toHaveBeenCalledWith('deleted_at', null);
+    expect(paymentsQuery.eq).toHaveBeenCalledWith('status', 'completed');
+  });
+
+  it('bug 107 — persists days_since_last_login from the newest profile login, not the 0 default', async () => {
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    wire({ profiles: [{ id: 'u1', last_login_at: threeDaysAgo }] });
+    await recordHealthMetrics('tenant-1');
+    const persisted = insert.mock.calls[0][0] as { days_since_last_login: number };
+    expect(persisted.days_since_last_login).toBe(3);
+  });
+
+  it('bug 108 — persists the distinct active-user count, not the total registered profiles', async () => {
+    // 5 registered profiles, but only 2 distinct users active in the last 7 days
+    wire({
+      profiles: [{ id: 'u1' }, { id: 'u2' }, { id: 'u3' }, { id: 'u4' }, { id: 'u5' }],
+      activitySessions: [{ user_id: 'u1' }, { user_id: 'u1' }, { user_id: 'u2' }],
+    });
+    await recordHealthMetrics('tenant-1');
+    const persisted = insert.mock.calls[0][0] as { active_users_count: number };
+    expect(persisted.active_users_count).toBe(2);
+  });
+});
+
+/**
  * Regression for bugs 60/61/62 — tenant-scoping leaks. Platform admins bypass the
  * RESTRICTIVE tenant-isolation RLS (tenant_id = get_current_tenant_id() OR
  * is_platform_admin()), so every per-tenant aggregate query MUST carry an explicit

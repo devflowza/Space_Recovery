@@ -241,6 +241,8 @@ export async function calculateHealthScore(tenantId: string): Promise<{
   score: number;
   churnRisk: 'low' | 'medium' | 'high' | 'critical';
   engagementLevel: 'inactive' | 'low' | 'moderate' | 'high' | 'very_high';
+  daysSinceLogin: number;
+  activeUsers: number;
 }> {
   const [usersRes, activeUsersRes, casesRes, paymentsRes, ticketsRes] = await Promise.all([
     supabase.from('profiles').select('id, last_login_at').eq('tenant_id', tenantId),
@@ -259,6 +261,8 @@ export async function calculateHealthScore(tenantId: string): Promise<{
       .from('payments')
       .select('amount, amount_base')
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .eq('status', 'completed')
       .gte('payment_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
     supabase
       .from('support_tickets')
@@ -269,7 +273,7 @@ export async function calculateHealthScore(tenantId: string): Promise<{
   ]);
 
   const totalUsers = usersRes.data?.length || 0;
-  const activeUsers = activeUsersRes.data?.length || 0;
+  const activeUsers = new Set((activeUsersRes.data || []).map(s => s.user_id)).size;
   const casesLast30d = casesRes.count || 0;
   const revenue = (paymentsRes.data || []).reduce((sum, p) => sum + baseAmount(p, 'amount'), 0);
   const openTickets = ticketsRes.count || 0;
@@ -306,14 +310,13 @@ export async function calculateHealthScore(tenantId: string): Promise<{
   else if (casesLast30d < 20) engagementLevel = 'high';
   else engagementLevel = 'very_high';
 
-  return { score, churnRisk, engagementLevel };
+  return { score, churnRisk, engagementLevel, daysSinceLogin, activeUsers };
 }
 
 export async function recordHealthMetrics(tenantId: string): Promise<void> {
   const health = await calculateHealthScore(tenantId);
 
-  const [usersRes, casesRes, revenueRes, ticketsRes] = await Promise.all([
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+  const [casesRes, revenueRes, ticketsRes] = await Promise.all([
     supabase
       .from('cases')
       .select('id', { count: 'exact', head: true })
@@ -324,6 +327,8 @@ export async function recordHealthMetrics(tenantId: string): Promise<void> {
       .from('payments')
       .select('amount, amount_base')
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .eq('status', 'completed')
       .gte('payment_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
     supabase
       .from('support_tickets')
@@ -340,10 +345,11 @@ export async function recordHealthMetrics(tenantId: string): Promise<void> {
     health_score: health.score,
     churn_risk: health.churnRisk,
     engagement_level: health.engagementLevel,
-    active_users_count: usersRes.count || 0,
+    active_users_count: health.activeUsers,
     cases_created_last_30d: casesRes.count || 0,
     revenue_last_30d: revenue,
     support_tickets_open: ticketsRes.count || 0,
+    days_since_last_login: health.daysSinceLogin,
   });
 }
 

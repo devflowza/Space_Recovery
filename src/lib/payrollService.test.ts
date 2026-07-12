@@ -258,6 +258,23 @@ describe('processPayroll docks unauthorized absence (Phase 0 overpayment fix)', 
   });
 });
 
+describe('getCurrentPayrollPeriod is deterministic under overlapping periods (bug #105)', () => {
+  it('orders by start_date desc and caps to one row so maybeSingle never sees >1 match', async () => {
+    // Two monthly periods both covering today (no DB overlap constraint exists).
+    // Without .order().limit(1) the underlying .maybeSingle() throws PGRST116 and
+    // rejects getDashboardStats, blanking the payroll dashboard.
+    const periodQuery = makeQuery({ id: 'period-newest' });
+    from.mockImplementation((table: string) =>
+      table === 'payroll_periods' ? periodQuery : makeQuery(null),
+    );
+
+    await payrollService.getCurrentPayrollPeriod();
+
+    expect(periodQuery.order).toHaveBeenCalledWith('start_date', { ascending: false });
+    expect(periodQuery.limit).toHaveBeenCalledWith(1);
+  });
+});
+
 describe('getActiveLoans excludes future-dated loans (bug #55)', () => {
   it('filters on start_date <= asOfDate when a period boundary is given', async () => {
     const loansQuery = makeQuery([{ id: 'loan-1', installment_amount: 100 }]);

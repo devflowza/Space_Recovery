@@ -457,7 +457,9 @@ export const VATAuditPage: React.FC = () => {
                               <p className="text-sm font-mono text-slate-600">{record.record_id?.substring(0, 8)}...</p>
                             </td>
                             <td className="py-3 px-4 text-right text-sm font-semibold text-primary">
-                              {formatCurrency(record.vat_amount)}
+                              {/* Base-currency figure so the row matches the KPI totals and the
+                                  tenant symbol formatCurrency applies; vat_amount is document-currency. */}
+                              {formatCurrency(record.vat_amount_base ?? record.vat_amount)}
                             </td>
                             <td className="py-3 px-4 text-center text-sm text-slate-600">
                               {formatTaxRatePercent(record.vat_rate)}
