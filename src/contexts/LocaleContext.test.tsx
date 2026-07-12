@@ -9,11 +9,12 @@ import type { TenantConfig } from '../types/tenantConfig';
 // reads config.locale.languageCode + refreshConfig via useTenantConfig().
 const refreshConfig = vi.fn(async () => {});
 let mockConfig: TenantConfig = DEFAULT_TENANT_CONFIG;
+let mockIsLoading = false;
 
 vi.mock('./TenantConfigContext', () => ({
   useTenantConfig: () => ({
     config: mockConfig,
-    isLoading: false,
+    isLoading: mockIsLoading,
     refreshConfig,
   }),
 }));
@@ -81,6 +82,7 @@ beforeEach(() => {
     mockConfig = configWithLang(lang);
   });
   mockConfig = DEFAULT_TENANT_CONFIG;
+  mockIsLoading = false;
   localStorage.clear();
   document.documentElement.dir = '';
   document.documentElement.lang = '';
@@ -244,6 +246,52 @@ describe('LocaleContext', () => {
       );
     });
     expect(screen.getByTestId('locale')).toHaveTextContent('ar');
+  });
+
+  it('preserves the pre-seeded RTL hint during tenant-config load instead of flashing LTR', async () => {
+    // main.tsx synchronously pre-seeds this for a returning Arabic tenant before
+    // React mounts, so the first paint is RTL.
+    localStorage.setItem('xsuite_locale_hint', 'ar');
+    document.documentElement.dir = 'rtl';
+    document.documentElement.lang = 'ar';
+    await i18n.changeLanguage('ar');
+    // Pre-profile auth window: tenantId is still undefined so loadConfig short-circuits
+    // with isLoading=false while config stays DEFAULT_TENANT_CONFIG (unresolved 'en').
+    // This is the dominant part of a hard reload and the exact window the flash occurs in;
+    // the guard must key off isResolvedConfig(config), not isLoading.
+    mockIsLoading = false;
+    mockConfig = DEFAULT_TENANT_CONFIG;
+
+    let rerender!: ReturnType<typeof render>['rerender'];
+    await act(async () => {
+      const r = render(
+        <LocaleProvider>
+          <span>child</span>
+        </LocaleProvider>
+      );
+      rerender = r.rerender;
+    });
+
+    // The loading window must NOT clobber the pre-seeded RTL direction with the
+    // DEFAULT 'en'/LTR — that would be the visible LTR reflow flash on every reload.
+    expect(document.documentElement.dir).toBe('rtl');
+    expect(document.documentElement.lang).toBe('ar');
+    expect(i18n.language).toBe('ar');
+
+    // Once the real Arabic tenant config resolves, it stays RTL (fix doesn't pin to the hint).
+    mockIsLoading = false;
+    mockConfig = configWithLang('ar');
+    await act(async () => {
+      rerender(
+        <LocaleProvider>
+          <span>child</span>
+        </LocaleProvider>
+      );
+    });
+
+    expect(document.documentElement.dir).toBe('rtl');
+    expect(document.documentElement.lang).toBe('ar');
+    expect(i18n.language).toBe('ar');
   });
 
   it('is idempotent under StrictMode double-invoke', async () => {

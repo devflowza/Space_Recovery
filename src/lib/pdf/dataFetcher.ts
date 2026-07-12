@@ -1187,7 +1187,11 @@ async function fetchChainOfCustodyEntries(caseId: string): Promise<ChainOfCustod
     .from('chain_of_custody')
     .select('id, action, action_category, actor_name, actor_role, created_at, description, evidence_hash, metadata')
     .eq('case_id', caseId)
-    .order('created_at', { ascending: true });
+    // Mirror of the UI ledger's (created_at DESC, id DESC) ordering: ascending here
+    // so the PDF entry_number (index+1) matches the UI's for tied-timestamp rows
+    // (e.g. a multi-device intake). Direction must stay ASC — id DESC would re-break it.
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true });
 
   if (error) {
     console.error('Error fetching chain of custody entries:', error);

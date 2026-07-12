@@ -775,7 +775,8 @@ export const bankingService = {
     const { count: unreconciledCount } = await supabase
       .from('bank_transactions')
       .select('id', { count: 'exact', head: true })
-      .eq('is_reconciled', false);
+      .eq('is_reconciled', false)
+      .is('deleted_at', null);
 
     const bankBalance = sumBankBalanceBase(
       (accounts ?? []).filter((a) => a.account_type === 'bank' || a.account_type === 'checking' || a.account_type === 'savings'),

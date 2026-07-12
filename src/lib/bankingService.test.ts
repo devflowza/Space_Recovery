@@ -23,11 +23,12 @@ function makeAccountsQuery(rows: Array<Record<string, unknown>>) {
   return builder;
 }
 
-/** bank_transactions head-count builder: select/eq are chainable; awaiting yields {count}. */
+/** bank_transactions head-count builder: select/eq/is are chainable; awaiting yields {count}. */
 function makeCountQuery(count: number) {
   const builder: Record<string, unknown> = {
     select: vi.fn(() => builder),
     eq: vi.fn(() => builder),
+    is: vi.fn(() => builder),
     then: (resolve: (v: { count: number; error: null }) => void) =>
       resolve({ count, error: null }),
   };
@@ -67,6 +68,24 @@ describe('getAccountBalanceSummary (cross-document balances must be base currenc
     const summary = await bankingService.getAccountBalanceSummary();
 
     expect(summary.totalCashBalance).toBe(70);
+  });
+
+  it('excludes soft-deleted rows from the pending-reconciliation count', async () => {
+    // Soft-deleted unreconciled rows keep is_reconciled=false; without a
+    // deleted_at filter they inflate pendingReconciliations and it never hits 0.
+    const accountsQuery = makeAccountsQuery([
+      { account_type: 'bank', current_balance: 0, current_balance_base: 0, currency: 'OMR' },
+    ]);
+    const countQuery = makeCountQuery(4);
+    from.mockImplementation((table: string) =>
+      table === 'bank_accounts' ? accountsQuery : countQuery,
+    );
+
+    const summary = await bankingService.getAccountBalanceSummary();
+
+    expect(summary.pendingReconciliations).toBe(4);
+    // the count must be scoped to live (non-soft-deleted) transactions
+    expect(countQuery.is).toHaveBeenCalledWith('deleted_at', null);
   });
 });
 

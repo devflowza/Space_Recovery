@@ -19,8 +19,12 @@ export function buildPayslipDocument(
   const formatCurrency = (amount: number): string =>
     formatEngineMoney(amount, { symbol: currencySymbol, decimalPlaces, position: currencyPosition });
 
-  const earnings = payslipData.items?.filter((item) => item.component_type === 'earning') || [];
+  // Component types are {earning, allowance, bonus, deduction}; allowance and bonus
+  // are earnings everywhere else in the app (see SalaryComponentsPage). Classify
+  // anything that is not a deduction as an earning so Total Earnings stays consistent
+  // with the Net Salary box (net = gross − deductions).
   const deductions = payslipData.items?.filter((item) => item.component_type === 'deduction') || [];
+  const earnings = payslipData.items?.filter((item) => item.component_type !== 'deduction') || [];
 
   // eslint-disable-next-line xsuite/no-raw-currency-aggregation -- single payroll_record = one employee/period in one currency; payroll_record_items has no amount_base shadow
   const totalEarnings = earnings.reduce((sum, item) => sum + Number(item.amount), 0);

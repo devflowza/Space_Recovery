@@ -2,7 +2,7 @@ import { supabase, resolveTenantId } from './supabaseClient';
 import type { Database, Json } from '../types/database.types';
 import { resolveRateContext } from './currencyService';
 import { buildPayrollBaseColumns } from './payrollBase';
-import { baseAmount } from './financialMath';
+import { baseAmount, roundMoney } from './financialMath';
 import { currentTenantToday } from './tenantToday';
 import { logger } from './logger';
 
@@ -76,6 +76,20 @@ export function computeEmployeePay(input: EmployeePayInput): EmployeePayResult {
   const netSalary = totalEarnings - totalDeductions;
 
   return { overtimeAmount, absenceDeduction, socialSecurityDeduction, totalEarnings, totalDeductions, netSalary };
+}
+
+/** The amount to collect for one loan this period: the fixed installment, but
+ *  never more than the outstanding balance. installment_amount is stored rounded
+ *  to 2dp, so N installments can sum to slightly more than total_amount — the
+ *  final scheduled installment must not over-collect past the balance nor drive
+ *  remaining_amount negative (bug #89). Used for BOTH the net-pay deduction and
+ *  the recorded repayment so the payroll record and the loan ledger stay in
+ *  lock-step. */
+function scheduledLoanDeduction(
+  loan: Pick<EmployeeLoan, 'installment_amount' | 'remaining_amount' | 'total_amount'>,
+): number {
+  const outstanding = Math.max(0, Number(loan.remaining_amount ?? loan.total_amount));
+  return Math.min(Number(loan.installment_amount ?? 0), outstanding);
 }
 
 interface PayrollSettingsValues {
@@ -440,7 +454,7 @@ export const payrollService = {
 
       const activeLoans = await this.getActiveLoans(employee.id, period.end_date);
       const loanDeductions = activeLoans.reduce(
-        (sum, loan) => sum + Number(loan.installment_amount),
+        (sum, loan) => sum + scheduledLoanDeduction(loan),
         0
       );
 
@@ -479,7 +493,7 @@ export const payrollService = {
       for (const loan of activeLoans) {
         pendingLoanRepayments.push({
           loan_id: loan.id,
-          amount: Number(loan.installment_amount),
+          amount: scheduledLoanDeduction(loan),
           payment_date: period.end_date,
           payment_method: 'payroll_deduction',
           notes: `Automatic deduction for ${period.period_name}`,
@@ -802,10 +816,17 @@ export const payrollService = {
     const loan = await this.getEmployeeLoan(repayment.loan_id);
     if (!loan) throw new Error('Loan not found');
 
+    // Never collect (or record) more than the outstanding balance. The stored
+    // installment_amount is rounded to 2dp, so N installments can sum past the
+    // loan total; an uncapped final deduction over-collects and drives
+    // remaining_amount negative, polluting outstanding-balance aggregations (bug #89).
+    const outstanding = Math.max(0, Number(loan.remaining_amount ?? loan.total_amount));
+    const appliedAmount = Math.min(repayment.amount, outstanding);
+
     const repaymentInsert: Database['public']['Tables']['loan_repayments']['Insert'] = {
       tenant_id: loan.tenant_id,
       loan_id: repayment.loan_id,
-      amount: repayment.amount,
+      amount: appliedAmount,
       repayment_date: repayment.payment_date,
       payment_method: repayment.payment_method || 'payroll_deduction',
       notes: repayment.notes,
@@ -819,9 +840,12 @@ export const payrollService = {
 
     if (error) throw error;
 
-    const newRemainingAmount = Number(loan.remaining_amount ?? loan.total_amount) - repayment.amount;
+    const newRemainingAmount = roundMoney(Math.max(0, outstanding - appliedAmount));
     const newPaidInstallments = (loan.paid_installments || 0) + 1;
-    const isCompleted = newPaidInstallments >= loan.installments;
+    // Complete on either the scheduled installment count OR a cleared balance, so
+    // a loan is never left 'active' owing nothing (rounding rounded down) nor
+    // 'completed' while still owing.
+    const isCompleted = newPaidInstallments >= loan.installments || newRemainingAmount <= 0;
 
     const { error: updateError } = await supabase
       .from('employee_loans')

@@ -310,6 +310,86 @@ describe('processPayroll only deducts loans whose repayment has started (bug #55
   });
 });
 
+describe('recordLoanRepayment caps the final rounded installment (bug #89)', () => {
+  // Wires getEmployeeLoan -> the given loan, and captures the loan_repayments
+  // insert amount and the employee_loans update payload.
+  function arrangeLoan(
+    loan: Record<string, unknown>,
+    captured: { recorded?: number; update?: Record<string, unknown> },
+  ) {
+    vi.spyOn(payrollService, 'getEmployeeLoan').mockResolvedValue(loan as never);
+    from.mockImplementation((table: string) => {
+      if (table === 'loan_repayments') {
+        return {
+          insert: (row: { amount: number }) => {
+            captured.recorded = row.amount;
+            return { select: () => ({ maybeSingle: () => Promise.resolve({ data: row, error: null }) }) };
+          },
+        } as never;
+      }
+      if (table === 'employee_loans') {
+        return {
+          update: (payload: Record<string, unknown>) => {
+            captured.update = payload;
+            return { eq: () => Promise.resolve({ data: null, error: null }) };
+          },
+        } as never;
+      }
+      // completion path stamps end_date via currentTenantToday() -> tenants read
+      if (table === 'tenants') return makeQuery({ timezone: 'UTC' });
+      return makeQuery(null);
+    });
+  }
+
+  it('never over-collects or writes a negative remaining_amount on the final installment', async () => {
+    // 100.00 over 6 installments -> installment 16.67; after 5 deductions the
+    // outstanding balance is 16.65, smaller than one scheduled installment.
+    const captured: { recorded?: number; update?: Record<string, unknown> } = {};
+    arrangeLoan(
+      { id: 'loan-1', tenant_id: 't-1', total_amount: 100, remaining_amount: 16.65,
+        installment_amount: 16.67, installments: 6, paid_installments: 5, status: 'active', end_date: null },
+      captured,
+    );
+
+    await payrollService.recordLoanRepayment({ loan_id: 'loan-1', amount: 16.67, payment_date: '2026-07-31' });
+
+    expect(captured.recorded).toBe(16.65);            // capped at outstanding, not the full 16.67
+    expect(captured.update!.remaining_amount).toBe(0); // clamped, never the old -0.02
+    expect(captured.update!.status).toBe('completed');
+  });
+
+  it('completes a loan whose balance clears even if the installment count is not yet reached', async () => {
+    const captured: { recorded?: number; update?: Record<string, unknown> } = {};
+    arrangeLoan(
+      { id: 'loan-2', tenant_id: 't-1', total_amount: 100, remaining_amount: 10,
+        installment_amount: 50, installments: 6, paid_installments: 2, status: 'active', end_date: null },
+      captured,
+    );
+
+    await payrollService.recordLoanRepayment({ loan_id: 'loan-2', amount: 50, payment_date: '2026-07-31' });
+
+    expect(captured.recorded).toBe(10);                // never collects past the 10 owed
+    expect(captured.update!.remaining_amount).toBe(0);
+    expect(captured.update!.status).toBe('completed'); // balance-based completion, count is only 3/6
+  });
+
+  it('records the full installment and decrements the balance mid-loan (normal path intact)', async () => {
+    const captured: { recorded?: number; update?: Record<string, unknown> } = {};
+    arrangeLoan(
+      { id: 'loan-3', tenant_id: 't-1', total_amount: 100, remaining_amount: 100,
+        installment_amount: 16.67, installments: 6, paid_installments: 0, status: 'active', end_date: null },
+      captured,
+    );
+
+    await payrollService.recordLoanRepayment({ loan_id: 'loan-3', amount: 16.67, payment_date: '2026-07-31' });
+
+    expect(captured.recorded).toBe(16.67);
+    expect(captured.update!.remaining_amount).toBe(83.33); // roundMoney(100 - 16.67), no float noise
+    expect(captured.update!.paid_installments).toBe(1);
+    expect(captured.update!.status).toBe('active');        // not completed
+  });
+});
+
 describe('processPayroll is idempotent under retry/concurrency (bug #19)', () => {
   // The initial getPayrollPeriod read sees 'draft' (a stale read — the period was
   // already claimed by a concurrent run or a prior partial run). `claimResult`
