@@ -444,3 +444,46 @@ describe('processPayroll is idempotent under retry/concurrency (bug #19)', () =>
     expect(result.success).toBe(true);
   });
 });
+
+describe('getEmployeeAttendance excludes soft-deleted rows (bug #59)', () => {
+  it('filters attendance_records on deleted_at IS NULL so cancelled absences never drive pay', async () => {
+    const attQuery = makeQuery([]);
+    from.mockImplementation((table: string) =>
+      table === 'attendance_records' ? attQuery : makeQuery(null),
+    );
+
+    await payrollService.getEmployeeAttendance('emp-1', '2026-06-01', '2026-06-30');
+
+    // Without this filter a soft-deleted 'absent'/overtime row still counts into
+    // daysAbsent/overtimeHours and corrupts net pay — every other payroll read
+    // filters deleted_at; this pay-affecting query must too.
+    expect(attQuery.is).toHaveBeenCalledWith('deleted_at', null);
+  });
+});
+
+describe('period status cascades onto payroll_records (bug #60)', () => {
+  it('approvePayroll advances the period records to approved (not left on calculated)', async () => {
+    const recordsQuery = makeQuery(null);
+    from.mockImplementation((table: string) =>
+      table === 'payroll_records' ? recordsQuery : makeQuery({ id: 'period-1', status: 'approved' }),
+    );
+
+    await payrollService.approvePayroll('period-1', 'user-1');
+
+    expect(recordsQuery.update).toHaveBeenCalledWith(expect.objectContaining({ status: 'approved' }));
+    expect(recordsQuery.eq).toHaveBeenCalledWith('period_id', 'period-1');
+    expect(recordsQuery.is).toHaveBeenCalledWith('deleted_at', null); // skip soft-deleted rows
+  });
+
+  it('markPayrollAsPaid advances the period records to paid', async () => {
+    const recordsQuery = makeQuery(null);
+    from.mockImplementation((table: string) =>
+      table === 'payroll_records' ? recordsQuery : makeQuery({ id: 'period-1', status: 'paid' }),
+    );
+
+    await payrollService.markPayrollAsPaid('period-1', 'user-1');
+
+    expect(recordsQuery.update).toHaveBeenCalledWith(expect.objectContaining({ status: 'paid' }));
+    expect(recordsQuery.eq).toHaveBeenCalledWith('period_id', 'period-1');
+  });
+});

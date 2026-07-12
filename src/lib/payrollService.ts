@@ -283,11 +283,17 @@ export const payrollService = {
   },
 
   async approvePayroll(periodId: string, approvedBy: string) {
-    return this.updatePayrollPeriod(periodId, {
+    const period = await this.updatePayrollPeriod(periodId, {
       status: 'approved',
       approved_by: approvedBy,
       approved_at: new Date().toISOString(),
     });
+    // Records are inserted 'calculated' and were never advanced afterwards, so
+    // the dashboard "Processed This Month" count and the per-employee status
+    // badge stayed stuck on 'calculated' even in approved/paid periods (bug #60).
+    // Cascade the period status onto its records so both surfaces stay truthful.
+    await this.setPeriodRecordsStatus(periodId, 'approved');
+    return period;
   },
 
   async approvePayrollPeriod(periodId: string) {
@@ -297,11 +303,29 @@ export const payrollService = {
   },
 
   async markPayrollAsPaid(periodId: string, paidBy: string) {
-    return this.updatePayrollPeriod(periodId, {
+    const period = await this.updatePayrollPeriod(periodId, {
       status: 'paid',
       paid_by: paidBy,
       paid_at: new Date().toISOString(),
     });
+    // Advance the period's records to 'paid' too (bug #60) — see approvePayroll.
+    await this.setPeriodRecordsStatus(periodId, 'paid');
+    return period;
+  },
+
+  /** Cascade a period-level status transition onto its payroll_records. Records
+   *  are created 'calculated' by processPayroll and no other path mutates their
+   *  status, so approve/mark-paid must propagate here or the dashboard count and
+   *  the per-employee status badge never leave 'calculated' (bug #60). Skips
+   *  soft-deleted rows; tenant scoping is enforced by RLS. */
+  async setPeriodRecordsStatus(periodId: string, status: string) {
+    const { error } = await supabase
+      .from('payroll_records')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('period_id', periodId)
+      .is('deleted_at', null);
+
+    if (error) throw error;
   },
 
   async markPayrollPeriodAsPaid(periodId: string) {
@@ -584,7 +608,8 @@ export const payrollService = {
       .select('*')
       .eq('employee_id', employeeId)
       .gte('date', startDate)
-      .lte('date', endDate);
+      .lte('date', endDate)
+      .is('deleted_at', null);
 
     if (error) throw error;
 

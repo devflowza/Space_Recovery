@@ -57,6 +57,12 @@ export async function getCaseFinancialSummary(caseId: string): Promise<CaseFinan
       .in('status', ['approved', 'paid']),
   ]);
 
+  // A failed sub-query must not be silently treated as an empty result — that would
+  // understate totalInvoiced/outstandingBalance/etc. from partial data (showing $0 owed
+  // while money is outstanding). Propagate the first error before aggregating.
+  const summaryError = quotesResult.error || invoicesResult.error || expensesResult.error;
+  if (summaryError) throw summaryError;
+
   const quotes = quotesResult.data || [];
   const invoices = invoicesResult.data || [];
   const expenses = expensesResult.data || [];

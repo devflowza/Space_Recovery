@@ -806,7 +806,8 @@ export const bankingService = {
         )
       `)
       .not('case_id', 'is', null)
-      .is('deleted_at', null);
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
 
     if (filters?.hasOutstandingInvoices) {
       query = query.gt('balance_due', 0);
@@ -890,13 +891,17 @@ export const bankingService = {
 
     const cases = Array.from(casesMap.values());
 
-    cases.sort((a, b) => {
-      const numA = parseInt(a.case_number ?? '') || 0;
-      const numB = parseInt(b.case_number ?? '') || 0;
-      return numB - numA;
-    });
+    // Case numbers are prefixed, zero-padded labels (e.g. 'CASE-0005'), so parseInt
+    // of the label is always NaN→0 — the old sort was a silent no-op that left the
+    // list in arbitrary DB order. Compare the full string with numeric-aware collation
+    // so higher (newer) numbers sort first. Return the full deduped set: the Record
+    // Receipt case picker fetches this once and searches it client-side, so the old
+    // slice(0, 50) silently hid cases with open invoices from the operator.
+    cases.sort((a, b) =>
+      (b.case_number ?? '').localeCompare(a.case_number ?? '', undefined, { numeric: true, sensitivity: 'base' }),
+    );
 
-    return cases.slice(0, 50).map((c) => ({
+    return cases.map((c) => ({
       ...c,
       client_name: c.customers_enhanced?.customer_name
         ?? c.companies?.company_name

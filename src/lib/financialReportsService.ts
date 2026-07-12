@@ -104,6 +104,10 @@ export const generateProfitLossReport = async (
     supabase
       .from('invoices')
       .select('amount_paid, amount_paid_base, total_amount, total_amount_base, tax_amount, tax_amount_base, status')
+      // A void/cancelled invoice is not realized revenue even if a stale amount_paid
+      // survives (it is never zeroed on status change) — exclude it as the Revenue-by-Case
+      // report does (EXP-014), so P&L and revenue-by-case reconcile for the same period.
+      .not('status', 'in', `(${RECEIVABLE_INVOICE_EXCLUDED_STATUSES.map((s) => `"${s}"`).join(',')})`)
       .is('deleted_at', null)
       .gte('invoice_date', dateFrom)
       .lte('invoice_date', dateTo),
@@ -120,6 +124,12 @@ export const generateProfitLossReport = async (
       .lte('expense_date', dateTo)
       .in('status', ['approved', 'paid']),
   ]);
+
+  // Supabase resolves a failed query as {data:null, error}; without these checks a
+  // silently-failed expenses fetch would read as 0 expenses and report revenue as pure
+  // profit. Throw as generateAgedReceivablesReport does.
+  if (invoicesResult.error) throw invoicesResult.error;
+  if (expensesResult.error) throw expensesResult.error;
 
   const invoices = invoicesResult.data || [];
   const expenses = expensesResult.data || [];
@@ -278,6 +288,10 @@ export const generateCashFlowReport = async (
       .eq('is_active', true),
   ]);
 
+  if (paymentsResult.error) throw paymentsResult.error;
+  if (expensesResult.error) throw expensesResult.error;
+  if (bankAccountsResult.error) throw bankAccountsResult.error;
+
   const receipts = (paymentsResult.data || []).reduce((sum, p) => sum + baseAmount(p, 'amount'), 0);
   const payments = (expensesResult.data || []).reduce((sum, e) => sum + baseAmount(e, 'amount'), 0);
 
@@ -322,6 +336,9 @@ export const generateInvoiceSummaryReport = async (
       .gte('quote_date', dateFrom)
       .lte('quote_date', dateTo),
   ]);
+
+  if (invoicesResult.error) throw invoicesResult.error;
+  if (quotesResult.error) throw quotesResult.error;
 
   const invoices = invoicesResult.data || [];
   const quotes = quotesResult.data || [];
@@ -390,6 +407,9 @@ export const generateRevenueByCustomerReport = async (
       amount_paid_base,
       customer:customers_enhanced(id, customer_name, email)
     `)
+    // Exclude void/cancelled — a stale amount_paid on a voided invoice is not realized
+    // revenue (EXP-014), matching generateRevenueByCaseReport so the surfaces reconcile.
+    .not('status', 'in', `(${RECEIVABLE_INVOICE_EXCLUDED_STATUSES.map((s) => `"${s}"`).join(',')})`)
     .is('deleted_at', null)
     .gte('invoice_date', dateFrom)
     .lte('invoice_date', dateTo);
