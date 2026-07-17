@@ -3,9 +3,8 @@ import { sanitizeFilterValue } from './postgrestSanitizer';
 import { buildExpenseSearchOr } from './searchResolvers';
 import { logger } from './logger';
 import type { Database } from '../types/database.types';
-import { createFinancialTransaction } from './financialService';
 import { resolveRateContext, getBaseCurrency, getCurrencyDecimals } from './currencyService';
-import { convertToBase, baseAmount, roundMoney } from './financialMath';
+import { convertToBase, baseAmount } from './financialMath';
 import { currentTenantToday } from './tenantToday';
 
 type ExpenseInsert = Database['public']['Tables']['expenses']['Insert'];
@@ -370,82 +369,17 @@ export const submitExpense = async (id: string, submittedBy: string) => {
   return data;
 };
 
-export const approveExpense = async (id: string, approvedBy: string) => {
-  const { data: expense, error: fetchError } = await supabase
-    .from('expenses')
-    .select('amount, description, currency, exchange_rate, rate_source, amount_base, status, created_by, expense_date, tax_amount, tax_amount_base')
-    .eq('id', id)
-    .maybeSingle();
-
-  if (fetchError) throw fetchError;
-  if (!expense) {
-    throw new Error(`Expense ${id} not found`);
-  }
-
-  // State-machine guard: only a pending expense is approvable. Together with the
-  // partial unique index on financial_transactions(reference_type, reference_id)
-  // this makes the EXP-001 double-post impossible — a re-approval aborts here, and
-  // even a race that slips through cannot insert a second ledger row.
-  if (expense.status !== 'pending') {
-    throw new Error(`Only a pending expense can be approved (current status: ${expense.status ?? 'unknown'}).`);
-  }
-
-  // Segregation of duties: the approver must not be the creator (EXP-008).
-  if (expense.created_by && expense.created_by === approvedBy) {
-    throw new Error('You cannot approve an expense you created.');
-  }
-
-  const { data, error } = await supabase
-    .from('expenses')
-    .update({
-      status: 'approved',
-      approved_by: approvedBy,
-      approved_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .eq('status', 'pending')
-    .select()
-    .maybeSingle();
-
+export const approveExpense = async (id: string, _approvedBy?: string) => {
+  // Approval is ONE atomic server transaction (approve_expense, SECURITY DEFINER):
+  // it stamps status=approved / approved_by=auth.uid() / approved_at, posts the GL
+  // accrual at the EXPENSE date (EXP-024), and writes the input-VAT 'purchase' row
+  // (EXP-027/EXP-032) — all-or-nothing. The old browser-side read→update→ledger→VAT
+  // sequence could half-apply on a mid-sequence failure or double-post on a race
+  // (EXP-001). SoD (creator≠approver), the pending-state guard, and tenant/role authz
+  // are enforced inside the RPC; _approvedBy is retained for call-site compatibility
+  // but ignored (the DB derives the approver from auth.uid()).
+  const { data, error } = await supabase.rpc('approve_expense', { p_expense_id: id });
   if (error) throw error;
-  if (!data) {
-    throw new Error('Expense was no longer pending; approval aborted.');
-  }
-
-  // Post the ledger entry at the EXPENSE date (not the approval date) so every
-  // period report buckets it consistently (EXP-024).
-  await createFinancialTransaction({
-    transaction_date: (expense.expense_date ?? (await currentTenantToday())).slice(0, 10),
-    amount: expense.amount,
-    transaction_type: 'expense',
-    description: `Expense approved: ${expense.description ?? ''}`,
-    reference_type: 'expense',
-    reference_id: id,
-    currency: expense.currency ?? undefined,
-    exchange_rate: expense.exchange_rate ?? undefined,
-    rate_source: expense.rate_source ?? undefined,
-    amount_base: expense.amount_base ?? undefined,
-  });
-
-  // Input VAT: write a 'purchase' VAT row (the type the VAT engine reads) with the
-  // real tax amount + economic period, regardless of case linkage (EXP-027/EXP-032).
-  // No-op until the form captures tax_amount (EXP-005), but correct once it does.
-  const taxAmount = Number(expense.tax_amount ?? 0);
-  if (taxAmount > 0) {
-    await createExpenseVATRecord({
-      recordId: id,
-      // Store the DOCUMENT-currency tax to match the sale/purchase writers
-      // (createVATRecordFromInvoice/Purchase) so calculateVATForPeriod's
-      // SUM(sale) - SUM(purchase) stays on one consistent basis.
-      vatAmount: taxAmount,
-      netAmount: Number(expense.amount ?? 0),
-      taxAmount,
-      expenseDate: expense.expense_date ?? null,
-      currency: expense.currency ?? null,
-      exchangeRate: expense.exchange_rate ?? null,
-    });
-  }
-
   return data;
 };
 
@@ -734,50 +668,9 @@ export const getExpensesByCategory = async (filters?: {
     .sort((a, b) => b.amount - a.amount);
 };
 
-// createFinancialTransaction now lives in financialService (shared, fail-fast):
-// a failed ledger write throws so approveExpense aborts instead of silently
-// leaving the books out of balance.
-
-/**
- * Records input VAT for an approved expense as a 'purchase' row — the record_type
- * the VAT engine actually reads (calculateVATForPeriod sums sale/purchase only) —
- * with the real tax amount and economic period, so input-VAT reclaim works
- * (EXP-027 / EXP-032). Replaces the old always-zero, case-gated 'expense' stub.
- */
-const createExpenseVATRecord = async (args: {
-  recordId: string;
-  vatAmount: number;
-  netAmount: number;
-  taxAmount: number;
-  expenseDate: string | null;
-  currency: string | null;
-  exchangeRate: number | null;
-}) => {
-  const vatRate = args.netAmount > 0 ? Math.round((args.taxAmount / args.netAmount) * 10000) / 100 : 0;
-  const taxPeriod = (args.expenseDate ?? (await currentTenantToday())).slice(0, 7); // YYYY-MM
-  const baseCurrency = await getBaseCurrency();
-  const baseDp = await getCurrencyDecimals(baseCurrency);
-  const rate = args.exchangeRate ?? 1;
-  const payload = {
-    record_type: 'purchase',
-    record_id: args.recordId,
-    vat_amount: args.vatAmount,
-    vat_rate: vatRate,
-    tax_period: taxPeriod,
-    currency: args.currency ?? baseCurrency,
-    exchange_rate: rate,
-    vat_amount_base: roundMoney(args.vatAmount * rate, baseDp),
-    taxable_amount_base: roundMoney(args.netAmount * rate, baseDp),
-  } as Database['public']['Tables']['vat_records']['Insert'];
-
-  const { error } = await supabase.from('vat_records').insert([payload]);
-  if (error) {
-    logger.error('Error creating expense VAT record:', error);
-    // Input-VAT posting failures must be LOUD: a silently missing purchase row
-    // understates the reclaim on the filed return (Phase-0 posture).
-    throw error;
-  }
-};
+// The GL accrual and the input-VAT 'purchase' row are now posted inside the
+// approve_expense RPC (one atomic transaction), so the former client-side
+// createFinancialTransaction call and createExpenseVATRecord helper were removed.
 
 export const expensesService = {
   getNextExpenseNumber,

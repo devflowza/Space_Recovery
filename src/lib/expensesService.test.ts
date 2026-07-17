@@ -24,7 +24,6 @@ import {
   approveExpense,
   getExpenseStats,
 } from './expensesService';
-import { getBaseCurrency, getCurrencyDecimals } from './currencyService';
 import { currentTenantToday } from './tenantToday';
 
 /** Thenable query builder: select/in/gte/lte are chainable; awaiting yields {data}. */
@@ -233,64 +232,34 @@ describe('archiveExpense / deleteExpense (EXP-018/EXP-006 — admin-gated atomic
   });
 });
 
-describe('expense input-VAT posting (Phase 0 money dimensions)', () => {
-  const expenseReader = (expense: Record<string, unknown>) => {
-    const b: Record<string, unknown> = {
-      select: vi.fn(() => b),
-      eq: vi.fn(() => b),
-      maybeSingle: vi.fn().mockResolvedValue({ data: expense, error: null }),
-    };
-    return b;
-  };
-  const approveUpdate = () => {
-    const b: Record<string, unknown> = {
-      update: vi.fn(() => b),
-      eq: vi.fn(() => b),
-      select: vi.fn(() => b),
-      maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'e1', status: 'approved' }, error: null }),
-    };
-    return b;
-  };
-  const vatInsert = (captured: { payload?: Record<string, unknown> }, error: unknown = null) => ({
-    insert: vi.fn((rows: Array<Record<string, unknown>>) => {
-      captured.payload = rows[0];
-      return Promise.resolve({ error });
-    }),
-  });
-  const pendingExpense = {
-    amount: 100, description: 'x', currency: 'EUR', exchange_rate: 0.41, rate_source: 'manual',
-    amount_base: 41, status: 'pending', created_by: 'u-creator', expense_date: '2026-06-15',
-    tax_amount: 5, tax_amount_base: 2.05,
-  };
+describe('approveExpense (EXP-001 — atomic approval via approve_expense RPC)', () => {
+  // Approval now stamps the expense, posts the GL accrual, and writes the input-VAT
+  // 'purchase' row in ONE server transaction (SECURITY DEFINER). The client is a thin
+  // pass-through — it must not read-then-update the expense from the browser (the old
+  // multi-statement path that could half-apply on a mid-sequence failure / double-post
+  // on a race). SoD (creator≠approver) and the pending-state guard are enforced in the DB.
+  it('calls approve_expense with the expense id and returns the updated row', async () => {
+    rpc.mockResolvedValueOnce({ data: { id: 'e1', status: 'approved' }, error: null });
 
-  it('posts purchase VAT with currency, frozen rate and base amounts', async () => {
-    vi.mocked(getBaseCurrency).mockResolvedValue('OMR');
-    vi.mocked(getCurrencyDecimals).mockResolvedValue(3);
-    const captured: { payload?: Record<string, unknown> } = {};
-    from
-      .mockReturnValueOnce(expenseReader({ ...pendingExpense }))
-      .mockReturnValueOnce(approveUpdate())
-      .mockReturnValueOnce(vatInsert(captured));
+    const res = await approveExpense('e1', 'u-approver');
+
+    expect(rpc).toHaveBeenCalledWith('approve_expense', { p_expense_id: 'e1' });
+    expect(res).toEqual({ id: 'e1', status: 'approved' });
+  });
+
+  it('performs no client-side expense read/update (ledger + VAT are atomic in the RPC)', async () => {
+    rpc.mockResolvedValueOnce({ data: { id: 'e1', status: 'approved' }, error: null });
 
     await approveExpense('e1', 'u-approver');
 
-    expect(captured.payload).toMatchObject({
-      record_type: 'purchase', record_id: 'e1', currency: 'EUR', exchange_rate: 0.41,
-      vat_amount: 5,
-      vat_amount_base: 2.05,     // roundMoney(5 * 0.41, 3)
-      taxable_amount_base: 41,   // roundMoney(100 * 0.41, 3)
-    });
+    expect(from).not.toHaveBeenCalled();
   });
 
-  it('THROWS when the vat_records insert fails (no more silent input-VAT loss)', async () => {
-    vi.mocked(getBaseCurrency).mockResolvedValue('OMR');
-    vi.mocked(getCurrencyDecimals).mockResolvedValue(3);
-    const captured: { payload?: Record<string, unknown> } = {};
-    from
-      .mockReturnValueOnce(expenseReader({ ...pendingExpense }))
-      .mockReturnValueOnce(approveUpdate())
-      .mockReturnValueOnce(vatInsert(captured, { message: 'boom' }));
+  it('surfaces the RPC guard error (SoD / non-pending / unauthorized) to the caller', async () => {
+    rpc.mockResolvedValueOnce({ data: null, error: { message: 'You cannot approve an expense you created' } });
 
-    await expect(approveExpense('e1', 'u-approver')).rejects.toMatchObject({ message: 'boom' });
+    await expect(approveExpense('e1', 'u-approver')).rejects.toMatchObject({
+      message: expect.stringContaining('cannot approve'),
+    });
   });
 });
