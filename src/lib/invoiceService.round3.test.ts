@@ -9,20 +9,32 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 //              silent DB error there (postgrest returns it, does not throw) would
 //              otherwise leave old+new rows active and print doubled line items.
 
-const { state, fromMock } = vi.hoisted(() => {
+const { state, fromMock, rpcMock } = vi.hoisted(() => {
   const state: {
     quoteRow: Record<string, unknown> | null;
     claimReturnsRow: boolean;
     invoiceRow: Record<string, unknown>;
-    lineItemDeleteError: { message: string } | null;
+    saveError: { message: string } | null;
     inserted: Record<string, unknown[]>;
   } = {
     quoteRow: null,
     claimReturnsRow: true,
     invoiceRow: {},
-    lineItemDeleteError: null,
+    saveError: null,
     inserted: {},
   };
+
+  // Persistence for create + update now goes through the atomic save_invoice_with_lines
+  // RPC. It returns the invoice row, or surfaces state.saveError so we can assert the
+  // client aborts on a failed atomic write (the whole txn rolls back server-side).
+  const rpcMock = vi.fn(async (fn: string) => {
+    if (fn === 'save_invoice_with_lines') {
+      return state.saveError
+        ? { data: null, error: state.saveError }
+        : { data: { id: 'inv-new', invoice_number: null, ...state.invoiceRow }, error: null };
+    }
+    return { data: 'X-1', error: null };
+  });
 
   const fromMock = vi.fn((table: string) => {
     const flags = { didUpdate: false, didInsert: false, didSelect: false };
@@ -58,26 +70,22 @@ const { state, fromMock } = vi.hoisted(() => {
       return { data: { id: 'li-1', sort_order: 0 }, error: null };
     });
     (chain as { then: unknown }).then = (resolve: (v: unknown) => unknown) => {
-      // The invoice_line_items soft-delete is `.update().eq()` (no .select()).
-      if (table === 'invoice_line_items' && flags.didUpdate && !flags.didSelect) {
-        return resolve({ data: null, error: state.lineItemDeleteError });
-      }
       if (table === 'quote_items') return resolve({ data: [], error: null });
       return resolve({ data: [{ id: 'li-1', sort_order: 0 }], error: null });
     };
     return chain;
   });
 
-  return { state, fromMock };
+  return { state, fromMock, rpcMock };
 });
 
 vi.mock('./supabaseClient', () => ({
-  supabase: { from: fromMock, rpc: vi.fn(async () => ({ data: 'X-1', error: null })), auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'u-1' } } })) } },
+  supabase: { from: fromMock, rpc: rpcMock, auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'u-1' } } })) } },
   resolveTenantId: vi.fn(async () => 't-1'),
 }));
 vi.mock('./taxDocumentService', () => ({
   computeDocumentTotals: vi.fn(async () => ({ computation: { lines: [] }, subtotal: 0, taxAmount: 0, totalAmount: 0, placeOfSupplySubdivisionId: null })),
-  persistDocumentTaxLines: vi.fn(async () => undefined),
+  buildDocumentTaxLineRefRows: vi.fn(() => []),
   issueTaxDocument: vi.fn(async () => ({})),
 }));
 vi.mock('./currencyService', () => ({
@@ -97,9 +105,16 @@ beforeEach(() => {
   state.quoteRow = null;
   state.claimReturnsRow = true;
   state.invoiceRow = {};
-  state.lineItemDeleteError = null;
+  state.saveError = null;
   for (const k of Object.keys(state.inserted)) delete state.inserted[k];
+  rpcMock.mockClear();
 });
+
+/** create-mode calls to the atomic save_invoice_with_lines RPC. */
+const createCalls = () =>
+  rpcMock.mock.calls.filter(
+    ([fn, args]) => fn === 'save_invoice_with_lines' && (args as { p_mode?: string })?.p_mode === 'create',
+  );
 
 describe('convertQuoteToInvoice — Finding 2: idempotent conversion (no duplicate invoice)', () => {
   it('rejects an already-converted quote WITHOUT creating a second invoice', async () => {
@@ -107,7 +122,7 @@ describe('convertQuoteToInvoice — Finding 2: idempotent conversion (no duplica
     state.claimReturnsRow = false; // the compare-and-set matches 0 rows
 
     await expect(convertQuoteToInvoice('q-1', 'tax_invoice', '2026-08-01')).rejects.toThrow(/already been converted/i);
-    expect(state.inserted['invoices'] ?? []).toHaveLength(0);
+    expect(createCalls()).toHaveLength(0);
   });
 
   it('converts a fresh quote and creates exactly one invoice when the claim succeeds', async () => {
@@ -115,22 +130,32 @@ describe('convertQuoteToInvoice — Finding 2: idempotent conversion (no duplica
     state.claimReturnsRow = true;
 
     await convertQuoteToInvoice('q-1', 'tax_invoice', '2026-08-01');
-    expect(state.inserted['invoices'] ?? []).toHaveLength(1);
+    expect(createCalls()).toHaveLength(1);
   });
 });
 
-describe('updateInvoice — Finding 3: line-item soft-delete error aborts the edit', () => {
-  it('throws (and does not insert new line items) when clearing the old items fails', async () => {
+describe('updateInvoice — Finding 3 (superseded by #52): a failed atomic write aborts the edit', () => {
+  it('throws when the atomic save RPC fails, and never touches invoice_line_items from the client', async () => {
     state.invoiceRow = {
       status: 'draft', payment_status: 'unpaid', invoice_type: 'tax_invoice',
       total_amount: 100, amount_paid: 0, balance_due: 100, due_date: null,
       currency: 'INR', exchange_rate: 1, rate_source: 'derived', customer_id: 'cust-1', company_id: null,
     };
-    state.lineItemDeleteError = { message: 'permission denied for table invoice_line_items' };
+    // The line-item soft-delete + re-insert now live inside the RPC transaction, so a
+    // DB failure there surfaces as the RPC error — and rolls the whole edit back.
+    state.saveError = { message: 'permission denied for table invoice_line_items' };
 
     await expect(
       updateInvoice('inv-1', { tax_rate: 5 }, [{ description: 'x', quantity: 1, unit_price: 100 }] as never),
     ).rejects.toThrow(/permission denied/i);
-    expect(state.inserted['invoice_line_items'] ?? []).toHaveLength(0);
+
+    // The atomic RPC was the write path...
+    expect(
+      rpcMock.mock.calls.some(
+        ([fn, args]) => fn === 'save_invoice_with_lines' && (args as { p_mode?: string })?.p_mode === 'update',
+      ),
+    ).toBe(true);
+    // ...and the client did NOT do its own line-item DML (that lived in the old path).
+    expect(fromMock.mock.calls.every(([t]) => t !== 'invoice_line_items')).toBe(true);
   });
 });

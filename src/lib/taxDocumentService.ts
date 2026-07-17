@@ -410,6 +410,60 @@ export async function persistDocumentTaxLines(args: {
   if (error) throw error;
 }
 
+/**
+ * Builds the document_tax_lines payload for the atomic `save_invoice_with_lines`
+ * RPC. Same row shape as persistDocumentTaxLines, but each per-line row carries
+ * `line_item_ref` — the 0-based line index (== the item's sort_order) it anchors
+ * to — instead of a resolved line_item_id, and document-level rollups / the
+ * round-off line carry `line_item_ref: null`. tenant_id, document_type/id and the
+ * real line_item_id (from the freshly-inserted items) are injected server-side, so
+ * the client never needs the item ids up front — which is exactly what lets the
+ * item insert and this snapshot happen in one transaction.
+ */
+export function buildDocumentTaxLineRefRows(
+  computation: TaxComputation, rc: RateContext,
+): Array<Record<string, unknown>> {
+  const refOf = (sentinel: string | null): number | null => {
+    if (sentinel === null) return null;
+    const m = /^idx:(\d+)$/.exec(sentinel);
+    return m ? Number(m[1]) : null;
+  };
+  const rows: Array<Record<string, unknown>> = [...computation.rollups, ...computation.lines].map((l) => ({
+    line_item_ref: refOf(l.lineItemId),
+    component_code: l.componentCode,
+    component_label: l.componentLabel,
+    jurisdiction_ref: l.jurisdictionRef,
+    rate: l.rate,
+    taxable_base: l.taxableBase,
+    tax_amount: l.taxAmount,
+    currency: rc.documentCurrency,
+    exchange_rate: rc.rate,
+    tax_amount_base: convertToBase(l.taxAmount, rc.rate, rc.baseDecimals),
+    tax_treatment: l.taxTreatment,
+    treatment_reason_code: l.treatmentReasonCode,
+    regime_key: computation.trace.regimeKey,
+    plugin_version: computation.trace.pluginVersion,
+    pack_version_id: computation.trace.packVersionId,
+    rule_trace: l.lineItemId === null ? (computation.trace as unknown as Json) : null,
+    backfilled: false,
+    sequence: l.sequence,
+  }));
+  const roundOff = roundOffAdjustmentLine(computation);
+  if (roundOff) {
+    rows.push({
+      line_item_ref: null,
+      component_code: roundOff.componentCode, component_label: roundOff.componentLabel,
+      jurisdiction_ref: null, rate: roundOff.rate, taxable_base: roundOff.taxableBase, tax_amount: roundOff.taxAmount,
+      currency: rc.documentCurrency, exchange_rate: rc.rate,
+      tax_amount_base: convertToBase(roundOff.taxAmount, rc.rate, rc.baseDecimals),
+      tax_treatment: roundOff.taxTreatment, treatment_reason_code: roundOff.treatmentReasonCode,
+      regime_key: computation.trace.regimeKey, plugin_version: computation.trace.pluginVersion,
+      pack_version_id: computation.trace.packVersionId, rule_trace: null, backfilled: false, sequence: roundOff.sequence,
+    });
+  }
+  return rows;
+}
+
 export async function issueTaxDocument(
   docType: TaxDocumentType, docId: string, dryRun = false,
 ): Promise<IssueTaxDocumentResult> {

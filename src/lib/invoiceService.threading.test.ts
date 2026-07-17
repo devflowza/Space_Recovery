@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { computeTotalsSpy, insertedPayloads, fromMock } = vi.hoisted(() => {
-  const insertedPayloads: Record<string, unknown[]> = {};
+const { computeTotalsSpy, buildRefRowsSpy, rpcMock, fromMock } = vi.hoisted(() => {
   const computeTotalsSpy = vi.fn(async () => ({
     computation: {
       lines: [], rollups: [],
@@ -12,41 +11,40 @@ const { computeTotalsSpy, insertedPayloads, fromMock } = vi.hoisted(() => {
     subtotal: 8000, taxAmount: 1440, totalAmount: 9440,
     placeOfSupplySubdivisionId: 'sub-ka',
   }));
-  const rowFor = (table: string): unknown =>
-    table === 'invoices'
-      ? {
-          id: 'inv-1', invoice_number: null, due_date: null,
-          status: 'draft', payment_status: 'unpaid', invoice_type: 'tax_invoice',
-          total_amount: 0, amount_paid: 0, balance_due: 0,
-          currency: 'INR', exchange_rate: 1, rate_source: 'derived',
-          customer_id: 'cust-existing', company_id: null,
-        }
-      : [{ id: 'li-1', sort_order: 0 }];
-  const fromMock = vi.fn((table: string) => {
+  const buildRefRowsSpy = vi.fn(() => [] as unknown[]);
+  const invoiceRow = {
+    id: 'inv-1', invoice_number: null, due_date: null,
+    status: 'draft', payment_status: 'unpaid', invoice_type: 'tax_invoice',
+    total_amount: 0, amount_paid: 0, balance_due: 0,
+    currency: 'INR', exchange_rate: 1, rate_source: 'derived',
+    customer_id: 'cust-existing', company_id: null,
+  };
+  // Persistence now goes through the atomic save_invoice_with_lines RPC; it returns
+  // the invoice row (create + update alike). Other RPCs (e.g. numbering) fall through.
+  const rpcMock = vi.fn(async (fn: string) =>
+    fn === 'save_invoice_with_lines' ? { data: invoiceRow, error: null } : { data: 'X-1', error: null });
+  const fromMock = vi.fn(() => {
     const chain: Record<string, unknown> = {};
-    chain.insert = vi.fn((payload: unknown) => {
-      (insertedPayloads[table] ??= []).push(Array.isArray(payload) ? payload[0] : payload);
-      return chain;
-    });
+    chain.insert = vi.fn(() => chain);
     chain.update = vi.fn(() => chain);
     chain.eq = vi.fn(() => chain);
     chain.is = vi.fn(() => chain);
     chain.select = vi.fn(() => chain);
-    chain.maybeSingle = vi.fn(async () => ({ data: rowFor(table), error: null }));
+    chain.maybeSingle = vi.fn(async () => ({ data: invoiceRow, error: null }));
     (chain as { then: unknown }).then = (resolve: (v: unknown) => unknown) =>
-      resolve({ data: rowFor(table), error: null });
+      resolve({ data: invoiceRow, error: null });
     return chain;
   });
-  return { computeTotalsSpy, insertedPayloads, fromMock };
+  return { computeTotalsSpy, buildRefRowsSpy, rpcMock, fromMock };
 });
 
 vi.mock('./supabaseClient', () => ({
-  supabase: { from: fromMock, rpc: vi.fn(async () => ({ data: 'X-1', error: null })), auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'u-1' } } })) } },
+  supabase: { from: fromMock, rpc: rpcMock, auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'u-1' } } })) } },
   resolveTenantId: vi.fn(async () => 't-1'),
 }));
 vi.mock('./taxDocumentService', () => ({
   computeDocumentTotals: computeTotalsSpy,
-  persistDocumentTaxLines: vi.fn(async () => undefined),
+  buildDocumentTaxLineRefRows: buildRefRowsSpy,
   issueTaxDocument: vi.fn(async () => ({})),
 }));
 vi.mock('./currencyService', () => ({
@@ -67,8 +65,15 @@ import { createInvoice, updateInvoice } from './invoiceService';
 
 beforeEach(() => {
   computeTotalsSpy.mockClear();
-  for (const k of Object.keys(insertedPayloads)) delete insertedPayloads[k];
+  buildRefRowsSpy.mockClear();
+  rpcMock.mockClear();
 });
+
+/** The header jsonb the client handed the atomic save_invoice_with_lines RPC. */
+const savedHeader = (): Record<string, unknown> => {
+  const call = rpcMock.mock.calls.find(([fn]) => fn === 'save_invoice_with_lines');
+  return (call?.[1] as { p_header: Record<string, unknown> }).p_header;
+};
 
 describe('createInvoice — buyer threading + place-of-supply persistence (P4 S2)', () => {
   it('passes customerId/companyId to computeDocumentTotals and persists place_of_supply_subdivision_id', async () => {
@@ -80,7 +85,7 @@ describe('createInvoice — buyer threading + place-of-supply persistence (P4 S2
       expect.objectContaining({ customerId: 'cust-1', companyId: null }),
       expect.anything(),
     );
-    expect(insertedPayloads['invoices'][0]).toMatchObject({ place_of_supply_subdivision_id: 'sub-ka' });
+    expect(savedHeader()).toMatchObject({ place_of_supply_subdivision_id: 'sub-ka' });
   });
 });
 

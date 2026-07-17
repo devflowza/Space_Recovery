@@ -1,5 +1,5 @@
 import { supabase, resolveTenantId } from './supabaseClient';
-import type { Database } from '../types/database.types';
+import type { Database, Json } from '../types/database.types';
 import { checkRateLimit, RATE_LIMITS } from './rateLimiter';
 import { logAuditTrail } from './auditTrailService';
 import { logInvoiceCreated, logInvoicePayment } from './chainOfCustodyService';
@@ -10,7 +10,7 @@ import { sanitizeFilterValue } from './postgrestSanitizer';
 import { calculateInvoiceTotalsBase, convertToBase, roundMoney } from './financialMath';
 import { resolveRateContext, getBaseCurrency, getCurrencyDecimals } from './currencyService';
 import type { RateContext } from './currencyService';
-import { computeDocumentTotals, persistDocumentTaxLines, issueTaxDocument } from './taxDocumentService';
+import { computeDocumentTotals, buildDocumentTaxLineRefRows, issueTaxDocument } from './taxDocumentService';
 import { deriveInvoiceStatus } from './invoiceStatus';
 import { getInvoiceEditability, RESTRICTED_EDITABLE_FIELDS } from './invoicePermissions';
 import { toDateInputValue } from './format';
@@ -20,7 +20,6 @@ import { currentTenantToday } from './tenantToday';
 type InvoiceInsert = Database['public']['Tables']['invoices']['Insert'];
 type InvoiceUpdate = Database['public']['Tables']['invoices']['Update'];
 type InvoiceLineItemRow = Database['public']['Tables']['invoice_line_items']['Row'];
-type InvoiceLineItemInsert = Database['public']['Tables']['invoice_line_items']['Insert'];
 
 // FK-safe UUID fields. `template_id`, `accounting_locale_id`, `currency_id` removed from invoices
 // schema in v1.0.0 — kept here only because callers may still pass them via Partial<Invoice>.
@@ -516,16 +515,7 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
     place_of_supply_subdivision_id: placeOfSupplySubdivisionId,
   };
 
-  const sanitizedInvoice = sanitizeUuidFields(invoiceToInsert);
-
-  const { data: invoiceData, error: invoiceError } = await supabase
-    .from('invoices')
-    .insert([sanitizedInvoice])
-    .select()
-    .maybeSingle();
-
-  if (invoiceError) throw invoiceError;
-  if (!invoiceData) throw new Error('Invoice insert returned no row');
+  const headerPayload = sanitizeUuidFields(invoiceToInsert);
 
   // Source each item's tax_amount/total FROM the kernel's per-line component rows
   // (tagged `idx:<index>`) so the stored line items and the document_tax_lines
@@ -541,11 +531,13 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
     };
   };
 
-  const itemsWithInvoiceId: InvoiceLineItemInsert[] = items.map((item, index) => {
+  // invoice_id is injected server-side (the header is inserted in the same txn);
+  // each row carries sort_order = its idx so the tax-line refs resolve. tenant_id
+  // is stamped by the set_*_tenant_and_audit trigger.
+  const itemRows = items.map((item, index) => {
     const { taxAmount: itemTax, taxableBase } = lineAggregate(index);
     return {
       tenant_id: tenantId,
-      invoice_id: invoiceData.id,
       description: item.description,
       quantity: item.quantity,
       unit_price: item.unit_price,
@@ -562,27 +554,23 @@ export const createInvoice = async (invoice: Partial<Invoice>, items: InvoiceIte
     };
   });
 
-  const { data: insertedItems, error: itemsError } = await supabase
-    .from('invoice_line_items')
-    .insert(itemsWithInvoiceId)
-    .select('id, sort_order');
+  const taxRows = buildDocumentTaxLineRefRows(computation, rc);
 
-  if (itemsError) throw itemsError;
-
-  // Ordered id array aligned to the kernel's `idx:<n>` sentinels (sort_order === n),
-  // so persistDocumentTaxLines relabels each component row to its real line-item id.
-  const insertedItemIds: Array<string | null> = items.map(
-    (_, index) => (insertedItems ?? []).find((r) => r.sort_order === index)?.id ?? null,
-  );
-
-  await persistDocumentTaxLines({
-    tenantId,
-    documentType: 'invoice',
-    documentId: invoiceData.id,
-    computation,
-    rc,
-    lineItemIds: insertedItemIds,
+  // ATOMIC persistence (finding #52): the header, its line items, and the
+  // document_tax_lines snapshot are written in ONE server transaction. A failure
+  // anywhere rolls the whole thing back — never a half-created invoice with orphaned
+  // or missing line items, or a tax snapshot that no longer ties to the header.
+  const { data: invoiceData, error: invoiceError } = await supabase.rpc('save_invoice_with_lines', {
+    p_mode: 'create',
+    // create mints its own id server-side; the SQL arg is nullable (generated types type it as string).
+    p_invoice_id: null as unknown as string,
+    p_header: headerPayload as unknown as Json,
+    p_items: itemRows as unknown as Json,
+    p_tax_lines: taxRows as unknown as Json,
   });
+
+  if (invoiceError) throw invoiceError;
+  if (!invoiceData) throw new Error('Invoice insert returned no row');
 
   await logAuditTrail('create', 'invoices', invoiceData.id, {}, { invoice_number: invoiceData.invoice_number, total_amount: totalAmount });
 
@@ -749,16 +737,6 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
       place_of_supply_subdivision_id: placeOfSupplySubdivisionId,
     };
 
-    // postgrest-js surfaces DB errors in the result rather than throwing, so this
-    // soft-delete's error MUST be inspected: if it silently failed (constraint /
-    // RLS denial) while the insert below still ran, the old + new line-item rows
-    // would both stay active and the PDF would print doubled items. Abort instead.
-    const { error: clearItemsError } = await supabase
-      .from('invoice_line_items')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('invoice_id', id);
-    if (clearItemsError) throw clearItemsError;
-
     const tenantId = await resolveTenantId();
     // Same kernel-sourced per-line mapping as createInvoice: tax_amount/total come
     // from computation.lines so the item rows and document_tax_lines never diverge.
@@ -770,11 +748,12 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
         taxableBase: rows[0].taxableBase,
       };
     };
-    const itemsWithInvoiceId: InvoiceLineItemInsert[] = items.map((item, index) => {
+    // invoice_id is injected server-side; each row carries sort_order = its idx so
+    // the tax-line refs resolve; tenant_id is stamped by trigger.
+    const itemRows = items.map((item, index) => {
       const { taxAmount: itemTax, taxableBase } = lineAggregate(index);
       return {
         tenant_id: tenantId,
-        invoice_id: id,
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
@@ -790,29 +769,35 @@ export const updateInvoice = async (id: string, invoice: Partial<Invoice>, items
         sort_order: index,
       };
     });
+    const taxRows = buildDocumentTaxLineRefRows(computation, rc);
 
-    const { data: insertedItems, error: itemsError } = await supabase
-      .from('invoice_line_items')
-      .insert(itemsWithInvoiceId)
-      .select('id, sort_order');
+    // Defense-in-depth (Issue 2): an edit must never clear the invoice's ownership links.
+    const headerPayload = dropEmptyKeys(
+      updateData as Record<string, unknown>,
+      ['case_id', 'customer_id', 'company_id', 'created_by'],
+    ) as InvoiceUpdate;
 
-    if (itemsError) throw itemsError;
-
-    const insertedItemIds: Array<string | null> = items.map(
-      (_, index) => (insertedItems ?? []).find((r) => r.sort_order === index)?.id ?? null,
-    );
-
-    await persistDocumentTaxLines({
-      tenantId,
-      documentType: 'invoice',
-      documentId: id,
-      computation,
-      rc,
-      lineItemIds: insertedItemIds,
+    // ATOMIC replace (finding #52): the header update, the line-item soft-delete +
+    // re-insert, and the document_tax_lines snapshot replace run in ONE server
+    // transaction. The old browser-side sequence (soft-delete -> insert -> persist
+    // tax -> header update) could half-apply: a failure after the soft-delete left
+    // the invoice with the old items gone and the new ones missing (or a tax snapshot
+    // that no longer tied to the header). That corruption window no longer exists.
+    const { data, error } = await supabase.rpc('save_invoice_with_lines', {
+      p_mode: 'update',
+      p_invoice_id: id,
+      p_header: headerPayload as unknown as Json,
+      p_items: itemRows as unknown as Json,
+      p_tax_lines: taxRows as unknown as Json,
     });
+    if (error) throw error;
+
+    await logAuditTrail('update', 'invoices', id, {}, headerPayload as Record<string, unknown>);
+    return data;
   }
 
-  // Defense-in-depth (Issue 2): an edit must never clear the invoice's ownership links.
+  // No-items edit (header-only): a single header UPDATE — no line-item churn, so no
+  // atomicity concern. Defense-in-depth: never clear the invoice's ownership links.
   updateData = dropEmptyKeys(
     updateData as Record<string, unknown>,
     ['case_id', 'customer_id', 'company_id', 'created_by'],

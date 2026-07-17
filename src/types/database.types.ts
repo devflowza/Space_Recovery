@@ -19582,6 +19582,88 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      save_invoice_with_lines: {
+        Args: {
+          p_header: Json
+          p_invoice_id: string
+          p_items: Json
+          p_mode: string
+          p_tax_lines: Json
+        }
+        Returns: {
+          amount_paid: number | null
+          amount_paid_base: number | null
+          balance_due: number | null
+          balance_due_base: number | null
+          bank_account_id: string | null
+          business_unit_id: string | null
+          buyer_address: Json | null
+          buyer_tax_number: string | null
+          buyer_tax_number_label: string | null
+          case_id: string | null
+          client_reference: string | null
+          company_id: string | null
+          converted_at: string | null
+          converted_from_quote_id: string | null
+          converted_to_invoice_id: string | null
+          created_at: string
+          created_by: string | null
+          credited_amount: number
+          credited_amount_base: number
+          currency: string | null
+          customer_id: string | null
+          deleted_at: string | null
+          discount_amount: number | null
+          discount_type: string
+          due_date: string | null
+          exchange_rate: number
+          expected_withholding: number | null
+          footer: string | null
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          invoice_type: string | null
+          is_proforma: boolean | null
+          legal_entity_id: string | null
+          notations: Json | null
+          notes: string | null
+          pack_version_id: string | null
+          paid_at: string | null
+          payment_status: string | null
+          place_of_supply_subdivision_id: string | null
+          proforma_invoice_id: string | null
+          rate_source: string
+          regime_snapshot: Json | null
+          reverse_charge: boolean | null
+          seller_tax_number: string | null
+          sent_at: string | null
+          status: string
+          status_id: string | null
+          subtotal: number | null
+          subtotal_base: number | null
+          supply_date: string | null
+          tax_amount: number | null
+          tax_amount_base: number | null
+          tax_inclusive: boolean
+          tax_rate: number | null
+          tax_regime_key: string | null
+          template_version_id: string | null
+          tenant_id: string
+          terms: string | null
+          title: string | null
+          total_amount: number | null
+          total_amount_base: number | null
+          updated_at: string
+          updated_by: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       search_donor_drives: {
         Args: { p_criteria: Json }
         Returns: {
