@@ -12,7 +12,11 @@ import {
   type LabelEntity,
 } from '../../lib/labelPrefsService';
 import { LabelPrintOptionsFields, type LabelPrintOverrides } from './LabelPrintOptionsFields';
-import { LABELS_PER_CHUNK, type BulkPrintProgress } from '../../lib/pdf/labels/bulkLabelPrint';
+import {
+  LABELS_PER_CHUNK,
+  printInventoryLabelsBulk,
+  type BulkPrintProgress,
+} from '../../lib/pdf/labels/bulkLabelPrint';
 import { probeQz } from '../../lib/pdf/labels/qzPrintService';
 
 /** Minimal identity a bulk target needs; entity mappers handle the rest. */
@@ -247,8 +251,10 @@ export function BulkLabelPrintModal<T extends BulkTarget>({
 }
 
 function defaultRunner(entity: LabelEntity) {
+  // bulkLabelPrint is already statically imported (for LABELS_PER_CHUNK); it keeps
+  // pdfmake lazy via its own deeper dynamic import of labelPrintService, so pulling
+  // printInventoryLabelsBulk in statically here changes no chunk boundary.
   return async (items: BulkTarget[], run: BulkRun) => {
-    const { printInventoryLabelsBulk } = await import('../../lib/pdf/labels/bulkLabelPrint');
     if (entity === 'inventory') return printInventoryLabelsBulk(items as never, run);
     throw new Error('stock/case must pass onRun'); // stock supplies its own runner (price/location mapping)
   };
