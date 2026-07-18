@@ -11,7 +11,7 @@
  */
 
 import type { ReceiptData } from '../types';
-import { formatDate } from '../utils';
+import { formatDate, formatDateTime } from '../utils';
 import type { CompactLabelContent } from './compactLabelDocument';
 import type { LabelSizePreset } from './labelSizes';
 import { sizeClass } from './labelSizes';
@@ -113,12 +113,25 @@ export function stockLabelContent(item: StockLabelItem, opts: StockLabelOptions,
   };
 }
 
-export function inventoryLabelContent(item: InventoryItemWithDetails, fields?: LabelFields): MappedLabel {
+export interface InventoryLabelOptions {
+  /** When the label is being printed — supplied by the print path; the mapper
+   *  stays pure so the Studio preview and unit tests can inject a fixed date. */
+  printedAt?: Date;
+}
+
+export function inventoryLabelContent(
+  item: InventoryItemWithDetails,
+  fields?: LabelFields,
+  opts?: InventoryLabelOptions,
+): MappedLabel {
   const id = item.item_number ?? item.name ?? 'ITEM';
   const specRaw = [item.brand?.name, item.device_type?.name, item.capacity?.name].filter(present).join(' · ');
   const lines = [
     on(fields, 'spec') && present(specRaw) ? specRaw : null,
     on(fields, 'location') ? item.storage_location?.name ?? null : null,
+    // added/printed default OFF, so they render only when explicitly enabled.
+    fields?.added === true && present(item.created_at) ? formatDate(item.created_at) : null,
+    fields?.printed === true && opts?.printedAt ? formatDateTime(opts.printedAt) : null,
   ].filter(present);
 
   return {

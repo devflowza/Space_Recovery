@@ -20,7 +20,7 @@ import type { LabelEntity, LabelEntityConfig } from '../../labelPrefsService';
 import type { LanguageCode } from '../../documentTranslations';
 import type { InventoryItemWithDetails } from '../../inventory/inventoryLabelTypes';
 import type { StockLabelItem, StockLabelOptions, MappedLabel } from './labelContent';
-import type { CompactLabelContent } from './compactLabelDocument';
+import type { CompactLabelContent, CompactLabelOptions } from './compactLabelDocument';
 import type { LabelSizePreset } from './labelSizes';
 import { getLabelSize, supportsBarcode } from './labelSizes';
 
@@ -58,6 +58,15 @@ export async function resolveLabelConfig(entity: LabelEntity, opts: LabelPrintOp
   }
   const sizeId = opts.sizeId ?? base.sizeId;
   return { ...base, sizeId, copies: opts.copies ?? base.copies, size: getLabelSize(sizeId) };
+}
+
+/** The engine options (id alignment + optional icon) derived from a resolved config. */
+function emitOptions(cfg: ResolvedLabelConfig): CompactLabelOptions {
+  return {
+    idAlign: cfg.idAlign,
+    icon: cfg.showIcon ? cfg.icon ?? null : null,
+    iconPosition: cfg.iconPosition,
+  };
 }
 
 /**
@@ -133,12 +142,13 @@ async function buildAndEmit(
   fontFamily: string,
   output: LabelOutput,
   filename: string,
+  opts: CompactLabelOptions = {},
 ): Promise<void> {
   const [{ createPdfWithFonts }, { buildCompactLabelDocument }] = await Promise.all([
     import('../fonts'),
     import('./compactLabelDocument'),
   ]);
-  const pdf = createPdfWithFonts(buildCompactLabelDocument(labels, size, fontFamily));
+  const pdf = createPdfWithFonts(buildCompactLabelDocument(labels, size, fontFamily, opts));
   if (output === 'download') pdf.download(filename);
   else if (output === 'open') pdf.open();
   else {
@@ -156,12 +166,13 @@ export async function buildLabelBlobUrl(
   labels: CompactLabelContent[],
   size: LabelSizePreset,
   fontFamily: string,
+  opts: CompactLabelOptions = {},
 ): Promise<string> {
   const [{ createPdfWithFonts }, { buildCompactLabelDocument }] = await Promise.all([
     import('../fonts'),
     import('./compactLabelDocument'),
   ]);
-  const pdf = createPdfWithFonts(buildCompactLabelDocument(labels, size, fontFamily));
+  const pdf = createPdfWithFonts(buildCompactLabelDocument(labels, size, fontFamily, opts));
   return new Promise<string>((resolve, reject) => {
     pdf.getBlob(
       (blob: Blob) => resolve(URL.createObjectURL(blob)),
@@ -177,12 +188,13 @@ export async function buildLabelBase64(
   labels: CompactLabelContent[],
   size: LabelSizePreset,
   fontFamily: string,
+  opts: CompactLabelOptions = {},
 ): Promise<string> {
   const [{ createPdfWithFonts }, { buildCompactLabelDocument }] = await Promise.all([
     import('../fonts'),
     import('./compactLabelDocument'),
   ]);
-  const pdf = createPdfWithFonts(buildCompactLabelDocument(labels, size, fontFamily));
+  const pdf = createPdfWithFonts(buildCompactLabelDocument(labels, size, fontFamily, opts));
   return new Promise<string>((resolve) => pdf.getBase64((data: string) => resolve(data)));
 }
 
@@ -226,7 +238,7 @@ export async function printCaseLabels(
     });
     const labels = withCopies(images, cfg.copies);
     const caseNo = data.caseData.case_number ?? data.caseData.case_no;
-    await buildAndEmit(labels, cfg.size, ctx.fontFamily, opts.output ?? 'print', `Labels_${caseNo}.pdf`);
+    await buildAndEmit(labels, cfg.size, ctx.fontFamily, opts.output ?? 'print', `Labels_${caseNo}.pdf`, emitOptions(cfg));
     return { success: true };
   } catch (error) {
     console.error('Error generating case labels:', error);
@@ -264,7 +276,7 @@ export async function printStockLabelBatch(
       entries.length === 1
         ? `stock-label-${entries[0].item.sku ?? entries[0].item.name.replace(/\s+/g, '-')}.pdf`
         : 'stock-labels.pdf';
-    await buildAndEmit(labels, cfg.size, fontFamily, opts.output ?? 'print', filename);
+    await buildAndEmit(labels, cfg.size, fontFamily, opts.output ?? 'print', filename, emitOptions(cfg));
     return { success: true };
   } catch (error) {
     console.error('Error generating stock labels:', error);
@@ -282,13 +294,14 @@ export async function printInventoryLabels(
     const { fontFamily, isRTL } = await resolveLabelFont();
     const cfg = await resolveLabelConfig('inventory', opts);
 
-    const mapped = items.map((item) => inventoryLabelContent(item, cfg.fields));
+    const printedAt = new Date();
+    const mapped = items.map((item) => inventoryLabelContent(item, cfg.fields, { printedAt }));
     const images = await resolveLabelImages(mapped, cfg.size, { isRTL, showQr: cfg.showQr, showBarcode: cfg.showBarcode });
     const labels = withCopies(images, cfg.copies);
     const first = items[0];
     const filename =
       items.length === 1 ? `inv-label-${first.item_number ?? first.id}.pdf` : 'inventory-labels.pdf';
-    await buildAndEmit(labels, cfg.size, fontFamily, opts.output ?? 'print', filename);
+    await buildAndEmit(labels, cfg.size, fontFamily, opts.output ?? 'print', filename, emitOptions(cfg));
     return { success: true };
   } catch (error) {
     console.error('Error generating inventory labels:', error);

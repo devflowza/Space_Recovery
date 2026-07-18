@@ -9,6 +9,7 @@ export interface InventoryItemWithDetails {
   model?: string | null;
   barcode?: string | null;
   qr_value?: string | null;
+  created_at?: string | null;
   brand?: { name: string } | null;
   device_type?: { name: string } | null;
   capacity?: { name: string } | null;

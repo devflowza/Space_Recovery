@@ -19,6 +19,7 @@ import {
   invalidateCompanySettingsCache,
 } from './companySettingsService';
 import { DEFAULT_LABEL_SIZE_ID, LABEL_SIZE_PRESETS } from './pdf/labels/labelSizes';
+import type { IdAlign, IconPosition } from './pdf/labels/labelSizes';
 
 export type LabelEntity = 'case' | 'stock' | 'inventory';
 
@@ -53,6 +54,8 @@ export const LABEL_FIELDS: Record<LabelEntity, LabelFieldDef[]> = {
   inventory: [
     { key: 'spec', label: 'Spec (brand / type / capacity)', default: true },
     { key: 'location', label: 'Storage location', default: true },
+    { key: 'added', label: 'Date added', default: false },
+    { key: 'printed', label: 'Printed date/time', default: false },
   ],
 };
 
@@ -64,6 +67,10 @@ export interface LabelEntityConfig {
   showQr: boolean;
   showBarcode: boolean;
   fields: Record<string, boolean>;
+  idAlign: IdAlign;
+  showIcon: boolean;
+  iconPosition: IconPosition;
+  icon?: string;
 }
 
 export interface LabelPrintingPrefs {
@@ -79,6 +86,14 @@ export interface LabelPrintingPrefs {
   showBarcode: Record<LabelEntity, boolean>;
   /** Optional content-field visibility, per entity. */
   fields: Record<LabelEntity, Record<string, boolean>>;
+  /** Identifier horizontal alignment, per entity (strip + card). */
+  idAlign: Record<LabelEntity, IdAlign>;
+  /** Whether the shared brand icon is stamped on this entity's label. */
+  showIcon: Record<LabelEntity, boolean>;
+  /** Corner the brand icon prints in, per entity. */
+  iconPosition: Record<LabelEntity, IconPosition>;
+  /** Shared 1-bit brand icon (data URL), tenant-level. */
+  icon?: string;
 }
 
 const ENTITIES: LabelEntity[] = ['case', 'stock', 'inventory'];
@@ -95,6 +110,9 @@ function buildDefaults(): LabelPrintingPrefs {
   const showQr = {} as Record<LabelEntity, boolean>;
   const showBarcode = {} as Record<LabelEntity, boolean>;
   const fields = {} as Record<LabelEntity, Record<string, boolean>>;
+  const idAlign = {} as Record<LabelEntity, IdAlign>;
+  const showIcon = {} as Record<LabelEntity, boolean>;
+  const iconPosition = {} as Record<LabelEntity, IconPosition>;
   for (const e of ENTITIES) {
     sizes[e] = DEFAULT_LABEL_SIZE_ID;
     autoPrint[e] = false;
@@ -102,8 +120,11 @@ function buildDefaults(): LabelPrintingPrefs {
     showQr[e] = true;
     showBarcode[e] = true;
     fields[e] = defaultLabelFields(e);
+    idAlign[e] = 'left';
+    showIcon[e] = false;
+    iconPosition[e] = 'top-right';
   }
-  return { sizes, autoPrint, copies, showQr, showBarcode, fields };
+  return { sizes, autoPrint, copies, showQr, showBarcode, fields, idAlign, showIcon, iconPosition, icon: undefined };
 }
 
 export const DEFAULT_LABEL_PRINTING_PREFS: LabelPrintingPrefs = buildDefaults();
@@ -112,6 +133,24 @@ function normalizeSizeId(value: unknown): string {
   return typeof value === 'string' && LABEL_SIZE_PRESETS.some((p) => p.id === value)
     ? value
     : DEFAULT_LABEL_SIZE_ID;
+}
+
+const ID_ALIGNS: IdAlign[] = ['left', 'center', 'right'];
+const ICON_POSITIONS: IconPosition[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+const MAX_ICON_DATAURL_BYTES = 65536;
+
+function normalizeIdAlign(value: unknown): IdAlign {
+  return ID_ALIGNS.includes(value as IdAlign) ? (value as IdAlign) : 'left';
+}
+function normalizeIconPosition(value: unknown): IconPosition {
+  return ICON_POSITIONS.includes(value as IconPosition) ? (value as IconPosition) : 'top-right';
+}
+function normalizeIcon(value: unknown): string | undefined {
+  return typeof value === 'string' &&
+    value.startsWith('data:image/') &&
+    value.length <= MAX_ICON_DATAURL_BYTES
+    ? value
+    : undefined;
 }
 
 function normalizeCopies(value: unknown): number {
@@ -139,6 +178,10 @@ export function normalizeLabelPrintingPrefs(value: unknown): LabelPrintingPrefs 
     showQr?: Record<string, unknown>;
     showBarcode?: Record<string, unknown>;
     fields?: Record<string, unknown>;
+    idAlign?: Record<string, unknown>;
+    showIcon?: Record<string, unknown>;
+    iconPosition?: Record<string, unknown>;
+    icon?: unknown;
   };
   const coerce = (v: unknown, fallback: boolean): boolean => (typeof v === 'boolean' ? v : fallback);
   const prefs = buildDefaults();
@@ -149,7 +192,11 @@ export function normalizeLabelPrintingPrefs(value: unknown): LabelPrintingPrefs 
     prefs.showQr[e] = coerce(raw.showQr?.[e], true);
     prefs.showBarcode[e] = coerce(raw.showBarcode?.[e], true);
     prefs.fields[e] = normalizeFields(e, raw.fields?.[e]);
+    prefs.idAlign[e] = normalizeIdAlign(raw.idAlign?.[e]);
+    prefs.showIcon[e] = raw.showIcon?.[e] === true;
+    prefs.iconPosition[e] = normalizeIconPosition(raw.iconPosition?.[e]);
   }
+  prefs.icon = normalizeIcon(raw.icon);
   return prefs;
 }
 
@@ -162,6 +209,10 @@ export function labelEntityConfig(prefs: LabelPrintingPrefs, entity: LabelEntity
     showQr: prefs.showQr[entity],
     showBarcode: prefs.showBarcode[entity],
     fields: prefs.fields[entity],
+    idAlign: prefs.idAlign[entity],
+    showIcon: prefs.showIcon[entity],
+    iconPosition: prefs.iconPosition[entity],
+    icon: prefs.icon,
   };
 }
 

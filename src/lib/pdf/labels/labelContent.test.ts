@@ -167,6 +167,35 @@ describe('inventoryLabelContent', () => {
     expect(mapped.content.lines).not.toContain('WD · HDD · 1 TB');
     expect(mapped.content.lines).toContain('Bin D-12');
   });
+
+  it('adds the created date only when the "added" field is enabled', () => {
+    const withDate = { ...item, created_at: '2026-07-01T09:00:00Z' };
+    expect(inventoryLabelContent(withDate).content.lines).not.toContain('01/07/2026');
+    expect(inventoryLabelContent(withDate, { spec: false, location: false, added: true }).content.lines).toContain('01/07/2026');
+  });
+
+  it('adds the printed date/time only when the "printed" field is enabled and a time is supplied', () => {
+    const at = new Date('2026-07-18T14:32:00Z');
+    const off = inventoryLabelContent(item, { spec: false, location: false, printed: true });
+    expect(off.content.lines).toEqual([]); // enabled but no printedAt supplied → nothing
+    const on = inventoryLabelContent(item, { spec: false, location: false, printed: true }, { printedAt: at });
+    expect(on.content.lines?.some((l) => l.startsWith('18/07/2026'))).toBe(true);
+    expect(on.content.lines?.some((l) => l.includes(':'))).toBe(true); // carries a time
+  });
+
+  it('orders lines spec → location → added → printed', () => {
+    const at = new Date('2026-07-18T14:32:00Z');
+    const mapped = inventoryLabelContent(
+      { ...item, created_at: '2026-07-01T09:00:00Z' },
+      { spec: true, location: true, added: true, printed: true },
+      { printedAt: at },
+    );
+    const lines = mapped.content.lines ?? [];
+    expect(lines[0]).toBe('WD · HDD · 1 TB');
+    expect(lines[1]).toBe('Bin D-12');
+    expect(lines[2]).toBe('01/07/2026');
+    expect(lines[3]?.startsWith('18/07/2026')).toBe(true);
+  });
 });
 
 describe('label field toggles', () => {

@@ -112,4 +112,56 @@ describe('normalizeLabelPrintingPrefs', () => {
     expect(cfg.fields.price).toBe(false);
     expect(cfg.fields.category).toBe(true);
   });
+
+  it('defaults idAlign=left, showIcon=false, iconPosition=top-right for every entity', () => {
+    const p = normalizeLabelPrintingPrefs(undefined);
+    expect(p.idAlign).toEqual({ case: 'left', stock: 'left', inventory: 'left' });
+    expect(p.showIcon).toEqual({ case: false, stock: false, inventory: false });
+    expect(p.iconPosition).toEqual({ case: 'top-right', stock: 'top-right', inventory: 'top-right' });
+    expect(p.icon).toBeUndefined();
+  });
+
+  it('coerces invalid idAlign / iconPosition back to their defaults and keeps valid ones', () => {
+    const p = normalizeLabelPrintingPrefs({
+      idAlign: { inventory: 'center', case: 'sideways' },
+      iconPosition: { inventory: 'bottom-left', stock: 'nope' },
+      showIcon: { inventory: true, case: 'yes' },
+    });
+    expect(p.idAlign.inventory).toBe('center');
+    expect(p.idAlign.case).toBe('left');
+    expect(p.iconPosition.inventory).toBe('bottom-left');
+    expect(p.iconPosition.stock).toBe('top-right');
+    expect(p.showIcon.inventory).toBe(true);
+    expect(p.showIcon.case).toBe(false);
+  });
+
+  it('keeps a small valid icon data URL but rejects a non-data-URL or an oversized blob', () => {
+    const ok = 'data:image/png;base64,AAAA';
+    expect(normalizeLabelPrintingPrefs({ icon: ok }).icon).toBe(ok);
+    expect(normalizeLabelPrintingPrefs({ icon: 'https://x/y.png' }).icon).toBeUndefined();
+    expect(normalizeLabelPrintingPrefs({ icon: 'data:image/png;base64,' + 'A'.repeat(70000) }).icon).toBeUndefined();
+  });
+
+  it('the inventory date fields default OFF and survive normalization', () => {
+    const p = normalizeLabelPrintingPrefs(undefined);
+    expect(p.fields.inventory.added).toBe(false);
+    expect(p.fields.inventory.printed).toBe(false);
+    const enabled = normalizeLabelPrintingPrefs({ fields: { inventory: { added: true } } });
+    expect(enabled.fields.inventory.added).toBe(true);
+    expect(enabled.fields.inventory.printed).toBe(false);
+  });
+
+  it('labelEntityConfig projects idAlign / showIcon / iconPosition / icon', () => {
+    const prefs = normalizeLabelPrintingPrefs({
+      idAlign: { inventory: 'center' },
+      showIcon: { inventory: true },
+      iconPosition: { inventory: 'bottom-right' },
+      icon: 'data:image/png;base64,AAAA',
+    });
+    const cfg = labelEntityConfig(prefs, 'inventory');
+    expect(cfg.idAlign).toBe('center');
+    expect(cfg.showIcon).toBe(true);
+    expect(cfg.iconPosition).toBe('bottom-right');
+    expect(cfg.icon).toBe('data:image/png;base64,AAAA');
+  });
 });
