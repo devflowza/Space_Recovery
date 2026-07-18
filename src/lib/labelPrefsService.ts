@@ -70,6 +70,8 @@ export interface LabelEntityConfig {
   idAlign: IdAlign;
   showIcon: boolean;
   iconPosition: IconPosition;
+  /** Identifier font-size multiplier (0.5–2.0; 1 = auto-fit default). */
+  idScale: number;
   icon?: string;
 }
 
@@ -92,6 +94,8 @@ export interface LabelPrintingPrefs {
   showIcon: Record<LabelEntity, boolean>;
   /** Corner the brand icon prints in, per entity. */
   iconPosition: Record<LabelEntity, IconPosition>;
+  /** Identifier font-size multiplier per entity (0.5–2.0; default 1). */
+  idScale: Record<LabelEntity, number>;
   /** Shared 1-bit brand icon (data URL), tenant-level. */
   icon?: string;
 }
@@ -113,6 +117,7 @@ function buildDefaults(): LabelPrintingPrefs {
   const idAlign = {} as Record<LabelEntity, IdAlign>;
   const showIcon = {} as Record<LabelEntity, boolean>;
   const iconPosition = {} as Record<LabelEntity, IconPosition>;
+  const idScale = {} as Record<LabelEntity, number>;
   for (const e of ENTITIES) {
     sizes[e] = DEFAULT_LABEL_SIZE_ID;
     autoPrint[e] = false;
@@ -123,8 +128,9 @@ function buildDefaults(): LabelPrintingPrefs {
     idAlign[e] = 'left';
     showIcon[e] = false;
     iconPosition[e] = 'top-right';
+    idScale[e] = 1;
   }
-  return { sizes, autoPrint, copies, showQr, showBarcode, fields, idAlign, showIcon, iconPosition, icon: undefined };
+  return { sizes, autoPrint, copies, showQr, showBarcode, fields, idAlign, showIcon, iconPosition, idScale, icon: undefined };
 }
 
 export const DEFAULT_LABEL_PRINTING_PREFS: LabelPrintingPrefs = buildDefaults();
@@ -151,6 +157,9 @@ function normalizeIcon(value: unknown): string | undefined {
     value.length <= MAX_ICON_DATAURL_BYTES
     ? value
     : undefined;
+}
+function normalizeIdScale(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.max(0.5, Math.min(2, value)) : 1;
 }
 
 function normalizeCopies(value: unknown): number {
@@ -181,6 +190,7 @@ export function normalizeLabelPrintingPrefs(value: unknown): LabelPrintingPrefs 
     idAlign?: Record<string, unknown>;
     showIcon?: Record<string, unknown>;
     iconPosition?: Record<string, unknown>;
+    idScale?: Record<string, unknown>;
     icon?: unknown;
   };
   const coerce = (v: unknown, fallback: boolean): boolean => (typeof v === 'boolean' ? v : fallback);
@@ -195,6 +205,7 @@ export function normalizeLabelPrintingPrefs(value: unknown): LabelPrintingPrefs 
     prefs.idAlign[e] = normalizeIdAlign(raw.idAlign?.[e]);
     prefs.showIcon[e] = raw.showIcon?.[e] === true;
     prefs.iconPosition[e] = normalizeIconPosition(raw.iconPosition?.[e]);
+    prefs.idScale[e] = normalizeIdScale(raw.idScale?.[e]);
   }
   prefs.icon = normalizeIcon(raw.icon);
   return prefs;
@@ -212,6 +223,7 @@ export function labelEntityConfig(prefs: LabelPrintingPrefs, entity: LabelEntity
     idAlign: prefs.idAlign[entity],
     showIcon: prefs.showIcon[entity],
     iconPosition: prefs.iconPosition[entity],
+    idScale: prefs.idScale[entity],
     icon: prefs.icon,
   };
 }
