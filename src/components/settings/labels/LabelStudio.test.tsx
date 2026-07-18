@@ -53,4 +53,12 @@ describe('LabelStudio alignment + icon', () => {
     renderStudio();
     expect(await screen.findByRole('switch', { name: /show icon on this label/i })).toBeDisabled();
   });
+
+  it('saves the chosen identifier size', async () => {
+    renderStudio();
+    fireEvent.click(await screen.findByRole('button', { name: /identifier size xl/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save & deploy/i }));
+    await waitFor(() => expect(setPrefs).toHaveBeenCalled());
+    expect(setPrefs.mock.calls[0][0].idScale.inventory).toBe(1.5);
+  });
 });

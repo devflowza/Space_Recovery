@@ -164,4 +164,17 @@ describe('normalizeLabelPrintingPrefs', () => {
     expect(cfg.iconPosition).toBe('bottom-right');
     expect(cfg.icon).toBe('data:image/png;base64,AAAA');
   });
+
+  it('defaults idScale to 1 per entity and clamps out-of-range / non-finite values', () => {
+    expect(normalizeLabelPrintingPrefs(undefined).idScale).toEqual({ case: 1, stock: 1, inventory: 1 });
+    const p = normalizeLabelPrintingPrefs({ idScale: { inventory: 1.5, case: 5, stock: 'big' } });
+    expect(p.idScale.inventory).toBe(1.5);
+    expect(p.idScale.case).toBe(2);
+    expect(p.idScale.stock).toBe(1);
+  });
+
+  it('labelEntityConfig projects idScale', () => {
+    const prefs = normalizeLabelPrintingPrefs({ idScale: { inventory: 1.25 } });
+    expect(labelEntityConfig(prefs, 'inventory').idScale).toBe(1.25);
+  });
 });
