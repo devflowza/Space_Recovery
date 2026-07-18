@@ -40,6 +40,7 @@ function mergeEntityConfig(prefs: LabelPrintingPrefs, entity: LabelEntity, cfg: 
     idAlign: { ...prefs.idAlign, [entity]: cfg.idAlign },
     showIcon: { ...prefs.showIcon, [entity]: cfg.showIcon },
     iconPosition: { ...prefs.iconPosition, [entity]: cfg.iconPosition },
+    idScale: { ...prefs.idScale, [entity]: cfg.idScale },
     icon: cfg.icon,
   };
 }
@@ -154,7 +155,7 @@ export const LabelStudio: React.FC<LabelStudioProps> = ({ entity, label, onBack 
       clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entity, cfg.sizeId, cfg.showQr, cfg.showBarcode, cfg.idAlign, cfg.showIcon, cfg.iconPosition, cfg.icon, JSON.stringify(cfg.fields)]);
+  }, [entity, cfg.sizeId, cfg.showQr, cfg.showBarcode, cfg.idAlign, cfg.idScale, cfg.showIcon, cfg.iconPosition, cfg.icon, JSON.stringify(cfg.fields)]);
 
   useEffect(
     () => () => {
@@ -306,6 +307,34 @@ export const LabelStudio: React.FC<LabelStudioProps> = ({ entity, label, onBack 
                   ].join(' ')}
                 >
                   <Icon className="h-4 w-4" />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Identifier size */}
+          <div className="space-y-2 border-t border-slate-100 pt-4">
+            <p className="text-sm font-semibold text-slate-800">Identifier size</p>
+            <p className="-mt-1 text-xs text-slate-500">Bias the code larger or smaller (it still auto-fits the stock).</p>
+            <div className="inline-flex overflow-hidden rounded-lg border border-slate-200">
+              {([
+                { v: 0.85, label: 'S' },
+                { v: 1, label: 'Normal' },
+                { v: 1.25, label: 'L' },
+                { v: 1.5, label: 'XL' },
+              ] as const).map(({ v, label: sizeLabel }) => (
+                <button
+                  key={sizeLabel}
+                  type="button"
+                  aria-label={`Identifier size ${sizeLabel}`}
+                  aria-pressed={cfg.idScale === v}
+                  onClick={() => patch({ idScale: v })}
+                  className={[
+                    'flex h-9 min-w-[3rem] items-center justify-center px-3 text-sm font-medium transition-colors',
+                    cfg.idScale === v ? 'bg-primary text-primary-foreground' : 'bg-white text-slate-600 hover:bg-slate-50',
+                  ].join(' ')}
+                >
+                  {sizeLabel}
                 </button>
               ))}
             </div>
