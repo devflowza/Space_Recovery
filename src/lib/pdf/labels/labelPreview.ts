@@ -63,6 +63,7 @@ function previewOptions(config: LabelEntityConfig): CompactLabelOptions {
     idAlign: config.idAlign,
     icon: config.showIcon ? config.icon ?? null : null,
     iconPosition: config.iconPosition,
+    idScale: config.idScale,
   };
 }
 

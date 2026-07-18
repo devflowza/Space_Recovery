@@ -66,6 +66,7 @@ function emitOptions(cfg: ResolvedLabelConfig): CompactLabelOptions {
     idAlign: cfg.idAlign,
     icon: cfg.showIcon ? cfg.icon ?? null : null,
     iconPosition: cfg.iconPosition,
+    idScale: cfg.idScale,
   };
 }
 
