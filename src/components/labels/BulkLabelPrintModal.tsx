@@ -191,13 +191,20 @@ export function BulkLabelPrintModal<T extends BulkTarget>({
 
         {running && progress && (
           <div className="space-y-1">
-            <div className="h-2 w-full rounded-full bg-slate-200">
+            <div
+              className="h-2 w-full rounded-full bg-slate-200"
+              role="progressbar"
+              aria-label={`Printing ${entity} labels`}
+              aria-valuemin={0}
+              aria-valuemax={progress.total}
+              aria-valuenow={progress.done}
+            >
               <div
                 className="h-2 rounded-full bg-primary transition-all"
                 style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }}
               />
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500" aria-live="polite">
               Printing {progress.done}/{progress.total} (batch {progress.chunk}/{progress.chunks})…
             </p>
           </div>
