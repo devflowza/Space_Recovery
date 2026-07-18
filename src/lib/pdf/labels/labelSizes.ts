@@ -80,3 +80,9 @@ export const LABEL_SIZE_GROUPS: readonly { cls: LabelSizeClass; label: string }[
   { cls: 'square', label: 'Square' },
   { cls: 'card', label: 'Card — wider stock' },
 ];
+
+/** Identifier horizontal alignment (strip + card layouts; square stays centered). */
+export type IdAlign = 'left' | 'center' | 'right';
+
+/** Corner placement for the optional label icon. */
+export type IconPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';

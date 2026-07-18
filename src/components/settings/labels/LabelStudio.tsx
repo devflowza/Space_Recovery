@@ -35,6 +35,10 @@ function mergeEntityConfig(prefs: LabelPrintingPrefs, entity: LabelEntity, cfg: 
     showQr: { ...prefs.showQr, [entity]: cfg.showQr },
     showBarcode: { ...prefs.showBarcode, [entity]: cfg.showBarcode },
     fields: { ...prefs.fields, [entity]: cfg.fields },
+    idAlign: { ...prefs.idAlign, [entity]: cfg.idAlign },
+    showIcon: { ...prefs.showIcon, [entity]: cfg.showIcon },
+    iconPosition: { ...prefs.iconPosition, [entity]: cfg.iconPosition },
+    icon: cfg.icon,
   };
 }
 
