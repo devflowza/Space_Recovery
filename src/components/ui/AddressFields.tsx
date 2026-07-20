@@ -46,6 +46,7 @@ export function AddressFields({ value, onChange, countryId, disabled }: {
           {t('ui.addressLine1', 'Address line 1')}
         </label>
         <input id="addr-line1" className={inputCls} disabled={disabled}
+          placeholder={t('ui.addressLine1Placeholder', 'Street address, P.O. box, etc.')}
           value={value.address_line1} onChange={(e) => set({ address_line1: e.target.value })} />
       </div>
       <div>
@@ -53,6 +54,7 @@ export function AddressFields({ value, onChange, countryId, disabled }: {
           {t('ui.addressLine2', 'Address line 2')}
         </label>
         <input id="addr-line2" className={inputCls} disabled={disabled}
+          placeholder={t('ui.addressLine2Placeholder', 'Apartment, suite, unit, floor, etc.')}
           value={value.address_line2} onChange={(e) => set({ address_line2: e.target.value })} />
       </div>
       {subdivisions.length > 0 && (
@@ -63,7 +65,7 @@ export function AddressFields({ value, onChange, countryId, disabled }: {
           <select id="addr-subdivision" className={inputCls} disabled={disabled}
             value={value.subdivision_id ?? ''}
             onChange={(e) => set({ subdivision_id: e.target.value || null })}>
-            <option value="">—</option>
+            <option value="">{t('ui.selectStateRegion', 'Select state / region')}</option>
             {subdivisions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>

@@ -9,7 +9,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
 import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { AddressFields, type AddressValue } from '../../components/ui/AddressFields';
-import { Plus, Search, Filter, Mail, Phone, Building2, MapPin, Users, UserCheck, Clock, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Layers } from 'lucide-react';
+import { Plus, Search, Filter, Mail, Phone, Building2, MapPin, Globe, Users, UserCheck, Clock, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import { formatDate } from '../../lib/format';
 import { KpiRow } from '../../components/templates/KpiRow';
 import { PageHeaderSlot } from '../../components/layout/PageHeaderSlot';
@@ -701,28 +701,32 @@ export const CompaniesListPage: React.FC = () => {
         }}
         title="Add New Company"
         subtitle="Enter the company details to get started."
-        maxWidth="3xl"
+        icon={Building2}
+        size="lg"
+        showClose
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <Input
             label="Company Name"
             value={formData.company_name}
             onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
             required
+            placeholder="Enter company name"
           />
 
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="VAT/Tax Number"
+              label="VAT / Tax Number"
               value={formData.tax_number}
               onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
+              placeholder="e.g. 1234567890"
             />
             <SearchableSelect
               label="Industry"
               value={formData.industry_id}
               onChange={(value) => setFormData({ ...formData, industry_id: value })}
               options={[{ id: '', name: 'Not specified' }, ...industries.map((i) => ({ id: i.id, name: i.name }))]}
-              placeholder="Select Industry"
+              placeholder="Not specified"
             />
           </div>
 
@@ -732,11 +736,15 @@ export const CompaniesListPage: React.FC = () => {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="e.g. info@example.com"
+              leftIcon={<Mail className="w-4 h-4" />}
             />
             <Input
               label="Phone Number"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="e.g. +968 9123 4567"
+              leftIcon={<Phone className="w-4 h-4" />}
             />
           </div>
 
@@ -746,6 +754,7 @@ export const CompaniesListPage: React.FC = () => {
               value={formData.website}
               onChange={(e) => setFormData({ ...formData, website: e.target.value })}
               placeholder="https://example.com"
+              leftIcon={<Globe className="w-4 h-4" />}
             />
             <SearchableSelect
               label="Primary Contact"
@@ -793,10 +802,10 @@ export const CompaniesListPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setAddressNotesCollapsed((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors py-0.5"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors py-0.5"
             >
               {addressNotesCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-              Additional address notes
+              Additional address notes (optional)
             </button>
             {!addressNotesCollapsed && (
               <textarea
@@ -810,8 +819,8 @@ export const CompaniesListPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Internal Notes
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Internal Notes <span className="font-normal text-slate-400">(Optional)</span>
             </label>
             <textarea
               value={formData.notes}
@@ -830,7 +839,7 @@ export const CompaniesListPage: React.FC = () => {
             </div>
           )}
 
-          <div className="flex gap-3 justify-end pt-3 border-t">
+          <div className="flex gap-2.5 justify-end pt-3 border-t">
             <Button
               type="button"
               variant="secondary"
@@ -842,7 +851,14 @@ export const CompaniesListPage: React.FC = () => {
               Cancel
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? 'Creating...' : 'Create Company'}
+              {createMutation.isPending ? (
+                'Creating...'
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Add Company
+                </>
+              )}
             </Button>
           </div>
         </form>
@@ -857,9 +873,11 @@ export const CompaniesListPage: React.FC = () => {
         }}
         title="Edit Company"
         subtitle="Update the company details."
-        maxWidth="3xl"
+        icon={Building2}
+        size="lg"
+        showClose
       >
-        <form onSubmit={handleEditSubmit} className="space-y-4">
+        <form onSubmit={handleEditSubmit} className="space-y-3">
           <Input
             label="Company Name"
             value={formData.company_name}

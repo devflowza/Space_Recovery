@@ -14,12 +14,13 @@ import { validatePartyTaxNumberPure } from '../../lib/regimes/partyTaxValidation
 import { useAuth } from '../../contexts/AuthContext';
 import {
   User,
+  UserPlus,
   Mail,
+  MapPin,
   Building2,
   ChevronDown,
   ChevronUp,
   Loader2,
-  StickyNote,
 } from 'lucide-react';
 
 interface CustomerFormModalProps {
@@ -68,7 +69,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const queryClient = useQueryClient();
   const { profile } = useAuth();
   const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false);
-  const [addressNotesCollapsed, setAddressNotesCollapsed] = useState(true);
+  const [detailsCollapsed, setDetailsCollapsed] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const customerNameRef = useRef<HTMLInputElement>(null);
@@ -263,7 +264,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     });
     setErrors({});
     setTouched({});
-    setAddressNotesCollapsed(true);
+    setDetailsCollapsed(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -311,141 +312,146 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         subtitle="Enter customer details to get started."
         icon={User}
         size="lg"
+        showClose
         initialFocusRef={customerNameRef}
         closeOnBackdrop={false}
       >
-        {/* Flat compact layout — paired rows, no section chrome — sized to fit
-            the viewport without scrolling (Modal width/height standard). */}
+        {/* Reference layout (2026-07-20): flat paired rows sized to fit the
+            viewport with no scrolling; structured address + tax live behind
+            the collapsed disclosure so the at-rest form matches the mock. */}
         <form onSubmit={handleSubmit} className="space-y-3">
-              <Input
-                ref={customerNameRef}
-                label="Customer Name"
-                value={formData.customer_name}
-                onChange={(e) => handleFieldChange('customer_name', e.target.value)}
-                onBlur={() => handleBlur('customer_name')}
-                error={touched.customer_name ? errors.customer_name : undefined}
-                required
-                placeholder="Full name or business name"
-                leftIcon={<User className="w-4 h-4" />}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Input
-                  label="Email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleFieldChange('email', e.target.value)}
-                  onBlur={() => handleBlur('email')}
-                  error={touched.email ? errors.email : undefined}
-                  placeholder="customer@email.com"
-                  leftIcon={<Mail className="w-4 h-4" />}
-                />
-                <PhoneInput
-                  label="Mobile Number"
-                  value={formData.mobile_number}
-                  onChange={(val) => handleFieldChange('mobile_number', val)}
-                  countries={countries}
-                  selectedCountryId={formData.country_id}
-                />
-              </div>
-
-              <PhoneInput
-                label="Alternative Phone"
-                value={formData.phone_number}
-                onChange={(val) => handleFieldChange('phone_number', val)}
-                countries={countries}
-                selectedCountryId={formData.country_id}
-              />
+          <Input
+            ref={customerNameRef}
+            label="Name"
+            value={formData.customer_name}
+            onChange={(e) => handleFieldChange('customer_name', e.target.value)}
+            onBlur={() => handleBlur('customer_name')}
+            error={touched.customer_name ? errors.customer_name : undefined}
+            required
+            placeholder="Enter full name"
+            leftIcon={<User className="w-4 h-4" />}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <SearchableSelect
-                label="Customer Group"
-                value={formData.customer_group_id}
-                onChange={(value) => handleFieldChange('customer_group_id', value)}
-                options={[{ id: '', name: 'No group' }, ...customerGroups.map((g) => ({ id: g.id, name: g.name }))]}
-                placeholder="Select type"
-                usePortal
-              />
-              <SearchableSelect
-                label="Company"
-                value={formData.company_id}
-                onChange={(value) => handleFieldChange('company_id', value)}
-                options={[
-                  { id: '', name: 'No company' },
-                  ...companies.map((c) => ({
-                    id: c.id,
-                    name: `${c.company_name} (${c.company_number})`,
-                  })),
-                ]}
-                placeholder="No company"
-                onAddNew={() => setIsAddCompanyModalOpen(true)}
-                addNewLabel="Add New Company"
-                usePortal
-              />
+            <Input
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleFieldChange('email', e.target.value)}
+              onBlur={() => handleBlur('email')}
+              error={touched.email ? errors.email : undefined}
+              placeholder="e.g. info@example.com"
+              leftIcon={<Mail className="w-4 h-4" />}
+            />
+            <PhoneInput
+              label="Mobile Number"
+              value={formData.mobile_number}
+              onChange={(val) => handleFieldChange('mobile_number', val)}
+              countries={countries}
+              selectedCountryId={formData.country_id}
+              placeholder="e.g. 9123 4567"
+            />
+          </div>
+
+          <PhoneInput
+            label="Phone Number (Alternative)"
+            value={formData.phone_number}
+            onChange={(val) => handleFieldChange('phone_number', val)}
+            countries={countries}
+            selectedCountryId={formData.country_id}
+            placeholder="e.g. 9123 4567"
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <SearchableSelect
+              label="Customer Group"
+              value={formData.customer_group_id}
+              onChange={(value) => handleFieldChange('customer_group_id', value)}
+              options={[{ id: '', name: 'No group' }, ...customerGroups.map((g) => ({ id: g.id, name: g.name }))]}
+              placeholder="No group"
+              usePortal
+            />
+            <SearchableSelect
+              label="Company (Optional)"
+              value={formData.company_id}
+              onChange={(value) => handleFieldChange('company_id', value)}
+              options={[
+                { id: '', name: 'No Company' },
+                ...companies.map((c) => ({
+                  id: c.id,
+                  name: `${c.company_name} (${c.company_number})`,
+                })),
+              ]}
+              placeholder="No Company"
+              onAddNew={() => setIsAddCompanyModalOpen(true)}
+              addNewLabel="Add New Company"
+              usePortal
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <SearchableSelect
-                  label="Country"
-                  value={formData.country_id}
-                  onChange={(value) => {
-                    setFormData({ ...formData, country_id: value, city_id: '' });
-                  }}
-                  options={[{ id: '', name: 'Not specified' }, ...countries.map((c) => ({ id: c.id, name: c.name }))]}
-                  placeholder="Select country"
-                  usePortal
-                />
-                <SearchableSelect
-                  label="City"
-                  value={formData.city_id}
-                  onChange={(value) => handleFieldChange('city_id', value)}
-                  options={[{ id: '', name: 'Not specified' }, ...filteredCities.map((c) => ({ id: c.id, name: c.name }))]}
-                  placeholder="Select city"
-                  disabled={!formData.country_id}
-                  usePortal
-                />
-              </div>
+            <SearchableSelect
+              label="Country"
+              value={formData.country_id}
+              onChange={(value) => {
+                setFormData({ ...formData, country_id: value, city_id: '' });
+              }}
+              options={[{ id: '', name: 'Not specified' }, ...countries.map((c) => ({ id: c.id, name: c.name }))]}
+              placeholder="Select country"
+              usePortal
+            />
+            <SearchableSelect
+              label="City"
+              value={formData.city_id}
+              onChange={(value) => handleFieldChange('city_id', value)}
+              options={[{ id: '', name: 'Not specified' }, ...filteredCities.map((c) => ({ id: c.id, name: c.name }))]}
+              placeholder="Not specified"
+              disabled={!formData.country_id}
+              usePortal
+            />
+          </div>
 
-              <AddressFields
-                value={addressValue}
-                onChange={(next) => setFormData((f) => ({ ...f, ...next }))}
-                countryId={formData.country_id || null}
-              />
+          <Input
+            label="Address"
+            value={formData.address}
+            onChange={(e) => handleFieldChange('address', e.target.value)}
+            placeholder="Enter full address"
+            leftIcon={<MapPin className="w-4 h-4" />}
+          />
 
-              <div>
-                <label htmlFor="customer-tax-number" className="mb-1 block text-sm font-medium">
-                  {(countries.find((c) => c.id === formData.country_id) as { tax_number_label?: string | null } | undefined)
-                    ?.tax_number_label ?? 'Tax Registration Number'}
-                </label>
-                <input
-                  id="customer-tax-number"
-                  className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  value={formData.tax_number}
-                  onChange={(e) => handleFieldChange('tax_number', e.target.value)}
-                  onBlur={() => handleBlur('tax_number')}
+          <div>
+            <button
+              type="button"
+              onClick={() => setDetailsCollapsed((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors py-0.5"
+            >
+              {detailsCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+              Additional address & tax details (optional)
+            </button>
+            {!detailsCollapsed && (
+              <div className="mt-2 space-y-3">
+                <AddressFields
+                  value={addressValue}
+                  onChange={(next) => setFormData((f) => ({ ...f, ...next }))}
+                  countryId={formData.country_id || null}
                 />
-                {errors.tax_number && <p className="mt-1 text-sm text-danger">{errors.tax_number}</p>}
-              </div>
-
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setAddressNotesCollapsed((prev) => !prev)}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors py-0.5"
-                >
-                  {addressNotesCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-                  Additional address notes
-                </button>
-                {!addressNotesCollapsed && (
-                  <textarea
-                    value={formData.address}
-                    onChange={(e) => handleFieldChange('address', e.target.value)}
-                    rows={2}
-                    className="mt-1.5 w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm resize-none transition-shadow bg-white"
-                    placeholder="Legacy free-text address notes"
+                <div>
+                  <label htmlFor="customer-tax-number" className="mb-1 block text-sm font-medium">
+                    {(countries.find((c) => c.id === formData.country_id) as { tax_number_label?: string | null } | undefined)
+                      ?.tax_number_label ?? 'Tax Registration Number'}
+                  </label>
+                  <input
+                    id="customer-tax-number"
+                    className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={formData.tax_number}
+                    onChange={(e) => handleFieldChange('tax_number', e.target.value)}
+                    onBlur={() => handleBlur('tax_number')}
                   />
-                )}
+                  {errors.tax_number && <p className="mt-1 text-sm text-danger">{errors.tax_number}</p>}
+                </div>
               </div>
+            )}
+          </div>
 
           <label htmlFor="customer-portal-enabled" className="flex cursor-pointer select-none items-start gap-2.5">
             <input
@@ -457,14 +463,13 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             />
             <span>
               <span className="block text-sm font-medium text-slate-800">Enable Client Portal Access</span>
-              <span className="block text-xs text-slate-500">Allow this customer to view their cases online.</span>
+              <span className="block text-xs text-slate-500">Allow this customer to access the client portal.</span>
             </span>
           </label>
 
           <div>
-            <label htmlFor="customer-internal-notes" className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1">
-              <StickyNote className="w-3.5 h-3.5 text-slate-400" />
-              Internal Notes
+            <label htmlFor="customer-internal-notes" className="block text-sm font-medium text-slate-700 mb-1">
+              Internal Notes <span className="font-normal text-slate-400">(Optional)</span>
             </label>
             <textarea
               id="customer-internal-notes"
@@ -472,11 +477,10 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               onChange={(e) => handleFieldChange('notes', e.target.value)}
               rows={2}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm resize-none transition-shadow bg-white"
-              placeholder="Private notes visible only to staff"
+              placeholder="Add any internal notes..."
             />
           </div>
 
-          {/* ── Footer ── */}
           {createMutation.isError && (
             <div className="px-3 py-2 bg-danger-muted border border-danger/30 rounded-lg text-sm text-danger">
               {createMutation.error instanceof Error
@@ -485,31 +489,25 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-3 border-t border-slate-200">
-            <p className="text-xs text-slate-400">
-              <span className="text-danger">*</span> Required fields
-            </p>
-            <div className="flex gap-2.5">
-              <Button type="button" variant="secondary" size="sm" onClick={handleClose}>
-                Cancel
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200">
+            <Button type="button" variant="secondary" onClick={handleClose}>
+              Cancel
+            </Button>
+            <UsageLimitGuard limitKey="max_customers" showToast={true}>
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4 mr-1.5" />
+                    Create Customer
+                  </>
+                )}
               </Button>
-              <UsageLimitGuard limitKey="max_customers" showToast={true}>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={createMutation.isPending}
-                >
-                  {createMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Customer'
-                  )}
-                </Button>
-              </UsageLimitGuard>
-            </div>
+            </UsageLimitGuard>
           </div>
         </form>
       </Modal>
@@ -524,6 +522,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         title="Add New Company"
         icon={Building2}
         size="sm"
+        showClose
       >
         <form onSubmit={handleCreateCompany} className="space-y-4">
           <Input

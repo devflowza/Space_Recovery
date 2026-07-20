@@ -1,5 +1,6 @@
 import { useId, type ReactNode, type ElementType, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
 import { Dialog } from './Dialog';
 import { cn } from '../../lib/utils';
 
@@ -21,6 +22,10 @@ interface ModalProps {
    *  buttons + ESC + backdrop — the top-right X pattern was removed
    *  platform-wide 2026-07-02 (DESIGN.md → Overlays). */
   footer?: ReactNode;
+  /** Opt-in top-right X dismiss button (2026-07-20 party-form standard —
+   *  matches the reference modal chrome; overrides the 2026-07-02 removal
+   *  for modals that opt in). */
+  showClose?: boolean;
   ariaLabel?: string;
   initialFocusRef?: RefObject<HTMLElement | null>;
   closeOnBackdrop?: boolean;
@@ -65,6 +70,7 @@ export function Modal({
   headerAction,
   headerBadges,
   footer,
+  showClose = false,
   ariaLabel,
   initialFocusRef,
   closeOnBackdrop = true,
@@ -88,14 +94,32 @@ export function Modal({
       {title && (
         <div className="no-print flex items-center justify-between p-3 border-b border-border">
           <div className="flex items-center gap-3">
-            {Icon && <Icon className="w-5 h-5 text-primary" />}
+            {Icon && (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <Icon className="w-5 h-5 text-primary" />
+              </div>
+            )}
             <div>
               <h2 id={titleId} className="text-lg font-semibold text-slate-900">{title}</h2>
               {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
             </div>
             {headerBadges && <div className="flex items-center gap-2 ms-2">{headerBadges}</div>}
           </div>
-          {headerAction && <div className="flex items-center gap-2">{headerAction}</div>}
+          {(headerAction || showClose) && (
+            <div className="flex items-center gap-2">
+              {headerAction}
+              {showClose && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label={t('ui.close', 'Close')}
+                  className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
       <div className="p-4 overflow-y-auto flex-1">{children}</div>
