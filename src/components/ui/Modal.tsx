@@ -7,6 +7,8 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  /** Optional one-line helper under the title (e.g. "Enter customer details to get started."). */
+  subtitle?: string;
   children: ReactNode;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'large' | '2xl';
   maxWidth?: '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
@@ -47,6 +49,7 @@ export function Modal({
   isOpen,
   onClose,
   title,
+  subtitle,
   children,
   size = 'md',
   maxWidth,
@@ -78,7 +81,10 @@ export function Modal({
         <div className="no-print flex items-center justify-between p-3 border-b border-border">
           <div className="flex items-center gap-3">
             {Icon && <Icon className="w-5 h-5 text-primary" />}
-            <h2 id={titleId} className="text-lg font-semibold text-slate-900">{title}</h2>
+            <div>
+              <h2 id={titleId} className="text-lg font-semibold text-slate-900">{title}</h2>
+              {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+            </div>
             {headerBadges && <div className="flex items-center gap-2 ms-2">{headerBadges}</div>}
           </div>
           {headerAction && <div className="flex items-center gap-2">{headerAction}</div>}

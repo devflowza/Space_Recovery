@@ -16,14 +16,10 @@ import {
   User,
   Mail,
   Building2,
-  MapPin,
-  Settings,
   ChevronDown,
   ChevronUp,
-  Plus,
   Loader2,
   StickyNote,
-  Shield,
 } from 'lucide-react';
 
 interface CustomerFormModalProps {
@@ -64,31 +60,6 @@ interface FormErrors {
   tax_number?: string;
 }
 
-const SectionHeader: React.FC<{
-  icon: React.ElementType;
-  title: string;
-  collapsible?: boolean;
-  collapsed?: boolean;
-  onToggle?: () => void;
-}> = ({ icon: Icon, title, collapsible, collapsed, onToggle }) => (
-  <div
-    className={`flex items-center justify-between py-2 ${collapsible ? 'cursor-pointer select-none' : ''}`}
-    onClick={collapsible ? onToggle : undefined}
-  >
-    <div className="flex items-center gap-2">
-      <div className="w-6 h-6 rounded-md bg-info-muted flex items-center justify-center">
-        <Icon className="w-3.5 h-3.5 text-primary" />
-      </div>
-      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{title}</span>
-    </div>
-    {collapsible && (
-      <div className="text-slate-400 hover:text-slate-600 transition-colors">
-        {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-      </div>
-    )}
-  </div>
-);
-
 export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   isOpen,
   onClose,
@@ -97,8 +68,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const queryClient = useQueryClient();
   const { profile } = useAuth();
   const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false);
-  const [showAltPhone, setShowAltPhone] = useState(false);
-  const [settingsCollapsed, setSettingsCollapsed] = useState(true);
   const [addressNotesCollapsed, setAddressNotesCollapsed] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -294,8 +263,6 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     });
     setErrors({});
     setTouched({});
-    setShowAltPhone(false);
-    setSettingsCollapsed(true);
     setAddressNotesCollapsed(true);
   };
 
@@ -341,17 +308,15 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         isOpen={isOpen}
         onClose={handleClose}
         title="Add New Customer"
+        subtitle="Enter customer details to get started."
         icon={User}
+        size="lg"
         initialFocusRef={customerNameRef}
         closeOnBackdrop={false}
       >
-        <form onSubmit={handleSubmit} className="space-y-1">
-
-          {/* ── Contact Details ── */}
-          <div className="rounded-lg bg-slate-50/60 border border-slate-100 p-3.5">
-            <SectionHeader icon={User} title="Contact Details" />
-
-            <div className="mt-2.5 space-y-3">
+        {/* Flat compact layout — paired rows, no section chrome — sized to fit
+            the viewport without scrolling (Modal width/height standard). */}
+        <form onSubmit={handleSubmit} className="space-y-3">
               <Input
                 ref={customerNameRef}
                 label="Customer Name"
@@ -384,32 +349,15 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 />
               </div>
 
-              {showAltPhone ? (
-                <PhoneInput
-                  label="Alternative Phone"
-                  value={formData.phone_number}
-                  onChange={(val) => handleFieldChange('phone_number', val)}
-                  countries={countries}
-                  selectedCountryId={formData.country_id}
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowAltPhone(true)}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors py-0.5"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add alternative phone
-                </button>
-              )}
-            </div>
-          </div>
+              <PhoneInput
+                label="Alternative Phone"
+                value={formData.phone_number}
+                onChange={(val) => handleFieldChange('phone_number', val)}
+                countries={countries}
+                selectedCountryId={formData.country_id}
+              />
 
-          {/* ── Organization ── */}
-          <div className="rounded-lg bg-slate-50/60 border border-slate-100 p-3.5">
-            <SectionHeader icon={Building2} title="Organization" />
-
-            <div className="mt-2.5 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <SearchableSelect
                 label="Customer Group"
                 value={formData.customer_group_id}
@@ -434,15 +382,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 addNewLabel="Add New Company"
                 usePortal
               />
-            </div>
           </div>
 
-          {/* ── Location ── */}
-          <div className="rounded-lg bg-slate-50/60 border border-slate-100 p-3.5">
-            <SectionHeader icon={MapPin} title="Location" />
-
-            <div className="mt-2.5 space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <SearchableSelect
                   label="Country"
                   value={formData.country_id}
@@ -504,63 +446,34 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                   />
                 )}
               </div>
-            </div>
-          </div>
 
-          {/* ── Settings (Collapsible) ── */}
-          <div className="rounded-lg bg-slate-50/60 border border-slate-100 p-3.5">
-            <SectionHeader
-              icon={Settings}
-              title="Settings"
-              collapsible
-              collapsed={settingsCollapsed}
-              onToggle={() => setSettingsCollapsed(!settingsCollapsed)}
+          <label htmlFor="customer-portal-enabled" className="flex cursor-pointer select-none items-start gap-2.5">
+            <input
+              id="customer-portal-enabled"
+              type="checkbox"
+              checked={formData.portal_enabled}
+              onChange={(e) => handleFieldChange('portal_enabled', e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
             />
+            <span>
+              <span className="block text-sm font-medium text-slate-800">Enable Client Portal Access</span>
+              <span className="block text-xs text-slate-500">Allow this customer to view their cases online.</span>
+            </span>
+          </label>
 
-            {!settingsCollapsed && (
-              <div className="mt-2.5 space-y-3 animate-fadeIn">
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-white border border-slate-200">
-                  <div className="mt-0.5">
-                    <Shield className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <label className="flex items-center justify-between cursor-pointer">
-                      <div>
-                        <span className="text-sm font-medium text-slate-800 block">Portal Access</span>
-                        <span className="text-xs text-slate-500">Allow customer to view their cases online</span>
-                      </div>
-                      <div
-                        className={`relative w-10 h-5 rounded-full transition-colors ${
-                          formData.portal_enabled ? 'bg-primary' : 'bg-slate-300'
-                        }`}
-                        onClick={() => handleFieldChange('portal_enabled', !formData.portal_enabled)}
-                      >
-                        <div
-                          className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                            formData.portal_enabled ? 'translate-x-5' : 'translate-x-0.5'
-                          }`}
-                        />
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="customer-internal-notes" className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1">
-                    <StickyNote className="w-3.5 h-3.5 text-slate-400" />
-                    Internal Notes
-                  </label>
-                  <textarea
-                    id="customer-internal-notes"
-                    value={formData.notes}
-                    onChange={(e) => handleFieldChange('notes', e.target.value)}
-                    rows={2}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm resize-none transition-shadow bg-white"
-                    placeholder="Private notes visible only to staff"
-                  />
-                </div>
-              </div>
-            )}
+          <div>
+            <label htmlFor="customer-internal-notes" className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1">
+              <StickyNote className="w-3.5 h-3.5 text-slate-400" />
+              Internal Notes
+            </label>
+            <textarea
+              id="customer-internal-notes"
+              value={formData.notes}
+              onChange={(e) => handleFieldChange('notes', e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm resize-none transition-shadow bg-white"
+              placeholder="Private notes visible only to staff"
+            />
           </div>
 
           {/* ── Footer ── */}

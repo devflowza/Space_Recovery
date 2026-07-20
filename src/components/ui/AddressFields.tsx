@@ -37,15 +37,18 @@ export function AddressFields({ value, onChange, countryId, disabled }: {
   const inputCls = 'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus:ring-2 focus:ring-ring';
 
   return (
+    // Compact 2-col layout: line1 | line2 on one row, then subdivision | postal —
+    // keeps the party-form modals within the viewport (no scrolling) per the
+    // modal width/height standard in ui/Modal.tsx.
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      <div className="sm:col-span-2">
+      <div>
         <label htmlFor="addr-line1" className="mb-1 block text-sm font-medium">
           {t('ui.addressLine1', 'Address line 1')}
         </label>
         <input id="addr-line1" className={inputCls} disabled={disabled}
           value={value.address_line1} onChange={(e) => set({ address_line1: e.target.value })} />
       </div>
-      <div className="sm:col-span-2">
+      <div>
         <label htmlFor="addr-line2" className="mb-1 block text-sm font-medium">
           {t('ui.addressLine2', 'Address line 2')}
         </label>
