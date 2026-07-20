@@ -18959,8 +18959,22 @@ export type Database = {
         }
         Returns: Json
       }
+      data_migration_export_page_impl: {
+        Args: {
+          p_after_created_at: string
+          p_after_id: string
+          p_entity_type: string
+          p_filters: Json
+          p_limit: number
+        }
+        Returns: Json
+      }
       data_migration_finalize: { Args: { p_run_id: string }; Returns: Json }
       data_migration_import_batch: {
+        Args: { p_entity_type: string; p_rows: Json; p_run_id: string }
+        Returns: Json
+      }
+      data_migration_import_batch_impl: {
         Args: { p_entity_type: string; p_rows: Json; p_run_id: string }
         Returns: Json
       }
