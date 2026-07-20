@@ -64,6 +64,7 @@ export interface InventorySpecFilters {
   chipset?: string;
   barcode?: string;
   serial_number?: string;
+  legacy_case_ref?: string;
 }
 
 export type InventoryFilters = {
@@ -111,6 +112,11 @@ function applyInventoryFilters(
   if (filters.serial_number) {
     const v = sanitizeFilterValue(filters.serial_number);
     q = q.ilike('serial_number', `%${v}%`);
+  }
+
+  if (filters.legacy_case_ref) {
+    const v = sanitizeFilterValue(filters.legacy_case_ref);
+    q = q.ilike('legacy_case_ref', `%${v}%`);
   }
 
   // Specs live in technical_details jsonb (the wizard writes everything there by
