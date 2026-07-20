@@ -30,7 +30,7 @@ interface Props {
 function hasAdvancedValues(v: AdvancedSearchValues): boolean {
   const advancedKeys: (keyof AdvancedSearchValues)[] = [
     'device_type_id', 'pcb_number', 'firmware', 'controller',
-    'head_map', 'dcm', 'chipset', 'barcode', 'serial_number', 'location_id',
+    'head_map', 'dcm', 'chipset', 'barcode', 'serial_number', 'legacy_case_ref', 'location_id',
   ];
   return advancedKeys.some(k => Boolean(v[k]));
 }
@@ -38,7 +38,7 @@ function hasAdvancedValues(v: AdvancedSearchValues): boolean {
 function countActiveAdvanced(v: AdvancedSearchValues): number {
   return [
     v.device_type_id, v.pcb_number, v.firmware, v.controller,
-    v.head_map, v.dcm, v.chipset, v.barcode, v.serial_number, v.location_id,
+    v.head_map, v.dcm, v.chipset, v.barcode, v.serial_number, v.legacy_case_ref, v.location_id,
   ].filter(Boolean).length;
 }
 
@@ -77,6 +77,7 @@ export function InventoryAdvancedSearch({ values, onChange, deviceTypes, locatio
       chipset: undefined,
       barcode: undefined,
       serial_number: undefined,
+      legacy_case_ref: undefined,
       location_id: undefined,
     });
   };
@@ -96,6 +97,7 @@ export function InventoryAdvancedSearch({ values, onChange, deviceTypes, locatio
       chipset: typeof raw.chipset === 'string' ? raw.chipset : undefined,
       barcode: typeof raw.barcode === 'string' ? raw.barcode : undefined,
       serial_number: typeof raw.serial_number === 'string' ? raw.serial_number : undefined,
+      legacy_case_ref: typeof raw.legacy_case_ref === 'string' ? raw.legacy_case_ref : undefined,
       location_id: typeof raw.location_id === 'string' ? raw.location_id : undefined,
     };
     onChange(loaded);
@@ -127,6 +129,7 @@ export function InventoryAdvancedSearch({ values, onChange, deviceTypes, locatio
         chipset: values.chipset,
         barcode: values.barcode,
         serial_number: values.serial_number,
+        legacy_case_ref: values.legacy_case_ref,
         location_id: values.location_id,
       };
       await saveInventorySearchTemplate(saveName.trim(), criteria);
@@ -252,6 +255,20 @@ export function InventoryAdvancedSearch({ values, onChange, deviceTypes, locatio
                 value={values.serial_number ?? ''}
                 onChange={e => handleField('serial_number', e.target.value)}
                 placeholder="Part of serial…"
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="adv-legacy-case" className="block text-xs font-medium text-slate-600 mb-1">
+                Legacy Case ID
+              </label>
+              <input
+                id="adv-legacy-case"
+                type="text"
+                value={values.legacy_case_ref ?? ''}
+                onChange={e => handleField('legacy_case_ref', e.target.value)}
+                placeholder="Part of old case ref…"
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white"
               />
             </div>
