@@ -700,6 +700,7 @@ export const CompaniesListPage: React.FC = () => {
           resetForm();
         }}
         title="Add New Company"
+        maxWidth="3xl"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -738,27 +739,28 @@ export const CompaniesListPage: React.FC = () => {
             />
           </div>
 
-          <Input
-            label="Website"
-            value={formData.website}
-            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-            placeholder="https://example.com"
-          />
-
-          <SearchableSelect
-            label="Primary Contact"
-            value={formData.primary_contact_id}
-            onChange={(value) => setFormData({ ...formData, primary_contact_id: value })}
-            onSearchTermChange={onCustomerSearch}
-            options={[
-              { id: '', name: 'No contact' },
-              ...customers.map((c) => ({
-                id: c.id,
-                name: `${c.customer_name}${c.email ? ` (${c.email})` : ''}`,
-              })),
-            ]}
-            placeholder="Select Primary Contact"
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Website"
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+              placeholder="https://example.com"
+            />
+            <SearchableSelect
+              label="Primary Contact"
+              value={formData.primary_contact_id}
+              onChange={(value) => setFormData({ ...formData, primary_contact_id: value })}
+              onSearchTermChange={onCustomerSearch}
+              options={[
+                { id: '', name: 'No contact' },
+                ...customers.map((c) => ({
+                  id: c.id,
+                  name: `${c.customer_name}${c.email ? ` (${c.email})` : ''}`,
+                })),
+              ]}
+              placeholder="Select Primary Contact"
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <SearchableSelect
@@ -853,6 +855,7 @@ export const CompaniesListPage: React.FC = () => {
           resetForm();
         }}
         title="Edit Company"
+        maxWidth="3xl"
       >
         <form onSubmit={handleEditSubmit} className="space-y-4">
           <Input

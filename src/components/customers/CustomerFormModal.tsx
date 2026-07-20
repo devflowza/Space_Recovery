@@ -342,10 +342,15 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         onClose={handleClose}
         title="Add New Customer"
         icon={User}
+        maxWidth="4xl"
         initialFocusRef={customerNameRef}
         closeOnBackdrop={false}
       >
-        <form onSubmit={handleSubmit} className="space-y-1">
+        <form onSubmit={handleSubmit} className="space-y-2">
+          {/* Two side-by-side section columns so the form uses the width instead
+              of stacking into one long scroll (Modal tier: multi-section form). */}
+          <div className="grid grid-cols-1 items-start gap-2 lg:grid-cols-2">
+          <div className="space-y-2">
 
           {/* ── Contact Details ── */}
           <div className="rounded-lg bg-slate-50/60 border border-slate-100 p-3.5">
@@ -436,7 +441,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               />
             </div>
           </div>
+          </div>
 
+          <div className="space-y-2">
           {/* ── Location ── */}
           <div className="rounded-lg bg-slate-50/60 border border-slate-100 p-3.5">
             <SectionHeader icon={MapPin} title="Location" />
@@ -561,6 +568,8 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 </div>
               </div>
             )}
+          </div>
+          </div>
           </div>
 
           {/* ── Footer ── */}
