@@ -57,7 +57,8 @@ function renderPage() {
 
 function cardFor(name: string): HTMLElement {
   const heading = screen.getByRole('heading', { name });
-  return heading.closest('.rounded-lg') as HTMLElement;
+  // Each sequence is a table row grouped under its category section.
+  return heading.closest('tr') as HTMLElement;
 }
 
 describe('SystemNumbers scope registry', () => {
@@ -84,7 +85,7 @@ describe('SystemNumbers fiscal fields (P3)', () => {
 
     // Open the (legacy, empty-template) invoices sequence's edit modal.
     const invoicesHeading = await screen.findByRole('heading', { name: 'Tax Invoice Number' });
-    const invoicesCard = invoicesHeading.closest('.rounded-lg') as HTMLElement;
+    const invoicesCard = invoicesHeading.closest('tr') as HTMLElement;
     fireEvent.click(within(invoicesCard).getByRole('button', { name: /edit sequence/i }));
 
     // Typing a format template drives a LIVE server-side preview, not a
@@ -114,7 +115,7 @@ describe('SystemNumbers fiscal fields (P3)', () => {
 
     // The 'case' row starts at reset_basis='fiscal_year'. Open its edit modal.
     const caseHeading = await screen.findByRole('heading', { name: 'Case Number' });
-    const caseCard = caseHeading.closest('.rounded-lg') as HTMLElement;
+    const caseCard = caseHeading.closest('tr') as HTMLElement;
     fireEvent.click(within(caseCard).getByRole('button', { name: /edit sequence/i }));
 
     // Switch the reset basis to "No automatic reset".
@@ -144,5 +145,45 @@ describe('SystemNumbers fiscal fields (P3)', () => {
     // A legacy (no-template) row still renders its classic next number.
     const invoicesCard = cardFor('Tax Invoice Number');
     expect(within(invoicesCard).getByText('INVO-10193')).toBeInTheDocument();
+  });
+});
+
+describe('SystemNumbers inline prefix/padding editing', () => {
+  beforeEach(() => h.rpc.mockClear());
+
+  it('editing the prefix inline reveals Save and persists prefix + padding via update_number_sequence', async () => {
+    renderPage();
+    await screen.findByRole('heading', { name: 'Tax Invoice Number' });
+
+    // No Save affordance until a cell is dirtied.
+    expect(screen.queryByRole('button', { name: /save prefix & padding/i })).toBeNull();
+
+    const prefixInput = screen.getByLabelText('Tax Invoice Number prefix') as HTMLInputElement;
+    fireEvent.change(prefixInput, { target: { value: 'newx' } });
+    expect(prefixInput.value).toBe('NEWX'); // upper-cased inline
+
+    const saveBtn = await screen.findByRole('button', { name: /save prefix & padding/i });
+    fireEvent.click(saveBtn);
+
+    // Inline save touches ONLY prefix + padding; advanced fields are left to
+    // COALESCE-to-stored (sent as undefined).
+    await waitFor(() =>
+      expect(h.rpc).toHaveBeenCalledWith(
+        'update_number_sequence',
+        expect.objectContaining({ p_scope: 'invoices', p_prefix: 'NEWX', p_padding: 4 }),
+      ),
+    );
+  });
+
+  it('Discard reverts an inline edit without calling the RPC', async () => {
+    renderPage();
+    await screen.findByRole('heading', { name: 'Tax Invoice Number' });
+
+    const prefixInput = screen.getByLabelText('Tax Invoice Number prefix') as HTMLInputElement;
+    fireEvent.change(prefixInput, { target: { value: 'ZZZ' } });
+    fireEvent.click(await screen.findByRole('button', { name: /discard changes/i }));
+
+    expect(prefixInput.value).toBe('INVO');
+    expect(h.rpc).not.toHaveBeenCalledWith('update_number_sequence', expect.anything());
   });
 });

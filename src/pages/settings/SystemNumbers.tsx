@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { Button } from '../../components/ui/Button';
@@ -8,7 +7,7 @@ import { Input } from '../../components/ui/Input';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
-import { ChevronLeft, Hash, Search, ArrowRight, Edit2 } from 'lucide-react';
+import { ChevronLeft, Search, Edit2, Check, X } from 'lucide-react';
 import { SettingsPageHeader } from '../../components/layout/SettingsPageHeader';
 import { useToast } from '../../hooks/useToast';
 import { logger } from '../../lib/logger';
@@ -58,6 +57,25 @@ export const SCOPE_REGISTRY = [
   { key: 'payroll_bank_file', label: 'Payroll Bank File Number', description: 'Payroll bank-file batches', category: 'HR' },
 ] as const;
 
+// Section order for the grouped tables; any live category not listed (defensive)
+// is appended after these.
+const CATEGORY_ORDER = ['Operations', 'Financial', 'Business Partners', 'Inventory', 'Reports', 'HR', 'Other'];
+
+// Turn a raw live scope with no registry entry into a readable label:
+// `inventory:6b24638d-…` -> "Inventory · 6b24638d"; `credit_note` -> "Credit Note".
+function prettifyScope(scope: string): string {
+  if (scope.includes(':')) {
+    const [base, rest] = scope.split(':');
+    const head = base.charAt(0).toUpperCase() + base.slice(1);
+    return rest ? `${head} · ${rest.slice(0, 8)}` : head;
+  }
+  return scope
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
 // Allowed `reset_basis` values are enforced by the DB CHECK in
 // `update_number_sequence` — keep this list in lockstep with it.
 const RESET_BASIS_OPTIONS: { value: string; label: string }[] = [
@@ -86,6 +104,24 @@ export const SystemNumbers: React.FC = () => {
   const [debouncedTemplate, setDebouncedTemplate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  // Per-scope inline edit drafts for the table's Prefix/Padding cells. A scope is
+  // "dirty" while a draft differs from its stored row; Save persists just those two
+  // fields (advanced format/reset stay untouched via COALESCE in the RPC).
+  const [drafts, setDrafts] = useState<Record<string, { prefix: string; padding: number }>>({});
+
+  const setDraft = (key: string, seq: NumberSequence, patch: Partial<{ prefix: string; padding: number }>) => {
+    setDrafts((prev) => {
+      const base = prev[key] ?? { prefix: seq.prefix, padding: seq.padding };
+      return { ...prev, [key]: { ...base, ...patch } };
+    });
+  };
+  const cancelDraft = (key: string) => {
+    setDrafts((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
 
   const { data: sequences = [], isLoading } = useQuery({
     queryKey: ['number_sequences'],
@@ -187,6 +223,46 @@ export const SystemNumbers: React.FC = () => {
     },
   });
 
+  // Inline table save: persists ONLY prefix + padding (leaving advanced format /
+  // reset fields as stored via COALESCE-to-stored in the RPC). Separate from the
+  // modal mutation so it never touches modal state.
+  const inlineSaveMutation = useMutation({
+    mutationFn: async (vars: { scope: string; prefix: string; padding: number; reset_annually: boolean; reset_basis: string }) => {
+      const { error } = await supabase.rpc('update_number_sequence', {
+        p_scope: vars.scope,
+        p_prefix: vars.prefix,
+        p_padding: vars.padding,
+        p_reset: vars.reset_annually,
+        p_reset_basis: vars.reset_basis,
+        p_format_template: undefined,
+        p_fiscal_year_anchor: undefined,
+        p_max_length: undefined,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['number_sequences'] });
+      cancelDraft(vars.scope);
+      toast.success('Number sequence updated successfully');
+    },
+    onError: (error: Error) => {
+      logger.error('Failed inline number-sequence save:', error);
+      toast.error(`Failed to update: ${error.message || 'Unknown error occurred'}`);
+    },
+  });
+
+  const handleInlineSave = (key: string, seq: NumberSequence) => {
+    const draft = drafts[key];
+    if (!draft) return;
+    inlineSaveMutation.mutate({
+      scope: key,
+      prefix: draft.prefix,
+      padding: draft.padding,
+      reset_annually: seq.reset_annually,
+      reset_basis: seq.reset_basis ?? 'never',
+    });
+  };
+
   const handleEdit = (sequence: NumberSequence) => {
     setEditingSequence(sequence);
     setFormData({
@@ -246,8 +322,10 @@ export const SystemNumbers: React.FC = () => {
   const scopeCards: ScopeCard[] = [
     ...SCOPE_REGISTRY.map(s => ({ key: s.key, label: s.label, description: s.description, category: s.category })),
     ...sequences
-      .filter(seq => !registryKeys.has(seq.scope))
-      .map(seq => ({ key: seq.scope, label: seq.scope, description: '', category: 'Other' })),
+      // `inventory:<uuid>` sequences are managed per device type on the Inventory
+      // Defaults page, not here — keep them out of this generic list.
+      .filter(seq => !registryKeys.has(seq.scope) && !seq.scope.startsWith('inventory:'))
+      .map(seq => ({ key: seq.scope, label: prettifyScope(seq.scope), description: '', category: 'Other' })),
   ];
 
   const categories = ['All', ...Array.from(new Set(scopeCards.map(c => c.category)))];
@@ -258,6 +336,15 @@ export const SystemNumbers: React.FC = () => {
     const matchesCategory = selectedCategory === 'All' || type.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  // Group the (filtered) sequences into ordered category sections for the tables.
+  const orderedCategories = [
+    ...CATEGORY_ORDER,
+    ...Array.from(new Set(filteredSequenceTypes.map(t => t.category))).filter(c => !CATEGORY_ORDER.includes(c)),
+  ];
+  const groupedSections = orderedCategories
+    .map(category => ({ category, rows: filteredSequenceTypes.filter(t => t.category === category) }))
+    .filter(section => section.rows.length > 0);
 
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-slate-50 via-white to-slate-50">
@@ -304,95 +391,153 @@ export const SystemNumbers: React.FC = () => {
                 Number Sequences ({filteredSequenceTypes.length})
               </h2>
               <p className="text-slate-500 text-sm">Configure prefixes and current numbers for automatic numbering</p>
-              <div className="mt-3 flex items-center gap-2 text-sm text-slate-500 bg-info-muted border border-info/20 rounded-lg px-4 py-2.5">
-                <Hash className="w-4 h-4 text-info shrink-0" />
-                <span>
-                  <strong className="font-medium text-slate-700">Inventory item numbers</strong> are now configured
-                  per device type.{' '}
-                  <Link
-                    to="/settings/inventory"
-                    className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-                  >
-                    Manage Inventory Number Sequences
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </span>
-              </div>
             </div>
 
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-32 w-full rounded-lg" />
+              <div className="space-y-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full rounded-lg" />
                 ))}
               </div>
+            ) : groupedSections.length === 0 ? (
+              <div className="py-16 text-center">
+                <p className="text-sm text-slate-500">No sequences match your search.</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {filteredSequenceTypes.map((type) => {
-                  const sequence = sequences.find(s => s.scope === type.key);
-                  const hasRow = !!sequence;
-                  const hasStarted = !!sequence && sequence.current_value > 0;
-                  const displaySeq: NumberSequence = sequence || {
-                    id: '',
-                    scope: type.key,
-                    prefix: type.key.replace(/_/g, '').toUpperCase().slice(0, 4),
-                    padding: 4,
-                    current_value: 0,
-                    reset_annually: false,
-                    created_at: '',
-                    format_template: null,
-                    reset_basis: null,
-                    fiscal_year_anchor: null,
-                    max_length: null,
-                  };
-
-                  return (
-                    <div
-                      key={type.key}
-                      className="rounded-lg border border-slate-200 bg-surface-muted p-3 hover:shadow-md hover:border-slate-300 transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h3 className="text-sm font-semibold text-slate-900 truncate" title={type.label}>
-                            {type.label}
-                          </h3>
-                          <Badge variant="default" size="sm" className="mt-1">
-                            {type.category}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {hasStarted ? (
-                            <Badge variant="info" size="sm">Active</Badge>
-                          ) : hasRow ? (
-                            <Badge variant="secondary" size="sm">Configured</Badge>
-                          ) : (
-                            <span className="text-xs font-medium text-slate-400">Not yet used</span>
-                          )}
-                          <button
-                            onClick={() => handleEdit(displaySeq)}
-                            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                            title="Edit sequence"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="text-xs text-slate-500">Next number</span>
-                        <Badge variant="success" size="sm" className="font-mono">
-                          {formatNumber(displaySeq)}
-                        </Badge>
-                      </div>
-
-                      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-500 border-t border-slate-200 pt-2">
-                        <span>Prefix <span className="block font-mono text-slate-700 truncate">{displaySeq.prefix}</span></span>
-                        <span>Padding <span className="block font-mono text-slate-700">{displaySeq.padding}</span></span>
-                        <span>Current <span className="block font-mono text-slate-700">{hasStarted ? formatCurrentNumber(displaySeq) : '—'}</span></span>
-                      </div>
+              <div className="space-y-7">
+                {groupedSections.map((section) => (
+                  <section key={section.category}>
+                    <div className="mb-2 flex items-center gap-2 px-1">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        {section.category}
+                      </span>
+                      <span className="text-xs font-medium text-slate-400 tabular-nums">{section.rows.length}</span>
+                      <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
                     </div>
-                  );
-                })}
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[880px] table-fixed text-sm">
+                        <thead>
+                          <tr className="text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            <th scope="col" className="px-4 py-2 font-semibold">Sequence</th>
+                            <th scope="col" className="w-36 px-3 py-2 font-semibold">Prefix</th>
+                            <th scope="col" className="w-24 px-3 py-2 font-semibold">Padding</th>
+                            <th scope="col" className="w-40 px-3 py-2 font-semibold">Next number</th>
+                            <th scope="col" className="w-36 px-3 py-2 font-semibold">Current</th>
+                            <th scope="col" className="w-28 px-3 py-2 font-semibold">Status</th>
+                            <th scope="col" className="w-16 px-3 py-2"><span className="sr-only">Edit</span></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {section.rows.map((type) => {
+                            const sequence = sequences.find((s) => s.scope === type.key);
+                            const hasRow = !!sequence;
+                            const hasStarted = !!sequence && sequence.current_value > 0;
+                            const displaySeq: NumberSequence = sequence || {
+                              id: '',
+                              scope: type.key,
+                              prefix: type.key.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 4),
+                              padding: 4,
+                              current_value: 0,
+                              reset_annually: false,
+                              created_at: '',
+                              format_template: null,
+                              reset_basis: null,
+                              fiscal_year_anchor: null,
+                              max_length: null,
+                            };
+                            const draft = drafts[type.key];
+                            const effPrefix = draft ? draft.prefix : displaySeq.prefix;
+                            const effPadding = draft ? draft.padding : displaySeq.padding;
+                            const isDirty = !!draft && (draft.prefix !== displaySeq.prefix || draft.padding !== displaySeq.padding);
+                            const rowSaving = inlineSaveMutation.isPending && inlineSaveMutation.variables?.scope === type.key;
+
+                            return (
+                              <tr key={type.key} className="group align-middle transition-colors hover:bg-slate-50">
+                                <td className="px-4 py-2 align-middle">
+                                  <h3 className="truncate text-sm font-semibold text-slate-900" title={type.label}>
+                                    {type.label}
+                                  </h3>
+                                  {type.description && (
+                                    <p className="mt-0.5 truncate text-xs text-slate-500">{type.description}</p>
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 align-middle">
+                                  <input
+                                    aria-label={`${type.label} prefix`}
+                                    value={effPrefix}
+                                    onChange={(e) => setDraft(type.key, displaySeq, { prefix: e.target.value.toUpperCase() })}
+                                    className="w-24 rounded-md border border-slate-200 bg-white px-2 py-1 font-mono text-sm text-slate-700 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/40"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 align-middle">
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={10}
+                                    aria-label={`${type.label} padding`}
+                                    value={effPadding}
+                                    onChange={(e) => setDraft(type.key, displaySeq, { padding: Math.max(1, Math.min(10, parseInt(e.target.value) || displaySeq.padding)) })}
+                                    className="w-16 rounded-md border border-slate-200 bg-white px-2 py-1 font-mono text-sm tabular-nums text-slate-700 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/40"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 align-middle">
+                                  <Badge variant="success" size="sm" className="font-mono">
+                                    {formatNumber({ ...displaySeq, prefix: effPrefix, padding: effPadding })}
+                                  </Badge>
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 align-middle font-mono text-slate-500">
+                                  {hasStarted ? formatCurrentNumber(displaySeq) : '—'}
+                                </td>
+                                <td className="px-3 py-2 align-middle">
+                                  {hasStarted ? (
+                                    <Badge variant="info" size="sm">Active</Badge>
+                                  ) : hasRow ? (
+                                    <Badge variant="secondary" size="sm">Configured</Badge>
+                                  ) : (
+                                    <span className="text-xs font-medium text-slate-400">Not yet used</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 align-middle">
+                                  {isDirty ? (
+                                    <div className="flex items-center justify-end gap-1">
+                                      <button
+                                        onClick={() => handleInlineSave(type.key, displaySeq)}
+                                        disabled={rowSaving}
+                                        title="Save prefix & padding"
+                                        className="rounded-md p-1.5 text-success transition-colors hover:bg-success-muted disabled:opacity-50"
+                                      >
+                                        <Check className="h-4 w-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => cancelDraft(type.key)}
+                                        disabled={rowSaving}
+                                        title="Discard changes"
+                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex justify-end">
+                                      <button
+                                        onClick={() => handleEdit(displaySeq)}
+                                        title="Edit sequence"
+                                        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                                      >
+                                        <Edit2 className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                ))}
               </div>
             )}
           </div>
