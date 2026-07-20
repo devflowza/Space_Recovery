@@ -545,39 +545,42 @@ export const SystemNumbers: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        size="lg"
         title={`Edit ${editingSequence ? (SCOPE_REGISTRY.find(t => t.key === editingSequence.scope)?.label ?? editingSequence.scope) : ''}`}
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Prefix
-            </label>
-            <Input
-              value={formData.prefix}
-              onChange={(e) => setFormData({ ...formData, prefix: e.target.value.toUpperCase() })}
-              placeholder="INV-"
-              className="font-mono"
-            />
-            <p className="text-xs text-slate-500 mt-2">
-              The prefix that appears before the number (e.g., INV-0001)
-            </p>
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Prefix
+              </label>
+              <Input
+                value={formData.prefix}
+                onChange={(e) => setFormData({ ...formData, prefix: e.target.value.toUpperCase() })}
+                placeholder="INV-"
+                className="font-mono"
+              />
+              <p className="text-xs text-slate-500 mt-2">
+                The prefix that appears before the number (e.g., INV-0001)
+              </p>
+            </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Number Padding
-            </label>
-            <Input
-              type="number"
-              value={formData.padding}
-              onChange={(e) => setFormData({ ...formData, padding: Math.max(1, Math.min(10, parseInt(e.target.value) || 4)) })}
-              min="1"
-              max="10"
-              className="font-mono"
-            />
-            <p className="text-xs text-slate-500 mt-2">
-              Preview: <span className="font-semibold">{formData.prefix}-{(( editingSequence?.current_value ?? 0) + 1).toString().padStart(formData.padding, '0')}</span>
-            </p>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Number Padding
+              </label>
+              <Input
+                type="number"
+                value={formData.padding}
+                onChange={(e) => setFormData({ ...formData, padding: Math.max(1, Math.min(10, parseInt(e.target.value) || 4)) })}
+                min="1"
+                max="10"
+                className="font-mono"
+              />
+              <p className="text-xs text-slate-500 mt-2">
+                Preview: <span className="font-semibold">{formData.prefix}-{(( editingSequence?.current_value ?? 0) + 1).toString().padStart(formData.padding, '0')}</span>
+              </p>
+            </div>
           </div>
 
           <div className="border-t border-slate-200 pt-5 space-y-5">
@@ -619,58 +622,60 @@ export const SystemNumbers: React.FC = () => {
               )}
             </div>
 
-            <div>
-              <label htmlFor="reset_basis" className="block text-sm font-semibold text-slate-700 mb-2">
-                Reset Basis
-              </label>
-              <select
-                id="reset_basis"
-                value={formData.reset_basis}
-                onChange={(e) => setFormData({ ...formData, reset_basis: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                {RESET_BASIS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {formData.reset_basis === 'fiscal_year' && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="fiscal_year_anchor" className="block text-sm font-semibold text-slate-700 mb-2">
-                  Fiscal Year Start
+                <label htmlFor="reset_basis" className="block text-sm font-semibold text-slate-700 mb-2">
+                  Reset Basis
+                </label>
+                <select
+                  id="reset_basis"
+                  value={formData.reset_basis}
+                  onChange={(e) => setFormData({ ...formData, reset_basis: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {RESET_BASIS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {formData.reset_basis === 'fiscal_year' && (
+                <div>
+                  <label htmlFor="fiscal_year_anchor" className="block text-sm font-semibold text-slate-700 mb-2">
+                    Fiscal Year Start
+                  </label>
+                  <Input
+                    id="fiscal_year_anchor"
+                    value={formData.fiscal_year_anchor}
+                    onChange={(e) => setFormData({ ...formData, fiscal_year_anchor: e.target.value })}
+                    placeholder="01-01"
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-slate-500 mt-2">
+                    Month and day the fiscal year begins, as MM-DD (e.g. 04-01 for April 1).
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="max_length" className="block text-sm font-semibold text-slate-700 mb-2">
+                  Maximum Length
                 </label>
                 <Input
-                  id="fiscal_year_anchor"
-                  value={formData.fiscal_year_anchor}
-                  onChange={(e) => setFormData({ ...formData, fiscal_year_anchor: e.target.value })}
-                  placeholder="01-01"
+                  id="max_length"
+                  type="number"
+                  value={formData.max_length}
+                  onChange={(e) => setFormData({ ...formData, max_length: e.target.value })}
+                  min="1"
+                  placeholder="Optional"
                   className="font-mono"
                 />
                 <p className="text-xs text-slate-500 mt-2">
-                  Month and day the fiscal year begins, as MM-DD (e.g. 04-01 for April 1).
+                  Optional cap on the total generated length; leave blank for no limit.
                 </p>
               </div>
-            )}
-
-            <div>
-              <label htmlFor="max_length" className="block text-sm font-semibold text-slate-700 mb-2">
-                Maximum Length
-              </label>
-              <Input
-                id="max_length"
-                type="number"
-                value={formData.max_length}
-                onChange={(e) => setFormData({ ...formData, max_length: e.target.value })}
-                min="1"
-                placeholder="Optional"
-                className="font-mono"
-              />
-              <p className="text-xs text-slate-500 mt-2">
-                Optional cap on the total generated length; leave blank for no limit.
-              </p>
             </div>
           </div>
 

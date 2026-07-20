@@ -25,6 +25,14 @@ interface ModalProps {
   closeOnEscape?: boolean;
 }
 
+// Standard width tiers (keep new modals consistent — pick by content, and use the
+// horizontal space before resorting to vertical scrolling):
+//   xs/sm  – confirmations and single-field quick-adds
+//   md     – short single-column forms (≤4 fields)
+//   lg     – standard forms: pair related fields into 2-column rows
+//   xl/4xl – multi-section entity forms (customer/supplier-class), 2–3 col rows
+//   2xl+/7xl – wizards and full editors (e.g. Add Inventory Item)
+// Scrolling is the fallback for genuinely long content, not a substitute for width.
 const sizeClasses: Record<NonNullable<ModalProps['size']>, string> = {
   xs: 'max-w-sm',
   sm: 'max-w-md',
