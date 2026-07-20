@@ -148,6 +148,9 @@ export const SettingsDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-6">
+      {/* Cap + centre the content on wide screens (like ListPageTemplate) so the
+          card grid doesn't sprawl edge-to-edge; the gradient stays full-bleed. */}
+      <div className="mx-auto max-w-[1800px] 2xl:max-w-[2400px]">
       <div className="mb-5 animate-fade-in">
         <div className="flex items-center gap-3">
           <div
@@ -185,6 +188,7 @@ export const SettingsDashboard: React.FC = () => {
             </div>
           </section>
         ))}
+      </div>
       </div>
     </div>
   );
