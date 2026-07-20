@@ -95,6 +95,25 @@ jobs:
         if: ${{ env.SUPABASE_DB_URL == '' }}
         run: 'echo "SKIP migration-manifest: SUPABASE_DB_URL unavailable (Dependabot/fork PRs have no access to Actions secrets). Enforced on internal PRs and on push to main."'
 
+  module-rls:
+    runs-on: ubuntu-latest
+    # Regression gate for the plan-driven module-entitlement RLS coverage
+    # (src/lib/modules/manifest.ts <-> the 28 HR/Payroll `<table>_module_gate`
+    # RESTRICTIVE policies from migration 20260719223155). Guarded the same way
+    # as schema-drift: skip with a clear echo when SUPABASE_DB_URL is unavailable
+    # (Dependabot/fork PRs have no access to Actions secrets); enforced on
+    # internal PRs and on push to main.
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check module-entitlement RLS coverage
+        if: ${{ env.SUPABASE_DB_URL != '' }}
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/check-module-rls.sql
+      - name: Skip module-rls (no Supabase credentials)
+        if: ${{ env.SUPABASE_DB_URL == '' }}
+        run: 'echo "SKIP module-rls: SUPABASE_DB_URL unavailable (Dependabot/fork PRs have no access to Actions secrets). Enforced on internal PRs and on push to main."'
+
   from-table-names:
     runs-on: ubuntu-latest
     steps:
