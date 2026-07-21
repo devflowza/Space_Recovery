@@ -384,7 +384,16 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   const accountMissing = !bankAccountId;
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Record Payment" size="lg" closeOnBackdrop={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Record Payment"
+      subtitle="Record a customer payment and allocate it to invoices."
+      icon={DollarSign}
+      size="lg"
+      showClose
+      closeOnBackdrop={false}
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="payment-case" className="block text-sm font-medium text-slate-700 mb-1">
