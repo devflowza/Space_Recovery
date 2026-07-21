@@ -226,7 +226,10 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
       isOpen={isOpen}
       onClose={onClose}
       title={supplier ? 'Edit Supplier' : 'Add New Supplier'}
+      subtitle={supplier ? "Update this supplier's details." : 'Enter the supplier details to add them.'}
+      icon={Truck}
       maxWidth="4xl"
+      showClose
       closeOnBackdrop={false}
       initialFocusRef={firstFieldRef}
       footer={
@@ -240,7 +243,7 @@ export default function SupplierFormModal({ isOpen, onClose, onSuccess, supplier
         </div>
       }
     >
-      <form id="supplierForm" onSubmit={handleSubmit} className="space-y-6">
+      <form id="supplierForm" onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="md:col-span-2 lg:col-span-3">
             <label className="block text-sm font-medium text-slate-700 mb-1">
