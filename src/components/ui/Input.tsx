@@ -21,7 +21,7 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
 
 /** Shared notch-label classes for the opt-in floatingLabel variant. */
 export const FLOATING_LABEL_CLS =
-  'pointer-events-none absolute -top-2 start-2.5 z-10 bg-surface px-1 text-xxs font-medium text-slate-500';
+  'pointer-events-none absolute -top-2 start-2.5 z-10 bg-surface px-1 text-xs font-medium text-slate-500';
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, hint, leftIcon, floatingLabel = false, className = '', size = 'md', ...props }, ref) => {
