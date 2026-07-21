@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
 import { sanitizeFilterValue } from '../../lib/postgrestSanitizer';
-import type { Database } from '../../types/database.types';
 import { getCustomerStats } from '../../lib/customerService';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
-import { PhoneInput } from '../../components/ui/PhoneInput';
-import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { CustomerAvatar } from '../../components/ui/CustomerAvatar';
 import { CustomerFormModal } from '../../components/customers/CustomerFormModal';
 import { Plus, Search, Filter, Mail, Phone, Building2, MapPin, Users, UserCheck, Clock, Archive, Download, ShieldCheck } from 'lucide-react';
@@ -62,21 +57,6 @@ interface CustomerGroup {
   name: string;
 }
 
-interface Country {
-  id: string;
-  name: string;
-  code: string;
-  phone_code: string | null;
-  is_active: boolean;
-}
-
-interface City {
-  id: string;
-  name: string;
-  country_id: string;
-  is_active: boolean;
-}
-
 export const CustomersListPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -88,8 +68,6 @@ export const CustomersListPage: React.FC = () => {
   const canBulkArchive = profile?.role === 'owner' || profile?.role === 'admin';
   const [isArchiving, setIsArchiving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterGroup, setFilterGroup] = useState<string>('all');
@@ -124,18 +102,6 @@ export const CustomersListPage: React.FC = () => {
     }
   }, [searchParams, setSearchParams]);
 
-  const [editFormData, setEditFormData] = useState({
-    customer_name: '',
-    email: '',
-    mobile_number: '',
-    phone_number: '',
-    customer_group_id: '',
-    country_id: '',
-    city_id: '',
-    address_line1: '',
-    portal_enabled: false,
-    notes: '',
-  });
   const { data: customersPage, isLoading } = useQuery({
     queryKey: ['customers_enhanced', debouncedSearch, filterGroup, filterPortal, page, pageSize],
     queryFn: async () => {
@@ -194,78 +160,6 @@ export const CustomersListPage: React.FC = () => {
       return data as CustomerGroup[];
     },
   });
-
-  const { data: countries = [] } = useQuery({
-    queryKey: ['countries'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('geo_countries')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) throw error;
-      return data as Country[];
-    },
-  });
-
-  const { data: cities = [] } = useQuery({
-    queryKey: ['cities'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('geo_cities')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) throw error;
-      return data as City[];
-    },
-  });
-
-  const filteredCities = cities.filter(
-    (city) => !editFormData.country_id || city.country_id === editFormData.country_id
-  );
-
-  const updateCustomerMutation = useMutation({
-    mutationFn: async (data: typeof editFormData) => {
-      if (!editingCustomer) throw new Error('No customer selected');
-
-      const updatePayload = {
-        customer_name: data.customer_name,
-        email: data.email || null,
-        mobile_number: data.mobile_number || null,
-        phone: data.phone_number || null,
-        customer_group_id: data.customer_group_id || null,
-        country_id: data.country_id || null,
-        city_id: data.city_id || null,
-        address: data.address_line1 || null,
-        portal_enabled: data.portal_enabled,
-        notes: data.notes || null,
-      } as Database['public']['Tables']['customers_enhanced']['Update'];
-
-      const { data: updatedCustomer, error } = await supabase
-        .from('customers_enhanced')
-        .update(updatePayload)
-        .eq('id', editingCustomer.id)
-        .select()
-        .maybeSingle();
-
-      if (error) throw error;
-      return updatedCustomer;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers_enhanced'] });
-      queryClient.invalidateQueries({ queryKey: ['customer_stats'] });
-      setIsEditModalOpen(false);
-      setEditingCustomer(null);
-    },
-  });
-
-  const handleSubmitEdit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateCustomerMutation.mutate(editFormData);
-  };
 
   const visibleIds = customers.map((c) => c.id);
 
@@ -711,131 +605,6 @@ export const CustomersListPage: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['customer_stats'] })}
       />
-
-      <Modal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setEditingCustomer(null);
-        }}
-        title="Edit Customer"
-        subtitle="Update this customer's details."
-        icon={UserCheck}
-        maxWidth="xl"
-        showClose
-      >
-        <form onSubmit={handleSubmitEdit} className="space-y-4">
-          <Input
-            label="Customer Name"
-            value={editFormData.customer_name}
-            onChange={(e) => setEditFormData({ ...editFormData, customer_name: e.target.value })}
-            required
-          />
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Email"
-              type="email"
-              value={editFormData.email}
-              onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-            />
-            <PhoneInput
-              label="Mobile Number"
-              value={editFormData.mobile_number}
-              onChange={(val) => setEditFormData({ ...editFormData, mobile_number: val })}
-              countries={countries}
-              selectedCountryId={editFormData.country_id}
-            />
-          </div>
-
-          <PhoneInput
-            label="Phone Number (Alternative)"
-            value={editFormData.phone_number}
-            onChange={(val) => setEditFormData({ ...editFormData, phone_number: val })}
-            countries={countries}
-            selectedCountryId={editFormData.country_id}
-          />
-
-          <SearchableSelect
-            label="Customer Group"
-            value={editFormData.customer_group_id}
-            onChange={(value) => setEditFormData({ ...editFormData, customer_group_id: value })}
-            options={[{ id: '', name: 'No group' }, ...customerGroups.map((g) => ({ id: g.id, name: g.name }))]}
-            placeholder="Select Group"
-          />
-
-          <div className="grid grid-cols-2 gap-3">
-            <SearchableSelect
-              label="Country"
-              value={editFormData.country_id}
-              onChange={(value) => {
-                setEditFormData({ ...editFormData, country_id: value, city_id: '' });
-              }}
-              options={[{ id: '', name: 'Not specified' }, ...countries.map((c) => ({ id: c.id, name: c.name }))]}
-              placeholder="Select Country"
-            />
-            <SearchableSelect
-              label="City"
-              value={editFormData.city_id}
-              onChange={(value) => setEditFormData({ ...editFormData, city_id: value })}
-              options={[{ id: '', name: 'Not specified' }, ...filteredCities.map((c) => ({ id: c.id, name: c.name }))]}
-              placeholder="Select City"
-              disabled={!editFormData.country_id}
-            />
-          </div>
-
-          <Input
-            label="Address"
-            value={editFormData.address_line1}
-            onChange={(e) => setEditFormData({ ...editFormData, address_line1: e.target.value })}
-          />
-
-          <div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={editFormData.portal_enabled}
-                onChange={(e) =>
-                  setEditFormData({ ...editFormData, portal_enabled: e.target.checked })
-                }
-                className="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary"
-              />
-              <span className="text-sm font-medium text-slate-700">
-                Enable Client Portal Access
-              </span>
-            </label>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Internal Notes
-            </label>
-            <textarea
-              value={editFormData.notes}
-              onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm"
-              placeholder="Add any internal notes..."
-            />
-          </div>
-
-          <div className="flex gap-3 justify-end pt-4 border-t">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setIsEditModalOpen(false);
-                setEditingCustomer(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={updateCustomerMutation.isPending}>
-              {updateCustomerMutation.isPending ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
     </ListPageTemplate>
   );
 };

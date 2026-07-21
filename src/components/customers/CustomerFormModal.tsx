@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient';
-import { createCustomer, getNextCustomerNumberPreview } from '../../lib/customerService';
+import { createCustomer, updateCustomer, getNextCustomerNumberPreview } from '../../lib/customerService';
 import { createCompany } from '../../lib/companyService';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -21,10 +21,34 @@ import {
   X,
 } from 'lucide-react';
 
+/** Existing-customer shape for edit mode. When provided, the modal switches
+ *  from create to edit (prefilled, "Save Changes", no Company field / next-No.
+ *  badge — company relationships and the photo are managed by their own UIs). */
+export interface CustomerEditData {
+  id: string;
+  customer_name: string;
+  email: string | null;
+  mobile_number: string | null;
+  phone: string | null;
+  customer_group_id: string | null;
+  country_id: string | null;
+  city_id: string | null;
+  address: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  subdivision_id: string | null;
+  postal_code: string | null;
+  portal_enabled: boolean | null;
+  notes: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
 interface CustomerFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (customer: Record<string, unknown>) => void;
+  /** Provide to open in edit mode for an existing customer. */
+  customer?: CustomerEditData;
 }
 
 interface CustomerGroup {
@@ -62,7 +86,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  customer,
 }) => {
+  const isEdit = Boolean(customer);
   const queryClient = useQueryClient();
   const { profile } = useAuth();
   const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false);
@@ -74,6 +100,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const [formData, setFormData] = useState({
     customer_name: '',
     email: '',
+    secondary_email: '',
     mobile_number: '',
     phone_number: '',
     customer_group_id: '',
@@ -156,13 +183,41 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     },
   });
 
-  // Non-consuming preview of the number the next created customer will get.
+  // Non-consuming preview of the number the next created customer will get
+  // (create mode only — an existing customer already has its number).
   const { data: nextCustomerNumber } = useQuery({
     queryKey: ['customer_number_preview'],
     queryFn: getNextCustomerNumberPreview,
-    enabled: isOpen,
+    enabled: isOpen && !isEdit,
     staleTime: 0,
   });
+
+  // Edit mode: prefill the form from the customer whenever the modal opens.
+  React.useEffect(() => {
+    if (!isOpen || !customer) return;
+    setFormData({
+      customer_name: customer.customer_name ?? '',
+      email: customer.email ?? '',
+      secondary_email: (customer.metadata as { secondary_email?: string } | null)?.secondary_email ?? '',
+      mobile_number: customer.mobile_number ?? '',
+      phone_number: customer.phone ?? '',
+      customer_group_id: customer.customer_group_id ?? '',
+      country_id: customer.country_id ?? '',
+      city_id: customer.city_id ?? '',
+      address: customer.address ?? '',
+      address_line1: customer.address_line1 ?? '',
+      address_line2: customer.address_line2 ?? '',
+      subdivision_id: customer.subdivision_id ?? null,
+      postal_code: customer.postal_code ?? '',
+      portal_enabled: customer.portal_enabled ?? false,
+      notes: customer.notes ?? '',
+      company_id: '',
+    });
+    setShowAltPhone(
+      Boolean(customer.phone) ||
+      Boolean((customer.metadata as { secondary_email?: string } | null)?.secondary_email),
+    );
+  }, [isOpen, customer]);
 
   const filteredCities = cities.filter(
     (city) => !formData.country_id || city.country_id === formData.country_id
@@ -211,6 +266,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         postal_code: customer.postal_code || null,
         portal_enabled: customer.portal_enabled,
         notes: customer.notes || null,
+        metadata: customer.secondary_email ? { secondary_email: customer.secondary_email } : null,
         created_by: profile?.id,
         company_id: customer.company_id || null,
       };
@@ -225,6 +281,42 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       onClose();
     },
   });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      if (!customer) throw new Error('No customer to update');
+      return updateCustomer(customer.id, {
+        customer_name: data.customer_name,
+        email: data.email || null,
+        mobile_number: data.mobile_number || null,
+        phone: data.phone_number || null,
+        customer_group_id: data.customer_group_id || null,
+        country_id: data.country_id || null,
+        city_id: data.city_id || null,
+        address: data.address || null,
+        address_line1: data.address_line1 || null,
+        address_line2: data.address_line2 || null,
+        subdivision_id: data.subdivision_id,
+        postal_code: data.postal_code || null,
+        portal_enabled: data.portal_enabled,
+        notes: data.notes || null,
+        // Merge into existing metadata so import keys (e.g. legacy_id) survive.
+        metadata: {
+          ...((customer?.metadata as Record<string, unknown> | null) ?? {}),
+          secondary_email: data.secondary_email || null,
+        },
+      });
+    },
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ['customers_enhanced'] });
+      queryClient.invalidateQueries({ queryKey: ['customers_for_cases'] });
+      if (customer) queryClient.invalidateQueries({ queryKey: ['customer', customer.id] });
+      if (onSuccess && updated) onSuccess(updated as unknown as Record<string, unknown>);
+      onClose();
+    },
+  });
+
+  const activeMutation = isEdit ? updateMutation : createMutation;
 
   const createCompanyMutation = useMutation({
     mutationFn: async (companyData: typeof newCompanyData) =>
@@ -243,6 +335,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     setFormData({
       customer_name: '',
       email: '',
+      secondary_email: '',
       mobile_number: '',
       phone_number: '',
       customer_group_id: '',
@@ -268,7 +361,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     setErrors(validationErrors);
     setTouched({ customer_name: true, email: true });
     if (Object.keys(validationErrors).length > 0) return;
-    createMutation.mutate(formData);
+    activeMutation.mutate(formData);
   };
 
   const handleClose = () => {
@@ -282,14 +375,15 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   };
 
   React.useEffect(() => {
+    // Create mode only — never override an edited customer's own country.
     const defaultCountryId = companySettings?.location?.default_country_id;
-    if (isOpen && defaultCountryId) {
+    if (isOpen && !customer && defaultCountryId) {
       setFormData((prev) => ({
         ...prev,
         country_id: defaultCountryId,
       }));
     }
-  }, [isOpen, companySettings]);
+  }, [isOpen, companySettings, customer]);
 
   const addressValue: AddressValue = {
     address_line1: formData.address_line1,
@@ -303,13 +397,13 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       <Modal
         isOpen={isOpen}
         onClose={handleClose}
-        title="Add New Customer"
+        title={isEdit ? 'Edit Customer' : 'Add New Customer'}
         icon={User}
         titleSize="sm"
         maxWidth="xl"
         showClose
         headerAction={
-          nextCustomerNumber ? (
+          !isEdit && nextCustomerNumber ? (
             <span
               title="The number this customer will be assigned"
               className="flex items-center gap-1.5 rounded-md border border-info/30 bg-info-muted px-2 py-1"
@@ -373,9 +467,17 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
           {showAltPhone && (
             <div className="flex items-start gap-2">
-              <div className="flex-1">
+              <div className="grid flex-1 grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Alternative Email"
+                  floatingLabel
+                  type="email"
+                  value={formData.secondary_email}
+                  onChange={(e) => handleFieldChange('secondary_email', e.target.value)}
+                  placeholder="e.g. info@example.com"
+                />
                 <PhoneInput
-                  label="Phone Number (Alternative)"
+                  label="Alternative Mobile Number"
                   floatingLabel
                   value={formData.phone_number}
                   onChange={(val) => handleFieldChange('phone_number', val)}
@@ -389,9 +491,10 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 onClick={() => {
                   setShowAltPhone(false);
                   handleFieldChange('phone_number', '');
+                  handleFieldChange('secondary_email', '');
                 }}
-                title="Remove alternative phone number"
-                aria-label="Remove alternative phone number"
+                title="Remove alternative contact"
+                aria-label="Remove alternative contact"
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-300 text-slate-400 transition-colors hover:border-danger/40 hover:bg-danger-muted hover:text-danger"
               >
                 <X className="h-4 w-4" />
@@ -404,30 +507,36 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               label="Customer Group"
               floatingLabel
               shrinkDefaultValue
+              className={isEdit ? 'md:col-span-2' : undefined}
               value={formData.customer_group_id}
               onChange={(value) => handleFieldChange('customer_group_id', value)}
               options={[{ id: '', name: 'No group' }, ...customerGroups.map((g) => ({ id: g.id, name: g.name }))]}
               placeholder="No group"
               usePortal
             />
-            <SearchableSelect
-              label="Company (Optional)"
-              floatingLabel
-              shrinkDefaultValue
-              value={formData.company_id}
-              onChange={(value) => handleFieldChange('company_id', value)}
-              options={[
-                { id: '', name: 'No Company' },
-                ...companies.map((c) => ({
-                  id: c.id,
-                  name: `${c.company_name} (${c.company_number})`,
-                })),
-              ]}
-              placeholder="No Company"
-              onAddNew={() => setIsAddCompanyModalOpen(true)}
-              addNewLabel="Add New Company"
-              usePortal
-            />
+            {/* Company (create only) — on an existing customer, relationships
+                are managed via the dedicated Associated Companies UI. In edit
+                mode the Group select spans the full row. */}
+            {!isEdit && (
+              <SearchableSelect
+                label="Company (Optional)"
+                floatingLabel
+                shrinkDefaultValue
+                value={formData.company_id}
+                onChange={(value) => handleFieldChange('company_id', value)}
+                options={[
+                  { id: '', name: 'No Company' },
+                  ...companies.map((c) => ({
+                    id: c.id,
+                    name: `${c.company_name} (${c.company_number})`,
+                  })),
+                ]}
+                placeholder="No Company"
+                onAddNew={() => setIsAddCompanyModalOpen(true)}
+                addNewLabel="Add New Company"
+                usePortal
+              />
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -501,11 +610,11 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             placeholder="Add any internal notes..."
           />
 
-          {createMutation.isError && (
+          {activeMutation.isError && (
             <div className="px-3 py-2 bg-danger-muted border border-danger/30 rounded-lg text-sm text-danger">
-              {createMutation.error instanceof Error
-                ? createMutation.error.message
-                : 'Failed to create customer. Please try again.'}
+              {activeMutation.error instanceof Error
+                ? activeMutation.error.message
+                : `Failed to ${isEdit ? 'update' : 'create'} customer. Please try again.`}
             </div>
           )}
 
@@ -513,21 +622,34 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             <Button type="button" variant="secondary" size="sm" className="text-xs" onClick={handleClose}>
               Cancel
             </Button>
-            <UsageLimitGuard limitKey="max_customers" showToast={true}>
-              <Button type="submit" size="sm" className="text-xs" disabled={createMutation.isPending}>
-                {createMutation.isPending ? (
+            {isEdit ? (
+              <Button type="submit" size="sm" className="text-xs" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                    Creating...
+                    Saving...
                   </>
                 ) : (
-                  <>
-                    <UserPlus className="w-3.5 h-3.5 mr-1.5" />
-                    Create Customer
-                  </>
+                  'Save Changes'
                 )}
               </Button>
-            </UsageLimitGuard>
+            ) : (
+              <UsageLimitGuard limitKey="max_customers" showToast={true}>
+                <Button type="submit" size="sm" className="text-xs" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+                      Create Customer
+                    </>
+                  )}
+                </Button>
+              </UsageLimitGuard>
+            )}
           </div>
         </form>
       </Modal>
