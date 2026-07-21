@@ -444,7 +444,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             placeholder="Enter full address"
           />
 
-          <div className="border-t border-slate-200 pt-4">
+          <div>
             <p className="mb-4 text-xs font-medium text-slate-500">
               Additional address details (optional)
             </p>

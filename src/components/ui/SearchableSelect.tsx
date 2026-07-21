@@ -198,7 +198,7 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
               aria-expanded
               aria-controls={listboxId}
               aria-activedescendant={activeOptionId}
-              className="w-full ps-8 pe-3 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className={`w-full ps-8 pe-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${floatingLabel ? 'text-xs placeholder:text-xs' : 'text-sm'}`}
               placeholder={t('ui.select.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => {
@@ -228,7 +228,7 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
             <div
               role="status"
               aria-live="polite"
-              className="px-3 py-6 text-center text-slate-500 text-sm"
+              className={`px-3 py-6 text-center text-slate-500 ${floatingLabel ? 'text-xs' : 'text-sm'}`}
             >
               {resolvedEmptyMessage}
             </div>
@@ -240,7 +240,7 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
                 id={`${listboxId}-opt-${option.id}`}
                 aria-selected={option.id === value}
                 aria-disabled={option.disabled || undefined}
-                className={`px-3 py-2 cursor-pointer transition-colors ${
+                className={`px-3 py-2 cursor-pointer transition-colors ${floatingLabel ? 'text-xs' : ''} ${
                   option.disabled
                     ? 'text-slate-400 cursor-not-allowed'
                     : activeIndex === index
@@ -263,7 +263,7 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
             <button
               type="button"
               onClick={handleAddNew}
-              className="w-full px-3 py-2 text-sm font-medium text-primary hover:bg-primary/5 rounded-md transition-colors text-start"
+              className={`w-full px-3 py-2 font-medium text-primary hover:bg-primary/5 rounded-md transition-colors text-start ${floatingLabel ? 'text-xs' : 'text-sm'}`}
             >
               + {resolvedAddNewLabel}
             </button>
