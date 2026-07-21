@@ -7,7 +7,8 @@ import { useFieldA11y } from '../../hooks/useFieldA11y';
 import { useAnchoredPosition } from '../../hooks/useAnchoredPosition';
 import { useListboxKeyboard } from '../../hooks/useListboxKeyboard';
 
-const triggerSizeClasses = { sm: 'px-3 py-1.5 text-sm', md: 'px-3 py-2' } as const;
+// md matches the 36px standard field height set in ui/Input.tsx.
+const triggerSizeClasses = { sm: 'px-3 py-1.5 text-sm', md: 'h-9 px-3 text-sm' } as const;
 
 interface Option {
   id: string;
@@ -315,12 +316,12 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
           onKeyDown={onKeyDown}
           tabIndex={disabled ? -1 : 0}
         >
-          <div className="flex items-center justify-between">
-            <span className={selectedOption ? 'text-slate-900' : 'text-slate-400'}>
+          <div className="flex h-full items-center justify-between gap-2">
+            <span className={cn('truncate', selectedOption ? 'text-slate-900' : 'text-slate-400')}>
               {selectedOption ? selectedOption.name : resolvedPlaceholder}
             </span>
             <ChevronDown
-              className={`w-4 h-4 text-slate-400 transition-transform ${
+              className={`w-4 h-4 shrink-0 text-slate-400 transition-transform ${
                 isOpen ? 'rotate-180' : ''
               }`}
             />

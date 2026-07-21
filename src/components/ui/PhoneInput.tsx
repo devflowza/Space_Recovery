@@ -226,8 +226,10 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
             )}
           </label>
         )}
+        {/* h-9 wrapper = the 36px standard field height (ui/Input.tsx md);
+            the button/input children stretch to fill it. */}
         <div
-          className={`flex border rounded-md overflow-hidden transition-all ${
+          className={`flex h-9 border rounded-md overflow-hidden transition-all ${
             error
               ? 'border-danger'
               : isDropdownOpen
@@ -244,7 +246,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
             aria-controls={listboxId}
             disabled={disabled}
             onClick={() => setIsDropdownOpen((prev) => !prev)}
-            className={`flex items-center gap-1 px-2.5 py-2 bg-slate-50 border-e border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors shrink-0 ${
+            className={`flex items-center gap-1 px-2.5 bg-slate-50 border-e border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors shrink-0 ${
               disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
             }`}
           >
@@ -271,7 +273,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
             onChange={handleLocalNumberChange}
             placeholder={placeholder}
             disabled={disabled}
-            className={`flex-1 px-3 py-2 text-sm focus:outline-none bg-white min-w-0 ${
+            className={`flex-1 px-3 text-sm focus:outline-none bg-white min-w-0 ${
               disabled ? 'bg-slate-100 cursor-not-allowed' : ''
             }`}
           />

@@ -702,7 +702,7 @@ export const CompaniesListPage: React.FC = () => {
         title="Add New Company"
         subtitle="Enter the company details to get started."
         icon={Building2}
-        size="lg"
+        maxWidth="xl"
         showClose
       >
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -874,7 +874,7 @@ export const CompaniesListPage: React.FC = () => {
         title="Edit Company"
         subtitle="Update the company details."
         icon={Building2}
-        size="lg"
+        maxWidth="xl"
         showClose
       >
         <form onSubmit={handleEditSubmit} className="space-y-3">

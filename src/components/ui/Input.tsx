@@ -3,7 +3,9 @@ import { AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useFieldA11y } from '../../hooks/useFieldA11y';
 
-const inputSizeClasses = { sm: 'px-3 py-1.5 text-sm', md: 'px-3 py-2' } as const;
+// md is the app-wide standard field height: 36px (h-9, 14px text) — aligned
+// with the ERP density band (Dynamics 32 / shadcn 36 / Odoo 38 / Jira 40).
+const inputSizeClasses = { sm: 'px-3 py-1.5 text-sm', md: 'h-9 px-3 text-sm' } as const;
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;

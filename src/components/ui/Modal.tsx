@@ -12,7 +12,7 @@ interface ModalProps {
   subtitle?: string;
   children: ReactNode;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'large' | '2xl';
-  maxWidth?: '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
+  maxWidth?: 'xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl';
   icon?: ElementType;
   headerAction?: ReactNode;
   headerBadges?: ReactNode;
@@ -36,8 +36,9 @@ interface ModalProps {
 // horizontal space before resorting to vertical scrolling):
 //   xs/sm  – confirmations and single-field quick-adds
 //   md     – short single-column forms (≤4 fields)
+//   maxWidth="xl" (576px) – party forms (customer/company add+edit), 2-col rows
 //   lg     – standard forms: pair related fields into 2-column rows
-//   xl/4xl – multi-section entity forms (customer/supplier-class), 2–3 col rows
+//   size xl/4xl – multi-section entity forms, 2–3 col rows
 //   2xl+/7xl – wizards and full editors (e.g. Add Inventory Item)
 // Scrolling is the fallback for genuinely long content, not a substitute for width.
 const sizeClasses: Record<NonNullable<ModalProps['size']>, string> = {
@@ -51,6 +52,7 @@ const sizeClasses: Record<NonNullable<ModalProps['size']>, string> = {
 };
 
 const maxWidthClasses: Record<NonNullable<ModalProps['maxWidth']>, string> = {
+  xl: 'max-w-xl',
   '3xl': 'max-w-3xl',
   '4xl': 'max-w-4xl',
   '5xl': 'max-w-5xl',

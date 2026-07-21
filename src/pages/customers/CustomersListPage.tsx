@@ -721,7 +721,7 @@ export const CustomersListPage: React.FC = () => {
         title="Edit Customer"
         subtitle="Update this customer's details."
         icon={UserCheck}
-        size="lg"
+        maxWidth="xl"
         showClose
       >
         <form onSubmit={handleSubmitEdit} className="space-y-4">

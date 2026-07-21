@@ -34,7 +34,7 @@ export function AddressFields({ value, onChange, countryId, disabled }: {
   }, [countryId]);
 
   const set = (patch: Partial<AddressValue>) => onChange({ ...value, ...patch });
-  const inputCls = 'w-full rounded-md border border-border bg-surface px-3 py-2 text-sm focus:ring-2 focus:ring-ring';
+  const inputCls = 'h-9 w-full rounded-md border border-border bg-surface px-3 text-sm focus:ring-2 focus:ring-ring';
 
   return (
     // Compact 2-col layout: line1 | line2 on one row, then subdivision | postal —
