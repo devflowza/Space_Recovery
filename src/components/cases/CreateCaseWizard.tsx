@@ -18,6 +18,7 @@ import {
   HardDrive,
   AlertCircle,
   CheckCircle,
+  FolderPlus,
   X,
   Plus,
   Trash2,
@@ -574,20 +575,28 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
       closeOnEscape={false}
       className="bg-white rounded-2xl shadow-2xl w-[95vw] max-w-[1600px] max-h-[90vh] overflow-hidden flex flex-col"
     >
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Create New Case</h2>
-            <p className="text-sm text-slate-500 mt-1">Complete all sections to create a case</p>
+        {/* Header mirrors the shared Modal chrome (badge + title/subtitle + X). */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <FolderPlus className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Create New Case</h2>
+              <p className="mt-0.5 text-sm text-slate-500">Complete all sections to create a case</p>
+            </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
+            aria-label="Close"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
           >
-            <X className="w-6 h-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="flex flex-col">
               <div
@@ -1033,7 +1042,7 @@ export const CreateCaseWizard: React.FC<CreateCaseWizardProps> = ({ onClose, onS
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-slate-200 bg-slate-50">
+        <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-slate-200 bg-slate-50">
           <Button variant="secondary" onClick={onClose}>
             <X className="w-4 h-4 mr-1" />
             Cancel
