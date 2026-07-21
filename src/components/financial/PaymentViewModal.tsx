@@ -95,7 +95,10 @@ export const PaymentViewModal: React.FC<PaymentViewModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Payment Details"
+      subtitle="Review this payment and its allocations."
+      icon={Receipt}
       size="lg"
+      showClose
     >
       <div className="space-y-6">
         <div className="bg-gradient-to-r from-success-muted to-success-muted rounded-xl p-6 border border-success/30">

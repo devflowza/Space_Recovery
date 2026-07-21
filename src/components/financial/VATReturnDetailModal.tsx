@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from '../ui/Modal';
-import { CheckCircle2, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, FileText } from 'lucide-react';
 import { useCurrency } from '../../hooks/useCurrency';
 import {
   getReturnLines,
@@ -43,7 +43,7 @@ export const VATReturnDetailModal: React.FC<VATReturnDetailModalProps> = ({ vatR
     Math.abs(ledgerInput - Number(vatReturn.input_vat)) <= 0.0001;
 
   return (
-    <Modal isOpen onClose={onClose} title={`Return ${vatReturn.period_start} → ${vatReturn.period_end}`} size="xl">
+    <Modal isOpen onClose={onClose} title={`Return ${vatReturn.period_start} → ${vatReturn.period_end}`} subtitle="Review this VAT return and its boxes." icon={FileText} size="xl" showClose>
       <div className="space-y-6">
         <div
           className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm ${

@@ -275,7 +275,10 @@ export default function InventoryDetailModal({
         isOpen={isOpen}
         onClose={onClose}
         title={getItemDisplayName()}
+        subtitle="Review this item's details and history."
+        icon={Package}
         maxWidth="4xl"
+        showClose
         headerAction={
           <div className="flex items-center gap-2">
             <Button
