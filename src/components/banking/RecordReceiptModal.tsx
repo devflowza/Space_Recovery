@@ -392,7 +392,10 @@ export const RecordReceiptModal: React.FC<RecordReceiptModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={singleInvoiceMode ? 'Record Payment for Invoice' : 'Record Payment'}
+      subtitle="Record a payment received and allocate it to invoices."
+      icon={Receipt}
       size="2xl"
+      showClose
       closeOnBackdrop={false}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
