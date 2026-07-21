@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { getExpenseCategories, Expense } from '../../lib/expensesService';
 import {
   DollarSign,
+  Receipt,
   Calendar,
   Tag,
   FileText,
@@ -171,11 +172,14 @@ export const ExpenseFormModal: React.FC<ExpenseFormModalProps> = ({
       isOpen={isOpen}
       onClose={handleClose}
       title={initialData?.id ? 'Edit Expense' : 'New Expense'}
+      subtitle={initialData?.id ? "Update this expense's details." : 'Enter the expense details to record it.'}
+      icon={Receipt}
       size="lg"
+      showClose
       closeOnBackdrop={false}
       initialFocusRef={firstFieldRef}
     >
-      <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
+      <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
