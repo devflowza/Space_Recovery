@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, ChevronDown, Search } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { FLOATING_LABEL_CLS } from './Input';
 import { useFieldA11y } from '../../hooks/useFieldA11y';
 import { useAnchoredPosition } from '../../hooks/useAnchoredPosition';
 import { useListboxKeyboard } from '../../hooks/useListboxKeyboard';
@@ -37,6 +38,11 @@ interface SearchableSelectProps {
   name?: string;
   className?: string;
   size?: 'sm' | 'md';
+  /** Opt-in: render the label as a notch on the trigger's top border. */
+  floatingLabel?: boolean;
+  /** Opt-in: render the trigger text at the smallest size while the default
+   *  (empty) value is selected — i.e. placeholder/"No X" options read quietly. */
+  shrinkDefaultValue?: boolean;
   /** Reports the live filter term (and '' on close) so consumers can fetch
    *  options server-side — required beyond PostgREST's 1000-row cap. */
   onSearchTermChange?: (term: string) => void;
@@ -62,6 +68,8 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
       name,
       className,
       size = 'md',
+      floatingLabel = false,
+      shrinkDefaultValue = false,
       onSearchTermChange,
     },
     ref
@@ -276,7 +284,7 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
 
     return (
       <div className={`relative ${className ?? ''}`} ref={containerRef}>
-        {label && (
+        {label && !floatingLabel && (
           <label {...labelProps} className="block text-sm font-medium text-slate-700 mb-1">
             {label}
             {required && (
@@ -317,7 +325,11 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
           tabIndex={disabled ? -1 : 0}
         >
           <div className="flex h-full items-center justify-between gap-2">
-            <span className={cn('truncate', selectedOption ? 'text-slate-900' : 'text-slate-400')}>
+            <span className={cn(
+              'truncate',
+              selectedOption ? 'text-slate-900' : 'text-slate-400',
+              shrinkDefaultValue && !value && 'text-xxs',
+            )}>
               {selectedOption ? selectedOption.name : resolvedPlaceholder}
             </span>
             <ChevronDown
@@ -327,6 +339,13 @@ export const SearchableSelect = React.forwardRef<HTMLDivElement, SearchableSelec
             />
           </div>
         </div>
+
+        {label && floatingLabel && (
+          <label {...labelProps} className={FLOATING_LABEL_CLS}>
+            {label}
+            {required && <span aria-hidden="true" className="text-danger ms-0.5">*</span>}
+          </label>
+        )}
 
         {error ? (
           <p {...errorProps} className="mt-1 text-xs text-danger flex items-center gap-1"><AlertCircle aria-hidden="true" className="w-3 h-3 shrink-0" />

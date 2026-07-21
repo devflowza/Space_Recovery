@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, ChevronDown, Search } from 'lucide-react';
+import { FLOATING_LABEL_CLS } from './Input';
 import { useFieldA11y } from '../../hooks/useFieldA11y';
 import { useAnchoredPosition } from '../../hooks/useAnchoredPosition';
 import { useListboxKeyboard } from '../../hooks/useListboxKeyboard';
@@ -26,6 +27,8 @@ interface PhoneInputProps {
   id?: string;
   hint?: string;
   name?: string;
+  /** Opt-in: render the label as a notch on the field's top border. */
+  floatingLabel?: boolean;
 }
 
 function findPhoneCodeForCountry(countries: PhoneCountry[], countryId: string): string {
@@ -72,6 +75,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
       id,
       hint,
       name,
+      floatingLabel = false,
     },
     ref
   ) => {
@@ -215,8 +219,8 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
       : null;
 
     return (
-      <div className="w-full" ref={containerRef}>
-        {label && (
+      <div className="relative w-full" ref={containerRef}>
+        {label && !floatingLabel && (
           <label {...labelProps} className="block text-sm font-medium text-slate-700 mb-1">
             {label}
             {required && (
@@ -278,6 +282,13 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
             }`}
           />
         </div>
+
+        {label && floatingLabel && (
+          <label {...labelProps} className={FLOATING_LABEL_CLS}>
+            {label}
+            {required && <span aria-hidden="true" className="text-danger ms-0.5">*</span>}
+          </label>
+        )}
 
         {error ? (
           <p {...errorProps} className="mt-1 text-xs text-danger flex items-center gap-1"><AlertCircle aria-hidden="true" className="w-3 h-3 shrink-0" />

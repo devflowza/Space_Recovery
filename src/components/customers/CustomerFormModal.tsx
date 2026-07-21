@@ -5,6 +5,7 @@ import { createCustomer } from '../../lib/customerService';
 import { createCompany } from '../../lib/companyService';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Textarea } from '../ui/Textarea';
 import { Modal } from '../ui/Modal';
 import { PhoneInput } from '../ui/PhoneInput';
 import { UsageLimitGuard } from '../shared/UsageLimitGuard';
@@ -15,8 +16,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   User,
   UserPlus,
-  Mail,
-  MapPin,
   Building2,
   ChevronDown,
   ChevronUp,
@@ -323,28 +322,27 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           <Input
             ref={customerNameRef}
             label="Name"
+            floatingLabel
             value={formData.customer_name}
             onChange={(e) => handleFieldChange('customer_name', e.target.value)}
             onBlur={() => handleBlur('customer_name')}
             error={touched.customer_name ? errors.customer_name : undefined}
             required
-            placeholder="Enter full name"
-            leftIcon={<User className="w-4 h-4" />}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Input
               label="Email"
+              floatingLabel
               type="email"
               value={formData.email}
               onChange={(e) => handleFieldChange('email', e.target.value)}
               onBlur={() => handleBlur('email')}
               error={touched.email ? errors.email : undefined}
-              placeholder="e.g. info@example.com"
-              leftIcon={<Mail className="w-4 h-4" />}
             />
             <PhoneInput
               label="Mobile Number"
+              floatingLabel
               value={formData.mobile_number}
               onChange={(val) => handleFieldChange('mobile_number', val)}
               countries={countries}
@@ -355,6 +353,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
           <PhoneInput
             label="Phone Number (Alternative)"
+            floatingLabel
             value={formData.phone_number}
             onChange={(val) => handleFieldChange('phone_number', val)}
             countries={countries}
@@ -365,6 +364,8 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <SearchableSelect
               label="Customer Group"
+              floatingLabel
+              shrinkDefaultValue
               value={formData.customer_group_id}
               onChange={(value) => handleFieldChange('customer_group_id', value)}
               options={[{ id: '', name: 'No group' }, ...customerGroups.map((g) => ({ id: g.id, name: g.name }))]}
@@ -373,6 +374,8 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             />
             <SearchableSelect
               label="Company (Optional)"
+              floatingLabel
+              shrinkDefaultValue
               value={formData.company_id}
               onChange={(value) => handleFieldChange('company_id', value)}
               options={[
@@ -392,6 +395,8 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <SearchableSelect
               label="Country"
+              floatingLabel
+              shrinkDefaultValue
               value={formData.country_id}
               onChange={(value) => {
                 setFormData({ ...formData, country_id: value, city_id: '' });
@@ -402,6 +407,8 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             />
             <SearchableSelect
               label="City"
+              floatingLabel
+              shrinkDefaultValue
               value={formData.city_id}
               onChange={(value) => handleFieldChange('city_id', value)}
               options={[{ id: '', name: 'Not specified' }, ...filteredCities.map((c) => ({ id: c.id, name: c.name }))]}
@@ -413,10 +420,10 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
           <Input
             label="Address"
+            floatingLabel
             value={formData.address}
             onChange={(e) => handleFieldChange('address', e.target.value)}
             placeholder="Enter full address"
-            leftIcon={<MapPin className="w-4 h-4" />}
           />
 
           <div>
@@ -467,19 +474,16 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             </span>
           </label>
 
-          <div>
-            <label htmlFor="customer-internal-notes" className="block text-sm font-medium text-slate-700 mb-1">
-              Internal Notes <span className="font-normal text-slate-400">(Optional)</span>
-            </label>
-            <textarea
-              id="customer-internal-notes"
-              value={formData.notes}
-              onChange={(e) => handleFieldChange('notes', e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm resize-none transition-shadow bg-white"
-              placeholder="Add any internal notes..."
-            />
-          </div>
+          <Textarea
+            id="customer-internal-notes"
+            label="Internal Notes"
+            floatingLabel
+            value={formData.notes}
+            onChange={(e) => handleFieldChange('notes', e.target.value)}
+            rows={2}
+            className="resize-none"
+            placeholder="Add any internal notes..."
+          />
 
           {createMutation.isError && (
             <div className="px-3 py-2 bg-danger-muted border border-danger/30 rounded-lg text-sm text-danger">
