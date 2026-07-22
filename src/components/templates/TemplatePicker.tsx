@@ -132,7 +132,7 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
 
   return (
     <div className="space-y-1.5">
-      <div className="flex items-end gap-2">
+      <div className={`flex gap-2 ${floatingLabel ? 'items-center' : 'items-end'}`}>
         <div className="flex-1">
           <Select
             label={label}
@@ -158,7 +158,7 @@ export const TemplatePicker: React.FC<TemplatePickerProps> = ({
           type="button"
           variant="secondary"
           size="sm"
-          className="mb-0.5"
+          className={floatingLabel ? undefined : 'mb-0.5'}
           onClick={() => setShowPreview(true)}
           disabled={disabled || !selected}
           title="Preview with this record's data"
