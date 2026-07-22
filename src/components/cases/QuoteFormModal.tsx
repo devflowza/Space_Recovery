@@ -4,7 +4,8 @@ import { Plus, Trash2, Search, DollarSign, FileText, FileBarChart, Briefcase, Ca
 import { Modal } from '../ui/Modal';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { Input, FLOATING_LABEL_CLS } from '../ui/Input';
+import { SearchableSelect } from '../ui/SearchableSelect';
 import { supabase } from '../../lib/supabaseClient';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useTaxConfig, useDateTimeConfig } from '../../contexts/TenantConfigContext';
@@ -426,24 +427,49 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
         <FileBarChart className="w-3.5 h-3.5 text-success" />
         <span className="text-xs font-semibold text-success">{quoteNumber}</span>
       </div>
-      <div className="flex items-center gap-1.5 bg-info-muted border border-info/30 px-2.5 py-1 rounded-lg">
-        <Briefcase className="w-3.5 h-3.5 text-info" />
-        <span className="text-xs font-semibold text-info">#{caseNumber}</span>
-      </div>
+      {/* When the header Case selector is shown (no bound case), this badge is
+          redundant — only show it for a quote already tied to a case. */}
+      {caseId && (
+        <div className="flex items-center gap-1.5 bg-info-muted border border-info/30 px-2.5 py-1 rounded-lg">
+          <Briefcase className="w-3.5 h-3.5 text-info" />
+          <span className="text-xs font-semibold text-info">#{caseNumber}</span>
+        </div>
+      )}
     </>
   );
+
+  // When the quote isn't already bound to a case, the Case picker lives in
+  // the modal header (not a separate body card) as the primary top-level control.
+  const caseSelector = !caseId ? (
+    <div className="w-56 sm:w-64">
+      <SearchableSelect
+        label="Case"
+        floatingLabel
+        shrinkDefaultValue
+        usePortal
+        required
+        value={selectedCaseId}
+        onChange={(value) => setSelectedCaseId(value)}
+        options={[
+          { id: '', name: 'Select a case...' },
+          ...cases.map((caseItem) => ({ id: caseItem.id, name: `${caseItem.case_no} - ${caseItem.title}` })),
+        ]}
+        placeholder="Select a case..."
+      />
+    </div>
+  ) : undefined;
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={initialData ? 'Edit Quote' : 'Create New Quote'}
-      subtitle={initialData ? "Update this quote's line items and terms." : 'Build the quote line items and terms.'}
       icon={FileText}
       size="xl"
       showClose
       initialFocusRef={titleInputRef}
       headerBadges={headerBadges}
+      headerAction={caseSelector}
       closeOnBackdrop={false}
       footer={
         <div className="flex items-center justify-end gap-3">
@@ -472,34 +498,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
         </div>
       }
     >
-      <form id="quoteForm" onSubmit={handleSubmit} className="space-y-4">
-
-        {!caseId && (
-          <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="bg-slate-100 p-1.5 rounded-lg">
-                <Briefcase className="w-4 h-4 text-slate-600" />
-              </div>
-              <h3 className="text-sm font-semibold text-slate-900">Select Case</h3>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Case *</label>
-              <select
-                value={selectedCaseId}
-                onChange={(e) => setSelectedCaseId(e.target.value)}
-                className="h-9 w-full px-3 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-success focus:border-success"
-                required
-              >
-                <option value="">Select a case...</option>
-                {cases.map((caseItem) => (
-                  <option key={caseItem.id} value={caseItem.id}>
-                    {caseItem.case_no} - {caseItem.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
+      <form id="quoteForm" onSubmit={handleSubmit} className="space-y-5">
 
         <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
@@ -508,11 +507,12 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
             </div>
             <h3 className="text-sm font-semibold text-slate-900">Quote Details</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-5">
             <div className="md:col-span-1">
               <Input
                 ref={titleInputRef}
                 label="Quote Title"
+                floatingLabel
                 value={quoteData.title}
                 onChange={(e) => setQuoteData({ ...quoteData, title: e.target.value })}
                 required
@@ -523,6 +523,7 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
             <div className="md:col-span-1">
               <Input
                 label="Client Reference"
+                floatingLabel
                 value={quoteData.client_reference}
                 onChange={(e) => setQuoteData({ ...quoteData, client_reference: e.target.value })}
                 placeholder="Optional"
@@ -530,23 +531,26 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
             </div>
 
             <div className="md:col-span-1">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-              <select
+              <SearchableSelect
+                label="Status"
+                floatingLabel
+                usePortal
                 value={quoteData.status}
-                onChange={(e) => setQuoteData({ ...quoteData, status: e.target.value })}
-                className="h-9 w-full px-3 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-success focus:border-success"
-              >
-                <option value="draft">Draft</option>
-                <option value="sent">Sent</option>
-                <option value="accepted">Accepted</option>
-                <option value="rejected">Rejected</option>
-                <option value="expired">Expired</option>
-              </select>
+                onChange={(value) => setQuoteData({ ...quoteData, status: value })}
+                options={[
+                  { id: 'draft', name: 'Draft' },
+                  { id: 'sent', name: 'Sent' },
+                  { id: 'accepted', name: 'Accepted' },
+                  { id: 'rejected', name: 'Rejected' },
+                  { id: 'expired', name: 'Expired' },
+                ]}
+              />
             </div>
 
             <div className="md:col-span-1">
               <Input
                 label="Valid Until"
+                floatingLabel
                 type="date"
                 value={quoteData.valid_until}
                 onChange={(e) => setQuoteData({ ...quoteData, valid_until: e.target.value })}
@@ -555,16 +559,14 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
 
             {currencies.length > 1 && (
               <div className="md:col-span-1">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
-                <select
+                <SearchableSelect
+                  label="Currency"
+                  floatingLabel
+                  usePortal
                   value={quoteData.currency || baseCurrency}
-                  onChange={(e) => setQuoteData((d) => ({ ...d, currency: e.target.value }))}
-                  className="h-9 w-full rounded border border-border bg-surface px-3 text-sm"
-                >
-                  {currencies.map((c) => (
-                    <option key={c.code} value={c.code}>{c.code}{c.isBase ? ' (base)' : ''}</option>
-                  ))}
-                </select>
+                  onChange={(value) => setQuoteData((d) => ({ ...d, currency: value }))}
+                  options={currencies.map((c) => ({ id: c.code, name: `${c.code}${c.isBase ? ' (base)' : ''}` }))}
+                />
               </div>
             )}
           </div>
@@ -688,11 +690,12 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
               </div>
               <h3 className="text-sm font-semibold text-slate-900">Financial Calculation</h3>
             </div>
-            <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-5">
+              <div className="grid grid-cols-3 gap-x-4 gap-y-5">
                 <div>
                   <Input
                     label="Tax Rate (%)"
+                    floatingLabel
                     type="number"
                     value={quoteData.tax_rate}
                     onChange={(e) =>
@@ -703,50 +706,47 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Discount ({quoteData.discount_type === 'percentage' ? '%' : docCurrency})
-                  </label>
-                  <input
+                  <Input
+                    label={`Discount (${quoteData.discount_type === 'percentage' ? '%' : docCurrency})`}
+                    floatingLabel
                     type="number"
-                    aria-label="Discount"
                     value={quoteData.discount_amount}
                     onChange={(e) =>
                       setQuoteData({ ...quoteData, discount_amount: parseFloat(e.target.value) || 0 })
                     }
                     min="0"
                     step="0.01"
-                    className="h-9 w-full px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary border-slate-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Discount Type
-                  </label>
-                  <div className="flex border border-slate-300 rounded-md overflow-hidden h-[34px]">
-                    <button
-                      type="button"
-                      onClick={() => setQuoteData({ ...quoteData, discount_type: 'fixed' })}
-                      className={`flex-1 px-2 py-1 transition-all flex items-center justify-center ${
-                        quoteData.discount_type === 'fixed'
-                          ? 'bg-success text-success-foreground shadow-sm'
-                          : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                      }`}
-                      title="Fixed Amount"
-                    >
-                      <DollarSign className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setQuoteData({ ...quoteData, discount_type: 'percentage' })}
-                      className={`flex-1 px-2 py-1 border-l border-slate-300 transition-all flex items-center justify-center ${
-                        quoteData.discount_type === 'percentage'
-                          ? 'bg-success text-success-foreground shadow-sm'
-                          : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                      }`}
-                      title="Percentage"
-                    >
-                      <Percent className="w-4 h-4" />
-                    </button>
+                  <div className="relative">
+                    <div className="flex border border-slate-300 rounded-md overflow-hidden h-9">
+                      <button
+                        type="button"
+                        onClick={() => setQuoteData({ ...quoteData, discount_type: 'fixed' })}
+                        className={`flex-1 px-2 transition-all flex items-center justify-center ${
+                          quoteData.discount_type === 'fixed'
+                            ? 'bg-success text-success-foreground shadow-sm'
+                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                        }`}
+                        title="Fixed Amount"
+                      >
+                        <DollarSign className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setQuoteData({ ...quoteData, discount_type: 'percentage' })}
+                        className={`flex-1 px-2 border-l border-slate-300 transition-all flex items-center justify-center ${
+                          quoteData.discount_type === 'percentage'
+                            ? 'bg-success text-success-foreground shadow-sm'
+                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                        }`}
+                        title="Percentage"
+                      >
+                        <Percent className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <label className={FLOATING_LABEL_CLS}>Discount Type</label>
                   </div>
                 </div>
               </div>
@@ -809,24 +809,22 @@ export const QuoteFormModal: React.FC<QuoteFormModalProps> = ({
               </div>
               <h3 className="text-sm font-semibold text-slate-900">Additional Information</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Bank Account
-                </label>
-                <select
-                  value={quoteData.bank_account_id || ''}
-                  onChange={(e) => setQuoteData({ ...quoteData, bank_account_id: e.target.value || null })}
-                  className="h-9 w-full px-3 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-success focus:border-success"
+                <SearchableSelect
+                  label="Bank Account"
+                  floatingLabel
+                  shrinkDefaultValue
+                  usePortal
                   disabled={bankAccountsLoading}
-                >
-                  <option value="">None selected</option>
-                  {bankAccounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.account_name} - {account.bank_name}
-                    </option>
-                  ))}
-                </select>
+                  value={quoteData.bank_account_id || ''}
+                  onChange={(value) => setQuoteData({ ...quoteData, bank_account_id: value || null })}
+                  options={[
+                    { id: '', name: 'None selected' },
+                    ...bankAccounts.map((account) => ({ id: account.id, name: `${account.account_name} - ${account.bank_name}` })),
+                  ]}
+                  placeholder="None selected"
+                />
                 {bankAccounts.length === 0 && !bankAccountsLoading && (
                   <p className="text-xs text-warning mt-1">No bank accounts set up. Add one in Banking &gt; Accounts to display payment details on quotes.</p>
                 )}
