@@ -127,7 +127,8 @@ describe('QuoteFormModal — unit select from master_unit_codes', () => {
     await user.type(priceInput, '300');
 
     // Type a fixed discount of 500 — larger than the 300 subtotal.
-    const discountInput = screen.getByLabelText('Discount');
+    // The floating label now reads "Discount (<currency>)" (matches Invoice).
+    const discountInput = screen.getByLabelText(/^Discount \(/);
     await user.clear(discountInput);
     await user.type(discountInput, '500');
 
