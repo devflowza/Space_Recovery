@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Package, Calendar, DollarSign, FileText, ClipboardList } from 'lucide-react';
+import { Plus, Trash2, DollarSign, ClipboardList } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Textarea } from '../ui/Textarea';
+import { SearchableSelect } from '../ui/SearchableSelect';
 import { supabase, resolveTenantId } from '../../lib/supabaseClient';
 import { useToast } from '../../hooks/useToast';
 import { useCurrency } from '../../hooks/useCurrency';
@@ -344,7 +346,6 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
       isOpen={isOpen}
       onClose={onClose}
       title={purchaseOrder ? 'Edit Purchase Order' : 'Create Purchase Order'}
-      subtitle={purchaseOrder ? "Update this purchase order's details." : 'Enter the purchase order details to create it.'}
       icon={ClipboardList}
       maxWidth="5xl"
       showClose
@@ -360,109 +361,78 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
         </div>
       }
     >
-      <form id="purchaseOrderForm" onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              PO Number *
-            </label>
-            <Input
-              value={formData.po_number}
-              onChange={(e) => setFormData({ ...formData, po_number: e.target.value })}
-              required
-              placeholder="PO000001"
-              disabled={!!purchaseOrder}
-            />
-          </div>
+      <form id="purchaseOrderForm" onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-5">
+          <Input
+            label="PO Number"
+            floatingLabel
+            value={formData.po_number}
+            onChange={(e) => setFormData({ ...formData, po_number: e.target.value })}
+            required
+            placeholder="PO000001"
+            disabled={!!purchaseOrder}
+          />
 
-          <div>
-            <label htmlFor="po-supplier" className="block text-sm font-medium text-slate-700 mb-1">
-              <Package className="inline w-4 h-4 mr-1" />
-              Supplier *
-            </label>
-            <select
-              id="po-supplier"
-              value={formData.supplier_id}
-              onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-              required
-              disabled={!!supplierId}
-            >
-              <option value="">Select Supplier</option>
-              {suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>
-                  {supplier.name} ({supplier.supplier_number})
-                </option>
-              ))}
-            </select>
-          </div>
+          <SearchableSelect
+            label="Supplier"
+            floatingLabel
+            usePortal
+            required
+            disabled={!!supplierId}
+            value={formData.supplier_id}
+            onChange={(value) => setFormData({ ...formData, supplier_id: value })}
+            options={[
+              { id: '', name: 'Select Supplier' },
+              ...suppliers.map((supplier) => ({ id: supplier.id, name: `${supplier.name} (${supplier.supplier_number ?? ''})` })),
+            ]}
+            placeholder="Select Supplier"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              <Calendar className="inline w-4 h-4 mr-1" />
-              Order Date *
-            </label>
-            <Input
-              type="date"
-              value={formData.order_date}
-              onChange={(e) => setFormData({ ...formData, order_date: e.target.value })}
-              required
-            />
-          </div>
+          <Input
+            label="Order Date"
+            floatingLabel
+            type="date"
+            value={formData.order_date}
+            onChange={(e) => setFormData({ ...formData, order_date: e.target.value })}
+            required
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Expected Delivery
-            </label>
-            <Input
-              type="date"
-              value={formData.expected_delivery}
-              onChange={(e) => setFormData({ ...formData, expected_delivery: e.target.value })}
-              min={formData.order_date}
-            />
-          </div>
+          <Input
+            label="Expected Delivery"
+            floatingLabel
+            type="date"
+            value={formData.expected_delivery}
+            onChange={(e) => setFormData({ ...formData, expected_delivery: e.target.value })}
+            min={formData.order_date}
+          />
 
-          <div>
-            <label htmlFor="po-status" className="block text-sm font-medium text-slate-700 mb-1">
-              Status *
-            </label>
-            <select
-              id="po-status"
-              value={formData.status_id}
-              onChange={(e) => setFormData({ ...formData, status_id: e.target.value })}
-              className="w-full h-9 px-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-              required
-            >
-              <option value="">Select Status</option>
-              {statuses.map((status) => (
-                <option key={status.id} value={status.id}>
-                  {status.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SearchableSelect
+            label="Status"
+            floatingLabel
+            usePortal
+            required
+            value={formData.status_id}
+            onChange={(value) => setFormData({ ...formData, status_id: value })}
+            options={statuses.map((status) => ({ id: status.id, name: status.name }))}
+            placeholder="Select Status"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Shipping Method
-            </label>
-            <Input
-              value={formData.shipping_method}
-              onChange={(e) => setFormData({ ...formData, shipping_method: e.target.value })}
-              placeholder="FedEx, UPS, etc."
-            />
-          </div>
+          <Input
+            label="Shipping Method"
+            floatingLabel
+            value={formData.shipping_method}
+            onChange={(e) => setFormData({ ...formData, shipping_method: e.target.value })}
+            placeholder="FedEx, UPS, etc."
+          />
 
           <div className="md:col-span-2 lg:col-span-3">
-            <label htmlFor="po-shipping-address" className="block text-sm font-medium text-slate-700 mb-1">
-              Shipping Address
-            </label>
-            <textarea
-              id="po-shipping-address"
+            <Textarea
+              label="Shipping Address"
+              floatingLabel
               value={formData.shipping_address}
               onChange={(e) => setFormData({ ...formData, shipping_address: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={2}
+              className="resize-none"
               placeholder="Complete shipping address..."
             />
           </div>
@@ -553,35 +523,26 @@ export default function PurchaseOrderFormModal({ isOpen, onClose, onSuccess, pur
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="po-notes" className="block text-sm font-medium text-slate-700 mb-1">
-              <FileText className="inline w-4 h-4 mr-1" />
-              Notes (Visible to Supplier)
-            </label>
-            <textarea
-              id="po-notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-              rows={3}
-              placeholder="Notes for the supplier..."
-            />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-5">
+          <Textarea
+            label="Notes (Visible to Supplier)"
+            floatingLabel
+            value={formData.notes}
+            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            rows={3}
+            className="resize-none"
+            placeholder="Notes for the supplier..."
+          />
 
-          <div>
-            <label htmlFor="po-internal-notes" className="block text-sm font-medium text-slate-700 mb-1">
-              Internal Notes (Private)
-            </label>
-            <textarea
-              id="po-internal-notes"
-              value={formData.internal_notes}
-              onChange={(e) => setFormData({ ...formData, internal_notes: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-              rows={3}
-              placeholder="Internal notes (not visible to supplier)..."
-            />
-          </div>
+          <Textarea
+            label="Internal Notes (Private)"
+            floatingLabel
+            value={formData.internal_notes}
+            onChange={(e) => setFormData({ ...formData, internal_notes: e.target.value })}
+            rows={3}
+            className="resize-none"
+            placeholder="Internal notes (not visible to supplier)..."
+          />
         </div>
 
       </form>
