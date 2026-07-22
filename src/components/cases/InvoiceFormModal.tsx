@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useId } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Trash2, Search, FileText, Download, DollarSign, FileBarChart, Briefcase, Calculator, Package, Info, Percent, Lock } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { SearchableSelect } from '../ui/SearchableSelect';
 import { supabase } from '../../lib/supabaseClient';
 import { useCurrency } from '../../hooks/useCurrency';
 import { useTaxConfig, useDateTimeConfig } from '../../contexts/TenantConfigContext';
@@ -112,11 +113,6 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
   const taxConfig = useTaxConfig();
   const { timezone } = useDateTimeConfig();
   const toast = useToast();
-  const caseSelectId = useId();
-  const statusId = useId();
-  const currencyId = useId();
-  const discountAmountId = useId();
-  const bankAccountId = useId();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCatalog, setShowCatalog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -616,23 +612,20 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
               </div>
               <h3 className="text-sm font-semibold text-slate-900">Select Case</h3>
             </div>
-            <div>
-              <label htmlFor={caseSelectId} className="block text-sm font-medium text-slate-700 mb-1">Case *</label>
-              <select
-                id={caseSelectId}
-                value={selectedCaseId}
-                onChange={(e) => handleCaseSelection(e.target.value)}
-                className="h-9 w-full px-3 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
-                required
-              >
-                <option value="">Select a case...</option>
-                {cases.map((caseItem) => (
-                  <option key={caseItem.id} value={caseItem.id}>
-                    {caseItem.case_no} - {caseItem.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SearchableSelect
+              label="Case"
+              floatingLabel
+              shrinkDefaultValue
+              usePortal
+              required
+              value={selectedCaseId}
+              onChange={(value) => handleCaseSelection(value)}
+              options={[
+                { id: '', name: 'Select a case...' },
+                ...cases.map((caseItem) => ({ id: caseItem.id, name: `${caseItem.case_no} - ${caseItem.title}` })),
+              ]}
+              placeholder="Select a case..."
+            />
           </div>
         )}
 
@@ -697,26 +690,28 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
               </div>
 
               <div className="md:col-span-1">
-                <label htmlFor={statusId} className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                <select
-                  id={statusId}
+                <SearchableSelect
+                  label="Status"
+                  floatingLabel
+                  usePortal
                   disabled={isRestricted}
                   value={invoiceData.status}
-                  onChange={(e) => setInvoiceData({ ...invoiceData, status: e.target.value })}
-                  className="h-9 w-full px-3 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="sent">Sent</option>
-                  <option value="paid">Paid</option>
-                  <option value="partial">Partially Paid</option>
-                  <option value="overdue">Overdue</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
+                  onChange={(value) => setInvoiceData({ ...invoiceData, status: value })}
+                  options={[
+                    { id: 'draft', name: 'Draft' },
+                    { id: 'sent', name: 'Sent' },
+                    { id: 'paid', name: 'Paid' },
+                    { id: 'partial', name: 'Partially Paid' },
+                    { id: 'overdue', name: 'Overdue' },
+                    { id: 'cancelled', name: 'Cancelled' },
+                  ]}
+                />
               </div>
 
               <div className="md:col-span-1">
                 <Input
                   label="Client Reference"
+                  floatingLabel
                   value={invoiceData.client_reference}
                   onChange={(e) => setInvoiceData({ ...invoiceData, client_reference: e.target.value })}
                   placeholder="Client's PO or reference number"
@@ -728,6 +723,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
               <div className="md:col-span-2">
                 <Input
                   label="Invoice Title"
+                  floatingLabel
                   value={invoiceData.title}
                   onChange={(e) => setInvoiceData({ ...invoiceData, title: e.target.value })}
                   placeholder="e.g., Data Recovery Services Invoice"
@@ -739,6 +735,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
               <div className="md:col-span-1">
                 <Input
                   label="Invoice Date"
+                  floatingLabel
                   type="date"
                   disabled={isRestricted}
                   value={invoiceData.invoice_date}
@@ -757,6 +754,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
               <div className="md:col-span-1">
                 <Input
                   label="Due Date"
+                  floatingLabel
                   type="date"
                   value={invoiceData.due_date}
                   onChange={(e) => {
@@ -769,20 +767,15 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
             </div>
 
             {currencies.length > 1 && (
-              <div>
-                <label htmlFor={currencyId} className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
-                <select
-                  id={currencyId}
-                  disabled={isRestricted}
-                  value={invoiceData.currency || baseCurrency}
-                  onChange={(e) => setInvoiceData((d) => ({ ...d, currency: e.target.value }))}
-                  className="h-9 rounded border border-border bg-surface px-3 text-sm"
-                >
-                  {currencies.map((c) => (
-                    <option key={c.code} value={c.code}>{c.code}{c.isBase ? ' (base)' : ''}</option>
-                  ))}
-                </select>
-              </div>
+              <SearchableSelect
+                label="Currency"
+                floatingLabel
+                usePortal
+                disabled={isRestricted}
+                value={invoiceData.currency || baseCurrency}
+                onChange={(value) => setInvoiceData((d) => ({ ...d, currency: value }))}
+                options={currencies.map((c) => ({ id: c.code, name: `${c.code}${c.isBase ? ' (base)' : ''}` }))}
+              />
             )}
           </div>
         </div>
@@ -910,6 +903,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 <div>
                   <Input
                     label="Tax Rate (%)"
+                    floatingLabel
                     type="number"
                     value={invoiceData.tax_rate}
                     onChange={(e) =>
@@ -920,11 +914,9 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label htmlFor={discountAmountId} className="block text-sm font-medium text-slate-700 mb-1">
-                    Discount ({invoiceData.discount_type === 'percentage' ? '%' : docCurrency})
-                  </label>
-                  <input
-                    id={discountAmountId}
+                  <Input
+                    label={`Discount (${invoiceData.discount_type === 'percentage' ? '%' : docCurrency})`}
+                    floatingLabel
                     type="number"
                     value={invoiceData.discount_amount}
                     onChange={(e) =>
@@ -932,7 +924,6 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                     }
                     min="0"
                     step="0.01"
-                    className="h-9 w-full px-3 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary border-slate-300"
                   />
                 </div>
                 <div>
@@ -1028,23 +1019,20 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
             </div>
             <div className="space-y-3">
               <div>
-                <label htmlFor={bankAccountId} className="block text-sm font-medium text-slate-700 mb-1">
-                  Bank Account
-                </label>
-                <select
-                  id={bankAccountId}
-                  value={invoiceData.bank_account_id || ''}
-                  onChange={(e) => setInvoiceData({ ...invoiceData, bank_account_id: e.target.value || null })}
-                  className="h-9 w-full px-3 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                <SearchableSelect
+                  label="Bank Account"
+                  floatingLabel
+                  shrinkDefaultValue
+                  usePortal
                   disabled={bankAccountsLoading}
-                >
-                  <option value="">None selected</option>
-                  {bankAccounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.account_name} - {account.bank_name}
-                    </option>
-                  ))}
-                </select>
+                  value={invoiceData.bank_account_id || ''}
+                  onChange={(value) => setInvoiceData({ ...invoiceData, bank_account_id: value || null })}
+                  options={[
+                    { id: '', name: 'None selected' },
+                    ...bankAccounts.map((account) => ({ id: account.id, name: `${account.account_name} - ${account.bank_name}` })),
+                  ]}
+                  placeholder="None selected"
+                />
                 {bankAccounts.length === 0 && !bankAccountsLoading && (
                   <p className="text-xs text-warning mt-1">No bank accounts set up. Add one in Banking &gt; Accounts to display payment details on invoices.</p>
                 )}
