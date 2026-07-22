@@ -545,6 +545,7 @@ export const CaseDetail: React.FC = () => {
         meta: (
           <AuditInfo
             className="mt-2"
+            showTimezone={false}
             createdAt={caseData.created_at}
             createdByName={caseData.created_by_profile?.full_name}
             updatedAt={caseData.updated_at}

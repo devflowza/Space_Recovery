@@ -13,6 +13,8 @@ interface AuditInfoProps {
   variant?: 'inline' | 'stacked';
   /** Label for the creation event ("Created", "Joined", "Added"…). */
   createdLabel?: string;
+  /** Append the tenant timezone label (e.g. "GMT+4") to the timestamps. Default true. */
+  showTimezone?: boolean;
   className?: string;
 }
 
@@ -38,14 +40,15 @@ export const AuditInfo: React.FC<AuditInfoProps> = ({
   updatedByName,
   variant = 'inline',
   createdLabel = 'Created',
+  showTimezone = true,
   className = '',
 }) => {
   const dateTimeConfig = useDateTimeConfig();
   if (!createdAt) return null;
 
-  const createdText = formatDateTimeWithConfig(createdAt, dateTimeConfig);
+  const createdText = formatDateTimeWithConfig(createdAt, dateTimeConfig, { withTz: showTimezone });
   const showUpdated = isMeaningfulUpdate(createdAt, updatedAt);
-  const updatedText = showUpdated ? formatDateTimeWithConfig(updatedAt, dateTimeConfig) : '';
+  const updatedText = showUpdated ? formatDateTimeWithConfig(updatedAt, dateTimeConfig, { withTz: showTimezone }) : '';
   const utcTitle = `UTC: ${createdAt}${showUpdated && updatedAt ? ` · updated ${updatedAt}` : ''}`;
 
   if (variant === 'stacked') {
